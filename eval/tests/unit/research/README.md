@@ -312,9 +312,10 @@ in the search group, and carries `handback-spawns:search-external-sites`.
 `ut_research_hb2` (`handback-cross-group-not-spawned.json`) names `research-plan`,
 another group, and carries `handback-no-spawn:research-plan`.
 `test_handback_routing_follows_the_step_group` reads the hook records for a main-thread
-spawn of each named agent. Whether a canned stub reply reaches the router as an agent
-return, and so whether the router acts on its `Hand-back:` line, is settled only by a
-live `make eval-skill SKILL=research` run.
+spawn of each named agent. The stub reply reaches the router as an agent return (the
+canned text rides in the hook's denial reason), so the router acts on its `Hand-back:`
+line. The validator checks the spawn, not that the report names a cross-group owner or
+ends on "Continue with …?"; the judge reads that part.
 
 ## Attached records (issue #3516)
 

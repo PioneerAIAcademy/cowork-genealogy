@@ -18,8 +18,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors connected to Native American tribes in Oklahoma during the mid-1800s. What records or repositories would help trace families through tribal rolls and treaties?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching ancestors connected to Native American tribes in Oklahoma during the mid-1800s. What records or repositories would help trace families through tribal rolls and treaties?",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {
@@ -46,7 +46,8 @@
     "place-population-any",
     "place-search-all-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Recognize Oklahoma was Indian Territory in the mid\u20111800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn\u2019t exist yet).",

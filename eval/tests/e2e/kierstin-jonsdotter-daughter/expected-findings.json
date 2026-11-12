@@ -4,13 +4,18 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Anna, christened 12 January 1777 at Rättvik, Kopparberg, Sweden (parents indexed as Anders Ersson and Kierstin Jöransdotter), was a daughter of Kierstin Jonsdotter (PID K8LX-YMK) and Anders Hansson (PID K4V1-467). In the same Rättvik baptism index, Anna's parents recur as a distinct couple — Anders Ersson and Kierstin Jöransdotter/Göransdotter — christening further children Anders (10 Sep 1779), Margita (31 May 1784) and Kierstin (1 Jul 1787), with both patronymics read consistently across four separate entries of the same index over ten years. Pass = tree.gedcomx.json adds no person Anna Andersdotter/Andersdr christened 1777 at all — whoever her parents are shown to be — and no parent-child link from Kierstin Jonsdotter or Anders Hansson to her. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss.",
+      "description": "The agent must NOT assert that Anna, christened 12 January 1777 at Rättvik, Kopparberg, Sweden (parents indexed as Anders Ersson and Kierstin Jöransdotter), was a daughter of Kierstin Jonsdotter (PID K8LX-YMK) and Anders Hansson (PID K4V1-467). In the same Rättvik baptism index, Anna's parents recur as a distinct couple — Anders Ersson and Kierstin Jöransdotter/Göransdotter — christening further children Anders (10 Sep 1779), Margita (31 May 1784) and Kierstin (1 Jul 1787), with both patronymics read consistently across four separate entries of the same index over ten years. Pass = tree.gedcomx.json adds no person Anna Andersdotter/Andersdr christened 1777 at all — whoever her parents are shown to be — and no parent-child link from Kierstin Jonsdotter or Anders Hansson to her. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Kierstin Jonsdotter (K8LX-YMK)",
         "relation": "child",
         "wrong_candidate": {
           "name": "Anna Andersdotter (Andersdr), christened 12 January 1777, Rättvik, Kopparberg, Sweden",
-          "note": "daughter of the separate Rättvik couple Anders Ersson and Kierstin Jöransdotter/Göransdotter, whose household recurs in 1779, 1784 and 1787; a different couple from Anders Hansson and Kierstin Jonsdotter"
+          "note": "daughter of the separate Rättvik couple Anders Ersson and Kierstin Jöransdotter/Göransdotter, whose household recurs in 1779, 1784 and 1787; a different couple from Anders Hansson and Kierstin Jonsdotter",
+          "records": [
+            "ark:/61903/1:1:VWH9-GL6",
+            "ark:/61903/1:1:VWH9-GLF",
+            "ark:/61903/1:1:VWH9-GLX"
+          ]
         }
       },
       "supporting_sources": [

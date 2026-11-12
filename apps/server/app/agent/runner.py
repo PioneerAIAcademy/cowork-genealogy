@@ -26,45 +26,14 @@ import asyncio
 import json
 import os
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 try:  # package context (python -m app.agent.runner)
     from .errors import classify, log_operator
-    from .hand_back import AUTO_CONTINUE_TEXT, ends_with_hand_back
     from .mock_agent import MockAgent
 except ImportError:  # loose script alongside mock_agent.py (baked E2B image)
     from errors import classify, log_operator  # type: ignore
-    from hand_back import AUTO_CONTINUE_TEXT, ends_with_hand_back  # type: ignore
     from mock_agent import MockAgent  # type: ignore
-
-
-@dataclass(frozen=True)
-class AutoContinue:
-    """Lay mode's answer to the hand-back (issue #2653): when a turn's final
-    main-thread text ends with the ruled literal `Next: <step>. Continue?`, the
-    runner starts the next turn with `Yes.` itself, so a stated objective runs
-    step by step with no click. Per-step hand-backs stay in the prompts; whether
-    anyone has to click is this control-plane setting (lead, 2026-09-18).
-
-    `max_steps` bounds ONE unattended chain — consecutive auto turns since the
-    last real user message — not the session: the counter resets on every
-    `user_msg`. A `user_msg` may also carry `"auto_continue": false`, which opts
-    its whole chain out: a caller that reads the first `turn_done` as its reply
-    would otherwise be handed a `Yes.` turn started behind it as the answer to
-    its next message.
-    """
-    enabled: bool = True
-    max_steps: int = 30
-
-    @classmethod
-    def from_env(cls, env=os.environ) -> "AutoContinue":
-        enabled = env.get("AUTO_CONTINUE", "1") not in ("0", "false", "False", "")
-        try:
-            max_steps = int(env.get("AUTO_CONTINUE_MAX_STEPS", "30"))
-        except ValueError:
-            max_steps = 30
-        return cls(enabled=enabled, max_steps=max(0, max_steps))
 
 
 def _make_agent(project_dir: Path):
@@ -123,9 +92,7 @@ MAX_QUEUED_TURNS = 8
 _TURN_FINISHED = "_turn_finished"
 
 
-async def serve(
-    agent, incoming: "asyncio.Queue", emit, *, auto_continue: AutoContinue | None = None
-) -> None:
+async def serve(agent, incoming: "asyncio.Queue", emit) -> None:
     """Dispatch messages from ``incoming`` (a queue fed concurrently with the
     running turn; ``None`` = stdin EOF). At most one turn runs at a time;
     additional user_msgs while busy are QUEUED and run in order.
@@ -144,19 +111,7 @@ async def serve(
     messages and then pressed Stop does not want the second one to start on its
     own a moment later.
 
-    AUTO-CONTINUE (issue #2653). When the finished turn's last main-thread text
-    ends with the hand-back literal and nothing is pending, the runner starts a
-    `Yes.` turn itself (see `AutoContinue`). A pending user message always wins
-    over the synthetic `Yes.`; a question, `Research complete.`, an error, or an
-    interrupted turn never continues, because none of them ends with the literal
-    (interrupt also clears the recorded text, so a turn cancelled mid-literal
-    cannot). The chain announces itself with an `auto_continue` event before
-    each synthetic turn, and `auto_continue_paused` when the budget is spent —
-    both recorded into the replay history by the Hub like any other event, and
-    turned into a bubble boundary by the web's fold.
-
     Extracted from main() so it is testable without stdio."""
-    auto = auto_continue or AutoContinue(enabled=False, max_steps=0)
     turn_task: asyncio.Task | None = None
     pending: list[dict] = []
     # 1b/1e on the alpha: the agent's two halts read this. `pending` is a local of THIS
@@ -165,29 +120,9 @@ async def serve(
     # the next step. Tolerant of a stand-in agent that predates the attribute.
     if hasattr(agent, "pending_user_message"):
         agent.pending_user_message = lambda: bool(pending)
-    # The finished/running turn's last main-thread `text` (no `agent` label —
-    # a subagent's prose never carries the hand-back), reset per turn.
-    last_text: str | None = None
-    # Whether the running chain may auto-continue: the frame that started it
-    # said so (or said nothing), and every `Yes.` turn inherits the answer.
-    chain_may_continue = auto.enabled
-    # Consecutive synthetic turns since the last real user message.
-    auto_steps = 0
-
-    def _observe(event: dict) -> None:
-        nonlocal last_text
-        if event.get("kind") == "text" and "agent" not in event:
-            last_text = str(event.get("text", ""))
-        elif event.get("kind") == "error":
-            # An errored turn never continues, whatever text preceded the
-            # error: the web refuses Continue on an error bubble, and the runner
-            # must not disagree with the button.
-            last_text = None
-        emit(event)
 
     def _start(text: str, *, queued: bool = False) -> None:
-        nonlocal turn_task, last_text
-        last_text = None
+        nonlocal turn_task
         # EVERY turn announces itself, queued or not.
         #
         # What needs it is the QUEUED turn. `Hub` sets `_turn_active` on the
@@ -209,7 +144,7 @@ async def serve(
         # The web client cannot: ChatPane returns early on `turn_start` and acts
         # on the `status: turn_active` frame sandbox_server converts this into.
         emit({"kind": "turn_start", "queued": queued})
-        turn_task = asyncio.create_task(_run_turn(agent, text, _observe))
+        turn_task = asyncio.create_task(_run_turn(agent, text, emit))
         # Wakes this loop when the turn ends, which is what lets a queued message
         # start without `serve` having to poll or block on the turn (it must stay
         # responsive to `interrupt` while a turn runs — that is why interrupt
@@ -225,31 +160,7 @@ async def serve(
             if turn_task is not None and not turn_task.done():
                 continue
             if pending:
-                # The user wins: their message runs next and no `Yes.` is
-                # injected ahead of it (stop condition 4 of issue #2653).
-                nxt = pending.pop(0)
-                chain_may_continue = auto.enabled and nxt.get("auto_continue", True) is not False
-                auto_steps = 0
-                _start(nxt.get("text", ""), queued=True)
-            elif chain_may_continue and ends_with_hand_back(last_text):
-                if auto_steps < auto.max_steps:
-                    auto_steps += 1
-                    emit({
-                        "kind": "auto_continue",
-                        "text": AUTO_CONTINUE_TEXT,
-                        "step": auto_steps,
-                        "max_steps": auto.max_steps,
-                    })
-                    _start(AUTO_CONTINUE_TEXT, queued=True)
-                else:
-                    # The literal is still on screen, so the web's Continue
-                    # button takes over from here.
-                    emit({
-                        "kind": "auto_continue_paused",
-                        "reason": "budget",
-                        "step": auto_steps,
-                        "max_steps": auto.max_steps,
-                    })
+                _start(pending.pop(0).get("text", ""), queued=True)
         elif mtype == "user_msg":
             text = msg.get("text", "")
             if turn_task and not turn_task.done():
@@ -264,12 +175,9 @@ async def serve(
                 else:
                     pending.append(msg)
                 continue
-            chain_may_continue = auto.enabled and msg.get("auto_continue", True) is not False
-            auto_steps = 0
             _start(text)
         elif mtype == "interrupt":
             pending.clear()
-            last_text = None  # a turn cancelled mid-literal must not continue
             if turn_task and not turn_task.done():
                 handled = False
                 try:
@@ -316,7 +224,7 @@ async def main() -> None:
 
     reader_task = asyncio.create_task(reader())
     try:
-        await serve(agent, incoming, _emit, auto_continue=AutoContinue.from_env())
+        await serve(agent, incoming, _emit)
     finally:
         reader_task.cancel()
 

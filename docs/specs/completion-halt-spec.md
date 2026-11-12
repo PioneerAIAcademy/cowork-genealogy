@@ -6,7 +6,7 @@ completes the project, on the agent's own `summary_for_user`. Its predicate,
 shared by both hosted planes.
 
 This contract used to sit inside the `research_delivered` tool spec. That tool was
-deleted in step mode's phase 2 (`docs/plan/research-step-mode.md`), and the halt, which
+deleted in step mode's phase 2 (`docs/specs/research-step-mode-spec.md`), and the halt, which
 never depended on it, moved here.
 
 ## What it does

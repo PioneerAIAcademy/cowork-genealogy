@@ -5,9 +5,7 @@
     "standardPlace": "~Rowan"
   },
   "response": {
-    "query": {
-      "standardPlace": "Rowan, North Carolina, United States"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Rowan, North Carolina, United States",
     "totalForPlace": 2,
     "results": [
@@ -15,19 +13,13 @@
         "id": "4000201",
         "title": "North Carolina, Rowan County Probate Records, 1753-1970",
         "dateRange": "1753-1970",
-        "recordCount": 289000,
-        "personCount": 289000,
-        "imageCount": 144500,
-        "url": "https://www.familysearch.org/search/collection/4000201"
+        "personCount": 289000
       },
       {
         "id": "4000202",
         "title": "North Carolina, County Marriages, 1762-1979",
         "dateRange": "1762-1979",
-        "recordCount": 3120000,
-        "personCount": 6240000,
-        "imageCount": 1560000,
-        "url": "https://www.familysearch.org/search/collection/4000202"
+        "personCount": 6240000
       }
     ]
   }

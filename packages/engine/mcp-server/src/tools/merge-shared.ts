@@ -9,7 +9,7 @@ import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedSourceReference } f
 import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import type { WarningGateRefusal } from "./tree-edit.js";
 import { TREE_SOURCE_REF_FIELDS } from "../validation/tree-shape.js";
-import { validateGedcomx } from "../validation/validator.js";
+import { validateGedcomx, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { createReport, isValid } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
 import {
@@ -93,23 +93,32 @@ export async function readProjectJson(
 }
 
 /**
- * Strip the parts of a candidate document that are legal in tool output
- * (`record_read`'s `gedcomx`, `toSimplified` results) but not in the persisted
- * tree format: top-level `places[]`, the record-only fields `principal`,
- * `resource_type` and `coverage`, and any person-level source ref that is not
- * a well-formed `{ref, page?, quality?}` naming a source in this candidate.
- * Person-level refs that pass are kept: they are tree format. Returns a cleaned
- * deep copy plus one warning per stripped kind — the input is never mutated,
- * and a candidate that carries these must not be rejected for it (most
- * hand-written `record_read` fixtures give persons `{id, title}` entries, and
- * agents re-id candidate sources and leave persona refs behind).
+ * Turn a candidate document — a `record_read` answer, compacted at the MCP
+ * boundary or full, or any `toSimplified` result — into one the persisted tree
+ * format accepts. Strips what is legal in tool output but not in the tree:
+ * top-level `places[]`, the record-only fields `principal`, `resource_type` and
+ * `coverage`, sources with no `title` (with every ref to them), relationships
+ * whose type is not ParentChild or Couple (after FamilySearch's type-URI prefix
+ * is stripped) or that name a persona absent from `persons`, and any
+ * person-level source ref that is not a well-formed `{ref, page?, quality?}`
+ * naming a source in this candidate. Fills what the compacted answer leaves out
+ * and the tree requires: missing name, fact and relationship ids are minted
+ * (`mergeGedcomx` re-mints them anyway), a persona with no gender gets
+ * "Unknown", a missing `given` or `surname` becomes "", and a candidate with no
+ * `sources` but a `citation` or `collectionTitle` gets one source `S1` built
+ * from them, so `hasSameCensus` still has a title to compare. Returns a cleaned
+ * deep copy plus one warning per kind — the input is never mutated, and a
+ * candidate that carries these must not be rejected for it.
  */
-export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
+export function sanitizeCandidate(candidate: CandidateDocument): {
   candidate: SimplifiedGedcomX;
   warnings: string[];
 } {
-  const cleaned = structuredClone(candidate);
+  const cleaned = structuredClone(candidate) as CandidateDocument;
   const warnings: string[] = [];
+
+  rebuildSourceFromCitation(cleaned, warnings);
+  dropTitlelessSources(cleaned, warnings);
 
   if (Array.isArray(cleaned.places) && cleaned.places.length > 0) {
     warnings.push(
@@ -162,7 +171,191 @@ export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
     );
   }
 
+  dropNonTreeRelationships(cleaned, warnings);
+  fillTreeRequiredFields(cleaned, warnings);
+
   return { candidate: cleaned, warnings };
+}
+
+/** A candidate as merge_warnings receives it: simplified GedcomX, possibly a
+ *  `record_read` answer compacted at the MCP boundary. */
+export type CandidateDocument = SimplifiedGedcomX & {
+  citation?: unknown;
+  recordUrl?: unknown;
+  collectionTitle?: unknown;
+};
+
+const FS_RELATIONSHIP_TYPE_PREFIX = "http://familysearch.org/types/relationships/";
+const TREE_RELATIONSHIP_TYPES: ReadonlySet<string> = new Set(VALIDATOR_ENUMS.relationship_type);
+
+/** The first straight-ASCII double-quoted run of a citation, less trailing
+ *  punctuation: FamilySearch citations open with the quoted collection title,
+ *  often with its comma inside the quotes (`"United States Census, 1860,"`). */
+function quotedTitle(citation: string): string | undefined {
+  const m = /"([^"]+)"/.exec(citation);
+  const title = m ? m[1].replace(/[\s,.;:]+$/, "") : "";
+  return title !== "" ? title : undefined;
+}
+
+function nonEmpty(v: unknown): string | undefined {
+  return typeof v === "string" && v !== "" ? v : undefined;
+}
+
+function rebuildSourceFromCitation(c: CandidateDocument, warnings: string[]): void {
+  if (Array.isArray(c.sources) && c.sources.length > 0) return;
+  const citation = nonEmpty(c.citation);
+  const title = nonEmpty(c.collectionTitle) ?? (citation ? quotedTitle(citation) ?? citation : undefined);
+  if (title === undefined) return;
+  const recordUrl = nonEmpty(c.recordUrl);
+  c.sources = [
+    {
+      id: "S1",
+      title,
+      ...(citation !== undefined ? { citation } : {}),
+      ...(recordUrl !== undefined ? { url: recordUrl } : {}),
+    },
+  ];
+  warnings.push(
+    `built source S1 ("${title}") from the candidate's citation — ` +
+      `a compacted record_read answer carries no sources[]`,
+  );
+}
+
+type RefHolder = { sources?: unknown };
+
+function refHolders(c: SimplifiedGedcomX): RefHolder[] {
+  const holders: RefHolder[] = [];
+  for (const p of c.persons ?? []) {
+    holders.push(p);
+    for (const n of p?.names ?? []) holders.push(n);
+    for (const f of p?.facts ?? []) holders.push(f);
+  }
+  for (const r of c.relationships ?? []) {
+    holders.push(r);
+    for (const f of r?.facts ?? []) holders.push(f);
+  }
+  return holders.filter((h) => h !== null && typeof h === "object");
+}
+
+function dropTitlelessSources(c: SimplifiedGedcomX, warnings: string[]): void {
+  if (!Array.isArray(c.sources)) return;
+  const dropped = new Set<string>();
+  const kept = c.sources.filter((sd) => {
+    const ok = sd !== null && typeof sd === "object" && nonEmpty(sd.title) !== undefined;
+    if (!ok && typeof sd?.id === "string") dropped.add(sd.id);
+    return ok;
+  });
+  const count = c.sources.length - kept.length;
+  if (count === 0) return;
+  c.sources = kept;
+  let refs = 0;
+  for (const h of refHolders(c)) {
+    if (!Array.isArray(h.sources)) continue;
+    const list = h.sources as unknown[];
+    const keptRefs = list.filter(
+      (r) => !(r !== null && typeof r === "object" && dropped.has(String((r as { ref?: unknown }).ref))),
+    );
+    refs += list.length - keptRefs.length;
+    if (keptRefs.length > 0) h.sources = keptRefs;
+    else delete h.sources;
+  }
+  warnings.push(
+    `dropped ${count} candidate source description(s) with no title, and ${refs} ` +
+      `reference(s) to them — a tree source needs a title`,
+  );
+}
+
+function dropNonTreeRelationships(c: SimplifiedGedcomX, warnings: string[]): void {
+  if (!Array.isArray(c.relationships)) return;
+  const personIds = new Set(
+    (c.persons ?? []).map((p) => p?.id).filter((id): id is string => typeof id === "string"),
+  );
+  let wrongType = 0;
+  let dangling = 0;
+  c.relationships = c.relationships.filter((r) => {
+    if (r === null || typeof r !== "object") return false;
+    if (typeof r.type === "string" && r.type.startsWith(FS_RELATIONSHIP_TYPE_PREFIX)) {
+      r.type = r.type.slice(FS_RELATIONSHIP_TYPE_PREFIX.length);
+    }
+    if (typeof r.type !== "string" || !TREE_RELATIONSHIP_TYPES.has(r.type)) {
+      wrongType++;
+      return false;
+    }
+    const ends = r.type === "ParentChild" ? [r.parent, r.child] : [r.person1, r.person2];
+    if (!ends.every((e) => typeof e === "string" && personIds.has(e))) {
+      dangling++;
+      return false;
+    }
+    return true;
+  });
+  if (wrongType > 0) {
+    warnings.push(
+      `dropped ${wrongType} candidate relationship(s) whose type is not ParentChild or ` +
+        `Couple (e.g. Sibling) — the tree carries only those two`,
+    );
+  }
+  if (dangling > 0) {
+    warnings.push(
+      `dropped ${dangling} candidate relationship(s) naming a person not in the candidate's persons[]`,
+    );
+  }
+}
+
+function fillTreeRequiredFields(c: SimplifiedGedcomX, warnings: string[]): void {
+  let ids = 0;
+  let genders = 0;
+  let nameParts = 0;
+  (c.persons ?? []).forEach((p, pi) => {
+    if (p === null || typeof p !== "object") return;
+    if (nonEmpty(p.gender) === undefined) {
+      p.gender = "Unknown";
+      genders++;
+    }
+    (p.names ?? []).forEach((n, ni) => {
+      if (n === null || typeof n !== "object") return;
+      if (nonEmpty(n.id) === undefined) {
+        n.id = `n_${pi}_${ni}`;
+        ids++;
+      }
+      if (typeof n.given !== "string") {
+        n.given = "";
+        nameParts++;
+      }
+      if (typeof n.surname !== "string") {
+        n.surname = "";
+        nameParts++;
+      }
+    });
+    (p.facts ?? []).forEach((f, fi) => {
+      if (f === null || typeof f !== "object") return;
+      if (nonEmpty(f.id) === undefined) {
+        f.id = `f_${pi}_${fi}`;
+        ids++;
+      }
+    });
+  });
+  (c.relationships ?? []).forEach((r, ri) => {
+    if (nonEmpty(r.id) === undefined) {
+      r.id = `r_${ri}`;
+      ids++;
+    }
+    (r.facts ?? []).forEach((f, fi) => {
+      if (f === null || typeof f !== "object") return;
+      if (nonEmpty(f.id) === undefined) {
+        f.id = `rf_${ri}_${fi}`;
+        ids++;
+      }
+    });
+  });
+  if (ids > 0) {
+    warnings.push(`minted ${ids} missing name/fact/relationship id(s) — the merge re-mints them`);
+  }
+  if (genders > 0) {
+    warnings.push(`set gender "Unknown" on ${genders} candidate person(s) that carried none`);
+  }
+  if (nameParts > 0) {
+    warnings.push(`set ${nameParts} missing given/surname name part(s) to ""`);
+  }
 }
 
 /** A persisted tree source ref: only `ref`/`page`/`quality`, `ref` a non-empty
