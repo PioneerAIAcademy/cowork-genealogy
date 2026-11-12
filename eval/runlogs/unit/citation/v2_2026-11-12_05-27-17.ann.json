@@ -320,7 +320,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "d"
+      "comment": null
     }
   ]
 }
