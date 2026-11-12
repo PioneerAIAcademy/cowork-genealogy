@@ -178,7 +178,7 @@ def test_dispose_named_items(before_state, after_state, test):
             if was == now:
                 continue
             # `in_progress` counts too, since section B of
-            # docs/plan/research-step-mode.md: a search that ran without closing
+            # docs/specs/research-step-mode-spec.md: a search that ran without closing
             # its item leaves it `in_progress`, and the router's dispose row now
             # names those as well. Leaving them out is what let a searched item
             # sit undisposed while the declaration stayed refused for good.
@@ -1932,4 +1932,87 @@ def test_research_plan_hints_review_first(before_state, after_state, test):
     assert any(pid in (i.get("rationale") or "").upper() for i in leads for pid in pids), (
         f"{leads[0].get('id')}'s rationale names none of {sorted(pids)}: "
         f"{leads[0].get('rationale')!r}"
+    )
+
+
+# --- Parentage: the parents' marriage is a dedicated item (issue #4022) -------
+
+# test id -> the candidate father's given name a dedicated parents'-marriage
+# item must pair with a marriage word. Thomas: the hypothesized father of
+# Patrick Flynn from 1850 co-residence (flynn-first-plan-surveyed).
+_PARENTS_MARRIAGE_BY_TEST_ID = {
+    "ut_research_plan_014": "Thomas",
+}
+
+# wed(?:s|ded|ding|lock)?\b rather than wed\w* so "Wednesday" cannot match.
+_MARRIAGE_WORD = r"(?:marri\w*|wed(?:s|ded|ding|lock)?\b|bond\w*|licen[cs]\w*)"
+_FOLDED_WORD = r"(?:baptis\w*|christen\w*|sibling\w*|child\w*)"
+
+
+def test_research_plan_plans_parents_marriage(before_state, after_state, test):
+    """Tag-gated (``parents-marriage-item``): a parentage plan carries a
+    dedicated item for the candidate parents' marriage to each other.
+
+    The body already forbids folding it into a generic church item, and the
+    v14_2026-10-29 run did exactly that on ut_research_plan_014: pli_009
+    (church) carried "A marriage record for Thomas Flynn and his wife ...
+    would supply her maiden name" alongside sibling baptisms. An item counts
+    only when its rationale names the candidate father together with a
+    marriage word and does not also target a baptism, christening, sibling or
+    child in that same sentence. The anti-words are sentence-scoped (the
+    death-route validator's precedent): a 2026-11-03 run wrote "Dedicated
+    search for Thomas Flynn's marriage to Patrick's mother." and then noted the
+    same parish registers may also hold a sibling's baptism — a dedicated item
+    a whole-rationale scan false-failed. The real v14 pli_009 rationale is five
+    sentences; its marriage sentence folds in sibling baptisms (one semicolon
+    sentence), and its last sentence searches "Thomas's marriage and ...
+    children bearing the Flynn surname" — so `child*` is in the anti-words
+    too, or that last sentence would slip the fold through (T-FEH, PR #4447).
+    ``record_type`` is deliberately not tested: the body names a church
+    marriage register as a valid dedicated item (review-ready, 2026-10-30).
+    Known limits, accepted with that decision: any new item pairing the
+    father's name with a marriage word in a clean sentence qualifies (e.g. a
+    FAN item on the marriage bondsman, or a folded item restated across two
+    sentences), so the folded shape is caught only in its measured
+    one-sentence form.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _PARENTS_MARRIAGE_BY_TEST_ID or "parents-marriage-item" in tags, (
+        f"{test_id} has a _PARENTS_MARRIAGE_BY_TEST_ID entry but no "
+        "'parents-marriage-item' tag - restore the tag or delete the entry"
+    )
+    if "parents-marriage-item" not in tags:
+        pytest.skip("not a parents-marriage-item test")
+    father = _PARENTS_MARRIAGE_BY_TEST_ID.get(test_id)
+    assert father, (
+        f"{test_id} carries 'parents-marriage-item' but has no entry in "
+        "_PARENTS_MARRIAGE_BY_TEST_ID"
+    )
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    def _dedicated(item: dict) -> bool:
+        text = item.get("rationale") or ""
+        return any(
+            re.search(rf"\b{re.escape(father)}\b", s, re.IGNORECASE) is not None
+            and re.search(rf"\b{_MARRIAGE_WORD}", s, re.IGNORECASE) is not None
+            and re.search(rf"\b{_FOLDED_WORD}", s, re.IGNORECASE) is None
+            for s in _SENTENCE_SPLIT_RE.split(text)
+        )
+
+    assert any(_dedicated(i) for i in items), (
+        f"no new plan item is dedicated to the candidate parents' marriage: "
+        f"no rationale sentence names {father} with a marriage word "
+        "(marri*/wed*/bond*/licen*) and no baptism, christening, sibling or "
+        "child target in that sentence (items: "
+        + "; ".join(
+            f"{i.get('id')} {i.get('record_type')}: {(i.get('rationale') or '')[:90]}"
+            for i in items
+        )
+        + ")"
     )

@@ -221,8 +221,16 @@ Sequence inside each tool:
    drop top-level `places[]`, every person-level source ref that is not a
    well-formed `{ref, page?, quality?}` naming a source in the candidate,
    person-level `principal`, and source-level `resource_type`/`coverage`
-   (legal in tool output like `record_read`'s `gedcomx`, not in the tree
-   format) with a warning per stripped kind, then validate the sanitized candidate
+   (legal in tool output like a `record_read` answer, not in the tree
+   format); drop sources with no `title` and every ref to them, and
+   relationships that are not ParentChild or Couple (after stripping
+   FamilySearch's type-URI prefix) or that name a person absent from the
+   candidate; mint missing name, fact and relationship ids, set a missing
+   `gender` to `Unknown` and a missing `given`/`surname` to `""`; and, when the
+   candidate has no `sources` but carries `citation` or `collectionTitle` (a
+   `record_read` answer compacted at the MCP boundary,
+   `record-read-tool-spec.md` §6–§7), build one source `S1` from them — with a
+   warning per kind, then validate the sanitized candidate
    (`sanitizeCandidate` + `validateCandidateGedcomx` in `merge-shared.ts`).
    `merge_warnings` sanitizes identically so the dry-run merges the same
    document the writer would.

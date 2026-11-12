@@ -40,11 +40,6 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
-    "namesake-pool-row": (
-        "its only test, ut_search_records_031, was deleted on chesworthrm's ruling on "
-        "issue #3363 (2026-11-09): it failed 3 of 9 runs on main, writing no pool row, "
-        "and the engine has no signal to check; issue #4408 restores it"
-    ),
     "not-reached-wiki": (
         "its only test, ut_research_exhaustiveness_019, was deleted by PR #3917: "
         "it fails 2 of 4 on main because the agent skips the localities read; "
@@ -64,6 +59,21 @@ DORMANT: dict[str, str] = {
         "its only test, ut_proof_conclusion_002, was deleted by PR #4341: Sonnet 5.5 "
         "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4425 "
         "restores it"
+    ),
+    "naturalization-exception": (
+        "its only test, ut_person_evidence_r8t, was deleted when person-evidence moved "
+        "to Sonnet 5 medium: it counts the interval from a return-trip arrival; "
+        "issue #4478 restores it"
+    ),
+    "naturalization-shortfall": (
+        "its only test, ut_person_evidence_n5r, was deleted when person-evidence moved "
+        "to Sonnet 5 medium: it leaves a real arrival-to-naturalization shortfall unstated; "
+        "issue #4478 restores it"
+    ),
+    "score-variant": (
+        "its only test, ut_person_evidence_013, was deleted when person-evidence moved "
+        "to Sonnet 5 medium: it treats a low same_person score as a veto in 3 of 5 runs; "
+        "issue #4478 restores it"
     ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "

@@ -1141,6 +1141,47 @@ def _record_birth_ranges(response: dict[str, Any]) -> dict[str, str] | None:
         return None
 
 
+#: The compiled function production's server applies to every `record_read`
+#: answer at the MCP boundary (#4415).
+_RECORD_READ_COMPACTOR = "compactRecordReadAnswer"
+
+
+def _compact_record_read(response: dict[str, Any], record_id: str) -> dict[str, Any]:
+    """Run the compiled `compactRecordReadAnswer` on a served `record_read`.
+
+    `record_id` is the agent's call `recordId`, never the fixture's
+    `args.recordId`, which carries the `~` predicate prefix. Applied after
+    staging, so the staged sidecar keeps the full document, as production's
+    does. Returns the response untouched, with a warning, when the build is
+    absent or node fails.
+    """
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock record_read compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {_RECORD_READ_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" process.stdout.write(JSON.stringify({_RECORD_READ_COMPACTOR}(input.response, input.recordId)));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"response": response, "recordId": record_id}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+            store=False,
+        )
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock record_read compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock record_read compaction failed in node ({exc})", stacklevel=2)
+        return response
+
+
 def _stage_record_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1441,6 +1482,50 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     return str(out.get("message") or f"{field} could not be read")
 
 
+def _trim_person_read(response: dict[str, Any]) -> dict[str, Any]:
+    """Trim a canned full `person_read` to the model-facing answer (#4384).
+
+    Runs the COMPILED `trimPersonReadForModel`, so every fixture is cut exactly
+    as production cuts its answer. Returns the response untrimmed, with a
+    warning, when node or the build is unavailable: a harness fault, never a
+    production shape.
+    """
+    person_read_js = _MCP_BUILD / "tools" / "person-read.js"
+    if not person_read_js.exists():
+        _warn_untrimmed(f"no engine build at {person_read_js}")
+        return response
+    url = _node_module_url(person_read_js)
+    script = (
+        f"import {{ trimPersonReadForModel }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const r = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(trimPersonReadForModel(r)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            _warn_untrimmed(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+            return response
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("persons"), list):
+            _warn_untrimmed("the trim returned no `persons`")
+            return response
+        return parsed
+    except Exception as e:
+        _warn_untrimmed(f"{type(e).__name__}: {e}")
+        return response
+
+
+def _warn_untrimmed(why: str) -> None:
+    warnings.warn(
+        f"mock person_read could not be trimmed ({why}); the response goes back in the "
+        "full shape production no longer returns, so results for this call are not "
+        "comparable to production",
+        stacklevel=2,
+    )
+
+
 def _stage_person_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1713,6 +1798,16 @@ def create_mock_server(
                     _workspace, args, response, _stored_rows.get(source_name)
                 )
 
+            # Production's person_read answers, and stages, the model-facing trim
+            # of the full read (#4384). A fixture holds the full read, which
+            # project_create's stand-in keeps reading from the manifest.
+            if (
+                _name == "person_read"
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _trim_person_read(response)
+
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.
             if (
@@ -1873,6 +1968,18 @@ def create_mock_server(
             # `_stage_record_read`, which both read them (#4127).
             if _name == "record_read" and isinstance(response, dict) and "indexFields" in response:
                 response = {k: v for k, v in response.items() if k != "indexFields"}
+
+            # Production's server compacts every record_read answer at the MCP
+            # boundary (#4415): after staging, so the sidecar stays full, and with
+            # the agent's own `recordId`. The extraction_append records map below
+            # is in-process in production and stays full.
+            if (
+                _name == "record_read"
+                and isinstance(response, dict)
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _compact_record_read(response, str(args.get("recordId") or ""))
 
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
@@ -2798,6 +2905,11 @@ def _make_extraction_append_handler(
                 # personId mode reads the person's attached records itself, as
                 # `ark:/61903/1:1:<id>`. Stage the fixtures for exactly those ids.
                 wanted += [f"ark:/61903/1:1:{b}" for b in _attached_record_ids(_ws, input_obj["personId"])]
+            if input_obj.get("attachWaitingPages") is True and input_obj.get("pageReadings") is not None:
+                # A page pass (#4286) re-reads a held record whose log entry keeps
+                # no index, to classify what its page says. Stage the records the
+                # readings name, by the id their assertions carry.
+                wanted += _page_reading_record_ids(_ws, input_obj["pageReadings"])
             for rid in wanted:
                 key = rid.strip()
                 bare = key.rsplit("1:1:", 1)[-1].rsplit("/", 1)[-1]
@@ -2856,6 +2968,30 @@ def _make_extraction_append_handler(
         return _tool_envelope("extraction_append", response)
 
     return handler
+
+
+def _page_reading_record_ids(workspace: Path, page_readings: Any) -> list[str]:
+    """The record ids of the assertions a `pageReadings` call names, read from the
+    workspace's research.json. Unreadable input stages nothing: the tool refuses
+    it on its own terms."""
+    try:
+        research = json.loads((Path(workspace) / "research.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    record_of = {
+        a.get("id"): a.get("record_id")
+        for a in research.get("assertions") or []
+        if isinstance(a, dict) and isinstance(a.get("record_id"), str)
+    }
+    ids: list[str] = []
+    for entry in page_readings if isinstance(page_readings, list) else []:
+        for r in (entry or {}).get("readings") or [] if isinstance(entry, dict) else []:
+            if not isinstance(r, dict):
+                continue
+            rid = record_of.get(r.get("disputesAssertionId") or r.get("personAssertionId"))
+            if rid and rid not in ids:
+                ids.append(rid)
+    return ids
 
 
 def _mock_memory_kinds(read: dict[str, Any]) -> dict[str, str]:
