@@ -6,6 +6,6 @@
   },
   "is_error": true,
   "response": {
-    "error": "No OpenRouter API key is configured. Tell the user to get one at https://openrouter.ai/keys and enter it in Claude Desktop under Settings → Extensions → Genealogy Research, or add it to ~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. Do not ask the user to paste the key into the chat."
+    "error": "No OpenRouter API key is configured. Tell the user to get one at https://openrouter.ai/keys and enter it in Claude Desktop under Settings → Desktop app → Extensions → Genealogy Research → Configure, or add it to ~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. Do not ask the user to paste the key into the chat."
   }
 }

@@ -656,8 +656,9 @@ restart. Order matters:
      to Extensions → Advanced settings → "Install extension" → pick the
      rebuilt `releases/genealogy-mcp.mcpb`. While the old copy is
      installed, the window offers only **Uninstall**: uninstall it, then
-     **Install**. Uninstalling clears the OpenRouter key; paste it again
-     under **Configure**.
+     **Install**. Uninstalling clears an OpenRouter key saved under
+     **Configure** (not one in `~/.familysearch-mcp/config.json`); paste it
+     again there.
    - **Plugin:** Claude Desktop → Customize → Plugins → Yours → **remove the
      existing Genealogy Research plugin first** (**…** → **Remove**),
      then **+ Add** → **Upload plugin** → pick the rebuilt

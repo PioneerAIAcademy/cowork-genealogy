@@ -156,8 +156,9 @@ The Viewer isn't signed yet, so your computer warns you about it the first time.
 
 Download the files again and install them. For the MCP server, follow step 2.
 While the old copy is installed, Claude Desktop offers only **Uninstall**:
-click it, confirm, then click **Install**. Uninstalling also removes your
-OpenRouter key, so paste it in again under **Configure**. For the plugin,
+click it, confirm, then click **Install**. Uninstalling also removes an
+OpenRouter key saved under **Configure**, so paste it in again there; a key in
+`~/.familysearch-mcp/config.json` stays. For the plugin,
 remove the old one first (Customize → Plugins → **Yours** → **…** next to it → **Remove**),
 then upload the new zip; uploading on top of the old one can leave old skills
 behind. Then restart Claude Desktop. Install the new Research Viewer over the

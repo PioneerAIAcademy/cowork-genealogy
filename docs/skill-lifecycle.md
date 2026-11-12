@@ -97,7 +97,8 @@ make mcpb          # Windows: eval\BuildMcpb.bat     — if you changed tool cod
 - **MCP:** Claude Desktop → Settings → Desktop app → Extensions → Advanced
   settings → Install extension → the new `.mcpb`. While the old copy is
   installed, the window offers only **Uninstall**: uninstall it, then
-  **Install**, and paste the OpenRouter key again under **Configure**.
+  **Install**. If your OpenRouter key was saved under **Configure**, paste it
+  again there.
 
 Then **fully quit and reopen Claude Desktop.** Cowork runs the uploaded `.zip`,
 not your working tree — skip the rebuild and your fix will look like it did
