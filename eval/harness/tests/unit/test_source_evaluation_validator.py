@@ -2314,6 +2314,29 @@ def test_a_finding_headed_as_a_birth_conflict_still_flags_a_census_year():
         _age_check(reply + _TAIL_CONFLICT)
 
 
+def test_an_italic_lead_in_scopes_the_finding_like_a_bold_one():
+    """Live Tallman run 3 of 3: the agent wrote the father's-name finding as `*Finding 2: Father's
+    given name.* ...` and the paragraph said "the birth range ... agree" beside "The 1850 census
+    household also lists a son named James". Only a bold lead-in was read as the topic, so the
+    italic one read as a birth finding and flagged the 1850 census."""
+    reply = (
+        "*Finding 2: Father's given name.* The Vermont vital record gives the father as \"Jas\" Tallman. "
+        "The profile says Joseph Tallman. The mother, the birth range and the death date agree. "
+        "The 1850 census household also lists a son named James. That is a lead, not proof."
+    )
+    _age_check(reply + _TAIL_CONFLICT)
+
+
+def test_an_italic_lead_in_about_the_birth_conflict_still_flags_a_census_year():
+    """The other direction: an italic lead-in about the birth still scopes its paragraph."""
+    reply = (
+        "*Finding 1: Birth date disagreement.* The 1850 census gives 1840 for his birth year, "
+        "which differs from the profile."
+    )
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(reply + _TAIL_CONFLICT)
+
+
 def test_contradicts_and_inconsistent_are_conflict_words():
     """Self-review finding: "contradicts the profile" carried no conflict word."""
     with pytest.raises(AssertionError, match="1850 census"):

@@ -1452,7 +1452,7 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
         if _AGE_FINDING_HEAD_RE.match(line) or (prev_blank and (_age_is_heading(stripped) or bold_heading)):
             # The topic of a bold lead-in is the lead-in: a finding about the father's name
             # whose paragraph mentions "birth range" is not a birth finding.
-            lead = re.match(r"\s*\*\*(.+?)\*\*\s*\S", raw)
+            lead = re.match(r"\s*(?:\*\*|\*)(.+?)(?:\*\*|\*)\s*\S", raw)
             heading = lead.group(1) if lead else stripped
             in_birth_block = bool(
                 re.search(r"\bbirth\b", heading, re.IGNORECASE)
