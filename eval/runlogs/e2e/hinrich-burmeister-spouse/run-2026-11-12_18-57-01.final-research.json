@@ -1,0 +1,51 @@
+{
+  "project": {
+    "id": "rp_hinrich_burmeister_spouse",
+    "objective": "Did Hinrich Burmeister of Sch\u00f6nberg (b. 1653) have a son Hinrich baptised 29 July 1687, and is the 'Elsch Burmeister' named as the child's mother his first wife Liesbeth Oldenburg?",
+    "subject_person_ids": [
+      "G8CJ-7VL"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was a son named Hinrich Burmeister baptised 29 July 1687 to Hinrich Burmeister of Sch\u00f6nberg, and is he the child the tree records as P71D-DRJ (christened 18 August 1683)?",
+      "rationale": "The objective's baptism date (29 July 1687) and the tree's christening date for the son Hinrich (18 August 1683) cannot both describe the same baptism. The tree link to that child is a disputed parent-child assertion, so this question tests it directly. The mother-identity question about Elsch depends on this baptism being established first.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1687-1693",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
