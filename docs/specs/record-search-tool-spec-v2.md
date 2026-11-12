@@ -533,11 +533,14 @@ refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
 `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
-birth years differ by more than two, and the `attachedTo*` flags — and the
+birth years differ by more than two, `surnameNotOnSubject` with
+`candidateSurname` when the surname is none the project gives the subject, and
+the `attachedTo*` flags — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
 `subjectTooThin: true` and its `subjectTooThinNote` when the subject lacks both a
 narrow date and a named relative — see `rank-search-matches-tool-spec.md` §
-`subjectTooThin`); it has
+`subjectTooThin` — and `surnameNote` when a row carries `surnameNotOnSubject`,
+§ `surnameNotOnSubject`); it has
 no row list of its own. There is one set of rows, never two.
 
 `searchRank` is what keeps that re-ordering **auditable rather than lossy**.
@@ -636,15 +639,15 @@ Strict surname + birth-place match:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `query` | object | Echo of the input fields the caller supplied. |
+| `query` | object \| undefined | Echo of the input fields the caller supplied. **Absent from a staged answer:** the staged file keeps it, and `research_log_append` reads it there. An answer that staged nothing (no `projectPath`, or `staged: null`) keeps it, since it is then the only copy. |
 | `totalMatches` | number | Total records matching the query in the corpus. Under a place expansion, the largest single search's total: a lower bound on the merged set, since the searches overlap and a sum would overcount. With `*PlaceExact` the modern parent's search can make it much wider than the town (Denver: 83 statewide against 26). |
-| `paginationCappedAt` | number | The hard limit on how many results are reachable through pagination (4999). When `totalMatches > paginationCappedAt`, the rest are unreachable — narrow the query. |
+| `paginationCappedAt` | number \| undefined | The hard limit on how many results are reachable through pagination (4999). **In the staged file only;** every answer drops it, since it never changes and the `offset` input states the limit (`offset + count` at most 4999). |
 | `returned` | number | Number of results in this response (≤ `count`). Under a place expansion it is the page shown even when the staged sidecar holds the larger ranked pool; `staged.returnedCount` says the same. |
 | `offset` | number | Echo of the input offset (0 if not supplied). Under a place expansion it is an offset into the merged list. |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). Under a place expansion, when any search has rows past `offset + count` or the merged list, after mapping, runs past the page. |
 | `placeExpansion` | object \| undefined | Present **only** when a place field was searched under more than one name: `searches[]` (each search's `places`, `totalMatches`, rows `returned`, and an `error` if it failed), `mergedCount` (records in the merged list read), `truncated` when names were left out to stay within 12 searches, `rankedPoolCapped` when only the first 300 merged rows were staged and ranked, and a one-sentence `note`. **Serialized before `results`**; staged with the response, since it records what was searched. See "Life event fields". |
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
-| `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
+| `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses **this tool made** with no `research.json` log entry. A `record_search` is never told about a `fulltext_search` file, nor the reverse, so one agent is not asked to log another agent's searches. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] | Always present. FamilySearch's own search order (under a place expansion, the merged order), or best first with score fields when ranking ran — one row list, never two; see "The response is re-ordered; the staged sidecar is not". |
 | `collections` | object \| undefined | `collectionId` → collection title for every collection in `results`, hoisted off the rows by the compaction every answer gets (see the `gedcomx` row of `RecordSearchResult`). Absent when no row carries a title. |
@@ -1171,8 +1174,8 @@ Each `RecordSearchResult`, as the staged file holds it (the answer compacts ever
 |-------|------|-------------|
 | `recordId` | string | The record-persona ARK in canonical form (e.g., `"ark:/61903/1:1:6K9K-3HN9"`). Feed directly to `record_read`'s `recordId` input, the record-match tools' `id`, or `source_attachments`' `uris`. |
 | `personName` | string \| undefined | The person's name as written on the source record. Undefined when the upstream record carries no display name and no fallback name form. |
-| `score` | number \| undefined | Relevance score within this query. Higher means better-ranked. Use for sorting within a result set. Not comparable across different queries. |
-| `confidence` | number \| undefined | A 1–5 confidence band on this result, where 5 is highest. Surface for transparency; rank with `score`. |
+| `score` | number \| undefined | FamilySearch's relevance score within this query. Not comparable across queries. **In the staged file only;** the answer drops it, since ranking (`matchScore`) replaces it. |
+| `confidence` | number \| undefined | FamilySearch's 1–5 confidence band on this result, where 5 is highest. **In the staged file only;** the answer drops it with `score`. |
 | `sex` | string \| undefined | `"Male"`, `"Female"`, or undefined. |
 | `birthDate` | string \| undefined | Birth date as written on the record (e.g., `"12 February 1809"` or `"1809"`). |
 | `birthPlace` | string \| undefined | Birth place as written. |
@@ -1182,11 +1185,11 @@ Each `RecordSearchResult`, as the staged file holds it (the answer compacts ever
 | `collectionId` | string \| undefined | The ID of the collection this record belongs to. Undefined when the upstream record carries no Collection-typed `sourceDescriptions[]` entry. |
 | `collectionTitle` | string \| undefined | Human-readable collection name. Undefined under the same conditions as `collectionId`. |
 | `collectionUrl` | string \| undefined | Link to the collection page on FamilySearch (a web page, not an ARK). Undefined under the same conditions as `collectionId`. |
-| `recordTitle` | string \| undefined | Human-readable description of the source record. |
+| `recordTitle` | string \| undefined | Human-readable description of the source record. The staged file keeps it whole. The answer drops it when it is exactly `Entry for <personName>, "<collection title>"`, and otherwise keeps it without the trailing `, "<collection title>"`, which `collections` already holds. |
 | `recordArk` | string \| undefined | The source record's ARK in canonical form (the `1:2:` entry, e.g. `"ark:/61903/1:2:HSJG-CLNF"`). Distinct from `recordId`, which is the `1:1:` persona ARK. **Not accepted by `record_read`** — feed that tool `recordId`. The two are independent id spaces, so a `1:2:` ARK passed to `record_read` resolved against the persona namespace and returned a different, unrelated record as a clean success; it is refused at the tool boundary. |
 | `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
-| `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. **Never in the answer, with or without `projectPath`:** every answer goes through `compactStagedRecordSearch`, which drops this field and `collectionUrl`, hoists `collectionTitle` into `collections`, drops an empty `treeMatches` and de-duplicates `events`, so only the staged file keeps the full row and `record_read` on `recordId` gives one record's document. The answer is compacted with no project too because a 100-result page carrying `gedcomx` is over Claude Code's ~50k-character tool-result cutoff (the Dixon fixture: about 62k characters, about 29k compacted), and a call over it reaches the model as an error notice with no data (lead, 2026-11-09). |
-| `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
+| `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. **Never in the answer, with or without `projectPath`:** every answer goes through `compactStagedRecordSearch`, which drops this field and `collectionUrl`, hoists `collectionTitle` into `collections`, drops an empty `treeMatches`, drops an empty `events` and de-duplicates the rest, drops `primaryId`, `score` and `confidence`, trims `recordTitle`, and drops `paginationCappedAt` (and `query` on a staged answer), so only the staged file keeps the full row and `record_read` on `recordId` gives one record's document. The answer is compacted with no project too because a 100-result page carrying `gedcomx` is over Claude Code's ~50k-character tool-result cutoff (the Dixon fixture: about 62k characters, about 29k compacted), and a call over it reaches the model as an error notice with no data (lead, 2026-11-09). |
+| `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. **In the staged file only,** beside `gedcomx`: `rank_search_matches` reads it there, since `record_search` stages before it compacts. |
 | `relativeTerms` | RelativeTerms \| undefined | Per-relative answer to "is the relative I searched on actually named on this record?" Present only when the caller supplied a relative *name*; see [`relativeTerms`](#relativeterms--whether-the-relative-you-anchored-on-is-actually-there) below. |
 | `batchNumber` | string \| undefined | The extraction batch this record came out of (e.g. `"M01048-5"`), read off the entry's `content.gedcomx.fields[]`. Feed it straight back as the `batchNumber` **input** to enumerate the rest of the batch. Undefined on any record that does not trace to an extraction batch, which is most of them — **absence carries no information** and is not a statement about the collection. See [`batchNumber`](#batchnumber--the-only-route-to-a-batch-you-can-enumerate) below. |
 | `role` | string \| undefined | FamilySearch's label for the persona's role on this record: `"Principal"`, `"Father"`, `"Mother"`, `"Spouse"`, or `"Other"`. Flat and top-level for the same reason as `relativeTerms` and `batchNumber`: the answer never carries `gedcomx`. This is FamilySearch's own vocabulary, not a `research.json` `record_role` value. Absent means unknown, never "principal". Present on 100% of search personas (measured 2026-09-14). `record_read` carries `principal` (boolean) on each person instead — the recapi endpoint does not expose the role string. |
@@ -1439,7 +1442,6 @@ Example:
     "birthPlace": "Kentucky"
   },
   "totalMatches": 432,
-  "paginationCappedAt": 4999,
   "returned": 1,
   "offset": 0,
   "hasMore": true,
@@ -1447,8 +1449,6 @@ Example:
     {
       "recordId": "ark:/61903/1:1:QPRC-WPBZ",
       "personName": "Abraham Lincoln",
-      "score": 5.4236,
-      "confidence": 4,
       "sex": "Male",
       "birthDate": "12 February 1809",
       "birthPlace": "Hardin, Kentucky, United States",
@@ -1458,12 +1458,10 @@ Example:
         { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
       ],
       "collectionId": "5000016",
-      "recordTitle": "Entry for Abraham Lincoln, \"United States, Social Security...\"",
       "recordArk": "ark:/61903/1:2:HSJG-CLNF",
       "treeMatches": [
         { "treePersonId": "GQWZ-GPX", "stars": 5 }
-      ],
-      "primaryId": "p_1"
+      ]
     }
   ],
   "collections": {
@@ -1961,7 +1959,7 @@ For each `entry` in `response.entries`:
 
 - `query` ← echo of input (only fields the caller supplied).
 - `totalMatches` ← `response.results`.
-- `paginationCappedAt` ← `4999` (constant).
+- `paginationCappedAt` ← `4999` (constant). Staged file only; the answer drops it.
 - `returned` ← `entries.length`.
 - `offset` ← `response.index ?? 0`.
 - `hasMore` ← `response.links?.next?.href != null`.
@@ -2135,7 +2133,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 28 | Surfaces `treeMatches` from `entry.hints` sorted by stars descending, and reaches `ranked[].treeMatches` on a `subjectId` search | Tree-match surfacing — the subject-named case is the one that reads `ranked`, not `results` |
 | 29 | Resolves the represented persona by ark suffix when there are multiple principals | Multi-principal handling |
 | 30 | Sets `hasMore: true` when `links.next` exists | Pagination flag |
-| 31 | Echoes `totalMatches` and `paginationCappedAt` correctly | Total-count surfacing |
+| 31 | Echoes `totalMatches`, and `query` when nothing staged; never `paginationCappedAt` | Total-count surfacing |
 | 35 | `father: absent` when the record names only the mother | **The issue's case.** `absent` must stay reachable |
 | 36 | `father: absent` when the record names no parents at all | The other route to `absent` |
 | 37 | `father: present` with the parent's name | Positive path |

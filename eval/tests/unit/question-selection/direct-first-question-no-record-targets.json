@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_question_selection_hrt",
+    "skill": "question-selection",
+    "name": "A pre-1850 identify-parents hand-back must not name record targets (direct-agent arm)",
+    "type": "positive",
+    "description": "Issue #4166. An empty project whose subject was born before 1800 and whose unconfirmed candidate father died before 1850 — the father's pre-1850 death invites naming his probate/estate file, or the pre-1850 census's head-of-household-only limitation, as the next-step record target. Both are research-plan's call, not question-selection's: the hand-back may route there, but must not name the record itself.",
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "empty-project",
+      "first-question",
+      "selection-basis-objective-decomposition",
+      "first-question-depends-on-empty",
+      "new-question-exhaustive-declaration-unstarted",
+      "objective-scope-match",
+      "single-fact-objective",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "hollis-parents-pre-1850"
+  },
+  "judge_context": [
+    "The objective is already a SINGLE fact (identify Reuben Hollis's parents, plural), so the first question should restate it at that same scope, with the identifying detail the three criteria require (name, approximate date, place) -- e.g. 'Who were the parents of Reuben Hollis, b. ca. 1795, Rowan County, North Carolina?'. Do NOT require decomposition into something narrower here, and do not narrow the question to Ezekiel Hollis alone -- he is an unconfirmed candidate the objective names, not a second objective (checked mechanically by test_single_fact_objective_not_narrowed).",
+    "RECORD TARGETS -- the primary thing under test, in BOTH the caller lines and summary_for_user. Part of this is checked MECHANICALLY by test_handback_not_record_scoped: a SPECIFIC kind of record (a census, deed, will, probate, estate, land, church, tax or court record, or any other named kind) named in the hand-back -- do not grade that part yourself. You must additionally watch for, and grade yourself, three further categories the mechanical check does NOT catch, each equally a Correctness failure: (1) a specific collection or repository named as the thing to search; (2) a jurisdiction named AS the record source to search rather than merely as the place the question is about -- e.g. 'research-plan will stage searches across Rowan County, North Carolina holdings' names the county as a record source, a failure, whereas the question text itself correctly names Rowan County only as the subject's place, which is not; (3) a census or record year (e.g. 'the 1850 census', 'records from 1850 onward'). All of these, mechanically-checked and judge-checked alike, fail however sound the reasoning behind naming it: 'the candidate father died in 1847, so check his probate file' and 'the 1850 census is the first to name every household member, so an earlier census won't help' are both record-scoped observations that belong to research-plan, which weighs record choice against locality and period. 'A research plan will now be built to test this', 'research will be planned and searched', and generic words with no specific kind, collection, repository or jurisdiction attached -- 'records', 'sources', 'documents', 'holdings' -- are all correct and must NOT be scored down merely for mentioning that records/sources exist.",
+    "SCOPE -- must not narrow to a record in the question text either (checked by test_new_question_not_record_scoped): the question is the fact sought (who were the parents), not a record ('what does Ezekiel Hollis's probate file say').",
+    "SCOPE -- must not widen beyond Reuben Hollis and his parents.",
+    "selection_basis should be objective_decomposition. depends_on and unblocks should both be explicitly [] for a first question, and search_stop must be unstarted.",
+    "PRESENTATION: the reply has two parts, split by a final line containing only ---. Above it are terse caller-facing lines, which may carry the q_ id and a routing hint such as research-plan; do not penalize either there, so long as no record type is named. Everything after the final --- is what the researcher reads: it must state the chosen question in plain words, never as a q_ id alone, and give the next step in plain language without naming a skill, tool, field, or record type."
+  ]
+}

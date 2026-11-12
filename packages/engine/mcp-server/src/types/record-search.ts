@@ -247,6 +247,8 @@ export interface RecordSearchResult {
   // the record-match tools' `id`, or source_attachments' `uris`.
   recordId: string;
   personName?: string;
+  // FamilySearch's search relevance. In the staged file only: the answer's
+  // compactor drops both (staged-compaction.ts).
   score?: number;
   confidence?: number;
   sex?: string;
@@ -285,6 +287,11 @@ export interface RecordSearchResult {
   birthYearConflict?: true;
   /** Candidate birth year minus subject birth year; present with the flag. */
   birthYearGap?: number;
+  /** True when the candidate's surname is not one the project gives the
+   *  subject; see `RankedMatch.surnameNotOnSubject`. */
+  surnameNotOnSubject?: true;
+  /** The candidate's surname; present with `surnameNotOnSubject`. */
+  candidateSurname?: string;
   /** Only set when attachment-checking ran and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
@@ -292,6 +299,9 @@ export interface RecordSearchResult {
   collectionId?: string;
   collectionTitle?: string;
   collectionUrl?: string;
+  // In the staged file in full. The answer drops it when it is exactly
+  // `Entry for <personName>, "<collection title>"`, else keeps it without the
+  // trailing `, "<collection title>"`.
   recordTitle?: string;
   // The source record/image ARK (the 1:2: entry), e.g.
   // "ark:/61903/1:2:HSJG-CLNF". Canonical ARK form.
@@ -307,8 +317,8 @@ export interface RecordSearchResult {
   // it, staged or not (compactStagedRecordSearch). `record_read` on `recordId`
   // returns the record's document.
   gedcomx?: SimplifiedGedcomX;
-  // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
-  // `same_person` as primaryId1/primaryId2.
+  // The `id` of the focus person inside `gedcomx.persons[]`. In the staged
+  // file only, beside `gedcomx`: rank_search_matches reads it there.
   primaryId?: string;
   // Whether the relative(s) the caller anchored the search on are actually
   // named on this record. Present only when a relative NAME was supplied.
@@ -373,9 +383,12 @@ export interface PlaceExpansion {
 }
 
 export interface RecordSearchToolResponse {
-  query: Partial<RecordSearchInput>;
+  // The answer drops it when it staged; the staged file keeps it, and
+  // research_log_append reads it from there.
+  query?: Partial<RecordSearchInput>;
   totalMatches: number;
-  paginationCappedAt: number;
+  // Always 4999. In the staged file only; the answer drops it.
+  paginationCappedAt?: number;
   returned: number;
   offset: number;
   hasMore: boolean;

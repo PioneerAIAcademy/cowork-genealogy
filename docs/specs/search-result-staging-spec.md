@@ -347,8 +347,9 @@ same ground truth production does.
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
 - **The un-finalized set is also a signal, not only garbage.** `stageSearchResults`
-  prunes it; `unloggedStagedSearches(projectPath)` *reads* its search files, and both staging
-  search tools surface what it returns as an advisory note (contract in
+  prunes it; `unloggedStagedSearches(projectPath, tool)` *reads* the calling tool's search
+  files, never another tool's, and both staging search tools surface what it returns as an
+  advisory note (contract in
   `record-search-tool-spec-v2.md`). What makes it a signal rather than a file count is
   the pairing rule: `research_log_append` only WARNS when a staging search tool logs
   `results_available > 0` with no `stagedResultsRef` (§6), so that entry's staged file

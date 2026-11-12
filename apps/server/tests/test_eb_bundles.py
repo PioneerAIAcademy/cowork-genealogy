@@ -253,6 +253,8 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 "web/feedback.py": (b"", f), "web/blobstore.py": (b"", f), "web/pages.py": (b"", f),
                 "web/static/pdfjs/pdf.min.mjs": (b"", f), "web/static/pdfjs/pdf.worker.min.mjs": (b"", f),
                 "web/static/pdfjs/LICENSE": (b"", f),
+                "web/static/pdfjs/cmaps/Adobe-Japan1-UCS2.bcmap": (b"", f),
+                "web/static/pdfjs/cmaps/LICENSE": (b"", f),
                 "enqueue.py": (b"", f), "grants.py": (b"", f), "turn_message.py": (b"", f),
                 "migrate.py": (b"", f), "pg_credentials.py": (b"", f),
                 "sql/001_schema.sql": (b"", f),

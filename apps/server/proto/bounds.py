@@ -1136,7 +1136,9 @@ ATTEMPT_LOCK_NS = 30301  # grants.ATTEMPT_LOCK_NS
 KEEPALIVE_DROP_MAX_S = 180.0
 DEADMAN_S = 300
 NFT_TABLE = "u13drop"
-SPILL_TOOL = "collections_search"
+# collections_search's Italy answer spilled until its rows went lean and its answer was held to
+# 40,000 characters (issue #4416); this record_search measured 57,214 on 2026-11-11.
+SPILL_TOOL = "record_search"
 SPILL_TEXT = PROBES / "u13-spill.txt"
 SPILL_READ_SQL = ("SELECT count(*) FROM tool_calls WHERE turn_id = %s AND id > %s AND tool_name IN ('Read', 'Grep') "
                   "AND input_path LIKE '%%/tool-results/%%'")
@@ -1271,8 +1273,9 @@ def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     """M51: SIGKILL between a tool result spilling to the CLI's tool-results file and the
     agent reading it back; the redelivery must complete, not end no_progress.
 
-    The prompt asks for Italy's last collection title: Italy is measured past the CLI's
-    50,000-character spill and the title is only in the tail, past the 2 KB preview. The
+    The prompt asks for the last recordId of a 100-row record_search (Johnson, parents John
+    and Mary, United States), measured past the CLI's 50,000-character spill; the id is only
+    in the tail, past the 2 KB preview. The
     kill fires on ``duration_ms``, which a failed call stamps too, so the run is void
     unless the turn read a tool-results file somewhere: a failing upstream call reads as
     void, not as M51 met. ``rerun_calls`` and ``reads_after_kill`` record re-ran vs stranded."""

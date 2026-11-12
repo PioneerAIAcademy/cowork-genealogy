@@ -5794,3 +5794,340 @@ describe("impossibility checks", () => {
     });
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// hasInterleavedChildrenIgnoreSimilarSpouses (issue #4345)
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasInterleavedChildrenIgnoreSimilarSpouses", () => {
+  const TAG = "hasInterleavedChildrenIgnoreSimilarSpouses";
+  type F = { id: string; type: string; date: string; standard_date: string };
+  type R = NonNullable<SimplifiedGedcomX["relationships"]>;
+  const birth = (id: string, date: string, type = "Birth"): F => ({ id, type, date, standard_date: date });
+  const person = (
+    id: string,
+    given: string,
+    surname: string,
+    facts: F[] = [],
+    gender: "Male" | "Female" = "Female",
+  ): SimplifiedPerson => ({ id, gender, names: [{ id: `N${id}`, given, surname }], facts });
+  const pc = (parent: string, child: string, subtype?: string) => ({
+    id: `R${parent}${child}`,
+    type: "ParentChild",
+    parent,
+    child,
+    ...(subtype ? { subtype } : {}),
+  });
+  const couple = (a: string, b: string) => ({ id: `C${a}${b}`, type: "Couple", person1: a, person2: b });
+  const run = (persons: SimplifiedPerson[], rels: R, anchor = "H", final = true) => {
+    const mob = new Mob({ persons, relationships: rels }, anchor);
+    return calculateWarnings(mob, mob, mob, final);
+  };
+  const hits = (persons: SimplifiedPerson[], rels: R, anchor = "H") =>
+    run(persons, rels, anchor).filter((w) => w.issueType === TAG);
+
+  // H married Agnes Brown (A) and Bertha Clark (B). Agnes's children are born
+  // 1850 and 1860; Bertha's child X is born 1855, between them.
+  const H = person("H", "Henry", "Ward", [birth("HB", "1820")], "Male");
+  const A = person("A", "Agnes", "Brown");
+  const B = person("B", "Bertha", "Clark");
+  const kid = (id: string, given: string, date: string, type = "Birth") =>
+    person(id, given, "Ward", [birth(`${id}B`, date, type)], "Male");
+  const A1 = kid("A1", "Albert", "1850");
+  const A2 = kid("A2", "Arthur", "1860");
+  const X = kid("X", "Xavier", "1855");
+  const both = (child: string, other: string) => [pc("H", child), pc(other, child)];
+  const family = (xRels: R = both("X", "B"), x: SimplifiedPerson = X) => ({
+    persons: [H, A, B, A1, A2, x],
+    rels: [couple("H", "A"), couple("H", "B"), ...both("A1", "A"), ...both("A2", "A"), ...xRels] as R,
+  });
+
+  it("fires: A's children 1850 and 1860, B's child 1855", () => {
+    const { persons, rels } = family();
+    const w = hits(persons, rels);
+    expect(w).toHaveLength(1);
+    expect(w[0].severity).toBe("implausible");
+    expect(w[0].scoreType).toBe("COHERENCE");
+    expect(w[0].personId).toBe("H");
+    expect(w[0].relatedPersonId).toBe("B");
+    expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "XB"]);
+    for (const name of ["Agnes Brown", "Bertha Clark", "Albert Ward", "Arthur Ward", "Xavier Ward"]) {
+      expect(w[0].message).toContain(name);
+    }
+    expect(w[0].message).toContain("one spouse recorded twice in a pair neither similar-spouse warning reports");
+  });
+
+  it("fires in merge mode too", () => {
+    const { persons, rels } = family();
+    expect(run(persons, rels, "H", false).map((w) => w.issueType)).toContain(TAG);
+  });
+
+  it("does not fire: B's child born 1855 under both A and B", () => {
+    // Both link orders, so a child counted under whichever coparent comes
+    // first, or last, fires in one of them.
+    for (const xRels of [
+      [pc("H", "X"), pc("A", "X"), pc("B", "X")],
+      [pc("H", "X"), pc("B", "X"), pc("A", "X")],
+    ]) {
+      const { persons, rels } = family(xRels);
+      expect(hits(persons, rels)).toEqual([]);
+    }
+  });
+
+  it("does not fire: A and B similar-named (similarSpouses fires instead)", () => {
+    const B2 = person("B", "Agnes", "Browne");
+    const { rels } = family();
+    const persons = [H, A, B2, A1, A2, X];
+    const tags = run(persons, rels).map((w) => w.issueType);
+    expect(tags).toContain("similarSpouses");
+    expect(tags).not.toContain(TAG);
+  });
+
+  it("does not fire: B's child dated 1850 against A's 1850 and 1852", () => {
+    const persons = [H, A, B, kid("A1", "Albert", "1850"), kid("A2", "Arthur", "1852"), kid("X", "Xavier", "1850")];
+    const { rels } = family();
+    expect(hits(persons, rels)).toEqual([]);
+  });
+
+  it("does not fire when the middle child's birth day is the eldest's or the youngest's", () => {
+    const day = (d1: string, dx: string, d2: string) => [
+      H, A, B, kid("A1", "Albert", d1), kid("A2", "Arthur", d2), kid("X", "Xavier", dx),
+    ];
+    const { rels } = family();
+    expect(hits(day("3 Mar 1850", "3 Mar 1850", "1860"), rels)).toEqual([]);
+    expect(hits(day("1850", "3 Mar 1860", "3 Mar 1860"), rels)).toEqual([]);
+    expect(hits(day("3 Mar 1850", "4 Mar 1850", "1860"), rels)).toHaveLength(1);
+  });
+
+  it("fires on year-only dates when the middle year is strictly between: 1851 against 1850 and 1852", () => {
+    const persons = [H, A, B, kid("A1", "Albert", "1850"), kid("A2", "Arthur", "1852"), kid("X", "Xavier", "1851")];
+    const { rels } = family();
+    expect(hits(persons, rels)).toHaveLength(1);
+  });
+
+  it("does not fire when an open-ended date could fall outside the span: Bef 1855", () => {
+    const { persons, rels } = family(undefined, kid("X", "Xavier", "Bef 1855"));
+    expect(hits(persons, rels)).toEqual([]);
+  });
+
+  it("does not fire: B's child is a Step link from B", () => {
+    const { persons, rels } = family([pc("H", "X"), pc("B", "X", "Step")]);
+    expect(hits(persons, rels)).toEqual([]);
+  });
+
+  it("does not fire: B's child is a Step link from the anchor", () => {
+    const { persons, rels } = family([pc("H", "X", "Step"), pc("B", "X")]);
+    expect(hits(persons, rels)).toEqual([]);
+  });
+
+  it("does not fire: a child with no second parent edge", () => {
+    const { persons, rels } = family([pc("H", "X")]);
+    expect(hits(persons, rels)).toEqual([]);
+  });
+
+  it("does not fire: the child's other parent is not a spouse of the anchor", () => {
+    const C = person("C", "Clara", "Dunn");
+    const { persons, rels } = family([pc("H", "X"), pc("C", "X")]);
+    expect(hits([...persons, C], rels)).toEqual([]);
+  });
+
+  it("does not fire: the middle child has a christening and no Birth", () => {
+    const { persons, rels } = family(undefined, kid("X", "Xavier", "1855", "Christening"));
+    expect(hits(persons, rels)).toEqual([]);
+  });
+
+  it("emits one warning for a pair whose children interleave both ways", () => {
+    const B2kid = kid("Y", "Yorick", "1865");
+    const { persons, rels } = family();
+    const w = hits([...persons, B2kid], [...rels, ...both("Y", "B")] as R);
+    expect(w).toHaveLength(1);
+    // X (1855) is the earliest child inside the other spouse's span.
+    expect(w[0].relatedPersonId).toBe("B");
+    expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "XB"]);
+  });
+
+  it("emits one warning per interleaving spouse pair", () => {
+    const D = person("D", "Dorothy", "Evans");
+    const Z = kid("Z", "Zachary", "1857");
+    const { persons, rels } = family();
+    const w = hits([...persons, D, Z], [...rels, couple("H", "D"), ...both("Z", "D")] as R);
+    expect(w.map((x) => x.relatedPersonId).sort()).toEqual(["B", "D"]);
+  });
+
+  it("cites one Birth fact per child: the first dated one", () => {
+    const x2 = person("X", "Xavier", "Ward", [birth("XB", "1855"), birth("XB2", "1856")], "Male");
+    const { persons, rels } = family(undefined, x2);
+    const w = hits(persons, rels);
+    expect(w).toHaveLength(1);
+    expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "XB"]);
+  });
+
+  it("names the nearest siblings on both sides of the middle child", () => {
+    const before1853 = kid("AM", "Alfred", "1853");
+    const after1857 = kid("AN", "Alan", "1857");
+    const { persons, rels } = family();
+    const w = hits([...persons, before1853, after1857], [...rels, ...both("AM", "A"), ...both("AN", "A")] as R);
+    expect(w).toHaveLength(1);
+    expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["AMB", "ANB", "XB"]);
+    expect(w[0].message).toContain("Alfred Ward");
+    expect(w[0].message).toContain("Alan Ward");
+    expect(w[0].message).not.toContain("Albert Ward");
+    expect(w[0].message).not.toContain("Arthur Ward");
+  });
+
+  it("breaks ties by id, whatever the order the children are linked in", () => {
+    // Two inside children born on the same day, and two earlier and two later
+    // siblings each born on the same day: the lower id is cited either way round.
+    const persons = [
+      H, A, B,
+      kid("A1", "Albert", "3 Mar 1850"), kid("A1b", "Abner", "3 Mar 1850"),
+      kid("A2", "Arthur", "9 Sep 1860"), kid("A2b", "Abel", "9 Sep 1860"),
+      kid("X", "Xavier", "1 Jul 1855"), kid("Xa", "Xenos", "1 Jul 1855"),
+    ];
+    const couples = [couple("H", "A"), couple("H", "B")];
+    const forward = [
+      ...both("A1", "A"), ...both("A1b", "A"), ...both("A2", "A"), ...both("A2b", "A"), ...both("X", "B"), ...both("Xa", "B"),
+    ];
+    const backward = [
+      ...both("Xa", "B"), ...both("X", "B"), ...both("A2b", "A"), ...both("A2", "A"), ...both("A1b", "A"), ...both("A1", "A"),
+    ];
+    for (const kids of [forward, backward]) {
+      const w = hits(persons, [...couples, ...kids] as R);
+      expect(w).toHaveLength(1);
+      expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "XB"]);
+    }
+  });
+
+  it("chooses the inside child by the start of its birth range, not the end", () => {
+    // X2 may have been born from 1852, X1 only in 1855, so X2 is born first even
+    // though its range ends later and its id sorts after X1's.
+    const persons = [H, A, B, A1, A2, kid("X2", "Xerxes", "Bet 1852 and 1858"), kid("X1", "Xavier", "1855")];
+    const base = [couple("H", "A"), couple("H", "B"), ...both("A1", "A"), ...both("A2", "A")];
+    for (const xs of [[...both("X1", "B"), ...both("X2", "B")], [...both("X2", "B"), ...both("X1", "B")]]) {
+      const w = hits(persons, [...base, ...xs] as R);
+      expect(w).toHaveLength(1);
+      expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "X2B"]);
+    }
+  });
+
+  it("reads a sibling's nearness from the end of its birth before x and the start of its birth after x", () => {
+    // Before x (1855): "Bet 1840 and 1852" ends after an exact 1851, so it is nearer.
+    // After x: "Bet 1858 and 1870" begins before an exact 1859, so it is nearer.
+    const persons = [
+      H, A, B, X,
+      kid("A1", "Albert", "Bet 1840 and 1852"), kid("A3", "Amos", "1851"),
+      kid("A2", "Arthur", "Bet 1858 and 1870"), kid("A4", "Abel", "1859"),
+    ];
+    const rels = [
+      couple("H", "A"), couple("H", "B"),
+      ...both("A1", "A"), ...both("A3", "A"), ...both("A2", "A"), ...both("A4", "A"), ...both("X", "B"),
+    ] as R;
+    const w = hits(persons, rels);
+    expect(w).toHaveLength(1);
+    expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "XB"]);
+  });
+
+  it("reports the direction whose inside child is born first, whichever Couple edge comes first", () => {
+    // A's children 1850 and 1860 span B's 1855; B's 1855 and 1865 span A's 1860.
+    // B's 1855 child is born first, so B is the related spouse either way round.
+    const Y = kid("Y", "Yorick", "1865");
+    const { persons } = family();
+    const kids = [...both("A1", "A"), ...both("A2", "A"), ...both("X", "B"), ...both("Y", "B")];
+    for (const couples of [[couple("H", "A"), couple("H", "B")], [couple("H", "B"), couple("H", "A")]]) {
+      const w = hits([...persons, Y], [...couples, ...kids] as R);
+      expect(w).toHaveLength(1);
+      expect(w[0].relatedPersonId).toBe("B");
+    }
+  });
+
+  it("does not fire on a similar-named pair with conflicting dates (similarSpousesConflictingDates fires instead)", () => {
+    const A0 = person("A", "Agnes", "Brown", [birth("AB0", "1820")]);
+    const B0 = person("B", "Agnes", "Browne", [birth("BB0", "1840")]);
+    const { rels } = family();
+    const tags = run([H, A0, B0, A1, A2, X], rels).map((w) => w.issueType);
+    expect(tags).toContain("similarSpousesConflictingDates");
+    expect(tags).not.toContain(TAG);
+  });
+
+  it("fires when the inner spouse's Couple edge comes first", () => {
+    const { persons } = family();
+    const rels = [couple("H", "B"), couple("H", "A"), ...both("A1", "A"), ...both("A2", "A"), ...both("X", "B")] as R;
+    const w = hits(persons, rels);
+    expect(w).toHaveLength(1);
+    expect(w[0].relatedPersonId).toBe("B");
+  });
+
+  it("cites the earliest-born child inside the span", () => {
+    const Y = kid("Y", "Yorick", "1853");
+    const { persons, rels } = family();
+    const w = hits([...persons, Y], [...rels, ...both("Y", "B")] as R);
+    expect(w).toHaveLength(1);
+    expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "YB"]);
+  });
+
+  it("does not fire when any reading of a child's Births leaves the span: every Birth fact and range bound counts", () => {
+    const { rels } = family();
+    const run3 = (a1: SimplifiedPerson, x: SimplifiedPerson, a2: SimplifiedPerson) => hits([H, A, B, a1, a2, x], rels);
+    const two = (id: string, given: string, d1: string, d2: string) =>
+      person(id, given, "Ward", [birth(`${id}B`, d1), birth(`${id}B2`, d2)], "Male");
+    // The middle child's second Birth, 1870, falls after the youngest.
+    expect(run3(A1, two("X", "Xavier", "1855", "1870"), A2)).toEqual([]);
+    // The eldest's second Birth, 1858, falls after the middle child.
+    expect(run3(two("A1", "Albert", "1850", "1858"), X, A2)).toEqual([]);
+    // A range on the eldest or the youngest that reaches the middle child.
+    expect(run3(kid("A1", "Albert", "Bet 1850 and 1856"), X, A2)).toEqual([]);
+    expect(run3(A1, X, kid("A2", "Arthur", "Bet 1854 and 1860"))).toEqual([]);
+    // The same shapes clear of the middle child still fire.
+    expect(run3(kid("A1", "Albert", "Bet 1848 and 1850"), X, kid("A2", "Arthur", "Bet 1860 and 1862"))).toHaveLength(1);
+  });
+
+  it("does not fire on a similar-named pair listed with the higher id first", () => {
+    const B2 = person("B", "Agnes", "Browne");
+    const rels = [couple("H", "B"), couple("H", "A"), ...both("A1", "A"), ...both("A2", "A"), ...both("X", "B")] as R;
+    const tags = run([H, A, B2, A1, A2, X], rels).map((w) => w.issueType);
+    expect(tags).toContain("similarSpouses");
+    expect(tags).not.toContain(TAG);
+  });
+
+  it("fires on a second similar-named pair, which neither similar-spouse tag reports", () => {
+    const B2 = person("B", "Agnes", "Browne");
+    const C = person("C", "Clara", "Dunn");
+    const D = person("D", "Clara", "Dunne");
+    const C1 = kid("C1", "Cecil", "1850");
+    const C2 = kid("C2", "Cyril", "1860");
+    const DX = kid("DX", "Dexter", "1855");
+    const rels = [
+      couple("H", "A"), couple("H", "B"), couple("H", "C"), couple("H", "D"),
+      ...both("C1", "C"), ...both("C2", "C"), ...both("DX", "D"),
+    ] as R;
+    const all = run([H, A, B2, C, D, C1, C2, DX], rels);
+    expect(all.filter((w) => w.issueType === "similarSpouses")).toHaveLength(1);
+    const w = all.filter((x) => x.issueType === TAG);
+    expect(w).toHaveLength(1);
+    expect(w[0].relatedPersonId).toBe("D");
+  });
+
+  it("does not fire on a later similar-named pair of the other kind, which the other similar-spouse tag reports", () => {
+    const B2 = person("B", "Agnes", "Browne");
+    const C = person("C", "Clara", "Dunn", [birth("CB0", "1820")]);
+    const D = person("D", "Clara", "Dunne", [birth("DB0", "1840")]);
+    const C1 = kid("C1", "Cecil", "1850");
+    const C2 = kid("C2", "Cyril", "1860");
+    const DX = kid("DX", "Dexter", "1855");
+    const rels = [
+      couple("H", "A"), couple("H", "B"), couple("H", "C"), couple("H", "D"),
+      ...both("C1", "C"), ...both("C2", "C"), ...both("DX", "D"),
+    ] as R;
+    const tags = run([H, A, B2, C, D, C1, C2, DX], rels).map((w) => w.issueType);
+    expect(tags.filter((t) => t === "similarSpouses")).toHaveLength(1);
+    expect(tags.filter((t) => t === "similarSpousesConflictingDates")).toHaveLength(1);
+    expect(tags).not.toContain(TAG);
+  });
+
+  it("fires when both wives carry the anchor's surname", () => {
+    const Aw = person("A", "Agnes", "Ward");
+    const Bw = person("B", "Bertha", "Ward");
+    const { rels } = family();
+    expect(hits([H, Aw, Bw, A1, A2, X], rels)).toHaveLength(1);
+  });
+});

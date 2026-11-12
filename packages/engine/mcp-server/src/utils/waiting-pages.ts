@@ -7,12 +7,24 @@
 // Spec: docs/specs/research-append-tool-spec.md, "Attaching waiting pages".
 
 import { arkToBareId } from "./ark.js";
+import { isLiveAssertion } from "./assertion-liveness.js";
 import { listStagedEnvelopes, readStagedResults } from "./results-staging.js";
+
+/** One live index assertion of a waiting page's record, as record-structurer
+ *  names it: what it disputes or whose new fact it adds (#4286). */
+export interface WaitingPageIndexEntry {
+  assertionId: string;
+  role: string;
+  factType: string;
+  value: string;
+}
 
 /** A held record's source and the staged or logged page that shows it. */
 export interface WaitingPage {
   sourceId: string;
   ref: string;
+  /** The record's index: its source's live assertions. */
+  index: WaitingPageIndexEntry[];
 }
 
 /** What selects one image inside a waypoint ARK. `cc` does not, so it is ignored. */
@@ -73,10 +85,20 @@ export async function waitingPages(projectPath: string, research: any): Promise<
   }
 
   const out: WaitingPage[] = [];
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
   for (const s of sources) {
     const key = pageKey(s.image_ark);
     const ref = key === null ? undefined : oldestRead.get(key);
-    if (ref) out.push({ sourceId: s.id, ref });
+    if (!ref) continue;
+    const index = assertions
+      .filter((a) => a?.source_id === s.id && typeof a?.id === "string" && isLiveAssertion(a))
+      .map((a) => ({
+        assertionId: a.id as string,
+        role: String(a.record_role ?? ""),
+        factType: String(a.fact_type ?? ""),
+        value: String(a.value ?? ""),
+      }));
+    out.push({ sourceId: s.id, ref, index });
   }
   return out;
 }

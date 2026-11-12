@@ -15,8 +15,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in Louisiana during the French colonial period (1700s). What records or repositories would help trace families?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching ancestors in Louisiana during the French colonial period (1700s). What records or repositories would help trace families?",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {
@@ -36,7 +36,8 @@
     "place-search-all-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "volume-search-louisiana-colonial"
+    "volume-search-louisiana-colonial",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Must mention Louisiana under French colonial rule. Must highlight parish registers, land grants, and colonial court records. Must not suggest U.S. state vital records for the 1700s."

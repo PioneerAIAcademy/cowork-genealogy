@@ -1,0 +1,42 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_uhh",
+    "skill": "search-external-sites",
+    "name": "Hosted: the capture steps name the upload page project_context returned",
+    "type": "positive",
+    "description": "A fresh hand-off on a hosted store. project_context returns an uploadUrl, so step 4's capture steps tell the researcher to upload the saved results page at https://genealogy.example.org/#/p/proj_7d4b2e91c6a05f38/upload, given in full in the text after the final --- line, instead of 'upload it here'. The delegation carries no uploadUrl; it comes only from project_context. test_capture_steps_name_the_upload_page_only_when_served checks the URL reaches the researcher, and the folder-mode arm of the same validator runs on every other hand-off test in the suite.",
+    "tags": [
+      "myheritage",
+      "external-site",
+      "census",
+      "url-generation",
+      "hosted",
+      "upload-url",
+      "capture-pending",
+      "log-site-myheritage",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Work plan item pli_001 — the 1855 Massachusetts State Census for Josiah Barnes on MyHeritage.\n\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: /proj_7d4b2e91c6a05f38",
+    "scenario": "ma-state-census-external"
+  },
+  "mcp_fixtures": [
+    "project-list-hosted-barnes",
+    "place-search-massachusetts",
+    "external-links-search-massachusetts",
+    "collections-search-massachusetts-census"
+  ],
+  "judge_context": [
+    "This test runs hosted: project_context returns uploadUrl https://genealogy.example.org/#/p/proj_7d4b2e91c6a05f38/upload, and the delegation names the project as projectPath /proj_7d4b2e91c6a05f38. That path is correct here; it is not a missing or invented project folder.",
+    "The capture steps (save the results page as a PDF) must tell the researcher to upload it at https://genealogy.example.org/#/p/proj_7d4b2e91c6a05f38/upload, written out in full in the part of the reply after the final --- line, which is the part the researcher sees. 'Upload it here' with no link, a link hidden behind other link text, or any other upload address is a fail on Capture guidance. A deterministic validator checks the URL is there verbatim; grade how clearly the steps read.",
+    "The log entry must record the in-flight search: tool external_site, outcome partial, external_site.capture_received false, and the generated URL.",
+    "pli_001 MUST be left in_progress: no capture has come back, so the search has not happened. completed or skipped is a fail.",
+    "The scenario's FamilySearch-holds-this-census point (the 1855 Massachusetts State Census is also FamilySearch collection 1459985) is graded by ut_search_external_sites_fhk. Neither require nor penalize that note here.",
+    "Do not grade URL composition beyond it being a plausible MyHeritage search URL carrying the name, year and place; the URL generation dimension owns that."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

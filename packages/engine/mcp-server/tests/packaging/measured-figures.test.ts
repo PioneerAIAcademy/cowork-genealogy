@@ -445,8 +445,8 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
   [
     40000,
     {
-      reason: "sidecar_read's page-size cap, a design limit chosen to keep one page inside the host's tool-result budget — not a measurement, so nothing in the artifact can trace it",
-      scope: ["packages/engine/mcp-server/src/tools/sidecar-read.ts"],
+      reason: "TOOL_RESULT_CHAR_BUDGET: sidecar_read's page-size cap and collections_search's answer bound (issue #4416), design limits chosen to keep one result inside the host's tool-result budget — not a measurement, so nothing in the artifact can trace it",
+      scope: ["packages/engine/mcp-server/src/tools/sidecar-read.ts", "packages/engine/mcp-server/src/tools/collections-search.ts"],
     },
   ],
 ]);

@@ -16,8 +16,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching an ancestor who lived in the Alabama region around 1800, before statehood. What archives or record repositories will hold for that locality and period?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching an ancestor who lived in the Alabama region around 1800, before statehood. What archives or record repositories will hold for that locality and period?",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {
@@ -42,7 +42,8 @@
     "wiki-search-any",
     "wikipedia-search-any",
     "volume-search-alabama",
-    "volume-search-mississippi-territory"
+    "volume-search-mississippi-territory",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Must mention territorial, church, land, and court records; historical societies in Alabama likely hold pre-statehood records and should be mentioned as repositories. Must avoid anachronistic record types like state archives or modern databases."

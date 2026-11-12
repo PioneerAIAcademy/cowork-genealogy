@@ -91,10 +91,19 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 | `person` | `personId` | one person, cascading every relationship touching them |
 | `fact` | `factId`, optional `personId` | one specific fact, wherever it lives (person or Couple relationship); `personId` picks the owner when the id is not unique (§2.1.2) |
 | `relationship` | `relationshipId` | one specific relationship |
+| `source` | `sourceId` | one source description, and every citation of it (`{ref: sourceId}`) on persons, names, person facts, relationships and relationship facts |
 
 Selection is **structural, never by name**. The caller passes ids; the tool
 walks the tree's own relationships to resolve relatives. The caller never has to
 read — and is better off not reading — the names and dates it is about to remove.
+
+**The caller never chooses a source itself.** The researcher names the S id,
+read from the viewer's Sources section. Tree sources carry no record type, so
+nothing tells a source's kind without its text, and the only tool that returns
+source titles also returns the citation, which can hold the answer (a marriage
+index citation ending "…25 June 1786"). The `source` selector never cascades:
+it removes no person, relationship or fact, only the description and the
+references to it.
 
 A selector that resolves to nothing is an **error, not a no-op**: `"<selector>
 matched nothing — …"`. Re-running a selector whose target is already gone
@@ -315,6 +324,7 @@ identifier-casing rule).
     relationships: number,          // including cascaded
     relationshipsCascaded: number,  // the subset removed because a person went
     factsByType: { [factType: string]: number },
+    sources: number,                // source descriptions removed by `source`
   },
   remaining: { persons: number, relationships: number },
   filesWritten: string[],           // [] under dryRun, else ["tree.gedcomx.json"],
@@ -339,12 +349,14 @@ project and stays loud. See the write-boundary invariants in
 any other genealogical value.** This is the tool's central constraint, not a
 nicety. The result lands in the context of the agent that is about to go looking
 for exactly this information; printing what was removed puts the answer straight
-back and makes the exercise worthless. The researcher verifies the removal in the
-viewer, where seeing the gap is the point.
+back and makes the exercise worthless. The researcher confirms the removal from
+these counts. A connector researcher has no viewer to check it in.
 
 What may appear in a result or error: entity **ids** (the caller supplied them,
 and they are opaque), **counts**, **fact type names** (`Birth`, `Marriage` — a
-kind, not a value), and JSON **paths**.
+kind, not a value), and JSON **paths**. A source description's `title`,
+`citation`, `author` and `url` never appear: only its S id and the
+`removed.sources` count.
 
 This constrains the pass-through channels too:
 
@@ -391,6 +403,11 @@ project. In any project with a plan the plan-phase precondition below fires
 first, so this refusal is reached only in a project that holds such a row and no
 plan.
 
+The same holds for a `source` forget. A `research.json`
+`sources[i].gedcomx_source_description_id` that points at the removed S id is a
+call-introduced cross-file error, so the forget is refused. `research_append`
+never deletes a row, so the remedy is a new project.
+
 ### Plan-phase precondition
 
 `tree_forget` refuses the call — including dry runs — when `research.json`
@@ -429,6 +446,10 @@ Three properties are load-bearing:
   which silently destroyed the pristine snapshot on a second forget — the hazard
   SKILL.md had to spend a paragraph warning about.) `restoreFile` is returned on
   every non-dry run regardless of whether this run created it.
+
+On a connector the restore file is a copy on the server's disk, and the project
+download skips dot-prefixed paths, so the researcher cannot reach it. Undoing a
+forget there means starting a new project.
 
 Restoring is a person's step, by hand. The engine leaves `tree.gedcomx.json`
 read-only between writes (guardrail-enforcement-spec §6.1), so first make it

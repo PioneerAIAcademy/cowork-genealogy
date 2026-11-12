@@ -811,6 +811,29 @@ derive it from run-log `usage.timeline` gaps**: those are per SDK message, not
 per tool call, and the figures they gave here (p90 79s, max 167s) were both
 inflated and a model generation stale.
 
+**A connector caller gets a tighter, single budget instead (self-hosted beta
+E5).** The 90+90+180=360s worst case above describes LOCAL and the worker. A
+connector-surface caller is instead held to one 180s budget
+(`CONNECTOR_TRANSCRIBE_BUDGET_MS`) that starts when the tool is entered — the
+Memories lookup, the fetch and the OCR all spend from it — chosen to leave
+room, under Claude's measured 230s per-call timeout (measured 2026-11-08), for
+the trip both ways and the staging write. Within that budget:
+one download attempt only (no fallback-URL retry), at a per-attempt timeout
+well under it (`CONNECTOR_FETCH_TIMEOUT_MS`, 30s — the download leg measures
+p50 1.9s/max 8.0s, so this is ample headroom); the OCR then gets whatever the
+budget has left, minus a fixed margin reserved for the staging write that runs
+after it returns (`CONNECTOR_STAGING_MARGIN_MS`). `runOcr`/`runFoundCheck`
+(`utils/ocr.ts`) stay principal-free either way — the connector clamp is
+computed in `image-transcribe.ts` and passed down as an ordinary `timeoutMs`,
+the same parameter `person_read`'s own ~40s memories-phase budget already uses,
+and whichever cap is tighter wins. **One known, accepted gap:** when
+`projectPath` and `imageId`/`ark` are given, `imageGroupPlace`'s lookup (the
+staged page's coverage place) is awaited after the OCR, inside the staging
+block, with its own default ~20s worst case (two sequential FamilySearch
+group-service calls) not drawn from this budget — so the true worst case on
+that one narrow path is "the 180s budget, plus up to ~20s of staging-time place
+lookup," not a hard 180s ceiling on every path.
+
 ### 5.8 Image cap (hard, shared, persisted)
 
 An agent can enter an unbounded page-by-page hunt through a browse-only image
@@ -892,12 +915,23 @@ alternative under-counts every delegated read; the refusal says "this server ses
 for that case, never "this project", because it can be refusing pages another project
 read.
 
-**Known limitation — header-less http requests share a bucket.** A request with no
-`X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
-I/O refuses), so its reads count in memory under the no-project scope, as on the
-file backend: two header-less patrons can advance one another's count. They never
-pool a bound patron's count — reads recorded under a `projectId` are excluded from
-that union. Accepted: such a session already fails every persistence call.
+**Per-user scope for a connector call naming no project.** A
+connector request that names no `projectPath` binds an *unbound* store (no
+`projectId`, and its I/O refuses), so its reads count in memory, as on the file
+backend — but `checkImageBrowseCap` also takes the `Principal`, and scopes that
+in-memory count to the connector caller's own id (`connectorUserId`,
+`utils/user-limits.ts`) rather than to one bucket shared by every connector
+patron. Two connector users calling with no project each get their own 20;
+neither advances the other's count, and the refusal for this case says the
+images were read "without a project under your account" rather than "in this
+server session" — the old wording, kept only for the LOCAL/file-backend case
+below, is misleading on a process many users share. A worker request always
+carries a project (`X-Genealogy-Project-Id`), so it never reaches this scope at
+all — it is counted against that project's log like any other bound call. The
+LOCAL/file-backend process (the desktop `.mcpb`, both harnesses) has exactly
+one user per process, so its no-project reads keep pooling as before, under
+"this server session" wording — there is only ever one caller to protect from
+there.
 
 **The trade, stated.** Because the count is persisted, a legitimate 21st page in
 the same project is refused **permanently** — a restart no longer resets it. The

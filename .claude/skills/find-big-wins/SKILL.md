@@ -69,7 +69,7 @@ If the lead has this week's output to hand, take the table from it. If not,
 rebuild only its queue-depth column, which is on disk:
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
   --json number,title,body,labels,assignees,createdAt > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \

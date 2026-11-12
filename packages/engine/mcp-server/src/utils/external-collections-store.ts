@@ -5,13 +5,19 @@
  *
  * Host-written only: `external_links_search` writes it, `research_query` and
  * `project_context` read it, `research_append`, `build_external_search_url` and
- * `research_log_append` refuse a collection it does not hold, and the raw-write
+ * `research_log_append` refuse a collection it does not hold,
+ * `build_external_search_url` refuses a site-wide build for a place it has no
+ * entry for (issue #4410), and the raw-write
  * deny protects it. It is not a
  * `research.json` section and is not schema-validated — the rows are API data.
  *
  * Shape (snake_case: a persisted document):
  *
  *     { "places": { "<place>": { "rows": [StoredCollectionRow, ...] } } }
+ *
+ * A place `external_links_search` refused as too large to list (more curated
+ * links than one request returns) is stored as `{ "rows": [], "too_large": true }`:
+ * looked up, list unknown — not "no collections".
  *
  * Entries are keyed by each link's OWN `place`, so a county fetch that returns
  * its state's whole list updates the state entry once rather than storing a
@@ -41,9 +47,14 @@ export interface StoredCollectionRow {
   end_year: string;
 }
 
+// Kept inline: packages/viewer-ui mirrors this shape by hand and its drift test
+// compares the two as text. `too_large`: refused as too large to list, so looked
+// up but its rows are unknown.
 export interface ExternalCollectionsDoc {
-  places: Record<string, { rows: StoredCollectionRow[] }>;
+  places: Record<string, { rows: StoredCollectionRow[]; too_large?: true }>;
 }
+
+export type StoredPlaceEntry = ExternalCollectionsDoc["places"][string];
 
 /** One API row, as `external_links_search` reads it. */
 export interface RawCollectionRow {
@@ -220,6 +231,62 @@ export async function loadStoredCollectionUrls(projectPath: string): Promise<Sto
   }
 }
 
+/** A place name compared as `build_external_search_url`'s place gate compares it:
+ *  comma-separated segments, each trimmed, empty ones dropped, lower-cased. */
+function placeSegments(place: string): string[] {
+  return place
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s !== "");
+}
+
+/** One stored place as the place gate reads it. */
+export interface StoredPlace {
+  place: string;
+  tooLarge: boolean;
+}
+
+/**
+ * Whether `standardPlace`, or a place containing it, has an entry — an entry
+ * with `rows: []` counts, since `recordExternalCollections` stores the queried
+ * place even when nothing matched (issue #4410). A stored key matches when it
+ * equals `standardPlace` or its last 1..n comma-separated segments, compared
+ * trimmed and case-insensitively: "Massachusetts, United States" covers
+ * "Hampshire, Massachusetts, United States". A `too_large` entry matches only
+ * its own place, never a place inside it: its list is unknown, so it cannot
+ * stand in for a county's lookup. No place resolution, no network.
+ */
+export function placeIsStored(places: Iterable<StoredPlace>, standardPlace: string): boolean {
+  const target = placeSegments(standardPlace);
+  if (target.length === 0) return false;
+  const exact = target.join(", ");
+  const suffixes = new Set<string>();
+  for (let i = 0; i < target.length; i++) suffixes.add(target.slice(i).join(", "));
+  for (const { place, tooLarge } of places) {
+    const stored = placeSegments(place).join(", ");
+    if (stored === "") continue;
+    if (tooLarge ? stored === exact : suffixes.has(stored)) return true;
+  }
+  return false;
+}
+
+/** The stored places, or why the file could not be read. */
+export type StoredPlaces = { places: StoredPlace[] } | { error: string };
+
+export async function loadStoredPlaces(projectPath: string): Promise<StoredPlaces> {
+  try {
+    const doc = await readExternalCollections(projectPath);
+    return {
+      places: Object.entries(doc?.places ?? {}).map(([place, entry]) => ({
+        place,
+        tooLarge: entry?.too_large === true,
+      })),
+    };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 /**
  * Store one fetch: replace the entry of every place the rows carry, and make sure
  * the queried place has an entry (`rows: []` when no row carries it), so "fetched,
@@ -228,12 +295,15 @@ export async function loadStoredCollectionUrls(projectPath: string): Promise<Sto
  * another folder; else the places written, sorted. A file that does not parse, or
  * is not this file's shape, is rebuilt from this fetch (it is a cache of API data);
  * any other read failure throws, so a passing store error cannot wipe the other
- * places' lists.
+ * places' lists. With `tooLarge`, `rows` must be empty and the queried place is
+ * stored as `{ rows: [], too_large: true }`. Only a fetch of that same place
+ * clears the flag; rows another fetch files under it keep it.
  */
 export async function recordExternalCollections(
   projectPath: string,
   queriedPlace: string,
   rows: StoredCollectionRow[],
+  options: { tooLarge?: boolean } = {},
 ): Promise<string[] | null> {
   if ((await classifyProjectPath(projectPath)) !== "project") return null;
   return withProjectLock(projectPath, async () => {
@@ -255,7 +325,13 @@ export async function recordExternalCollections(
     }
     if (!byPlace.has(queriedPlace)) byPlace.set(queriedPlace, []);
     const places: ExternalCollectionsDoc["places"] = { ...doc.places };
-    for (const [place, list] of byPlace) places[place] = { rows: list };
+    for (const [place, list] of byPlace) {
+      // Rows another place's fetch carries for a too-large place are a part of
+      // its list, not the whole: it stays too_large, so it still covers only itself.
+      const keepTooLarge = place !== queriedPlace && doc.places[place]?.too_large === true;
+      places[place] = keepTooLarge ? { rows: list, too_large: true } : { rows: list };
+    }
+    if (options.tooLarge) places[queriedPlace] = { rows: [], too_large: true };
     const sorted: ExternalCollectionsDoc["places"] = {};
     for (const k of Object.keys(places).sort(cmp)) sorted[k] = places[k];
     await getProjectStore().writeJson(projectPath, EXTERNAL_COLLECTIONS_FILE, { places: sorted });

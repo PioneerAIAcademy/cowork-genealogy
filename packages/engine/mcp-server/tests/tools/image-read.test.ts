@@ -1,4 +1,4 @@
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, connectorPrincipal } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { tmpdir } from "os";
@@ -570,6 +570,29 @@ describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)"
     mockFetch.mockReset();
     mockImageResponse();
     const r = await imageReadTool({ imageId: img(21), projectPath: project }, LOCAL);
+    expect(r.metadata.sizeBytes).toBe(4);
+  });
+});
+
+describe("imageReadTool — refused for a connector caller (self-hosted beta E5, #3996)", () => {
+  it("throws before any fetch or cap check", async () => {
+    const principal = connectorPrincipal({ accessToken: "tok", userId: "user-a" });
+    await expect(imageReadTool({ imageId: "004884748_02613" }, principal)).rejects.toThrow(
+      /image_read is not available on this connection\. Use image_transcribe instead/,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("a LOCAL principal is unaffected", async () => {
+    mockImageResponse();
+    const r = await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
+    expect(r.metadata.sizeBytes).toBe(4);
+  });
+
+  it("a worker-surface bearer principal is unaffected", async () => {
+    mockImageResponse();
+    const worker = { kind: "bearer", accessToken: "tok", config: {}, surface: "worker" } as const;
+    const r = await imageReadTool({ imageId: "004884748_02613" }, worker);
     expect(r.metadata.sizeBytes).toBe(4);
   });
 });

@@ -549,7 +549,7 @@ describe("image cap (#3010)", () => {
 
   it("shares one count with image_transcribe and image_read", async () => {
     for (let i = 300; i < 320; i++) {
-      await recordImageBrowse(await checkImageBrowseCap({ imageId: imageIdAt(i) }, "/projects/alpha", "image_transcribe"));
+      await recordImageBrowse(await checkImageBrowseCap({ imageId: imageIdAt(i) }, "/projects/alpha", "image_transcribe", LOCAL));
     }
     await expect(probe(1, "/projects/alpha")).rejects.toThrow(/Image cap reached/);
   });

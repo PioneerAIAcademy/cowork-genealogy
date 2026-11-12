@@ -14,8 +14,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors who lived in Vermont in the late 1700s, before statehood. Build me a locality research guide for Vermont covering that pre-statehood period. Pull the Vermont FamilySearch wiki place page so the guide reflects what FamilySearch documents about Vermont's records, not just what you already know.\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching ancestors who lived in Vermont in the late 1700s, before statehood. Build me a locality research guide for Vermont covering that pre-statehood period. Pull the Vermont FamilySearch wiki place page so the guide reflects what FamilySearch documents about Vermont's records, not just what you already know.",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {
@@ -34,7 +34,8 @@
     "wikipedia-search-any",
     "wiki-read-any",
     "collections-search-any",
-    "volume-search-any"
+    "volume-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "The skill MUST call wiki_place_page at least once with `standardPlace: 'Vermont, United States'` (or the leaf 'Vermont') — the request explicitly asks the skill to pull the Vermont place page. Returning a guide without invoking wiki_place_page is a failure regardless of how plausible the guide reads, because the migration target is the server-side fetch path.",

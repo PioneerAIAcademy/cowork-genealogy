@@ -25,7 +25,20 @@ import type { RecordSearchResult, RecordSearchToolResponse } from "../types/reco
 import type { FulltextResult, FulltextSearchResponse } from "../types/fulltext-search.js";
 import type { RankSearchMatchesResult } from "../types/rank-search-matches.js";
 import type { ImageTranscribeToolResponse } from "../types/image-transcribe.js";
+import type {
+  CompactRecordReadAnswer,
+  RecordReadResult,
+  RecordReadStubPersona,
+} from "../types/record-read.js";
+import type {
+  SimplifiedFact,
+  SimplifiedName,
+  SimplifiedPerson,
+  SimplifiedRelationship,
+  SimplifiedSourceDescription,
+} from "../types/gedcomx.js";
 import { arkToBareId } from "./ark.js";
+import { findRequestedPersona } from "./requested-persona.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { pageText } from "./text-page.js";
 
@@ -50,9 +63,17 @@ import { pageText } from "./text-page.js";
  *
  * Measured against the 3,380 rows of a real 140-search session: gedcomx aside,
  * collectionUrl was 14.0% of row bytes, collectionTitle 9.4%, empty
- * treeMatches 2.9%. primaryId (4.6%) is deliberately KEPT — rank_search_matches
- * skips any candidate lacking it (rank-search-matches.ts), so dropping it would
- * silently disable the re-ranker.
+ * treeMatches 2.9%.
+ *
+ * `primaryId`, `score` and `confidence` go too: no caller reads them off the
+ * answer. rank_search_matches needs `primaryId`, but it reads the staged file,
+ * which record_search writes before it compacts; `score` and `confidence` are
+ * FamilySearch's search relevance, which ranking replaces. An empty `events`
+ * says nothing. `recordTitle` goes when it is exactly `Entry for <personName>,
+ * "<collection title>"`; otherwise only its trailing `, "<collection title>"`
+ * goes, which the `collections` map already holds. `paginationCappedAt` (always
+ * 4,999; the `offset` description states the limit) always goes, and `query`
+ * goes on a staged answer, whose file keeps it for research_log_append.
  *
  * `batchNumber` is KEPT for the same class of reason (#1592): it is the only
  * route to a batch the agent can enumerate. Being flat and top-level, it
@@ -70,17 +91,37 @@ import { pageText } from "./text-page.js";
  * copy. A field whose meaning is stable is worth more here than 2.5 KB on the
  * one call shape where the caller demonstrably already knows the value.
  *
+ * `opts.staged` says the answer was staged; it defaults to `out.staged` being
+ * set. The eval mock compacts before it attaches `staged`, so it passes it.
+ *
  * Mutates and returns `out`.
  */
 export function compactStagedRecordSearch(
   out: RecordSearchToolResponse,
+  opts: { staged?: boolean } = {},
 ): RecordSearchToolResponse {
   const collections: Record<string, string> = {};
   for (const r of out.results ?? []) {
     delete r.gedcomx;
+    delete r.primaryId;
+    delete r.score;
+    delete r.confidence;
 
     // Derivable from collectionId; nothing reads it off the inline stub.
     delete r.collectionUrl;
+
+    // Read before the hoist below deletes the row's own copy; from the map on
+    // a second pass.
+    const title = r.collectionTitle ?? (r.collectionId ? out.collections?.[r.collectionId] : undefined);
+    if (r.recordTitle && title) {
+      const suffix = `, "${title}"`;
+      if (r.recordTitle === `Entry for ${r.personName ?? ""}${suffix}`) delete r.recordTitle;
+      else if (r.recordTitle.endsWith(suffix)) r.recordTitle = r.recordTitle.slice(0, -suffix.length);
+    }
+
+    if (Array.isArray(r.events) && r.events.length === 0) {
+      delete (r as Partial<RecordSearchResult>).events;
+    }
 
     // Hoist the repeated per-row title into one response-level map.
     if (r.collectionId && r.collectionTitle) {
@@ -110,6 +151,8 @@ export function compactStagedRecordSearch(
   // earlier pass: on already-compacted input no row carries `collectionTitle`,
   // so the local map is empty and the existing one is left alone.
   if (Object.keys(collections).length > 0) out.collections = collections;
+  delete out.paginationCappedAt;
+  if (opts.staged ?? out.staged != null) delete out.query;
   return out;
 }
 
@@ -455,6 +498,12 @@ export function annotateResultsWithRanking(
       row.birthYearConflict = stub.birthYearConflict;
     }
     if (stub.birthYearGap !== undefined) row.birthYearGap = stub.birthYearGap;
+    if (stub.surnameNotOnSubject !== undefined) {
+      row.surnameNotOnSubject = stub.surnameNotOnSubject;
+    }
+    if (stub.candidateSurname !== undefined) {
+      row.candidateSurname = stub.candidateSurname;
+    }
     if (stub.attachedToSubject !== undefined) {
       row.attachedToSubject = stub.attachedToSubject;
     }
@@ -476,4 +525,216 @@ export function annotateResultsWithRanking(
   // `results` now, and shipping both is the duplication this ruling removed.
   delete (out.ranked as { matches?: unknown }).matches;
   return out;
+}
+
+/** Personas a compacted `record_read` answer keeps whole. */
+export const RECORD_READ_FULL_PERSONAS = 40;
+
+/** Personas after the whole ones that are kept as names-only stubs; the rest
+ *  are counted in `personsOmitted`. Sized so a 150-persona household fits
+ *  39,000 characters (staged-compaction.test.ts). */
+export const RECORD_READ_STUB_PERSONAS = 60;
+
+const FS_RELATIONSHIP_TYPE_PREFIX = "http://familysearch.org/types/relationships/";
+
+type RecordReadAnswerInput = RecordReadResult | CompactRecordReadAnswer;
+type WorkingPerson = SimplifiedPerson | RecordReadStubPersona;
+
+function isObject(v: unknown): v is Record<string, any> {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+function bareIdsOf(p: WorkingPerson | undefined): Set<string> {
+  const ids = new Set<string>();
+  if (!p) return ids;
+  if (typeof p.id === "string" && p.id !== "") ids.add(arkToBareId(p.id));
+  if (typeof p.ark === "string" && p.ark !== "") ids.add(arkToBareId(p.ark));
+  return ids;
+}
+
+function hasText(v: unknown): v is string {
+  return typeof v === "string" && v !== "";
+}
+
+/** `citation`, `recordUrl` and `collectionTitle` from the document's sources. */
+function flattenSources(
+  out: Record<string, unknown>,
+  sources: SimplifiedSourceDescription[],
+  requested: WorkingPerson | undefined,
+): void {
+  const wanted = bareIdsOf(requested);
+  const personaSource =
+    wanted.size > 0
+      ? sources.find(
+          (s) =>
+            (s.resource_type === "Person" || s.resource_type === undefined) &&
+            typeof s.url === "string" &&
+            wanted.has(arkToBareId(s.url)),
+        )
+      : undefined;
+  const recordSource = sources.find((s) => s.resource_type === "Record");
+  const collectionSource = sources.find((s) => s.resource_type === "Collection");
+  const preference = [personaSource, recordSource, ...sources];
+
+  const citation = preference.map((s) => s?.citation).find(hasText);
+  if (citation !== undefined) out.citation = citation;
+  if (recordSource && hasText(recordSource.url)) out.recordUrl = recordSource.url;
+
+  const collectionTitle = hasText(collectionSource?.title)
+    ? collectionSource.title
+    : citation === undefined
+      ? preference.map((s) => s?.title).find(hasText)
+      : undefined;
+  if (collectionTitle !== undefined && !(citation ?? "").includes(collectionTitle)) {
+    out.collectionTitle = collectionTitle;
+  }
+}
+
+function compactFact(f: SimplifiedFact): void {
+  delete f.id;
+  delete f.sources;
+  if (f.place !== undefined && f.place === f.standard_place) delete f.place;
+}
+
+function compactName(n: SimplifiedName): void {
+  delete n.id;
+  delete n.sources;
+  if (n.type === "BirthName") delete n.type;
+}
+
+function relationshipEndpoints(r: SimplifiedRelationship): string[] {
+  return [r.parent, r.child, r.person1, r.person2].filter(
+    (v): v is string => typeof v === "string",
+  );
+}
+
+/** The persona cap: whole, then stubs, then omitted. */
+function capPersonas(
+  out: Record<string, any>,
+  persons: WorkingPerson[],
+  requested: WorkingPerson | undefined,
+): void {
+  if (persons.length <= RECORD_READ_FULL_PERSONAS) return;
+  const relationships: SimplifiedRelationship[] = Array.isArray(out.relationships)
+    ? out.relationships.filter(isObject)
+    : [];
+
+  // Full slots: the requested persona, its one-hop relatives in document order,
+  // the principal, then the rest in document order.
+  const order: number[] = [];
+  const placed = new Set<number>();
+  const place = (i: number) => {
+    if (i < 0 || placed.has(i)) return;
+    placed.add(i);
+    order.push(i);
+  };
+  place(requested ? persons.indexOf(requested) : -1);
+  if (requested && typeof requested.id === "string") {
+    const relatives = new Set<string>();
+    for (const r of relationships) {
+      const ends = relationshipEndpoints(r);
+      if (ends.includes(requested.id)) for (const e of ends) relatives.add(e);
+    }
+    persons.forEach((p, i) => {
+      if (typeof p.id === "string" && relatives.has(p.id)) place(i);
+    });
+  }
+  persons.forEach((p, i) => {
+    if ((p as SimplifiedPerson).principal === true) place(i);
+  });
+  persons.forEach((_, i) => place(i));
+
+  const full = new Set(order.slice(0, RECORD_READ_FULL_PERSONAS));
+  const stubs = new Set(
+    order.slice(RECORD_READ_FULL_PERSONAS, RECORD_READ_FULL_PERSONAS + RECORD_READ_STUB_PERSONAS),
+  );
+
+  const kept: WorkingPerson[] = [];
+  const omittedIds = new Set<string>();
+  persons.forEach((p, i) => {
+    if (full.has(i)) kept.push(p);
+    else if (stubs.has(i)) {
+      const stub: RecordReadStubPersona = {};
+      if (p.id !== undefined) stub.id = p.id;
+      if (p.ark !== undefined) stub.ark = p.ark;
+      if (p.gender !== undefined) stub.gender = p.gender;
+      if (p.names !== undefined) stub.names = p.names;
+      kept.push(stub);
+    } else if (typeof p.id === "string") omittedIds.add(p.id);
+  });
+  out.persons = kept;
+  const omitted = persons.length - kept.length;
+  if (omitted === 0) return;
+
+  out.personsOmitted = (typeof out.personsOmitted === "number" ? out.personsOmitted : 0) + omitted;
+  if (Array.isArray(out.relationships)) {
+    out.relationships = relationships.filter(
+      (r) => !relationshipEndpoints(r).some((e) => omittedIds.has(e)),
+    );
+  }
+  if (isObject(out.birthRanges)) {
+    for (const id of omittedIds) delete out.birthRanges[id];
+    if (Object.keys(out.birthRanges).length === 0) delete out.birthRanges;
+  }
+}
+
+/**
+ * Shape `record_read`'s answer at the MCP boundary (issue #4415;
+ * docs/specs/record-read-tool-spec.md, "The answer").
+ *
+ *  - `sources` becomes `citation` (the requested persona's Person source, else
+ *    the Record source, else the first that has one), `recordUrl` (the Record
+ *    source's url) and `collectionTitle` (the Collection source's title, only
+ *    when the citation does not contain it; with no citation at all, the first
+ *    source title). Every `{ref}` list on persons, names, facts and
+ *    relationships goes with it.
+ *  - Name, fact and relationship ids go, and top-level `places`. FamilySearch's
+ *    relationship-type URI prefix goes, a `BirthName` name type goes, and a
+ *    fact's `place` goes when it equals its `standard_place`.
+ *  - Past `RECORD_READ_FULL_PERSONAS`, the persona cap keeps the requested
+ *    persona, its one-hop relatives, the principal and then document order
+ *    whole, the next `RECORD_READ_STUB_PERSONAS` as `{id, ark, gender, names}`
+ *    stubs, and counts the rest in `personsOmitted`, dropping every
+ *    relationship and `birthRanges` key that names an omitted persona.
+ *
+ * Applied at the MCP boundary only (`recordReadMcpTool`) and in the eval mock's served
+ * path. extraction_append and same_person call `recordReadTool` in-process and
+ * keep the full document, and the staged sidecar is written before this runs.
+ * merge_warnings' `sanitizeCandidate` accepts the result. An answer with no
+ * `persons` array is returned untouched. Idempotent: a second pass finds no
+ * sources and no ids, and the cap picks the same personas again.
+ *
+ * Mutates and returns `out`.
+ */
+export function compactRecordReadAnswer(
+  out: RecordReadAnswerInput,
+  requestedId: string,
+): CompactRecordReadAnswer {
+  if (!isObject(out) || !Array.isArray(out.persons)) return out as CompactRecordReadAnswer;
+  const doc = out as Record<string, any>;
+  doc.persons = doc.persons.filter(isObject);
+  const persons = doc.persons as SimplifiedPerson[];
+  const requested = findRequestedPersona(doc, requestedId);
+
+  if (Array.isArray(doc.sources)) flattenSources(doc, doc.sources.filter(isObject), requested);
+  delete doc.sources;
+  delete doc.places;
+
+  for (const p of persons) {
+    delete p.sources;
+    for (const n of Array.isArray(p.names) ? p.names : []) if (isObject(n)) compactName(n);
+    for (const f of Array.isArray(p.facts) ? p.facts : []) if (isObject(f)) compactFact(f);
+  }
+  for (const r of Array.isArray(doc.relationships) ? doc.relationships : []) {
+    if (!isObject(r)) continue;
+    delete r.id;
+    delete r.sources;
+    if (typeof r.type === "string" && r.type.startsWith(FS_RELATIONSHIP_TYPE_PREFIX)) {
+      r.type = r.type.slice(FS_RELATIONSHIP_TYPE_PREFIX.length);
+    }
+    for (const f of Array.isArray(r.facts) ? r.facts : []) if (isObject(f)) compactFact(f);
+  }
+
+  capPersonas(doc, persons, requested);
+  return doc as CompactRecordReadAnswer;
 }

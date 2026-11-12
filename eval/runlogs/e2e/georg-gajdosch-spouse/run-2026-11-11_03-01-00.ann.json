@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Catharina and Anna 1718 are in the tree but under a separate Georg stub (I1), never linked to K69J-F7Y; Dorothea's couple link is untouched. The subject as Anna's father appears only as a possible claim in the proof summary, not in the tree. The judge graded f1 false as a rejected candidate written into the tree; I disagree, because I1, I2 and I3 are a separate family with no edge to K69J-F7Y and R1 (Georg and Dorothea) is unchanged.",
+    "f2": "Regraded from true to partial after review on PR #4472, with the judge's f2 label already seen in that review. ps_001 separates two Georgs, but h_001 (subject is Dorothea's Georg) and h_002 (subject is Catharina's Georg) both stay active, the claim that the subject fathered Anna stays at possible, and Dorothea is called neither refuted nor confirmed. The negative conclusion f2 asks for is not reached."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "2e85c3089a17979d720e60549e21e1b2b5bc1db41b68f559c09abfba049f9ce7",
+  "blind_bundle_digest": "b94997b64a95038fe8c0413464add0bbbcd7d0d1121b1b17eb1a7e0c6e10c592"
+}

@@ -25,6 +25,13 @@ export interface VolumeSearchInput {
   pageToken?: string;
   /** First page only: also count every matching volume by record-type group. */
   summary?: boolean;
+  /**
+   * Collapse this page's already-searchable volumes (`fulltextSearchable`, or
+   * at least 50% `recordSearchablePercent`) to one line each in
+   * `searchableOmitted`, leaving only volumes still worth a browse in
+   * `results`. Runs per page, before the answer-size budget.
+   */
+  omitSearchable?: boolean;
 }
 
 // ---------- RMS request ----------
@@ -150,6 +157,14 @@ export interface VolumeSearchResult {
   totalResults: number;
   nextPageToken?: string;
   results: VolumeGroup[];
+  /**
+   * Present only when `omitSearchable` was set: one line per distinct
+   * `<indexed|full-text> | <recordType> | <dateRange> | <places>` combination
+   * drawn from the volumes this page omitted from `results` for being already
+   * searchable. Always an array (possibly empty) when the flag was set, so a
+   * caller can check both `results` and this for a true nil.
+   */
+  searchableOmitted?: string[];
   /** Present when the input asked for `summary` and it could be computed. */
   summary?: VolumeRollup;
   /** Why `summary` is missing when it was asked for; the page is still complete. */

@@ -107,6 +107,9 @@ const BINARY_FILES = [
   "apps/electron/build/icon.png",
   "apps/electron/build/icon.ico",
   "apps/electron/build/icon.icns",
+  // #4448: one of the three vendored cmap files with no NUL byte in its first 8000
+  // bytes — the blanket rule alone would misclassify it as text.
+  "apps/server/proto/web/static/pdfjs/cmaps/CNS2-V.bcmap",
 ];
 
 describe(".gitattributes line-ending policy", () => {

@@ -6590,7 +6590,7 @@ def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatc
 
 
 def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
-    """A turn init-project opens is grouped by the step after it (plan section H), so
+    """A turn init-project opens is grouped by the step after it (spec section H), so
     that step replaces init-project in `turns.step`; nothing else is ever overwritten."""
     executed: list[tuple] = []
 

@@ -1,4 +1,4 @@
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, connectorPrincipal } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, readFile, mkdir, writeFile, readdir } from "fs/promises";
 import { tmpdir } from "os";
@@ -29,6 +29,22 @@ vi.mock("../../src/utils/image-group.js", async (importOriginal) => {
   return { ...actual, imageGroupPlace: imageGroupPlaceMock };
 });
 
+// A transparent spy on runOcr (issue #3996's connector time-budget tests):
+// forwards to the real implementation (so every existing test's OCR behavior
+// over the stubbed OpenRouter fetch is unchanged) while recording the
+// `timeoutMs` the tool actually computed and passed down.
+const runOcrSpy = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/ocr.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/ocr.js")>();
+  return {
+    ...actual,
+    runOcr: (req: Parameters<typeof actual.runOcr>[0]) => {
+      runOcrSpy(req);
+      return actual.runOcr(req);
+    },
+  };
+});
+
 import {
   imageTranscribeTool,
   imageTranscribeMcpTool,
@@ -44,6 +60,7 @@ import {
   configureTranscriptionCap,
   withTranscriptionSlot,
   __resetTranscriptionSlotsForTests,
+  OCR_TIMEOUT_MS,
 } from "../../src/utils/ocr.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
 import { imageReadTool } from "../../src/tools/image-read.js";
@@ -130,6 +147,7 @@ beforeEach(() => {
   getOpenRouterApiKeyMock.mockReset();
   getOpenRouterModelMock.mockReset();
   fetchFsImageBytesMock.mockReset();
+  runOcrSpy.mockReset();
   getOpenRouterApiKeyMock.mockResolvedValue("test-key");
   getOpenRouterModelMock.mockResolvedValue(MODEL);
   fetchFsImageBytesMock.mockResolvedValue({
@@ -271,6 +289,9 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
       // memoryShape — false for an ark, so the artifact content-type widening
       // and the no-token path stay off for every pre-existing caller.
       false,
+      // opts — empty for a LOCAL/non-connector caller (#3996): the connector
+      // time budget never applies here.
+      {},
     ]);
     expect(result.viewerUrl).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
@@ -287,6 +308,7 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
       undefined,
       LOCAL,
       false,
+      {},
     ]);
   });
 });
@@ -1192,6 +1214,7 @@ describe("imageTranscribeTool — memory artifacts", () => {
       undefined,
       LOCAL,
       true,
+      {},
     ]);
   });
 
@@ -1919,5 +1942,81 @@ describe("the transcription cap binds to image_transcribe", () => {
     // No cap configured: the wrapper calls straight through and the tool fails
     // on its own input, not on a slot.
     await expect(imageTranscribeTool({ imageId: "004022578_00190", projectPath: "/nope" }, LOCAL)).rejects.not.toThrow(/transcriptions, its limit/);
+  });
+});
+
+describe("imageTranscribeTool — connector time budget (self-hosted beta E5, #3996)", () => {
+  // Carries i=/cc=, so resolveFsImageInput gives it a fallbackUrl — the thing
+  // a connector caller must NOT be offered a second attempt against.
+  const ARK = "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041";
+  const connector = () => connectorPrincipal({ accessToken: "tok", userId: "user-a" });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("makes one fetch attempt with no fallback, at a timeout well under the 180s budget", async () => {
+    mockOpenRouterOk("page");
+    await transcribe({ ark: ARK }, connector());
+
+    expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(1);
+    const [, fallbackUrl, , , opts] = fetchFsImageBytesMock.mock.calls[0];
+    expect(fallbackUrl).toBeUndefined();
+    expect(opts.timeoutMs).toBeGreaterThan(0);
+    expect(opts.timeoutMs).toBeLessThanOrEqual(30_000);
+  });
+
+  it("keeps the fallback retry and the default (unbudgeted) fetch timeout for a LOCAL caller", async () => {
+    mockOpenRouterOk("page");
+    await transcribe({ ark: ARK }, LOCAL);
+
+    const [, fallbackUrl, , , opts] = fetchFsImageBytesMock.mock.calls[0];
+    expect(fallbackUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9PT-V9Q2-2");
+    expect(opts).toEqual({});
+  });
+
+  it("clamps the OCR budget to what the overall 180s budget has left, minus the staging margin", async () => {
+    // monotonicNow() (performance.now()), not Date — the connector budget is
+    // computed from it (utils/fs-budget.ts's monotonic-clock convention), so
+    // only `performance` needs faking; advancing it is what "elapsed time"
+    // means to the code under test.
+    vi.useFakeTimers({ toFake: ["performance"] });
+    // The fetch "takes" 150s of the 180s budget.
+    fetchFsImageBytesMock.mockImplementationOnce(async () => {
+      vi.advanceTimersByTime(150_000);
+      return { bytes: new Uint8Array([1, 2, 3]), contentType: "image/jpeg", sizeBytes: 3 };
+    });
+    mockOpenRouterOk("page");
+
+    await transcribe({ ark: ARK }, connector());
+
+    expect(runOcrSpy).toHaveBeenCalledTimes(1);
+    const req = runOcrSpy.mock.calls[0][0];
+    // 180s budget - 150s elapsed - 5s staging margin = 25s, well under the full
+    // 180s OCR_TIMEOUT_MS a LOCAL caller would get.
+    expect(req.timeoutMs).toBeGreaterThan(0);
+    expect(req.timeoutMs).toBeLessThan(26_000);
+  });
+
+  it("gives a LOCAL caller the full OCR_TIMEOUT_MS regardless of elapsed time", async () => {
+    vi.useFakeTimers({ toFake: ["performance"] });
+    fetchFsImageBytesMock.mockImplementationOnce(async () => {
+      vi.advanceTimersByTime(150_000);
+      return { bytes: new Uint8Array([1, 2, 3]), contentType: "image/jpeg", sizeBytes: 3 };
+    });
+    mockOpenRouterOk("page");
+
+    await transcribe({ ark: ARK }, LOCAL);
+
+    const req = runOcrSpy.mock.calls[0][0];
+    expect(req.timeoutMs).toBe(OCR_TIMEOUT_MS);
+  });
+
+  it("still honors person_read's own tighter ocrTimeoutMs under a connector principal", async () => {
+    mockOpenRouterOk("page");
+    await imageTranscribeTool({ ark: ARK }, connector(), { ocrTimeoutMs: 5_000 });
+
+    const req = runOcrSpy.mock.calls[0][0];
+    expect(req.timeoutMs).toBe(5_000);
   });
 });

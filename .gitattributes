@@ -19,6 +19,12 @@
 *.ico binary
 *.icns binary
 
+# #4448: vendored pdf.js character maps. Several are small and ASCII-heavy enough
+# to have no NUL byte in their first 8000 bytes, so without this they would fall
+# through to the blanket text=auto rule and risk eol=lf mangling a hash-pinned
+# binary file on a future vendor bump.
+apps/server/proto/web/static/pdfjs/cmaps/*.bcmap binary
+
 # Shell scripts must keep LF endings on every platform.
 #
 # Git for Windows defaults core.autocrlf=true, so without this these files check

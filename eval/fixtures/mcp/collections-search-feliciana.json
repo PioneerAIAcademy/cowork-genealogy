@@ -5,9 +5,7 @@
     "standardPlace": "~Louisiana"
   },
   "response": {
-    "query": {
-      "standardPlace": "Louisiana, United States"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Feliciana Parish, Louisiana, United States",
     "totalForPlace": 2,
     "results": [
@@ -15,19 +13,13 @@
         "id": "3000101",
         "title": "Louisiana, East Feliciana Parish Marriage Records, 1824-1900",
         "dateRange": "1824-1900",
-        "recordCount": 48210,
-        "personCount": 96420,
-        "imageCount": 24105,
-        "url": "https://www.familysearch.org/search/collection/3000101"
+        "personCount": 96420
       },
       {
         "id": "3000102",
         "title": "Louisiana, West Feliciana Parish Marriage Records, 1824-1900",
         "dateRange": "1824-1900",
-        "recordCount": 39880,
-        "personCount": 79760,
-        "imageCount": 19940,
-        "url": "https://www.familysearch.org/search/collection/3000102"
+        "personCount": 79760
       }
     ]
   }

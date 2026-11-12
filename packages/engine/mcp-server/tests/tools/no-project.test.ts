@@ -362,10 +362,20 @@ describe("build_external_search_url with projectPath", () => {
 
   it("half a project stays loud", async () => {
     await writeTree();
-    const r = await call(dir);
+    // A site baseUrl skips the place gate (issue #4410), so the log write's own
+    // error is what comes back.
+    const r = await buildExternalSearchUrlTool({
+      site: "findagrave",
+      attributes: { surname: "Flynn" },
+      baseUrl: "https://www.findagrave.com/memorial/search",
+      projectPath: dir,
+    });
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/research\.json not found in projectPath/);
+    // A site-wide build counts half a project as a project, and the gate refuses it.
+    const siteWide = await call(dir);
+    expect(!siteWide.ok && siteWide.reason).toBe("place_not_fetched");
   });
 });
 

@@ -57,7 +57,7 @@ fell outside the window that a 2-day run would have caught.
 **Backlog, unassigned Ready, and `icebox`.** Nothing else.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --limit 2000 --format json
+gh project item-list 1 --owner PioneerAIAcademy --limit 3000 --format json
 ```
 
 The board list truncates silently at `--limit`; the project has well over 600
