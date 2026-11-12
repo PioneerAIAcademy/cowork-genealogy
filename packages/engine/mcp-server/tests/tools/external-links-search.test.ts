@@ -240,12 +240,12 @@ describe("externalLinksSearchTool — fetches the full set", () => {
     await expect(externalLinksSearchTool({ standardPlace: "France" })).rejects.toThrow(/1 of the 999/);
   });
 
-  it("refuses a place over the 1,000-row cap and names a smaller scope", async () => {
+  it("refuses a place over the 1,000-row cap and, with no project, says to pass projectPath", async () => {
     mockFetch.mockResolvedValueOnce(
       jsonResponse({ totalResults: 1998, collections: [{ url: "https://example.com/a" }] }),
     );
     await expect(externalLinksSearchTool({ standardPlace: "United States" })).rejects.toThrow(
-      /1998 curated links.*state or county, not a whole country/s,
+      /1998 curated links.*no list is returned or stored.*pass projectPath.*smaller place inside it/s,
     );
   });
 

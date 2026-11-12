@@ -18,8 +18,10 @@ export interface ExternalCollectionRow {
   end_year: string
 }
 
+// `too_large`: external_links_search refused the place as too large to list —
+// looked up, but its collections are unknown (never "nothing for this place").
 export interface ExternalCollectionsData {
-  places: Record<string, { rows: ExternalCollectionRow[] }>
+  places: Record<string, { rows: ExternalCollectionRow[]; too_large?: true }>
 }
 
 export interface CollectionGroup {
@@ -31,6 +33,7 @@ export interface PlaceCollections {
   place: string
   groups: CollectionGroup[]
   rowCount: number
+  tooLarge: boolean
 }
 
 const OTHER = 'Other'
@@ -69,9 +72,8 @@ export function parseExternalCollections(raw: unknown): ExternalCollectionsData 
   const places: ExternalCollectionsData['places'] = {}
   for (const [name, entry] of Object.entries(raw.places)) {
     if (!isObject(entry) || !Array.isArray(entry.rows)) continue
-    places[name] = {
-      rows: entry.rows.map(parseRow).filter((r): r is ExternalCollectionRow => r !== null)
-    }
+    const rows = entry.rows.map(parseRow).filter((r): r is ExternalCollectionRow => r !== null)
+    places[name] = entry.too_large === true ? { rows, too_large: true } : { rows }
   }
   return { places }
 }
@@ -105,6 +107,6 @@ export function groupCollections(doc: ExternalCollectionsData | null): PlaceColl
         recordType,
         rows: [...(byType.get(recordType) ?? [])].sort((a, b) => byText(a.link_text, b.link_text))
       }))
-      return { place, groups, rowCount: rows.length }
+      return { place, groups, rowCount: rows.length, tooLarge: doc.places[place].too_large === true }
     })
 }

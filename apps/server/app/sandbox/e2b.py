@@ -241,8 +241,6 @@ class E2BProvider(SandboxProvider):
         s = get_settings()
         env: dict[str, str] = {
             "AGENT_MODE": s.agent_mode,
-            "AUTO_CONTINUE": "1" if s.auto_continue else "0",
-            "AUTO_CONTINUE_MAX_STEPS": str(s.auto_continue_max_steps),
             **optional_agent_env(s),
         }
         if proxy_active():

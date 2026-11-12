@@ -8,7 +8,7 @@ note and the foreground rewrite from here; the worker already imports from this 
 without a second implementation.
 
 Neither plane vetoes a stop. Step mode ends each turn at its boundary on purpose, and
-"Keep going" is the host's reply rather than a veto (docs/plan/research-step-mode.md,
+"Keep going" is the host's reply rather than a veto (docs/specs/research-step-mode-spec.md,
 section A2 and Phase 2).
 
 Pure stdlib and no I/O beyond ``read_research_json``, so ``test_continue_policy_parity.py``
@@ -57,8 +57,8 @@ TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 # than going with it.
 NO_PROJECT_NOTE = (
     "While no project exists yet (`project_context` returns `no_project`), a request to "
-    "research a person is a research job, not a single lookup: follow the research "
-    "skill, which sets up the project first."
+    "research a person is not a single lookup: follow the research skill, which sets up "
+    "the project first."
 )
 
 

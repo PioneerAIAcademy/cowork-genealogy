@@ -260,12 +260,20 @@ camelCase convenience fields the same way `research_log_append` does.
   },
   resolvedPlaces?: [{ place, standardPlace, source: "sidecar" | "geocoded" }], // §3.6
   unresolvedPlaces?: string[],     // §3.6 — each place looked up and left with no standard_place
+  skippedDerivedLinks?: string[],  // §5.13 — derived rows a gate refused, rolled back
   filesWritten: ["research.json"], // + "tree.gedcomx.json" first, when §3.4 wrote the S
                                    //   entry or §3.1's assertion-update rewrote a fact
   validation: { valid: true, warnings: string[] },
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
+
+**One `person_evidence` append can produce several `results[]` rows.** A link
+claims its whole record entry (§5.13), so the tool writes that entry's other
+one-party rows in the same call and each gets its own `results[i]`, in the order
+written, after the caller's own. A caller that assumed `results.length ===
+ops.length` will miscount. Rows a gate refused are **not** in `results` — they
+were rolled back — and are named in `skippedDerivedLinks` instead.
 
 A `hit_verdicts` append that §3.10 folds into an update of an existing row
 returns `op: "update"` and that row's `entryId`, and a warning naming the row; in
@@ -1289,13 +1297,14 @@ audit's recommendation #5):
 | any op citing an assertion (`person_evidence.assertion_id`; a conflict's `competing_assertion_ids`/`preferred_assertion_id`; a hypothesis's supporting/contradicting ids; a proof summary's `supporting_assertion_ids`, top level or in `claims[]`; a timeline event's `assertion_ids`; a question's `resolution_assertion_ids`) | **A retired assertion is not evidence.** An op that *newly* cites an assertion whose `superseded_by` is non-null is refused, naming it and what superseded it; an id the stored entry already held is not new. A retirement is refused while anything rests on the assertion (§11.6.1), so a stored citation of one does not arise | `retiredAssertionCitations` |
 | `extraction_append` re-extraction (internal `retireAssertions`) | **Nothing may rest on an assertion it retires.** Under the lock, every id must still be live and carry the record's id, and none may be cited by a live `person_evidence` row, a `rejected_links` row, a tree fact's `assertion_id`, a proof summary, a conflict, a hypothesis, a timeline event or a question's `resolution_assertion_ids`; when a relationship claim is among them, no tree relationship may cite the record's `S`. The whole batch is refused, each referrer named | `planRetirement` / `assertionReferrers` |
 | `assertions` append or update, `fact_type: relationship` | **`structured_value.relationship_type` must not contradict what `value` says about the record SUBJECT.** `relationship_type` is the subject's own role and `related_person_role` is the other party's, so a death certificate naming the father is `"child"` on the deceased, not `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, and the omission is the live defect: 5 sightings across three of the five current record-extraction run logs, every one a sister typed `child`. **Position decides whose role the value names**, and that is why two earlier guards on this field were abandoned: `child of Jim Neal` states the subject's role, while `father named as Casper` and `father: Jan Roelfs` label the other party and are skipped. Comparing relation words without regard to position refused 22 of the 37 it flagged over the e2e run logs, and 27 of 47 over the full population below — re-derivable with `measure_relationship_direction.py --counterfactual`. Unknown spellings fail open, never refused — 63 assertions across 16 spellings over the e2e run logs, 73 across 18 over the full population (`grandparent`, `ParentChild`, `administrator`, `ward`, `grandchild` are the commonest; `stepfather` and `father_in_law` occur nowhere in any of them and are not useful examples). Forward direction only, on the ops being written, so a project holding an assertion written before this rule stays writable | Refuses **21 of 2586 (0.8%)** across the e2e run logs, the unit run logs, the scenario fixtures and the hosted seed — 19 distinct assertions, since a unit log carries an id-less write op beside its persisted copy; **0** in the fixtures and **0** in the seed. All read individually, all true positives. Measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py`. ADR-0011 |
+| `person_evidence` append of a one-party fact | **A record entry belongs to one tree person.** A link says the person in role X of record Y *is* tree person Z, so it claims that entry, not the one fact it names: the call is refused when another tree person already holds the entry through a one-party link of their own. The holder side counts **only one-party links** — a two-party assertion's link does not say which of its two parties it is about, so counting it would refuse the ordinary household shape. The refusal names the holding assertions and the ways out, each of which works **in the same call**: append a `rejected_links` row for the pairing being ruled out (which retires the holding link itself), update that link with `superseded_by` when it is superseded by a link already held, or link an assertion of the party actually meant. The holder set is read from the pre-call document **less this call's own retirements** — a supersede or rejection sent in the same batch clears the holder it names, so correcting a wrong link is one call, not two. Order-dependent by construction: whichever link arrives second is the one refused | Refuses **104 (entry, person) pairs across 51 entries** over the 237 committed e2e final states; the rejected any-live-link reading refuses **1,242**. Read individually: 19 entries where the later arrival is the thinner claim (the defect), **4 where it is the fuller claim and the refusal is wrong**, 28 where both sides are equally thin. The 4 are an accepted false-deny cost, stated per ADR-0011. Measured at 02ffc4da1 by `packages/engine/mcp-server/dev/replay-entry-link.ts`. §5.13 |
 | `assertions` append or update | **`informant_proximity: "unknown"` implies `information_quality: "indeterminate"`.** If the informant cannot be identified, neither firsthand knowledge nor its absence has been established, so the Layer-2 decision tree terminates at its first question and never reaches the primary/secondary split. **Forward only, and deliberately not a biconditional**: `indeterminate` does NOT imply `unknown` — a NAMED informant whose relationship to the specific fact cannot be established is the tree's "cannot tell" branch at a known proximity, which is the ordinary census shape, and an `iff` reading would refuse it. Fires only for the two in-enum values that claim a determination: a missing `information_quality` is `checkRequired`'s error and an out-of-enum one is `checkEnum`'s, and adding this on top would name the wrong fix — not hypothetical, `mid-research-flynn-bad-enum` a_001 is `unknown` + `tertiary` and `ut_validate_schema_004` pins the validator at exactly ONE error for it. The update arm validates the MERGED entry, which is the case the rule exists for: flipping proximity to `unknown` and leaving a stale `secondary` behind. The update arm checks it only when the op sets `informant_proximity` or `information_quality`, which still catches that flip; an update touching neither, such as a question tie on a legacy pair, is not re-checked | Prose in `record-extractor.md` (since retired), and prose did not hold: the model broke it on **248 of 982** `unknown` assertions across the committed e2e corpus. Mirrored at the document tier in `validator.ts`; six scenario assertions backfilled with it |
 | `conflicts` append (fact) | ≥2 `competing_assertion_ids`; identity ≥1 | `validateResearch` (`"fact conflict requires at least 2 competing_assertion_ids"`) |
 | `conflicts` append (fact), or an update that (re)sets `competing_assertion_ids` | **no competing pair whose `place` values are in a containment relationship, when the dispute is about place** — "Ireland" and "County Cork, Ireland" are one claim at two levels of precision, not a disagreement, so the entry asserts a dispute the sources do not have. Three conditions, each load-bearing. **(a) `disputed_attribute` must name place and nothing else**, matched against an exact allow-list: the field is free text — 28 distinct values across the 102 corpus fact conflicts, including whole sentences and two compounds (`birth_year_and_birthplace`) — so a dispute about the *year* between two places in containment is a real dispute, and refusing it with a message saying they "do not disagree" is false about the axis actually in dispute. **(b) no pair may disagree at all**: `compatiblePlace` is true for EQUAL places as well as for containment (including a place written without the country the other adds, "Ohio" against "Ohio, United States"), so the canonical Flynn conflict (Ireland / Ireland / Pennsylvania) has two compatible Irelands beside a Pennsylvania that genuinely disagrees. **(c) at least one pair must be a *strict* containment** — compatible with differing hierarchy depth, counted in normalized segments via `placeSegments`, which is what the comparator itself counts; a raw comma count disagrees with it in both directions ("Ireland" vs "Ireland," wrongly refused, "Cork, Ireland" vs "Ireland," wrongly allowed). A place that is blank or comma-only is "no place" and is skipped, not read as a disagreement, which would silently disable the guard for the whole entry. Reads free-text `place` because that is the value the comparator is built for and the one every assertion carries however it was authored — not because `standard_place` is empty (it is empty on the hand-authored fixtures only; `research_append` resolves and writes it itself on every assertion append carrying a place). Siblings ("Schuylkill, Pennsylvania" vs "Allegheny, Pennsylvania") are incompatible and stay allowed. Scoped to ops that set the pairing, so a conflict written before the rule existed stays editable. `conflict_type: "identity"` is out of scope | Alpha feedback 2026-08-28: the agent filed a country-vs-county pair as a birthplace dispute, and corrected itself only when the researcher pushed back. Measured cost: **0 of 37** corpus fact conflicts are refused, and 0 of the 102 fact conflicts across the wider 406-document corpus. A predicate keyed on any-compatible-pair — the first revision — refused **35 of 37** |
 | `conflicts` update → `resolved` | `independence_analysis`, `weighing_analysis`, `resolution_rationale` all set — each a **non-blank string**, trimmed, since a whitespace-only value satisfies the field and states nothing and a non-string satisfies no emptiness comparison at all; `preferred_assertion_id` ∈ `competing_assertion_ids` **when non-null**. Null is legal: a `synthesis` resolution names no winning assertion. **A conflict the researcher weighed and honestly could not settle is NOT recorded `resolved` at all** (decision 12, step mode): it stays `unresolved`, carrying the three analyses with `resolution_rationale` saying what would settle it. It used to be recorded `resolved` with `resolution_kind: "tree"`, which was the shape that cleared the completion gate — but that kind asserts the tree's existing conclusion WON the weighing, a finding about the evidence, and "I could not tell" is not that finding. Writing it as one makes an open question read as settled to every later reader, which is the opposite of the deferral-is-a-finding intent. It is not `moot` either, which asserts the conflict no longer matters. The completion gate below therefore keeps refusing, and that is now the designed end state: the project does not complete, the question is concluded at the tier the evidence reaches (`not_proved` included), and the run ends on that open conclusion | audit; `validator.ts` NULLABLE set; `conflictInvariants` checks membership only under `preferred_assertion_id != null` |
 | `conflicts` append landing `resolved`, or update touching the resolution (`status`, `resolution_kind`, `preferred_assertion_id`, `resolved_value`, `resolution_rationale`) on a conflict that stands `resolved` | **`resolution_kind` names how it was settled**, and each kind carries its own proof. `competitor`: `preferred_assertion_id` is a non-blank string and one of `competing_assertion_ids`. `tree`: the tree's existing conclusion stands against the competing records; nothing more is owed. `synthesis`: no single assertion wins, so `resolved_value` is a non-blank string and `resolution_rationale` cites at least two distinct `src_`/`a_` ids — the records the value is built from, so the label cannot be reached for to dodge naming a winner. An unrelated edit to a conflict resolved before this rule existed is not re-judged; an update touching its resolution is. `moot` is not this rule's (the row above). The refusal names all three kinds and what each requires, and the rejection hint shows one worked resolve per kind | `guardrail-enforcement-spec.md` §5; `resolutionKindInvariants`; worked resolves in `research-append-examples.ts` |
 | `conflicts` update → `moot` | `resolution_rationale` set to a **non-blank string**, trimmed, on the same reading as the `resolved` row above — say why the conflict no longer bears on the question. Only that one field: there is nothing to weigh or to declare independent once the conflict has stopped bearing on the question, which is what separates `moot` from `resolved`. The analyses stay optional but are not inert: a moot that also carries non-blank `independence_analysis` and `weighing_analysis` can lift the core-identifier cap on its competitors (the `person_evidence` append/update at `confident`/`probable` row below, which also needs a birth place or date attribute and no identity conflict doubting the record person), and one with only the rationale does not. `moot` settles a conflict for every gate that reads `status`, the completion gate below included, and was the one settling write with no precondition at all — so a bare `{status: "moot"}` cleared that gate while asserting nothing | Found reviewing the completion gate's derived arm, which raised the population reaching this escape from 5 conflicts to 14. Measured cost: **0 of 1** — the corpus holds one moot conflict (`ogletree-children` c_006) and it carries a rationale. Trimming both rows is free on the same scan: **0 of 85** resolved conflicts and **0 of 1** moot carry a blank or non-string analysis field, across the e2e final states, the unit run logs, the scenario fixtures and the e2e starting documents; measured at 07f1fd31d. ADR-0011 |
-| `conflicts` append, or update that (re)sets `preferred_assertion_id` or `status` | **`preferred_assertion_id` may not name an assertion whose `value` contains `[?]` unless a corroborating assertion exists.** Corroboration requires all four: (1) the corroborator's own value carries no `[?]`; (2) it is on a different record (`record_id ?? source_id`); (3) same `fact_type`, value equal once `[?]` stripped, whitespace collapsed and case folded; (4) same person — in `competing_assertion_ids`, or linked via live `person_evidence` to a `person_id` the preferred assertion is also linked to. Null `preferred_assertion_id` is legal (deferral: `unresolved`, or `resolved` with `resolution_kind: "tree"` under the row below). The refusal tells the caller a user-confirmed reading is one more reading to weigh in the conflict, never a correction: extraction writes `assertions` and they are final, so it never tells the caller to update the assertion itself. Applies at any `status` including `moot`. Reads live `research`. Scoped to ops that set `preferred_assertion_id` or `status`, so an unrelated edit to a conflict written before this rule is not refused | Alpha feedback 2026-09-23: a single OCR pass overruled the user's reading of an image. Corpus check (2026-09-28): **0 of 56** preferred resolutions across 194 committed e2e runs would be refused; 6 of 91 conflicts have a `[?]` competitor |
+| `conflicts` append, or update that (re)sets `preferred_assertion_id` or `status` | **`preferred_assertion_id` may not name a doubtful assertion — one whose `value` contains `[?]`, or one its own page disputes (lead ruling 10, 2026-11-05) — unless a corroborating assertion exists.** Corroboration requires all four: (1) the corroborator is not itself doubtful; (2) it is on a different record (`record_id ?? source_id`); (3) same `fact_type`, value equal once `[?]` stripped, whitespace collapsed and case folded; (4) same person — in `competing_assertion_ids`, or linked via live `person_evidence` to a `person_id` the preferred assertion is also linked to. Null `preferred_assertion_id` is legal (deferral: `unresolved`, or `resolved` with `resolution_kind: "tree"` under the row below). The refusal tells the caller a user-confirmed reading is one more reading to weigh in the conflict, never a correction: extraction writes `assertions` and they are final, so it never tells the caller to update the assertion itself. Applies at any `status` including `moot`. Reads live `research`. Scoped to ops that set `preferred_assertion_id` or `status`, so an unrelated edit to a conflict written before this rule is not refused | Alpha feedback 2026-09-23: a single OCR pass overruled the user's reading of an image. Corpus check (2026-09-28): **0 of 56** preferred resolutions across 194 committed e2e runs would be refused; 6 of 91 conflicts have a `[?]` competitor |
 | `conflicts` append, or update that sets `conflict_type`, `disputed_attribute` or `competing_assertion_ids` | **it does not restate a conflict already recorded**: refused when another `conflicts[]` entry, at any status, has the same `conflict_type`, the same `disputed_attribute` for a `fact` conflict (trimmed, case folded), and the same set of `competing_assertion_ids` (order and repeats ignored). Two records can disagree on a birth year and on a birthplace, which are two conflicts with two winners, so the attribute is part of what a fact conflict is about; an `identity` conflict over the same assertions asks one question. The existing entry is the one to update. The refusal names it, its status, and `research_query` `conflictId`. For an unresolved one it says to update it. For a resolved or moot one it says conflict-resolution reopens it, setting `unresolved` and clearing the resolution and analysis fields, and that proof-conclusion first removes a `resolved_conflict_ids` citation, in an earlier call. Its worked example is the plain update, not an append. A batch that writes the same conflict twice is refused saying so, without naming the id the first op would have taken, since nothing was written. Reads live `research` | Alpha feedback 2026-09-03 (a resolved conflict re-raised late in a long session). Measured 2026-11-03: of the 14 conflict appends in the committed unit run logs, **2** restate an existing conflict, both duplicates and both on the same `disputed_attribute`: `ut_conflict_resolution_008` (v4, run 2) over an unresolved `c_001`, after reading it by `assertionId` and getting 0, and `ut_research_001` (v17) over a resolved `c_001`. The 233 committed e2e final documents hold no such pair, so no landed write would have been refused. `duplicateConflictInvariants` |
 | `hypotheses` update → `ruled_out`/`status: ruled_out` | `ruled_out_reason` non-empty | `validateResearch` (`"ruled_out is true but ruled_out_reason is missing"`) |
 | `hypotheses` append/update setting **`status: "supported"`** | the mechanical evidence floor of `research-schema-spec.md` §5.9, both halves: **(a)** no `conflicts[]` entry whose `competing_assertion_ids` overlap this hypothesis's `supporting_assertion_ids` **or** `contradicting_assertion_ids` is still unresolved (`resolved` and `moot` both settle it), and **(b)** either ≥1 supporting assertion carries `record_basis: "stated"`, or ≥2 carry `record_basis: "inferred"` and cite ≥2 distinct `source_id` values. **Conflicts are matched by assertion overlap, never by shared `question_id`** — `eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that separates the two: its `h_001` is `supported` while `c_001` is unresolved and blocks the same `q_001`, but names entirely different assertions, so a question-keyed predicate refuses a shipped, correct fixture. **Forward direction only** (lead ruling 2026-09-07): a hypothesis that clears the floor and was left `active` is untouched, and the spec's third condition — evidence consistency, no logical or geographic impossibility — is a genealogist's judgment call and is not attempted. Gated on **any of the three coupled fields** — `status`, `supporting_assertion_ids` or `contradicting_assertion_ids` — not on `status` alone: the invariant couples the status to both id lists, so an op touching a list breaks it without naming the status, which is the skill's own documented re-invocation path ("only link the evidence and leave the status unchanged"). A narrative-only update naming none of the three is not refused. An empty `supporting_assertion_ids` at `supported` is **refused** (it carries no evidence), contrary to the issue's accept-list wording; a dangling id that resolves to no assertion simply counts as nothing. Read from the **pre-call snapshot**, both halves, per ADR-0011's criterion: `conflicts` belongs to `agent:conflict-resolution` and `assertions` is written by `extraction_append` (it was `skill:record-extraction`'s, since retired, when this was decided), neither of them this author's own prior step — so a live read would let a session satisfy this gate with a write made inside the very call it gates (the `conflicts` hook arm denies a main-thread resolve where a hook binds, which is not every plane, and does not change who must satisfy the precondition). A same-batch resolve-then-promote is therefore refused, and the refusal says to settle the conflict in an earlier call. **Both halves' refusals say so**, since both read the snapshot: a batch that appends a valid `direct` assertion and promotes on it is refused saying there is no direct assertion, so half (b)'s message ends "Assertions appended in THIS call do not count — append them in an earlier call, then promote". The refusal names which half failed and the ids involved; the same wording as the eval validator, with ids bracketed and comma-joined, plus a remedy clause the pytest-facing Python text does not carry | The rule shipped as SKILL.md prose and an eval validator (`test_supported_requires_evidence_floor`) and bound in neither Cowork nor hosted. **Measured cost: 0 of 9.** 17 ops set `status: "supported"` across 13 calibration run logs, of which **9 landed** (7 returned `ok: false`, 1 capture stripped) — a refused call is not a write (`replay.py`) — and none of the 9 fails either half. Corroborated by 0 of 44 `supported` hypotheses over 276 committed final states and fixtures. The snapshot read costs 0 further refusals: no calibration batch appends an assertion ahead of the promote, and neither batch carrying a `conflicts` op ahead of it is affected. The one batch it would refuse is in `_2491-exploratory-quarantine`, exploratory-only by lead ruling 2026-09-15. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`; re-derive before quoting. ADR-0011 |
@@ -1311,7 +1320,8 @@ audit's recommendation #5):
 | `person_evidence` append/update declaring `core_identifier_conflict` | rejected unless `confidence` is `speculative`. Reads the entry's own field and nothing else — no tree read, no re-reading of the record — which is what makes it a precondition rather than a prompt rule (ADR-0011's first question). The cap applies to `confident` **and** `probable`; a whitespace-only or null value is not a declaration. Clearing the field to null is the escape when the conflict is explained and does not bear on identity | The prose form did not bind, twice: `agents/person-evidence.md` carried "a qualitative conflict caps confidence regardless of score" using the same 0.85 figure as the failing test, and a Step 3 forcing function that made the agent WRITE the verdict still let it argue past the verdict in the next clause (`ut_person_evidence_012`, `_024`; single-test rounds 2026-09-23). **Refuses zero existing writes**: the field is new, so no committed entry carries it — compare the score requirement in the row above, which was `personEvidenceScoreWarnings` until it graduated on 2026-09-24; the reason a CONTRADICTION cap stays measured-first is that `speculative` is 344 of 22,050 committed person_evidence writes (1.6%) and an inferred cap would hit live traffic. **A surname arm on this row was measured and set aside** — refusing a `confident` link when the project documents the person under another surname does not reach the link it was written for (in the motivating `jimmie-jewel-neal` fixture that link is `confident` only in the two runs where the tree records the person under a single surname, and a `Couple`-with-`Marriage` escape clears her in all six regardless), while inside that same fixture it refuses 80 other links, 74 of them on the fixture's own subject. For scale it fires on 858 of 5,752 (14.9%) committed confident links, measured at 8296d1527 over 204 committed e2e final states — context rather than the reason, since ADR-0011 limit 2 rules that a rate never substitutes for inspection. The three facts, the escape-arm breakdown, and the one earlier argument deliberately not carried forward (the patronymic half, which inverts shipped doctrine) are in `guardrail-enforcement-spec.md` §9, "Options set aside"; re-derive with `dev/measure-surname-arm.ts` |
 | `person_evidence` append, or update setting `confidence`, `move_bridge`, `assertion_id`, `person_id` or `superseded_by`, at `confident` across an unexplained move between countries | rejected unless `move_bridge` names what explains the move. The move is read from the documents: the country of the linked party's own residence/census assertion on the record (failing that, the household head's), against the countries of the tree person's Residence and Census facts. A fact counts only through a source other than the record being judged and not one linked to this person only below `confident`, so neither the record nor a capped link vouches for itself. An unchecked attachment link is not such a capped link: its source is the import's own `S`, which an imported residence fact already cites, and counting it would stop that fact vouching for every subject the baseline step links. Countries come from `canonicalCountry` (place-resolver), with US states and state codes read as the United States, and border-shifting countries grouped (British Isles incl. Ireland; Germany, Poland, Austria, Hungary, Russia, Switzerland; Norway, Sweden, Denmark). An unrecognized name reads as no country and the check stays silent. `probable` is never refused, and an update that touches none of those five fields is not re-checked: a re-pointed link is a new pairing, as the score gate reads it, and clearing `superseded_by` brings a retired link back, so an un-supersede is judged like an append (MV1). An update after which the link is superseded is not checked, since a retired link asserts nothing | The prose cap in `agents/person-evidence.md` held about two runs in three (`ut_person_evidence_g7m`, suites 2026-10-06), each failure a different misreading. **Refuses 0 of 5,893** committed confident links across 310 fixture and e2e documents (2,617 with a recognized country on both sides). A first version reading every last place segment as a country refused 147, all place-name variants (Norge/Norway, México/Mexico, NJ, a bare town), which is why it fails open. The `superseded_by` trigger refuses no committed call: of the 465 committed `person_evidence` updates, 5 name `superseded_by` and none clears it (measured at ed4f73911 by `packages/engine/mcp-server/dev/measure-namesake-cap.ts`) |
 | `person_evidence` append/update at `confident`/`probable` | rejected when the record's own assertions about the SAME party (the persona id, else the role, read across the record: an assertion with no persona id joins the one persona carrying its role when it comes from an extraction that set no persona id and names one person at that role, and a persona id worn by several roles keys on the role — `recordPartyKeyer`) state a birth place, or a birth/christening date, that contradicts the tree person's birth fact. Place compares `birth` only (a christening place is the church, not the birthplace). Two places agree on their text or, when both carry one, on their resolved `standard_place`, and they agree when one is `compatiblePlace` with the other — the top level one names appears in the other with every level below matching — so a place written without its country ("Staffordshire, England" against "West Bromwich, Staffordshire, England, United Kingdom"; "Georgia" against "Georgia, United States") is not a contradiction. A disagreeing pair then counts only when the two places are in **different countries** (read offline: the last segment `canonicalCountry` recognizes, else a standard place's last segment, which is always its country; a trailing United Kingdom gives way to a country named before it, so England against Scotland, or against "Dublin, Ireland, United Kingdom", differs, while a bare United Kingdom does not differ from a constituent; a US state is not read as the United States, since "CA" is also Canada) or further apart than the era allows: 25 mi before 1850, 250 mi for 1850–1949, 500 mi from 1950, a range touching two eras taking the larger (`birthThresholdMiles`, shared with `person_warnings`), over every year in the tree birth's `date`/`standard_date` and the assertion's `date`. The coordinates of both `standard_place`s are looked up before the ops apply, replaying the call's own assertion updates, from the FamilySearch Places API under a 10 s budget, only for pairs that disagree and are not already known to be in different countries; a Places outage leaves the pair without coordinates. It **fails closed**: with no country difference, a pair caps unless both sides carry a `standard_place` with coordinates, neither is a whole region and they are not two counties against each other (Places type continent, country, dependency or protectorate, colony, state, province, territory, region, prefecture, governorate, or principality or emirate, read case-insensitively without a "(Top level)" qualifier, whose coordinates are its centre; a county or municipality still gets a distance, except against another county, since two counties named as a birthplace are two places), and some year is known (fail-closed: review-ready decision, 2026-10-14; the region and county rules: decided at implementation, 2026-10-15). A birth place that is a non-place phrase ("Same House", `isNonPlacePhrase`) states nothing and is skipped. Date compares birth and christening alike (a baptism follows birth closely) at a 5-year threshold, since the tree side is routinely a circa year. Silent when the contradicting claim is `information_quality: secondary` or an informant with no proximity to the birth, or was set aside by a settled **fact** conflict on the attribute that arm checks: a competitor other than the `preferred_assertion_id` of a `resolved` one that names a preferred assertion, or of a `moot` one whose `independence_analysis` and `weighing_analysis` are both non-blank strings. A moot one releases nothing while a `conflict_type: "identity"` conflict, at any status, names the record person behind any of its competitors, since `moot` is also how a fact conflict ends when its record turns out to be someone else. Status does not exempt one: a `resolved` identity conflict does not say which way it settled, and one in the corpus prefers an assertion of the person its rationale rejects. The doubt is read by record person (the record and its party key, as above), not by assertion id, because an identity conflict usually names the persona's name assertion rather than its christening. Released on the place arm when `disputed_attribute` is a birthplace and on the date arm when it is a birth date or year, matched against an exact list so a free-text attribute releases nothing; an identity conflict, an unresolved one, a moot one carrying only its `resolution_rationale`, or one about another attribute still caps. A moot that means "a different person" with no identity conflict beside it cannot be told apart from the documents, and releases. The refusal names how a conflict lifts the cap, that a moot does not while any identity conflict names the record's person, and that conflict-resolution writes it, since person-evidence, which reads it, may not write `conflicts`. A two-party relationship assertion is checked on both arms when another live link (the document's, with this call's appends and updates replayed over it) ties a one-party assertion of the same record to the same person through one of the assertion's two parties — its own, or the one `structured_value.related_person_role` names: the link is then about that party, and when siblings tie both parties to the person both are checked. With no such sibling it is silent, because which of the two people the link names is not decidable from the documents. Which link lands first does not matter: an append or re-pointing update of a one-party link, at any tier, is refused when it gives a party to a live `confident`/`probable` relationship link that this gate would then refuse, unless the same call lowers that link (`scopedRelationalLinkInvariants`); a relationship link already refused without this link is not counted against it. An `update` that sets `superseded_by` is exempt, since it retires a link; an `append` is never exempt, whatever `superseded_by` it carries | Refuses **0 of 323** committed confident/probable fixture entries. Over the 323 committed fixture and e2e documents (10,086 confident/probable links) the place arm refused **1,067** with `compatiblePlace` alone, almost all one place written with and without its country, and refuses **138** with the alignment above, nothing it did not refuse before (2026-10-12). Over the 337 committed fixture and e2e documents (10,438 confident/probable links) the arm before the distance test still refuses 138, the non-place-phrase skip silences none of them, and the country and distance test leaves **64**; the 74 it silences were read individually, and are one place spelled two ways or neighbouring places (most within 20 mi) and the cruz-corona-ancestry premise against its record (85 mi, 1910) (measured 2026-10-15, `npx tsx dev/measure-birthplace-cap.ts`). The four scopings and what each removed are in `guardrail-enforcement-spec.md`'s §5 row for this cap. Replaces three prose attempts and one self-declared field, each measured not to bind (`ut_person_evidence_012`, `_024`). The two-party arm adds 11 refusals over 302 committed fixture and e2e documents (9,736 confident/probable links), every one already refused for that persona by the one-party arm; running its place arm too would then have added 247, every one a less specific place that `compatiblePlace`'s country-first comparison read as a contradiction. With the comparator aligned on the top level and both arms and both parties live, over 350 documents (10,607 links, live coordinates) the gate refuses 165 against main's 142: 44 added, every one citing an assertion the one-party arm already refuses in the same document, and 21 released — 14 on a resolved-and-lost assertion and 7 in one spriggs-parents-1898 run whose extraction stamped one persona id on the whole household (measured 2026-10-21, `npx tsx dev/measure-core-identifier-gate.ts --coords`, diffed against main with `--list`). The moot release (an alpha session's 1786 group baptism, 12 and 9 years after the births, found to be a late baptism and marked moot, had kept all 12 of its links capped) changes nothing over 407 fixture and e2e documents (11,679 confident/probable links): 286 refused before and after, the `--list` output identical (measured 2026-11-06 without `--coords`, which cannot move it: the corpus's one moot conflict, `ogletree-children` c_006, disputes `birth_year` with both analyses, the date arm reads no coordinates, and its gaps are 1-3 years). Of the 411 committed scenario and e2e research documents (`git ls-files 'eval/fixtures/scenarios/*/research.json' 'eval/runlogs/*final-research.json'`; the script reads the 407 of them with a tree beside them), 1 holds a moot conflict, so the unit tests are the proof |
-| `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` (since retired) epistemic cap |
+| `person_evidence` append/update → `confident` | rejected when the linked assertion is **doubtful** — its `value` carries an uncertain reading (`[?]`), or a live page reading names it in `disputes_assertion_id` (lead ruling 10, 2026-11-05) — **and** no other live `person_evidence` row ties that `person_id` to a distinct record. The refusal names both exits: lower the link to `probable`, or stop citing the value. A researcher's own reading is not doubtful. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` (since retired) epistemic cap |
+| `proof_summaries` append/update, tier above `not_proved` | **lead ruling 10 (2026-11-05):** rejected when it cites (top level or a claim) an assertion in a dispute group — a disputed index assertion or a reading disputing one — unless the narrative or a claim's `claim`/`finding` text **names every reading**. Literal form: each reading's `value`, with `[?]` removed, whitespace collapsed and case folded, matches `(?<![\p{L}\p{N}])<reading>(?![\p{L}\p{N}])` (flag `u`) in the same-normalized text; a shorter reading counts only where it is not inside a longer reading that contains it ("Harriet" inside "Harriet Ann"). A paraphrase ("the page gives a different name") does not satisfy it — the accepted direction. A proof that cites the researcher's own reading (a disputing assertion under a `user_provided` entry) is settled and not checked; one that cites the index value or the page's `[?]` reading in that group is still checked. Runs on every write of the summary, not only one that touches the narrative, so a summary written before the page was read is refused on its next edit. A `confident` link or a conflict preference written before the page was read is left as written: those rules run on write only, and this gate is what catches a conclusion leaning on one. The refusal names both exits: write both readings in, or stop citing the value | lead ruling 10, 2026-11-05 |
 | `person_evidence` append, or update that moves a live link onto a new pair or revives a retired one | rejected when `rejected_links` names that exact `(assertion_id, person_id)` pair. The refusal quotes the researcher's `reason` when one was given. Exact pair only: rejecting "this record is not Mary" says nothing about her sister or about another record for Mary. An edit to a link that already exists (a rationale, a lower tier, a supersede) is not refused | `rejectedLinkInvariants`; `research-schema-spec.md` §5.14 |
 | `person_evidence` append, or update that moves a live link onto a new pair, revives a retired one, or raises a `speculative` link, at `probable` or `confident` | **rejected when the person is a `blankAddedPerson`**: added during this research (not a FamilySearch id, not in `starting-tree.gedcomx.json`, holding no attachment link) and carrying no source ref on its node, names, facts or any relationship it is in, with no namesake (a `namesakes` row, or a same-named relative in the tree): the namesake cap decides that person's links, and a speculative link must not let a record land on it first. `tree_edit add_person` makes such a person, so nothing records which record it came from, and the link would vouch for it anyway. A stub the researcher stated carries its source on the relationship and is not blank. The refusal names the order that keeps `same_person` ahead of the write: a `speculative` link with its score, then the `materialize_facts` call that writes the persona onto the person (with the linked assertion's `recordId` and `recordRole`, and for a two-party assertion the named-party form as well), then raising the link. `materialize_facts` writes onto a blank added person once any live link ties the record to it (`tree-materialization-spec.md`, the link rule); with no link at all the write would make the person read as minted from the record, and the link after it would need no score. Silent at `speculative`, which asserts no identity; with no starting-tree baseline, which cannot tell an imported person from an added one; for an attachment link; for a retired link; and for negative evidence (`record_role` or `record_basis` `absent`, an assertion written before the `record_basis` rename included), since no persona can be materialized from an absence. Reads the live tree | Measured 2026-11-04 over the committed e2e final documents: 1,121 of June and July's 6,113 links pointed at a person with no ref on any name or fact, and 8 of the 5,061 since August (3 persons: 2 record-derived stubs, 1 negative-evidence link, now exempt). `refLessAddedPersonInvariants`, `blankAddedPerson` |
 | `rejected_links` append | **`researcher_words` is a non-empty string**: the researcher's own message saying the pair is not a match, verbatim. Only the researcher rejects a pair (lead, 2026-10-20), and the engine cannot see who spoke, so the quoted words make a rejection written on a hedge, or in a turn the researcher never spoke in, visible. Required here and optional in the JSON Schema, so a row written before the field existed still validates. **The same write undoes the link**: every live `person_evidence` entry on that exact pair gets `superseded_by: "<rj_ id>"`, and every fact on that tree person carrying the pair's `assertion_id` is removed, unless the fact's `sources[]` also carries a `ref` other than the `gedcomx_source_description_id` of the assertion's research source. Another ref means another record (`materialize_facts` stamps `assertion_id` only when it mints a fact and adds a ref when it corroborates one), so that fact is kept and named in the response. A fact with no `assertion_id` is never removed, and names and relationships carry none, so the response names the person and says they may still carry names or relationships from that record. Nothing changes when the pair has no live link. All-or-nothing with the rest of the call. **`rejected_links` update** may set only `reason`: re-pointing a rejection would move it onto a linked pair without retiring the link, and `researcher_words` is a record | Lead ruling 2026-10-20; `retireRejectedLinks`; `research-schema-spec.md` §5.14 |
@@ -1701,13 +1711,32 @@ is listed, and the name sentence only when a name is. It rides
   the main thread then routes them to person-evidence is not checked; the first
   e2e runs that write rows measure it.
 - **The same call stamps `record_persona_ids` and `birth_year`.** On an append, and on an update
-  setting `record_ids` or `log_entry_ids`, `stampNamesakePersonas` looks each
+  setting `record_ids`, `log_entry_ids` or `name` (the check below reads the name),
+  `stampNamesakePersonas` looks each
   listed record up in the sidecars of the row's `log_entry_ids` (persona-bearing
   searches and reads only, matched by bare id), stores a found id in the sidecar's
   form and maps it to that result's `primaryId`, or, where the result has none (a
   read), to the person of its record whose ark is the listed id (`personaFor`). A
   listed household member of a hit or a read is found the same way, by that
-  person's ark, and stored in it. A log that finds the record but names no persona
+  person's ark, and stored in it. **A persona is taken only when one of its names
+  shares a given word with the row's `name`** (chesworthrm, 2026-11-09). Words come
+  from `ownGivenWords` once every mark but a letter, an apostrophe or a hyphen is a
+  space, so a bracketed placeholder ("(Mrs.)") is still dropped; then hyphenated
+  words are split, accents folded, and initials and particles (de, da, do, dos,
+  das) dropped. The row's are the words of
+  its name before any relative it names ("wife of Edwin Earnest"), read "Given
+  Surname" when written "Surname, Given", less name suffixes, and less the last
+  word, the surname, when two or more are left, taken before any hyphen in it is
+  split (`sharesRowGivenName`). A row whose name has "Mrs." anywhere before any
+  relative it names may give her husband's given name ("Mrs. Edwin Earnest",
+  "Hannah Earnest (Mrs. Edwin Earnest)", "Earnest, Edwin, Mrs."), so it takes no
+  persona not recorded female. A persona with no entry, or with no such word,
+  counts as none named, so a household member listed by mistake (a husband's own
+  record for his wife's namesake) is left unstamped and gives the row no year. A
+  Latin given name for an English one (Maria for Mary), an abbreviation (Wm for
+  William), an initial, and a surname first name written without a comma lose
+  their stamp too: the safe direction, since a wrong stamp corrupts item 10's
+  counts and the age exemption's year. A log that finds the record but names no persona
   for it does not end the lookup: a later cited log may still stamp it, and
   otherwise the first found form is kept. `birth_year` is the earliest birth,
   christening or baptism year among the personas so found, and is deleted when
@@ -1720,7 +1749,7 @@ is listed, and the name sentence only when a name is. It rides
   `person_evidence` ops name a person, each of that person's rows with no
   `birth_year` gets one by the same lookup (`fillNamesakeBirthYears`), before the
   cap judges; nothing else of the row changes, and a row whose listed records no
-  persona matches exactly stays without one. So a row written before the year was
+  persona matches exactly, or only one of another given name, stays without one. So a row written before the year was
   stamped gets one the first time a call links its person. A row whose personas
   state no year is looked up again on each later call that links its person; the
   call reads each sidecar once, and a read that fails leaves the row to the next
@@ -2101,6 +2130,185 @@ ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91
 `person_evidence` links.
 
+### 5.12 A caller's `localities` collection counts are stamped from the catalog
+
+On a `localities` append, and on an update whose `fields` sets `collections`,
+reached as an MCP caller (`researchAppendFromCaller`), each collection's
+`person_count` and `record_count` are set from FamilySearch's collection catalog
+(`fetchAllCollections`, the catalog `collections_search` reads, counted as it
+counts them: `collectionCountsById`). The write is never refused (decided at review-ready,
+2026-11-09). The wiring is `stampLocalityCollectionCounts` in
+`research-append.ts`, called from `prepareOps` after the `for_place` check (§5.8)
+and skipped when an earlier check has refused the batch.
+
+**Why.** research-plan plans from these counts without calling `collections_search`
+when every collection in a covering locality carries a `person_count`, and decides
+a name search vs an image browse on `person_count > 0`. In alpha feedback bundle
+`feedback-2026-11-05T18-50-09-991Z.zip` one locality stored `person_count: 0` on all 13 of its collections, and the second plan
+sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 and
+380,262) to full-text search as browse-only. The agent cannot know a better count
+than the catalog, so a refusal would cost a turn and end in the same state.
+
+- **Ids.** A number id is stored as a string on every path below. A collection with
+  no id (absent, null, empty, or neither a string nor a number) cannot be checked: both counts become
+  `null`, with the warning
+  > `localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)`
+- **Found.** The id is in the catalog: both counts become the catalog's. A warning names each
+  value that changed:
+  > `localities collections '<id>': <count> <old> -> <new>[, <count> <old> -> <new>], set from FamilySearch's catalog`
+
+  `<count>` is `person_count` or `record_count`; only a count that changed is named,
+  `person_count` first. `<old>` is the JSON of the supplied value, or `absent`.
+  An absent `record_count` is filled without being named: `collections_search`
+  returns no record count, so locality-guide leaves it out and this stamp is
+  where it comes from. A supplied `record_count` that differs is still named.
+- **Not found.** Both counts become `null`, which sends research-plan back to
+  `collections_search`:
+  > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
+- **The catalog cannot be read** (no FamilySearch session, a network failure, a
+  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count in each such op becomes `null`, with one warning per op. The
+  underlying error, including the auth error's "Call the login tool", is not passed on:
+  > `localities collections: FamilySearch's collection catalog could not be read, so every person_count and record_count in this entry was set to null (unknown)`
+- **A spent FamilySearch request budget** (the process-wide limit or the per-user
+  429 pause, `isFsBudgetExhausted`) is a refusal, not a failed read: it is rethrown,
+  so the call fails with that error and nothing is written, as for an assertion's
+  geocode.
+- **When the catalog is read.** Once per call, in `researchAppendFromCaller`, before
+  the project lock, and only when the call carries a `localities` collection. A cold
+  read can run past 30 seconds (2 of 51 in the committed e2e run logs took 33 and 36,
+  collections-search-tool-spec "Timeout") and Cowork's bridge aborts a call at 60, so
+  the write waits at most 20 seconds; a read still running then goes on and fills
+  the cache. `fetchAllCollections` caches a successful read for an hour per token
+  (for the whole process when `GENEALOGY_SHARED_COLLECTIONS_CACHE` is `true`), so the
+  read is usually warm after locality-guide's own `collections_search`, but not after
+  a token refresh, or on a per-token hosted server where another patron's read has
+  since taken the cache's one slot.
+- **Whose session reads it.** The caller's: `server.ts` binds
+  `collectionCatalogLoader(principal)` and passes it to `researchAppendFromCaller`,
+  so `research-append.ts` imports no token code. That keeps every tool built on
+  `researchAppend` out of the hosted reauth alarm's set of tools that reach the token,
+  which they do not. `research_append` itself never passes on a sign-in instruction
+  (a failed read is the warning above), so it stays out of that set too.
+- **Who is stamped.** Only an MCP caller. The internal `researchAppend` callers are
+  not. The unit eval harness passes a null catalog loader, so it never contacts
+  FamilySearch and stores the counts as written (the `person_warnings`
+  precedent).
+- **Measured 2026-11-10** with a live session: the catalog held 3,638 collections
+  (the read asks for 5,000, so an id is not missed by truncation), every `id` a string.
+
+### 5.13 A link claims its whole record entry
+
+A `person_evidence` row answers "is the person in role X of record Y the same as
+tree person Z". Once it says yes, every fact that record states about that
+person is about Z, so the tool writes the entry's remaining rows itself rather
+than leaving the answer recorded against one fact.
+
+**What an entry is.** The record (`arkToBareId`) plus the party key
+`recordPartyKeyer` gives — the `record_persona_id` when the record named one,
+else the `record_role`, read across the whole record. The same key the
+contradiction gate uses, so the write rule and the gate cannot disagree about
+what a party is.
+
+**Three things are not part of an entry.** A two-party fact (a relationship, a
+marriage, a couple event, or a fact about someone else filed on this persona):
+its link does not say which of the two parties it is about, so it neither
+triggers an expansion nor is produced by one. Negative evidence: `absent` is not
+an entry, and this is applied when the key is computed, because
+`recordPartyKeyer` returns the persona id for an absent-role assertion that
+carries one — negative evidence filed against a persona would otherwise sit
+inside that persona's party. And an attachment-shaped link
+(`isAttachmentLink`), which the baseline step writes with no `same_person` call
+behind it; expanding there would multiply an assumption rather than record a
+judgement.
+
+**What a derived row carries.** Its trigger's `person_id`, `confidence`,
+`move_bridge` and `core_identifier_conflict`; `match_score: null`; and a
+rationale naming the link it came from and the entry key, which is what makes
+it distinguishable from a row a caller wrote (`isDerivedEntryLink`). The
+`move_bridge` inheritance is load-bearing rather than tidiness:
+`unexplainedMoveInvariants` reads the move off the record and the party — the
+same ones a derived row sits on — and returns early only on a non-empty bridge,
+so without it every derived row of a bridged entry is refused and the entry
+quietly fails to expand.
+
+**Gates.** Derived rows skip the `same_person` score gate: the attestation is
+keyed on the assertion, and its persona arm fires only where the assertion
+carries a non-null `record_persona_id`, so a derived row would owe a score that
+cannot exist. They are exempt by op index, not by any shape a caller can send.
+Every other gate still runs, and a derived row one refuses is **rolled back out
+of the document and reported in `skippedDerivedLinks`**, never raised as an
+error — the caller did not write that row and cannot act on a failure about it.
+The two call-level post-checks (circular corroboration, the namesake cap) skip
+derived rows outright, since each judges a (person, record-entry) pairing a
+derived row shares with its trigger, so its finding would duplicate one the
+caller already has. Those two read the **finished document**, which cannot say
+who wrote a row, so the rationale prefix is the tool's alone: a caller op whose
+`person_evidence` rationale starts with it is refused before anything is read,
+on an update's `fields` as well as an append's `entry`. Without that boundary a
+caller writes its own way past both gates — the skip is sound only while the
+prefix means "the tool derived this".
+
+**Correcting a wrong link.** The holder set is the pre-call document's live
+links minus the ones this call retires — a `person_evidence` update setting
+`superseded_by`, a `rejected_links` append naming the pairing, **and** an
+assertion this call re-links to a different person, together with the rows that
+assertion derived. The first two are the routes the refusal advises, so
+following that advice works in the one call it is given in.
+
+**Step 6 of `person-evidence` is two calls, and both of them work.** Correcting
+a link the agent itself got wrong goes: append the replacement to get its `pe_`
+id, then update the old entry's `superseded_by` with it. The first call is a
+bare append, so the link being corrected is still live and still holds the
+entry — which is why an assertion re-linked elsewhere in the same call is struck
+from the holder set, along with the rows it derived. Without that, the entry
+rule refused the one route that fixes a wrong link, and neither way out the
+refusal offered was open to an agent: a rejection needs `researcher_words` that
+only the researcher can give (lead, 2026-10-20), and a supersede needs the
+replacement link that very call is trying to make.
+
+**A supersede onto a different person moves the rows the link derived.**
+Retiring only the entry named in the update would leave every row it produced on
+the old person — the same "one entry, one person" break the rule exists to stop,
+arrived at from the other side. So when an update's `superseded_by` names a link
+for a *different* `person_id`, each derived row of the retired trigger is retired
+too and pointed at the replacement's row for its own assertion, which the first
+call's expansion has already written. A supersede onto the **same** person is a
+correction of that link, not a move, and leaves the derived rows alone. No link
+is fabricated: `superseded_by` may only name a link for the same assertion, so a
+derived row with no replacement row to name is left live and named in a warning.
+
+**Re-pointing `person_id` on a link that derived rows is refused.** The entry
+rule governs appends, so an update that moves `person_id` walked around it,
+carrying the one fact across and stranding the derived rows. It is refused with
+the step-6 route named, since that route moves them. A re-point of a link that
+derived nothing is untouched — refusing every re-point would block legitimate
+correction.
+
+**A rejection retires what the rejected link derived.** The rule above is what
+makes this necessary: if a link claims the whole entry, then ruling that link out
+rules out the rows it produced. So a `rejected_links` append retires, on the same
+person, both the link naming that assertion **and** every derived row whose
+rationale names it as the trigger — matched on the rationale's
+`<prefix><assertion_id>:` form, whose trailing colon keeps `a_001` from matching
+`a_0011`. Each retired row's fact leaves the person's tree too, unless another
+source also cites it, the same as the rejected link's own fact. The same set is
+excluded from the holder count, so the one-call
+correction works on an entry that has already expanded. Without this, rejecting
+the original link leaves the derived facts on a person the researcher has just
+said they do not belong to, and the one-call correction the refusal advertises is
+itself refused, because the derived rows still hold the entry. Rejecting a
+*derived* pairing retires only that row: it rules out one fact, not the
+identification.
+
+**Scope.** The rule runs at write time, so a project written before it stays
+partly linked; nothing backfills. It reaches an entry only where one one-party
+fact is already linked. An entry reached solely through two-party links is not
+expanded, by the reasoning above — a rare shape: across the committed e2e final
+states, 11 (entry, person) pairs in 6 runs, holding 41 one-party facts. A
+two-party link usually sits on an entry whose own person already holds it
+through a one-party link of their own, and there nothing is unreached: the
+facts belong to that person and are already linked to them.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -2225,6 +2433,18 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 - **append-only enforced** — there is no delete op; an update never shrinks an array.
 - **camelCase→snake_case** — persisted entry uses snake_case keys.
 - **atomicity** — a validation failure leaves `research.json` byte-unchanged.
+- **entry-link expansion (§5.13)** — `research-append-entry-link.test.ts`, a
+  labelled case set per ADR-0011. Must-fire: an entry another person holds
+  through a one-party link refuses; a derived row a gate refuses is skipped and
+  reported, not raised. Must-not-fire: a two-party fact neither triggers nor is
+  produced; negative evidence is not part of an entry, in both the
+  `record_basis` and `record_role` spellings; an attachment-shaped link does not
+  expand; a two-party holder does not make the entry someone else's; a derived
+  row does not chain. Plus the positive arms — expansion, no score owed,
+  `move_bridge` inherited, and the key falling back to `record_role` when the
+  record named no persona. Every case was watched failing on a planted break
+  (the naive any-live-link reading, the `isTwoParty` filter removed, each half
+  of the `absent` filter removed, and expansion disabled outright), not assumed.
 - **composite create** — `sourceDescription` writes the `S` entry (shared `nextId`
   allocator), stamps the sources op, echoes `sourceDescriptionId`, writes both
   files tree-first with `atomicWriteBoth` (no `.bak`).
@@ -2237,6 +2457,12 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   supplied persona rejected; absence never errors.
 - **joint-write atomicity** — a research-side validation failure after the
   in-memory `S` creation leaves **both** files byte-unchanged, no `.bak`.
+- **locality collection counts** (§5.12) — a wrong count replaced with a warning;
+  a correct one kept silently; an id the catalog lacks, and every id on a failed
+  read (an error, a non-200 or the 20-second budget), nulled with a warning and the
+  write kept; a collection with no id nulled; a number id stored as a string; a spent
+  FamilySearch budget rethrown; an update stamped like an append;
+  a null loader and an internal `researchAppend` write left unstamped.
 - **place levers** — sidecar copy preferred over geocoding; `resolvedPlaces`
   echo; country-contradiction rejected; `standard_place: null` opt-out honored;
   `opsReceived` echoed on batch failures.
@@ -3635,18 +3861,96 @@ Lead rulings, 2026-10-19, 2026-10-20 and 2026-10-30.
 
 ### 11.9 Attaching waiting pages — a read page onto its record's source
 
-`extraction_append({ projectPath, attachWaitingPages: true })`, sent alone, for what
+`extraction_append({ projectPath, attachWaitingPages: true, pageReadings? })`, for what
 `project_context` lists in `waitingPages`. It takes no refs, so a caller cannot name
 the wrong page: code joins each source's `image_ark` to a logged or staged
 `image_transcribe` read and sets `transcription` and `image_filename` on the existing
-source. A page
-showing two held records fills both.
+source. A page showing two held records fills both. One write per source, so a
+refusal leaves the others kept. `ok` is false only when something waited or was sent
+and nothing was written. The result carries `attached`, `readings` (when
+`pageReadings` was sent), a `summary` naming each record and what its page said, and
+`records: []`.
 
-It writes no assertion and no log entry, and does not consume the page's file, so a
-record extracted later still finds the page, the same day for a staged one. Facts on the page stay as
-text. One write per page, so a refusal leaves the others kept. `ok` is false only
-when something waited and nothing was kept. The result carries `attached`, a
-`summary` naming each record, and `records: []`.
+**What the page says (lead rulings 2 and 9, 2026-11-05).** Every kept page gets
+one structuring pass: the router hands `waitingPages` to `record-structurer` in one
+spawn, and the agent reads each page against its record's index (`waitingPages[].index`)
+and sends only what the page **adds to** or **reads differently from** the index.
+Code never compares a page with its index: document roles do not line up with indexed
+roles, and code would be matching on the very name in doubt.
+
+```
+pageReadings: [{
+  sourceId: string,                  // a source waitingPages lists in this call
+  readings: [{                       // [] = the page confirms the index: nothing written for it
+    disputesAssertionId?: string,    // exactly one of these two: the index assertion read differently,
+    personAssertionId?: string,      //   or any assertion of the persona a new fact is about
+    type: string,                    // a disputing reading has the disputed assertion's fact type
+    value?: string, date?: string, place?: string,   // at least one
+    note?: string,                   // into informant_bias_notes, verbatim
+    researcherWords?: string,        // the researcher's own reading, verbatim; only with disputesAssertionId
+  }],
+}]
+```
+
+`pageReadings` is refused without `attachWaitingPages`. Every entry is checked before
+anything is written, and one bad entry refuses the call: an unknown key; a source named
+twice, unknown, or with no page waiting; an assertion id that is not live or is on
+another source; both ids or neither; a disputing `type` that is not the disputed
+assertion's (compared after the §3.7 alias fold); no `value`, `date` or `place`;
+`researcherWords` on a new fact.
+
+**A page already kept** takes only the researcher's own reading — every reading in its
+entry must carry `researcherWords`. A kept page stores no ref and, if it was kept before
+this change, was never logged, so a page reading would have nothing to cite. Pages kept
+between 2026-11-05, when keeping a page shipped, and this change get no structuring pass; this is the one
+exception to "every kept page", recorded in the PR.
+
+**What code writes for a reading**, on the page's source, in the same write that keeps
+the page:
+
+- `record_id`, `record_role` and `extracted_for_question_ids` from the named assertion.
+  **No `record_persona_id`**: the assertion cites an `image_transcribe` entry, which
+  carries no personas (D2, §3.5).
+- `fact_type` from `type`; `value` is the reading's `value`, else `date`, else `place`;
+  `date` and `place` are always kept when sent, as extraction keeps them, so a date-only reading carries `date` too; the `[?]` goes into `value` only.
+- The classification from the real classifier: the record's type and collection, read
+  from the record's index read (the source's log entry's sidecar; when that entry keeps
+  none, as an accepted hint's does not, the record is read again host-side), with the
+  persona's role and the fact (`classifyReading` in `record-extract.ts`, the row
+  `extractRecord` takes). Never a sibling assertion's. When the index cannot be read, the
+  source is refused whole and its page is not kept, so it keeps waiting.
+- `record_basis: "stated"`; `informant_bias_notes` is the row's own note, the agent's
+  `note`, and the researcher's words, joined.
+- A disputing reading carries `disputes_assertion_id` and a trailing `[?]` in its value.
+  The index assertion is never touched. A new fact carries no `[?]` unless the agent
+  wrote one.
+- `log_entry_id`: the page's `image_transcribe` entry. A staged page is logged once
+  when it has a reading, **with no `query`**, so the entry takes the read's own `ark`
+  from the staged payload and a record extracted later still finds the page. With no
+  readings nothing is logged and the page's file is left alone. A researcher's reading
+  is cited under its own `user_provided` entry instead, so it never collides with the
+  page's reading of the same fact (§3.4.3).
+
+**Documents mode refuses a held record's page.** A `documents` entry whose
+`transcriptionRef` is an `image_transcribe` read of an image a held record's source
+shows — the same join `waitingPages` makes, read from the staged payload's `query.ark`
+or the log entry's `query.ark` / `query.imageArk` — is refused naming
+`attachWaitingPages` with `pageReadings`, so the page never becomes a second source. A
+read whose ARK carries `i=` or `groupId` never joins and is never refused. A page
+documents mode itself logged carries `query: { recordId }` and no ARK; it is already its
+own source and is not seen by this check.
+
+**Re-extraction leaves a page's readings alone** (§11.6.1). A reading cites the page's
+`image_transcribe` entry or the researcher's `user_provided` one, never its source's own
+entry, and only the record's index assertions are retired. A dispute of a retired index
+assertion follows its `superseded_by` to the successor; nothing rewrites
+`disputes_assertion_id`.
+
+**A disputed value is doubtful (ruling 10)**: see the `person_evidence`, `conflicts`
+and `proof_summaries` rows of the §5 invariants table. No conflict opens for a page that
+disputes its own index: `unregisteredDisagreements` skips any pair inside one dispute
+group, because a conflict would hold every proof on that source at `not_proved`. A
+person or another record settles it.
 
 ## 12. `evaluation_append` — the second lane-scoped variant
 

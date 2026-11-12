@@ -8,7 +8,6 @@ import { configFromEnv, PER_USER_ENV } from "../../src/hosted-config-env.js";
 const VALID: Record<string, string> = {
   WEB_PUBLIC_URL: "https://beta.example",
   UPLOADS_ENABLED: "true",
-  TRANSCRIPTION_ENABLED: "true",
 };
 
 describe("configFromEnv", () => {
@@ -20,7 +19,6 @@ describe("configFromEnv", () => {
       OPENROUTER_MODEL: "a/model",
       WEB_PUBLIC_URL: "https://beta.example",
       UPLOADS_ENABLED: "true",
-      TRANSCRIPTION_ENABLED: "false",
       MATCHER_URL: "http://matcher:8765",
       MATCHER_API_KEY: "matcher-key",
     });
@@ -31,7 +29,6 @@ describe("configFromEnv", () => {
       openRouterModel: "a/model",
       webPublicUrl: "https://beta.example",
       uploadsEnabled: true,
-      transcriptionEnabled: false,
       matcher: "service",
       matcherUrl: "http://matcher:8765",
       matcherApiKey: "matcher-key",
@@ -39,15 +36,13 @@ describe("configFromEnv", () => {
   });
 
   it("reads a switch trimmed and in any case", () => {
-    const config = configFromEnv({ UPLOADS_ENABLED: " TRUE ", TRANSCRIPTION_ENABLED: "False" });
+    const config = configFromEnv({ UPLOADS_ENABLED: " TRUE " });
     expect(config.uploadsEnabled).toBe(true);
-    expect(config.transcriptionEnabled).toBe(false);
   });
 
   it("leaves a switch unset when its variable is empty, over the base's value", () => {
-    const config = configFromEnv({ UPLOADS_ENABLED: "", TRANSCRIPTION_ENABLED: "  " }, { uploadsEnabled: true });
+    const config = configFromEnv({ UPLOADS_ENABLED: "" }, { uploadsEnabled: true });
     expect(config.uploadsEnabled).toBe(true);
-    expect("transcriptionEnabled" in config).toBe(false);
   });
 
   it("trims WEB_PUBLIC_URL, and a blank one leaves the base's value", () => {
@@ -94,7 +89,6 @@ describe("configFromEnv", () => {
   );
 
   it.each(["off", "1", "yes", "on", "0"])("refuses a switch set to %j rather than guessing", (raw) => {
-    expect(() => configFromEnv({ TRANSCRIPTION_ENABLED: raw })).toThrow(/TRANSCRIPTION_ENABLED must be true or false/);
     expect(() => configFromEnv({ UPLOADS_ENABLED: raw })).toThrow(/UPLOADS_ENABLED must be true or false/);
   });
 
@@ -137,7 +131,6 @@ describe("configFromEnv", () => {
       "OPENROUTER_MODEL",
       "WEB_PUBLIC_URL",
       "UPLOADS_ENABLED",
-      "TRANSCRIPTION_ENABLED",
       "MATCHER_URL",
       "MATCHER_API_KEY",
     ]);
@@ -151,7 +144,6 @@ describe("configFromEnv", () => {
       "openRouterApiKey",
       "openRouterModel",
       "popStatsUrl",
-      "transcriptionEnabled",
       "uploadsEnabled",
       "webPublicUrl",
       "wikiApiUrl",

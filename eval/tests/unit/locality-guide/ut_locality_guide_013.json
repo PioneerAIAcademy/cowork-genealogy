@@ -41,7 +41,8 @@
     "place-population-any",
     "place-search-all-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Recognize Pennsylvania\u2019s Quaker communities in the late 1700s and mention meeting minutes, membership lists, marriage certificates, and burial records. Highlight repositories like Friends Historical Library, local meeting houses, and state archives. Note that Quaker records often substitute for civil registration. Avoid statewide vital registration and modern databases as if they existed in the 1700s.",

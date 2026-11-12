@@ -45,12 +45,14 @@ offer the next.
 ## One step per turn
 
 **A turn runs one step, then ends.** A step is one agent spawn or `Skill`
-call, plus the tool calls it needs and any repeat of the same step. After it
-returns:
+call, plus the tool calls it needs and any repeat of the same step. A bounded
+first message with no project runs init-project first, then its deliverable
+(§"Bounded request or job"). After it returns:
 
 1. report what that step found: relay everything after its final `---`
    verbatim, or its whole return when it has none or is from gps-mentor or
-   research-exhaustiveness;
+   research-exhaustiveness; from init-project in a bounded turn, leave out its
+   sentence naming the next step;
 2. end with **"Continue with `<label>`?"**, using the exact label below,
    then on the same line the project's `projectUrl` when a tool gave you one;
 3. end your turn.
@@ -196,14 +198,18 @@ person ID, go to `@plugin:search-images` with the message copied verbatim and no
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
-and `timeline_build({ projectPath, personId })`, and relay its `summary`. A transcription you deliver yourself: call
+and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. A transcription you deliver yourself: call
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
 `projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
 link. Only when `project_context` returns `reason: "no_project"`: one named image, called
 without `projectPath`, its `transcription` shown inline; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
-`@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. Do not walk the routing table from the top for one: that table
+`@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
+already holds, as `researcherReadings`, each `{ sourceId, assertionId, words }`, the user's words exactly. An image
+dropped into the chat cannot reach the tools. When `project_context` returned an `uploadUrl`,
+give the researcher that link; otherwise ask them to put the image in the project folder. Then
+read it by `file`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver this turn's deliverable, and stop: at least one hand-off
@@ -211,6 +217,20 @@ for it, since one deliverable can need two (a record found goes on through
 extraction), except a transcription, a records-request letter, a timeline for a
 person on an existing project and a status question (answered from
 `project_context`), which take no hand-off at all.
+
+**A bounded first message that names a FamilySearch person ID and finds no
+project**, for any deliverable but a research plan, spawns `@plugin:init-project`,
+then, in the same turn, the agent that owns the deliverable. Never
+`@plugin:question-selection` in that turn, and `@plugin:locality-guide` only when it
+owns the deliverable. A record ask needs no question or plan:
+`@plugin:search-records` runs the search the user named with `projectPath` and a
+`subject:` block whose `subjectId` is the tree id from `project_context`'s
+`subjectPersonIds`, never the FamilySearch ID. Relay init-project's report without
+its next-step sentence, then the deliverable's report, and end on the
+deliverable's "Continue with …?" line. A record search that finds nothing still
+ends on one: offer `@plugin:search-external-sites`, naming no site or collection
+that no tool returned, with "Continue with `running the searches`?". This paragraph does not apply to the
+record-set and transcription paths with no project.
 
 **Start from what is already attached.** Before routing to any search —
 on a bounded request or a job alike — when the project holds a FamilySearch
@@ -328,8 +348,8 @@ message.
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
    | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
-   | `project_context` lists **`waitingPages`** | `extraction_append({ projectPath, attachWaitingPages: true })`: one call, no hand-off. Then route again. |
-   | Objective but no questions | For each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`. Then `@plugin:question-selection`. Report each `timeline_build` `summary`, then the question. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
+   | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
+   | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). For each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`. Then `@plugin:question-selection`. Report each `timeline_build` `summary`, then the question. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
    | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item, routing to person-evidence, **or** invoking research-exhaustiveness | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until hypothesis-tracking has written the entry |

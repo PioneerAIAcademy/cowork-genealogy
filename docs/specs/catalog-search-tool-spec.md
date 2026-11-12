@@ -276,7 +276,6 @@ an error; the flag tells the agent its place filter is looser than it asked for.
     filmNotes?: [{                // one entry per reel (a dense reel is several), see below
       filmNumber?: string,        // legacy microfilm
       imageGroupNumber?: string,  // DGS — feeds image_search / fulltext_search
-      copyLocation?: string,
       text?: string,              // what the reel covers; several notes' texts joined with " | "
     }],
     filmNotesTotal?: number,      // only when filmNotes was cut short: how many entries the item has
@@ -296,25 +295,28 @@ A hit carries no item URL. The URL is the Catalog's item record, which answered
 401 without a sign-in token when probed on 2026-10-22, so neither an agent nor a
 person can open it. The tool uses it only to hydrate the hit, and `id` is its
 item segment. The item's `author` list is not carried either: no plugin body,
-validator or recorded fixture reads it.
+validator or recorded fixture reads it. Nor is a film note's `copy_location`:
+the hit's `repositoryCalls` names the same places ("Online", "FamilySearch
+Library", "Granite Mountain Record Vault"), so it only repeated them on every
+reel.
 
 ### Film notes: one entry per reel
 
 One reel can carry many film notes, each with its own `text` and the same
 numbers. The tool returns one entry per reel, and a dense reel as several.
 
-Film notes that agree on all three of `filmNumber`, `imageGroupNumber` and
-`copyLocation` are one reel, and become one entry. Their `text`
+Film notes that agree on both `filmNumber` and `imageGroupNumber` are one reel,
+and become one entry. Their `text`
 values are joined with `" | "`, in the order the Catalog gave them. A note with
 no text adds nothing, not even a separator. Entries come out in the order their
-reel first appeared. The three fields are every field of the tool's film-note
+reel first appeared. The two fields are every field of the tool's film-note
 table but `text`, so the reel key is derived from the one list the tool reads
 fields from, and a field added to that table becomes part of the key. The key is
-the three values written as JSON, so one field cannot run into the next: film
+the two values written as JSON, so one field cannot run into the next: film
 number `1` with image group `23` is not film number `12` with image group `3`.
 
 A reel whose joined text would pass 2,000 characters is several entries in a
-row. Each carries the reel's three fields and a run of whole note texts, joined
+row. Each carries the reel's two fields and a run of whole note texts, joined
 the same way and in the same order, and a run is closed when the next note would
 take it past 2,000. A note is never cut in two, so a note longer than that stands
 alone. The point is the size budget below: a reel merged into one entry cannot be
@@ -324,11 +326,14 @@ dense reel can still be listed when all of it cannot, and large enough that an
 ordinary reel stays one entry. The entries of a reel sit together, and a reel's
 next entry is its next run.
 
-Nothing is lost. Every text is kept, once. Notes that differ in any one of the
-three fields stay apart, and so does a note that lacks a field another has. The
-same reel held in two places is therefore two entries. That matters because the
-plugin reads `copyLocation` and `imageGroupNumber` off each entry as a fact
-about one reel, and a merge across a difference would give an entry that says
+Nothing is lost. Every distinct text is kept, once: a text the reel already has
+is not joined again. Notes that differ in either field stay apart, and so does a
+note that lacks a field another has. The same reel held in two places (the
+vault and the library) is one entry, since the copy location is no longer
+carried; its two copies carry the same notes, so without that rule each text
+would appear twice. Keeping reels apart
+matters because the plugin reads `filmNumber` and `imageGroupNumber` off each
+entry as a fact about one reel, and a merge across a difference would give an entry that says
 something no note said. Splitting the joined `text` of the entries of a reel
 back into its notes is exact while no note text contains the separator. None did
 in the answers that `packages/engine/mcp-server/dev/try-catalog-search.ts` saved
@@ -767,13 +772,13 @@ readers and every access uses one of them:
 | an item landing exactly on the deadline is discarded | the expiry timer fires AT the deadline, so `>` let it write after the race settled |
 | the 403 does not state its cause as fact | a 403 cannot be told from a missing entitlement, which waiting never clears |
 | `parseUpstreamErrorBody` falls through to `detail` when `errors` yields nothing | present-but-unusable is not absent |
-| every film-note field maps to its own key, and `shelf`, `imageStartNumber` and `indexed` are not carried | the four fields are one table read once each, where seven near-identical spreads let a mistyped repeat go unseen; the three dropped fields stay dropped, as the service sends them |
+| every film-note field maps to its own key, and `shelf`, `imageStartNumber`, `indexed` and `copyLocation` are not carried | the three fields are one table read once each, where seven near-identical spreads let a mistyped repeat go unseen; the dropped fields stay dropped, as the service sends them |
 | hydration reads none of `shelf`, `item_image_start_no` and `fs_indexed` when the service sends them, and a note with nothing but `shelf` and `item_image_start_no` is no entry | a field added to the table by mistake would otherwise reach the entry only through the reel key; a note of `{}` claims the item was filmed while naming neither the film nor the DGS |
 | `hydrateRequested` is echoed | with the defaults 15 of 25 hits are `hydrated: false` purely for sitting past the window |
 | place resolution eating the budget names the place | otherwise a bare `timed out after 0ms` quoting the query URL |
 | a 400 carries the Catalog's own `detail` | the service says which parameter it rejected; discarding it left the agent retrying the same query |
 | notes on one reel become one entry, texts joined with `" \| "` in the order given; a note with no text adds no separator, and a reel with no text has no `text` key | the merge rule, and a stray separator or an empty `text` |
-| two notes that differ only in `filmno`, `digital_film_no` or `copy_location` stay apart, and so does a note missing a field the other has | a merge across a difference gives an entry that says something no note said; the same reel held in two places must stay two entries, because the plugin reads `copyLocation` off each |
+| two notes that differ only in `filmno` or `digital_film_no` stay apart, and so does a note missing a field the other has; two that differ only in `copy_location` are one entry with no `copyLocation` | a merge across a difference gives an entry that says something no note said; the copy location is not carried, so one reel held in two places is one reel |
 | the reel key is every field of the film-note table but `text`, looped over the table: a note differing only in one of them is a second entry, and every field of the table is on the entry | a field added to the table is a field the key and the entry carry, with no second list to forget |
 | the reel key cannot run one field into the next: film number `1` with image group `23` is not `12` with `3`, for every adjacent pair of key fields | the key as a plain join passed every other test |
 | a field that is absent and a field never set are the same reel | the key writes an absent field the same way whichever way it is absent |

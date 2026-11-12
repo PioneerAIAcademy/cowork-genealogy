@@ -49,7 +49,13 @@ BUILD_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+\+(dev|\d{4}-\d{2}-\d{2}\.[0-9a-f]
 COMMON_REQUIRED = ("Procfile", "BUILD-INFO.json", "certs/rds-global-bundle.pem")
 REQUIRED = {
     "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "web/feedback.py",
-                              "web/blobstore.py", "web/pages.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py",
+                              "web/blobstore.py", "web/pages.py",
+                              "web/static/pdfjs/pdf.min.mjs", "web/static/pdfjs/pdf.worker.min.mjs",
+                              "web/static/pdfjs/LICENSE",
+                              # #4448: one representative cmap file, not all 168.
+                              "web/static/pdfjs/cmaps/Adobe-Japan1-UCS2.bcmap",
+                              "web/static/pdfjs/cmaps/LICENSE",
+                              "enqueue.py", "grants.py", "turn_message.py", "migrate.py",
                               "pg_credentials.py", "config/familysearch.json",
                               "web-dist/index.html",
                               # Missing, nginx falls back to 8 KB header lines and a patron's

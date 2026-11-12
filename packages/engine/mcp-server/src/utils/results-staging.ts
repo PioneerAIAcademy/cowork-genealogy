@@ -449,12 +449,9 @@ export async function readStagedEnvelopeQuery(
  * UNLOGGED_SEARCHES_NOTE to find both copies when editing either.
  */
 export const UNLOGGED_SEARCHES_NOTE =
-  "{n} earlier staged search response(s) in this project have no research.json log " +
-  "entry: {refs}. Call `research_log_append` for each, passing that ref as " +
-  "`stagedResultsRef` — the staged file holds the search's own query, so the entry " +
-  "is filled in host-side and needs no reconstruction from memory. Log each as you " +
-  "go rather than batching them at the end. A search with no log entry is a search " +
-  "that did not happen, and the staged response is deleted 24h after it was made.";
+  "{n} earlier staged search(es) have no log entry: {refs}. Log each now: " +
+  "`research_log_append` with that ref as `stagedResultsRef`. An unlogged staged " +
+  "search is deleted 24h after it ran.";
 
 /** How many refs the note names before it summarises the remainder. */
 const UNLOGGED_REFS_SHOWN = 5;
@@ -530,6 +527,10 @@ export const NIL_SEARCH_NEEDS_LOG_NOTE =
  * obligation satisfiable from the store, and `research_log_append` then fills
  * `query` from the staged payload verbatim.
  *
+ * **Scoped to the caller's tool.** Only files `tool` staged are listed, so a
+ * search-records agent is never told to log a search a parallel
+ * search-full-text agent made, and the reverse.
+ *
  * Never throws, and returns an empty array on any failure — a missing project,
  * unreadable research.json, corrupt envelope. This runs inside a successful search;
  * a project-state read that cannot complete must not turn that search into an error
@@ -545,6 +546,7 @@ export interface UnloggedStagedSearch {
 
 export async function unloggedStagedSearches(
   projectPath: string,
+  tool: string,
 ): Promise<UnloggedStagedSearch[]> {
   // An explicit `projectPath: null` reaches here: all three callers gate on
   // `!== undefined`, and `join(null, …)` is a raw TypeError, which would turn an
@@ -576,11 +578,12 @@ export async function unloggedStagedSearches(
       // legacy `external_links_search` file (that tool stopped staging in #2995)
       // can no longer pair, so either would nag until the TTL.
       if (typeof envelope.tool === "string" && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
+      if (envelope.tool !== tool) continue;
       const parsed = Date.parse(envelope.retrieved);
       const fallback = Number.isNaN(parsed);
       staged.push({
         ref,
-        tool: typeof envelope.tool === "string" ? envelope.tool : "",
+        tool,
         // mtime is the fallback for an envelope whose `retrieved` is missing or
         // unparseable: it is the same clock, one write later.
         retrieved: fallback ? entry.mtimeMs : parsed,

@@ -26,6 +26,9 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
                                                 only with the chat off (#3993); 404 with it on
   GET  /           onboarding signed out, account and projects signed in; chat off only (#4001)
+  GET  /upload/{project_id}, /pdfjs/{name}, /pdfjs/cmaps/{name}
+                   the upload page (UPLOADS_ENABLED), the pdf.js it loads, and the character
+                   maps a CID-keyed CJK font needs for text extraction; chat off (#4001, #4448)
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
                                                 with OPENROUTER_LINKING_ENABLED=true; cookie needed)
@@ -126,7 +129,9 @@ from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse,
+)
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from starlette.datastructures import MutableHeaders
 from starlette.routing import get_route_path
@@ -134,6 +139,27 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
+# #4001: the vendored pdf.js the upload page loads (static/pdfjs/README.md), served by name
+# from this fixed set only, so no path a request carries reaches the filesystem.
+PDFJS_DIR = HERE / "static" / "pdfjs"
+PDFJS_FILES = frozenset({"pdf.min.mjs", "pdf.worker.min.mjs"})
+# #4448: the vendored character maps a CID font with no /ToUnicode table needs for text
+# extraction. Built once from the *.bcmap names on disk -- never LICENSE, which stays
+# unservable here exactly as the top-level static/pdfjs/LICENSE already is at /pdfjs/LICENSE.
+PDFJS_CMAPS_DIR = PDFJS_DIR / "cmaps"
+PDFJS_CMAP_FILES = frozenset(p.name for p in PDFJS_CMAPS_DIR.glob("*.bcmap"))
+
+
+def _serve_allowlisted(dir_: Path, allowed: frozenset[str], name: str, media_type: str) -> Response:
+    """Serve ``dir_ / name`` when ``name`` is in ``allowed``, else 404 -- membership is
+    checked before any path is built, so a name outside the allow-list never reaches the
+    filesystem. Shared by every ``/pdfjs/...`` route; a {name} path parameter never matches
+    a request carrying a '/'."""
+    if name not in allowed:
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(dir_ / name, media_type=media_type, headers={"Cache-Control": "public, max-age=3600"})
+
+
 SQL_DIR = PROTO_DIR / "sql"
 # enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
@@ -153,6 +179,9 @@ from web import feedback  # noqa: E402  (U20: the feedback bundle)
 from web import pages  # noqa: E402  (#4001: the chat-off tier's own pages)
 from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
+
+# The minted project-id shape (auth.PROJECT_ID_PATTERN), the only one the upload page takes.
+UPLOAD_PAGE_ID_RE = re.compile(auth.PROJECT_ID_PATTERN)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
     IMAGE_REF_RE,
@@ -196,6 +225,15 @@ WEB_TABLES = ("sessions", "projects", "turns", "session_events", "session_seq", 
               "session_entries", "tool_calls", "documents", "blobs", "staging", "users",
               "allowed_emails", "familysearch_tokens")
 WEB_FUNCTIONS = ("next_session_seq(text)",)
+# PgStore.delete_session's deletes, which malachi's user_admin.py runs too to delete a
+# user. A session's rows: one of grants.SESSION_TABLES, then `sessions` itself.
+SESSION_ROW_DELETE_SQL = "DELETE FROM {table} WHERE session_id = %s"
+# A project's own rows, in this order, `projects` last. Each goes only once no session opens
+# the project: a project another session still opens keeps its owner.
+PROJECT_TABLES = ("documents", "blobs", "staging", "projects")
+PROJECT_ROW_DELETE_SQL = (
+    "DELETE FROM {table} WHERE project_id = %s AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = %s)"
+)
 READY_SQL = (
     "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
     "UNION ALL SELECT f FROM unnest(%s::text[]) f WHERE to_regprocedure(f) IS NULL"
@@ -1186,22 +1224,19 @@ class PgStore:
                 if (await cur.fetchone())["live"]:
                     raise SessionBusy(session_id)
                 for table in grants.SESSION_TABLES:
-                    await conn.execute(f"DELETE FROM {table} WHERE session_id = %s", (session_id,))  # noqa: S608 - fixed names
+                    await conn.execute(SESSION_ROW_DELETE_SQL.format(table=table), (session_id,))
                 # The transcript is keyed by the SDK session id (004), not this one, and a
                 # subagent's rows share it under a `subagents/...` subpath: this removes
                 # exactly what the spend meter (worker SESSION_USAGE_SQL) counts.
                 await conn.execute(grants.TRANSCRIPT_DELETE_SQL,
                                    (grants.transcript_ids(session_id, row["sdk_session_id"]),))
-                await conn.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
+                await conn.execute(SESSION_ROW_DELETE_SQL.format(table="sessions"), (session_id,))
                 # The project goes only with its LAST session. A project another session
                 # still opens must keep its documents -- and must keep its projects row,
                 # or its owner is gone and the next dev-login create could claim it.
-                for table in ("documents", "blobs", "staging", "projects"):
-                    await conn.execute(
-                        f"DELETE FROM {table} WHERE project_id = %s "  # noqa: S608 - fixed names
-                        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = %s)",
-                        (row["project_id"], row["project_id"]),
-                    )
+                for table in PROJECT_TABLES:
+                    await conn.execute(PROJECT_ROW_DELETE_SQL.format(table=table),
+                                       (row["project_id"], row["project_id"]))
         return True
 
     async def list_projects(self, owner_id: str) -> list[dict[str, Any]]:
@@ -3149,6 +3184,14 @@ def create_app(
     # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
 
+    def _refused_page(exc: SessionRefused, up: str = "") -> HTMLResponse:
+        """A refused session's page on ``/`` and ``/upload/<id>`` (``up="../"``): its
+        reason's wording, naming the account, and never the account data."""
+        _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
+        message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
+        return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready", up=up),
+                            status_code=exc.status_code)
+
     @beta.api_route("/", methods=["GET", "HEAD"])
     async def home(request: Request) -> HTMLResponse:
         """#4001: onboarding signed out, the account and projects signed in. Registered before
@@ -3159,10 +3202,7 @@ def create_app(
         try:
             user = await current_user(request)
         except SessionRefused as exc:
-            _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
-            message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
-            return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready"),
-                                status_code=exc.status_code)
+            return _refused_page(exc)
         except HTTPException as exc:
             if exc.status_code != 401:
                 raise
@@ -3170,11 +3210,64 @@ def create_app(
                        else "dev" if auth.dev_login_enabled() else None)
             return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
         linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
+        projects = await _store(request).list_projects(user.id)
+        # Upload links only where the page answers: uploads on and a minted id (a seeded
+        # or demo id would link to a 404).
+        uploadable = (frozenset(p["id"] for p in projects if UPLOAD_PAGE_ID_RE.fullmatch(str(p["id"])))
+                      if app.state.uploads is True else frozenset())
         return HTMLResponse(pages.signed_in_page(
             public_url=auth.public_url(), email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
-            deletion_code=auth.deletion_code(user.id), projects=await _store(request).list_projects(user.id),
-            openrouter_linked=linked,
+            deletion_code=auth.deletion_code(user.id), projects=projects,
+            openrouter_linked=linked, uploadable=uploadable,
         ))
+
+    @beta.api_route("/upload/{project_id}", methods=["GET", "HEAD"])
+    async def upload_page(project_id: str, request: Request) -> Response:
+        """#4001: the upload page for one project. pdf.js reads a PDF's text layer in the
+        browser and sends it beside the file to ``POST /api/projects/{id}/files``.
+
+        404 while ``UPLOADS_ENABLED`` is not true (the route it posts to answers 404 too),
+        and for an id outside ``UPLOAD_PAGE_ID_RE``, both before any cookie is read. Signed
+        out, the browser goes to FamilySearch sign-in with ``next=upload/<id>`` and comes back
+        here (``auth.SAFE_NEXT_RE``); with FamilySearch off, to ``/``. A missing project and
+        someone else's get the same 404 page."""
+        if app.state.uploads is not True or not UPLOAD_PAGE_ID_RE.fullmatch(project_id):
+            return HTMLResponse(pages.not_found_page(), status_code=404)
+        try:
+            user = await current_user(request)
+        except SessionRefused as exc:
+            return _refused_page(exc, up="../")
+        except HTTPException as exc:
+            if exc.status_code != 401:
+                raise
+            base = app.state.base_path
+            if auth.familysearch_configured():
+                return RedirectResponse(f"{base}/auth/familysearch/login?next=upload/{project_id}", status_code=303)
+            return RedirectResponse(f"{base}/", status_code=303)
+        # One project's owner, then its research.json for the label: missing, foreign and
+        # NULL-owner ids miss alike, without listing every project the user has.
+        store = _store(request)
+        if await store.project_owner(project_id) != user.id:
+            return HTMLResponse(pages.not_found_page(), status_code=404)
+        research = (await store.documents(project_id, ("research.json",))).get("research.json", (0, None))[1]
+        return HTMLResponse(pages.upload_page(project_id=project_id, label=project_label(research)))
+
+    @beta.api_route("/pdfjs/{name}", methods=["GET", "HEAD"])
+    async def pdfjs_file(name: str) -> Response:
+        """#4001: the vendored pdf.js, from the tier and never a CDN; chat off only, like the
+        page that loads it. Only the two names in PDFJS_FILES; anything else is a 404.
+
+        Not under ``/static/``: Beanstalk's Python platform has its nginx answer ``/static/``
+        from the bundle's own ``static/`` folder, so the request would never reach the tier
+        (eb-web/README.md)."""
+        return _serve_allowlisted(PDFJS_DIR, PDFJS_FILES, name, "text/javascript")
+
+    @beta.api_route("/pdfjs/cmaps/{name}", methods=["GET", "HEAD"])
+    async def pdfjs_cmap_file(name: str) -> Response:
+        """#4448: the vendored pdf.js character maps textLayer() resolves through cMapUrl.
+        Only names in PDFJS_CMAP_FILES (the *.bcmap files on disk); anything else, including
+        LICENSE, is a 404."""
+        return _serve_allowlisted(PDFJS_CMAPS_DIR, PDFJS_CMAP_FILES, name, "application/octet-stream")
 
     @beta.get("/privacy")
     async def privacy_page() -> HTMLResponse:

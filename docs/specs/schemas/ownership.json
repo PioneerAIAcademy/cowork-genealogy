@@ -786,7 +786,8 @@
       "callers": [
         "agent:init-project",
         "agent:tree-edit",
-        "agent:proof-conclusion"
+        "agent:proof-conclusion",
+        "skill:forget-and-rederive"
       ],
       "agentCallers": [
         {
@@ -828,7 +829,8 @@
         "research_append",
         "extraction_append",
         "tree_edit",
-        "tree_correct"
+        "tree_correct",
+        "tree_forget"
       ],
       "enforceableAt": [
         "unit"
