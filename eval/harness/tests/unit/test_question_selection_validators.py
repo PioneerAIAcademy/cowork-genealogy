@@ -534,13 +534,18 @@ def test_no_carve_out_still_fires_on_a_record_name():
         )
 
 
-def test_will_pattern_does_not_flag_the_modal_verb():
-    """Pins the `(?!\\s+be\\b)` fix (ut_question_selection_007's flaky run-0
-    fail): "her will be planned" is the modal auxiliary (her [searches] will
-    be planned), not "her will" the legal document, and must not fire."""
+@pytest.mark.parametrize("sentence", [
+    "Searches for her will be planned next.",
+    "The search for her will begin by working from the household Thomas Flynn headed.",
+    "The search for their will need the 1850 household first.",
+])
+def test_will_pattern_does_not_flag_the_modal_verb(sentence):
+    """Pins `_MODAL_VERB_AFTER` (ut_question_selection_007's run-0 fails): "her
+    will be planned" and "her will begin" are the modal auxiliary, not "her
+    will" the legal document, and must not fire."""
     reply = _reply(
         "**Next step:** plan research for this question.",
-        "Searches for her will be planned next.",
+        sentence,
     )
     check_handback(
         before_state=_before(),
@@ -550,12 +555,17 @@ def test_will_pattern_does_not_flag_the_modal_verb():
     )
 
 
-def test_will_pattern_still_flags_the_document_noun():
+@pytest.mark.parametrize("sentence", [
+    "Her will names her surviving children.",
+    "Search his will for the children's names.",
+    "Their will, dated 1870, names the heirs.",
+])
+def test_will_pattern_still_flags_the_document_noun(sentence):
     """The pattern must still catch the actual document: "her will" as a
-    noun, not followed by "be", is unaffected by the modal-verb carve-out."""
+    noun, not followed by a base verb, is unaffected by the modal carve-out."""
     reply = _reply(
         "**Next step:** plan research for this question.",
-        "Her will names her surviving children.",
+        sentence,
     )
     with pytest.raises(AssertionError, match="names a record"):
         check_handback(
