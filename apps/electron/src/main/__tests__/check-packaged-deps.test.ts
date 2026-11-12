@@ -24,7 +24,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, copyFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import asar from '@electron/asar'
+import * as asar from '@electron/asar'
 import { packageNameFromEntry, normaliseEntry } from '../../../scripts/check-packaged-deps.mjs'
 
 const APP_ROOT = process.cwd()
