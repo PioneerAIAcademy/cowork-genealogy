@@ -303,7 +303,7 @@ the user changed assertions/links since you last saw them — use
   existing links for every candidate person, when checking for revisions.
 
 A list takes at most 50 ids, and only one filter per call may be a list. While
-`truncated` is true, re-query with `offset` at 50, then 100, until you hold
+`truncated` is true, call again with `offset: nextOffset` until you hold
 `count` items.
 
 **Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.

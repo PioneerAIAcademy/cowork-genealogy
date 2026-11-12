@@ -1646,8 +1646,9 @@ The principle, from `project-context-tool-spec.md`: the writer tools removed
 JSON to think." **Never design a flow that hands the LLM a large document to
 edit and re-emit.**
 
-> **Today:** `research_query` returns 50 items per call with a `truncated` flag
-> and an `offset` parameter for paging past 50, and covers
+> **Today:** `research_query` returns a page per call (at most 50 items, and
+> within the 40,000-character tool-result budget) with a `truncated` flag and a
+> `nextOffset` to pass back as `offset`, and covers
 > **14 of the 17** `research.json` sections — missing `project`,
 > `researcher_profile`, and `warning_justifications`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,

@@ -34,7 +34,11 @@ import { unregisteredDisagreements, type UnregisteredDisagreement } from "../uti
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 
+/** The most items one page holds, and the most ids one list filter takes. A page
+ *  also stops short of it when the whole answer would pass
+ *  TOOL_RESULT_CHAR_BUDGET (see `pageAt`). */
 const MAX_ITEMS = 50;
 
 export const RESEARCH_QUERY_SECTIONS = [
@@ -129,8 +133,8 @@ export interface ResearchQueryInput {
   place?: string;
   /** external_collections: case-insensitive substring of a row's record type. */
   recordType?: string;
-  /** Pagination, not a filter: skip the first `offset` matches, then return up
-   *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
+  /** Pagination, not a filter: the start of the page to return, 0 or a
+   *  previous page's `nextOffset`. Applies to every section; absent ⇒ 0. */
   offset?: number;
   /** assertions only: also return the ones a re-extraction retired (#3678). */
   includeSuperseded?: boolean;
@@ -140,13 +144,15 @@ export type ResearchQueryResult =
   | {
       ok: true;
       section: ResearchQuerySection;
-      /** Total matches (before the MAX_ITEMS cap and any `offset`). */
+      /** Total matches (before paging and any `offset`). */
       count: number;
       items: any[];
       /** true when matches remain *beyond this page* (`count > offset +
-       *  items.length`) — page with `offset` (or narrow the filter) rather than
-       *  relying on this being everything. */
+       *  items.length`) — page with `offset: nextOffset` (or narrow the filter)
+       *  rather than relying on this being everything. */
       truncated: boolean;
+      /** Present only when `truncated`: the `offset` of the next page. */
+      nextOffset?: number;
       /** List calls only: `{id: n}` for every requested id, zeros included,
        *  over the whole match set (identical on every page). On a contains-mode
        *  section an item naming two ids counts under both, so the values can
@@ -540,6 +546,67 @@ export function disagreementsInScope(
     : found.filter((d) => assertionIds.some((id) => d.assertionIds.includes(id)));
 }
 
+type OkPage = Extract<ResearchQueryResult, { ok: true }>;
+
+/** The whole answer for items `[start, end)` of the matches, as returned. */
+type RenderPage = (start: number, end: number) => OkPage;
+
+function fitsBudget(page: OkPage): boolean {
+  return JSON.stringify(page).length <= TOOL_RESULT_CHAR_BUDGET;
+}
+
+/** Where the page starting at `start` ends: the most items, up to MAX_ITEMS,
+ *  whose whole answer fits TOOL_RESULT_CHAR_BUDGET, and never fewer than one.
+ *  The window end is tried first: below it the answer only grows with each
+ *  item, so the search is sound there, while at the last match dropping
+ *  `truncated`/`nextOffset` can make a longer page the smaller one. */
+function pageEnd(start: number, count: number, render: RenderPage): number {
+  const last = Math.min(start + MAX_ITEMS, count);
+  if (fitsBudget(render(start, last))) return last;
+  let best = start + 1;
+  let lo = start + 2;
+  let hi = last - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (fitsBudget(render(start, mid))) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
+
+/** The page of `count` matches at `offset`. Pages are cut greedily from 0, so
+ *  an `offset` is either a page start or refused naming the one at or below
+ *  it: a caller stepping by 50 after a short page would otherwise skip items.
+ *  Past the end is an empty page only when every page but the last is full,
+ *  so no step-by-50 caller can have stepped over a short one. */
+function pageAt(count: number, offset: number, render: RenderPage): OkPage {
+  let start = 0;
+  let allFull = true;
+  while (start < count) {
+    const end = pageEnd(start, count, render);
+    if (offset === start) return render(start, end);
+    if (offset < end) throw new ResearchQueryError(notAPageStart(offset, start));
+    if (end < count && end - start < MAX_ITEMS) allFull = false;
+    if (end >= count && !allFull) throw new ResearchQueryError(notAPageStart(offset, start));
+    start = end;
+  }
+  return render(offset, offset);
+}
+
+function notAPageStart(offset: number, start: number): string {
+  return (
+    `offset ${offset} is not where a page of this answer starts; pages hold up to ${MAX_ITEMS} items ` +
+    `and stop short when the answer would pass ${TOOL_RESULT_CHAR_BUDGET} characters. The page ` +
+    `at or below it starts at offset ${start}: call again with offset: ${start}. That page may ` +
+    `hold items you already have; match them by id rather than counting them twice. While ` +
+    `truncated is true, page with offset: nextOffset.`
+  );
+}
+
 export async function researchQuery(input: ResearchQueryInput): Promise<ResearchQueryResult> {
   const { projectPath, section } = input;
 
@@ -645,14 +712,14 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
             )
         : [];
       const hits = rows.filter((item) => activeFilters.every(({ rule, values }) => matches(item, rule, values)));
-      const from = input.offset ?? 0;
-      return {
+      return pageAt(hits.length, input.offset ?? 0, (start, end) => ({
         ok: true,
         section,
         count: hits.length,
-        items: hits.slice(from, from + MAX_ITEMS),
-        truncated: hits.length > from + MAX_ITEMS,
-      };
+        items: hits.slice(start, end),
+        truncated: end < hits.length,
+        ...(end < hits.length ? { nextOffset: end } : {}),
+      }));
     }
 
     const research = await readJson(projectPath, "research.json");
@@ -751,40 +818,47 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       ordered = ranked.map((r) => r.link);
     }
 
-    const start = input.offset ?? 0;
-    const page: Extract<ResearchQueryResult, { ok: true }> = {
-      ok: true as const,
-      section,
-      count: ordered.length,
-      items: projectItems(section, ordered.slice(start, start + MAX_ITEMS)),
-      truncated: ordered.length > start + MAX_ITEMS,
-    };
-    // Reasons for the links on this page only.
-    const reviewReasons = Object.fromEntries(
-      (ranked ?? [])
-        .slice(start, start + MAX_ITEMS)
-        .filter((r) => r.reasons.length > 0)
-        .map((r) => [r.id, r.reasons]),
-    );
-    if (Object.keys(reviewReasons).length > 0) page.reviewReasons = reviewReasons;
     // Per id over the whole match set, so a page answers "0 means none" for
     // every id it was asked about, not only for the ids its items carry.
-    if (listFilter) {
-      const { rule, values } = listFilter;
-      page.countById = Object.fromEntries(
-        values.map((id) => [id, ordered.filter((item) => matches(item, rule, [id])).length]),
+    const countById = listFilter
+      ? Object.fromEntries(
+          listFilter.values.map((id) => [id, ordered.filter((item) => matches(item, listFilter.rule, [id])).length]),
+        )
+      : undefined;
+    // Over the whole set too, and computed before paging: every page carries
+    // it, so every page's size counts it.
+    let unregistered: UnregisteredDisagreement[] | undefined;
+    if (section === "conflicts" && (input.status === undefined || input.status === "unresolved")) {
+      // A conflictId read is scoped to that conflict's own competing assertions.
+      const assertionIds =
+        activeFilters.find((f) => f.key === "assertionId")?.values ??
+        (activeFilters.some((f) => f.key === "conflictId")
+          ? ordered.flatMap((c: any) => (Array.isArray(c?.competing_assertion_ids) ? c.competing_assertion_ids : []))
+          : undefined);
+      unregistered = disagreementsInScope(research, input, assertionIds);
+    }
+
+    return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
+      const page: OkPage = {
+        ok: true as const,
+        section,
+        count: ordered.length,
+        items: projectItems(section, ordered.slice(start, end)),
+        truncated: end < ordered.length,
+      };
+      if (page.truncated) page.nextOffset = end;
+      // Reasons for the links on this page only.
+      const reviewReasons = Object.fromEntries(
+        (ranked ?? [])
+          .slice(start, end)
+          .filter((r) => r.reasons.length > 0)
+          .map((r) => [r.id, r.reasons]),
       );
-    }
-    if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
+      if (Object.keys(reviewReasons).length > 0) page.reviewReasons = reviewReasons;
+      if (countById) page.countById = countById;
+      if (unregistered) page.unregisteredDisagreements = unregistered;
       return page;
-    }
-    // A conflictId read is scoped to that conflict's own competing assertions.
-    const assertionIds =
-      activeFilters.find((f) => f.key === "assertionId")?.values ??
-      (activeFilters.some((f) => f.key === "conflictId")
-        ? ordered.flatMap((c: any) => (Array.isArray(c?.competing_assertion_ids) ? c.competing_assertion_ids : []))
-        : undefined);
-    return { ...page, unregisteredDisagreements: disagreementsInScope(research, input, assertionIds) };
+    });
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
@@ -804,9 +878,10 @@ export const researchQuerySchema = {
     "\n" +
     "Pick `section` and, optionally, the well-known filter fields that section " +
     "supports (below) — passing a filter a section doesn't support is an error, not " +
-    "a silent no-op. Omit all filters to get the whole section (50 items per call; " +
-    "check `truncated`, then either narrow the filter or page with `offset` to fetch " +
-    "items 51+).\n" +
+    "a silent no-op. Omit all filters to get the whole section, a page at a time: " +
+    "a page holds up to 50 items and stops short when the answer would pass 40,000 " +
+    "characters. Check `truncated`, then either narrow the filter or page with " +
+    "`offset: nextOffset`.\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
     "(questionId, status), `log` (planItemId, questionId — every entry for any plan item " +
@@ -833,10 +908,11 @@ export const researchQuerySchema = {
     "`personId`, `assertionId`, `sourceId`, `recordId` and `conflictId` also take a list (≤50 ids): one call " +
     "returns items matching any, plus `countById` per id.\n" +
     "\n" +
-    "Returns `{ section, count, items, truncated }` — `count` is the total match " +
-    "count before the 50-item page cap and any `offset`; `truncated` is true when " +
-    "matches remain beyond the returned page, so advance `offset` by items.length " +
-    "and call again until it is false. `items` is camelCase-untouched (the " +
+    "Returns `{ section, count, items, truncated, nextOffset? }` — `count` is the total " +
+    "match count before paging and any `offset`; `truncated` is true when matches remain " +
+    "beyond the returned page. While `truncated` is true, call again with " +
+    "`offset: nextOffset`. An `offset` that is not where a page starts is refused, naming " +
+    "the one to use. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
     "projection, not a persisted document, with two omissions. An item of a plan " +
     "that is not active (superseded or completed) carries no `rationale`, except " +
@@ -934,10 +1010,11 @@ export const researchQuerySchema = {
       offset: {
         type: "number",
         description:
-          "Pagination (not a filter): 0-based index of the first match to return — " +
-          "skips that many, then returns up to 50. Default 0. When `truncated` is " +
-          "true, fetch items 51+ by setting offset to 50, then 100, and so on. " +
-          "Must be a non-negative whole number.",
+          "Pagination (not a filter): where the page starts. Default 0. When " +
+          "`truncated` is true, call again with the response's `nextOffset` here. A " +
+          "page holds up to 50 items, fewer when the answer would pass 40,000 " +
+          "characters, so do not step by 50: a value that is not a page start is " +
+          "refused. Must be a non-negative whole number.",
       },
       includeSuperseded: {
         type: "boolean",

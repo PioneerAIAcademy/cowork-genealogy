@@ -148,10 +148,15 @@ class Stub:
         if self.mode != "serves-staged-ref":
             items = [{k: v for k, v in e.items() if k != "staged_ref"} for e in items]
         offset = args.get("offset", 0)
-        page = items[offset:offset + 1] if self.mode == "tiny-pages" else items[offset:offset + 50]
+        # The new modes page short only on the replacement call; the walk calls
+        # each build answers must stay comparable.
+        one = self.mode == "tiny-pages" or (self.mode in ("next-offset", "stuck") and "questionId" in args)
+        page = items[offset:offset + 1] if one else items[offset:offset + 50]
         count = len(items) if self.mode != "drop-one" else len(items) + 1
         body = {"ok": True, "section": "log", "count": count, "items": page,
                 "truncated": offset + len(page) < len(items)}
+        if self.mode in ("next-offset", "stuck") and body["truncated"]:
+            body["nextOffset"] = offset + len(page) if self.mode == "next-offset" else offset
         if self.mode == "duplicate" and "questionId" in args:
             body["items"] = page + page[:1]
         return [{"type": "text", "text": json.dumps(body)}], False
@@ -179,6 +184,28 @@ def test_a_correct_replacement_collapses_the_walk(tmp_path):
 
 def test_a_replacement_needing_several_pages_still_collapses(tmp_path):
     assert _run(tmp_path, mode="tiny-pages").status == "collapsed"
+
+
+def _long_group():
+    """Four entries for q_001, so one-item pages take four calls: more than the
+    old `ceil(4 / 50) + 1 = 2` page cap allowed."""
+    state = {
+        "plans": [{"id": "pl_001", "question_id": "q_001", "items": [{"id": "pli_001"}, {"id": "pli_002"}]}],
+        "log": [{"id": f"log_00{i}", "plan_item_id": "pli_001" if i < 4 else "pli_002", "tool": "record_search"}
+                for i in range(1, 5)],
+    }
+    groups, _ = rc.find_walk_groups([_walk("pli_001", 3), _walk("pli_002", 1)], state)
+    return groups[0]
+
+
+def test_short_pages_followed_by_next_offset_still_collapse(tmp_path):
+    out = _run(tmp_path, mode="next-offset", group=_long_group())
+    assert (out.status, out.replacement_calls, out.entries_returned) == ("collapsed", 4, 4)
+
+
+def test_a_next_offset_that_does_not_advance_is_an_integrity_error(tmp_path):
+    with pytest.raises(IntegrityError, match="paging did not advance"):
+        _run(tmp_path, mode="stuck", group=_long_group())
 
 
 def test_a_base_that_accepts_the_replacement_is_not_an_error(tmp_path):
