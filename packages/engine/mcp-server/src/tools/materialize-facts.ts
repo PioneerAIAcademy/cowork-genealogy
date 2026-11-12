@@ -264,6 +264,16 @@ function unionRef(
  *  named-party arm (§4.6) — because the two had the same block character for
  *  character, and a second copy is how the two drift. NEVER sets `preferred`:
  *  concluding a preferred name is proof-conclusion's job (§4.2). */
+/** A name assertion's `structured_value.type` -> the tree's name type. Only a
+ *  document's own words map; anything else, and no type at all, mints none —
+ *  never a default (issue #4378, Richard 2026-11-12). */
+const TREE_NAME_TYPE: Readonly<Record<string, string | undefined>> = Object.assign(Object.create(null), {
+  birth: "BirthName",
+  married: "MarriedName",
+  nickname: "Nickname",
+  also_known_as: "AlsoKnownAs",
+});
+
 function upsertName(
   tree: SimplifiedGedcomX,
   person: SimplifiedPerson,
@@ -401,8 +411,8 @@ function applyMaterializeOp(
 
     if (NAME_TYPES.has(rawType)) {
       const ref = resolveSourceRef(a, research, tree);
-      const { given, surname } = nameParts(a);
-      const n = upsertName(tree, person, given, surname, ref, "BirthName");
+      const { given, surname, type } = nameParts(a);
+      const n = upsertName(tree, person, given, surname, ref, type ? TREE_NAME_TYPE[type] : undefined);
       namesAdded += n.namesAdded;
       refsAttached += n.refsAttached;
       continue;

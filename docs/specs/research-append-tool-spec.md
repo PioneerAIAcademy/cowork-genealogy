@@ -3498,7 +3498,9 @@ document: {
     id: string,                        // local only; relationships refer to it
     principal?: true,
     household?: string,                // only when one text covers several households
-    names:  [{ given?: string, surname?: string, uncertain?: true, note?: string }],
+    names:  [{ given?: string, surname?: string,  // EVERY name the text gives, the one it shows first first;
+               type?: "birth" | "married" | "nickname" | "also_known_as",  // only where the text says which
+               uncertain?: true, note?: string }],  // each name is its own `name` assertion, its type in structured_value
     gender?: "male" | "female",
     statedRelation?: string,           // the text's own word: "son", "wife", "daughter-in-law", "consent signer", "neighbor"
     fatherBirthPlace?: string,         // a census's parent-birthplace columns, as written on this person's line
