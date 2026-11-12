@@ -517,8 +517,8 @@ router sentence: plan at most one extra round, then wrap up.
     `search-full-text`, `search-images` after `search-records`): `step_boundary.GROUPS` admits
     it, so it joins the step's fan-out in the same turn.
   - Another group (`research-plan`, `research-exhaustiveness`, `person-evidence`):
-    `step_allowed` refuses the spawn mid-turn, so the report names it and the
-    `project_context` ladder runs it next turn. Offering every hand-back as the next step
+    `step_allowed` refuses the spawn mid-turn, so the report says what it asks for and leaves the next step to the
+    `project_context` ladder. Offering every hand-back as the next step
     was rejected: it adds a turn the group rule does not require.
   - Not a spawnable agent (`image-reader`, `extraction_append`, `image_transcribe`,
     "to caller", "none"): ignored.
