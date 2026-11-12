@@ -147,14 +147,18 @@ production sends. In order:
    1. The wiki's navigation sidebar is removed with `stripWikiSidebar`
       (`src/utils/wiki-sidebar.ts`), the rule `wiki_read` and `wiki_place_page`
       use (`wiki-page-tool-spec.md`, "The sidebar").
-   2. **Image links** are removed. An image link is markdown image syntax
-      `![alt](src)` whose `src` ends in an image extension (`png`, `jpg`,
-      `jpeg`, `gif`, `svg`, `webp`, `bmp`, `tif`, `tiff`; any case), with an
-      optional title. When a link wraps it — the wiki's
-      `[![alt](…/img_auth.php/…/X.jpg)](…/index.php?title=File:X.jpg&… "alt")` —
-      the whole wrapping link goes. An `![alt](x.pdf)`, or an image with no
+   2. **Image links** are removed. An image link is markdown image syntax —
+      `!`, the alt text in brackets, the source in parentheses — whose source
+      ends in an image extension (`png`, `jpg`, `jpeg`, `gif`, `svg`, `webp`,
+      `bmp`, `tif`, `tiff`; any case), with an optional title. When a link wraps
+      it, as the wiki's file-page links do, the whole wrapping link goes:
+      `[![Norway Marriages 1716-1763](https://www.familysearch.org/en/wiki/img_auth.php/thumb/c/c4/Norway_Marriages_1716-1763.jpg/400px-Norway_Marriages_1716-1763.jpg)](https://www.familysearch.org/en/wiki/index.php?title=File:Norway_Marriages_1716-1763.jpg "Norway Marriages 1716-1763")`
+      is removed whole. An image whose source ends in `.pdf`, or in no
       extension, stays; so does an ordinary text link to a `File:` page.
-   3. **Link titles** are removed: `[text](url "Title")` becomes `[text](url)`.
+   3. **Link titles** are removed:
+      `[Norway Church Records](https://www.familysearch.org/en/wiki/Norway_Church_Records "Norway Church Records")`
+      becomes
+      `[Norway Church Records](https://www.familysearch.org/en/wiki/Norway_Church_Records)`.
       The link text and URL stay.
 
    The patterns, from `src/tools/wiki-search.ts`:
