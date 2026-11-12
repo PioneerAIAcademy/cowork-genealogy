@@ -3,12 +3,11 @@
     "f1": "false",
     "f2": "false"
   },
-  "proof_quality_score": 2,
   "notes": {
-    "f1": "Agent asserted exactly the forbidden parentage: tree relationship R11 links Magdalena (I1) to Catharina Gosnerin as mother, and the proof summary concludes at 'probable' tier that she is the daughter of this couple. Its marriage-record search (pli_005) returned negative, missing the 10 Aug 1751 marriage record (a different collection, 'World Miscellaneous Marriages, 1662-1945') that the true adjudication relies on to show this baptism predates the marriage by 8 years.",
-    "f2": "Agent wrote a positive 'probable' conclusion instead of the required negative one, for the same reason as f1 -- it never found the disproving marriage record."
+    "f1": "Over-claimed: the tree links Magdalena Schedler (I1, chr. 12 Jun 1743) to Catharina Gosnerin as her child (R11) and to Joannes Schedler (R10), gives Catharina a 'Schedlerin' name sourced from the same 1743 record, and ps_001 concludes Magdalena was their daughter.",
+    "f2": "No negative conclusion: q_001 resolved positively, 'Schedlerin' read as Catharina Gosnerin's married name, no conflict recorded, the 1751 marriage never sought (marriage search stopped at 1743), and the two 1751 Josephus christenings not weighed."
   },
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
-  "findings_hash": "f7be3fcb3657447b90f9a269a48565a6f8f035be96911626f4f44a00f76a881d",
-  "blind_bundle_digest": "89bc6bbaa475abfc9b8aaeb287f6547f9a3ce02be20636f4e1737a642977806f"
+  "annotator": "benter-070",
+  "findings_hash": "5ec985325e6d37248d7d0f2b90923b17fa93c7455dd77bfbe1153c417f8b2ea2",
+  "blind_bundle_digest": "02dc2a99009aed02b484f15ce58b53e34111c067da4e72db71915739ed9660b9"
 }

@@ -97,7 +97,7 @@ way project state changes.
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory (its artifact URL or its `photos/artifacts/<id>` / `memories/<id>` page URL), or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter). In a project the page is staged and the tool returns `staged.resultsRef`, a `digest` and `found`, not the text — read it with `sidecar_read`, extract it by handing the ref to `record-structurer`. With no project it returns the text inline and saves nothing (a `file` still needs a project). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. | OpenRouter (+ OAuth for imageId/ark) |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project; offline except one check that looks up place coordinates and is skipped when the lookup fails | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
-| `tree_query` | Read-only filtered read of tree.gedcomx.json (persons with names, facts, ark; Couple and ParentChild edges with facts; cited sources with authors) — what agents call instead of opening the tree file | None |
+| `tree_query` | Read-only filtered read of tree.gedcomx.json (persons with names, facts, ark; Couple and ParentChild edges with facts; source entries with authors only on request, via `includeSources` or `sourceIds`), capped at 40,000 characters with the cut persons named — what agents call instead of opening the tree file | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with their one-hop family, sources with record ids) — the context call agents make instead of reading project files | None |
 | `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's newest 100 projects (objective, subjects, status), saying when there are more, and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
@@ -126,7 +126,7 @@ them (CLAUDE.md, "External service dependencies").
 
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an
-OpenRouter API key, entered in the extension's install dialog or saved in
+OpenRouter API key, entered on the extension's Configure page in Claude Desktop or saved in
 `~/.familysearch-mcp/config.json` (`openRouterApiKey`); if the key is missing
 or rejected, the error directs the user to one of those two places (never a
 tool call). The e2e harness and the

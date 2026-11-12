@@ -43,11 +43,10 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
+import * as asar from '@electron/asar'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const require = createRequire(import.meta.url)
 const HERE = dirname(fileURLToPath(import.meta.url))
 const APP_ROOT = resolve(HERE, '..')
 
@@ -145,7 +144,6 @@ export function normaliseEntry(file) {
 
 /** Top-level package names in the asar's `node_modules`, and whether `entry` is present. */
 function inspectAsar(asarPath, entry) {
-  const asar = require('@electron/asar')
   const names = new Set()
   let hasEntry = false
   for (const file of asar.listPackage(asarPath, { isPack: false })) {
