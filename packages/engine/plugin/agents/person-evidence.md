@@ -459,9 +459,11 @@ never replaces it (see step 3).
    assertion carries one, every assertion of the same `record_role`. Write the
    covered links with the same `match_score` and no further call. One that
    names a second person (a relationship, marriage or couple event) is covered
-   only when you also link one of that party's own facts to the same candidate;
-   otherwise it needs its own call. An assertion whose `record_persona_id` is
-   null on a record where others carry one needs its own call.
+   only when the candidate is the person the assertion is about and you also
+   link one of that person's other facts to it. Linked to the second person it
+   names, it is never covered: make that call with `recordRole` (below). An
+   assertion whose `record_persona_id` is null on a record where others carry
+   one needs its own call.
 
    For the **second party** of a relationship or marriage assertion — the party
    the assertion names but is not itself about — add `recordRole` (or
