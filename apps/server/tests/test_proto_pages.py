@@ -424,3 +424,22 @@ async def test_only_the_two_pdfjs_files_are_served(name):
     async with make_client(FakeStore(), None, user=None) as c:
         r = await c.get(f"/pdfjs/{name}")
     assert r.status_code == 404
+
+
+async def test_pdfjs_cmaps_are_served_from_the_tier():
+    name = "Adobe-Japan1-UCS2.bcmap"
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get(f"/pdfjs/cmaps/{name}")
+        head = await c.head(f"/pdfjs/cmaps/{name}")
+    assert r.status_code == 200 and r.headers["content-type"] == "application/octet-stream"
+    assert r.content == (PDFJS / "cmaps" / name).read_bytes()
+    assert head.status_code == 200 and head.headers["content-length"] == str(len(r.content))
+
+
+@pytest.mark.parametrize("name", ["LICENSE", "..%2F..%2Fapp.py", "NotARealCmap.bcmap"])
+async def test_only_bcmap_files_are_served_from_cmaps(name):
+    """#4448: LICENSE is vendored to disk for the bundle, but never in the HTTP allow-list --
+    the same as the top-level static/pdfjs/LICENSE, which already 404s at /pdfjs/LICENSE."""
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get(f"/pdfjs/cmaps/{name}")
+    assert r.status_code == 404
