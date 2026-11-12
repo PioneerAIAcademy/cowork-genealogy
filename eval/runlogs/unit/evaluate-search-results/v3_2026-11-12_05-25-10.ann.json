@@ -1,0 +1,222 @@
+{
+  "run_log": "v3_2026-11-12_05-25-10.json",
+  "annotator": "taiwoadedotunxx1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_n6t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_n6t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_n6t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the hit text: it is a garbled OCR row reading \"Jane Eliza Selmon Mary Robertson & Hiram Hy\", and other entries on the page give the child's surname before the parents. The verdict is sound, since the mother, the father's garbled name and the place all fit Iram. But the agent cut the child to \"apparently Jane Eliza\" and never mentioned the token \"Selmon\", which sits where a surname would be and is not Hyde. That is an omission rather than an outright error, since the row is too scrambled to say \"Selmon\" is her surname, but it should have been flagged. Partial is right"
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The deciding facts are named correctly: mother Mary Robertson, father \"Hiram Hy\", and the place. The reasoning should still have said that \"Selmon\" appears where the child's surname would be and does not match Hyde, and then explained why the match holds anyway (a garbled OCR row; both parents' names fit). Leaving that out makes the match look cleaner than the evidence is. Partial."
+    }
+  ]
+}
