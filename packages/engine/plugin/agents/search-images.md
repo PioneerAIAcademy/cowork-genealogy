@@ -154,7 +154,7 @@ transcribed use search-full-text (both are faster than reading pages).
 | MCP tool | Input | Purpose |
 |----------|-------|---------|
 | `volume_search` | `standardPlace`, year range, `omitSearchable` | Find image groups covering a place/period; returns `imageGroupNumber`, `imageCount`, `recordSearchablePercent`, `fulltextSearchable`, `coverages[]`. With `omitSearchable: true`, an already-searchable volume is a line in `searchableOmitted` instead of a `results` entry |
-| `image_search` | `imageGroupNumber` (a volume id); bare film + `item`, `itemImage` | List every image ID inside ONE group; with `item`, one item of a film and that item's `imageGroupNumber` |
+| `image_search` | `imageGroupNumber` (a volume id); bare film + `item`, `itemImage` | Count ONE group's images and give their id ranges (`imageCount`, `imageIdRanges`: `[firstId, lastId]` per unbroken run); with `item`, one item of a film and that item's `imageGroupNumber` |
 | `volume_bisect` | `imageGroupNumber` (split name), `targetYear`, `readings`, `projectPath` | Read ONE probe page per call toward a year; returns `bracket`, `reading`, `nextImageId` or `stopped` |
 | `catalog_search` | `title`, `keywords`, `standardPlace` | Find a filmed record set in the FamilySearch Catalog; a hit's `filmNotes[].imageGroupNumber` goes to `image_search` |
 | `image_transcribe` | `imageId`, `projectPath` | OCR ONE page host-side; returns `staged.resultsRef`, `digest` and `found`, not the text. With no `projectPath`, returns `transcription` inline and stages nothing |
@@ -163,7 +163,7 @@ transcribed use search-full-text (both are faster than reading pages).
 **`image_search` takes an `imageGroupNumber`, never an `imageId`.** Passing an
 `imageId` (e.g. `004567123_00058`) to `image_search` is the single most common
 mistake — an `imageId` names one page and goes to `image_transcribe`, not to
-`image_search`. `image_search` lists the **whole** group in one call — it has no
+`image_search`. `image_search` answers for the **whole** group in one call — it has no
 `offset`, `limit`, `imageIndex`, or `imageId` parameter, so never re-query to
 "get more."
 
@@ -274,12 +274,12 @@ Pass the chosen group's `imageGroupNumber` (a split natural-group name like
 
 ```
 image_search({ imageGroupNumber: "004567123" })
-// → { imageIds: ["004567123_00001", "004567123_00002", ...] }
+// → { imageCount: 412, imageIdRanges: [["004567123_00001", "004567123_00412"]] }
 ```
 
-An empty `imageIds` array means the group has no images yet — treat it as a
-nil result (step 6). A large volume returns hundreds of IDs; do not dump the
-full list to the caller.
+`imageCount: 0` means the group has no images yet — treat it as a nil result
+(step 6). The image at offset k within a run is `firstId` with its 5-digit
+suffix raised by k, zero-padded. Read only ids inside a returned range.
 
 ### 4. Read pages with `image_transcribe`
 
@@ -304,9 +304,8 @@ excerpt you cannot place. If `staged` is null the text came back inline as
 - **One year in a split group** (a name like `008230326_001_M964-RDH`): call
   `volume_bisect({ imageGroupNumber, targetYear, readings: [], projectPath })`,
   then call it again with each returned `reading` appended to `readings`, until
-  it returns `stopped`. Then `image_transcribe` from the returned `bracket`
-  forward, never before its `lowPosition` (positions index the group's
-  `image_search` list, from 0). Never step through the volume with
+  it returns `stopped`. Then `image_transcribe` from the returned
+  `bracket.lowImageId` forward, never before it. Never step through the volume with
   `image_transcribe` to find where a year starts.
 - **A bare film number from `volume_search`** (it returned the number itself):
   the film is not split, and `volume_bisect` refuses it. Read its register or
@@ -346,8 +345,8 @@ in a project, log it `outcome: "partial"`, never `"error"`; either way, keep its
 
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event
-this agent exists to record; log it once you have the image list, whether you go
-on to read pages now, hand the list to the user to page through, or the pages
+this agent exists to record; log it once you have the image ranges, whether you go
+on to read pages now, hand the ranges to the user to page through, or the pages
 come back NOT READ. Deferring the read to the user **never** defers the log — an
 unlogged browse is an incomplete browse, even when the images were listed
 perfectly.
@@ -503,7 +502,7 @@ to the caller, in this order:
 - next-step hint (e.g. "image 00058 ready for extraction", "film 2 of 2
   still to browse", "no digitized volume — try search-external-sites")
 
-Do not reproduce transcriptions in full, and do not dump the image list.
+Do not reproduce transcriptions in full, and do not dump the image ranges.
 
 ### `summary_for_user`
 
