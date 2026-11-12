@@ -5082,7 +5082,38 @@ export function namesakeCallCheck(
       .filter((id: unknown) => !rowIdsBefore.has(id)),
   );
   const findings: Array<{ index: number | null; message: string }> = [];
-  for (const { entry, rows, pairs, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree })) {
+  const asserted = assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree });
+  const assertedIds = new Set(asserted.map((a) => a.entry?.id));
+  // The person's links the cap would refuse that this call did not assert, by
+  // source: a refusal names them, so lowering the new link is not taken for
+  // the whole fix while an older link from the same record stands above it.
+  const standing = new Map<string, Map<string, string[]>>();
+  const standingOn = (p: string, source: string): string[] => {
+    let bySource = standing.get(p);
+    if (!bySource) {
+      bySource = new Map();
+      standing.set(p, bySource);
+      const v = namesakeVerdicts(p, after.research, after.tree, {
+        startingPersonIds,
+        voucherPairs: vouchingPairs(before, after),
+        derivedPairs: true,
+        startingTree,
+      });
+      const byId = new Map<string, any>(
+        ((after.research?.person_evidence ?? []) as any[]).filter((e) => e && typeof e.id === "string").map((e) => [e.id, e]),
+      );
+      for (const [id, other] of v?.verdicts ?? []) {
+        if (other.allowed || assertedIds.has(id)) continue;
+        const e = byId.get(id);
+        if (!e) continue;
+        const list = bySource.get(other.source) ?? [];
+        list.push(`'${id}' (assertion '${e.assertion_id}', '${e.confidence}')`);
+        bySource.set(other.source, list);
+      }
+    }
+    return bySource.get(source) ?? [];
+  };
+  for (const { entry, rows, pairs, verdict } of asserted) {
     if (verdict.allowed) continue;
     // #4226: as in `circularCorroborationCallCheck` — the cap judges a (person,
     // record) pairing, which a derived row shares with its trigger, so its
@@ -5095,7 +5126,14 @@ export function namesakeCallCheck(
         break;
       }
     }
-    findings.push({ index, message: namesakeRefusal(entry, rows, verdict, addedInCall, pairs) });
+    const others = standingOn(entry.person_id, verdict.source);
+    const tail =
+      others.length > 0
+        ? ` The same cap holds ${others.join(", ")} from source '${verdict.source}' on '${entry.person_id}', ` +
+          `which this call leaves as it is: lower ${others.length > 1 ? "them" : "it"} to 'speculative' in this ` +
+          `call too, unless you first link what ties them.`
+        : "";
+    findings.push({ index, message: namesakeRefusal(entry, rows, verdict, addedInCall, pairs) + tail });
   }
   return findings;
 }

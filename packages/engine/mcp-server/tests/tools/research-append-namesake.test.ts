@@ -366,6 +366,47 @@ describe("namesake cap", () => {
       expect((await readResearch()).person_evidence).toEqual([]);
     });
 
+    describe("names the links from the same source the cap leaves standing", () => {
+      const withStanding = (...pe: Record<string, unknown>[]) =>
+        research({
+          assertions: [...baseAssertions(), assertion("a_021", "src_003", REC.death, "deceased", "death", "1931")],
+          person_evidence: pe,
+        });
+
+      it("names an older untied link from the same source, and lowering both goes through", async () => {
+        const r0 = withStanding(standing("pe_001", "a_020", P));
+        await setup(r0);
+        await scoreAll(r0, ["a_021", P]);
+        const r = await call(link("a_021", P));
+        expect(capErrors(r)).toHaveLength(1);
+        expect(capErrors(r)[0]).toContain(
+          `The same cap holds 'pe_001' (assertion 'a_020', 'probable') from source 'src_003' on '${P}', ` +
+            "which this call leaves as it is: lower it to 'speculative' in this call too",
+        );
+        const ok = await call(link("a_021", P, "speculative"), update("pe_001", { confidence: "speculative" }));
+        expect(errs(ok)).toBe("");
+      });
+
+      it("names nothing once the older link is speculative, or when it comes from another source", async () => {
+        for (const pe of [standing("pe_001", "a_020", P, "speculative"), standing("pe_001", "a_001", P)]) {
+          const r0 = withStanding(pe);
+          await setup(r0);
+          await scoreAll(r0, ["a_021", P]);
+          const r = await call(link("a_021", P));
+          expect(capErrors(r)).toHaveLength(1);
+          expect(capErrors(r)[0]).not.toContain("The same cap holds");
+        }
+      });
+
+      it("does not name a link the call itself writes", async () => {
+        const r0 = withStanding(standing("pe_001", "a_020", P));
+        await setup(r0);
+        await scoreAll(r0, ["a_021", P]);
+        const r = await call(link("a_021", P), update("pe_001", { rationale: "restated" }), update("pe_001", { confidence: "confident" }));
+        for (const m of capErrors(r)) expect(m).not.toMatch(/The same cap holds 'pe_001'/);
+      });
+    });
+
     it("C2 judges a row recorded in the same call, in either order", async () => {
       await setup(research({ namesakes: [] }));
       await attest(["a_020", P]);
