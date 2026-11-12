@@ -37,6 +37,6 @@
     "NO agent is spawned. A question is not a steer: a steer asks for work ('did you check the 1850 census?' is a plan item), a question asks for something the router already knows.",
     "The answer comes from the project — `project_context` or a narrow `research_query` is fine, and reading is not running a step.",
     "The turn ends with the SAME \"Continue with …?\" line the previous turn offered, so the researcher's place is kept. This test has no previous turn, so that line is the one project_context's nextStep maps to: \"Continue with `writing the conclusion`?\" (nextStep is proof-conclusion). Ending with no line, or with a different one, both lose it.",
-    "Do not charge the reply for the genealogy content of the answer; this test is about whether a question moves the run."
+    "Do not charge the reply for the genealogy content of the answer: whether it names a particular source (src_005 or any other), or says nothing is on file, is not graded. This test grades only that no agent ran and the closing line."
   ]
 }
