@@ -19,8 +19,7 @@ const TREE_FILE = "tree.gedcomx.json";
 export function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
   const byId = persons.find((p) => p.id === personId);
   if (byId) return byId;
-  const wanted = personId.trim().toUpperCase();
-  const linked = persons.filter((p) => treePidOfArk(p.ark)?.toUpperCase() === wanted);
+  const linked = linkedPersons(persons, personId);
   if (linked.length === 1) return linked[0];
   if (linked.length > 1) {
     throw new Error(
@@ -29,6 +28,13 @@ export function findAnchor(persons: SimplifiedPerson[], personId: string): Simpl
     );
   }
   throw new Error(`Person '${personId}' not found in ${TREE_FILE}.`);
+}
+
+/** Every tree person whose FamilySearch link (`ark`, read by `treePidOfArk`)
+ *  names `familySearchId`, compared case-insensitively, in tree order. */
+export function linkedPersons<P extends { ark?: unknown }>(persons: P[], familySearchId: string): P[] {
+  const wanted = familySearchId.trim().toUpperCase();
+  return persons.filter((p) => treePidOfArk(p.ark)?.toUpperCase() === wanted);
 }
 
 /** The source refs on a person, its facts and its names, first-seen order,
