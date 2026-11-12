@@ -744,8 +744,8 @@ The two tools and the page move onto the tool server, behind the door.
 
 **Built so far:** the skeleton this section describes, with `derived` holding only
 `folderName`. It passes the engine's tests on both store backends.
-**Not yet:** no card has drawn through the door. That still needs the edge's `/img` route,
-a seeded test project and sign-in. The rename to `Genealogy Research`, `derived` beyond
+**Not yet:** no card has drawn through the door. That still needs a seeded test project
+and sign-in (issue #3997). The rename to `Genealogy Research`, `derived` beyond
 `folderName` and the `recordSearch` part are not built, and the door's 400, 403 and 503
 are still HTTP refusals.
 
@@ -810,8 +810,8 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
   result carries it in `_meta`, so the card has it even with no tool input.
 - There is one public origin, `WEB_PUBLIC_URL`. The page's `resourceDomains` and every
   image link use it. `projectUrl` goes away.
-- The edge's commented `/img/` block becomes
-  `location = /img { proxy_pass $tools_upstream; }`: an exact path, with the token in the
+- The edge carries `location = /img { proxy_pass $tools_upstream; }`
+  (`apps/server/proto/malachi/nginx.conf`): an exact path, with the token in the
   query.
 - A tool error reaches the card as text. A 401 stays HTTP, because that is what brings
   up Claude's Reconnect card (and makes it refresh, where a refresh token exists). Whether the door's 400, 403 and 503 become tool errors on the connector
