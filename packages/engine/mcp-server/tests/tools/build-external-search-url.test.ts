@@ -8,6 +8,8 @@ import {
   buildExternalSearchUrlTool,
 } from "../../src/tools/build-external-search-url.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
+import { recordExternalCollections } from "../../src/utils/external-collections-store.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 describe("build_external_search_url", () => {
   describe("one passing case per site", () => {
@@ -858,7 +860,7 @@ describe("build_external_search_url", () => {
   });
 
   describe("unsupported site", () => {
-    it("names exactly the eighteen supported sites", () => {
+    it("names exactly the nineteen supported sites", () => {
       const r = buildExternalSearchUrl({
         site: "wiewaswie",
         attributes: { givenName: "Patrick", surname: "Flynn" },
@@ -887,6 +889,7 @@ describe("build_external_search_url", () => {
           "archion",
           "matricula",
           "openarch",
+          "blm_glo",
         ].sort(),
       );
     });
@@ -1085,6 +1088,9 @@ describe("build_external_search_url", () => {
       // TCP-drops some source ranges outright — a blocked capture must narrate
       // as expected, which is this tier's purpose.
       ["openarch", "free_bot_protected"],
+      // No login and no challenge page in a real browser or a private window
+      // (measured 2026-11-11, spec §10).
+      ["blm_glo", "free"],
     ] as const)("%s reports access %s", (site, access) => {
       const r = buildExternalSearchUrl({
         site,
@@ -2049,6 +2055,136 @@ describe("build_external_search_url", () => {
     }
     const ancestry = (baseUrl: string) =>
       buildExternalSearchUrlTool({ site: "ancestry", attributes: { surname: "Flynn" }, baseUrl, projectPath: dir });
+    // The place every site-wide in-project build below names, stored as fetched.
+    const PA = "Pennsylvania, United States";
+    async function writeFetchedProject() {
+      await writeProject();
+      await storeCollections([STORED]);
+    }
+
+    describe("a site-wide build inside a project needs a fetched place (lead ruling 2026-11-10, issue #4410)", () => {
+      const siteWide = (extra: Record<string, unknown> = {}) =>
+        buildExternalSearchUrlTool({ site: "myheritage", attributes: { surname: "Flynn" }, projectPath: dir, ...extra });
+
+      it("refuses a place never looked up, names external_links_search, and logs nothing", async () => {
+        await writeFetchedProject();
+        const r = await siteWide({ standardPlace: "Hampshire, Massachusetts, United States" });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("place_not_fetched");
+        expect(r.errors.join(" ")).toContain(
+          `external_links_search(${JSON.stringify({ standardPlace: "Hampshire, Massachusetts, United States", projectPath: dir })})`,
+        );
+        expect(await readLog()).toEqual([]);
+      });
+
+      it("refuses when nothing is stored at all", async () => {
+        await writeProject();
+        const r = await siteWide({ standardPlace: PA });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("place_not_fetched");
+      });
+
+      it("refuses a missing or blank standardPlace inside a project", async () => {
+        await writeFetchedProject();
+        for (const extra of [{}, { standardPlace: "   " }, { standardPlace: 42 }]) {
+          const r = await siteWide(extra);
+          expect(r.ok, JSON.stringify(extra)).toBe(false);
+          if (r.ok) continue;
+          expect(r.reason).toBe("place_not_fetched");
+          expect(r.errors.join(" ")).toMatch(/standardPlace is required.*external_links_search/);
+        }
+        expect(await readLog()).toEqual([]);
+      });
+
+      it("treats a blank baseUrl and the archion/matricula root fallback as site-wide", async () => {
+        await writeProject();
+        const blank = await siteWide({ baseUrl: "  ", standardPlace: PA });
+        expect(!blank.ok && blank.reason).toBe("place_not_fetched");
+        const root = await buildExternalSearchUrlTool({ site: "archion", attributes: {}, projectPath: dir, standardPlace: "Germany" });
+        expect(!root.ok && root.reason).toBe("place_not_fetched");
+      });
+
+      it("refuses when external-collections.json cannot be read", async () => {
+        fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
+        await writeProject();
+        await writeFile(join(dir, "external-collections.json"), "{ not json");
+        const r = await siteWide({ standardPlace: PA });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("place_not_fetched");
+        expect(r.errors.join(" ")).toMatch(/could not be read.*external_links_search/);
+      });
+
+      it("allows a fetched place, trimmed and in any case", async () => {
+        await writeFetchedProject();
+        for (const standardPlace of [PA, "  pennsylvania,united states "]) {
+          const r = await siteWide({ standardPlace });
+          expect(r.ok, `${standardPlace}: ${JSON.stringify(r)}`).toBe(true);
+        }
+        expect(await readLog()).toHaveLength(2);
+      });
+
+      it("allows a place inside a fetched one, but not a place that only shares a tail word", async () => {
+        await writeFetchedProject();
+        const inside = await siteWide({ standardPlace: "Philadelphia, Pennsylvania, United States" });
+        expect(inside.ok, JSON.stringify(inside)).toBe(true);
+        const country = await siteWide({ standardPlace: "United States" });
+        expect(!country.ok && country.reason).toBe("place_not_fetched");
+        const lookalike = await siteWide({ standardPlace: "New Pennsylvania, United States" });
+        expect(!lookalike.ok && lookalike.reason).toBe("place_not_fetched");
+      });
+
+      it("allows a place whose lookup found nothing, stored as rows: [] by recordExternalCollections", async () => {
+        await writeProject();
+        expect(await recordExternalCollections(dir, "Ireland", [])).toEqual(["Ireland"]);
+        const r = await siteWide({ standardPlace: "Cork, Munster, Ireland" });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+      });
+
+      it("allows a too_large place for exactly itself, and never for a place inside it", async () => {
+        await writeProject();
+        expect(await recordExternalCollections(dir, "United States", [], { tooLarge: true })).toEqual(["United States"]);
+        const nationwide = await siteWide({ standardPlace: " united states " });
+        expect(nationwide.ok, JSON.stringify(nationwide)).toBe(true);
+        for (const inside of ["Hampshire, Massachusetts, United States", "Massachusetts, United States"]) {
+          const r = await siteWide({ standardPlace: inside });
+          expect(!r.ok && r.reason, inside).toBe("place_not_fetched");
+        }
+      });
+
+      it("does not check a build with baseUrl, a folder that is not a project, or a call with no project", async () => {
+        await writeProject();
+        const curated = await buildExternalSearchUrlTool({
+          site: "digital_newspaper_archive",
+          attributes: { keywords: "Flynn" },
+          baseUrl: "https://example-archive.org/search",
+          projectPath: dir,
+        });
+        expect(curated.ok, JSON.stringify(curated)).toBe(true);
+        const outsideProject = await mkdtemp(join(tmpdir(), "build-url-no-project-"));
+        try {
+          const r = await buildExternalSearchUrlTool({ site: "myheritage", attributes: { surname: "Flynn" }, projectPath: outsideProject });
+          expect(r.ok, JSON.stringify(r)).toBe(true);
+        } finally {
+          await rm(outsideProject, { recursive: true, force: true });
+        }
+        const standalone = await buildExternalSearchUrlTool({ site: "myheritage", attributes: { surname: "Flynn" } });
+        expect(standalone.ok, JSON.stringify(standalone)).toBe(true);
+      });
+
+      it("a build error still wins over the gate", async () => {
+        await writeProject();
+        const r = await buildExternalSearchUrlTool({ site: "findagrave", attributes: {}, projectPath: dir });
+        expect(!r.ok && r.reason).toBe("no_attributes");
+      });
+
+      it("keeps standardPlace out of the schema's required list", () => {
+        expect(buildExternalSearchUrlSchema.inputSchema.required).toEqual(["site", "attributes"]);
+        expect(buildExternalSearchUrlSchema.inputSchema.properties).toHaveProperty("standardPlace");
+      });
+    });
 
     describe("a collection baseUrl must be a stored collection (lead ruling 2026-10-23)", () => {
       it("refuses a collection the project has not stored, and logs nothing", async () => {
@@ -2111,12 +2247,13 @@ describe("build_external_search_url", () => {
     });
 
     it("appends one partial external_site entry and returns its logId", async () => {
-      await writeProject();
+      await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({
         site: "ancestry",
         attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
         projectPath: dir,
         planItemId: "pli_003",
+        standardPlace: PA,
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
@@ -2134,11 +2271,12 @@ describe("build_external_search_url", () => {
     });
 
     it("returns a handoffLine carrying exactly the URL it logged", async () => {
-      await writeProject();
+      await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({
         site: "myheritage",
         attributes: { givenName: "Patrick", surname: "Flynn", marriagePlace: "Pennsylvania" },
         projectPath: dir,
+        standardPlace: PA,
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
@@ -2183,18 +2321,200 @@ describe("build_external_search_url", () => {
     });
 
     it("a bad planItemId fails the call as log_write_failed and leaves the log alone", async () => {
-      await writeProject();
+      await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({
         site: "findagrave",
         attributes: { surname: "Flynn" },
         projectPath: dir,
         planItemId: "q_001",
+        standardPlace: PA,
       });
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(r.reason).toBe("log_write_failed");
       expect(r.errors.join(" ")).toMatch(/not a plan-item id/);
       expect(await readLog()).toEqual([]);
+    });
+  });
+
+  // Every URL below is the shape verified in a real browser on 2026-11-11
+  // (spec §10): this exact Montana URL listed FABBIE S MCELWEE, Serial Patent
+  // SER-569015 (24 Feb 1917), and the same URL with geostatecodes=PA returned
+  // "No results found" — so the state facet binds inside `searchTerm`.
+  describe("blm_glo (#4402)", () => {
+    const VERIFIED_MT =
+      "https://glorecords.blm.gov/s/advanced-search?searchTerm=%2Fsearch%3Fq%3DMcElwee%2BFabbie" +
+      "%26geostatecodes%3DMT%26documenttype%3DPatent%26page%3D1%26pageSize%3D25";
+
+    function innerQuery(url: string): URLSearchParams {
+      const term = new URL(url).searchParams.get("searchTerm") ?? "";
+      expect(term.startsWith("/search?")).toBe(true);
+      return new URLSearchParams(term.slice("/search?".length));
+    }
+
+    it("builds the browser-verified URL character for character", () => {
+      const r = buildExternalSearchUrl({
+        site: "blm_glo",
+        attributes: { surname: "McElwee", givenName: "Fabbie", usState: "Montana" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(VERIFIED_MT);
+      expect(r.access).toBe("free");
+      expect(r.notes.some((n) => n.startsWith("federal land only"))).toBe(true);
+      expect(r.notes.filter((n) => n.includes("is not used by blm_glo"))).toEqual([]);
+    });
+
+    it.each(["MT", "mt", "Broadwater, Montana, United States"])(
+      "usState %s gives the same state facet as \"Montana\"",
+      (usState) => {
+        const r = buildExternalSearchUrl({
+          site: "blm_glo",
+          attributes: { surname: "McElwee", givenName: "Fabbie", usState },
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).toBe(VERIFIED_MT);
+      },
+    );
+
+    it("double-encodes a name's own reserved characters so they cannot split the inner query", () => {
+      const r = buildExternalSearchUrl({
+        site: "blm_glo",
+        attributes: { surname: "O'Brien & Co", givenName: "Mary Ann", usState: "Ohio" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const inner = innerQuery(r.url);
+      expect(inner.get("q")).toBe("O'Brien & Co Mary Ann");
+      expect(inner.get("geostatecodes")).toBe("OH");
+      expect(inner.get("documenttype")).toBe("Patent");
+      expect([...inner.keys()]).toEqual(["q", "geostatecodes", "documenttype", "page", "pageSize"]);
+    });
+
+    it("a surname-only search with no state is nationwide, and says so", () => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", attributes: { surname: "McElwee" } });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const inner = innerQuery(r.url);
+      expect(inner.get("q")).toBe("McElwee");
+      expect(inner.has("geostatecodes")).toBe(false);
+      expect(r.notes).toContain("no usState supplied — the search covers every public-land state");
+    });
+
+    it("an unrecognized usState searches without a state facet, with a note", () => {
+      const r = buildExternalSearchUrl({
+        site: "blm_glo",
+        attributes: { surname: "McElwee", givenName: "Fabbie", usState: "Atlantis" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(innerQuery(r.url).has("geostatecodes")).toBe(false);
+      expect(r.notes).toContain(
+        "'usState' names no US state this site can facet on — no state filter was applied",
+      );
+    });
+
+    it("a state with no name refuses as no_attributes, saying why", () => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", attributes: { usState: "Montana" } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+      expect(r.errors).toContain("blm_glo needs a surname or given name — a state alone is not a person search");
+    });
+
+    // The two edges of the public-land list: Ohio was the first public-land
+    // state, Alaska the last.
+    it.each(["Ohio", "Alaska", "Wyoming", "Florida"])("public-land state %s builds a URL", (usState) => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", attributes: { surname: "McElwee", usState } });
+      expect(r.ok).toBe(true);
+    });
+
+    it.each([
+      "Pennsylvania",
+      "Virginia",
+      "Georgia",
+      "Texas",
+      "Kentucky",
+      "Tennessee",
+      "Vermont",
+      "Maine",
+      "West Virginia",
+      "Hawaii",
+      "District of Columbia",
+      "Schuylkill, Pennsylvania, United States",
+    ])("state-land %s refuses as outside_coverage — no URL whose nil reads as absence", (usState) => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", attributes: { surname: "McElwee", usState } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("outside_coverage");
+      expect(r.errors.join(" ")).toMatch(/is not a public-land state/);
+    });
+
+    it("refuses a baseUrl on another host", () => {
+      const r = buildExternalSearchUrl({
+        site: "blm_glo",
+        baseUrl: "https://catalog.archives.gov/search",
+        attributes: { surname: "McElwee" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+    });
+
+    it.each([
+      "https://glorecords.blm.gov/search/default.aspx?searchTabIndex=0",
+      "https://glorecords.blm.gov/results/default.aspx?searchCriteria=type=patent",
+      "https://glorecords.blm.gov/s/",
+    ])("refuses a baseUrl on a path that does not take a search: %s", (baseUrl) => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", baseUrl, attributes: { surname: "McElwee" } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+      expect(r.errors.join(" ")).toMatch(/redirect and drop every parameter/);
+    });
+
+    it("accepts the portal's own search path as baseUrl, with or without a trailing slash", () => {
+      for (const baseUrl of [
+        "https://glorecords.blm.gov/s/advanced-search",
+        "https://glorecords.blm.gov/s/advanced-search/",
+      ]) {
+        const r = buildExternalSearchUrl({ site: "blm_glo", baseUrl, attributes: { surname: "McElwee" } });
+        expect(r.ok).toBe(true);
+      }
+    });
+
+    it("names DC with a lower-case 'of' in the refusal", () => {
+      const r = buildExternalSearchUrl({
+        site: "blm_glo",
+        attributes: { surname: "McElwee", usState: "Washington, D.C." },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/^District of Columbia is not a public-land state/);
+    });
+
+    it("the standing note says the search is patents only and how to avoid a name-form false negative", () => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", attributes: { surname: "McElwee" } });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const note = r.notes.find((n) => n.startsWith("federal land only")) ?? "";
+      expect(note).toMatch(/limited to land patents/);
+      expect(note).toMatch(/surname alone/);
+    });
+
+    it("newspapers still scopes region from a state after the shared helper refactor", () => {
+      const r = buildExternalSearchUrl({
+        site: "newspapers",
+        attributes: { surname: "Flynn", searchPlace: "Schuylkill, Pennsylvania, United States" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(new URL(r.url).searchParams.get("region")).toBe("us-pa");
+    });
+
+    it("is advertised in the schema's site enum", () => {
+      expect(buildExternalSearchUrlSchema.inputSchema.properties.site.enum).toContain("blm_glo");
     });
   });
 });

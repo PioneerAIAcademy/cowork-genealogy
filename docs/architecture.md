@@ -563,9 +563,9 @@ agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
-| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
 | **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
 > **A skill cannot set its model or effort.** To route a step to a different
@@ -923,7 +923,7 @@ There **is** an orchestrator, and it is a skill:
    (`docs/specs/research-append-tool-spec.md` §11.8).
 
    **A turn runs ONE step** (step mode, decision 25,
-   `docs/plan/research-step-mode.md`): it reports the step and ends with
+   `docs/specs/research-step-mode-spec.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
    stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
    enforces that boundary on the FS prototype always, on every e2e run (the e2e
@@ -2314,7 +2314,7 @@ changes how a correct change is made:
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
   4. **Step mode's boundary is enforced on one plane and graded on another.** Under
-     `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19, amended
+     `docs/specs/research-step-mode-spec.md` decision 25 (lead, 2026-10-19, amended
      2026-10-21), a step ends by asking the researcher with `AskUserQuestion`, and what
      stops a model starting the next step without asking differs by plane: the FS
      prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
