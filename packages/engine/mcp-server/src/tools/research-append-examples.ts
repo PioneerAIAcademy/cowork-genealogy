@@ -232,7 +232,7 @@ const EXAMPLES: Record<string, string> = {
     "Schuylkill County was formed in 1811 from Berks and Northampton; pre-1811 records are filed under the parent counties.",
     "Statewide civil birth/death registration began only in 1906 — earlier vital events rely on church, cemetery, and probate records."
   ],
-  "guide_markdown": "## Schuylkill County, Pennsylvania - 1845-1908\\n\\nProbate is held by the county Register of Wills from 1811...",
+  "guide_markdown": "# Locality Guide: Schuylkill County, Pennsylvania (1845-1908)\\n\\n## Jurisdiction overview\\n- Formed 1811 from Berks and Northampton...\\n\\n## Available record types\\n- Probate: county Register of Wills from 1811...\\n\\n## Research tips\\n- Search the parent counties before 1811...",
   "pages_read": [
     { "section": "home", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy", "found": true },
     { "section": "getting_started", "url": null, "found": false },
