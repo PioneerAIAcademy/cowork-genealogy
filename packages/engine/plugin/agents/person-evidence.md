@@ -15,8 +15,8 @@ description: >-
   (use extraction_append); resolve a conflict where multiple candidates compete
   (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
   after proof-conclusion).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5
+effort: medium
 tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control

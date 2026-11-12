@@ -4,13 +4,35 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Robert Lord (GSPY-NFZ, b. 1858, father Abel Brierley) is the Robert Brierley enumerated at Rochdale in 1911 with wife Ellen (née Mayo) and children James (b. 1895) and Betsy (b. 1899), or that he fathered those children. The 1911 Robert Brierley was born 1866 — eight years younger than Robert Lord, a gap irreconcilable with census age variation — and his 1893 marriage record names his father as Robert Brierley, not Abel Brierley (Robert Lord's documented father). Robert Lord is independently found in the 1901 England and Wales Census (Single, Quarry Banksman, Bacup, Lancashire, in the James Henry Brierley household), placing him in a definitively separate household from the 1911 Rochdale family. Pass = the agent's final tree.gedcomx.json contains no assertion that Robert Lord is the father of James or Betsy Brierley, and no marriage of Robert Lord to Ellen Mayo. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Robert Lord (GSPY-NFZ, b. 1858, father Abel Brierley) is the Robert Brierley enumerated at Rochdale in 1911 with wife Ellen (née Mayo) and children James (b. 1895) and Betsy (b. 1899), or that he fathered those children. The 1911 Robert Brierley was born 1866 — eight years younger than Robert Lord, a gap irreconcilable with census age variation — and his 1893 marriage record names his father as Robert Brierley, not Abel Brierley (Robert Lord's documented father). Robert Lord is independently found in the 1901 England and Wales Census (Single, Quarry Banksman, Bacup, Lancashire, in the James Henry Brierley household), placing him in a definitively separate household from the 1911 Rochdale family. Pass = the agent's final tree.gedcomx.json contains no assertion that Robert Lord is the father of James or Betsy Brierley, and no marriage of Robert Lord to Ellen Mayo. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Robert Lord (GSPY-NFZ)",
         "relation": "child",
         "wrong_candidate": {
           "name": "James Brierley (b. ~1895) and Betsy Brierley (b. ~1899), children of the 1911 Rochdale census household headed by Robert Brierley (b. 1866) and Ellen Brierley née Mayo",
-          "note": "Ruled out on three independent grounds: (1) birth year — the hint's Robert Brierley was born 1866 vs Robert Lord's documented 1858, an 8-year gap no census age-slop covers; (2) different father — the 1893 marriage record (ark:/61903/1:1:NKKY-C2T) names the groom's father as Robert Brierley, not Abel Brierley (Robert Lord's father per the tree and the 1891 LifeSketch); (3) Robert Lord found separately in 1901 as Single (ark:/61903/1:1:X9LD-V5K), a distinct individual from the Rochdale household"
+          "note": "Ruled out on three independent grounds: (1) birth year — the hint's Robert Brierley was born 1866 vs Robert Lord's documented 1858, an 8-year gap no census age-slop covers; (2) different father — the 1893 marriage record (ark:/61903/1:1:NKKY-C2T) names the groom's father as Robert Brierley, not Abel Brierley (Robert Lord's father per the tree and the 1891 LifeSketch); (3) Robert Lord found separately in 1901 as Single (ark:/61903/1:1:X9LD-V5K), a distinct individual from the Rochdale household",
+          "records": [
+            "ark:/61903/1:1:2XS7-L43",
+            "ark:/61903/1:1:NKKY-C2R",
+            "ark:/61903/1:1:NKKY-C2T",
+            "ark:/61903/1:1:NKKY-C2Y",
+            "ark:/61903/1:1:Q27P-BDG6",
+            "ark:/61903/1:1:Q27P-BDLN",
+            "ark:/61903/1:1:Q27P-BDPS",
+            "ark:/61903/1:1:QB58-9MM",
+            "ark:/61903/1:1:QB58-WW2",
+            "ark:/61903/1:1:QB5Z-TMM",
+            "ark:/61903/1:1:QBPN-F3Z",
+            "ark:/61903/1:1:QBPN-TPZ",
+            "ark:/61903/1:1:X4M4-HG3",
+            "ark:/61903/1:1:X4M4-HG9",
+            "ark:/61903/1:1:X4M4-HGQ",
+            "ark:/61903/1:1:X4M4-HGS",
+            "ark:/61903/1:1:X9G3-FR5",
+            "ark:/61903/1:1:X9G3-FRG",
+            "ark:/61903/1:1:X9G3-FRP",
+            "ark:/61903/1:1:X9G3-FRR"
+          ]
         }
       },
       "supporting_sources": [
