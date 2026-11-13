@@ -49,7 +49,7 @@
           "jurisdiction": "Arsdorf, Redange, Luxembourg",
           "date_range": "1840-1852",
           "repository": "FamilySearch",
-          "rationale": "Luxembourg, Church and Civil Registration (collection 5000012) covers Arsdorf civil birth registers. Search for Theresia's birth in the 1840s, which would name her parents.",
+          "rationale": "Luxembourg, Church and Civil Registration (collection 5000012) covers Arsdorf civil birth registers. Its birth acts index the child by given name only; the surname is indexed on the parents. Search givenName with the family surname as fatherSurname and no surname. Search for Theresia's birth in the 1840s, which would name her parents.",
           "fallback_for": null,
           "status": "in_progress"
         }

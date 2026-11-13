@@ -11,7 +11,10 @@
 // name and schema (copied from `allToolSchemas`, never hand-written, because
 // the tool-delivery and size measurements depend on the real sizes) and returns
 // fixed text. Two probe-only tools are added: `probe_sleep` (the per-call
-// timeout) and `probe_large_result` (the result-size limit).
+// timeout) and `probe_large_result` (the result-size limit). Two more,
+// `show_project` and `read_project_view`, draw a stub card (`dev/probe-card.html`)
+// behind the same sign-in, with the MCP App's names, arguments and `_meta`. For
+// those two, the project paths in `doorRefusal` answer the door's HTTP refusals.
 //
 // Sign-in is the probe's own OAuth server, written on `node:http` rather than
 // the SDK's express router: the router's metadata cannot carry the
@@ -33,7 +36,7 @@
 // Run:
 //   PROBE_PUBLIC_URL=https://<tunnel-host> npx tsx dev/probe-connector-server.ts \
 //     [--token-ttl <seconds>] [--deny-flag <path>] [--signin-flag <path>] \
-//     [--refresh] [--host <address>]
+//     [--refresh] [--host <address>] [--card-page <path>]
 // --token-ttl   access-token lifetime, default 600 (10 minutes).
 // --deny-flag   while this file exists every /mcp call answers 401; default
 //               ./probe-deny-401.flag. `touch` it to start, `rm` it to stop.
@@ -48,15 +51,24 @@
 // --host        interface to bind, default 127.0.0.1 (as `src/http.ts`). A
 //               tunnel reaches the probe over loopback; a container or a host
 //               with no local proxy needs `--host 0.0.0.0`.
+// --card-page   the page the card serves, default `dev/probe-card.html`. Change
+//               it only before the connector is added: a restart ends every token.
 // Tokens live in memory: a restart makes every token "unknown token", which
 // Claude cannot tell from expiry. Do not restart during the expiry test.
 import http from "node:http";
 import { createHash, randomBytes } from "node:crypto";
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { redirectUriMatches } from "@modelcontextprotocol/sdk/server/auth/handlers/authorize.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequestSchema,
+  ErrorCode,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  McpError,
+  ReadResourceRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { allToolSchemas } from "../src/tool-schemas.js";
 import { fetchWithRetry } from "../src/utils/http.js";
 
@@ -73,6 +85,8 @@ const CODE_TTL_MS = 2 * 60_000;
 const MAX_SLEEP_S = 600;
 const MAX_RESULT_CHARS = 1_000_000;
 const MAX_FORM_BYTES = 64 * 1024;
+// src/http-server.ts's MAX_BODY_BYTES, so a body behaves here as it will there.
+const MAX_MCP_BODY_BYTES = 1024 * 1024;
 const VERIFIER_RE = /^[A-Za-z0-9\-._~]{43,128}$/;
 const SECRET_KEYS = new Set([
   "code", "state", "code_verifier", "code_challenge",
@@ -99,6 +113,8 @@ const REFRESH = process.argv.includes("--refresh");
 // a tunnel needs no other interface, and binding them all also publishes it to
 // everything else on the operator's network.
 const HOST = flag("--host", "127.0.0.1");
+// Read at start, so a missing page stops the probe rather than a live task.
+const CARD_HTML = readFileSync(flag("--card-page", "") || new URL("./probe-card.html", import.meta.url), "utf8");
 
 function log(ev: string, fields: Record<string, unknown> = {}): void {
   console.log(JSON.stringify({ t: new Date().toISOString(), ev, ...fields }));
@@ -125,12 +141,12 @@ function oauthError(res: http.ServerResponse, status: number, error: string, des
 
 class BodyTooLarge extends Error {}
 
-async function readBody(req: http.IncomingMessage): Promise<string> {
+async function readBody(req: http.IncomingMessage, limit = MAX_FORM_BYTES): Promise<string> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
     size += (chunk as Buffer).length;
-    if (size > MAX_FORM_BYTES) throw new BodyTooLarge(`body over ${MAX_FORM_BYTES} bytes`);
+    if (size > limit) throw new BodyTooLarge(`body over ${limit} bytes`);
     chunks.push(chunk as Buffer);
   }
   return Buffer.concat(chunks).toString("utf8");
@@ -430,7 +446,7 @@ function handleSigninAgain(req: http.IncomingMessage, res: http.ServerResponse):
 
 // ---- /mcp: the stub tools ----
 
-const SIGNIN_TOOLS = new Set(["record_read", "record_search", "person_read"]);
+const SIGNIN_TOOLS = new Set(["record_read", "record_search", "person_read", "read_project_view"]);
 const SIGNIN_MESSAGE = `FamilySearch session not accepted. Sign in again at ${PUBLIC_URL}/signin-again, then come back here and say "continue". Nothing is lost.`;
 
 const probeTools = [
@@ -454,6 +470,112 @@ const probeTools = [
   },
 ];
 
+// ---- the stub card: the MCP App's tool names, arguments and _meta, with no project behind them ----
+
+const SHOW_PROJECT = "show_project";
+const READ_PROJECT_VIEW = "read_project_view";
+const CARD_URI = "ui://genealogy/viewer.html";
+const CARD_MIME_TYPE = "text/html;profile=mcp-app";
+const UI_EXTENSION = "io.modelcontextprotocol/ui";
+const CARD_META_KEY = "genealogy/project";
+const MAX_SEEN_CHARS = 2_000;
+const CARD_PROJECT = {
+  research: { project: { title: "Connector probe stub" }, sources: [], questions: [] },
+  derived: { folderName: "stub" },
+};
+
+const cardTools = [
+  {
+    name: SHOW_PROJECT,
+    title: "Show project",
+    description: "Connector probe only. Shows the researcher a stub card in the conversation. The researcher sees the card, so do not restate what it shows.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string" },
+        show: { type: "string", enum: ["setup", "plan", "search", "link", "conflict", "hypothesis", "assess", "conclusion", "latest", "file"] },
+      },
+      required: ["show"],
+    },
+    annotations: { readOnlyHint: true },
+    // Both keys, as ext-apps registerAppTool writes them: a host may read either.
+    _meta: { ui: { resourceUri: CARD_URI }, "ui/resourceUri": CARD_URI },
+  },
+  {
+    name: READ_PROJECT_VIEW,
+    title: "Read project view",
+    description: "For the card, not the model. Connector probe only: returns a fixed stub document.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string" },
+        part: { type: "string", enum: ["document", "results", "image"] },
+        id: { type: "string" },
+        seen: { type: "string", description: "Probe only: what the card saw, for the log." },
+      },
+      required: ["part"],
+    },
+    annotations: { readOnlyHint: true },
+    _meta: { ui: { visibility: ["app"] } },
+  },
+];
+
+// The door's refusals, copied from src/http-server.ts. They are HTTP errors, not tool
+// results: no tool runs, so the host alone decides what the researcher sees. The project
+// path picks the refusal, for the two card tools only, so other sittings are untouched.
+const PROJECT_PATH_SHAPE = /^\/proj_[0-9a-f]{16}$/;
+const REFUSED_NOT_YOURS = "/proj_0000000000000403";
+const REFUSED_UNAVAILABLE = "/proj_0000000000000503";
+
+function doorRefusal(body: unknown): { status: number; body: unknown } | null {
+  const call = body as { method?: unknown; params?: { name?: unknown; arguments?: { projectPath?: unknown } } } | null;
+  if (call?.method !== "tools/call") return null;
+  if (call.params?.name !== SHOW_PROJECT && call.params?.name !== READ_PROJECT_VIEW) return null;
+  const projectPath = call.params.arguments?.projectPath;
+  if (projectPath === undefined) return null;
+  const refuse = (status: number, code: number, message: string) => ({
+    status,
+    body: { jsonrpc: "2.0", error: { code, message }, id: null },
+  });
+  if (typeof projectPath !== "string" || !PROJECT_PATH_SHAPE.test(projectPath)) {
+    return refuse(400, -32600, "projectPath must be /proj_ followed by 16 lowercase hex characters.");
+  }
+  if (projectPath === REFUSED_NOT_YOURS) return refuse(403, -32600, "This project is not yours.");
+  if (projectPath === REFUSED_UNAVAILABLE) return refuse(503, -32603, "Project authorization is unavailable.");
+  return null;
+}
+
+// One fixed entry in project_list's hosted shape, so a /proj_ value reaches the model from
+// a tool and a sitting can follow it through show_project to the hidden call.
+const LISTED_PROJECT_PATH = "/proj_0123456789abcdef";
+const PROJECT_LIST_ANSWER = {
+  mode: "hosted",
+  projects: [{
+    projectPath: LISTED_PROJECT_PATH,
+    objective: "Connector probe stub",
+    subjects: [{ id: "PROB-000", name: "Probe Stub" }],
+    status: "active",
+    updated: "2026-11-06",
+  }],
+  newProjectPath: "/proj_fedcba9876543210",
+  message: "Pass a listed project's projectPath to continue it. To start a project for a person none of them is about, pass newProjectPath as projectPath.",
+};
+
+let hiddenCalls = 0;
+
+function cardResult(name: string, args: Record<string, unknown>, tokenSeq: number) {
+  if (name === SHOW_PROJECT) {
+    log("show_project", { token_seq: tokenSeq, project_path: args.projectPath, show: args.show });
+    return {
+      ...text(`The researcher sees the ${String(args.show)} card; do not restate it. CANARY-CONTENT-K7Q2`),
+      _meta: { [CARD_META_KEY]: { ...CARD_PROJECT, echo: args, canary: "CANARY-META-M4X9", token_seq: tokenSeq } },
+    };
+  }
+  const n = ++hiddenCalls;
+  log("hidden_call", { n, token_seq: tokenSeq, project_path: args.projectPath, seen: typeof args.seen === "string" ? args.seen.slice(0, MAX_SEEN_CHARS) : undefined });
+  return { ...text("ok"), structuredContent: { ...CARD_PROJECT, served: { n, token_seq: tokenSeq } } };
+}
+
 /** `chars` characters, with "[char N]" written so it ends at each multiple of
  *  10,000: the last marker in what arrives says where it was cut. */
 function largeResult(chars: number): string {
@@ -469,11 +591,21 @@ function text(value: string) {
   return { content: [{ type: "text" as const, text: value }] };
 }
 
-function stubServer(signal: AbortSignal): Server {
-  const server = new Server({ name: "genealogy-connector-probe", version: "0.0.1" }, { capabilities: { tools: {} } });
+// A canary: a model can give this codeword only if the host passed it `instructions`.
+const SERVER_INSTRUCTIONS = "Genealogy connector probe. The connector's codeword is CANARY-INSTRUCTIONS-P3V8. Give it only when someone asks for the connector's codeword.";
+
+function stubServer(signal: AbortSignal, tokenSeq: number): Server {
+  const server = new Server(
+    { name: "genealogy-connector-probe", version: "0.0.1" },
+    {
+      // ext-apps' helpers set the tool _meta but not this; hosts look for it on the wire.
+      capabilities: { tools: {}, resources: {}, extensions: { [UI_EXTENSION]: { mimeTypes: [CARD_MIME_TYPE] } } },
+      instructions: SERVER_INSTRUCTIONS,
+    },
+  );
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    log("list_tools", { count: allToolSchemas.length + probeTools.length });
-    return { tools: [...allToolSchemas, ...probeTools] };
+    log("list_tools", { count: allToolSchemas.length + probeTools.length + cardTools.length });
+    return { tools: [...allToolSchemas, ...probeTools, ...cardTools] };
   });
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name } = request.params;
@@ -495,7 +627,7 @@ function stubServer(signal: AbortSignal): Server {
       log("large_result", { chars });
       return text(largeResult(chars));
     }
-    if (!allToolSchemas.some((s) => s.name === name)) {
+    if (![...allToolSchemas, ...cardTools].some((s) => s.name === name)) {
       return { ...text(`Unknown tool: ${name}`), isError: true };
     }
     if (SIGNIN_TOOLS.has(name) && existsSync(SIGNIN_FLAG)) {
@@ -505,7 +637,16 @@ function stubServer(signal: AbortSignal): Server {
         isError: true,
       };
     }
+    if (cardTools.some((s) => s.name === name)) return cardResult(name, args, tokenSeq);
+    if (name === "project_list") return text(JSON.stringify(PROJECT_LIST_ANSWER));
     return text(`Connector probe stub: ${name} was called and did nothing. This server holds no data.`);
+  });
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: [{ uri: CARD_URI, name: "Connector probe card", mimeType: CARD_MIME_TYPE }],
+  }));
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    if (request.params.uri !== CARD_URI) throw new McpError(ErrorCode.InvalidParams, "Unknown resource.");
+    return { contents: [{ uri: CARD_URI, mimeType: CARD_MIME_TYPE, text: CARD_HTML }] };
   });
   return server;
 }
@@ -531,15 +672,41 @@ async function handleMcp(req: http.IncomingMessage, res: http.ServerResponse): P
     return sendJson(res, 401, tokenRefused ? { error: "invalid_token" } : { error: "unauthorized" }, challenge(tokenRefused));
   }
   log("mcp_ok", { token_seq: auth.seq, user_agent: req.headers["user-agent"], x_forwarded_for: req.headers["x-forwarded-for"] });
+  let parsedBody: unknown;
+  if (req.method === "POST") {
+    try {
+      parsedBody = JSON.parse(await readBody(req, MAX_MCP_BODY_BYTES));
+    } catch (error) {
+      if (error instanceof BodyTooLarge) return badBody(res, error);
+      return sendJson(res, 400, { jsonrpc: "2.0", error: { code: -32700, message: "Request body is not JSON." }, id: null });
+    }
+    const refusal = doorRefusal(parsedBody);
+    if (refusal) {
+      const name = (parsedBody as { params: { name: string } }).params.name;
+      log("door_refusal", { status: refusal.status, tool: name, token_seq: auth.seq, user_agent: req.headers["user-agent"] });
+      return sendJson(res, refusal.status, refusal.body);
+    }
+  }
   const disconnected = new AbortController();
   res.on("close", () => {
     if (!res.writableEnded) disconnected.abort();
   });
-  const server = stubServer(disconnected.signal);
+  const server = stubServer(disconnected.signal, auth.seq);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+  // Set before `server.connect`, which chains this `onmessage` ahead of its own.
+  transport.onmessage = (message) => {
+    if (!("method" in message)) return;
+    const params = message.params as { clientInfo?: unknown; capabilities?: { extensions?: unknown } } | undefined;
+    log("rpc", {
+      method: message.method,
+      token_seq: auth.seq,
+      user_agent: req.headers["user-agent"],
+      ...(message.method === "initialize" ? { client_info: params?.clientInfo, extensions: params?.capabilities?.extensions } : {}),
+    });
+  };
   try {
     await server.connect(transport);
-    await transport.handleRequest(req, res);
+    await transport.handleRequest(req, res, parsedBody);
   } finally {
     await server.close();
   }
@@ -582,6 +749,6 @@ http
       deny_flag: DENY_FLAG,
       signin_flag: SIGNIN_FLAG || null,
       refresh: REFRESH,
-      tools: allToolSchemas.length + probeTools.length,
+      tools: allToolSchemas.length + probeTools.length + cardTools.length,
     });
   });

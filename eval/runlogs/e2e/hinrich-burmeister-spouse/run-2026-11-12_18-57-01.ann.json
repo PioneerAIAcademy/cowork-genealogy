@@ -1,0 +1,15 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "false"
+  },
+  "notes": {
+    "f1": "Run ended after 2 minutes with no search; the tree is the starting tree, so the wrong son is absent by inaction.",
+    "f2": "Absent by inaction, as f1: spouses are Liesbeth Oldenburg and Anna Meyborg only.",
+    "f3": "No proof summary, no log entries, q_001 still open: question-selection asked the user which fact to research first, the main thread resumed it with SendMessage and ended its turn awaiting a notification, and the job-mode run ended."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "c9194118b3f25d0109a39b7dc06b6be3c9b24c599bc9ce7b9d48598d5e4f835e",
+  "blind_bundle_digest": "acad18ba7c5df0fe34ff250501407b4fbe11227f955f6b584013d21f903c92ce"
+}
