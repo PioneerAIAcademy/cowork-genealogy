@@ -1,6 +1,6 @@
 import type { Principal } from "../auth/principal.js";
 import { performLogin } from "../auth/login.js";
-import { isHostedMode, HOSTED_LOGIN_UNAVAILABLE } from "../auth/config.js";
+import { connectorLoginMessage, isConnector, isHostedMode, HOSTED_LOGIN_UNAVAILABLE } from "../auth/config.js";
 import type { LoginResult } from "../types/auth.js";
 
 export type LoginToolInput = Record<string, never>;
@@ -16,6 +16,11 @@ export async function loginTool(
   // report). Refuse, without claiming the session was rejected: this answer
   // checks nothing, and an agent that called login after an image 403 read the
   // old "not accepting this session" text as confirmation.
+  // A connector caller signs in on the web tier's own page, so the answer names
+  // that link (self-hosted beta E3); it checks nothing either.
+  if (isConnector(principal)) {
+    return { success: false, message: connectorLoginMessage(principal) };
+  }
   if (await isHostedMode(principal)) {
     return { success: false, message: HOSTED_LOGIN_UNAVAILABLE };
   }

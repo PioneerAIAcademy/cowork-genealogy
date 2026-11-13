@@ -93,7 +93,7 @@ project_create({ projectPath, objective, title, personId: "<id>", subjectPersonI
 `objective` from the opening turn; `title` a concise 3-6 word session name. Name the person as the user named them; when the user gave only the ID, name them by the ID ("Identify the parents of KWCJ-RN4", "KWCJ-RN4's parents"), and `project_create` stores the person's name in its place. It reads the person, their relatives, sources and memories, writes both files, the profile and the memory sources, and returns a summary: `subject`, `objective` and `title` as stored, `relatives` (each with `id`, `name` and `relationship`: `spouse`, `father`, `mother`, `parent`, `child`, `sibling` or `relative`), `counts`, `memories` (`transcribed`, `notTranscribed`), the read's `notes`, and `omitted` when a list was trimmed. Never call it with `tree`.
 
 - **Refused with `subject_person_ids contains '<id>' which is not in tree.gedcomx.json persons`, or a message naming `personReadRef`:** the installed extension is out of date. Tell the user to update it, and stop.
-- **An auth error:** tell the user to log in, and stop.
+- **An auth error:** give the user the tool's message as it is, with any link it carries, and stop.
 - **Any other refusal** is about your call: fix it and call again.
 
 **User-stated facts vs. FamilySearch:**

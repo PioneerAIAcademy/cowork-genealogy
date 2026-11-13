@@ -149,6 +149,7 @@ In a batch, every other op is logged as usual. A ref no log entry names keeps th
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
 `{ ok: true, results: [...], filesWritten, validation }` for a batch. Either may
 carry `escalationDue: string`, present only when §8.1's nil-escalation note fires,
+`planRationale: string`, present only when §8.1's plan-rationale note fires,
 and `next: string`, present only when the call logged a report-only agent's own
 entry (`source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
 `validate_schema`): it tells the agent to return the report it just logged, in
@@ -485,6 +486,20 @@ A third advisory rides a top-level `escalationDue` string rather than
   reads is, which is why this is a tool note and not prose — a prose version of
   the same trigger was measured and made a correct search give up early. A
   call that brings several plan items to the threshold gets one line per item.
+- **Plan rationale:** when a call logs the **first** nil `record_search` /
+  `fulltext_search` entry for a plan item (the same nil test as above),
+  `planRationale` quotes the plan item's `rationale` and says to search next, before
+  any other retry, any name, place or source it gives that is not yet searched,
+  then to carry on with the other retries. The rationale is where
+  research-plan puts what it knew about the search: another surname the person
+  may be under, how a collection is indexed, a second jurisdiction. It fires for
+  any record type. It stays silent when the plan item already had a nil, when any
+  entry for it is `positive` or `partial`, when the rationale is blank, and for a
+  search that serves no plan item. A batch whose nils are the item's first gets
+  one line for it. Measured 2026-11-12 on Haiku 5.5 at low effort:
+  `ut_search_records_d33` never searched the married surname its rationale names
+  in 2 to 3 of 10 runs, with or without a body rule; with the note it searched it
+  in 10 of 10.
 
 ### 8.2 A precondition that blocks: undocumented census structure
 
@@ -1082,6 +1097,10 @@ the command that measured it are in `guardrail-enforcement-spec.md`.
   once ≥3 positive searches are logged with zero sources and zero assertions,
   stays silent below the threshold, stays silent once any source or assertion
   exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
+- **Plan rationale (§8.1)** — `planRationale` appears on the first nil against a
+  plan item, single or batched, for any record type; stays absent on a later nil,
+  once the plan item has a positive or partial entry, with a blank rationale, and
+  with no plan item.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or

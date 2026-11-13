@@ -52,7 +52,7 @@ DOOR_SOURCE = PROTO.parents[2] / "packages/engine/mcp-server/src/store/pg-s3-pro
 ID_COLUMNS = ("user_id", "owner_id", "project_id", "session_id", "project_key")
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS", "FAMILYSEARCH_WEB_ENABLED",
             "FAMILYSEARCH_CONFIG", "GENEALOGY_MAX_USERS", "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED",
-            "FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")
+            "FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "OAUTH_ISSUER")
 
 
 @pytest.fixture(autouse=True)
