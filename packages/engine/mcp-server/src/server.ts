@@ -25,6 +25,7 @@ import { loginTool, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
 import { collectionCatalogLoader, collectionsSearchTool, type CollectionsSearchInput } from "./tools/collections-search.js";
+import { fulltextSearchableLoader } from "./utils/fulltext-searchable.js";
 import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
@@ -784,7 +785,11 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "research_append") {
       try {
         const args = request.params.arguments as unknown as ResearchAppendInput;
-        const result = await researchAppendFromCaller(args, collectionCatalogLoader(principal));
+        const result = await researchAppendFromCaller(
+          args,
+          collectionCatalogLoader(principal),
+          fulltextSearchableLoader(principal),
+        );
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

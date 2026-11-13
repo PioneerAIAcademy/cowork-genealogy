@@ -1,0 +1,718 @@
+{
+  "guard": "plan-item-void-search",
+  "description": "A research_append write marking a plan item `completed` when every non-error `fulltext_search` attributed to it is scoped to a `query.imageGroupNumber`, every one returned nothing (`results_available === 0`), every such id is a bare digit run, FamilySearch reports NONE of them as full-text searchable, and no `image_search` entry (any outcome) names the item. Such a nil is a fact about the volume's coverage, not about the person, so the completion claims a search that could not have happened and the volume never surfaces as unread (#4431, feedback #4379). Silent on an UNKNOWN answer (`searchable: null`), on any searchable id, on a composite or mixed id set, on a non-void entry, when an image_search names the item, and for any status but completed. Replayed by planItemVoidSearchInvariants (research-append.ts).",
+  "format": "expect: fire | silent, judged for the plan item named by `write` (found in research.plans[].items). research.log holds the attributed entries. `searchable` is the set FamilySearch reported, as a list; absent or null means UNKNOWN, which never fires. Every fire case carries a `shape`; a guard needs at least two distinct fire shapes and at least one silent case.",
+  "cases": [
+    {
+      "id": "single-bare-group-unsearchable",
+      "expect": "fire",
+      "shape": "single-bare-group",
+      "why": "One attributed scoped full-text search, void, on one bare-digit id FamilySearch does not report as searchable. The maria-vazsan-spouse 5219332 shape.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "multi-bare-group-all-unsearchable",
+      "expect": "fire",
+      "shape": "multi-bare-group",
+      "why": "Several scoped void entries across several bare-digit ids, none searchable. The real corpus shape: hugh-mclachlan-marriage pli_005 carries three group ids.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102848"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102858"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102865"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "scoped-void-among-productive-searches",
+      "expect": "fire",
+      "shape": "scoped-void-among-productive",
+      "why": "THE MOTIVATING CASE, from feedback bundle 2026-11-09 (pli_005, Walpole NH town records). The bundle attributes five full-text searches to the item; the four carried here are three keyword/place searches that returned thousands of rows, and one that NAMES an image group — which returned nothing and which FamilySearch does not report as searchable. The productive three never searched that volume, so the item is still unread and condition 2 reads only the entries that name a group. The id here, 1987741, is in fact a collection id rather than an image group: the refusal is correct in outcome but reached through the documented unknown-id hole, and its message sends the agent to record_search for exactly that reason.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "vital_record",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "partial",
+            "results_available": 6316,
+            "query": {
+              "keywords": "+Eastman",
+              "includeFacets": true
+            }
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "results_available": 0,
+            "query": {
+              "keywords": "+Eastman",
+              "imageGroupNumber": "1987741"
+            }
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "partial",
+            "results_available": 3376,
+            "query": {
+              "keywords": "+Eastman",
+              "place": "Cheshire, New Hampshire"
+            }
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "partial",
+            "results_available": 1156,
+            "query": {
+              "keywords": "+Eastman +Walpole",
+              "count": 20
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "loader-includes-the-id",
+      "expect": "silent",
+      "why": "FamilySearch reports the group as full-text searchable, so the nil is about the person, not the volume.",
+      "write": "pli_005",
+      "searchable": [
+        "5219332"
+      ],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "loader-returned-null-unknown",
+      "expect": "silent",
+      "why": "UNKNOWN: the request failed, the budget was spent, or no pre-read ran. UNKNOWN never refuses.",
+      "write": "pli_005",
+      "searchable": null,
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "one-of-several-ids-searchable",
+      "expect": "silent",
+      "why": "Condition 3 needs NONE searchable. One searchable id means a real search could have run.",
+      "write": "pli_005",
+      "searchable": [
+        "4102858"
+      ],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102848"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102858"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102865"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "image-search-names-the-item",
+      "expect": "silent",
+      "why": "An image_search names the item, so pages were reached for. Counted at ANY outcome, error included, to stay clear of the issue #4313 pattern (403 pages, capped partial browses) the lead dropped on 2026-11-09.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "image_search",
+            "outcome": "error",
+            "query": {
+              "imageGroupNumber": "5219332"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "negative-outcome-with-rows",
+      "expect": "silent",
+      "why": "outcome 'negative' with ten rows read is a real search. Void is results_available === 0, not outcome === 'negative' — marina-lopez-parents/log_026 is exactly this.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 10
+          }
+        ]
+      }
+    },
+    {
+      "id": "some-void-some-with-rows",
+      "expect": "silent",
+      "why": "Condition 2 needs EVERY scoped entry void. One of these two returned ten rows, so a real search ran against this item even though both ids are unsearchable. `some` in place of `every` would refuse it — this case is what makes that break visible.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "results_available": 0,
+            "query": {
+              "imageGroupNumber": "5219332"
+            }
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "results_available": 10,
+            "query": {
+              "imageGroupNumber": "4102848"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "composite-group-id-unanswerable",
+      "expect": "silent",
+      "why": "image_search mints composite ids; the searchability endpoint cannot answer one, so absent from its reply does not mean unsearchable.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "005190819_004_M9SP-M12"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "mixed-bare-and-composite-ids",
+      "expect": "silent",
+      "why": "A partial view cannot support 'none of them are searchable'. Mixed is UNKNOWN too.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "007947987_001"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "results-available-key-absent",
+      "expect": "silent",
+      "why": "results_available is optional: 25 of the 77 scoped entries in the committed corpus omit it (measured 2026-11-12 at eb75332e1). A strict === 0 reads an absent count as NOT void, so an unknown count never refuses.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102848"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "results-available-explicit-null",
+      "expect": "silent",
+      "why": "The schema declares results_available nullable. Same reading as an absent key: not void, so no refusal.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          },
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "4102848"
+            },
+            "results_available": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "error-entry-is-not-a-search",
+      "expect": "silent",
+      "why": "An outcome 'error' entry is excluded from the scoped set, so this item has no scoped entry at all and condition 1 fails.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "error",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-scoped-entry-attributed",
+      "expect": "silent",
+      "why": "The attributed full-text search carries no imageGroupNumber, so condition 1 never matches. The guard is best-effort by construction — `query` is unvalidated.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "results_available": 0,
+            "query": {
+              "keywords": "+Eastman"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "entry-belongs-to-another-item",
+      "expect": "silent",
+      "why": "The void scoped entry names a different plan item, so nothing is attributed to this one.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_009",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-still-in-progress",
+      "expect": "silent",
+      "why": "The guard judges only an item standing at completed.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "in_progress"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-skipped-is-the-exit",
+      "expect": "silent",
+      "why": "A skip is the item's honest exit (Exemption 3 in planItemSearchedSkipInvariants). This guard says nothing about it.",
+      "write": "pli_005",
+      "searchable": [],
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_005",
+                "record_type": "church",
+                "status": "skipped"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "outcome": "negative",
+            "query": {
+              "imageGroupNumber": "5219332"
+            },
+            "results_available": 0
+          }
+        ]
+      }
+    }
+  ]
+}
