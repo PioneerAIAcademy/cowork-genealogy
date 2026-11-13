@@ -10,7 +10,8 @@
       "server-migration",
       "uses-tool-response",
       "vermont",
-      "direct-arm"
+      "direct-arm",
+      "no-project"
     ]
   },
   "input": {
