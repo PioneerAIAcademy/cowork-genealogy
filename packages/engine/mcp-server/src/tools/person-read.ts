@@ -5,6 +5,7 @@ import {
   simplifySourceDescription,
 } from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { START_PROJECT_RULE } from "../utils/project-io.js";
 import {
   fetchMemories,
   fetchPortraitId,
@@ -138,7 +139,13 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       ...result,
     };
   }
-  return result;
+  return {
+    ...result,
+    notes: [
+      ...(result.notes ?? []),
+      START_PROJECT_RULE,
+    ],
+  };
 }
 
 /**
