@@ -4,6 +4,7 @@ import { fsFetch } from "./fs-fetch.js";
 import type { FulltextGroupNumberResponse } from "../types/volume-search.js";
 import { isFsBudgetExhausted } from "./fs-budget.js";
 import { mapWithConcurrency } from "./place-resolver.js";
+import type { FulltextSearchableLoader } from "../types/volume-search.js";
 
 const FULLTEXT_GROUP_URL =
   "https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber";
@@ -77,12 +78,12 @@ export async function fetchFulltextSearchableBatched(
   return new Set(sets.flatMap((s) => [...(s as Set<string>)]));
 }
 
-/** A principal-bound `fetchFulltextSearchableBatched`, so a writer tool can
- *  resolve a searchability set without importing auth or a principal (#4431).
- *  The same shape as `CollectionCatalogLoader`: built once per request in
- *  `server.ts`, passed to `researchAppendFromCaller`, `null` where no caller
- *  supplies one. Batched, because the ids come from a document that grows. */
-export type FulltextSearchableLoader = (ids: string[]) => Promise<Set<string> | null>;
+/** Built once per request in `server.ts` and passed to
+ *  `researchAppendFromCaller`; `null` where no caller supplies one. Batched,
+ *  because the ids come from a document that grows. The TYPE is declared in
+ *  `types/volume-search.ts` and re-exported here — see the note there for why a
+ *  writer tool must not import it from this module. */
+export type { FulltextSearchableLoader } from "../types/volume-search.js";
 
 export function fulltextSearchableLoader(principal: Principal): FulltextSearchableLoader {
   return (ids: string[]) => fetchFulltextSearchableBatched(ids, principal);

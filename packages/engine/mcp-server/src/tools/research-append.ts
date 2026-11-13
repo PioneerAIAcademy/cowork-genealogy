@@ -128,7 +128,7 @@ import {
   DERIVED_ENTRY_LINK_PREFIX,
 } from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
-import type { FulltextSearchableLoader } from "../utils/fulltext-searchable.js";
+import type { FulltextSearchableLoader } from "../types/volume-search.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 
