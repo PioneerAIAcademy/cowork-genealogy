@@ -165,6 +165,33 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
 
+def test_open_conflict_writes_blocked_by_conflict(before_state, after_state, test):
+    """Tag-gated: Step 0's open-conflict block writes `blocked_by_conflict`
+    (issue #4323). `test_no_exhaustive_declaration` catches only a stop-gate
+    value; this catches a `resources_spent` decline in its place and a run
+    that writes no stop at all."""
+    if "blocked-by-conflict" not in test.get("tags", []):
+        pytest.skip("not a blocked-by-conflict scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    stops = [
+        (q.get("id"), (q.get("search_stop") or {}).get("stopped_because"))
+        for q in _questions_with_changed_declaration(before, after)
+        if q.get("search_stop")
+    ]
+    assert stops, (
+        "no question's search_stop was written: an unresolved conflict that "
+        "lists the question owes a `blocked_by_conflict` stop"
+    )
+    bad = [f"{qid}: stopped_because={sb!r}" for qid, sb in stops if sb != "blocked_by_conflict"]
+    assert not bad, (
+        "an unresolved conflict that lists the question owes a "
+        "`blocked_by_conflict` stop, not:\n  - " + "\n  - ".join(bad)
+    )
+
+
 # --- Tag-gated: not_reached is built from what the project holds ------------
 
 _LOCALITY_PAGE_SECTIONS = frozenset({"home", "getting_started", "online_records", "research_tips"})

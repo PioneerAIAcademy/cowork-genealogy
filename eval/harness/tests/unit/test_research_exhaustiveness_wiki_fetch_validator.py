@@ -264,3 +264,42 @@ def test_d3c_is_graded_by_the_no_gate_validator():
     with pytest.raises(AssertionError, match="Unexpected stop-gate write"):
         run(state("question_answered", "exhaustive_declared"))
     run(state("blocked_by_conflict", "in_progress"))
+
+
+def test_d3c_is_graded_on_the_stop_it_writes():
+    """d3c owes a `blocked_by_conflict` stop, and the no-gate check above
+    misses the two ways it fails: a `resources_spent` decline in its place,
+    and no write at all. v5_2026-11-02_10-47-43 recorded the first, and the
+    judge scored it 3 on every dimension (review of PR #4540). Reads the real
+    d3c file; a skip is turned into a failure for the reason given in
+    `test_a_decline_without_a_step_0_tag_still_owes_the_fetch`."""
+    from test_research_exhaustiveness import test_open_conflict_writes_blocked_by_conflict as check_stop
+
+    d3c = json.loads(
+        (Path(__file__).resolve().parents[3] / "tests" / "unit"
+         / "research-exhaustiveness"
+         / "direct-ut_research_exhaustiveness_d3c.json").read_text(encoding="utf-8")
+    )["test"]
+
+    def state(stopped_because):
+        return {"research_json": {"questions": [{
+            "id": "q_001", "status": "in_progress",
+            "search_stop": {"stopped_because": stopped_because},
+        }]}}
+
+    def run(after, test=d3c):
+        try:
+            check_stop(state(None), after, test)
+        except pytest.skip.Exception:
+            pytest.fail("the blocked-by-conflict check skipped d3c")
+
+    run(state("blocked_by_conflict"))
+    for wrong in ("resources_spent", "question_answered"):
+        with pytest.raises(AssertionError, match="owes a `blocked_by_conflict` stop, not"):
+            run(state(wrong))
+    with pytest.raises(AssertionError, match="no question's search_stop was written"):
+        run(state(None))
+
+    untagged = {"tags": [t for t in d3c["tags"] if t != "blocked-by-conflict"]}
+    with pytest.raises(pytest.skip.Exception):
+        check_stop(state(None), state("resources_spent"), untagged)

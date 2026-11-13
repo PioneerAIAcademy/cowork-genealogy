@@ -294,7 +294,7 @@
       },
       "outcome": "positive",
       "results_examined": 9,
-      "notes": "1870 census: Patrick Flynn age 25 in household of Thomas Flynn, Schuylkill Co. — corroborates 1850/1860 placement. 1880 census: Patrick Flynn age 35, head of own household, wife Margaret, no parentage information (relationship column says 'Self'). 1900 census: Patrick Flynn age 55, same household. Later censuses corroborate identity but add no new parentage evidence beyond 1870.",
+      "notes": "1870 census: Patrick Flynn age 25 in household of Thomas Flynn, Schuylkill Co. — corroborates 1850/1860 placement. 1880 census: Patrick Flynn age 35, head of own household, wife Margaret, no parentage information (relationship column says 'Self'). 1900 census: no entry for Patrick, consistent with his death ca. 1898. Later censuses corroborate identity but add no new parentage evidence beyond 1870.",
       "external_site": null
     },
     {
@@ -788,7 +788,7 @@
         {
           "start": "1870-01-01",
           "end": "1898-03-12",
-          "expected_events": ["marriage", "1880_census", "1900_census", "residence", "occupation", "death"],
+          "expected_events": ["marriage", "1880_census", "residence", "occupation", "death"],
           "severity": "high"
         }
       ]
