@@ -112,8 +112,8 @@ classifications are not yours to send.
   - `Mary (Johnson) Smith`, `Mary Smith nee Johnson`, `née Johnson`: Johnson
     `birth`, Smith `married`. A surname the text gives her father is `birth`; one
     it gives a husband it names is `married`.
-  - `Mrs. Thomas Flynn` is her own person: surname Flynn, `married`, no given
-    name, with a `couple` to Thomas Flynn.
+  - `Mrs. Thomas Flynn` is her own person, `names: [{ surname: "Flynn", type:
+    "married" }]` with no given name, and a `couple` to Thomas Flynn.
   - A bracket ending a name (`Julia Rose (Hart)`, `Ann Hart (Cole)`), or several
     (`Ann Hart (Cole) (Dunn)`): each surname its own name, no `type`. Never take
     the first as her birth surname.
