@@ -24,6 +24,5 @@ on any proof tier, not just Proved.
 
 ## Used by
 
-`ut_proof_conclusion_d3c` — verifies that proof-conclusion detects the open
-identity-scoped conflict and declines to write a proof summary, routing to
-`conflict-resolution` instead.
+No unit test uses this scenario. (`ut_proof_conclusion_d3c`, once credited
+here, runs on `flynn-parentage-disproved`.)

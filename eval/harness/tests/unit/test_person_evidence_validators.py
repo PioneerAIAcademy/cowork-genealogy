@@ -900,6 +900,83 @@ def test_chrono_fires_when_record_persona_id_is_null():
     assert "1858" in str(exc.value)
 
 
+# The ut_person_evidence_021 shape: a household with no persona ids. Bridget's
+# relationship fact (a_007, child_2, born ~1844) is linked to Thomas (I2, born
+# 1818), the head it names, and the only same_person call scored the head.
+
+_HOUSEHOLD_REC = "ark:/61903/1:1:MQ7X-8KP"
+_HOUSEHOLD = {
+    "assertions": [
+        {"id": "a_001", "record_id": _HOUSEHOLD_REC, "record_role": "head_of_household",
+         "record_persona_id": None, "fact_type": "name"},
+        {"id": "a_004", "record_id": _HOUSEHOLD_REC, "record_role": "child_1",
+         "record_persona_id": None, "fact_type": "relationship", "date": "1850"},
+        {"id": "a_005", "record_id": _HOUSEHOLD_REC, "record_role": "child_2",
+         "record_persona_id": None, "fact_type": "name"},
+        {"id": "a_006", "record_id": _HOUSEHOLD_REC, "record_role": "child_2",
+         "record_persona_id": None, "fact_type": "birth", "date": "~1844"},
+        {"id": "a_007", "record_id": _HOUSEHOLD_REC, "record_role": "child_2",
+         "record_persona_id": None, "fact_type": "relationship", "date": "1850"},
+    ],
+    "person_evidence": [],
+}
+_HOUSEHOLD_TREE = _tree_with_birth("I2", 1818)
+
+
+def _household_link(assertion_id: str) -> dict:
+    return {
+        "assertions": _HOUSEHOLD["assertions"],
+        "person_evidence": [
+            {"id": "pe_009", "assertion_id": assertion_id, "person_id": "I2",
+             "confidence": "probable", "rationale": "Head of the household."}
+        ],
+    }
+
+
+def _sp(assertion_id: str, **named) -> dict:
+    return {
+        "tool": "mcp__genealogy__same_person",
+        "args": {"projectPath": "/p", "assertionId": assertion_id, "treePersonId": "I2", **named},
+    }
+
+
+def test_chrono_passes_when_the_only_call_scored_another_party():
+    """The link is about the head the fact names, so the child's birth year is
+    not the linked person's. Fired before: the fallback took the head's call and
+    then read the child's facts."""
+    check_chrono(
+        _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+        _state(_household_link("a_007"), _HOUSEHOLD_TREE),
+        [_sp("a_004", recordRole="head_of_household")],
+    )
+    check_chrono(
+        _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+        _state(_household_link("a_007"), _HOUSEHOLD_TREE),
+        [_sp("a_001")],
+    )
+
+
+def test_chrono_fires_when_a_call_scored_the_facts_own_party():
+    """A call on another fact of the same party still answers for it."""
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+            _state(_household_link("a_006"), _HOUSEHOLD_TREE),
+            [_sp("a_005")],
+        )
+    assert "1844" in str(exc.value) and "1818" in str(exc.value)
+
+
+def test_chrono_prefers_the_own_party_call_over_an_earlier_other_party_one():
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+            _state(_household_link("a_006"), _HOUSEHOLD_TREE),
+            [_sp("a_004", recordRole="head_of_household"), _sp("a_005")],
+        )
+    assert "pe_009" in str(exc.value)
+
+
 def test_chrono_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
         check_chrono(_state(None), _state(None), [])

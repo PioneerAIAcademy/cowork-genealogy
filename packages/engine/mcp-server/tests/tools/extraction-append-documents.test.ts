@@ -25,6 +25,7 @@ import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 import { validateStructuredDocument, probateDecedentId } from "../../src/utils/structured-document.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
+import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const noReader = { readRecord: async () => { throw new Error("no reads on the document path"); } } as any;
@@ -151,6 +152,70 @@ describe("extraction_append: documents", () => {
       expect(r.ok).toBe(false);
       expect(r.errors?.join(" ")).toMatch(/documents\[1\]\.document\.persons\[0\]\.informant_proximity/);
       expect(await readFile(join(dir, "research.json"), "utf8")).toBe(before);
+    });
+  });
+
+  describe("every name a document gives, with its type (issue #4378)", () => {
+    const withGrace = () => {
+      const doc = structuredClone(obituary) as any;
+      doc.persons.push({
+        id: "p4", gender: "female", statedRelation: "sister",
+        names: [
+          { given: "Grace", surname: "Whitaker", type: "birth", note: "printed Grace (Whitaker) Tolman" },
+          { given: "Grace", surname: "Tolman", type: "married" },
+        ],
+        facts: [{ type: "residence", place: "Ogden, Weber, Utah" }],
+      });
+      return doc;
+    };
+
+    it("accepts the four name types and refuses any other, naming the four", () => {
+      expect(validateStructuredDocument(withGrace())).toEqual([]);
+      const bad = withGrace();
+      bad.persons[3].names[0].type = "maiden";
+      expect(validateStructuredDocument(bad).join(" ")).toMatch(
+        /persons\[3\]\.names\[0\]\.type: must be one of birth, married, nickname, also_known_as/,
+      );
+    });
+
+    it("writes one name assertion per name, names[0] first, each with its own value, type and note", async () => {
+      const r = await run([{ recordId: "capture:obituary-grace", document: withGrace() }]);
+      expect(r.ok).toBe(true);
+      const all = await assertionsFor("capture:obituary-grace");
+      const graceRole = all.find((a: any) => a.fact_type === "name" && a.value === "Grace Whitaker")?.record_role;
+      expect(graceRole).toBeTruthy();
+      const names = all.filter((a: any) => a.record_role === graceRole && a.fact_type === "name");
+      expect(names.map((a: any) => a.value)).toEqual(["Grace Whitaker", "Grace Tolman"]);
+      expect(names.map((a: any) => a.structured_value)).toEqual([
+        { given: "Grace", surname: "Whitaker", type: "birth" },
+        { given: "Grace", surname: "Tolman", type: "married" },
+      ]);
+      expect(names[0].informant_bias_notes ?? "").toMatch(/printed Grace \(Whitaker\) Tolman/);
+      expect(names[1].informant_bias_notes ?? "").not.toMatch(/printed/);
+      // The first name assertion of a party is still names[0]: readers that take
+      // a party's first name depend on it.
+      expect(all.find((a: any) => a.record_role === graceRole)?.value).toBe("Grace Whitaker");
+      // A name with no type carries none.
+      const harold = all.find((a: any) => a.fact_type === "name" && a.value === "Harold Dean Whitaker");
+      expect(harold.structured_value).toEqual({ given: "Harold Dean", surname: "Whitaker" });
+    });
+
+    it("materializes both names on one person, BirthName Whitaker first and MarriedName Tolman", async () => {
+      await run([{ recordId: "capture:obituary-grace", document: withGrace() }]);
+      const all = await assertionsFor("capture:obituary-grace");
+      const graceRole = all.find((a: any) => a.fact_type === "name" && a.value === "Grace Whitaker")?.record_role;
+      const m = await materializeFacts({ projectPath: dir, personId: "I9", recordId: "capture:obituary-grace", recordRole: graceRole });
+      expect(JSON.stringify(m)).toMatch(/"ok":true/);
+      const tree = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf8"));
+      const grace = tree.persons.find((p: any) => p.id === "I9");
+      expect(grace.names.map((n: any) => [n.given, n.surname, n.type])).toEqual([
+        ["Grace", "Whitaker", "BirthName"],
+        ["Grace", "Tolman", "MarriedName"],
+      ]);
+      const harold = await materializeFacts({ projectPath: dir, personId: "I8", recordId: "capture:obituary-grace", recordRole: all[0].record_role });
+      expect(JSON.stringify(harold)).toMatch(/"ok":true/);
+      const after = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf8"));
+      expect(after.persons.find((p: any) => p.id === "I8").names[0].type).toBeUndefined();
     });
   });
 

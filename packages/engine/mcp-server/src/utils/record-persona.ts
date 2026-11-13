@@ -307,13 +307,14 @@ export function candAsFact(cand: FactCandidate): SimplifiedFact {
 /** Given/surname from a name assertion — its structured_value when present, else
  *  parsed from `value` (surname = last token). Both parts are always returned
  *  (empty string, not undefined) so the minted name satisfies the tree schema's
- *  present-and-string given/surname requirement. */
-export function nameParts(assertion: any): { given: string; surname: string } {
+ *  present-and-string given/surname requirement. `type` is the structured
+ *  value's own word (`birth`, `married`…), absent when it states none. */
+export function nameParts(assertion: any): { given: string; surname: string; type?: string } {
   const sv = assertion.structured_value;
   if (sv && typeof sv === "object" && !Array.isArray(sv)) {
     const given = typeof sv.given === "string" ? sv.given : "";
     const surname = typeof sv.surname === "string" ? sv.surname : "";
-    if (given || surname) return { given, surname };
+    if (given || surname) return { given, surname, ...(typeof sv.type === "string" ? { type: sv.type } : {}) };
   }
   const tokens = String(assertion.value ?? "").trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return { given: "", surname: "" };

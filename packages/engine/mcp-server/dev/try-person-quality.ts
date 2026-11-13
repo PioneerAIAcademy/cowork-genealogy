@@ -48,18 +48,7 @@ try {
   }
   if (result.detail) {
     console.log("---");
-    console.log(
-      `facts=${result.detail.facts.length}  ` +
-        `withSources=${result.detail.facts.filter((f) => f.sources.length > 0).length}  ` +
-        `conflicts=${result.detail.conflicts.length}`,
-    );
-    for (const f of result.detail.facts) {
-      console.log(`  ${(f.conclusionType ?? "?").padEnd(13)} score=${f.score}`);
-      for (const s of f.sources) {
-        console.log(`      ${s.agrees === true ? "agrees " : s.agrees === false ? "DIFFERS" : "unknown"}  ${s.title}`);
-      }
-      for (const i of f.issues) console.log(`      issue: ${i}`);
-    }
+    console.log(`conflicts=${result.detail.conflicts.length}`);
     for (const c of result.detail.conflicts) {
       console.log(`  CONFLICT ${c.field}: ${c.values.join("  vs  ")}  (${c.sources.length} sources)`);
     }

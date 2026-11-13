@@ -13,7 +13,7 @@ vi.mock("../../src/tools/image-transcribe.js", () => ({
   imageTranscribeTool: vi.fn(),
 }));
 
-import { personReadTool } from "../../src/tools/person-read.js";
+import { personReadTool, readPerson } from "../../src/tools/person-read.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
@@ -87,8 +87,14 @@ function route(
   });
 }
 
-const read = (extra: Record<string, unknown> = {}) =>
-  personReadTool({ personId: PID, sourceDescriptions: true, ...extra }, LOCAL);
+// The transcription phase belongs to `readPerson`, which `project_create` calls.
+// `person_read`'s own answer carries no transcribed text (issue #4420); the last
+// describe block below pins that.
+const read = async (extra: { projectPath?: string } = {}) =>
+  (await readPerson(PID, extra, LOCAL)).result;
+
+const readTool = (extra: Record<string, unknown> = {}) =>
+  personReadTool({ personId: PID, ...extra }, LOCAL);
 
 // A real folder, not a literal path: a `projectPath` also stages the read
 // itself (#2944), which writes under it.
@@ -108,7 +114,7 @@ afterEach(async () => {
   await rm(proj, { recursive: true, force: true });
 });
 
-describe("person_read — transcription phase", () => {
+describe("readPerson — transcription phase (project_create)", () => {
   it("transcribes a kept image memory into text", async () => {
     route([mem("d1", "image/jpeg", "Document", "Last Will and Testament", "jpg")]);
     const out = await read();
@@ -252,16 +258,32 @@ describe("person_read — transcription phase", () => {
   });
 });
 
-describe("person_read — the staged copy is post-merge (#2944)", () => {
+describe("person_read — memories are title and links (#4420)", () => {
+  it("returns a memory with its links and no text, and transcribes nothing", async () => {
+    route([
+      mem("d1", "image/jpeg", "Document", "Will", "jpg"),
+      mem("s1", "text/plain", "Story", "Obituary of Almon Clegg", "txt"),
+    ]);
+    const out = await readTool({ projectPath: proj });
+    expect(transcribe).not.toHaveBeenCalled();
+    const memories = out.sources.filter((s) => s.artifact_url !== undefined);
+    expect(memories.map((s) => s.id).sort()).toEqual(["d1", "s1"]);
+    for (const m of memories) {
+      expect(m.title).toBeTruthy();
+      expect(m.url).toBeTruthy();
+      expect(m.text).toBeUndefined();
+      expect(m.image_ref).toBeUndefined();
+      expect(m.notes).toBeUndefined();
+    }
+  });
+});
+
+describe("person_read — the staged copy is the answer (#2944)", () => {
   it("staged gedcomx equals the returned document when memories merged", async () => {
-    transcribe.mockResolvedValue({
-      transcription: "OCR TEXT",
-      imageRef: "images/d1.jpg",
-    } as never);
     route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
-    const out = await read({ projectPath: proj });
+    const out = await readTool({ projectPath: proj });
     // The merge really ran, so the equality below is not equal by construction.
-    expect(out.sources.find((s) => s.id === "d1")?.text).toBe("OCR TEXT");
+    expect(out.sources.find((s) => s.id === "d1")?.artifact_url).toBeTruthy();
     const { readFile } = await import("fs/promises");
     const envelope = JSON.parse(
       await readFile(join(proj, out.staged!.resultsRef), "utf8"),

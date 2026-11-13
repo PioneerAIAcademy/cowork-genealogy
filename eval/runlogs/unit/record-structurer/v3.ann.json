@@ -1,11 +1,11 @@
 {
-  "run_log": "v1_2026-10-20_19-57-51.json",
-  "annotator": "Francisbucci2@gmail.com",
+  "run_log": "v3.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
       "test_id": "ut_record_structurer_008",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -13,7 +13,7 @@
     {
       "test_id": "ut_record_structurer_008",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -51,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_007",
+      "test_id": "ut_record_structurer_006",
       "dimension_source": "rubric",
       "dimension_name": "Verbatim relay",
       "llm_score": 3,
@@ -59,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_007",
+      "test_id": "ut_record_structurer_006",
       "dimension_source": "rubric",
       "dimension_name": "Stated relations",
       "llm_score": 3,
@@ -67,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_007",
+      "test_id": "ut_record_structurer_006",
       "dimension_source": "rubric",
       "dimension_name": "Faithful reading",
       "llm_score": 3,
@@ -75,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_007",
+      "test_id": "ut_record_structurer_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -83,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_007",
+      "test_id": "ut_record_structurer_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,7 +91,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_007",
+      "test_id": "ut_record_structurer_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -99,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_002",
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -107,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_002",
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,15 +115,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_002",
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "judge is correct"
+      "comment": "The agent initially submitted unsupported note fields, causing validation errors. It recovered by removing the invalid fields and successfully submitting the extraction on the second attempt. Although the final extraction was successful, the initial tool-call error shows that the agent did not correctly follow the tool's schema on its first attempt. "
     },
     {
-      "test_id": "ut_record_structurer_002",
+      "test_id": "ut_record_structurer_009",
       "dimension_source": "rubric",
       "dimension_name": "Faithful reading",
       "llm_score": 3,
@@ -131,15 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Stated relations",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_002",
+      "test_id": "ut_record_structurer_009",
       "dimension_source": "rubric",
       "dimension_name": "Verbatim relay",
       "llm_score": 3,
@@ -147,31 +163,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_006",
+      "test_id": "ut_record_structurer_009",
       "dimension_source": "rubric",
-      "dimension_name": "Verbatim relay",
+      "dimension_name": "Stated relations",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Stated relations",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
-    },
-    {
-      "test_id": "ut_record_structurer_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Faithful reading",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
-    },
-    {
-      "test_id": "ut_record_structurer_006",
+      "test_id": "ut_record_structurer_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -179,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_006",
+      "test_id": "ut_record_structurer_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,15 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
-    },
-    {
-      "test_id": "ut_record_structurer_001",
+      "test_id": "ut_record_structurer_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -203,73 +195,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_structurer_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Faithful reading",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Stated relations",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Verbatim relay",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Verbatim relay",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Stated relations",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_structurer_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Faithful reading",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_record_structurer_005",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -285,7 +213,31 @@
     {
       "test_id": "ut_record_structurer_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

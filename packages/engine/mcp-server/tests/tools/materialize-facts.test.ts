@@ -2453,15 +2453,59 @@ describe("materialize_facts", () => {
     expect(n.sources).toEqual([{ ref: "S1", quality: 3 }]); // the ref is never optional
   });
 
-  it("(48) the PERSONA arm still records BirthName, unchanged by the named-party arm", async () => {
-    // upsertName is shared, so a change for one arm must not move the other.
+  it("(48) the PERSONA arm records no name type the assertion does not state (issue #4378)", async () => {
+    // The FamilySearch index types every persona BirthName whatever the record
+    // says, so an untyped name assertion is never defaulted to one.
     await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
     const r = single(
       await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }),
     );
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(findPerson(await readTree(), "I2").names[0].type).toBe("BirthName");
+    expect(findPerson(await readTree(), "I2").names[0].type).toBeUndefined();
+  });
+
+  it("(48b) the PERSONA arm mints each name with the type its structured_value states, and only those four", async () => {
+    const [, ...rest] = enrichPersona();
+    const named = (id: string, given: string, surname: string, type?: string) =>
+      assertion(id, {
+        record_id: "REC-SON",
+        record_role: "child",
+        fact_type: "name",
+        value: `${given} ${surname}`,
+        structured_value: { given, surname, ...(type ? { type } : {}) },
+      });
+    await writeProject(
+      tree(),
+      research({
+        sources: [S1],
+        assertions: [
+          named("a_001", "Grace", "Whitaker", "birth"),
+          ...rest,
+          named("a_010", "Grace", "Tolman", "married"),
+          named("a_011", "Gracie", "Tolman", "nickname"),
+          named("a_012", "Grayce", "Whitaker", "also_known_as"),
+          named("a_013", "Grace", "Whiteacre", "BirthName"),
+          named("a_014", "Grace", "Wittaker", "maiden"),
+        ],
+      }),
+    );
+    const r = single(
+      await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }),
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const byName = Object.fromEntries(
+      findPerson(await readTree(), "I2").names.map((n: any) => [`${n.given} ${n.surname}`, n.type]),
+    );
+    expect(byName).toEqual({
+      "Grace Whitaker": "BirthName",
+      "Grace Tolman": "MarriedName",
+      "Gracie Tolman": "Nickname",
+      "Grayce Whitaker": "AlsoKnownAs",
+      "Grace Whiteacre": undefined,
+      "Grace Wittaker": undefined,
+    });
   });
 
   /** A mirrored register: both parties have a persona, each carrying ONLY the
