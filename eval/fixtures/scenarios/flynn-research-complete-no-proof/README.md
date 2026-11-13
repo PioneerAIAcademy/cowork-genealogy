@@ -9,7 +9,14 @@ Differs from `flynn-resolved` in these ways:
 - **Added a contemporaneous family Bible (1845):** `src_006` is a family Bible birth entry recorded by the father, Thomas Flynn — a **second** independent original source with *primary* information on the parent-child relationship, alongside the baptism. This is the key to a defensible `proved`: the skill's own tier table defines `proved` as "2+ independent original sources with primary information," so a single primary source (baptism alone) correctly tier-downs to `probable` (see the senior-review note below). With the baptism **and** the family Bible, the scenario genuinely clears the `proved` bar, corroborated by the indirect census co-residence and the direct-but-secondary death certificate.
 - **`q_001` rescoped to the father only:** Original wording asked about "parents" (plural). The fixture's existing evidence (1850/1860 census and 1908 death cert) only names Thomas. When the baptism was added, it also named the mother (Mary Brennan) as Catholic baptismal records always do — and a careful LLM correctly tier-downed the whole question because the mother's identification had only one corroborating source. Rescoping the question to "Who was the father?" matches the actual evidence scope and aligns with the test's intent (verifying `proved`-tier for paternal identification). Maternal identification would be a separate downstream question.
 
-Everything else (project.status, q_001.search_stop shape, plans, log entries 1–6 including negative probate log_006, conflict c_001, etc.) matches `flynn-resolved`. The search_stop text references five sources, two of them with primary information on the relationship.
+It also differs from `flynn-resolved` in these ways:
+
+- **The objective and `q_001` say Ireland, not Pennsylvania:** `project.objective` reads "born ca. 1845 in Ireland", and `q_001` reads "(b. ~1845, Ireland, d. 1908, Schuylkill County, PA)", consistent with the resolved birthplace conflict `c_001`. `q_001`'s rationale also names the father as the objective and the mother as a separate downstream question.
+- **The Bible's provenance:** `log_008` and `src_006` (both added here) state that the Bible descended from Patrick Flynn (d. 1908, Schuylkill County) to his daughter, Mrs James Brown (the wife of the death certificate's informant), and down her line to its present holder.
+- **`a_015` is `approximate`:** the Bible gives the birth year only.
+- **The plan and `h_001`:** `pl_002` gains item `pli_007` (the family Bible), and `h_001`'s `supporting_assertion_ids` add `a_014` and `a_015`.
+
+These match `flynn-resolved`: `project.status` and every other `project` field except the objective; `q_001.search_stop`'s shape (the same five keys); log entries 1–6, including the negative probate `log_006`; conflict `c_001`; and the other questions, timelines and evaluations. The search_stop text references five sources, two of them with primary information on the relationship.
 
 ## Items added vs. flynn-resolved
 
