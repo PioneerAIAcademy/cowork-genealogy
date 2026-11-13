@@ -150,7 +150,7 @@ const validSource = (id: string) => ({
   gedcomx_source_description_id: "SD-001",
   citation: "1850 U.S. Census, Schuylkill County, PA",
   citation_detail: citationDetail,
-  source_classification: "original",
+  source_classification: "derivative",
   repository: "NARA",
   access_date: "2026-01-01",
 });
@@ -12420,6 +12420,161 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.sourceReuse?.srcId).toBe("src_001");
   });
 
+  // ── #2475 row #1824: reuse keeps the first acquisition's log id ──
+
+  it("updated_existing keeps the source's first log_entry_id, and a source with none gains one", async () => {
+    const twoLogs = () => {
+      const research = baseResearch();
+      research.log = [searchLogEntry(null), { ...searchLogEntry(null), id: "log_002" }] as any;
+      return research;
+    };
+    const withFirst = twoLogs();
+    (withFirst.sources[0] as any).log_entry_id = "log_001";
+    await writeProject(withFirst);
+    const reuse = () =>
+      researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: reuseSourceOp("NARA", { log_entry_id: "log_002" }) },
+          { section: "assertions", op: "append", entry: reuseAssertionOp("rec1", "death") },
+        ],
+      });
+    let r = await reuse();
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (r.ok && "results" in r) expect(r.sourceReuse?.action).toBe("updated_existing");
+    expect((await readResearch()).sources[0].log_entry_id).toBe("log_001");
+
+    await writeProject(twoLogs());
+    r = await reuse();
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await readResearch()).sources[0].log_entry_id).toBe("log_002");
+  });
+
+  // ── #2475 row #1824: `original` needs stored evidence (lead, 2026-09-02) ──
+
+  describe("original needs stored evidence (#2475 row #1824)", () => {
+    const INDEX_URL = "https://www.familysearch.org/ark:/61903/1:1:MDEF-123";
+    const originalSource = (extra: Record<string, unknown> = {}) => ({
+      ...sourceOpNoRef(),
+      gedcomx_source_description_id: "SD-001",
+      source_classification: "original",
+      url: INDEX_URL,
+      ...extra,
+    });
+    const callerAppend = (entry: Record<string, unknown>) =>
+      researchAppendFromCaller({ projectPath: dir, section: "sources", op: "append", entry } as any, null);
+    const callerUpdate = (entryId: string, fields: Record<string, unknown>) =>
+      researchAppendFromCaller({ projectPath: dir, section: "sources", op: "update", entryId, fields } as any, null);
+
+    it("refuses a caller's original source on a 1:1 index ARK, and writes nothing", async () => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await callerAppend(originalSource());
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/1:1 ARK is an index entry/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("refuses a lone original source with no url and no assertions in the call", async () => {
+      await writeProject();
+      const { url: _u, ...noUrl } = originalSource();
+      const r = await callerAppend(noUrl);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    it("accepts original with a transcription, a stored image, or a 3:1/3:2 image ARK in url", async () => {
+      for (const extra of [
+        { transcription: "Patrick Flynn, died 12 March 1908" },
+        { image_filename: "images/004022578_00190.jpg" },
+        { url: "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSHN-9L9X" },
+        { url: "https://www.familysearch.org/ark:/61903/3:2:77TF-QRP9" },
+      ]) {
+        await writeProject();
+        const r = await callerAppend(originalSource(extra));
+        expect(r.ok, `${JSON.stringify(extra)}: ${JSON.stringify(r)}`).toBe(true);
+      }
+    });
+
+    it("does not count image_ark as evidence: the extractor stamps it on every index read", async () => {
+      await writeProject();
+      const r = await callerAppend(originalSource({ image_ark: "ark:/61903/3:1:3Q9M-CSHN-9L9X" }));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    it("refuses upgrading a derivative to original without evidence, and accepts it when the same update adds a transcription", async () => {
+      await writeProject();
+      let r = await callerUpdate("src_001", { source_classification: "original" });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/source 'src_001' is classified original/);
+      r = await callerUpdate("src_001", { source_classification: "original", transcription: "the page, read" });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readResearch()).sources[0].source_classification).toBe("original");
+    });
+
+    it("leaves a legacy original with no evidence writable", async () => {
+      const research = baseResearch();
+      (research.sources[0] as any).source_classification = "original";
+      await writeProject(research);
+      const r = await callerUpdate("src_001", { notes: "re-checked" });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+
+    it("refuses an update that strips the only evidence from an original", async () => {
+      const research = baseResearch();
+      Object.assign(research.sources[0] as any, {
+        source_classification: "original",
+        url: "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSHN-9L9X",
+      });
+      await writeProject(research);
+      const r = await callerUpdate("src_001", { url: INDEX_URL });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    const absentAssertion = (role = "absent") => ({
+      ...noId(validAssertion("x")),
+      source_id: undefined,
+      record_id: "1850-census-schuylkill",
+      record_role: role,
+      informant_proximity: "researcher",
+      record_basis: "absent",
+      log_entry_id: "log_001",
+    });
+
+    it("exempts the absence browse: a batch whose assertions are all absent may write original with no image", async () => {
+      await writeProject(sidecarResearch());
+      const { url: _u, ...noUrl } = originalSource();
+      const { source_id: _s, ...absent } = absentAssertion();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: noUrl },
+          { section: "assertions", op: "append", entry: absent },
+        ],
+      });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+
+    it("does not exempt a batch with a non-absent assertion", async () => {
+      await writeProject(sidecarResearch());
+      const { url: _u, ...noUrl } = originalSource();
+      const { source_id: _s, ...absent } = absentAssertion();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: noUrl },
+          { section: "assertions", op: "append", entry: absent },
+          { section: "assertions", op: "append", entry: reuseAssertionOp("rec-new") },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+  });
+
   it("new_source_reused_s: same record_id, different repository → new src_ citing the existing S; no S created", async () => {
     await writeProject();
     const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
@@ -17563,6 +17718,203 @@ describe("research_append — one score per record persona covers its facts (#35
     const { id: _id, ...birthplace } = { ...fact("a_099", "P1", "principal", "birthplace"), log_entry_id: "log_001" };
     const r = await write({ section: "assertions", op: "append", entry: birthplace }, link("a_051"));
     expect(errorsOf(r) ?? []).toEqual([]);
+  });
+
+  it("shares a persona's score onto its two-party fact when a one-party fact goes to the same person", async () => {
+    await writeProject();
+    await score({});
+    expect(errorsOf(await write(link("a_011"), link("a_050"))) ?? []).toEqual([]);
+  });
+
+  it("shares it when the one-party link was written earlier", async () => {
+    await writeProject();
+    await score({});
+    expect(errorsOf(await write(link("a_011"))) ?? []).toEqual([]);
+    expect(errorsOf(await write(link("a_050"))) ?? []).toEqual([]);
+  });
+
+  it("does not share it onto a two-party fact whose person holds another party's facts", async () => {
+    // I2 holds the father's name, so a_050's link to I2 is about the father, and
+    // a score comparing P1 with I2 is the wrong comparison for it.
+    await writeProject();
+    await score({ tree_person_id: "I2" });
+    await score({ assertion_id: "a_020", record_persona_id: "F1", record_role: "father", tree_person_id: "I2" });
+    const r = await write(link("a_020", "I2"), link("a_050", "I2"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not share it when the same person also holds another party's one-party fact", async () => {
+    // I2 holds both P1's birth and F1's name, so which party a_050's link is
+    // about is open again, and P1's score cannot answer for it.
+    await writeProject();
+    await score({ tree_person_id: "I2" });
+    await score({ assertion_id: "a_020", record_persona_id: "F1", record_role: "father", tree_person_id: "I2" });
+    const r = await write(link("a_011", "I2"), link("a_020", "I2"), link("a_050", "I2"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not share it when the same person also holds another party's fact with no persona id", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.push(fact("a_021", null, "father", "birth"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score({});
+    await score({ assertion_id: "a_021", record_persona_id: null, record_role: "father" });
+    const r = await write(link("a_010"), link("a_021"), link("a_050"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not read a retired fact's link as tying the two-party fact to its party", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.push({ ...fact("a_012", "P1", "principal", "residence"), superseded_by: "retracted" });
+    r0.person_evidence = [{
+      id: "pe_900", ...link("a_012").entry,
+    }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score({});
+    const r = await write(link("a_050"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+});
+
+describe("research_append — one score per party of a record with no persona ids (#3552)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-capture-score-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // A researcher's capture of a death certificate: no assertion carries a persona
+  // id. a_110-a_112 are the deceased's, a_113 the father's, a_114 the deceased's
+  // relationship to the father.
+  const REC = "capture:george-burns-death-cert-1914";
+  const fact = (id: string, role: string, fact_type = "name") => ({
+    ...validAssertion(id, "src_010"),
+    record_id: REC,
+    record_persona_id: null,
+    record_role: role,
+    fact_type,
+    value: `${id} value`,
+  });
+  async function writeProject() {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      fact("a_110", "principal"),
+      fact("a_111", "principal", "death"),
+      fact("a_112", "principal", "burial"),
+      fact("a_113", "father"),
+      fact("a_114", "principal", "relationship"),
+    ] as any;
+    r.sources = [...r.sources, { id: "src_010", gedcomx_source_description_id: "S1" }] as any;
+    const tree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Burns" }] }],
+    };
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  async function score(over: Record<string, unknown> = {}) {
+    await recordMatchScore(dir, {
+      record_id: REC,
+      record_persona_id: null,
+      record_role: "principal",
+      tree_person_id: "I1",
+      score: 0.98,
+      scorer: "familysearch",
+      model: null,
+      assertion_id: "a_110",
+      record_source: "projection",
+      computed: "2026-11-11T00:00:00Z",
+      party_resolved: true,
+      ...(over as any),
+    });
+  }
+  const link = (assertionId: string, personId = "I1") => ({
+    section: "person_evidence" as const,
+    op: "append" as const,
+    entry: {
+      assertion_id: assertionId,
+      person_id: personId,
+      confidence: "probable",
+      rationale: "Names match.",
+      match_score: 0.98,
+      created: "2026-11-11",
+      superseded_by: null,
+    },
+  });
+  const write = (...ops: any[]) => researchAppend({ projectPath: dir, ops } as any);
+
+  it("accepts every fact of the scored role with one score", async () => {
+    await writeProject();
+    await score();
+    expect(errorsOf(await write(link("a_110"), link("a_111"), link("a_112"))) ?? []).toEqual([]);
+  });
+
+  it("still needs its own score for another role of the record", async () => {
+    await writeProject();
+    await score();
+    expect((await write(link("a_113"))).ok).toBe(false);
+  });
+
+  it("does not share the score with another tree person", async () => {
+    await writeProject();
+    await score();
+    expect((await write(link("a_111", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share a fetched score, whose party the assertions do not name", async () => {
+    await writeProject();
+    await score({ record_source: "record_read" });
+    expect((await write(link("a_111"))).ok).toBe(false);
+  });
+
+  it("does not share across roles once one fact of the record carries a persona id", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.find((a: any) => a.id === "a_113").record_persona_id = "F1";
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score();
+    expect((await write(link("a_111"))).ok).toBe(false);
+  });
+
+  it("shares the score onto the role's two-party fact when a one-party fact goes to the same person", async () => {
+    await writeProject();
+    await score();
+    expect(errorsOf(await write(link("a_111"), link("a_114"))) ?? []).toEqual([]);
+    expect((await write(link("a_114", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share the role's score onto its two-party fact linked alone", async () => {
+    await writeProject();
+    await score();
+    expect(failure(await write(link("a_114"))).errors?.join(" ")).toMatch(/assertion 'a_114'.*no same_person score behind it/);
+  });
+
+  it("names the role in the refusal, so one call is made per party", async () => {
+    await writeProject();
+    const r = await write(link("a_111"));
+    expect(failure(r).errors?.join(" ")).toMatch(/One score covers every fact of the 'principal' party/);
+  });
+
+  it("neither shares a role's score nor promises one onto a fact that reads as fetched", async () => {
+    // same_person files a fetched persona's own id for a_111 here, so the
+    // projected score of a_110 cannot answer for it.
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.log = [{
+      id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_read", query: {},
+      outcome: "positive", results_examined: 1, external_site: null, results_ref: null,
+    }];
+    r0.assertions.find((a: any) => a.id === "a_111").log_entry_id = "log_001";
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score();
+    const errors = failure(await write(link("a_111"))).errors?.join(" ") ?? "";
+    expect(errors).toMatch(/assertion 'a_111'.*no same_person score behind it/);
+    expect(errors).not.toMatch(/One score covers/);
   });
 });
 
