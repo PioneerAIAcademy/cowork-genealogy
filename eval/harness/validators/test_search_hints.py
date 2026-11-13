@@ -220,7 +220,7 @@ def test_thin_hint_is_not_enough_information(agent_returns, text_response, test)
 
 # --- How triage leaves the hints item -------------------------------------
 
-_ENDING = re.compile(r"item-ends:(completed|in_progress|skipped)")
+_ENDING = re.compile(r"item-ends:(completed|in_progress|skipped|untouched)")
 
 
 def test_hints_item_ends_as_tagged(before_state, after_state, test):
@@ -228,7 +228,9 @@ def test_hints_item_ends_as_tagged(before_state, after_state, test):
     one negative log entry naming the item, then `completed`; hints found with
     the researcher present → `in_progress`, nothing logged, waiting on verdicts;
     hints unreadable, or nobody present to decide → `skipped` /
-    `inaccessible`. The tag names the ending the fixture forces."""
+    `inaccessible`; a sign-in message → `untouched`, the item exactly as it
+    was with nothing logged, so a lapsed session is not recorded as an
+    inaccessible source. The tag names the ending the fixture forces."""
     endings = [m.group(1) for t in test.get("tags", []) if (m := _ENDING.fullmatch(t))]
     if not endings:
         pytest.skip("not a hints-item ending test")
@@ -237,10 +239,22 @@ def test_hints_item_ends_as_tagged(before_state, after_state, test):
     assert held, "an item-ends test must hand over a planItemId in its delegation"
     item = _plan_item(after_state, held)
     assert item is not None, f"the hints item {held} is gone from plans"
+    naming = [e for e in _new_log_entries(before_state, after_state) if e.get("plan_item_id") == held]
+    if expected == "untouched":
+        was = _plan_item(before_state, held)
+        assert was is not None, f"the hints item {held} is not in the starting plans"
+        assert item == was, (
+            f"a sign-in message leaves the hints item {held} as it was; it went from "
+            f"{was.get('status')!r} to {item.get('status')!r}"
+            f"{' (' + str(item.get('skip_category')) + ')' if item.get('skip_category') else ''}"
+        )
+        assert not naming, (
+            f"a sign-in message logs nothing against the hints item; got {[e.get('id') for e in naming]}"
+        )
+        return
     assert item.get("status") == expected, (
         f"the hints item {held} ended {item.get('status')!r}; this fixture forces {expected!r}"
     )
-    naming = [e for e in _new_log_entries(before_state, after_state) if e.get("plan_item_id") == held]
     if expected == "completed":
         assert len(naming) == 1 and naming[0].get("outcome") == "negative", (
             f"no hints completes the item through one negative log entry naming it; got "
