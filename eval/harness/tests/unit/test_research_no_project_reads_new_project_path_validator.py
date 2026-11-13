@@ -43,7 +43,7 @@ def _new_path() -> str:
 
 
 def _tool_calls(*read_paths: str, listing: dict | None = None, prefix: str = "mcp__genealogy__") -> list[dict]:
-    calls = [{"tool": f"{prefix}project_list", "args": {}, "response": listing or _listing()}]
+    calls = [{"tool": f"{prefix}project_list", "args": {}, "response": listing if listing is not None else _listing()}]
     calls += [{"tool": f"{prefix}project_context", "args": {"projectPath": p}} for p in read_paths]
     return calls
 
@@ -78,6 +78,17 @@ def test_fails_when_the_working_folder_is_read_before_new_project_path():
         reads_new_path(_test(), _tool_calls(_WORKING_FOLDER, _new_path()), _handoff())
 
 
+def test_fails_when_project_context_sends_no_project_path():
+    calls = _tool_calls(_new_path()) + [{"tool": "mcp__genealogy__project_context", "args": {}}]
+    with pytest.raises(AssertionError, match="at a path other than newProjectPath"):
+        reads_new_path(_test(), calls, _handoff())
+
+
+def test_fails_when_the_handoff_names_new_project_path():
+    with pytest.raises(AssertionError, match="hand-off names newProjectPath"):
+        reads_new_path(_test(), _tool_calls(_new_path()), _handoff(f"Survey the tree. projectPath: {_new_path()}"))
+
+
 def test_fails_when_project_context_is_never_called():
     with pytest.raises(AssertionError, match="never called with newProjectPath"):
         reads_new_path(_test(), _tool_calls(), _handoff())
@@ -88,6 +99,12 @@ def test_fails_when_the_handoff_names_a_listed_project():
     calls = _tool_calls(_new_path(), listing=listing)
     with pytest.raises(AssertionError, match="names a listed project's path"):
         reads_new_path(_test(), calls, _handoff(f"Survey the tree for {_LISTED_PATH}."))
+
+
+def test_fails_when_the_listing_is_empty():
+    calls = _tool_calls(_new_path(), listing={})
+    with pytest.raises(AssertionError, match="never received a hosted project_list answer"):
+        reads_new_path(_test(), calls, _handoff())
 
 
 def test_fails_when_there_is_no_hosted_listing():
