@@ -1,0 +1,582 @@
+{
+  "run_log": "v12_2026-11-12_11-44-36.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked ps_001 against a_001–a_003, src_001, log_001 and tree fact F2. The citation, the source classifications, the 1870–1885 bracket and the Death fact on I1 all match. Nothing is invented."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The agent passed the gate and concluded at possible, but left q_001 open and skipped the project update. §7 says the question it concluded is resolved in the same batch as the summary; only a gate-blocked attempt stays open. Every earlier run of this test resolved q_001. The judge wrongly treats \"left open\" as a valid step."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One research_append was refused for \"claims: null\" and fixed on the next call by dropping the field. The other calls were correct. One clean recovery gets full credit."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Possible with shortfall \"gap\" is right. The unsearched 1880 census would narrow the 15-year bracket itself, and §2 caps the tier at possible in that case. The narrative names the census and explains why the tier isn't higher."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "F2 and R1 are described in prose, the citation is inline, it says no conflicts are open, and the tier is stated. A reader doesn't need research.json to follow it."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions are cited and described, along with the log_001 documented negative (no Kentucky death certificate before 1911) and F2 as the lower bound. The weak points (derivative source, inferred link) are stated, not hidden."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A 399-word Summary, within the ~300–500 budget. The sources all point one way and there are no competing candidates, so a Summary fits."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It added Death fact F3, \"after 1870, before 1885\", to I1, marked primary and sourced to S1. That's the bounded-death encoding the agent's instructions ask for. The judge wrongly calls possible \"above the threshold\" (the threshold is probable), but this test grades a bounded encoding, and this one is right."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked ps_001's narrative against src_001.citation. It matches word for word and is followed by src_001's URL, which is what this test grades. The tier is right and the tree wasn't changed."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_001 was saved at not_proved with shortfall \"gap\". q_001 was left open, and the reply names research-plan and the unsearched records. The run skipped the step-8 project stamp, which earlier annotators didn't mark down when no status change was due (test 024)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The first research_append was refused for \"claims: null\", and the retry without that field created ps_001. Every read call used a valid section and ids. One clean recovery gets full credit."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not_proved with \"gap\" fits one record whose surname is illegible and no candidate surname. The narrative says why the tier can't be higher and names the records still to search: censuses, children's records, Ellen's death record, parish registers and 1889 newspapers."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_001 reads without research.json. The 1889 certificate is described with its full citation and URL, a_001–a_003 are described in prose, it says no conflicts exist, the tier is stated, and I1/I2 always appear next to the names. It runs 349 words against a 150-word Statement budget, but this dimension doesn't grade length, and this test kept 3 at 247 words in v6."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions are described in prose: Ellen's given name with her surname illegible (a_001), the 12 June 1889 Dubuque marriage (a_002) and the groom Michael Doyle (a_003). The project has no conflicts."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Statement fits a not_proved stop on one illegible record with no candidate surname. Earlier annotators scored it the same way (d5e, 024)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The tier is not_proved, the conclusion is neither bounded nor a documented negative, and tree.gedcomx.json is unchanged. Earlier annotators scored this test N/A too."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked ps_001 against a_001–a_003, src_001 and the tree. The 25 June 1786 Hamre date and place, the exact citation, the ages (27 and 41) and both christening facts are right, and the narrative says no image is confirmed. One small slip isn't worth a point: it calls Urna/Unna a \"u/n confusion\", but the letters that differ are r and n."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_001 was appended and q_001 resolved in one batch, with resolution_assertion_ids a_001–a_003. The Marriage fact was added to rel-anders-unna. The project was set to completed because q_001 was its only question (step 8)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All ten calls succeeded with the right project path, ids and fields. None was refused."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Probable with shortfall \"gap\" fits one derivative index entry with primary, direct information. Both the narrative and the search summary name the unexamined register page as the remaining gap."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_001 copies src_001's citation exactly and describes the groom, the bride and the marriage entry in plain prose. It names both christening tree facts with their dates and places, states the tier, and uses no bare a_/c_/src_ ids."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three q_001 assertions are used: the groom's name (a_001), the bride's indexed name \"Urna Halsteinsdr\" (a_002), and the date and place (a_003). The name variant is explained in the text, and there are no conflicts on file."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Summary fits one direct entry plus an identity step for the name variant. At 403 words it's within the 300–500 Summary budget."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d4d",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tier is probable. tree_edit added Marriage F1 (25 Jun 1786, Hamre) to rel-anders-unna, primary and sourced to S1 at quality 2. That's the write this test asks for, since the couple had no Marriage fact before the run."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked ps_001 against a_001–a_003, src_001 and q_001's stop criteria. The illegible surname, the 12 June 1889 marriage, the primary information from the couple, the verbatim citation and the FamilySearch-only search are all stated correctly. No sentence says the surname cannot be found."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_001 has its tier, shortfall, search summary and narrative. q_001 stayed open with research-plan named as the next step, which is what earlier runs of this test scored 3 for. The agent skipped step 8's project \"updated\" stamp, but earlier annotations didn't mark that down (004, 011, 024)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The first research_append was refused for an extra \"form: null\" field, and the retry without it succeeded at once. The read calls used the right projectPath and ids. One clean recovery gets full credit. (The judge counts six research_query calls; there were five, plus project_context.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not_proved with shortfall \"gap\" fits one record whose surname is illegible, with no candidate surname. The narrative and the search summary both name reachable unsearched records: children's baptisms, the death record, the 1885 Iowa census and parish registers."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_001 describes the certificate in prose, copies the src_001 citation in full, says there's no conflict and states the tier, with no bare ids. It runs 290 words against the 150-word Statement budget, but this dimension doesn't grade length, and earlier runs of this test with longer Statements (640 and 667 words) scored 3."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions appear in prose: the bride's name with the illegible surname (a_001), the marriage (a_002) and the groom's name (a_003). They're also listed in supporting_assertion_ids, and it says there are no conflicts."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Statement fits a not_proved finding on one record with no candidate surname. The 290 words go past the Statement budget, but the form is still the right one, and longer Statements on this test scored 3 before."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The tier is not_proved and the finding is neither bounded nor a documented negative. Only research.json changed; the tree is untouched."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the review's claims against ps_001, a_004/a_010/a_013, c_001, the log and the tree. They hold: the citations match src_001/src_003/src_004 word for word, the shared census informant is noted in c_001, there is no probate log entry, and R1 carries S1–S3.\n\n"
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The review works through all the checks (tier, self-containment, citations, conflicts, exhaustiveness, unresolvability, tree) and names all five GPS components. It flags the missing mother and src_005–src_009 as gaps."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All nine calls were reads (project_context, seven research_query, tree_query) with the right projectPath, sections and q_001 filters. None was refused."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The review upholds ps_001's probable tier and \"gap\" shortfall. It names three blockers for proved (indirect census evidence, a secondary informant, search not exhaustive), says why the tier is above possible, and names the 1880 census, src_005 and src_006 as what would raise it."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Review run: the agent checked ps_001's narrative and said it is self-contained, since it names each record with date and place, and its citations match src_001, src_003 and src_004 word for word. ps_001 has no bare a_/c_/src_ ids. The judge docked it for three wording issues the agent found itself and named nothing it missed. The rubric's review-mode partial needs a missed issue, so this is a pass."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The review covers ps_001's cited a_004, a_010, a_013 and c_001. It lists src_005–src_009 as next-round gaps, says which could change the tier (the src_005 baptism, the src_006 will), and doesn't call them defects."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "Neither the agent's return nor the reply names ps_001's form (Summary) or says whether it still fits. The only \"Summary\" in the run is the \"Evidence Summary\" heading inside ps_001's own narrative. The judge's claim that Claude identified the form isn't in the run. The per-claim breakdown it recommends (paternity probable, maternity not proved) is tier bookkeeping, not a judgment between Statement, Summary and Argument. The rubric's review-mode fail applies: the existing form is never identified or judged."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "All nine calls were reads and nothing was written. The rubric says to score null when the skill assessed an existing proof and wrote nothing (gps-review), and that a rationale praising the assessment means null. The judge's 3 grades the fixture's own R1 and F1. v8 and v11 also set this to N/A."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against a_004, a_010, a_013, c_001, src_001–src_009 and the tree. The census and death-certificate classifications, the son-in-law informant, the empty search_stop, the R1/S1 mapping and the Ireland-vs-Pennsylvania birthplace are all correct. One small slip: it says four sources are uncited, then lists five, including src_007."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Right score, wrong reason. The test needs three things for a 3: (a) all five GPS components, (b) whether ps_001's form (summary) still fits, (c) each uncited source's effect on the tier. (c) is done: src_005 \"could raise the tier\", src_006 \"could lift toward proved\", src_008 \"not tier-changing alone\". (b) is missing: the reply never names the Summary form or says whether it fits. The judge says it does, but it doesn't. Same score as the v2 and v8 annotations of this test."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked all 9 calls: project_context, tree_query, and research_query on proof_summaries, assertions, conflicts and questions (scoped by questionId), plus sources, log and person_evidence. Every filter is supported and every call returned ok."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The review upholds probable with \"gap\" and names four blockers to proved: indirect and secondary evidence only, no mother, no exhaustiveness declaration, thin reasoning. It says why possible is unwarranted, and calls the \"gap\" shortfall honest given the unsearched 1870/1880/1900 censuses and probate."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The review quotes the bare ids (a_004, a_010, a_013, src_001/003/004, c_001, plan_001) and calls them \"a failure of self-containment, not a style issue\". It notes that the narrative reproduces none of the stored citations and that c_001's reasoning is only a pointer. The check is done, and the test says a \"not self-contained\" verdict reached that way is a pass."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The review walks a_004, a_010, a_013 and c_001, flags src_005–src_009 as uncited gaps with their effect on the tier, and notes that src_002 is a derivative of src_001. It labels them \"not defects of ps_001\", as asked."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "I searched the reply and the agent's return for summary, form, vehicle, argument, statement and structure. The only hits are \"the proof's own search summary\", \"Summary finding\", \"a statement about the mother\" and \"no real argument\", and none of them names ps_001's form or judges its fit. The judge's \"correctly identifies ps_001 as a Summary\" and \"notes the summary is defensible\" aren't in the run; they paraphrase the tier paragraph. The rubric's review-mode fail applies: the existing form is never identified or judged."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The run assessed ps_001 and wrote nothing (file_changes is null), so the rubric scores this N/A."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked ps_001 and both replies against the fixture. The 1885 index entry, the clerk informant, the unsourced 1870 residence F2, a_003 being linked only to I1, and the 1822 namesake are all stated correctly. The agent never called tree_edit; the judge wrongly says it reported a tree_edit refusal."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The gate stopped on check 3 and the agent saved the decline as ps_001, as its instructions require. It left q_001 open, named the unsearched records (order book, estate file, 1880 census, cemetery and church records) and named the route: person-evidence on Jesse (I2). The test accepts a gate-stop."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The first research_append was refused for \"claims: null\"; the retry without that field saved ps_001. One clean recovery, scored 3 last round for the same refusal."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not_proved with \"gap\" fits: the namesake isn't excluded and nothing ties the administrator to I2. The search summary names reachable unsearched records, and the narrative says linking Jesse and reading the order book or estate file would settle it."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge's reason doesn't hold. F2 is described as \"Residence, Muhlenberg County, Kentucky, 1870\", R1 as Jesse being \"the subject's son\", I2 appears next to Jesse's name, and ns_001 and I1 never appear (the namesake is described as \"a second Elijah Wilkins, born about 1822\"). The F2 passage uses the shape the agent's instructions prescribe. It runs 315 words against the 150-word Statement budget, but this dimension doesn't grade length."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_001 describes a_001 (dead by 1885), a_003 (Jesse as administrator) and the decedent's name a_002 (inside the quoted citation), plus the documented negative and the 1822 namesake. There are no conflicts. The judge is wrong that the narrative discusses pe_001 or pe_002; neither appears."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Statement fits a not_proved gate-stop that reaches no conclusion."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent stopped at the gate, held the bounded death back and made no tree write, so I1 has no Death fact. It named person-evidence on Jesse (I2) as the next step. The rubric grades a withheld bracket rather than calling it N/A, and this test's instructions accept \"a gate-stop that declines to conclude… provided nothing is encoded and the reason is stated\". Leaving the death off I1 with the route named \"scores 3\"."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "ps_002's new narrative gets all three later findings right: the 1855 \"Washington\" birthplace, Margaret Clark's 1880 \"N Hamshire\", and no Iram in Walworth. But the reply shown to the user says the 1864 Hyde genealogy \"establish[es] who Iram Hyde was, where he lived, and whom he married\", while the log for that search says \"No 'Iram' in either volume\". A factually false claim in the reply makes this a 2."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ps_002 was updated in place with both the narrative and the search summary, at not_proved with shortfall \"gap\". q_002 was left open and nothing was written to the tree, as the agent's instructions require. It skipped the step-8 project stamp, but no status change was due."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All nine calls succeeded with the right project path, question id and ps_002 id, and none was refused. The judge says the first update carried the vehicle, but the vehicle came in a second call, after the tool's 150-word Statement-budget warning. That's a clean fix."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not_proved with \"gap\" fits: no record names Iram's parents, and the narrative names reachable sources not yet searched (the daughters' death certificates, NH town records, Washington Co. probate)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Neither of the judge's reasons holds. The new narrative never mentions a_019 or a_020. The church baptism and marriage entries and the 1826/1829 land records are described in prose before their image ids. The only internal id is q_001, which appears with its conclusion (New Hampshire, probable). The tier is stated."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The narrative covers a_019 and a_020 in prose, the 1826 mortgage (a_017), and all three later findings (log_019 to log_021). No inconvenient evidence is left out."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A 445-word Summary, within the ~300–500 budget, and the narrative is laid out as a summary. The first write still carried the old Statement label and was relabelled after the tool's warning."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The tier is not_proved, the conclusion isn't bounded, and tree.gedcomx.json wasn't changed."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked ps_001 and the reply against the fixture, which has no sources, assertions or log, and a tree holding only I1 with F1 (birth ~1845, Ireland) and F2 (residence 1850, Schuylkill). Nothing is invented, the unsearched record types match the search summary, and the tier and shortfall fit an empty file."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The ps_001 append and the q_001 resolve (status, resolved date, empty resolution_assertion_ids) went in one batch, summary first. project.status was set to completed in a second call, search_stop was left alone, and the agent didn't decline under wrapUp. The next-step line says the project is complete."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All seven calls (project_context, four research_query, two research_append) used the right sections, questionId q_001, a well-formed proof_summaries entry and a project update carrying only status. None was refused. (The judge counts six; there were seven.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Zero assertions leaves not_proved as the only tier. Shortfall \"gap\" matches the narrative, which names reachable unsearched records (1850–1880 Schuylkill censuses, PA death and marriage records, Catholic registers, Irish records) and says they \"are reachable and were not searched\"."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge's reason doesn't hold: the narrative does say no record was gathered. The real gap is that the agent never read the tree and describes I1 from \"the starting description of the subject\": \"living in Schuylkill County\" with no date, where the tree has F2 as an 1850 residence, and it never says F1/F2 carry no source. The agent's instructions say to read a tree fact and name it by type, place and date, not describe it from the question. An earlier annotation (v8) docked this test for the same incomplete tree description."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "q_001 has no assertions and no conflicts, so there's nothing to omit. The narrative mentions the only data held (I1's birth and residence)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "A Statement is the right form here: zero assertions, sources and conflicts leave nothing to correlate (Summary) or argue (Argument). The judge calls the form \"defensible\" and says the structure \"does follow the statement form\", and docks it only for running 202 words against the ~150 budget. That's a length miss on the right form, not a form problem. Earlier wz1 Statements scored 3 here (v8, v9, v10)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The tier is not_proved and the conclusion is neither bounded nor a documented negative. tree.gedcomx.json is unchanged."
+    }
+  ]
+}

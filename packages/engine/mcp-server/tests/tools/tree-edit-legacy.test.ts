@@ -92,7 +92,7 @@ describe("tree_edit on a legacy (pre-tightening) tree", () => {
           where: "Weber County, Utah",
           where_within: "dwelling 84",
         },
-        source_classification: "original",
+        source_classification: "derivative",
         repository: "NARA",
         access_date: "2026-07-10",
       },

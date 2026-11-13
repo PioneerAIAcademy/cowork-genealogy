@@ -165,6 +165,33 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
 
+def test_open_conflict_writes_blocked_by_conflict(before_state, after_state, test):
+    """Tag-gated: Step 0's open-conflict block writes `blocked_by_conflict`
+    (issue #4323). `test_no_exhaustive_declaration` catches only a stop-gate
+    value; this catches a `resources_spent` decline in its place and a run
+    that writes no stop at all."""
+    if "blocked-by-conflict" not in test.get("tags", []):
+        pytest.skip("not a blocked-by-conflict scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    stops = [
+        (q.get("id"), (q.get("search_stop") or {}).get("stopped_because"))
+        for q in _questions_with_changed_declaration(before, after)
+        if q.get("search_stop")
+    ]
+    assert stops, (
+        "no question's search_stop was written: an unresolved conflict that "
+        "lists the question owes a `blocked_by_conflict` stop"
+    )
+    bad = [f"{qid}: stopped_because={sb!r}" for qid, sb in stops if sb != "blocked_by_conflict"]
+    assert not bad, (
+        "an unresolved conflict that lists the question owes a "
+        "`blocked_by_conflict` stop, not:\n  - " + "\n  - ".join(bad)
+    )
+
+
 # --- Tag-gated: not_reached is built from what the project holds ------------
 
 _LOCALITY_PAGE_SECTIONS = frozenset({"home", "getting_started", "online_records", "research_tips"})
@@ -336,9 +363,17 @@ def test_fetches_registration_start_date(tool_calls, test):
     only because the agent happened to fetch anyway before stopping, so this
     was a latent contradiction surfaced by sampling, not a regression.
 
-    Step 0 declares five hard blocks. The four named above are the ones any
-    test exercises; the classification and person_evidence blocks have no test
-    today, so a test that stops at one will need its tag added here too.
+    `blocked-by-conflict` is the fifth member (issue #4323): an unresolved
+    conflict that lists the question in `blocks_question_ids` is a Step 0 hard
+    block, because the `blocked_by_conflict` write it produces carries
+    `stop_criteria: null` and no start date can change it. ut_d3c failed here
+    3/3 on Sonnet 5 medium with every judge dimension 3 before the block moved
+    into Step 0.
+
+    Step 0 declares six hard blocks. The five tags named above cover four of
+    them — `refuse-in-progress` and `refuse-planned` are both the active-plan
+    check. The classification and person_evidence blocks have no test today, so
+    a test that stops at one will need its tag added here too.
     """
     tags = test.get("tags") or []
     if "near-miss" in tags:
@@ -348,6 +383,7 @@ def test_fetches_registration_start_date(tool_calls, test):
         or "refuse-planned" in tags
         or "already-declared" in tags
         or "tentative-value-sweep" in tags
+        or "blocked-by-conflict" in tags
     ):
         pytest.skip("returns at a Step 0 precondition — Step 1 is never reached")
     called = [bare_tool_name(c.get("tool", "")) for c in (tool_calls or [])]

@@ -36,518 +36,60 @@
       {
         "sentence": "A marriage date is missing a month.",
         "conclusionType": "MARRIAGE",
-        "conclusionId": "ad07ff24-76de-4d77-b1ed-bda3b85ef32f",
         "scoreType": "COMPLETENESS"
       },
       {
         "sentence": "A marriage date is missing a month.",
         "conclusionType": "MARRIAGE",
-        "conclusionId": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
         "scoreType": "COMPLETENESS"
       },
       {
         "sentence": "This person has a birth date of 30 November 1838, which does not match the date 1841. Edward Tallman, \"United States, Census, 1870\"",
         "conclusionType": "BIRTH",
-        "conclusionId": "248eaba5-34ae-4182-9874-bfcc07166241",
         "scoreType": "CONSISTENCY"
       },
       {
         "sentence": "This person has a birth place of Peru, Clinton, New York, United States, which does not match the place Peru. Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
         "conclusionType": "BIRTH",
-        "conclusionId": "248eaba5-34ae-4182-9874-bfcc07166241",
         "scoreType": "CONSISTENCY"
       },
       {
         "sentence": "A marriage has no tagged sources.",
         "conclusionType": "MARRIAGE",
-        "conclusionId": "ad07ff24-76de-4d77-b1ed-bda3b85ef32f",
         "scoreType": "VERIFIABILITY"
       },
       {
         "sentence": "A marriage has no tagged sources.",
         "conclusionType": "MARRIAGE",
-        "conclusionId": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
         "scoreType": "VERIFIABILITY"
       },
       {
         "sentence": "A residence has no tagged sources.",
         "conclusionType": "RESIDENCE",
-        "conclusionId": "2bf97c97-0425-4b9f-a096-502884431672",
         "scoreType": "VERIFIABILITY"
       },
       {
         "sentence": "A residence has no tagged sources.",
         "conclusionType": "RESIDENCE",
-        "conclusionId": "9533450c-afc3-4b24-9e8b-9d3480bb33d1",
         "scoreType": "VERIFIABILITY"
       },
       {
         "sentence": "A residence has no tagged sources.",
         "conclusionType": "RESIDENCE",
-        "conclusionId": "6df6da6e-ef82-4b5e-a51c-3484adc696a2",
         "scoreType": "VERIFIABILITY"
       },
       {
         "sentence": "A residence has no tagged sources.",
         "conclusionType": "RESIDENCE",
-        "conclusionId": "f7bfcb81-82f7-459b-b75e-0e636e6ed210",
         "scoreType": "VERIFIABILITY"
       },
       {
         "sentence": "A residence has no tagged sources.",
         "conclusionType": "RESIDENCE",
-        "conclusionId": "84cd9e6b-d580-4b08-a4fa-582106e22a29",
         "scoreType": "VERIFIABILITY"
       }
     ],
     "detail": {
-      "facts": [
-        {
-          "conclusionId": "991a0a6e-291e-4f21-a0db-159dd32b100f",
-          "conclusionType": "NAME",
-          "score": 1,
-          "issues": [],
-          "sources": [
-            {
-              "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQ2-58BX",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tollman, \"United States, Census, 1850\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1910\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:VNRV-QZJ",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tollman, \"New York, State Census, 1875\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:VT8T-XYW",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQV-662T",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQG-F2GF",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Find a Grave Index\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQL-F9N3",
-              "agrees": true
-            },
-            {
-              "title": "Edward M Tollman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XF2X-BYV",
-              "agrees": true
-            },
-            {
-              "title": "Edward ...Allman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8RW-X4N",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XF4D-B9M",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KFTK-Z6N",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": true
-            },
-            {
-              "title": "Edward, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XFXS-8Y5",
-              "agrees": true
-            },
-            {
-              "title": "Edward, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XFXS-886",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1880\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-KC4",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R7-NW1",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"New York, State Census, 1865\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XFXS-8D3",
-              "agrees": true
-            },
-            {
-              "title": "Edward M Tollman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KF5F-WMS",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1870\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-6QM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQX-DRDD",
-              "agrees": true
-            }
-          ]
-        },
-        {
-          "conclusionId": "2cfdb7b2-1ede-4287-814b-3280139faea7",
-          "conclusionType": "GENDER",
-          "score": 1,
-          "issues": [],
-          "sources": [
-            {
-              "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tollman, \"United States, Census, 1850\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1910\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:VNRV-QZJ",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tollman, \"New York, State Census, 1875\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:VT8T-XYW",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQV-662T",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQG-F2GF",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQL-F9N3",
-              "agrees": true
-            },
-            {
-              "title": "Edward M Tollman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XF2X-BYV",
-              "agrees": true
-            },
-            {
-              "title": "Edward ...Allman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8RW-X4N",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XF4D-B9M",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KFTK-Z6N",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": true
-            },
-            {
-              "title": "Edward, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XFXS-8Y5",
-              "agrees": true
-            },
-            {
-              "title": "Edward, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XFXS-886",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1880\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-KC4",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R7-NW1",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"New York, State Census, 1865\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:XFXS-8D3",
-              "agrees": true
-            },
-            {
-              "title": "Edward M Tollman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KF5F-WMS",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1870\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-6QM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQX-DRDD",
-              "agrees": true
-            }
-          ]
-        },
-        {
-          "conclusionId": "248eaba5-34ae-4182-9874-bfcc07166241",
-          "conclusionType": "BIRTH",
-          "score": 0.9649122807017544,
-          "issues": [
-            "This person has a birth date of 30 November 1838, which does not match the date 1841. Edward Tallman, \"United States, Census, 1870\"",
-            "This person has a birth place of Peru, Clinton, New York, United States, which does not match the place Peru. Edward Tallman, \"Vermont, Vital Records, 1760-2008\""
-          ],
-          "sources": [
-            {
-              "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tollman, \"United States, Census, 1850\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1910\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Find a Grave Index\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1880\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"New York, State Census, 1865\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1870\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
-              "agrees": true
-            }
-          ]
-        },
-        {
-          "conclusionId": "2bf97c97-0425-4b9f-a096-502884431672",
-          "conclusionType": "RESIDENCE",
-          "score": 1,
-          "issues": [
-            "A residence has no tagged sources."
-          ],
-          "sources": []
-        },
-        {
-          "conclusionId": "9533450c-afc3-4b24-9e8b-9d3480bb33d1",
-          "conclusionType": "RESIDENCE",
-          "score": 1,
-          "issues": [
-            "A residence has no tagged sources."
-          ],
-          "sources": []
-        },
-        {
-          "conclusionId": "6df6da6e-ef82-4b5e-a51c-3484adc696a2",
-          "conclusionType": "RESIDENCE",
-          "score": 1,
-          "issues": [
-            "A residence has no tagged sources."
-          ],
-          "sources": []
-        },
-        {
-          "conclusionId": "f7bfcb81-82f7-459b-b75e-0e636e6ed210",
-          "conclusionType": "RESIDENCE",
-          "score": 1,
-          "issues": [
-            "A residence has no tagged sources."
-          ],
-          "sources": []
-        },
-        {
-          "conclusionId": "84cd9e6b-d580-4b08-a4fa-582106e22a29",
-          "conclusionType": "RESIDENCE",
-          "score": 1,
-          "issues": [
-            "A residence has no tagged sources."
-          ],
-          "sources": []
-        },
-        {
-          "conclusionId": "c5be31e4-c57a-417a-b672-456ec4e963d8",
-          "conclusionType": "BURIAL",
-          "score": 1,
-          "issues": [],
-          "sources": [
-            {
-              "title": "Edward Tallman, \"Find a Grave Index\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX",
-              "agrees": true
-            }
-          ]
-        },
-        {
-          "conclusionId": "9381f219-2889-4bfc-9b03-5527232282c1",
-          "conclusionType": "DEATH",
-          "score": 1,
-          "issues": [],
-          "sources": [
-            {
-              "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQ2-58BX",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Find a Grave Index\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX",
-              "agrees": true
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": true
-            }
-          ]
-        },
-        {
-          "conclusionId": "ad07ff24-76de-4d77-b1ed-bda3b85ef32f",
-          "conclusionType": "MARRIAGE",
-          "score": 0.8888888888888888,
-          "issues": [
-            "A marriage has no tagged sources.",
-            "A marriage date is missing a month."
-          ],
-          "sources": [],
-          "relationshipId": "MCC9-DWM"
-        },
-        {
-          "conclusionId": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
-          "conclusionType": "MARRIAGE",
-          "score": 0.8888888888888888,
-          "issues": [
-            "A marriage has no tagged sources.",
-            "A marriage date is missing a month."
-          ],
-          "sources": [],
-          "relationshipId": "MWXP-1NL"
-        }
-      ],
       "conflicts": [
         {
           "field": "Death Place",
@@ -556,21 +98,9 @@
             "Burlington, United States"
           ],
           "sources": [
-            {
-              "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
+            "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ"
           ]
         },
         {
@@ -580,16 +110,8 @@
             "+1840"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"United States, Census, 1880\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"Find a Grave Index\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
+            "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX"
           ]
         },
         {
@@ -599,36 +121,12 @@
             "+1840"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"United States, Census, 1880\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tollman, \"United States, Census, 1850\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
-              "agrees": null
-            },
-            {
-              "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1910\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"New York, State Census, 1865\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
+            "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
+            "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
+            "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
+            "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD"
           ]
         },
         {
@@ -638,21 +136,9 @@
             "Peru"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tollman, \"United States, Census, 1850\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1880\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
+            "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1"
           ]
         },
         {
@@ -662,21 +148,9 @@
             "Peru"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1910\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1870\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
+            "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL"
           ]
         },
         {
@@ -686,16 +160,8 @@
             "Vermont, United States"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QPQ2-58BX",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:QPQ2-58BX",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY"
           ]
         },
         {
@@ -705,16 +171,8 @@
             "+1841"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"United States, Census, 1870\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"Find a Grave Index\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
+            "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX"
           ]
         },
         {
@@ -724,36 +182,12 @@
             "+1841"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"United States, Census, 1870\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tollman, \"United States, Census, 1850\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1910\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
-              "agrees": null
-            },
-            {
-              "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"New York, State Census, 1865\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
+            "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
+            "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
+            "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
+            "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD"
           ]
         },
         {
@@ -763,16 +197,8 @@
             "+1841"
           ],
           "sources": [
-            {
-              "title": "Edward Tallman, \"United States, Census, 1870\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
-              "agrees": null
-            },
-            {
-              "title": "Edward Tallman, \"United States, Census, 1880\"",
-              "uri": "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
-              "agrees": null
-            }
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1"
           ]
         }
       ]
