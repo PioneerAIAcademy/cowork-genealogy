@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "user_message": "Keep researching this project. Run the open searches on the plan, and don't check in with me between them.",
+    "user_message": "Keep researching this project. Work through whatever is still planned, and don't check in with me between searches.",
     "scenario": "search-continue-authorized-in-message"
   },
   "execution": {
@@ -61,7 +61,7 @@
   "judge_context": [
     "This is a ROUTING test. Whether search-records is reached, how many times it is spawned and what each spawn carries are asserted deterministically by validators that read the PreToolUse hook records (test_routes_to_expected_skill, test_delegation_hands_plan_item_verbatim, test_search_spawns_cover_each_open_item). You cannot see those records. Do NOT score Correctness or Completeness on which callee was reached, how many spawns there were, or the order of skills_invoked.",
     "The project's active plan has two planned items (pli_001 census, pli_002 church) and no evidence yet. The researcher asked for the open searches to run without check-ins, so dispatching both in one step is correct.",
-    "search-records is stubbed and returns a bare denial. Grade only the quality of the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation is sound. Do not penalize it for not completing the research cycle."
+    "search-records is STUBBED: each spawn returns \"Your delegation is recorded and counts as complete\" and runs no search. So saying both searches were handed off, delegated or dispatched is ACCURATE and is NOT a fabricated claim; no search results and no project changes are the expected state. Do not score Correctness or Completeness down for the missing results. Grade only the router's own work: whether it claims records were found or facts learned (that would be fabrication), and whether its state derivation is sound. A scratch run graded Correctness 1 three times for reading the hand-off as false, while every deterministic validator passed."
   ],
   "judge_reads_files": true
 }

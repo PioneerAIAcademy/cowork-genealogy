@@ -233,7 +233,7 @@ def test_research_check_does_not_count_a_plan_item_id_key_as_a_block():
 
 FANS = {
     "tags": ["routing", "routes-to:search-records", "fans-out-plan-items"],
-    "user_message": "Keep researching this project. Run the open searches on the plan, and don't check in with me between them.",
+    "user_message": "Keep researching this project. Work through whatever is still planned, and don't check in with me between searches.",
 }
 
 
@@ -249,6 +249,11 @@ def test_fans_out_check_passes_on_one_spawn_per_item_and_does_not_skip():
 def test_fans_out_check_allows_router_prose_sharing_few_words_with_the_message():
     prose = "The researcher asked to keep going without check-ins. Run the census search.\n"
     fans_out_check(FANS, [spawn(prose + handed(ITEM)), spawn(handed(ITEM_2))], BEFORE_2)
+
+
+def test_fans_out_check_allows_the_routers_own_wording_of_the_plan():
+    prose = "Running pli_002, the second of the open searches on the plan.\n"
+    fans_out_check(FANS, [spawn(handed(ITEM)), spawn(prose + handed(ITEM_2))], BEFORE_2)
 
 
 def test_fans_out_check_fails_on_one_spawn_for_two_items():
@@ -268,8 +273,8 @@ def test_fans_out_check_fails_when_an_item_is_not_dispatched():
 @pytest.mark.parametrize(
     "relay",
     [
-        "Keep researching this project. Run the open searches on the plan, and don't check in with me between them.",
-        "the researcher said: run the open searches on the PLAN and don\u2019t check in",
+        "Keep researching this project. Work through whatever is still planned, and don't check in with me between searches.",
+        "the researcher said: work through whatever is still PLANNED and don\u2019t check in",
     ],
 )
 def test_fans_out_check_fails_when_a_spawn_carries_the_researchers_words(relay):
