@@ -1,0 +1,734 @@
+{
+  "run_log": "v19.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The plan is mostly correct, but Claude incorrectly describes Patrick's birthplace as unverified and suggests the objective conflicts with the tree. The tree records Ireland as his birthplace, supported by S1. The plan should distinguish the sourced tree fact from the wording of the research objective. The remaining plan items and rationales are appropriate."
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_clc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The plan is mostly factually accurate. It correctly identifies the existing 1850 census evidence, Thomas Flynn as a candidate father, and the unknown mother. However, it should describe the birthplace discrepancy more precisely: the research objective says Pennsylvania, while the sourced tree fact records Ireland. The discrepancy needs investigation, but the explanation should not imply that either birthplace has been established conclusively."
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d03",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly identified that pli_010 was still planned and had no corresponding research-log entry. It appropriately marked the item as skipped rather than completed. However, the plan item still contains a contradiction: its date range is 1850–1860, while its rationale refers to Patrick Flynn's 1868 marriage. Acknowledging the mismatch without resolving it leaves an inaccurate plan item."
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly identified the available evidence and the purpose of the proposed searches. However, the rationale for pli_009 is not precise. The 1850 census already places Patrick in Thomas Flynn's household, although it does not explicitly establish their relationship. Thomas's marriage record would help establish whether he had a wife before Patrick's birth and identify a possible mother. It should be described as corroborating evidence, not as a prerequisite for the 1850 census to establish the household connection."
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d9k",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I checked the eight persisted plan items and confirmed that all fallback_for fields are null. Although the rationale mentions possible alternative repositories, the required fallback relationship was not saved in the structured plan. The research targets themselves are appropriate, but this is a significant omission."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The overall order is reasonable, with Pennsylvania church records before probate, naturalization, and the later Irish parish search. However, the required fallback structure is missing: no item's fallback_for field references a primary item's ID. The contingency must be explicitly persisted, and the fallback rationale must explain why the primary search might fail."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The three requested census years are included, and the plan correctly avoids repeating the completed 1850 and 1860 searches. However, I checked the persisted plan and found no Ancestry fallback items or fallback_for relationships, despite the explicit requirement for at least one fallback chain."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The census searches are ordered correctly from 1870 through 1900, with FamilySearch first. However, no corresponding Ancestry searches or fallback_for links were created, so the required free-before-paid fallback sequence is incomplete."
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The rationale says Martha would have been about 9 in January 1869 if born around 1859. This is not necessarily an arithmetic error: depending on her actual birthday, she could have been either 9 or 10 on 7 January 1869. The plan appropriately treats the age as a warning that the marriage record may belong to a different woman or that Martha's estimated birth year may be inaccurate. It does not present Wood as her confirmed birth surname. I therefore consider the plan factually sound."
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_tgt",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
