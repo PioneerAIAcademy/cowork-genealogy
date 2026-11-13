@@ -10,9 +10,10 @@ import {
   NOT_FAMILYSEARCH_ID_MESSAGE,
   notLinkedMessage,
 } from "../../src/tools/person-quality.js";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { getValidToken } from "../../src/auth/refresh.js";
 import {
   renderIssueSentence,
@@ -379,6 +380,16 @@ describe("personQualityTool detail flag", () => {
     const { detail, ...onWithoutDetail } = on;
     expect(detail).toBeDefined();
     expect(onWithoutDetail).toEqual(off);
+  });
+
+  it("keeps the Tallman detail answer under 5,500 characters (issue #4420)", () => {
+    const f = JSON.parse(
+      readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), "../../../../../eval/fixtures/mcp/person-quality-tallman-detail.json"),
+        "utf8",
+      ),
+    );
+    expect(JSON.stringify(f.response).length).toBeLessThan(5_500);
   });
 
   it("returns no per-fact breakdown, and no fact id on an issue (issue #4420)", async () => {
