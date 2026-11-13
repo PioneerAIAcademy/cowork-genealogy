@@ -270,10 +270,10 @@ records" would be wrong.
   finding exists.** Naming him there is inadmissible — `presence_mirror`
   (`author.py:1259-1297`) hard-fails a non-`avoid` finding naming somebody absent from
   the unstripped tree, and Gideon is two hops out; `required: false` is not an exemption
-  (`author.py:1276`). An `avoid` finding would be self-defeating — `apply_avoid_guard`
-  (`judge.py:406-445`) exempts only the fixture's own subject ids, so "must not conclude
-  Gideon was the father" would force-fail any run that correctly added Gideon as the
-  mother's second husband. f5 (added 2026-08-18) does reference Sleeper, but only in
+  (`author.py:1276`). An `avoid` finding would need care — `apply_avoid_guard`'s
+  edge check (`e2e/avoid_guard.py`) fails a new non-Step parent edge from the named
+  candidate to the subject, so "must not conclude Gideon was the father" is checkable,
+  but it was not authored and f5 covers it through the judge. f5 (added 2026-08-18) does reference Sleeper, but only in
   `description` prose and in a `details.stepfather_note` key — neither is in
   `_TARGET_KEYS` (`validate_fixture.py:160`), so `presence_mirror` never tokenises it.
   f5 is graded on the tree carrying Margaret's remarriage as a `Couple` relationship

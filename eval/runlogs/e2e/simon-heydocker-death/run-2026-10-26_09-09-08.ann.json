@@ -3,11 +3,11 @@
     "f1": "true",
     "f2": "true"
   },
-  "proof_quality_score": 2,
   "notes": {
-    "f2": "Primary Death fact (id F1) has correct date, full place (Stötten/Nötten, Laakirchen), and source S1 (6VYC-Q99N) — pass. A duplicate Death fact (id 079db9de) with place 'Austria' also present on GZRZ-TNG; likely the raw indexed record written before the image read, not removed by the agent. Proof quality 2: identification reasoning solid and conclusion correct, but the proof summary does not document the calibration check — 'original image confirmed' stated without naming the calibration neighbours that license it. Fixture was re-resolved to outcome 2 during this grading session after human re-read of image 64 (ark:/61903/3:1:S3HY-DBPS-JD) found both neighbours passing: Pomayr aged 63 and Lietmayr aged 35."
+    "f1": "No 1808 death on GZRZ-TNG; both death facts are 6 April 1836. The 24 Aug 1808 Simon (born ~1778) is distinguished from the subject in the search log and in ps_001.",
+    "f2": "The primary Death fact F1 gives 6 April 1836 at Stotten (Notten), Laakirchen, Gmunden, citing S1 = the Laakirchen death entry 6VYC-Q99N; ps_001 records house 14 and quotes the original image. The older starting fact was filled as '6. April 1836', place 'Austria' only, with the same source: partial on its own, but a less-detailed duplicate does not undo the correctly documented primary fact."
   },
-  "annotator": "mercyokum",
-  "findings_hash": "747477437ac7108d9e3d5a419aeaa6fd4f5c5507bd084f45f40f9877f01a6c1e",
-  "blind_bundle_digest": "76a1748f02df81b20da52941829d59ed0132d5d8e3d6f7610590a3db881bc932"
+  "annotator": "benter-070",
+  "findings_hash": "9000e4e7c0d3fa96e680de1bd6f3c2a6f4e5950a700558a058b3ba04a1043cb1",
+  "blind_bundle_digest": "b9f1b493d714d8c3ce825aede31a236dca64332fa78d190a4b23dec660c42ca3"
 }

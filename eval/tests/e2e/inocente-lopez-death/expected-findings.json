@@ -44,6 +44,8 @@
         "fact_type": "Death",
         "wrong_candidate": {
           "name": "Inocente Lopez",
+          "date": "13 January 1906",
+          "place": "Suchitoto",
           "note": "the infant son of Santos Lopez, born 28 Dec 1905 and died 13 Jan 1906 at Suchitoto, aged eighteen days per the register (sixteen days by his indexed civil registration of 1905)"
         }
       },

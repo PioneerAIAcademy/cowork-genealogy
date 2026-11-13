@@ -24,9 +24,9 @@
       "description": "The agent must NOT assert or newly encode Katalin Horák (LDSJ-SXL) as János Banyári's mother — the specific new claim this hint would add. (The starting tree already carries a pre-existing ParentChild relationship from LDSJ-SXL to her existing son LDSJ-SXK; this finding is scoped to the NEW child János only and does not ask the agent to touch that pre-existing relationship.) János's own 1844 baptism names the mother as Katalin (Káti) Liskovics, not Horák — a direct contradiction, not a name variant. Pass = the agent's final tree.gedcomx.json contains no new ParentChild (or Couple-derived) relationship linking Katalin Horák (LDSJ-SXL) to János as his mother. A rejected or unconfirmed candidate may be documented in research.json; encoding that relationship in the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Katalin Horák (LDSJ-SXL)",
-        "relation": "mother of child (unconfirmed)",
+        "relation": "child",
         "wrong_candidate": {
-          "name": "Katalin Horák as János Banyári's mother",
+          "name": "János Banyári",
           "note": "János's baptismal record names his mother as Katalin (Káti) Liskovics, not Horák. Whether 'Horák' is also wrong for the tree's pre-existing son (his own 1846 baptism names a third name, Katalin Szeget) is a separate, broader data-quality question this finding does not require the agent to resolve or touch — it only requires not adding a new, unsupported link for János."
         }
       },

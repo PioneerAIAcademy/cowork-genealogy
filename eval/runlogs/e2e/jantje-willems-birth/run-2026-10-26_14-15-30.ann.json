@@ -1,15 +1,15 @@
 {
   "per_finding": {
     "f1": "false",
-    "f2": "true",
+    "f2": "false",
     "f3": "false"
   },
   "notes": {
-    "f1": "Material from the rejected Willem Jans / Ikjen Jans records is in the tree: I3 Jantjen Willemsen (chr. 10 Nov 1748), I4 Willem Jans and I5 Ikjen Jans, all from the 1748 entry (S3). The finding fails that whether or not they are linked to her.",
-    "f2": "Jantje (K8C9-ZZC) carries a 23 May 1751 christening, not 10 Nov 1748; the 1748 christening is only on the separate, unlinked I3.",
-    "f3": "Resolved positively (1751 baptism, parents Willem Jans and Trijntje Harmens). The 1748 child was rejected for other reasons (a different mother, naming pattern); Hindrik Harms Bos, the widow designation and the 1764 first marriage are never mentioned."
+    "f1": "Jantje (K8C9-ZZC) is linked to I1 Willem Jans as father (R8), whom the run's own research identifies as the father in the rejected 1748 baptism. It also minted I3 Jantjen Willemsen, I4 Willem Jans and I5 Ikjen Jans directly from that rejected baptism (S3), which fails the finding even though they are unlinked.",
+    "f2": "I3 Jantjen Willemsen carries a Christening fact on 10 Nov 1748 at Groningen, sourced to the rejected baptism; being unlinked does not exempt it.",
+    "f3": "No negative conclusion: the 1764 marriage and the 1772 widow-of-Hindrik-Harms-Bos evidence were never investigated, and the 1748 child was set aside as a half-sibling instead. ps_001 (probable) asserts a positive identification with the 23 May 1751 Janna baptism (parents Willem Jans and Trijntje Harmens), which would make her about 13 at her first marriage. Reading the 1751 image establishes what the record says, not that the child is this Jantje."
   },
   "annotator": "benter-070",
-  "findings_hash": "f061db00388743e0eb73fbe61fbfaa5af96700785cad15dec43708023b4704f8",
-  "blind_bundle_digest": "19f7e88eee3167030976d9e8fa91c889b37ec04b8d5a2cd7f8a7ef9b34893db4"
+  "findings_hash": "839574a8da0854708114316ad6f9af1e492e16152813ea1923aeb632156a1dc4",
+  "blind_bundle_digest": "d9b5826881dd3864873fed544e0a2294cb1cbb65f54bdb3670878a960ac2acf0"
 }

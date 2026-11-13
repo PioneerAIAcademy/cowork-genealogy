@@ -85,7 +85,7 @@ def test_fixture_for_is_the_orchestrators_loader_on_a_real_fixture():
     assert fixture.researcher_question == meta["researcher_question"]
     assert fixture.expected_findings == expected
     assert fixture.judge_model == meta["model"]["judge"], "the fixture's judge model, not the default"
-    assert meta["source_pid"] in fixture.subject_person_ids, "the avoid guard's subject exemption"
+    assert meta["source_pid"] in fixture.subject_person_ids, "the avoid guard's edge check reads the subject's role"
 
 
 def test_fixture_for_refuses_a_slug_with_no_fixture_json(tmp_path):

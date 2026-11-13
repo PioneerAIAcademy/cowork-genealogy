@@ -80,6 +80,7 @@ from harness.skill_invocation import (
 )
 
 from e2e import pricing
+from e2e.avoid_guard import read_starting_state
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
@@ -790,7 +791,8 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
 
-    # Subject person id(s) for the avoid-guard's subject exemption. Primary
+    # Subject person id(s): the avoid guard's edge check reads the forbidden
+    # role from the subject's side of an edge. Primary
     # source is starting-research.json's project.subject_person_ids; source_pid
     # is added when it's a real PID (not the "PID-TODO" marker).
     subject_ids: set[str] = set()
@@ -3641,12 +3643,19 @@ async def run_e2e_test(
                     model=fixture.judge_model,
                 )
                 # Deterministic §3.4.1 backstop: an `avoid` finding whose
-                # target is still in the final tree is forced to matched:
-                # "false" and the verdict recomputed (downgrade-only).
+                # forbidden record, edge or value is in the final tree but not
+                # the starting tree is forced to matched: "false" and the
+                # verdict recomputed (downgrade-only).
+                _, starting_research = read_starting_state(
+                    fixture.starting_research_path.parent
+                )
                 judge_output = judge_module.apply_avoid_guard(
                     judge_output,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    final_research=final_research,
+                    starting_tree=starting_tree,
+                    starting_research=starting_research,
                     subject_person_ids=fixture.subject_person_ids,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")

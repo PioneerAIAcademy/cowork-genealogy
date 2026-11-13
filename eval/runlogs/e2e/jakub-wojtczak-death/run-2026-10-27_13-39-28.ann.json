@@ -4,9 +4,10 @@
     "f2": "false"
   },
   "notes": {
-    "f2": "Agent never evaluated the hint (VZGY-L1L), never called source_attachments, never named Frank J Wojtczak. proof_summaries is empty and the question is still open. No documented conclusion of any kind."
+    "f1": "The prohibited 19 March 1997 Waterbury death was not added; Jakub (PM7N-7HV) has no death fact in the final tree, and the Frank J Wojtczak records are not cited anywhere.",
+    "f2": "158 searches were logged (126 negative), but no negative conclusion was written: the 1997 death is never rejected as Frank's, nothing states that Jakub's death date and place remain unknown, and q_001 is still open with no proof summary. Substantial research activity, not translated into the required conclusion."
   },
-  "annotator": "mercyokum",
-  "findings_hash": "1aca74813f76857ef218287fe56626fd0e02e91ffd3f8f235d1038ed45c1c10b",
-  "blind_bundle_digest": "a37a8faa9575211241510c035da15c9bbfc28802f213dfb1cb44e7a8c047e893"
+  "annotator": "benter-070",
+  "findings_hash": "3de79e8e974db4b741b2e2e16387195ba56146c24bc1c1769e345dc96a424e5b",
+  "blind_bundle_digest": "1f45a4932149613b6db1e16c7bb7e1c7a8118721fc6ec5d654b4f45870e11709"
 }

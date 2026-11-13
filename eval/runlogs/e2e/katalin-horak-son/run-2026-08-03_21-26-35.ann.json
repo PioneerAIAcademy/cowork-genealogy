@@ -4,13 +4,12 @@
     "f2": "true",
     "f3": "true"
   },
-  "proof_quality_score": 3,
   "notes": {
-    "f1": "New person I1 (János Bányári) with a Christening fact (1 Sep 1844, Kľak, sourced to the baptismal entry) linked via a new ParentChild relationship to LDSJ-SX2 (István) as father. Exact match on name, date, place, source.",
-    "f2": "No relationship of any kind links LDSJ-SXL (Katalin Horák) to I1 in the final tree. The mother conflict (Liskovics vs. Horák) is documented in research.json as c_001 and resolved as analytically inconclusive without asserting Horák as the mother.",
-    "f3": "Proof summary ps_001 (tier: possible) explicitly states the Horák attribution cannot be established from current evidence, names the actual indexed mother (Káti Liskovics) as the contradiction, documents five negative marriage-record searches, and recommends the decisive next step (reading the blocked original image) rather than guessing."
+    "f1": "I1 Janos Banyari added, christened 01 Sep 1844, Klak, Nova Bana, and linked to Istvan (LDSJ-SX2) as father by R7, both sourced to the baptism KDVC-BPB.",
+    "f2": "No new relationship connects Katalin Horak (LDSJ-SXL) to Janos as his mother; the pre-existing couple and her existing son are unchanged.",
+    "f3": "ps_001 (possible) states that Katalin Horak cannot be established as Janos's mother because the baptism index names Kati Liskovics; negative marriage searches for Horak, Banyari and Liskovics support it. Qualification: conflict c_001 is marked resolved though its text gives two unresolved explanations, and the original image was not examined; ps_001 does not claim the indexer error is proven, so the conclusion stands."
   },
-  "annotator": "itacollins333@gmail.com",
-  "findings_hash": "d29c69f352031bd58ce79a3e22634e906bca58a2fcaa965da94444040eb6d2be",
-  "blind_bundle_digest": "53066b6b25da9c5bd00ac63c8fd05c9caccc7f52df64721ea8990ccba875c68f"
+  "annotator": "benter-070",
+  "findings_hash": "2548c0b7747296cdfa2961cbe6c97a1d0aabaf3c07276210989771fe2cf711e8",
+  "blind_bundle_digest": "d231e5c5c41f139c55646ebff9b51200258562795e26e79b75840ee648d0eb86"
 }
