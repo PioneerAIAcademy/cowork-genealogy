@@ -1,0 +1,67 @@
+{
+  "test": {
+    "id": "ut_research_fo1",
+    "skill": "research",
+    "name": "Fans out one search-records agent per open plan item",
+    "type": "positive",
+    "description": "Issue #4441. On a job, research/SKILL.md's search step dispatches one search agent per open item of the active plan, as parallel calls in one message. Uses search-continue-authorized-in-message unmodified: one in_progress question q_001, active plan pl_001 with pli_001 (census) and pli_002 (church), both planned with no fallback_for, no log entries or assertions. The message is a job ('finding a record' alone would be a bounded ask that runs one search). The router must spawn search-records twice, each handed exactly one plan item and neither carrying the researcher's words. search-records is stubbed with the usual stop reply, so a dispatch that sends the two one after the other records one spawn and fails.",
+    "tags": [
+      "routing",
+      "routes-to:search-records",
+      "asserts-delegation-plan-item",
+      "fans-out-plan-items"
+    ]
+  },
+  "input": {
+    "user_message": "Keep researching this project. Run the open searches on the plan, and don't check in with me between them.",
+    "scenario": "search-continue-authorized-in-message"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. Whether search-records is reached, how many times it is spawned and what each spawn carries are asserted deterministically by validators that read the PreToolUse hook records (test_routes_to_expected_skill, test_delegation_hands_plan_item_verbatim, test_search_spawns_cover_each_open_item). You cannot see those records. Do NOT score Correctness or Completeness on which callee was reached, how many spawns there were, or the order of skills_invoked.",
+    "The project's active plan has two planned items (pli_001 census, pli_002 church) and no evidence yet. The researcher asked for the open searches to run without check-ins, so dispatching both in one step is correct.",
+    "search-records is stubbed and returns a bare denial. Grade only the quality of the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation is sound. Do not penalize it for not completing the research cycle."
+  ],
+  "judge_reads_files": true
+}

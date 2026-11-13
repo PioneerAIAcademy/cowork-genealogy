@@ -143,6 +143,29 @@ session, which a fresh-context test cannot seed; the proof-conclusion
 tree-encoding and `exhaustive_declared` rows reach the same agent that
 `ut_research_s59` already asserts.
 
+## One plan item per search agent (issue #4441)
+
+`ut_research_fo1` (`route-plan-items-one-per-agent.json`) runs
+`search-continue-authorized-in-message`, whose active plan has two open items, on a
+job-shaped message. `fans-out-plan-items` gates
+`test_search_spawns_cover_each_open_item`: one `search-records` spawn per open item
+with no `fallback_for`, the handed items equal to that set, and no spawn carrying
+six or more consecutive words of the researcher's message. Whether the spawns share
+one assistant message is not checked, but `search-records` keeps the stop stub, so a
+router that sends them one after the other records one spawn and fails.
+
+`test_delegation_hands_plan_item_verbatim` reads the handed item from the spawn's
+`plan_item:` block. It fails a spawn with two blocks, two id lines, or an id line
+naming a different item, and accepts any id-line spelling (`planItemId:`,
+`Plan item ID:`) or none.
+
+`ut_research_ue1` and `ut_research_uh1` clone `ut_research_es9` and
+`ut_research_fsh` on an `--autonomous` run. SKILL.md passes `userPresent: no` to
+`search-external-sites` only in an autonomous run and to `search-hints` only on an
+`--autonomous` run, and both agents read a missing field as yes.
+`delegates-user-present-no-external` and `delegates-user-present-no-hints` add the
+field to `test_spawn_carries_its_step_mode_fields`.
+
 ## What is NOT covered (and why)
 
 - **Second-opinion verdict handling**: gps-mentor is not a routing row; it

@@ -17,6 +17,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_research import (  # noqa: E402
     test_delegation_hands_plan_item_verbatim as research_check,
+    test_search_spawns_cover_each_open_item as fans_out_check,
 )
 from test_search_records import (  # noqa: E402
     test_handed_plan_item_skips_research_query as skips_check,
@@ -165,6 +166,126 @@ def test_research_check_fails_when_a_field_is_dropped():
 def test_research_check_fails_when_no_search_records_was_spawned():
     with pytest.raises(AssertionError, match="No recorded spawn"):
         research_check(RTEST, [], BEFORE)
+
+
+
+# --- research: a spawn hands exactly one item (issue #4441) -----------------
+
+ITEM_2 = dict(ITEM, id="pli_002", sequence=2, record_type="church")
+BEFORE_2 = {
+    "tree_gedcomx_json": BEFORE["tree_gedcomx_json"],
+    "research_json": {
+        "project": {"subject_person_ids": ["I1"]},
+        "plans": [{"id": "pl_001", "status": "active", "items": [ITEM, ITEM_2]}],
+    },
+}
+
+
+def handed(item, id_line=None):
+    """A spawn prompt handing ``item``, with ``id_line`` in place of the usual one."""
+    line = f"planItemId: {item['id']}" if id_line is None else id_line
+    return f"{line}\nplanId: pl_001\nprojectPath: /p\nplan_item:\n{block(item)}\nsubject:\n{block(SUBJECT)}"
+
+
+def expect_fail(check, *args) -> str:
+    """A must-fail case: an AssertionError, never a skip."""
+    with pytest.raises(BaseException) as excinfo:
+        check(*args)
+    assert excinfo.typename == "AssertionError", excinfo.typename
+    return str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "id_line", ["Plan item ID: pli_001", "planItemId=pli_001", "**planItemId:** `pli_001`", ""]
+)
+def test_research_check_passes_on_every_id_line_spelling_and_on_none(id_line):
+    research_check(RTEST, [spawn(handed(ITEM, id_line))], BEFORE)
+
+
+def test_research_check_reads_the_item_from_the_block_not_from_prose():
+    """umbelina-shaped: the prompt names an earlier item in prose. pli_001 is open
+    and listed first, so the old first-id-in-the-prompt lookup read pli_001."""
+    prompt = "pli_001 returned no death record; this is the church records fallback.\n" + handed(ITEM_2)
+    research_check(RTEST, [spawn(prompt)], BEFORE_2)
+
+
+def test_research_check_fails_on_two_id_lines():
+    prompt = "planItemId: pli_001\n" + handed(ITEM_2)
+    assert "2 plan item id lines" in expect_fail(research_check, RTEST, [spawn(prompt)], BEFORE_2)
+
+
+def test_research_check_fails_on_two_plan_item_blocks():
+    prompt = handed(ITEM, "") + f"\nplan_item:\n{block(ITEM_2)}"
+    assert "2 plan_item blocks" in expect_fail(research_check, RTEST, [spawn(prompt)], BEFORE_2)
+
+
+def test_research_check_fails_when_the_id_line_disagrees_with_the_block():
+    prompt = handed(ITEM_2, "planItemId: pli_001")
+    assert "id line names 'pli_001'" in expect_fail(research_check, RTEST, [spawn(prompt)], BEFORE_2)
+
+
+def test_research_check_does_not_count_a_plan_item_id_key_as_a_block():
+    prompt = handed(ITEM, "") + '\nlog: {"plan_item_id": "pli_001"}'
+    research_check(RTEST, [spawn(prompt)], BEFORE)
+
+
+# --- research: one search agent per open item (issue #4441) ----------------
+
+FANS = {
+    "tags": ["routing", "routes-to:search-records", "fans-out-plan-items"],
+    "user_message": "Keep researching this project. Run the open searches on the plan, and don't check in with me between them.",
+}
+
+
+def test_fans_out_check_ignores_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        fans_out_check({"tags": ["routing"]}, [spawn(handed(ITEM))], BEFORE_2)
+
+
+def test_fans_out_check_passes_on_one_spawn_per_item_and_does_not_skip():
+    fans_out_check(FANS, [spawn(handed(ITEM)), spawn(handed(ITEM_2, "Plan item ID: pli_002"))], BEFORE_2)
+
+
+def test_fans_out_check_allows_router_prose_sharing_few_words_with_the_message():
+    prose = "The researcher asked to keep going without check-ins. Run the census search.\n"
+    fans_out_check(FANS, [spawn(prose + handed(ITEM)), spawn(handed(ITEM_2))], BEFORE_2)
+
+
+def test_fans_out_check_fails_on_one_spawn_for_two_items():
+    prompt = handed(ITEM) + f"\nplan_item:\n{block(ITEM_2)}"
+    assert "1 search-records spawns for 2" in expect_fail(fans_out_check, FANS, [spawn(prompt)], BEFORE_2)
+
+
+def test_fans_out_check_fails_on_two_spawns_for_the_same_item():
+    msg = expect_fail(fans_out_check, FANS, [spawn(handed(ITEM)), spawn(handed(ITEM))], BEFORE_2)
+    assert "handed plan items ['pli_001', 'pli_001']" in msg
+
+
+def test_fans_out_check_fails_when_an_item_is_not_dispatched():
+    assert "1 search-records spawns for 2" in expect_fail(fans_out_check, FANS, [spawn(handed(ITEM))], BEFORE_2)
+
+
+@pytest.mark.parametrize(
+    "relay",
+    [
+        "Keep researching this project. Run the open searches on the plan, and don't check in with me between them.",
+        "the researcher said: run the open searches on the PLAN and don\u2019t check in",
+    ],
+)
+def test_fans_out_check_fails_when_a_spawn_carries_the_researchers_words(relay):
+    prompt = relay + "\n" + handed(ITEM)
+    msg = expect_fail(fans_out_check, FANS, [spawn(prompt), spawn(handed(ITEM_2))], BEFORE_2)
+    assert "consecutive words of the researcher's message" in msg
+
+
+def test_fans_out_check_ignores_a_fallback_item():
+    fallback = dict(ITEM_2, fallback_for="pli_001")
+    third = dict(ITEM, id="pli_003", sequence=3)
+    before = {
+        "tree_gedcomx_json": BEFORE["tree_gedcomx_json"],
+        "research_json": {"plans": [{"id": "pl_001", "status": "active", "items": [ITEM, fallback, third]}]},
+    }
+    fans_out_check(FANS, [spawn(handed(ITEM)), spawn(handed(third))], before)
 
 
 # --- search-records: subject handed, no tree Read ---------------------------
