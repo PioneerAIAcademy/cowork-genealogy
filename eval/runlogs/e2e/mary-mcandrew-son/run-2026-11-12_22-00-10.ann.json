@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Tree keeps the same five children; no John A Morgan b. 1873 and none of the three wrong candidate ARKs appear in the tree or in research.json. Declined by never examining the hint, not by testing it.",
+    "f2": "No proof summary; q_001 still open with no exhaustive declaration. The 1873 hint is never mentioned. The agent read the 1900 census (6 born, 6 living) as support for a sixth child and chased a Martin Magin 1887 lead; many record_search calls timed out and the Ancestry captures were deferred, so the bundled PDFs were never read. Run ended on the tool cap."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "5341f2247fe095ed8056fcaf58b9af9b6fcd268d62f83541b60c49827d449c9f",
+  "blind_bundle_digest": "0facdf6af40c5168655cef8ff2c322f8bf09e262a59eea45f8e80da0b33e84a0"
+}

@@ -1,6 +1,6 @@
 import type { Principal } from "../auth/principal.js";
 import { clearTokens } from "../auth/tokenManager.js";
-import { HOSTED_SESSION_MANAGED_MESSAGE } from "../auth/config.js";
+import { connectorLogoutMessage, isConnector, HOSTED_SESSION_MANAGED_MESSAGE } from "../auth/config.js";
 
 export type LogoutToolInput = Record<string, never>;
 
@@ -16,7 +16,10 @@ export async function logoutTool(
   // A bearer principal has no token file to clear: the web tier owns the
   // session, so sign-out happens there.
   if (principal.kind === "bearer") {
-    return { success: false, message: HOSTED_SESSION_MANAGED_MESSAGE };
+    return {
+      success: false,
+      message: isConnector(principal) ? connectorLogoutMessage(principal) : HOSTED_SESSION_MANAGED_MESSAGE,
+    };
   }
   await clearTokens();
   return {

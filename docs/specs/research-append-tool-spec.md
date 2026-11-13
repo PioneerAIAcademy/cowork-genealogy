@@ -1745,6 +1745,15 @@ is listed, and the name sentence only when a name is. It rides
   update cannot set either field (`updatableFields`). A record found in no sidecar is
   left unstamped and the row is still written. Nothing reads
   `record_persona_ids` yet: it measures item 10 (`research-schema-spec.md` §5.15).
+- **A row that lists a record cites the log entry that returned it** (lead,
+  2026-11-12; `namesakeRowLogCheck`). An append whose `record_ids` holds a record
+  and whose `log_entry_ids` is empty is refused, and so is an update that leaves a
+  row in that state by changing either field. The message names the row and says
+  to send `log_entry_ids` with the `log_` id `research_log_append` returned.
+  Without a cited log nothing ties the row to the search or read that returned
+  its record, and no persona can be stamped. A pool row, which lists no record,
+  is not judged. A row written before this rule stays editable in its other
+  fields. It binds for every agent that writes the section.
 - **The fill in** (chesworthrm, 2026-11-06). When a call's applied
   `person_evidence` ops name a person, each of that person's rows with no
   `birth_year` gets one by the same lookup (`fillNamesakeBirthYears`), before the
