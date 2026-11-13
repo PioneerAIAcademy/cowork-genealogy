@@ -10779,6 +10779,70 @@ function localityBody(op: any): unknown {
   return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
 }
 
+/** The locality-guide template's level-two headings a saved guide must carry
+ *  (spec §5.14). The template is `agents/locality-guide.md`'s output format;
+ *  `tests/packaging/locality-guide-headings.test.ts` fails when they part. */
+export const LOCALITY_GUIDE_HEADINGS = ["Jurisdiction overview", "Available record types", "Research tips"] as const;
+
+/** `_heading()` in eval/harness/validators/test_locality_guide.py, which grades
+ *  the saved guide: `^##[ \t]+<title>` under Python's IGNORECASE | MULTILINE.
+ *  The lookbehind and `u` keep it to Python's answers: JS `m` also starts a line
+ *  after a lone `\r`, U+2028 and U+2029, and `i` without `u` does not fold `ſ`.
+ *  Python alone still matches `İ` or `ı` for an `i`. */
+const GUIDE_HEADING_PATTERNS = LOCALITY_GUIDE_HEADINGS.map(
+  (title) => [title, new RegExp(`(?<![^\\n])##[ \\t]+${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "iu")] as const,
+);
+
+/** The template headings `markdown` lacks, in template order. */
+export function missingGuideHeadings(markdown: string): string[] {
+  return GUIDE_HEADING_PATTERNS.filter(([, pattern]) => !pattern.test(markdown)).map(([title]) => title);
+}
+
+/**
+ * Refuse a `localities` write whose `guide_markdown` lacks a template heading
+ * (spec §5.14). Runs on an append, and on an update whose `fields` set the key. An
+ * absent key and `null` are the schema's to allow, and a persisted guide is never
+ * re-read. Any other non-string is refused here, since `validator.ts` does not type
+ * this field. Synchronous, so it runs even when an earlier `prepareOps` check has
+ * already collected a refusal, and both come back in one call.
+ */
+function localityGuideHeadingRefusals(
+  ops: ResearchAppendOp[],
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const out: string[] = [];
+  for (const [i, op] of ops.entries()) {
+    const body = localityBody(op);
+    const guide = body && typeof body === "object" ? (body as Record<string, unknown>).guide_markdown : undefined;
+    if (guide === undefined || guide === null) continue;
+    if (typeof guide !== "string") {
+      const got = Array.isArray(guide) ? "an array" : typeof guide === "object" ? "an object" : `a ${typeof guide}`;
+      out.push(
+        fmt(
+          i,
+          `guide_markdown must be the whole guide as one markdown string, not ${got}. Re-send this ` +
+            `entry with it as a string carrying the template's ` +
+            `${LOCALITY_GUIDE_HEADINGS.map((t) => `'## ${t}'`).join(", ")} lines.`,
+        ),
+      );
+      continue;
+    }
+    const missing = missingGuideHeadings(guide);
+    if (missing.length === 0) continue;
+    const many = missing.length > 1;
+    out.push(
+      fmt(
+        i,
+        `guide_markdown lacks the locality guide template's heading${many ? "s" : ""} ` +
+          `${missing.map((t) => `'## ${t}'`).join(", ")}. Add ${many ? "each" : "it"} as its own line ` +
+          "beginning with exactly those words after two #s, put the guide's text for that section " +
+          "under it, and re-send this entry with the whole guide.",
+      ),
+    );
+  }
+  return out;
+}
+
 /** The `collections` lists of a batch's `localities` writes, by op index: an
  *  append's `entry.collections`, an update's `fields.collections`. */
 function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record<string, unknown>[]]> {
@@ -11819,6 +11883,7 @@ async function prepareOps(
   }
   errors.push(...retiredAssertionCitations(ops, research, fmt));
 
+  errors.push(...localityGuideHeadingRefusals(ops, fmt));
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
   if (errors.length === 0) stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
@@ -13062,6 +13127,53 @@ function boundErrors(lines: readonly string[]): string[] {
   ];
 }
 
+/** A namesake row that lists records cites the log entry of the search or read
+ *  that returned them (lead, 2026-11-12). Without one nothing ties the row to
+ *  what returned its records and no persona can be stamped. One finding per row
+ *  the call appended, or whose `record_ids` or `log_entry_ids` it changed, that
+ *  ends with a record id and no log entry, keyed to the last op that wrote it. A
+ *  pool row, which lists no record, is not judged, and neither is a row written
+ *  before this rule whose two fields the call leaves as they were. */
+export function namesakeRowLogCheck(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+): Array<{ index: number; message: string }> {
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const was = (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []) as any[];
+  const lastOp = new Map<string, number>();
+  applied.forEach((a, i) => {
+    if (a.section === "namesakes" && !a.noop) lastOp.set(a.entryId, i);
+  });
+  const filled = (v: unknown): string[] =>
+    (Array.isArray(v) ? v : []).filter((x): x is string => typeof x === "string" && x.trim() !== "");
+  const findings: Array<{ index: number; message: string }> = [];
+  for (const [id, index] of lastOp) {
+    const row = rows.find((r) => r && r.id === id);
+    if (!row) continue;
+    const records = filled(row.record_ids);
+    if (records.length === 0 || filled(row.log_entry_ids).length > 0) continue;
+    const prior = was.find((r) => r && r.id === id);
+    if (
+      prior &&
+      JSON.stringify(filled(prior.record_ids)) === JSON.stringify(records) &&
+      filled(prior.log_entry_ids).length === 0
+    ) {
+      continue;
+    }
+    const about = [row.name, row.place, row.time_period].filter((x) => typeof x === "string" && x !== "");
+    findings.push({
+      index,
+      message:
+        `The namesakes row${about.length > 0 ? ` for ${about.join(", ")}` : ""} lists ` +
+        `${records.map((r) => `'${r}'`).join(", ")} and cites no log entry, so nothing ties it to the search ` +
+        "or read that returned that record. Nothing was written. Send it again with `log_entry_ids` holding " +
+        "the log_ id research_log_append returned for that search or read.",
+    });
+  }
+  return findings;
+}
+
 /** The namesake cap's findings on a call, each labelled with the batch index of the op
  *  it is keyed to. `applied` is in step with the findings' own indexes. */
 function namesakeMessages(
@@ -13073,6 +13185,7 @@ function namesakeMessages(
   startingTree: SimplifiedGedcomX | null,
 ): string[] {
   return [
+    ...namesakeRowLogCheck(before, after, applied),
     ...namesakeCallCheck(before, after, applied, startingPersonIds, startingTree),
     ...circularCorroborationCallCheck(before, after, applied, startingTree),
   ].map((f) =>

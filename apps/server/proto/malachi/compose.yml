@@ -116,6 +116,9 @@ services:
       GENEALOGY_SIGNIN_CALLS_PER_MINUTE: ${GENEALOGY_SIGNIN_CALLS_PER_MINUTE:-}
       WEB_DIST_DIR: ""
       PUBLIC_URL: ${PUBLIC_URL:?set in the env file}
+      # Claude's authorization server (#3997). The same value as the tools tier's below:
+      # both print it, and a client compares them byte for byte.
+      OAUTH_ISSUER: ${PUBLIC_URL:?set in the env file}
       SESSION_SECRET: ${SESSION_SECRET:?set in the env file}
       FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:?set in the env file}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}

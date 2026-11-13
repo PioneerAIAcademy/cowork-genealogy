@@ -284,7 +284,7 @@ describe("match + merge workflow (integration)", () => {
     expect(gate.warnings.map((w) => w.issueType)).toContain("hasEventsOutsideLifespanFar");
   });
 
-  it("re-merge: a census already attached to the tree is flagged by hasSameCensus", async () => {
+  it("re-merge: a census attached to the tree with no url is flagged by hasSameCensus on its title", async () => {
     // Tree already carries the 1880 census on John (a prior run attached it).
     const treeWithCensus: SimplifiedGedcomX = JSON.parse(JSON.stringify(startingTree));
     treeWithCensus.persons![0].facts!.push({

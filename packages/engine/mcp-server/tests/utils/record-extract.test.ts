@@ -258,6 +258,37 @@ describe("a death record", () => {
   });
 });
 
+describe("an indexed record's names (issue #4378)", () => {
+  // The index types every persona BirthName whatever the record says (the 1911
+  // census wife Sarah Pragnell, XW43-WKV, under her married surname), so an
+  // indexed record writes one name, names[0], and never carries a type.
+  const doc: ExtractDocument = {
+    recordId: "rec_names",
+    gedcomx: {
+      sources: [{ resource_type: "http://gedcomx.org/Collection", title: "Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986" }],
+      persons: [
+        {
+          id: "p1",
+          principal: true,
+          names: [
+            { type: "BirthName", given: "Sarah", surname: "Pragnell" },
+            { type: "MarriedName", given: "Sarah", surname: "Hart" },
+          ],
+          facts: [{ type: "http://gedcomx.org/Burial", date: "12 Mar 1887", place: "Cincinnati, Hamilton, Ohio" }],
+        },
+      ],
+      relationships: [],
+    },
+  } as unknown as ExtractDocument;
+  const names = extractRecord(doc, { logEntryId: "l_001", questionIds: [] }).assertions.filter((a) => a.fact_type === "name");
+
+  it("writes exactly one name assertion, from names[0], with no type", () => {
+    expect(names).toHaveLength(1);
+    expect(names[0].value).toBe("Sarah Pragnell");
+    expect(names[0].structured_value).toEqual({ given: "Sarah", surname: "Pragnell" });
+  });
+});
+
 describe("a burial record", () => {
   // Hand-built, like the defaulted-report doc below: the rule under test is the
   // classification row, which keys on record type alone, not on any index field

@@ -796,9 +796,10 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
   `location = /img { proxy_pass $tools_upstream; }`: an exact path, with the token in the
   query.
 - A tool error reaches the card as text. A 401 stays HTTP, because that is what brings
-  up Claude's Reconnect card (and makes it refresh, where a refresh token exists). Whether the door's 400, 403 and 503 become tool errors on the connector
-  path is now due: the record's **Door refusals** shows our text survives a 400 and is
-  replaced on a 403 and a 503.
+  up Claude's Reconnect card (and makes it refresh, where a refresh token exists). On the connector path a `tools/call` refused for someone else's
+  project, or by a failed token or owner lookup, is a tool error carrying our message, so
+  the card shows it as text; a request with no tool call keeps its 403 or 503, and a 400
+  is unchanged (lead, 2026-11-12).
 - Later, `show_project`'s `_meta` carries `session: {signedIn, url}` for a sign-in
   banner. A sign-in link in a tool's message is not clickable in a Desktop Chat reply,
   and Claude may caution against opening it (the beta plan's P0.2 item 10), so the

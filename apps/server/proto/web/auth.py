@@ -50,10 +50,16 @@ Settings are read from the environment at call time, so a test can set them per 
                              identity read share this many calls per sliding minute, two per
                              sign-in. Unset: no budget. Anything but a whole number of at least
                              2 refuses to start
+  OAUTH_ISSUER               the connector's authorization server (#3997, web/connector_auth.py).
+                             Unset: none of its routes exist. Set: it must equal PUBLIC_URL, which
+                             must have no path, with FamilySearch sign-in on and the chat off;
+                             anything else refuses to start. The tools tier takes the same value
 
 With the chat off (#3992) the session cookie lasts 24 hours rather than 30 days, sign-in asks
 for no ``offline_access``, and each sign-in consumes a single-use state record
-(``signin_states``) before it calls FamilySearch.
+(``signin_states``) before it calls FamilySearch. A plain sign-in there creates no user
+(#3997): only the connector's consent does, so a chat-off tier with no ``OAUTH_ISSUER``
+admits existing users only.
 
 OpenRouter linking (#3988) is the second PKCE round-trip here: the patron's own OpenRouter
 key, stored under the same Fernet key as the FamilySearch grant (``encrypt``), which the
@@ -291,6 +297,30 @@ def signin_calls_per_minute() -> int | None:
     return value
 
 
+def oauth_issuer() -> str | None:
+    """``OAUTH_ISSUER`` (#3997): the connector's authorization server, or None (unset) for
+    none. The issuer is this tier's own origin, printed byte for byte as the tools tier
+    prints it, so it must equal ``public_url()`` (which never ends in a slash) and
+    PUBLIC_URL can carry no path: ``/.well-known/oauth-authorization-server`` cannot sit
+    under a prefix the edge strips. The flow signs users in with FamilySearch and relies on
+    the chat-off tier's single-use sign-in state and policy pages, so both are required."""
+    issuer = _env("OAUTH_ISSUER")
+    if not issuer:
+        return None
+    problems = []
+    if issuer != public_url():
+        problems.append(f"it must equal PUBLIC_URL ({public_url()}), with no trailing slash")
+    if base_path():
+        problems.append("PUBLIC_URL must have no path")
+    if not familysearch_enabled():
+        problems.append("FAMILYSEARCH_WEB_ENABLED must be on")
+    if chat_enabled():
+        problems.append("GENEALOGY_CHAT must be false")
+    if problems:
+        raise RuntimeError(f"Refusing to start: OAUTH_ISSUER is {issuer!r}, but " + "; ".join(problems))
+    return issuer
+
+
 def session_max_age(*, chat: bool | None = None) -> int:
     """The session's life in seconds (#3992): 24 hours with the chat off, 30 days with it on.
     The tier passes ``app.state.chat``, the value its routes were built with; ``None`` reads
@@ -362,6 +392,8 @@ def preflight() -> None:
       ``GENEALOGY_MAX_USERS`` other than a positive integer,
       ``GENEALOGY_SIGNIN_CALLS_PER_MINUTE`` other than a whole number of at least 2, or an
       ``FS_REDIRECT_URI`` that is not an absolute http(s) URL with a path, at any scheme.
+    - An ``OAUTH_ISSUER`` that is not PUBLIC_URL, or one set with a PUBLIC_URL path,
+      FamilySearch sign-in off or the chat on (``oauth_issuer``).
     """
     base_path()
     chat_enabled()
@@ -369,6 +401,7 @@ def preflight() -> None:
     max_users()
     signin_calls_per_minute()
     callback_path()
+    oauth_issuer()
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()
@@ -442,6 +475,16 @@ def cookie_kwargs() -> dict[str, Any]:
 
 def oauth_state_cookie(verifier: str, state: str, next_route: str | None) -> str:
     return _state_cookie(FS_OAUTH_SALT, {"verifier": verifier, "state": state}, next_route)
+
+
+def connector_state_cookie(verifier: str, state: str, connector: dict[str, Any]) -> str:
+    """The FamilySearch state cookie of a sign-in the connector's consent page started
+    (#3997): the plain flow's, plus the pending authorization request and the terms
+    acceptance the consent click gave. The same cookie and salt, so the one callback reads
+    either; only the consent POST writes this shape, after checking the request it signed."""
+    return _state_cookie(
+        FS_OAUTH_SALT, {"verifier": verifier, "state": state, "connector": connector, "terms": True}, None,
+    )
 
 
 def read_oauth_state_cookie(token: str | None) -> dict[str, Any] | None:
