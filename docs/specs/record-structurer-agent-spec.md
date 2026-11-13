@@ -106,8 +106,39 @@ is §11.7's code.
   with no `date` becomes the fact's date, marked computed. Any other stray entry still
   refuses the batch.
 - **Every named person is their own person.** A father named inside a groom's
-  block gets his own entry and his own name. `names[0]` is the bare name. The
-  tie is a relationship or a `statedRelation`.
+  block gets his own entry and his own name. Each name the text gives a person
+  is its own `names` entry, the one the text shows first first: the persona
+  projection marks the first name preferred, and `extraction_append` writes one
+  `name` assertion per entry. The tie is a relationship or a `statedRelation`.
+- **Names: a type only where the text says whose surname it is.** The agent
+  sets `type` (`birth`, `married`, `nickname`, `also_known_as`) from the text's
+  own words, and `materialize_facts` mints the tree's name type from it and
+  from nothing else (`tree-materialization-spec.md`, "No name type is
+  invented, on either arm"). The rules, and why each reads as it does:
+  - `Mary (Johnson) Smith` and `nee` / `née` give a `birth` and a `married`
+    name. `nee` is often written without a comma; book-to-tree found 302 such
+    names across 113 family histories (588,798 people).
+  - `Mrs. Thomas Flynn` names a woman by her husband. Her given name is unknown,
+    not Thomas: she is surname Flynn, `married`, with a `couple` to him.
+  - A bracket ending a name, or several brackets in a row, gives each surname
+    its own name with no type. Which bracket is her birth surname differs
+    between books: where relatives could tell, one book printed the birth
+    surname before the brackets and three printed it in the first bracket, and
+    book-to-tree's parser, assuming the first, published 15 women with a
+    husband's surname as their own. A published tree needs a surname and takes
+    that guess; a research record needs no surname the record does not state.
+  - A bracketed spelling of the word before it is an `also_known_as` name, a
+    short form of the person's own given name a `nickname`. In a man's name a
+    bracket is never a maiden name: in an obituary survivor list a woman's given
+    name there is his wife, and elsewhere it is a nickname.
+  - `(Mrs)`, `(widow)`, `(adopted)` are notes, never name parts; they were the
+    commonest non-surname in an end bracket in book-to-tree's books.
+  - Surname particles (`St`, `Ste`, `Saint`, `Mc`, `Mac`, `Van`, `Von`, `De`,
+    `Du`, `Le`, `La`, `Fitz`, `ten`, `ter`) stay with the surname. Where a name
+    assertion has no structured value, `nameParts` applies the same rule to its
+    last-token split.
+  - A bare `O` before a surname is a middle initial unless written `O'`: 64 of
+    book-to-tree's 89 such names read as an initial and 6 as `O'`.
 - **Stated relationships only.** The agent emits a relationship only where the
   text states it, including a stated sibling. It never
   deduces one from who lived with whom. On a census, the column's value goes
@@ -139,7 +170,7 @@ is §11.7's code.
   anniversary notice is `newspaper_announcement`, never the event's own
   record type.
 - **Obituary survivor lists.** `given (surname) married-surname` is one woman
-  with her maiden name. `given (given) surname` is a person plus a spouse, and
+  with a `birth` and a `married` name (Names, above). `given (given) surname` is a person plus a spouse, and
   that spouse is a child-in-law who takes the surname outside the parentheses
   (genealogist, 2026-10-04: "Robert (Linda) Whitaker" gives Linda Whitaker; a
   trial wrote her as bare "Linda" in 1 of 3 runs). Neighbours, friends and pallbearers are

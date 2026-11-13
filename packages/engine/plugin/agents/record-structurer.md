@@ -77,7 +77,8 @@ classifications are not yours to send.
     id,                                        // p1, p2, …
     principal?: true,
     household?: "1",                           // only when one text covers several
-    names: [{ given?, surname?, uncertain?: true, note? }],
+    names: [{ given?, surname?, type?: birth | married | nickname | also_known_as,
+              uncertain?: true, note? }],
     gender?: male | female,
     statedRelation?: "son", "wife", "daughter-in-law", "executor", "heir",
                      "witness", "consent signer", "neighbor", "late husband",
@@ -104,8 +105,29 @@ classifications are not yours to send.
   not give: a birth year from an age, a date by arithmetic. A computed birth is
   a year (`~1845`), never a day.
 - **Every named person is their own person.** A father named inside a groom's
-  line gets his own entry and his own name. `names[0]` holds the bare name only.
-  The tie is a relationship or a `statedRelation`.
+  line gets his own entry and his own name. Each name the text gives a person is
+  its own `names` entry, the one it shows first first. The tie is a relationship
+  or a `statedRelation`.
+- **Names.** Set `type` only where the text says whose surname it is:
+  - `Mary (Johnson) Smith`, `Mary Smith nee Johnson`, `née Johnson`: Johnson
+    `birth`, Smith `married`. A surname the text gives her father is `birth`; one
+    it gives a husband it names is `married`.
+  - `Mrs. Thomas Flynn` is her own person: surname Flynn, `married`, no given
+    name, with a `couple` to Thomas Flynn.
+  - A bracket ending a name (`Julia Rose (Hart)`, `Ann Hart (Cole)`), or several
+    (`Ann Hart (Cole) (Dunn)`): each surname its own name, no `type`. Never take
+    the first as her birth surname.
+  - A spelling of the word before it (`Jacob Hamlin (Hamblin)`) is an
+    `also_known_as` name. A short form of the person's own given name
+    (`Edward (Ted) Adams`) is a `nickname` name.
+  - In a man's name a bracket is never a maiden name. Outside an obituary
+    survivor list it is a `nickname` name (`William (Bud) Nunn`).
+  - `(Mrs)`, `(widow)`, `(adopted)` go in that name's `note`, never in the name.
+  - A particle stays with the surname: `St`, `Ste`, `Saint`, `Mc`, `Mac`, `Van`,
+    `Von`, `De`, `Du`, `Le`, `La`, `Fitz`, `ten`, `ter` (`Robert St. Clair`:
+    surname `St. Clair`).
+  - A bare `O` before a surname is a middle initial (`John O Hare`); `O'Hare` is
+    a surname.
 - **`statedRelation` is the person's relation to the principal**, in the
   text's word (`father`, `sister`, `officiant`, `witness`). A principal has
   none. Where there are two principals, a parent is `father` or `mother`, tied
@@ -119,8 +141,7 @@ classifications are not yours to send.
 - **Gender** for every person whose sex the text states.
 - **Dates** as written. An Old Style date is recorded as the caller's flag gives
   it; never convert one from memory.
-- **Obituary survivor lists.** `Mary (Johnson) Smith` is one woman, with
-  Johnson her maiden name. `John (Mary) Smith` is John plus his wife Mary
+- **Obituary survivor lists.** `John (Mary) Smith` is John plus his wife Mary
   Smith, who takes the surname outside the parentheses: a child-in-law, `statedRelation: "daughter-in-law"`. Neighbours, friends and
   pallbearers are `"neighbor"` / `"friend"`, never kin. "Preceded in death by …"
   is one `absentPersons` entry per person, and each `note` names that person.

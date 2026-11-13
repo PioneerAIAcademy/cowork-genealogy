@@ -9,6 +9,7 @@ import {
   projectsToRecordPersonaFact,
   factTypeKey,
   isCoupleEventFactType,
+  nameParts,
 } from "../../src/utils/record-persona.js";
 
 /**
@@ -350,5 +351,35 @@ describe("projectedRecordDocument", () => {
     // Deliberate: record_role is an open enum, so edges cannot be inferred from
     // role names, and a wrong edge scores worse than no edge.
     expect(projectedRecordDocument(groups).relationships).toBeUndefined();
+  });
+});
+
+describe("nameParts' fallback keeps a surname particle with the surname", () => {
+  const parts = (value: string, structured_value?: unknown) => {
+    const { given, surname } = nameParts({ value, ...(structured_value === undefined ? {} : { structured_value }) });
+    return [given, surname];
+  };
+
+  it.each([
+    ["Robert St. Clair", "Robert", "St. Clair"],
+    ["Robert St Clair", "Robert", "St Clair"],
+    ["Martin Van Buren", "Martin", "Van Buren"],
+    ["Anna De La Cruz", "Anna", "De La Cruz"],
+    ["Mary Ann McDonald", "Mary Ann", "McDonald"],
+    ["John O Hare", "John O", "Hare"],
+  ])("%s -> %s / %s", (value, given, surname) => {
+    expect(parts(value)).toEqual([given, surname]);
+  });
+
+  it("keeps one given token when every token before the last is a particle", () => {
+    expect(parts("Le Roy")).toEqual(["Le", "Roy"]);
+  });
+
+  it("reads a structured value with empty parts through the same fallback", () => {
+    expect(parts("Robert St. Clair", { given: "", surname: "" })).toEqual(["Robert", "St. Clair"]);
+  });
+
+  it("never splits a structured value", () => {
+    expect(parts("ignored", { given: "Robert", surname: "Clair" })).toEqual(["Robert", "Clair"]);
   });
 });

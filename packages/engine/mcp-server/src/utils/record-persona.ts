@@ -304,8 +304,13 @@ export function candAsFact(cand: FactCandidate): SimplifiedFact {
   return f;
 }
 
+/** Surname particles kept with the surname they precede (`St. Clair`, `Van Buren`),
+ *  matched case-insensitively with any trailing period dropped. */
+const SURNAME_PARTICLES = new Set(["st", "ste", "saint", "mc", "mac", "van", "von", "de", "du", "le", "la", "fitz", "ten", "ter"]);
+
 /** Given/surname from a name assertion — its structured_value when present, else
- *  parsed from `value` (surname = last token). Both parts are always returned
+ *  parsed from `value`: the surname is the last token plus every particle token
+ *  directly before it, always leaving one given token. Both parts are always returned
  *  (empty string, not undefined) so the minted name satisfies the tree schema's
  *  present-and-string given/surname requirement. `type` is the structured
  *  value's own word (`birth`, `married`…), absent when it states none. */
@@ -319,7 +324,9 @@ export function nameParts(assertion: any): { given: string; surname: string; typ
   const tokens = String(assertion.value ?? "").trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return { given: "", surname: "" };
   if (tokens.length === 1) return { given: tokens[0], surname: "" };
-  return { given: tokens.slice(0, -1).join(" "), surname: tokens[tokens.length - 1] };
+  let start = tokens.length - 1;
+  while (start > 1 && SURNAME_PARTICLES.has(tokens[start - 1].replace(/\.$/, "").toLowerCase())) start--;
+  return { given: tokens.slice(0, start).join(" "), surname: tokens.slice(start).join(" ") };
 }
 
 // ─── the record-side persona projection (issue #1731 step 1) ─────────────────
