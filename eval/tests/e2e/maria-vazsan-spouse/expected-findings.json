@@ -4,13 +4,27 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that the subject Maria Vázsan (PID LJTH-GRX, baptised 10 Jan 1853 at Bojnice, daughter of Ignatius Vázsan and Anna Prividzer) married János Czibula or had a daughter Maria Czibula (baptised 9 Jun 1900, Bojnice). On that 1900 baptism the mother is indexed only as 'Maria Vázsan', with no age and no parents, and FamilySearch attaches that mother persona on its tree to a different person (LJT8-8L5) — a younger Maria Vázan (indexed spelling) whose own 1869 baptism names her parents as Franciscus (Ferencz) Vázan and Julianna Hoffmann, a different parentage and generation from the subject — not to the subject. Whether that younger woman is also the person who married János Czibula in 1893 is not established by the index and is not needed here: what rules out the subject is that the hinted persona belongs to a different woman, and that 'Maria Vázsan' is a common name in this parish. Pass = the final tree.gedcomx.json contains no János Czibula spouse, no 1893 marriage, and no Maria Czibula (b.1900) child for the subject. A rejected candidate may be documented in research.json; writing one into tree.gedcomx.json — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that the subject Maria Vázsan (PID LJTH-GRX, baptised 10 Jan 1853 at Bojnice, daughter of Ignatius Vázsan and Anna Prividzer) married János Czibula or had a daughter Maria Czibula (baptised 9 Jun 1900, Bojnice). On that 1900 baptism the mother is indexed only as 'Maria Vázsan', with no age and no parents, and FamilySearch attaches that mother persona on its tree to a different person (LJT8-8L5) — a younger Maria Vázan (indexed spelling) whose own 1869 baptism names her parents as Franciscus (Ferencz) Vázan and Julianna Hoffmann, a different parentage and generation from the subject — not to the subject. Whether that younger woman is also the person who married János Czibula in 1893 is not established by the index and is not needed here: what rules out the subject is that the hinted persona belongs to a different woman, and that 'Maria Vázsan' is a common name in this parish. Pass = the final tree.gedcomx.json contains no János Czibula spouse, no 1893 marriage, and no Maria Czibula (b.1900) child for the subject. A rejected candidate may be documented in research.json; writing one into tree.gedcomx.json — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Maria Vázsan (LJTH-GRX)",
         "relation": "spouse",
         "wrong_candidate": {
           "name": "János Czibula as the subject's husband (and Maria Czibula, b. 9 Jun 1900, as the subject's daughter)",
-          "note": "the 1900 Bojnice baptism indexes the mother only as 'Maria Vázsan' with no age and no parents; FamilySearch attaches that persona to a different, younger woman (LJT8-8L5), not to the subject (b. 1853, daughter of Ignatius Vázsan and Anna Prividzer). Whether that younger woman is the same person as the 1893 Czibula bride is not established by the index."
+          "note": "the 1900 Bojnice baptism indexes the mother only as 'Maria Vázsan' with no age and no parents; FamilySearch attaches that persona to a different, younger woman (LJT8-8L5), not to the subject (b. 1853, daughter of Ignatius Vázsan and Anna Prividzer). Whether that younger woman is the same person as the 1893 Czibula bride is not established by the index.",
+          "records": [
+            "ark:/61903/1:1:QVNW-6H51",
+            "ark:/61903/1:1:QVNW-6HR9",
+            "ark:/61903/1:1:QVNW-6HRM",
+            "ark:/61903/1:1:QVNW-6T76",
+            "ark:/61903/1:1:QVNW-6T7D",
+            "ark:/61903/1:1:QVNW-6T7X",
+            "ark:/61903/1:1:QVNW-6XP5",
+            "ark:/61903/1:1:QVNW-6XPG",
+            "ark:/61903/1:1:QVNW-6XPP",
+            "ark:/61903/1:1:QVNW-D14B",
+            "ark:/61903/1:1:QVNW-D14T",
+            "ark:/61903/1:1:QVNW-D14Y"
+          ]
         }
       },
       "supporting_sources": [

@@ -23,6 +23,8 @@ import re
 
 import pytest
 
+from validators_lib import as_mapping, bare_tool_name
+
 
 # --- Cross-file referential integrity ---------------------------------
 
@@ -87,21 +89,28 @@ def _trees_equal(before: dict | None, after: dict | None) -> bool:
     return before == after
 
 
-def test_verification_reads_the_tree(builtin_tool_calls, test):
+def test_verification_reads_the_tree(tool_calls, builtin_tool_calls, test):
     """Tag-gated (reads-tree): the delegation states the values it wants
-    confirmed, so a reply can repeat them without looking. Only a Read of
-    tree.gedcomx.json shows the tree was checked."""
+    confirmed, so a reply can repeat them without looking. A `tree_query` that
+    returned persons, or a Read of tree.gedcomx.json, shows the tree was
+    checked."""
     if "reads-tree" not in test.get("tags", []):
         pytest.skip("not a reads-tree scenario")
+    queries = [
+        c for c in tool_calls or []
+        if bare_tool_name(c.get("tool")) == "tree_query"
+        and as_mapping(c.get("response")).get("ok") is True
+        and as_mapping(c.get("response")).get("persons")
+    ]
     reads = [
         (c.get("args") or {}).get("file_path", "")
         for c in builtin_tool_calls or []
         if c.get("tool") == "Read"
     ]
     tree_reads = [r for r in reads if r.replace("\\", "/").endswith("tree.gedcomx.json")]
-    assert tree_reads, (
-        "The agent reported on the tree without reading tree.gedcomx.json; "
-        f"its Read calls were {reads[:3]}"
+    assert queries or tree_reads, (
+        "The agent reported on the tree without reading it: no tree_query "
+        f"returned persons and its Read calls were {reads[:3]}"
     )
 
 

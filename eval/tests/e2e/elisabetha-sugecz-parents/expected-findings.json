@@ -4,13 +4,21 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Elisabetha Sugecz (PID G4C9-Y6C) was the daughter of Thomas (Thomæ) Sugecz and Susanna (Susanæ) Petrich on the strength of the baptism of 14 August 1786 at Madžarevo, Varaždin, Croatia (\"Croatia, Church Books, 1516-1994\", ark 1:1:QKMN-XYBK) — the record FamilySearch's own hinting matched to her at unverified confidence. That entry is a genuine baptism of a genuine Elisabetha Sugecz, but not of this woman. Her own attached sources place nine children's baptisms at Remetinec, Varaždin between 1816 and 1837, and the 8 October 1837 baptism of Andreas Harmiczar (ark 1:1:QKMN-LM5B, attached in the tree to G4C9-Y6C) names Elizabethæ Sugecz, wife of Thomæ Harmiczar, as his mother — so a woman baptized in August 1786 would have borne that child at 51, and Sophia in 1836 at 49. Pass = the agent's final tree.gedcomx.json contains no parent-child relationship making Thomas Sugecz or Susanna Petrich a parent of G4C9-Y6C, and no stub persons of those names standing as her parents. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Elisabetha Sugecz (PID G4C9-Y6C) was the daughter of Thomas (Thomæ) Sugecz and Susanna (Susanæ) Petrich on the strength of the baptism of 14 August 1786 at Madžarevo, Varaždin, Croatia (\"Croatia, Church Books, 1516-1994\", ark 1:1:QKMN-XYBK) — the record FamilySearch's own hinting matched to her at unverified confidence. That entry is a genuine baptism of a genuine Elisabetha Sugecz, but not of this woman. Her own attached sources place nine children's baptisms at Remetinec, Varaždin between 1816 and 1837, and the 8 October 1837 baptism of Andreas Harmiczar (ark 1:1:QKMN-LM5B, attached in the tree to G4C9-Y6C) names Elizabethæ Sugecz, wife of Thomæ Harmiczar, as his mother — so a woman baptized in August 1786 would have borne that child at 51, and Sophia in 1836 at 49. Pass = the agent's final tree.gedcomx.json contains no parent-child relationship making Thomas Sugecz or Susanna Petrich a parent of G4C9-Y6C, and no stub persons of those names standing as her parents. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Elisabetha Sugecz (PID G4C9-Y6C)",
         "relation": "parent",
         "wrong_candidate": {
           "name": "Thomas (Thomæ) Sugecz and Susanna (Susanæ) Petrich, per the 14 August 1786 Madžarevo baptism (ark 1:1:QKMN-XYBK)",
-          "note": "Refuted on age: the subject is named as mother in sourced Remetinec baptisms of 1836 and 1837, which an August 1786 baptism would place at ages 49 and 51. The same couple's only other indexed child in 1780-1802 is Margaritha, baptized 17 June 1783 — a family whose childbearing ends three decades before the subject's own ends. FamilySearch's record page for the 1786 entry points it at LK25-1K1, a bare September-2015 extraction stub with no spouse, no children and no sources, so the hint cannot be rescued as an unmerged duplicate of G4C9-Y6C."
+          "note": "Refuted on age: the subject is named as mother in sourced Remetinec baptisms of 1836 and 1837, which an August 1786 baptism would place at ages 49 and 51. The same couple's only other indexed child in 1780-1802 is Margaritha, baptized 17 June 1783 — a family whose childbearing ends three decades before the subject's own ends. FamilySearch's record page for the 1786 entry points it at LK25-1K1, a bare September-2015 extraction stub with no spouse, no children and no sources, so the hint cannot be rescued as an unmerged duplicate of G4C9-Y6C.",
+          "records": [
+            "ark:/61903/1:1:QKMN-X845",
+            "ark:/61903/1:1:QKMN-X84P",
+            "ark:/61903/1:1:QKMN-X84R",
+            "ark:/61903/1:1:QKMN-XYB2",
+            "ark:/61903/1:1:QKMN-XYBK",
+            "ark:/61903/1:1:QKMN-XYBL"
+          ]
         }
       },
       "supporting_sources": [

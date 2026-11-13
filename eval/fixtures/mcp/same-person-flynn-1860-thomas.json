@@ -1,6 +1,6 @@
 {
   "tool": "same_person",
-  "description": "same_person — the 1860-census head of household Thomas Flynn (the second party of a_010) scored against the tree's Thomas Flynn (I2). Good match, no conflict. For ut_person_evidence_025.",
+  "description": "same_person — the 1860-census head of household Thomas Flynn (the second party of a_010) scored against the tree's Thomas Flynn (I2). Good match, no conflict. For ut_person_evidence_025 and ut_person_evidence_002.",
   "args": {
     "assertionId": "~",
     "treePersonId": "I2"

@@ -219,8 +219,9 @@ Then report the files written and stop. Do not run, commit, or push.
 > 1. **Seed an editable project** — `SeedProject.bat` (enter `<slug>`) or
 >    `make e2e-project TEST=<slug>`. It copies the fixture's starting state
 >    into `eval/e2e-project/<slug>/` (throwaway, never committed).
-> 2. **Watch it run** — open `eval/e2e-project/<slug>/` in the Claude Desktop
->    **Cowork** tab and run `/research`. Open the same folder in the Research
+> 2. **Watch it run** — in Claude Desktop, start a **Cowork** task on
+>    `eval/e2e-project/<slug>/` (**New** → **Cowork** → **Project or folder** →
+>    **Add folder**) and run `/research`. Open the same folder in the Research
 >    Viewer (`Viewer.bat` / `make electron`) to follow along.
 > 3. Commit the fixture directory and open a PR.
 

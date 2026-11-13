@@ -1,12 +1,13 @@
 {
   "per_finding": {
-    "f1": "true",
+    "f1": "false",
     "f2": "true"
   },
-  "proof_quality_score": 3,
   "notes": {
-    "f1": "Agent declined the wrong candidate: the 1892 Kiszombor christening record was created as an unattached person (I1) but never asserted as a child of Rozal Sarman (P873-TWP); ps_001 explicitly rejects the link, identifying a different couple (mother Szaz, not Sarman). Present only as a rejected hypothesis. Compliance/guardrail issues are separate from finding recovery.",
-    "f2": "Documented negative conclusion at probable tier (ps_001): no record links a daughter Viktoria to Rozal Sarman; the 1892 baptism belongs to a Szaz-surname family. Exhaustive-search summary covers four Torontal church collections plus FTS coverage analysis."
+    "f1": "Viktoria is not linked to Rozal Sarman or Istvan Juhasz, but an unlinked stub I1 Viktoria Juhasz (chr. 1892, Kiszombor) was written into the tree from S1 = XZ6D-FZR, a rejected record.",
+    "f2": "ps_001 concludes no record ties a daughter Viktoria to the couple and that the 1892 Kiszombor Viktoria belongs to a family whose mother is Szaz, backed by the 1890 companion baptism and a rejected byname explanation. h_001 is still marked active, but the documented conclusion covers both required points."
   },
-  "annotator": "solomonbaidoo54@gmail.com"
+  "annotator": "benter-070",
+  "findings_hash": "ffa2afa1ecb8f60d6536d23f94e03cc8ef0305589538727413f2d4c911812224",
+  "blind_bundle_digest": "4902b235733dbf1575881228ad20c2dca4e7c8a83119c79df4ab05c2ac171b1a"
 }

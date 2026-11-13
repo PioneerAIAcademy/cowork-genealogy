@@ -115,7 +115,8 @@ export const MAX_DOCUMENT_BYTES = 16 * 1024 * 1024;
 // `connector_tokens` is here for the same reason `turns` is: the door READS it
 // on every connector request (migration 017). Without it a tier deployed one
 // migration behind answers /healthz 200, passes the load balancer's check, and
-// then 503s every connector call with `error=42P01`.
+// then fails every connector request with `error=42P01`: a tool error on a
+// `tools/call`, a 503 on anything else.
 export const STORE_TABLES = [
   "documents",
   "blobs",

@@ -50,6 +50,9 @@ import {
   keptFamilySearchStatus,
   toolNameOf,
   PRM_PATH,
+  NOT_YOUR_PROJECT_MESSAGE,
+  AUTHORIZATION_UNAVAILABLE_MESSAGE,
+  CONNECTOR_SCOPE,
   startHttpServer,
   TURN_ID_HEADER,
   type AuthorizeRequest,
@@ -795,12 +798,63 @@ describe("tool server over Streamable HTTP", () => {
           call("project_context", { projectPath: "/proj_00112233445566aa" }),
           connectorHeaders(),
         );
-        expect(res.status, `ownerId=${ownerId}`).toBe(403);
+        // A tool error, not a 403: Claude replaces a 403's body with its own
+        // "blocked by a firewall" text, so our message never reached the model.
+        expect(res.status, `ownerId=${ownerId}`).toBe(200);
+        expect(await res.json(), `ownerId=${ownerId}`).toEqual({
+          jsonrpc: "2.0",
+          id: 1,
+          result: { content: [{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }], isError: true },
+        });
         // A NULL owner is refused with the rest: a connector never claims an
         // ownerless project, unlike the web tier's may_create_or_claim.
         expect(bindStore).not.toHaveBeenCalled();
-        await res.text();
       }
+    });
+
+    it("a real MCP client reads the refusal as a tool error, not as a transport failure", async () => {
+      // What the hand-built response has to satisfy: the SDK's own client must
+      // parse it as this call's result, so the message reaches the model.
+      const client = await connect();
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: "u_someone_else" });
+      const refused = await client.callTool({
+        name: "project_context",
+        arguments: { projectPath: "/proj_00112233445566aa" },
+      });
+      expect(refused.isError).toBe(true);
+      expect(refused.content).toEqual([{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }]);
+      // The same client still works afterwards, on the same connection.
+      const next = await client.callTool({ name: "convert_calendar", arguments: { date: "1 Jan 1900" } });
+      expect(next.content).toBeDefined();
+    });
+
+    it("answers a refused call under the call's own id, a string id included", async () => {
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: "u_someone_else" });
+      const res = await rpc(
+        { ...call("project_context", { projectPath: "/proj_00112233445566aa" }), id: "call-7" },
+        connectorHeaders(),
+      );
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ id: "call-7", result: { isError: true } });
+    });
+
+    it("an owner lookup that throws is a tool error saying to try again, and binds no store", async () => {
+      bindStore.mockClear();
+      projectOwner.mockRejectedValueOnce(new Error("pool is down"));
+      const res = await rpc(
+        call("project_context", { projectPath: "/proj_00112233445566aa" }),
+        connectorHeaders(),
+      );
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toEqual({
+        jsonrpc: "2.0",
+        id: 1,
+        result: { content: [{ type: "text", text: AUTHORIZATION_UNAVAILABLE_MESSAGE }], isError: true },
+      });
+      // Never the cause: a pool error can carry a connection string.
+      expect(JSON.stringify(body)).not.toContain("pool is down");
+      expect(bindStore).not.toHaveBeenCalled();
     });
 
     it("admits a project the caller owns", async () => {
@@ -863,22 +917,40 @@ describe("tool server over Streamable HTTP", () => {
           headers: { Host: "evil.example" },
         });
         expect(res.status).toBe(200);
+        // The shape Claude signed in against (the connector probe, issue #3529).
         expect(await res.json()).toEqual({
           resource: `${issuer}/mcp`,
           authorization_servers: [issuer],
+          scopes_supported: [CONNECTOR_SCOPE],
+          bearer_methods_supported: ["header"],
         });
 
-        const refused = await fetch(`${url}/mcp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
-          body: JSON.stringify(call("convert_calendar", {})),
-        });
+        const post = (headers: Record<string, string>) =>
+          fetch(`${url}/mcp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+            body: JSON.stringify(call("convert_calendar", {})),
+          });
+        // No token: no error code (RFC 6750 3.1), and the URL the challenge
+        // names is the one just served.
+        const noToken = await post({});
+        expect(noToken.status).toBe(401);
+        expect(noToken.headers.get("WWW-Authenticate")).toBe(
+          `Bearer resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
+        );
+        await noToken.text();
+        // A token that was sent and refused says so: this is what tells Claude
+        // to offer Reconnect rather than report the server unreachable.
+        const refused = await post({ Authorization: "Bearer not-a-token-this-server-issued" });
         expect(refused.status).toBe(401);
-        // The URL the challenge names is the one just served.
         expect(refused.headers.get("WWW-Authenticate")).toBe(
-          `Bearer resource_metadata="${issuer}${PRM_PATH}"`,
+          `Bearer error="invalid_token", resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
         );
         await refused.text();
+        // An admitted token is still admitted on this server.
+        const admitted = await post(connectorHeaders());
+        expect(admitted.status).toBe(200);
+        await admitted.text();
       } finally {
         withIssuer.closeAllConnections();
         await new Promise<void>((r) => withIssuer.close(() => r()));
@@ -1041,11 +1113,42 @@ describe("tool server over Streamable HTTP", () => {
       expect(text).not.toContain("X-Genealogy-Project-Id");
     });
 
-    it("a lookup that throws is a 503, never an admission", async () => {
+    it("a token lookup that throws is never an admission: a tool call gets the refusal, not the tool's answer", async () => {
       lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
-      const res = await rpc(call("convert_calendar", {}), connectorHeaders());
+      const res = await rpc(call("convert_calendar", { date: "1 Jan 1900" }), connectorHeaders());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      // The refusal, not the tool's answer: the token was never checked.
+      expect(body).toEqual({
+        jsonrpc: "2.0",
+        id: 1,
+        result: { content: [{ type: "text", text: AUTHORIZATION_UNAVAILABLE_MESSAGE }], isError: true },
+      });
+      expect(JSON.stringify(body)).not.toContain("pool is down");
+    });
+
+    it.each([
+      ["initialize", { jsonrpc: "2.0", id: 1, method: "initialize", params: {
+        protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "0" } } }],
+      ["tools/list", { jsonrpc: "2.0", id: 1, method: "tools/list" }],
+      ["a notification", { jsonrpc: "2.0", method: "notifications/initialized" }],
+      ["a tools/call with no id", { jsonrpc: "2.0", method: "tools/call", params: { name: "convert_calendar", arguments: {} } }],
+    ])("a token lookup that throws stays a 503 for %s, which has no tool result to carry a message", async (_what, body) => {
+      lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
+      const res = await rpc(body, connectorHeaders());
       expect(res.status).toBe(503);
-      await res.text();
+      const text = await res.text();
+      expect(JSON.parse(text).error.message).toBe("Project authorization is unavailable.");
+      expect(text).not.toContain("pool is down");
+    });
+
+    it("a refused token is still a 401 over HTTP, whatever the method: that status is what offers Reconnect", async () => {
+      for (const body of [call("convert_calendar", {}), { jsonrpc: "2.0", id: 1, method: "tools/list" }]) {
+        const res = await rpc(body, { Authorization: "Bearer not-a-token-this-server-issued" });
+        expect(res.status).toBe(401);
+        expect(res.headers.get("WWW-Authenticate")).toMatch(/^Bearer/);
+        await res.text();
+      }
     });
 
     describe("project_list on a connector (#3991)", () => {
@@ -1623,6 +1726,71 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
     expect((await res.json()).error.message).toBe("Not authenticated. Sign in again to reconnect.");
     expect(gated.entered.has(blockedId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("with an issuer, that refusal says the token is dead, so the client signs in again", async () => {
+    // The same path on a server that has an issuer: the shared one has none, so
+    // its challenge is the bare `Bearer` whatever the door passes.
+    const issuer = "https://beta.example";
+    const withIssuer = await startHttpServer({
+      host: "127.0.0.1", port: 0, baseConfig: {}, bindStore, authorize, lookupConnector, projectOwner,
+      ownedProjects, issuer,
+    });
+    const addr = withIssuer.address();
+    if (!addr || typeof addr !== "object") throw new Error("no port");
+    const post = (projectPath: string) =>
+      fetch(`http://127.0.0.1:${addr.port}/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...userA },
+        body: JSON.stringify(call("project_context", { projectPath })),
+      });
+    try {
+      bindStore.mockClear();
+      const gated = gatedStores(5);
+      const held = Array.from({ length: 4 }, (_, i) => post(projPath("f", i)));
+      const waiting = post(projPath("f", 4));
+      try {
+        await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+        lookupConnector.mockImplementationOnce(async () => null);
+      } finally {
+        await release(gated, held);
+      }
+      const res = await waiting;
+      expect(res.status).toBe(401);
+      expect(res.headers.get("WWW-Authenticate")).toBe(
+        `Bearer error="invalid_token", resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
+      );
+      await res.text();
+      await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+    } finally {
+      withIssuer.closeAllConnections();
+      await new Promise<void>((r) => withIssuer.close(() => r()));
+    }
+  });
+
+  it("a call that waited, whose second lookup throws, gets a tool error and never runs", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("9", i) }), userA),
+    );
+    const waitingId = projPath("9", 4).slice(1);
+    const waiting = rpc(call("project_context", { projectPath: `/${waitingId}` }), userA);
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
+    } finally {
+      await release(gated, held);
+    }
+    const res = await waiting;
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      jsonrpc: "2.0",
+      id: 1,
+      result: { content: [{ type: "text", text: AUTHORIZATION_UNAVAILABLE_MESSAGE }], isError: true },
+    });
+    expect(gated.entered.has(waitingId)).toBe(false);
     await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
   });
 

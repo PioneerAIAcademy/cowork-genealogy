@@ -1,10 +1,13 @@
 {
   "per_finding": {
-    "f1": "true",
+    "f1": "false",
     "f2": "partial"
   },
-  "proof_quality_score": 2,
   "notes": {
-    "f2": "Right negative conclusion, but the agent's own proof summary (ps_001) rates the tier 'probable' not 'proved' and names an unresolved open thread (h_001, I8's identity vs GK89-82B's José branch) that it says 'prevents escalation to proved' -- explicitly leaving the possibility of an undiscovered Antonia de Jesus connection open rather than closing it as the expected finding requires. Reached via the 1859 marriage + 1890 baptism grandfather-name route rather than the fixture's disproving 1895 death record or Julia's 1967 record."
-  }
+    "f1": "GK89-82B is not linked to Antonia de Jesus, but the rejected family was written into the tree: I8 Antonio Fernandes Lucas + I6 Antonia de Jesus (R9) with children I12 Maria (d. 1889) and I15 Maria Lucas (d. 1894), sourced in part to S5 and S10, both on the rejected list.",
+    "f2": "ps_001 and ps_002 both conclude 'probably not', separating the two men by father (Manoel vs Jose), but h_001 is left active on the identity of the 1890 baptism's father, which the finding says must not stay open, and the 1895 death of 'Junior' was not found."
+  },
+  "annotator": "benter-070",
+  "findings_hash": "ac089ce40e776b094060cfff4fd3e17467b24cbc1d97c94113c55f4f8e6f949c",
+  "blind_bundle_digest": "6f5e4c73aba9ec8b325f3c00b396273040f814642e42ef518edf73b255e8d5f7"
 }
