@@ -1,8 +1,8 @@
 {
   "tool": "collections_search",
-  "description": "collections_search for Ochtrup at the country scope collections_search derives for Germany, window 1836. No collection is for the Diocese of Münster or Ochtrup; the nearest are the Paderborn Catholic records and the country-wide Marriages, 1558-1929 index, which does not say it covers Ochtrup. Measured live 2026-11-13 with collectionsSearchTool({ standardPlace: 'Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany', startYear: 1836, endYear: 1836 }).",
+  "description": "collections_search for Ochtrup at the country scope collections_search derives for Germany, window 1836. No collection is for the Diocese of Münster or Ochtrup; the nearest are the Paderborn Catholic records and the country-wide Marriages, 1558-1929 index, which does not say it covers Ochtrup. Measured live 2026-11-13 with collectionsSearchTool({ standardPlace: 'Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany', startYear: 1836, endYear: 1836 }). Matches on ~Germany because the response is the Germany scope, so a call passing the country gets the same answer as one passing the town.",
   "args": {
-    "standardPlace": "~Ochtrup"
+    "standardPlace": "~Germany"
   },
   "response": {
     "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
