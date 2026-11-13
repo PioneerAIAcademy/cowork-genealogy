@@ -26,7 +26,9 @@ export function SetupCard({ view, heightLimit, actions }: CardProps) {
     })
   }
   if (question) points.push({ label: 'The question', body: <Prose text={question.question} index={index} /> })
-  const next = nextStepWords(status?.nextStep) ?? stateWords(status?.state)
+  const next = nextStepWords(status?.nextStep)
+  const state = stateWords(status?.state)
   if (next) points.push({ label: 'Next', body: next })
+  else if (state) points.push({ label: 'Where it stands', body: state })
   return <Shell title="The research is set up" points={points} actions={actions} heightLimit={heightLimit} />
 }

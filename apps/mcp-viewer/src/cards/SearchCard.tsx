@@ -43,7 +43,16 @@ export function SearchCard({ view, heightLimit, actions = [], onSeeResults }: Ca
   }
   const kept = recordsKept(research, searches)
   if (kept.length > 0) {
-    const named = kept.filter((source) => resolveFieldId(source.id, index) !== null).slice(0, RECORDS_NAMED)
+    // Two sources can name one record (two people on one census page): name it once.
+    const labels = new Set<string>()
+    const named = kept
+      .filter((source) => {
+        const label = resolveFieldId(source.id, index)?.label
+        if (!label || labels.has(label)) return false
+        labels.add(label)
+        return true
+      })
+      .slice(0, RECORDS_NAMED)
     points.push({
       label: kept.length === 1 ? 'Record kept' : `${kept.length} records kept`,
       body: (

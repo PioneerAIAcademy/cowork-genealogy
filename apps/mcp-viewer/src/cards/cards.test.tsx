@@ -90,6 +90,12 @@ describe('the setup card', () => {
     expect(card.text).toContain('Search another website.')
     expect(card.text).not.toContain('pli_007')
   })
+
+  it('with nothing next, says where the question stands instead', () => {
+    const card = drawn(COMPOUND_DOC(), { show: 'setup' })
+    expect(card.text).toContain('Where it stands')
+    expect(card.text).not.toContain('Next')
+  })
 })
 
 describe('the search card', () => {
@@ -101,6 +107,9 @@ describe('the search card', () => {
     expect(card.text).toContain('It found nothing.')
     expect(card.text).toContain('8 records kept')
     expect(card.text).toContain('6 more in the case file.')
+    const named = [...card.container.querySelectorAll('.records li')].map((li) => li.textContent)
+    expect(named).toHaveLength(2)
+    expect(new Set(named).size).toBe(2)
     expect(leftoverIds(card.text)).toEqual([])
   })
 
