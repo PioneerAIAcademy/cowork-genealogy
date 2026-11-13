@@ -255,15 +255,6 @@ function unionRef(
   return true;
 }
 
-/** Upsert one SOURCED name onto a person: union the ref onto an equivalent
- *  existing name, else mint a new one carrying it. Name equivalence is
- *  case/space-insensitive on given + surname, which is what makes a re-run a
- *  no-op rather than a duplicate.
- *
- *  Shared by both arms — the persona arm's `name` assertions and the
- *  named-party arm (§4.6) — because the two had the same block character for
- *  character, and a second copy is how the two drift. NEVER sets `preferred`:
- *  concluding a preferred name is proof-conclusion's job (§4.2). */
 /** A name assertion's `structured_value.type` -> the tree's name type. Only a
  *  document's own words map; anything else, and no type at all, mints none —
  *  never a default (issue #4378, Richard 2026-11-12). */
@@ -273,6 +264,16 @@ const TREE_NAME_TYPE: Readonly<Record<string, string | undefined>> = Object.assi
   nickname: "Nickname",
   also_known_as: "AlsoKnownAs",
 });
+
+/** Upsert one SOURCED name onto a person: union the ref onto an equivalent
+ *  existing name, else mint a new one carrying it. Name equivalence is
+ *  case/space-insensitive on given + surname, which is what makes a re-run a
+ *  no-op rather than a duplicate.
+ *
+ *  Shared by both arms — the persona arm's `name` assertions and the
+ *  named-party arm (§4.6) — because the two had the same block character for
+ *  character, and a second copy is how the two drift. NEVER sets `preferred`:
+ *  concluding a preferred name is proof-conclusion's job (§4.2). */
 
 function upsertName(
   tree: SimplifiedGedcomX,
