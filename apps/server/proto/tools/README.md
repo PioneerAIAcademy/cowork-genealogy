@@ -66,6 +66,13 @@ A connector call naming no project binds a store that refuses every project tool
 answers `project_list` with the user's projects plus one fresh `/proj_` path, which reads
 as an empty project until its first write claims it.
 
+A connector `tools/call` that names someone else's project, or meets a failed token or
+owner lookup, is answered **200 with an `isError` result**, not 403 or 503: Claude
+replaces a 403's body and drops a 503's, so neither message reached the model or a card.
+The result says the call did not run and what to do next. A request with no tool call
+(`initialize`, `tools/list`, a notification) keeps its 403 or 503, a refused token is
+always a 401 over HTTP, and the worker path keeps every status it had.
+
 Each connector user runs at most **4** `tools/call` requests at a time (self-hosted beta
 E4, per user; a constant in `src/utils/user-limits.ts`, not a setting). A call over the
 cap waits its turn, oldest first, and is never refused; `initialize`, `tools/list`,

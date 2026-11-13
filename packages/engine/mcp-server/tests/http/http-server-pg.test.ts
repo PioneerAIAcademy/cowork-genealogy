@@ -45,7 +45,7 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { startHttpServer } from "../../src/http-server.js";
+import { NOT_YOUR_PROJECT_MESSAGE, startHttpServer } from "../../src/http-server.js";
 import {
   authorizeAttempt,
   createPgS3Backend,
@@ -440,6 +440,13 @@ if (!DSN || !ENDPOINT) {
         return { status: res.status, text: await res.text() };
       }
 
+      /** The door's answer to a `connCall` naming a project that is not the caller's. */
+      const NOT_YOURS = {
+        jsonrpc: "2.0",
+        id: 1,
+        result: { content: [{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }], isError: true },
+      };
+
       afterAll(async () => {
         // Ordered: projects reference users with no ON DELETE.
         for (const projectId of seededProjects) await purge(projectId);
@@ -506,9 +513,12 @@ if (!DSN || !ENDPOINT) {
         expect(mine.status, mine.text).toBe(200);
         expect(mine.text, "the canary must be in A's own project").toContain("Alpha");
 
-        // B names the same project: refused, and reads nothing.
+        // B names the same project: refused, and reads nothing. The refusal is
+        // a tool error now, so the status no longer tells it from A's answer:
+        // the whole body is the refusal and nothing else.
         const read = await connCall(b.token, "project_context", { projectPath });
-        expect(read.status, read.text).toBe(403);
+        expect(read.status, read.text).toBe(200);
+        expect(JSON.parse(read.text)).toEqual(NOT_YOURS);
         expect(read.text).not.toContain("Alpha");
       });
 
@@ -518,14 +528,38 @@ if (!DSN || !ENDPOINT) {
         const projectPath = freshPath();
         const projectId = projectPath.slice(1);
         await seedAs(a.userId, projectPath, "Alpha");
-        const before = await rowCounts(projectId);
-        await connCall(b.token, "research_append", {
-          projectPath,
-          section: "questions",
-          op: "append",
-          entry: { question: "can B write here?", status: "open" },
-        });
-        expect(await rowCounts(projectId)).toEqual(before);
+        // Versions, not row counts: a write that got through would rewrite A's
+        // existing research.json row in place, which a count cannot see.
+        const versions = async () =>
+          (
+            await backend.pool.query<{ name: string; version: string }>(
+              "SELECT name, version FROM documents WHERE project_id = $1 ORDER BY name",
+              [projectId],
+            )
+          ).rows;
+        const before = await versions();
+        expect(before.length).toBeGreaterThan(0);
+        // A valid entry, so the append would land if the door admitted it.
+        const entry = {
+          question: "can B write here?",
+          rationale: "A gap in the timeline",
+          selection_basis: "objective_decomposition",
+          priority: "high",
+          status: "open",
+          depends_on: [],
+          unblocks: [],
+          resolved: null,
+          resolution_assertion_ids: [],
+          search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+        };
+        const r = await connCall(b.token, "research_append", { projectPath, section: "questions", op: "append", entry });
+        expect(r.status, r.text).toBe(200);
+        expect(JSON.parse(r.text)).toEqual(NOT_YOURS);
+        expect(await versions()).toEqual(before);
+        // The same append as the owner does move the version, so the check above can fail.
+        const mine = await connCall(a.token, "research_append", { projectPath, section: "questions", op: "append", entry });
+        expect(toolBody(mine).ok, mine.text).toBe(true);
+        expect(await versions()).not.toEqual(before);
       });
 
       it("a project whose owner_id is NULL is refused: a connector never claims an ownerless project", async () => {
@@ -535,7 +569,8 @@ if (!DSN || !ENDPOINT) {
         // The engine's own ownerless project, exactly as the worker creates one.
         await backend.pool.query("INSERT INTO projects (project_id) VALUES ($1)", [projectId]);
         const r = await connCall(a.token, "project_context", { projectPath });
-        expect(r.status, r.text).toBe(403);
+        expect(r.status, r.text).toBe(200);
+        expect(JSON.parse(r.text)).toEqual(NOT_YOURS);
       });
 
       it("project_context on a fresh path answers no_project and claims nothing", async () => {
@@ -1078,7 +1113,7 @@ if (!DSN || !ENDPOINT) {
             authorize: (req) => authorizeAttempt(unmigrated, req),
             // This door runs against a database with no connector tables, so
             // the lookups would throw; the cases here never present a connector
-            // token, and a throw is a 503, never an admission.
+            // token, and a throw is never an admission.
             lookupConnector: async () => null,
             projectOwner: async () => ({ exists: false, ownerId: null }),
             ownedProjects: async () => ({ ids: [], truncated: false }),
