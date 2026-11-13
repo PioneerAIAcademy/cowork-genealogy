@@ -1,0 +1,646 @@
+{
+  "run_log": "v20_2026-11-13_05-40-25.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_arc`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The plan correctly identifies church baptism records as the primary source for Katharina's parents, accurately describes what each record type would provide (baptism entry names parents, Familienregister lists all children, marriage confirms the couple), and correctly notes that Archion is a paid site with no FamilySearch collections for Baiersbronn. The jurisdiction (Baiersbronn, Freudenstadt, Baden-Württemberg) is accurate for the 1843 period. All factual claims about record types and their content are supported by genealogical practice and the locality entry.\n\nJunior: (Pass - All factual claims about record typed and their content are supported by genealogical practice and the locality entry.)"
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_arc`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The response addresses all required elements: (1) provides the Archion parish URL from loc_001 (https://www.archion.de/de/alle-archive/baden-wuerttemberg/evangelisches-archiv-baden-und-wuerttemberg-wuerttemberg/dekanat-freudenstadt/baiersbronn); (2) explains what the register would settle (Katharina's parents from baptism or Familienregister); (3) specifies what to look for (baptism register 1841-1845, entry for Katharina Seeger with spelling variants); (4) offers to walk the researcher through capture and reading. The plan itself is comprehensive with 8 items covering primary sources (baptism, Familienregister, marriage, siblings), fallback routes (Katharina's own marriage and death), and secondary sources (probate, MyHeritage).\n\nJunior: (Pass - The response addresses all required elements.)"
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_arc`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching expected patterns. collections_search and external_links_search both used the standardPlace parameter correctly with the full Baiersbronn jurisdiction. research_append correctly structured the plan and 8 plan items with all required fields (sequence, record_type, jurisdiction, date_range, repository, rationale, status). No tool calls returned fixture_not_found errors; all matched.kind values were 'live' or 'predicate' (valid). Arguments were semantically appropriate throughout.\n\nJunior: (Pass - Arguments were semantically appropriate throughout.)"
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_arc`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item's record_type matches the information need. Church baptism (pli_001) directly names parents; Familienregister (pli_002) lists all children and parents; marriage (pli_003) confirms the couple and mother's maiden name; siblings' baptisms (pli_004) test household identity via godparents; Katharina's own marriage (pli_005) and death (pli_006) provide independent routes to parents; probate (pli_007) names heirs/children; MyHeritage (pli_008) searches indexed trees. Each rationale explicitly states what information the record type provides and why it advances the question.\n\nJunior: (Pass - Each rationale explicitly states what information the record type provides and why it advances the question.)"
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_arc`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item's rationale ties directly to evidence about Katharina's parents. FAN items (siblings' baptisms, godparents) are justified as testing household identity and confirming the parents named in Katharina's own entry. Katharina's marriage and death records are framed as independent routes to her parents' names, not as ends in themselves. The probate item targets the parents' estate to name children including Katharina. No item pursues a relative's own missing facts; all serve the question of identifying Katharina's parents.\n\nJunior: (Pass - No item pursues a relative's own missing facts. all serve the question of identity of identifying Katharina's parents.)"
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_arc`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> Sequence follows defensible logic: (1) baptism (free/indexed on Archion, most direct); (2) Familienregister (same source, broader context); (3) parents' marriage (uses identifiers from steps 1-2); (4) siblings' baptisms (FAN fallback if Katharina's entry is ambiguous); (5-6) Katharina's own marriage and death (independent routes, dated after birth window); (7) probate (archive enquiry, fallback); (8) MyHeritage (secondary, indexed). Date ranges appropriately span the question's window: baptism covers 1841-1845 (the 'about 1843' estimate), death covers 1843-1930 (reaching the later part of the window). No item depends on an identifier a later item supplies; the plan is logically coherent.\n\nJunior: (Pass - Sequence follows defensive logic. No item depends on an identifier a later item supplies. The plan is logically coherent.)"
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_plan_arc`** — `rubric` / `Jurisdiction accuracy`\nLLM: 2 → Junior: 2\n\n> Primary jurisdictions are correct: Baiersbronn, Freudenstadt, Baden-Württemberg existed in 1843 and held church records. However, pli_005 and pli_006 use broader jurisdictions ('Württemberg, Germany (Baiersbronn and the place she later lived)' and 'Württemberg, Germany (place of her last residence)') that are vague and generated validation warnings. While the rationale acknowledges the place is unknown and suggests starting with Baiersbronn, the jurisdiction field itself is imprecise. For pli_007, 'Baiersbronn, Freudenstadt, Baden-Württemberg, Germany' is correct for the period. The core issue is that pli_005 and pli_006 use region-level jurisdictions when the plan should specify the known starting point (Baiersbronn) or acknowledge the search will expand if needed.\n\nJunior: (Partial - The research jurisdictions are historically appropriate in principle, but pli_005 and pli_006 use vague, overly broad jurisdiction descriptions instead of specifying the known starting point, Baiersbronn. Although the rationale acknowledges the uncertainty and proposes an appropriate search strategy, the jurisdiction fields remain imprecise and trigger validation warnings. Pli_007 is correctly specified.)"
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_arc`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose 'create' mode (no prior plan existed for q_001). The plan was written with status 'active' and all items with status 'planned', which is appropriate for a first plan. The research_append call correctly appended the plan and items to the research.json file. No prior active plan needed to be superseded, and no existing items were edited in place. The audit trail is preserved: this is the first plan for q_001, and it is now active.\n\nJunior: (Pass - The skill correctly chose'create' mode. The audit trail is preserved. This is the first plan for q_001, and it is now active.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_plan_006`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The plan is substantively sound and well-reasoned, but contains one factual error: pli_014 (1880 census) is included despite the user's explicit instruction 'We've already done censuses — focus on what comes next.' Claude acknowledges this in the text ('I added this even though you said censuses are done') but persists it anyway. The plan correctly identifies probate, church, and vital records as appropriate next steps, and the rationales are grounded in the project state. However, including a census item against explicit user direction is a correctness defect.\n\nJunior: (Partial - The plan is otherwise sound, relevant, and well-reasoned, but includes pli_014 (1880 census) despite the user's explicit instruction to exclude further census research. Although the error is acknowledged, the item remains in the plan, making it a clear instruction-following defect.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The plan addresses everything required: it creates a new active plan (pl_003) for q_001 after the prior plan (pl_002) was completed, proposes appropriate record types for the research question, and covers the major gaps identified in the proof summary (probate, post-1860 censuses, church records, naturalization, Irish origin). The user's request for church and probate records is fully addressed with multiple items targeting each.\n\nJunior: (Pass - The plan addresses everything required. The user's request for church and probate records is fully addressed with multiple itemd targeting each.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_006`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching expected values. The project_context, research_query, tree_query, and research_append calls all used correct projectPath and section arguments. The collections_search call with standardPlace 'Pennsylvania, United States' matches the expected ~Pennsylvania predicate. The place_search call with 'Schuylkill County' and context 'Pennsylvania' matches the ~Schuylkill predicate. No fixture_not_found errors occurred.\n\nJunior: (Pass - No fixture_not_found errors occurred.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_006`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item targets appropriate record types for the parentage question. Church records (pli_006, pli_008, pli_010, pli_011, pli_012) are selected to find burial entries, baptisms of siblings, and marriage records—all of which can supply names, dates, and family relationships. Probate (pli_007) is chosen to find wills naming heirs, which would be direct parentage evidence. Vital records (pli_009) target the parents' marriage. Naturalization (pli_013) can supply origin and arrival dates. Each rationale explains what specific information the record type provides for the question.\n\nJunior: (Pass - Each rationale explains what specific information the record type provies for the question.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_006`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item's rationale ties it to evidence about Patrick Flynn (the question's subject). FAN items (pli_010, pli_011) explicitly state what they would reveal about Patrick: siblings' baptisms place the family in a parish and name the mother; Patrick's own marriage and children's records may name his parents or show how the 1908 informant knew Thomas. The Thomas Flynn items (pli_007, pli_008) are justified by what they reveal about Patrick's parentage, not by Thomas's own missing facts. No item pursues a relative's record for its own sake.\n\nJunior: (Pass - No item pursues a relative's record for its own sake.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_plan_006`** — `rubric` / `Sequencing logic`\nLLM: 2 → Junior: 2\n\n> The sequence is mostly logical (free/indexed before paid, narrow before broad), but the per-test requirement for an explicit fallback_for relationship is not met. The plan lacks a structured fallback chain: pli_006 and pli_008 (church records) should have a fallback item (e.g., diocesan archive) with fallback_for pointing to the primary FamilySearch item, explaining why the primary might fail (registers not yet digitized). Similarly, pli_007 (probate) should have a fallback to county courthouse records. The rationales mention these alternatives in prose but do not encode them in the fallback_for field as required. Additionally, pli_014 (1880 census) is sequenced last, which is reasonable, but its inclusion violates the user's explicit instruction.\n\nJunior: (Partial - The research sequence is generally logical, but the plan fails to encode the required fallback relationships in the fallback_for fields. Although alternatives are mentioned in the rationales, they are not formally linked to the primary searches. Additionally, pli_014 includes a census search despite the user's explicit instruction to exclude further census research. )"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_006`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> All jurisdictions are historically accurate. Schuylkill County, Pennsylvania is correctly used for 1860-1908 (formed 1811). The plan correctly notes via loc_001 that pre-1811 records would be filed under parent counties (Berks and Northampton). Ireland is used for the Irish origin search (pli_012) with date range 1815-1850, which is appropriate for Thomas Flynn's birth (~1818) and Patrick's birth (~1845). The plan correctly identifies that Pennsylvania statewide civil registration began in 1906, so pre-1906 events rely on church and probate records.\n\nJunior: (Pass - All jurisdictions are historically accurate.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_006`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose add-new mode: the prior plan (pl_002) for q_001 was completed, and the question remains in_progress, so a new active plan is appropriate. The new plan (pl_003) is created with status 'active' and question_id 'q_001'. The prior plan (pl_002) was left in 'completed' status and not modified, preserving the audit trail. Exactly one active plan now exists for q_001. The mode and lifecycle handling are correct.\n\nJunior: (Pass - The mode and lifecycle handling are correct.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The plan is factually accurate. It correctly identifies Michael's 1870 residence outside Schuylkill County (log_001) and 1882 residence in Schuylkill County as a miner (log_002). It accurately cites Patrick's 1875 deed purchase (S1, Deed Book 42 p. 118) as a FAN item. Jurisdictional facts are correct: Schuylkill County formed in 1811, Diocese of Philadelphia held the county until 1961, civil registration began 1906. All record types and repositories are appropriate for the period and question. No fabricated material or unsupported claims.\n\nJunior: (Pass - No fabricated material or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The plan addresses the full scope of the research question: why Michael moved to Schuylkill County around 1882 for coal mining. It covers census records to establish the before/after occupational change, land records to explore family pull via Patrick's 1875 purchase, church records for community context, vital records for biographical details, mining employment records for direct evidence of the hypothesis, newspapers for regional context, naturalization records if foreign-born, and probate for family relationships. All required elements of a first plan for this question are present.\n\nJunior: (Pass - All required elements of a first plan for this question are present.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed with correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. collections_search used standardPlace ~Pennsylvania with appropriate year range. place_search used ~Schuylkill with context. research_append correctly structured the plan and eight plan items with all required fields. No fixture_not_found errors occurred. Arguments matched expected patterns semantically.\n\nJunior: (Pass - All MCP tool call passed with correct arguments.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Each record type directly addresses the research question's information needs. Census (pli_001) tests occupational change and birthplace. Land (pli_002) explores family pull via Patrick's deed. Church (pli_003) reveals community and arrival date. Vital records (pli_004) provide biographical details and origin. Mining records (pli_005) directly test the coal-mining hypothesis. Newspapers (pli_006) give regional context for labor recruitment. Naturalization (pli_007) addresses potential foreign birth. Probate (pli_008) clarifies family relationships. Each rationale explains what specific information the type provides.\n\nJunior: (Pass - Each record type directly addresses the research question's information need. Each rational explains what specific information the type provides.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every plan item's rationale ties directly to evidence about Michael (the question's subject). The FAN item (pli_002) explicitly states Patrick's deed 'may be the reason for the move (family pull, not just work)' and searches for Michael as grantee/lessee, not Patrick's own facts. Church records (pli_003) search Michael's marriage and children's baptisms to date his arrival. Vital records (pli_004) search Michael's own marriage and death certificate. Mining records (pli_005) directly test Michael's employment. No item pursues a relative's record for its own sake; all serve the subject's movement question.\n\nJunior: (Pass - No item pursues a relative's record for its own sake. All serve the subject's movement question.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> Sequence follows defensible logic: free/indexed sources first (census, church, vital, probate on FamilySearch), then paid/external (land at courthouse, mining at state archives, newspapers). Narrow before broad: Schuylkill County records precede statewide vital records. Census (pli_001) comes first to establish occupational change and birthplace, which informs later searches. Church (pli_003) and vital (pli_004) follow census to use identified information. Mining records (pli_005) test the hypothesis directly. Naturalization (pli_007) is conditional on census results ('only if Michael was foreign-born'). Date ranges reach the later part of the window: 1880-1900 for census covers the move and beyond; 1885-1968 for vital covers marriage through death. No item depends on evidence only a later item can supply.\n\nJunior: (Pass - No item depends on evidence only a later item can supply.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> Jurisdictions are historically accurate for the 1870-1882 period. Schuylkill County, Pennsylvania is correctly identified as existing from 1811 onward (per loc_001). The plan correctly notes that pre-1811 records would be in Berks and Northampton (parent counties), though not needed here. Diocese of Philadelphia is correctly identified as holding Schuylkill County through this period (Diocese of Allentown not erected until 1961). Pennsylvania statewide civil registration correctly dated to 1906 onward. No anachronistic jurisdictions or boundary errors.\n\nJunior: (Pass Jurisdictions are historically accurate for the 1870-1882 period. No anachronistic jurisdiction or boundary errors.)"
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_bpx`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose 'create' mode: no prior plan existed for q_001 (research_query returned count: 0). The plan was written as 'active' status with created date 2026-11-13. The research_append call correctly appended the plan and all eight items to the research.json file. No prior active plan needed to be superseded. The audit trail is preserved: this is the first plan for the question, and it is now the active plan. Exactly one active plan exists for q_001.\n\nJunior: (Pass The skill correctly chose 'create' mode. Exactly one active plan exixts for q_001.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_011`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The plan correctly identifies the next research steps for q_001 after pl_002 was completed. All eight plan items target appropriate record types (census, probate, church, vital) with correct jurisdictions (Schuylkill County, Pennsylvania) and date ranges aligned with the research question. The rationales accurately cite the proof summary's identified gaps (1870, 1880, 1900 censuses and Thomas Flynn's probate), correctly note that 1880 and 1900 censuses first state relationships and parents' birthplaces, and appropriately explain why each record type would advance the parentage question. The plan correctly avoids re-searching 1850 and 1860 (already completed in pl_002). No fabricated claims or unsupported assertions appear.\n\nJunior: (Pass - No fabricated claims or unsupported assertions appear.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_011`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: created a new active plan (pl_003) for q_001 after the prior completed plan, included eight plan items covering the delegated census years (1870, 1880, 1900) plus probate and church records, provided detailed rationales for each item explaining what evidence it would yield, and persisted the plan to research.json. The response narrates the plan's logic and next steps. No required work was omitted.\n\nJunior: (Pass - No required work was omitted.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_011`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching expected values. project_context and research_query calls used correct projectPath and section/questionId parameters. collections_search calls used standardPlace predicates matching ~United States and ~Pennsylvania. place_search used ~Schuylkill for placeName. research_append correctly structured the plan and plan_items operations with all required fields. No tool calls returned fixture_not_found errors; all matched.kind values were 'live' or 'predicate'. Arguments were semantically correct throughout.\n\nJunior: (Pass - All MCP tool calls passed arguments matching expected values.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_011`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item targets record types appropriate to the parentage research question. Census items (1870, 1880, 1900) are justified to track Patrick as an adult and confirm household relationships; 1880 and 1900 are explicitly noted as the first to state relationships and parents' birthplaces, directly addressing the Ireland vs. Pennsylvania birthplace conflict. Probate (pli_009) targets Thomas Flynn's will/administration to name heirs and confirm Patrick as son. Church items (pli_010, pli_011, pli_013) target marriage, burial, and FAN records to confirm the couple and place child with parent. Vital record (pli_012) targets Patrick's marriage to identify his wife and obtain parents' names. Each rationale names the specific information the record type provides.\n\nJunior: (Pass - Every plan item targets record types appropriate to the parentage question. Each rationale names the specific information the record type provides.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_011`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every plan item's rationale ties directly to evidence about Patrick Flynn (the question's subject). Census items explain what Patrick's household position and stated relationships would reveal about his parentage. Probate (pli_009) targets Thomas's will to name Patrick as heir/son. Church marriage (pli_010) confirms Thomas as a couple and corroborates the father named indirectly. Church burial (pli_011) may state Patrick's age and parents. Marriage (pli_012) identifies Patrick's wife and may state his parents' names. FAN (pli_013) targets siblings, in-laws, and neighbors to place Thomas as Patrick's father in records naming the relationship. No item pursues a relative's own record for its own sake; all rationales explain what the record would reveal about Patrick's parentage.\n\nJunior: (Pass - No item pursues a relative's own record for its own sake. All rationales explain what the record would reveal about Patrick's parentage.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_plan_011`** — `rubric` / `Sequencing logic`\nLLM: 2 → Junior: 2\n\n> The sequence is mostly logical (censuses 1870→1880→1900 in order, probate after censuses, church and vital records following), but the per-test context requires at least one fallback_for chain linking Ancestry items back to FamilySearch items for the same year. The plan includes only FamilySearch items for all censuses (pli_006, pli_007, pli_008) with no Ancestry fallbacks. The context also requires FamilySearch items to appear at lower sequence numbers than Ancestry items for the same year — this constraint is satisfied vacuously because no Ancestry items exist. However, the absence of any fallback_for chain is a concrete omission from the per-test requirement. The date ranges appropriately reach the later part of the question's window (1900 census, 1908 death), and the logic of searching censuses before probate and church records is sound.\n\nJunior: (Partial - The research sequence, date ranges, and search priorities are appropriate, but the plan omits the required fallback_for relationships linking Ancestry searches to their corresponding FamilySearch searches. The absence of these fallback chains is a specific requirement gap despite the otherwise sound plan.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_011`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> All jurisdictions are historically accurate for the target periods. Schuylkill County, Pennsylvania is correctly named for 1870, 1880, and 1900 censuses (the county existed from 1811 onward per loc_001). Probate records are correctly placed in Schuylkill County (Register of Wills held records from 1811). Church records are correctly placed in Schuylkill County (Catholic parishes under Diocese of Philadelphia/Allentown per loc_001). The plan correctly notes that Patrick's birth marriage likely occurred in Ireland before 1845 and defers Irish locality survey, showing awareness of jurisdiction changes. No anachronistic or non-existent jurisdictions appear.\n\nJunior: (Pass - All jurisdictions are historically accurate for the target periods. No anachronistic or non-existent jurisdictions appear.)"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_011`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose add-new mode: pl_002 (the prior plan for q_001) was already marked completed, and the question remains in_progress with no active plan. The skill created a new active plan (pl_003) with status='active' and created='2026-11-13'. The prior plan (pl_002) was not modified in place — it remains completed as the audit trail. Exactly one active plan now exists for q_001 (pl_003). The lifecycle is correct: completed plan left intact, new active plan created, no duplicate active plans. The mode matches the project state perfectly.\n\nJunior: (Pass - The skill correctly chose add-new mode. The mode matches the project state perfectly.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The plan is factually accurate. All seven items target appropriate record types for Danish parentage research. The military levy rolls (pli_002) are correctly identified as direct parentage evidence for a male subject, with the rationale accurately noting that sons are enrolled under the father's name. The baptism (pli_001), marriage (pli_003), siblings/FAN (pli_004), Mikkel's own vital events (pli_005), census (pli_006), and probate (pli_007) are all correctly sourced and justified. The plan correctly interprets the patronymic 'Nielsen' as indicating a father named Niels, and correctly notes that 'Blyeberg' is a place name, not a patronymic, per the Denmark Naming Customs wiki. The date ranges are appropriate for the 1779 birth and the father's plausible lifespan. No fabricated material or unsupported claims appear.\n\nJunior: (Pass - No fabricated material or unsupported claims appear.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The plan addresses all required elements for a first research plan on a Danish male parentage question. It includes the mandatory military levy rolls item (pli_002), the baptism (pli_001), the parents' marriage (pli_003), FAN items (pli_004), fallback vital records (pli_005), census (pli_006), and probate (pli_007). The plan covers both parts of the objective: identifying the father and determining when he died. All seven items are fully specified with sequence, record type, jurisdiction, date range, repository, rationale, and status. The plan was correctly created as 'active' for q_001, and the file write was successful.\n\nJunior: (Pass - The plan was correctely created as 'active' for q_001, and the file write was successful.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. The project_context call correctly identified the project path. The research_query calls for plans and localities were correctly scoped. The tree_query call correctly retrieved the subject person. The wiki_read calls for Denmark_Military_Records and Denmark_Naming_Customs matched the expected URL patterns (~Denmark_Military_Records and ~Denmark_Naming_Customs). The place_search call for Stagstrup with context Thisted, Denmark was appropriate. The research_append call correctly structured all seven plan items with proper section, op, and entry fields. No critical identifiers were wrong, no calls landed in fixture_not_found, and no validation errors occurred.\n\nJunior: (Pass - No critical identifiers were wrong, no calls landed a fixture_not_found, and no validation errors occurred.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item targets appropriate record types for the research question. The military levy rolls (pli_002, record_type 'military') are the centerpiece—correctly identified as direct parentage evidence because males are enrolled under the father's name from 1789. The baptism (pli_001, church) names both parents. The marriage (pli_003, church) confirms the couple and provides the mother's name. Siblings/FAN (pli_004, church) test the parentage find. Mikkel's own vital events (pli_005, church) serve as fallback and may name the father. Census (pli_006) places Mikkel in a household with a father. Probate (pli_007) identifies heirs and the father's death. Each rationale explains what specific information the record type provides for the parentage question.\n\nJunior: (Pass - Every plan item targets appropriate record types for the research question. Each rationale explains what specific information the record type provides for the parentage question.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item's rationale ties it to evidence about Mikkel (the question's subject). The baptism (pli_001) names his parents. The levy roll (pli_002) places him under his father's name. The marriage (pli_003) confirms the candidate parents as a unit and corroborates a father found indirectly. Siblings (pli_004) test the parentage find by sharing the same father and mother. Mikkel's own vital events (pli_005) may name the father and locate his family. Census (pli_006) places Mikkel with a father in a household. Probate (pli_007) lists Mikkel as an heir, confirming the father's identity. No item pursues a relative's own record for its own sake; all serve to establish or confirm Mikkel's father.\n\nJunior: (Pass - No item pursues a relative's own record for its own sake. All serve to establish or confirm Mikkel's father.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> The sequence reflects defensible search order. Items 1–2 (baptism and levy roll) are the primary sources most likely to name the father directly, with the baptism first (free/indexed, though browse-only) and the levy roll second (indexed, 1789+). Item 3 (marriage) depends on identifying a candidate father from items 1–2, so it correctly follows. Item 4 (siblings/FAN) is found while browsing items 1–2, so its placement is logical. Item 5 (Mikkel's vital events) is marked as fallback_for pli_001, correctly positioned after the primary baptism search. Item 6 (census) provides independent household evidence. Item 7 (probate) addresses the second part of the objective (when the father died) and logically follows the identification of the father. The date_range for pli_007 (1779–1840) reaches the later part of the father's plausible lifespan, not only its start. No item waits on evidence only a later item can produce.\n\nJunior: (Pass - The sequence reflects defensible search order. No item waits on evidence only a later item can produce.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> All jurisdictions are historically accurate for the 1779–1840 period. Stagstrup Sogn (parish) and Thisted Amt (county) both existed in 1779 and remained the relevant jurisdictions throughout the search window. The plan correctly uses 'Stagstrup Sogn, Thisted Amt, Denmark' for parish-level records and 'Thisted Amt, Denmark' for county-level records (military, census, probate). No anachronistic jurisdictions are named, and no pre-statehood or boundary-change issues apply to this Danish context. The localities entry (loc_001) confirms these jurisdictions as valid for the 1779–1820 period.\n\nJunior: (Pass - All jurisdictions are historically accurate for the 1779-1840 period.)"
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_015`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose the add-new mode for a first plan. The research_query call confirmed that no prior plans existed for q_001 (count: 0). The plan was created with status 'active' and all seven items with status 'planned', which is correct for a new plan. The plan ID (pl_001) and item IDs (pli_001–pli_007) were generated and persisted correctly. The audit trail is preserved: this is the first plan for the question, so no prior plan needed to be set to 'superseded'. Exactly one plan is now active for q_001. The lifecycle is clean and correct.\n\nJunior: (Pass - The skill correctly chose the add-new mode for a first plan. The lifecycle is clean and correct.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The plan's factual claims are accurate and well-supported. The skill correctly identified that statewide Kentucky death certificates begin 1911 (per loc_001), making a certificate unlikely for a death in the 1870s-1880s. The subject's documented facts (birth c. 1814, residence 1870 Muhlenberg County) are correctly cited. The plan items target appropriate record types with accurate date ranges and jurisdictions. No fabricated material or unsupported claims appear. The rationales cite the locality guide and tree facts appropriately.\n\nJunior: (Pass - The plan's factual claims are acurate and well-supported. The rationales cite the locality guide and tree facts appropriately.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements. It created the first plan for q_001 (Add-new mode, appropriate since no prior plan existed). All seven plan items were written with complete metadata (sequence, record_type, jurisdiction, date_range, repository, rationale, fallback_for, status). The plan covers the full scope: hints review, certificate search, county registers, probate (primary evidence), census bracketing, cemetery records, and FAN items. The response narrates the plan's logic and indicates next steps (search-records handoff).\n\nJunior: (Pass - The skill addressed all required elements.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. project_context and research_query calls used correct projectPath and section/questionId parameters. tree_query and localities queries were correctly formed. collections_search calls used standardPlace with appropriate values ('Kentucky, United States' and 'United States' with date filters). research_append correctly structured the plan and plan_items operations with all required fields. No calls landed in fixture_not_found; all matched.kind values are 'live' or 'predicate'. No critical identifiers were wrong.\n\nJunior: (Pass - All MCP tool calls passed arguments matching the fixture's expected_args semantically. No critical identifiers were wrong.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item's record_type matches the research question's information needs. pli_001 (fs_hints) checks for existing answers. pli_002 and pli_003 (vital_record) target death certificates and county registers to test the presupposed record type. pli_004 (probate) targets administrator bonds and estate settlements—the primary death evidence for pre-1911 Kentucky per loc_001. pli_005 (census) brackets the death window. pli_006 (cemetery) seeks burial records. pli_007 (vital_record/FAN) uses children's death certificates to corroborate identity. Each rationale explains what specific information the type provides (e.g., probate 'brackets the death within months and names widow or heirs').\n\nJunior: (Pass - All plan items use record types appropriate to the research question. Each item has a clear purpose, and its rationale explains how the targeted records will establish or corroborate the required information. The selection is well-aligned with the available evidence and research objectives.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item's rationale ties it to evidence about the question's subject (Elijah Wilkins' death date and place). pli_001 checks hints on ZZWK-EL1 directly. pli_002-pli_006 all target records that would reveal Elijah's own death facts. pli_007 (FAN) explicitly states that children's death certificates 'list the father's name and birthplace, and may show a Wilkins family burial place, corroborating identity of this Elijah'—the link to the subject is clear. No item pursues a relative's own missing facts for their own sake; all serve the question's objective.\n\nJunior: (Pass - No item pursues a relative's own missing facts for their own sake. All serve the question's objective.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> The sequence reflects defensible search order. pli_001 (hints review) comes first—free, indexed, may answer immediately. pli_002 (statewide certificates 1911-1925) tests the presupposed record type quickly. pli_003 (county registers 1870-1910) narrows to the likely death era before certificates. pli_004 (probate 1870-1900) is the primary evidence per loc_001, placed after narrowing the window. pli_005 (1880 census) brackets the death window and confirms identity. pli_006 (cemetery) and pli_007 (FAN) are supplementary. Date ranges reach the later part of the window (1880 census, probate to 1900, cemetery to 1915, FAN to 1950). No item waits on evidence only a later item can supply. Fallback_for is null throughout (appropriate—no explicit fallback chain needed for this straightforward search order).\n\nJunior: (Pass - The sequence reflects defensible search order.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> Jurisdictions are correct for the target period. Muhlenberg County, Kentucky is named for all county-level searches (pli_003-pli_007), matching the subject's documented 1870 residence. The locality guide confirms Muhlenberg County existed 1798-present, covering the entire 1870-1915 search window. Kentucky statewide (pli_002) is correct for the 1911-1925 certificate search. No anachronistic jurisdictions appear; all date ranges align with when records were kept in those jurisdictions.\n\nJunior: (Pass - Jurisdictions are correct for the target period. No anachronistic jurisdictions appear. All dates ranges align with when records were kept in those jurisdictions.)"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_016`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose Add-new mode: no prior plan existed for q_001 (research_query returned count 0), so creating the first plan was appropriate. The plan was written with status 'active' and created date '2026-11-13'. All seven items were appended with status 'planned'. The research_append operation succeeded with validation passing. Exactly one active plan now exists for q_001 (no prior active plan to supersede). The audit trail is preserved—this is the first plan entry for the question. The mode and lifecycle handling are correct.\n\nJunior: (Pass - The skill correctly chose Add-new mode. The mode and lifecycle handling are correct.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude's response accurately reflects the project state. The plan review correctly identifies pli_006 (probate search) as the next in-progress item, accurately summarizes the evidence from log_004 (1860 census) and log_005 (death certificate), and correctly notes that Thomas Flynn is identified as father but the mother remains unknown. The observation that q_001 shows as 'concluded' in project_context while stored as 'in_progress' is accurate per the per-test context. No fabricated material or unsupported claims.\n\nJunior: (Pass - No fabricated material or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_plan_001`** — `base` / `Completeness`\nLLM: 2 → Junior: 2\n\n> Claude addresses the active plan and identifies pli_006 as the next step with sound reasoning. However, the per-test context explicitly requires that the response 'say what comes after probate, concretely and with a reason.' Claude identifies gaps (marriage record, mother's identity, church baptism, FAN items, burial/church record) and recommends 'an add-new round to cover these gaps,' but does not specify which concrete record type should follow probate or explain why. The response stops at identifying the gap rather than proposing a specific next record type with justification.\n\nJunior: (Partial - Claude correctly identifies the research gaps and recommends expanding the plan, but fails to specify the concrete record type that should follow probate and explain why it should be prioritised.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made three MCP tool calls: project_context (no args expected), research_query for plans (section='plans', questionId='q_001'), and research_query for log (section='log', questionId='q_001'). All calls matched expected usage. The args were semantically correct and no fixture_not_found errors occurred. The calls were appropriate for reviewing an active plan.\n\nJunior: (Pass - The calls were appropriate for reviewing an active plan.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_001`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> The plan's three items target appropriate record types for the parentage question: census (1860) to confirm household placement, vital record (death certificate) to identify father directly, and probate to find direct evidence of parent-child relationship through will/estate naming. Each record type addresses a specific information need for establishing parentage. Claude's review correctly validates these selections.\n\nJunior: (Pass - The plan's three items target appropriate record types for the parentage question. Claude's review correctly validates these selections.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_001`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> All three plan items in pli_004, pli_005, and pli_006 are scoped to evidence about Patrick Flynn (the question's subject). The census confirms Patrick's placement in Thomas's household; the death certificate names Thomas as Patrick's father; the probate would name Patrick as Thomas's son. Each item's rationale ties directly to what it reveals about Patrick's parentage, not to relatives' own missing facts. The identified gaps (marriage record, mother's identity) are also appropriately scoped to the subject's parentage question.\n\nJunior: (Pass - Each item's rationale ties directly to what it reveals about Patrick's parentage. Not to relative's own missing facts.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_001`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> The sequence is logically sound: census (1860) and death certificate (1908) are completed and provide indirect and secondary evidence respectively; probate (1870-1890) is next and would provide direct evidence of the parent-child relationship. The date_range for probate (1870-1890) is reasonable for Thomas Flynn's death window. Claude correctly notes that the window 'could fall later' but the range is defensible as a starting search. No item depends on evidence only a later item can supply. The sequencing respects the evidence dependency: census and death cert establish Thomas as father before probate would confirm it.\n\nJunior: (Pass - The sequence is logically sound. No item depends on evidence only a later item can supply.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_001`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> All jurisdictions are correct for the time periods: Schuylkill County, Pennsylvania for 1860 census, 1908 death certificate, and 1870-1890 probate records. Schuylkill County existed throughout this period and is the appropriate jurisdiction for these record types. No historical boundary changes or pre-statehood issues apply to this Pennsylvania county in the 19th century.\n\nJunior: (Pass - All jurisdictions are correct for the time periods.)"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_001`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> Claude correctly chose review mode: the active plan pl_002 has an item still in progress (pli_006), and the request was a recap/confirmation of the next step. No new plan was created; no existing items were edited in place. The response correctly identifies that pli_006 remains active and in progress, preserving the audit trail. Claude notes that after pli_006 is closed, an add-new round should follow, which is the correct lifecycle step for when the current plan's items are exhausted but the question remains open.\n\nJunior: (Pass - Claude correctly chose review mode. Which is the correct lifecycle step for when the current plan's items are exhausted but the question remains open.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The plan correctly identifies Patrick Flynn's parentage research objective and creates a comprehensive first plan (pl_002) with 9 items. All factual claims are grounded in the project state: Patrick's 1908 death in Schuylkill County (S3), Thomas Flynn's co-enumeration in 1850 (log_001/log_002), the Ireland/Pennsylvania birthplace conflict, and the indirect evidence basis for the parent-child relationship. The plan accurately reflects the locality information (Schuylkill County formed 1811, statewide death registration 1906, Catholic parishes under Diocese of Philadelphia). No fabricated material; all assertions match the before-state sources and tool responses.\n\nJunior: (Pass - No fabricated material. All assertions match the before-state sources and tool responses.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: created the first plan for q_001 (which had no prior plan), set it to active status, included 9 sequenced plan items covering vital records (death certificate, marriage), church records (burial, baptism, full-text search), census records (1860-1880 and FAN), and probate records. The plan explicitly avoids re-searching the 1850 census already completed under q_002. All major parentage research pathways are covered: direct records (death certificate naming parents), household tracking (censuses), candidate parents' marriage, and FAN approaches.\n\nJunior: (Pass - The skill addressed all required elements. All major parentage pathways are covered.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed correct arguments. place_search used 'Schuylkill County' and 'Pennsylvania' (matched predicate on ~Schuylkill). collections_search used 'Pennsylvania, United States' with startYear 1845 and endYear 1930 (matched predicate). project_context, research_query (plans and questions), tree_query, and research_append all used correct projectPath and section arguments. No fixture_not_found errors. The append operation correctly structured 9 plan items with all required fields (sequence, record_type, jurisdiction, date_range, repository, rationale, fallback_for, status).\n\nJunior: (Pass - All MCP tool calls passed correct arguments. No fixture_not_found errors.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item's record_type matches the parentage research question's information needs. Vital records (death certificate, marriage) directly name parents. Census records (1860-1880) show household composition and parental birthplaces. Church records (burial, baptism) test the Ireland/Pennsylvania conflict and may name parents. Probate records identify heirs naming Patrick. The parents' marriage record (pli_008, vital_record, 1835-1848) is explicitly included and rationale states it 'may supply her surname' and 'corroborate Thomas as father.' Each rationale explains what specific information the record type provides for parentage.\n\nJunior: (Pass - Every plan item's record_type matches the parentage research question's information needs. Each rationale explains what specific information the record type provides for parentage.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item's rationale ties directly to evidence about Patrick Flynn (the question's subject). Items targeting Patrick's own records (death, marriage, baptism, burial) are clearly about him. Items targeting Thomas Flynn's records (marriage, estate) explicitly state their bearing: the marriage 'may supply her surname' and 'corroborate Thomas as father'; the estate looks for 'heirs naming Patrick.' The FAN item (pli_011) rationale states it targets 'siblings of Patrick' and 'neighbors around dwelling 84' to show 'whether Thomas had other children or kin who name the parents.' No item pursues a relative's own missing facts for its own sake; all serve the parentage question.\n\nJunior: (Pass - No item pursues a relative's own missing facts for its own sake. All serve the parentage question.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> Sequence reflects defensible search order: free/indexed sources first (death certificate, church, census, marriage collections are indexed or name-searchable), narrow before broad (Schuylkill County before unscoped full-text search at pli_012). Dependency logic is sound: pli_004 (death certificate) comes first because it may directly name parents; pli_006-007 (censuses and Patrick's marriage) follow to gather household and biographical context; pli_008 (parents' marriage) comes after establishing Thomas as candidate father; pli_009 (baptism) tests the birthplace conflict; pli_010 (probate) and pli_011 (FAN) provide corroborating evidence; pli_012 (full-text search) is fallback for unindexed records. Date ranges appropriately cover the window: 1908 death certificate, 1860-1880 censuses, 1835-1848 parents' marriage, 1843-1847 baptism, 1830-1910 full-text. No item waits on evidence only a later item can supply.\n\nJunior: (Pass - Sequence reflects defensible search order. No item waits on evidence only after a later item can supply.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> Jurisdictions are historically accurate for the time period. Schuylkill County, Pennsylvania is correctly named for 1845-1908 (formed 1811 per locality data). The plan correctly notes that pre-1811 records would be in Berks and Northampton (parent jurisdictions), though not needed here since Patrick was born ~1845. Pennsylvania statewide death registration 1906 is correctly cited for the 1908 death certificate. Church records under Diocese of Philadelphia (later Archdiocese) are correctly identified. Probate records correctly placed with county Register of Wills. No anachronistic jurisdictions or boundary errors.\n\nJunior: (Pass - Jurisdictions are historically accurate for the time period. No anachronistic jurisdictions or boundary errors.)"
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_014`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose add-new mode: q_001 had no prior plan (research_query returned count: 0), and the most recent plan (pl_001) is for a different question (q_002) with status 'completed.' The new plan pl_002 is set to 'active' status, appropriate for a first plan on an in-progress question. The skill did not modify or supersede any existing plan. Exactly one active plan now exists for q_001. The audit trail is preserved: pl_001 remains unchanged. No lifecycle violations; the mode and status transitions are correct.\n\nJunior: (Pass - The skill correctly chose add-new mode. No lifecycle violations. The mode and status transitions are correct.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_010`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that the old plan's date window (1870-1890) was invalidated by new information suggesting Thomas Flynn died around 1865. It properly set pl_002 to 'superseded' without modifying its items, created a new active plan (pl_003) with items targeting 1860-1870 ranges, and preserved the audit trail. All factual claims about the tree state (Patrick's birth ~1845, death 1908, Thomas as father per 1908 certificate, siblings Mary and James from baptismal registers) are accurate. The plan rationales correctly cite the localities entry (loc_001) and explain why each record type was chosen. No fabricated material or unsupported claims.\n\nJunior: (Pass - No fabricated material or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_010`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all requirements: superseded the old plan without editing its items, created a new plan with 9 items spanning 1860-1870 date ranges (plus a fallback to 1870-1890), explained the invalidation of the prior window, maintained FAN items (pli_007 siblings, pli_014 obituary survivors), preserved free-before-paid sequencing, and identified the gap between 1860 and 1908. The response narrates the decision, the tree state, and the new plan's logic. No silent omissions of what the input state required.\n\nJunior: (Pass - The skill addressed all requirements. No silent omissions of what the input state required.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_010`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All six MCP tool calls passed correct arguments: project_context and research_query calls used correct projectPath and section/questionId parameters; tree_query correctly specified personIds [I1, I2, I3, I4] with includeSources=true; research_append correctly structured the update to pl_002 and append operations for pl_003 and its 9 items. No fixture_not_found errors. Arguments match expected_args semantically; no critical identifiers were wrong.\n\nJunior: (Pass - All six MCP tool calls passed correct arguments. No fixture_not_found errors. Arguments match expected_args semanticaclly. No critical identifiers were wrong.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_010`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item's record_type matches the information need. Church records (pli_007, pli_008, pli_012) target sibling baptisms and marriage to identify the mother; probate (pli_009, pli_015) targets wills/administrations naming heirs; cemetery (pli_010) tests the ~1865 death date; census (pli_011) bridges the 1860-1908 gap and confirms Thomas's absence; military (pli_013) may name parents/siblings; newspaper (pli_014) tests the death date and names survivors. Each rationale explains what specific information the type provides.\n\nJunior: (Pass - Every plan item's record_type matches the information need. Each rationale explains what specific information the type provides.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_010`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item's rationale ties it to evidence about Patrick Flynn (the question's subject). FAN items (pli_007 siblings, pli_014 obituary) explicitly state what they reveal about Patrick: sibling baptisms may name the mother, obituary survivors are FAN names. Items targeting Thomas (pli_009 probate, pli_010 burial, pli_011 census, pli_015 probate fallback) are justified by their bearing on Patrick's parentage—a will naming Patrick as son is direct evidence, absence in 1870 census confirms the ~1865 death date. No item pursues a relative's own record for its own sake.\n\nJunior: (Pass - No item pursues a relative's own record for its own sake.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_010`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> Sequence reflects defensible search order: free/indexed sources first (church, census, military, newspaper via FamilySearch), narrow before broad (Pottsville baptisms before county marriage search, 1860-1870 probate before 1870-1890 fallback). Fallback chain explicit: pli_015 (1870-1890 probate) is marked fallback_for pli_009 (1860-1870 probate). Dependency logic sound: pli_007 (siblings) comes before pli_008 (marriage) because sibling names may help locate the marriage; pli_011 (1870 census) comes after pli_009 (probate) to test the ~1865 death hypothesis. Date ranges reach the later part of the window (1870 census, 1861-1900 military, 1865-1885 marriage) not only the start. No item waits on evidence only a later item can supply.\n\nJunior: (Pass - Sequence reflects defensible search order. No item waits on evidence only a later item can supply.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_plan_010`** — `rubric` / `Jurisdiction accuracy`\nLLM: 2 → Junior: 2\n\n> Jurisdictions are mostly correct for the time period: Schuylkill County, Pennsylvania (formed 1811, valid 1860-1870); Pottsville (parish-level for church records, correct per loc_001 quirk that Catholic registers are held at parish/diocese, not county); Pennsylvania for military records. However, pli_008 lists 'Schuylkill County, Pennsylvania; Ireland (origin parish unknown)' as a single jurisdiction entry. The validation warning flags this: 'Ireland (origin parish unknown) is not inside any locality this project has researched.' While the search strategy is sound (Thomas b. ~1818 Ireland, marriage likely 1835-1850 in either Ireland or Pennsylvania), the jurisdiction field should not list an unlocalized Irish parish alongside the county. This is a minor structural issue—the rationale correctly acknowledges the unknown origin parish—but the jurisdiction field itself is imprecise.\n\nJunior: (Partial - The jurisdictions are generally historically appropriate, but pli_008 combines Schuylkill County with an unspecified Irish origin parish in one jurisdiction field. Although the rationale acknowledges the uncertainty, the imprecise entry triggers a validation warning and should be separated or refined.)"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_010`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> Supersede mode is correct: new information (reference suggesting Thomas died ~1865, not 1875-1890) invalidates the active plan pl_002's assumptions. The skill set pl_002.status to 'superseded' without modifying its items (pli_004, pli_005, pli_006 remain intact as audit trail). Created a new active plan pl_003 with 9 items. Exactly one plan is now active for q_001 (pl_003); the prior active plan is marked superseded. The lifecycle is preserved: completed items (pli_004, pli_005) are left alone, in-progress item (pli_006) is carried forward as a fallback (pli_015), and new items target the revised window. No duplicate active plans, no in-place edits of existing items.\n\nJunior: (Pass - No duplicate active plans, no in-place edits of exising items.)"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The plan is factually accurate. It correctly identifies Josiah Rowe's known facts (birth ~1828 Ohio, military service 1862-1865 Indiana, death 1879 Vigo County), accurately cites the locality collections (1850 Census id 1401638, 1860 Census id 1473181, Civil War Pension Files id 1888129), and correctly notes the locality quirks (1850/1860 censuses list household members without relationships; Indiana had no statewide vital registration before 1882). The plan's rationales are grounded in the tree data and locality information. No fabricated material or unsupported claims appear.\n\nJunior: (Pass - No fabaricated material or unsupported claims appear.)"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the full scope of the user request: create the first research plan for q_001. It produced a complete plan with 8 sequenced items covering the research window (1850-1865) and beyond, with appropriate rationales for each item. The plan covers the required evidence types (census, military, vital, land, probate, cemetery, newspaper) and identifies gaps (collection lookups returned nothing; locality warnings about jurisdiction coverage). No required work was omitted.\n\nJunior: (Pass - No required work was omitted.)"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. The project_context, research_query, tree_query, place_search, and collections_search calls all used correct parameters. The research_append call correctly structured the plan and plan_items with all required fields (sequence, record_type, jurisdiction, date_range, repository, rationale, fallback_for, status). No critical identifiers were wrong, and no calls landed in fixture_not_found errors.\n\nJunior: (Pass - No critical identifiers were wrong. No calls landed in fixture_not_found errors.)"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item's record_type matches the research question's information needs. Census (items 1-2) answers household composition; military (item 3) provides residence at enlistment and pension household data; vital_record/marriage (item 4) names spouse and in-laws; land (item 5) places him annually between censuses; probate (item 6) names heirs and spouse; cemetery (item 7) provides burial/obituary context; newspaper (item 8) offers FAN leads. Each rationale explicitly states what information the record type provides for the question.\n\nJunior: (Pass - Every plan item's record_type matches the research question's information needs. Each rationale explicitly states what information the record type provides for the question.)"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item's rationale ties directly to evidence about Josiah Rowe's residence and household composition (the question's subject). Items targeting relatives (spouse in marriage records, in-laws, neighbors via FAN) explicitly state what they reveal about Josiah: marriage records name a spouse and place him; land records name adjoining landowners who may be kin or co-residents; probate names heirs and spouse showing household composition at death. No item pursues a relative's own missing facts; all serve the subject's documented needs.\n\nJunior: (Pass No item pursues a relative's own missing facts. All serve the subject's documented needs.)"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> The sequence is logically sound. Free/indexed sources (censuses, military) come first (items 1-3); county courthouse records (marriage, land, probate) follow (items 4-6); supplementary sources (cemetery, newspaper) come last (items 7-8). The 1850 census (item 1) precedes 1860 (item 2), filling the window chronologically. Military item (item 3) provides residence at 1862 enlistment before marriage/land items that depend on knowing his location. The date_ranges reach the later part of the question's window: 1850-1865 is the question window; items cover 1850, 1860, 1861-1900 (pension), 1850-1879, 1850-1879, 1879-1890, 1879-1880, 1850-1879. The pension item's date_range (1861-1900) correctly extends past 1865 to capture pension files filed after his 1879 death, which the rationale explicitly notes may name household members and earlier residence.\n\nJunior: (Pass - The records are prioritized in a logical sequence: census and military records first, courthouse records next, and supplementary sources last. The 1850–1860 census sequence is chronological, while the military record helps establish residence before later searches. The pension date range appropriately extends beyond the research window to capture post-1879 records that may provide evidence about earlier family and residence details. )"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> Jurisdictions are correct for the time period. Vigo County, Indiana existed in 1818-present per the locality data, covering the entire 1850-1865 window. Ohio is correctly named for his birth (~1828) and as a search location for 1850-1860 censuses since his 1850 residence is unproven. The plan correctly identifies that Indiana marriage and probate records exist for Vigo County but are not in indexed collections, so it plans them from the county clerk and Master Commissioner—a historically accurate approach. No anachronistic jurisdictions or pre-statehood errors appear.\n\nJunior: (Pass - Jurisdictions are correct for the time period. No anachronistic jurisdictions or pre-statehool error appear.)"
+    },
+    {
+      "test_id": "ut_research_plan_wnc",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wnc`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose 'create' mode for the first plan. The research_query call confirmed no prior plans existed (count: 0), so creating a new active plan (pl_001) is the correct lifecycle action. The plan was written with status='active' and all items with status='planned', which is appropriate for a newly created plan. No prior plan was modified or superseded; the audit trail is clean. Exactly one active plan now exists for q_001.\n\nJunior: (Pass - The skill correctly chose 'create' mode for the first plan. Exactly one active plan now exists for q_001.)"
+    }
+  ]
+}
