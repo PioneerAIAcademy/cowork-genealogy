@@ -641,7 +641,10 @@ describe("tool server over Streamable HTTP", () => {
     });
   });
 
-  it("3. a FamilySearch token the upstream refuses gets the hosted reauth text, never the desktop one", async () => {
+  it("3. a FamilySearch token the upstream refuses gets the connector's sign-in message, never the desktop's or the worker's", async () => {
+    // Self-hosted beta E3: a tool error the model relays, and the connector
+    // stays connected. This server has no public URL, so the message names the
+    // site; the next test shows the link.
     const client = await connect();
     const result = await client.callTool({
       name: "record_read",
@@ -649,9 +652,61 @@ describe("tool server over Streamable HTTP", () => {
     });
     expect(result.isError).toBe(true);
     const body = JSON.parse(textOf(result)) as { error: string };
-    expect(body.error).toBe(HOSTED_REAUTH_INSTRUCTION);
+    expect(body.error).toBe(
+      "FamilySearch session not accepted. Sign in again at the Genealogy Research site, " +
+        'then come back here and say "continue". Nothing is lost.',
+    );
+    expect(body.error).not.toBe(HOSTED_REAUTH_INSTRUCTION);
     expect(body.error).not.toContain("Call the login tool");
     expect(body.error).not.toContain("not logged in");
+  });
+
+  it("3b. with a public URL the message carries the web tier's sign-in link, and login names the same one", async () => {
+    const linked = await startHttpServer({
+      host: "127.0.0.1",
+      port: 0,
+      baseConfig: { webPublicUrl: "https://beta.example/" },
+      bindStore,
+      authorize,
+      lookupConnector,
+      projectOwner,
+      ownedProjects,
+    });
+    const address = linked.address();
+    if (!address || typeof address !== "object") throw new Error("server did not bind a port");
+    try {
+      const client = await connect(undefined, `http://127.0.0.1:${address.port}`);
+      const refused = await client.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB" } });
+      expect(refused.isError).toBe(true);
+      expect((JSON.parse(textOf(refused)) as { error: string }).error).toBe(
+        "FamilySearch session not accepted. Sign in again at https://beta.example/auth/familysearch/login, " +
+          'then come back here and say "continue". Nothing is lost.',
+      );
+      // The connector is still connected: the next call on the same client runs.
+      const login = await client.callTool({ name: "login", arguments: {} });
+      expect(textOf(login)).toContain("https://beta.example/auth/familysearch/login");
+      expect(textOf(login)).not.toContain("Reconnect button");
+
+      // The next turn's first read carries the link too, so it survives an
+      // agent's summary that dropped the tool error.
+      const id = "proj_0a0b0c0d0e0f0a0b";
+      await seedProject(new ScopedFsStore(root, id, `/${id}`), `/${id}`, "Lapsed");
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: TEST_USER_ID });
+      const context = JSON.parse(
+        textOf(await client.callTool({ name: "project_context", arguments: { projectPath: `/${id}` } })),
+      );
+      expect(context.ok).toBe(true);
+      expect(context.signInUrl).toBe("https://beta.example/auth/familysearch/login");
+      const status = JSON.parse(textOf(await client.callTool({ name: "auth_status", arguments: {} })));
+      expect(status).toMatchObject({
+        loggedIn: false,
+        accountId: TEST_USER_ID,
+        signInUrl: "https://beta.example/auth/familysearch/login",
+      });
+    } finally {
+      linked.closeAllConnections();
+      await new Promise<void>((resolve) => linked.close(() => resolve()));
+    }
   });
 
   it("4. two concurrent connector calls each reach upstream with their OWN FamilySearch token, never the connector token", async () => {
@@ -1050,8 +1105,8 @@ describe("tool server over Streamable HTTP", () => {
 
     it("the audit line keeps the FIRST failing FamilySearch status, not the last", () => {
       // A tool makes many FamilySearch requests, concurrently, so last-write
-      // -wins makes the recorded status a race. E3's session-end rule keys on
-      // this value.
+      // -wins makes the recorded status a race. An operator reads this value to
+      // see that a session has ended.
       expect(keptFamilySearchStatus(null, 200)).toBe(200);
       expect(keptFamilySearchStatus(null, 401)).toBe(401);
       // The 401 survives every later success — this is the case that regressed.
