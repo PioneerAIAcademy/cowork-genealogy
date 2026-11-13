@@ -84,9 +84,23 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
+// Pass-through stub for the one network call the #4431 searchability pre-read
+// makes. Inert unless a test sets `impl`, so every other test in this file still
+// reaches the real `fsFetch`. It exists so the dispatch test below can exercise
+// `server.ts`'s loader wiring offline — nothing else can see that wire.
+const mockFsFetch = vi.hoisted(() => ({ impl: null as null | ((...a: any[]) => any) }));
+vi.mock("../../src/utils/fs-fetch.js", async (importOriginal) => {
+  const real: any = await importOriginal();
+  return {
+    ...real,
+    fsFetch: (...a: any[]) => (mockFsFetch.impl ? mockFsFetch.impl(...a) : real.fsFetch(...a)),
+  };
+});
+
 import {
   researchAppend,
   researchAppendFromCaller,
+  planItemVoidSearchInvariants,
   countryConsistency,
   mintedFromThisRecord,
   personaReachable,
@@ -127,6 +141,7 @@ import {
 import { callTool } from "../helpers/call-tool.js";
 import { questionStatus } from "../../src/utils/question-state.js";
 import { writeProjectFile } from "../helpers/project-files.js";
+import { markFsRefusal } from "../../src/utils/fs-budget.js";
 
 /** Claude Code saves a tool result over this many characters to a file the agent may not be able to
  *  read back, so a refused answer has to stay well under it. */
@@ -19356,5 +19371,262 @@ describe("research_append — person_evidence to a ref-less added person", () =>
     await write(research(), withStartingTree as boolean);
     const r = await researchAppend(link(personId as string, assertionId as string, confidence as string));
     expect(errorsOf(r)).not.toMatch(REFUSAL);
+  });
+});
+
+// #4431 — the void-search completion guard, END TO END through the PRODUCTION
+// entry point.
+//
+// `researchAppendFromCaller` is the only path production takes, and it is where
+// the searchability set is resolved: it decides from the OPS whether to do the
+// pre-read at all. Calling `researchAppend` with a hand-made `options` skips
+// that decision — which is how a shipped deadlock passed a green suite. The
+// skip cases are the ones that proved it: a skip op completes nothing, so under
+// a `completed`-only gate it never got a set, Exemption 3 saw UNKNOWN, and the
+// item was refused BOTH ways. These therefore go through the caller, with a
+// loader, so the gate is part of what is under test.
+//
+// The parameter is also `applyOne`'s 18th positional argument, and every
+// parameter after its second is optional — so dropping it at the call site
+// compiles clean, typechecks clean, and leaves the guard permanently UNKNOWN.
+// Only an end-to-end test sees that.
+describe("research_append — a plan item completed on guaranteed-nil full-text searches (#4431)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-void-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** `record_type: "other"` sits outside RECORD_TYPE_TERMS on purpose, so the
+   *  completion record-type check stays silent and these tests read only this
+   *  guard. An entry attributed to the item also satisfies the structural
+   *  attribution gate. */
+  const voidEntry = (id: string, gid: string, ra: number | null = 0) => ({
+    id,
+    plan_item_id: "pli_001",
+    performed: "2026-11-12T00:00:00Z",
+    tool: "fulltext_search",
+    query: { imageGroupNumber: gid },
+    outcome: "negative",
+    results_examined: 0,
+    results_available: ra,
+    external_site: null,
+  });
+
+  function research(itemStatus = "in_progress", log = [voidEntry("log_001", "5219332")]) {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [
+      validPlan("pl_001", "q_001", "active", [
+        { ...seededPlanItem("pli_001"), record_type: "other", status: itemStatus },
+      ]),
+    ];
+    r.log = log as any;
+    return r;
+  }
+  const write = async (r: any) => {
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  };
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const status = async () => (await readResearch()).plans[0].items[0].status;
+
+  /** The production path. `searchable` is what FamilySearch reports; `null` is a
+   *  loader that cannot answer. `asked` is derived inside the tool, as in
+   *  production — a test cannot hand it an answer for an id nothing asked about. */
+  const viaCaller = (fields: Record<string, unknown>, searchable: string[] | null, section: "plan_items" | "plans" = "plan_items") =>
+    researchAppendFromCaller(
+      section === "plan_items"
+        ? { projectPath: dir, section, op: "update", planId: "pl_001", entryId: "pli_001", fields }
+        : { projectPath: dir, section, op: "update", entryId: "pl_001", fields },
+      null,
+      async () => (searchable === null ? null : new Set(searchable)),
+    );
+  const NONE: string[] = [];
+  const inlineItem = (extra: Record<string, unknown>) => ({
+    items: [{ ...seededPlanItem("pli_001"), record_type: "other", ...extra }],
+  });
+
+  it("MUST FIRE — plan_items arm: refuses the completion and writes nothing", async () => {
+    await write(research());
+    const r = await viaCaller({ status: "completed" }, NONE);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/does not report as full-text searchable/);
+    expect(r.errors.join(" ")).toMatch(/5219332/);
+    expect(await status()).toBe("in_progress");
+  });
+
+  it("MUST FIRE — plans inline-items arm: the same refusal through the other door", async () => {
+    await write(research());
+    const r = await viaCaller(inlineItem({ status: "completed" }), NONE, "plans");
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/does not report as full-text searchable/);
+    expect(await status()).toBe("in_progress");
+  });
+
+  it("MUST FIRE — several bare-digit groups, none searchable, names them all", async () => {
+    await write(research("in_progress", [voidEntry("log_001", "4102848"), voidEntry("log_002", "4102858"), voidEntry("log_003", "4102865")]));
+    const r = await viaCaller({ status: "completed" }, NONE);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/4102848, 4102858, 4102865/);
+  });
+
+  // The tests above hand `researchAppendFromCaller` a loader directly, so they
+  // cannot see whether `server.ts` passes one. Drop
+  // `fulltextSearchableLoader(principal)` from the research_append arm there and
+  // typecheck passes, the engine suite passes, and the guard is permanently
+  // UNKNOWN in production. This one goes through `createServer`, as a connected
+  // client does, and is the only test that fails on that deletion.
+  it("MUST FIRE — through the MCP dispatch, so server.ts's loader is under test", async () => {
+    await write(research());
+    // The searchability endpoint, answering: none of the asked ids are searchable.
+    mockFsFetch.impl = async () => ({ ok: true, json: async () => ({ ids: [] }) });
+    try {
+      const r = await callTool("research_append", {
+        projectPath: dir,
+        section: "plan_items",
+        op: "update",
+        planId: "pl_001",
+        entryId: "pli_001",
+        fields: { status: "completed" },
+      });
+      expect(r.isError).toBe(true);
+      expect(r.text).toMatch(/does not report as full-text searchable/);
+      expect(await status()).toBe("in_progress");
+    } finally {
+      mockFsFetch.impl = null;
+    }
+  });
+
+  // THE REGRESSION THIS BLOCK EXISTS FOR. Under a `completed`-only pre-read gate
+  // a skip op resolved no set, so Exemption 3 saw UNKNOWN and the searched-skip
+  // rule refused the skip as well: the item was refused BOTH ways and stuck at
+  // `in_progress` for good. Both arms, because one arm can be wired and the
+  // other not.
+  it("MUST NOT FIRE (9b) — plan_items arm: the refusal's own advice is accepted", async () => {
+    await write(research());
+    expect((await viaCaller({ status: "completed" }, NONE)).ok).toBe(false);
+    const r = await viaCaller({ status: "skipped", skip_category: "user_declined" }, NONE);
+    expect(r.ok, `the refusal tells the agent to skip user_declined; ${JSON.stringify(r)}`).toBe(true);
+    expect(await status()).toBe("skipped");
+  });
+
+  it("MUST NOT FIRE (9a) — plans inline-items arm: the refusal's own advice is accepted", async () => {
+    await write(research());
+    const r = await viaCaller(inlineItem({ status: "skipped", skip_category: "user_declined" }), NONE, "plans");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("skipped");
+  });
+
+  it("MUST NOT FIRE — the group is searchable, so the nil is about the person", async () => {
+    await write(research());
+    const r = await viaCaller({ status: "completed" }, ["5219332"]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("MUST NOT FIRE — a loader that cannot answer is UNKNOWN", async () => {
+    await write(research());
+    const r = await viaCaller({ status: "completed" }, null);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("MUST NOT FIRE — no loader at all: the default path is inert", async () => {
+    await write(research());
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+      null,
+    );
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  // An id the pre-read never asked about is absent from the reply for the same
+  // reason a known-unsearchable one is. Without the `asked` set, a document that
+  // grew between the unlocked pre-read and the lock would read as evidence and
+  // produce a FALSE DENY on a search that genuinely ran.
+  it("MUST NOT FIRE — an id nothing asked about is UNKNOWN, not 'unsearchable'", async () => {
+    await write(research());
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+      null,
+      async () => new Set<string>(),      // answers, but about nothing we hold
+    );
+    // The loader is asked about 5219332 and reports it unsearchable -> refused.
+    expect(r.ok).toBe(false);
+    // Now the same answer with the id absent from `asked`: judged directly.
+    const doc = await readResearch();
+    const item = doc.plans[0].items[0];
+    expect(
+      planItemVoidSearchInvariants({ ...item, status: "completed" }, doc, {
+        asked: new Set(["9999999"]),
+        searchable: new Set<string>(),
+      }),
+      "an id outside `asked` must not be read as unsearchable",
+    ).toEqual([]);
+  });
+
+  it("MUST NOT FIRE — a pre-existing 'completed' merely re-stated is untouched", async () => {
+    await write(research("completed"));
+    const r = await viaCaller({ status: "completed" }, NONE);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("MUST NOT FIRE — an absent results_available is not void", async () => {
+    const absent: any = voidEntry("log_002", "4102848");
+    delete absent.results_available;
+    await write(research("in_progress", [voidEntry("log_001", "5219332"), absent]));
+    expect((await viaCaller({ status: "completed" }, NONE)).ok).toBe(true);
+  });
+
+  it("MUST NOT FIRE — an explicit null results_available is not void", async () => {
+    await write(research("in_progress", [voidEntry("log_001", "5219332"), voidEntry("log_002", "4102848", null)]));
+    expect((await viaCaller({ status: "completed" }, NONE)).ok).toBe(true);
+  });
+
+  // `readCatalog` RETHROWS a spent budget because its read stamps VALUES, so a
+  // half-answer corrupts the document. This read only ever REFUSES, and a spent
+  // budget is not evidence a volume is unsearchable.
+  it("MUST NOT FIRE — a spent FamilySearch budget is UNKNOWN, not 'unsearchable'", async () => {
+    await write(research());
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+      null,
+      () => Promise.reject(markFsRefusal(new Error("FamilySearch budget exhausted"))),
+    );
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("asks FamilySearch only when an op moves a plan item to a terminal status", async () => {
+    await write(research());
+    const asked: string[][] = [];
+    const loader = async (ids: string[]) => {
+      asked.push(ids);
+      return new Set<string>();
+    };
+    const call = (fields: Record<string, unknown>) =>
+      researchAppendFromCaller(
+        { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields },
+        null,
+        loader,
+      );
+
+    expect((await call({ rationale: "Reworded, no status change" })).ok).toBe(true);
+    expect(asked, "an op that moves no item to a terminal status must not pay a request").toEqual([]);
+
+    expect((await call({ status: "completed" })).ok).toBe(false);
+    expect(asked).toEqual([["5219332"]]);
+
+    // A skip is terminal too, and must resolve a set or Exemption 3 is inert.
+    expect((await call({ status: "skipped", skip_category: "user_declined" })).ok).toBe(true);
+    expect(asked, "a skip op must also resolve a set").toEqual([["5219332"], ["5219332"]]);
   });
 });
