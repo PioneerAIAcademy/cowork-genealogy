@@ -7889,6 +7889,11 @@ describe("research_append (project singleton section)", () => {
       expect(after.person_evidence.map((pe: any) => pe.id)).toEqual(["pe_001"]);
       expect(after.questions[0].status).toBe("resolved");
       expect(r.validation.warnings.join("\n")).toMatch(/2 person\(s\): I3 Josef Smith, I4 Marie Smith; 1 relationship\(s\); 2 person_evidence link\(s\)/);
+      // The eval validators excuse this removal by these opening words
+      // (`_UNANCHORED_REMOVAL_PREFIX`, eval/harness/validators/test_universal.py).
+      const removal = r.validation.warnings.filter((w: string) => w.includes("person(s): I3"));
+      expect(removal).toHaveLength(1);
+      expect(removal[0].startsWith("the last open question is resolved, so the minted persons ")).toBe(true);
     });
 
     it("anchors on a FamilySearch id with no starting tree", async () => {
