@@ -182,8 +182,13 @@ export async function rankSearchMatches(
       ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames))
       : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames));
 
-  if (input.checkAttachments && matches.length > 0 && subject.familySearchId) {
-    await applyAttachments(matches, subject.familySearchId, principal);
+  // Flags are emitted only when true, so a row with no flag reads as attached to
+  // nobody. When the check did not run (no FamilySearch id) or failed, say so.
+  let attachmentsChecked: boolean | undefined;
+  if (input.checkAttachments && matches.length > 0) {
+    attachmentsChecked = subject.familySearchId
+      ? await applyAttachments(matches, subject.familySearchId, principal)
+      : false;
   }
 
   const out: RankSearchMatchesResult = {
@@ -192,9 +197,11 @@ export async function rankSearchMatches(
     returnedCount: matches.length,
     scoringErrors,
     scoreLogError,
+    realNegativeFloor: realNegative,
     ...tooThinField(subject),
     matches,
   };
+  if (attachmentsChecked === false) out.attachmentsChecked = false;
   if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
   if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
 
@@ -1178,7 +1185,7 @@ async function applyAttachments(
   matches: RankedMatch[],
   familySearchId: string,
   principal: Principal,
-): Promise<void> {
+): Promise<boolean> {
   const uris = matches.map((m) => m.recordId);
   const isSubject = (p: { personId: string }) =>
     p.personId?.toUpperCase() === familySearchId;
@@ -1189,6 +1196,7 @@ async function applyAttachments(
       stub.attachedToSubject = persons.some(isSubject);
       stub.attachedToOther = persons.some((p) => !isSubject(p));
     }
+    return true;
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;
     // A connector caller whose FamilySearch session has ended must be told: with
@@ -1199,6 +1207,7 @@ async function applyAttachments(
     }
     // Best-effort: any other attachments failure must not fail the rank. Leave
     // the attachedTo* fields unset rather than asserting a wrong answer.
+    return false;
   }
 }
 

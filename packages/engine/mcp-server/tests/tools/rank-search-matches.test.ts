@@ -902,6 +902,28 @@ describe("rank_search_matches", () => {
         expect(m).not.toHaveProperty("attachedToSubject");
         expect(m).not.toHaveProperty("attachedToOther");
       }
+      expect(out.attachmentsChecked).toBe(false);
+    });
+
+    it("sets attachmentsChecked: false when the attachments call fails, and leaves it off on success", async () => {
+      await writeTree(treeOf({ id: SUBJECT_ID }));
+      const ok = await rankWithAttachments(SUBJECT_ID);
+      expect(ok).not.toHaveProperty("attachmentsChecked");
+
+      const ref = await stage([candidate({ recordId: ATTACHED, primaryId: "p1" })]);
+      scorePairMock.mockResolvedValue(scoreResult(0.8));
+      sourceAttachmentsMock.mockRejectedValue(new Error("FamilySearch source-attachments API error: 500"));
+      const failed = await rankSearchMatches(
+        { projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID, checkAttachments: true },
+        LOCAL,
+      );
+      expect(failed.attachmentsChecked).toBe(false);
+    });
+
+    it("carries the active matcher's realNegative floor on the result", async () => {
+      await writeTree(treeOf({ id: SUBJECT_ID }));
+      const out = await rankWithAttachments(SUBJECT_ID);
+      expect(out.realNegativeFloor).toBe(0.01);
     });
 
     describe("when the attachments read fails (self-hosted beta E3)", () => {

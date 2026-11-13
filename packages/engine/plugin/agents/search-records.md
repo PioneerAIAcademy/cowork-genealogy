@@ -396,8 +396,11 @@ unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
 the ranker missed), `matchScore` (0–1),
-`candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
-carries counts and diagnostics only. The bulk GedcomX stays host-side.
+`candidateFactCount`, and `attachedToSubject` / `attachedToOther` (present only
+when `true`). `ranked` carries counts and diagnostics only.
+A row at or below `ranked.realNegativeFloor` lists only identity fields; a
+missing field there is not evidence the record lacks it — `record_read` gives the
+full record. The bulk GedcomX stays host-side.
 
 Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
 highest. A row the ranker could not score keeps its search position, has no
@@ -558,7 +561,9 @@ candidates; you still confirm the top ones:
   it as `needs-review` and confirm by other means.
 - **Attachment status** is already on each match: attached-to-subject → note and
   deprioritize *when the goal is discovering new evidence*; attached-to-other →
-  potentially relevant; unattached → prioritize (new evidence). **When the goal is
+  potentially relevant; unattached (flag absent or false) → prioritize (new
+  evidence), unless `ranked.attachmentsChecked` is `false`: then attachment status
+  is unknown and is no reason to prioritize. **When the goal is
   instead confirming a specific fact already suspected** (e.g. "did this marriage
   happen, and when"), an attached-to-subject candidate is exactly the target, not
   noise — read it via `record_read` even at a moderate `matchScore`.

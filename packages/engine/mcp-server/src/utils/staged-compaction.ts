@@ -41,6 +41,7 @@ import { arkToBareId } from "./ark.js";
 import { findRequestedPersona } from "./requested-persona.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { pageText } from "./text-page.js";
+import { FAMILYSEARCH_FLOORS } from "./matcher.js";
 
 /**
  * Slim `record_search`'s INLINE projection so a broad search can't overflow the
@@ -445,6 +446,31 @@ function cutInlineTranscription(out: ImageTranscribeToolResponse, text: string):
   out.truncationNotice = out.truncationNotice ? `${out.truncationNotice} ${cut}` : cut;
 }
 
+/** Fields a ranked row at or below the matcher floor keeps (#4419, experiment). */
+export const SLIM_ROW_KEYS: ReadonlySet<string> = new Set([
+  "recordId",
+  "recordArk",
+  "personName",
+  "role",
+  "birthDate",
+  "birthPlace",
+  "events",
+  "relativeTerms",
+  "batchNumber",
+  "collectionId",
+  "matchRank",
+  "searchRank",
+  "matchScore",
+  "attachedToSubject",
+  "attachedToOther",
+]);
+
+function slimRow(row: RecordSearchResult): void {
+  for (const key of Object.keys(row)) {
+    if (!SLIM_ROW_KEYS.has(key)) delete (row as unknown as Record<string, unknown>)[key];
+  }
+}
+
 /**
  * Annotate the search rows with the ranking, in place, and return them best
  * first.
@@ -482,6 +508,7 @@ export function annotateResultsWithRanking(
   if (!ranked || !ranked.matches || ranked.matches.length === 0) return out;
   if (!out.results || out.results.length === 0) return out;
 
+  const floor = ranked.realNegativeFloor ?? FAMILYSEARCH_FLOORS.realNegative;
   const stubById = new Map(
     ranked.matches.map((m) => [arkToBareId(m.recordId), m]),
   );
@@ -490,7 +517,12 @@ export function annotateResultsWithRanking(
     if (!stub) continue;
     row.matchRank = stub.matchRank;
     row.searchRank = stub.searchRank;
-    row.matchScore = stub.matchScore;
+    // The slim test reads the UNROUNDED score, and a null score (scoring failed)
+    // is never slimmed or rounded: `null <= 0.01` is true in JS, and
+    // `Math.round(null * 100) / 100` is 0, either of which turns a scoring error
+    // into a confident non-match.
+    const rawScore = stub.matchScore;
+    row.matchScore = rawScore === null ? null : Math.round(rawScore * 100) / 100;
     if (stub.candidateFactCount !== undefined) {
       row.candidateFactCount = stub.candidateFactCount;
     }
@@ -504,12 +536,11 @@ export function annotateResultsWithRanking(
     if (stub.candidateSurname !== undefined) {
       row.candidateSurname = stub.candidateSurname;
     }
-    if (stub.attachedToSubject !== undefined) {
-      row.attachedToSubject = stub.attachedToSubject;
-    }
-    if (stub.attachedToOther !== undefined) {
-      row.attachedToOther = stub.attachedToOther;
-    }
+    // Flags travel only when true; absence reads as "not attached" unless
+    // `ranked.attachmentsChecked` is false.
+    if (stub.attachedToSubject === true) row.attachedToSubject = true;
+    if (stub.attachedToOther === true) row.attachedToOther = true;
+    if (rawScore !== null && rawScore <= floor) slimRow(row);
   }
 
   // Best first. An unscored row has no matchRank and sorts last, keeping its

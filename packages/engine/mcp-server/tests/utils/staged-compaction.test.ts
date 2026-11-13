@@ -443,6 +443,104 @@ describe("annotateResultsWithRanking", () => {
     expect(out.ranked).toMatchObject({ surnameNote: "note" });
   });
 
+  describe("slim rows below the matcher floor and flags only when true (#4419)", () => {
+    const FULL = {
+      recordId: rowA.recordId,
+      recordArk: "ark:/61903/1:2:AAAA-AA1",
+      personName: "Ann Doe",
+      role: "Spouse",
+      sex: "Female",
+      birthDate: "1850",
+      birthPlace: "Ohio",
+      deathDate: "1900",
+      deathPlace: "Iowa",
+      collectionId: "1234",
+      collectionTitle: "Census",
+      collectionUrl: "https://www.familysearch.org/search/collection/1234",
+      recordTitle: "Entry for Ann Doe",
+      primaryId: "AAAA-AA1",
+      treeMatches: [{ id: "LZZZ-ZZZ", name: "Ann Doe", birth: "1850" }],
+      candidateFactCount: 4,
+      batchNumber: "M01",
+      relativeTerms: { father: "absent" },
+      events: [{ type: "Census", date: "1850" }],
+    };
+    const row = (extra: Record<string, unknown> = {}, id = rowA.recordId) => ({ ...FULL, ...extra, recordId: id });
+    const run = (rows: unknown[], matches: unknown[], extra: Record<string, unknown> = {}) =>
+      annotateResultsWithRanking({
+        results: rows,
+        ranked: { subjectId: "I1", scoredCount: matches.length, returnedCount: matches.length, matches, ...extra },
+      } as never);
+
+    it("keeps only the identity key set on a row at or below the floor", () => {
+      const out = run(
+        [row()],
+        [{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.01, attachedToSubject: true, surnameNotOnSubject: true }],
+      );
+      expect(Object.keys(out.results[0]).sort()).toEqual(
+        [
+          "recordId", "recordArk", "personName", "role", "birthDate", "birthPlace", "events",
+          "relativeTerms", "batchNumber", "collectionId", "matchRank", "searchRank", "matchScore",
+          "attachedToSubject",
+        ].sort(),
+      );
+    });
+
+    it("emits no attachedTo* false, but copies a true", () => {
+      const out = run(
+        [row({}, rowA.recordId), row({}, rowB.recordId)],
+        [
+          { recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.8, attachedToSubject: false, attachedToOther: true },
+          { recordId: rowB.recordId, matchRank: 2, searchRank: 2, matchScore: 0.7, attachedToSubject: false, attachedToOther: false },
+        ],
+      );
+      expect(out.results[0]).not.toHaveProperty("attachedToSubject");
+      expect(out.results[0]).toHaveProperty("attachedToOther", true);
+      expect(out.results[1]).not.toHaveProperty("attachedToSubject");
+      expect(out.results[1]).not.toHaveProperty("attachedToOther");
+    });
+
+    it("rounds the score to 2 decimals and slims on the UNROUNDED score", () => {
+      const out = run(
+        [row({}, rowA.recordId), row({}, rowB.recordId)],
+        [
+          { recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.012 },
+          { recordId: rowB.recordId, matchRank: 2, searchRank: 2, matchScore: 0.0049 },
+        ],
+      );
+      expect(out.results[0].matchScore).toBe(0.01);
+      expect(out.results[0]).toHaveProperty("deathDate"); // 0.012 > 0.01: not slimmed
+      expect(out.results[1]).not.toHaveProperty("deathDate");
+    });
+
+    it("never slims or rounds a null score", () => {
+      const out = run(
+        [row()],
+        [{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: null }],
+      );
+      expect(Object.keys(out.results[0]).sort()).toEqual(
+        [...Object.keys(FULL), "matchRank", "searchRank", "matchScore"].sort(),
+      );
+      expect(out.results[0].matchScore).toBeNull();
+    });
+
+    it("uses ranked.realNegativeFloor when present, FamilySearch's 0.01 when absent", () => {
+      const stub = { recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.2 };
+      expect(run([row()], [stub]).results[0]).toHaveProperty("deathDate");
+      expect(run([row()], [stub], { realNegativeFloor: 0.25 }).results[0]).not.toHaveProperty("deathDate");
+    });
+
+    it("makes a 50-row all-below-floor page at least 25% smaller", () => {
+      const ids = Array.from({ length: 50 }, (_, i) => `ark:/61903/1:1:ZZZZ-${String(i).padStart(3, "0")}`);
+      const rows = () => ids.map((id) => row({ attachedToSubject: false }, id));
+      const matches = ids.map((id, i) => ({ recordId: id, matchRank: i + 1, searchRank: i + 1, matchScore: 0 }));
+      const unslimmed = JSON.stringify(rows()).length;
+      const slim = JSON.stringify(run(rows(), matches).results).length;
+      expect(slim).toBeLessThanOrEqual(unslimmed * 0.75);
+      expect(run(rows(), matches).results).toHaveLength(50);
+    });
+  });
+
   it("gives up the duplicate row list: `ranked` keeps metadata, not matches", () => {
     const out = annotateResultsWithRanking(
       resp(rankedWith([{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.5 }])),
