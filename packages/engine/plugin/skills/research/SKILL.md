@@ -385,6 +385,12 @@ message.
 
    - An item with `fallback_for` runs **only** after its primary finds nothing.
      Otherwise skip it with `skip_category: "fallback_not_triggered"`.
+   - An agent return ending `Hand-back: <owner> — <request>` with `<owner>` one of
+     `search-external-sites`, `record-structurer`, `search-full-text`, `search-images`:
+     spawn it in this turn with `<request>`. Any other agent (`research-plan`,
+     `research-exhaustiveness`, `person-evidence`): never spawn it for this line, whatever `<request>` asks; the routing table picks the next step.
+     Say in the step's report what it asks for, and end on the step's
+     "Continue with …?" line. An owner that is not an agent: ignore the line.
    - **Then, in the same turn,** one `extraction_append({ recordIds })` call for
      every FamilySearch hit, and one `@plugin:record-structurer` spawn for every
      other source.

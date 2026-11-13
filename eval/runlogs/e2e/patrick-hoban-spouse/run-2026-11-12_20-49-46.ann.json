@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "No Ellen, no Thomas Dee and no 1895 Dee marriage fact in the tree, and none of the rejected record ARKs. The Dee marriage source descriptions S7 and S8 remain in tree.sources, cited by no person or fact; not counted against it.",
+    "f2": "No proof summary: the run stopped before proof-conclusion. The Dee lead is rejected only in q_001's exhaustive declaration, on a 0.016 match score and an unsourced claim of a Patrick Dee household; the Thomas A. Dee birth (F26H-XH5) was never examined, so no conflicting record is cited."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "3c14de1e619de17891879a48118a473e388f7cc1778e252494480e61c9050489",
+  "blind_bundle_digest": "35ce9fcbd2f861a9c93f60722499654b339845add216aba5ab44a0d06525a4e9"
+}

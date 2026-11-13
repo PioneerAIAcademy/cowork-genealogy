@@ -102,6 +102,31 @@
           "found": true
         }
       ]
+    },
+    {
+      "id": "loc_002",
+      "place": "United States",
+      "for_place": "Pennsylvania, United States",
+      "time_period": "1800-1830",
+      "jurisdictions": [
+        {
+          "name": "Pennsylvania",
+          "date_range": "1681-present"
+        }
+      ],
+      "collections": [],
+      "quirks": [
+        "Pennsylvania had no statewide birth registration before 1906, so a county of birth is usually reached through later records."
+      ],
+      "created": "2026-10-22",
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy",
+          "found": true
+        }
+      ]
     }
   ]
 }
