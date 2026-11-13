@@ -25,6 +25,7 @@ bundle both set it.
 | `GET /api/projects/{id}/download` | Owner-checked zip of the project (#3987): every document and blob `feedback.project_files` walks, unredacted, built in a temp file under `/var/tmp` and streamed with `Content-Length`; an unreadable blob is named in `MISSING.txt`. 404 with no blob store; 429 `Retry-After: 5` while another download streams. |
 | `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` (at `FS_REDIRECT_URI`'s path) | Patron sign-in (U2, below). Every `/api/sessions` and `/api/projects` route needs the session cookie. Session routes answer 404 for a session on a project the caller does not own. |
 | `GET /openrouter`, `GET /openrouter/link`, `GET /openrouter/callback`, `POST /openrouter/unlink` | The patron's own OpenRouter key (#3988), served only with `OPENROUTER_LINKING_ENABLED=true` (otherwise 404), each needing the session cookie (a blocked user gets 403). `GET /openrouter` is `{linked}`, never the key; linked means a stored key that decrypts under the current `FS_TOKEN_ENC_KEY`. `link` sets the `or_oauth` state cookie (uid, PKCE verifier, state; its own salt) and redirects to openrouter.ai with the state inside `callback_url`. The callback answers every outcome with a page and drops the state cookie: a refused session with its 401/403; a missing cookie, another user's cookie, a mismatched state or no code (cancelled) with 400; a failed exchange with 502 (outcome and status or exception class logged, never the body), under one 20 s deadline; a failed write with 503. When the code was spent but no key was stored, the page tells the patron to delete the possibly-created key at OpenRouter. Otherwise the key is stored encrypted under `FS_TOKEN_ENC_KEY` in `users.openrouter_key_enc`. `unlink` is POST only, sets the column to NULL and calls nothing at OpenRouter. |
+| `GET /.well-known/oauth-authorization-server`, `GET /authorize`, `GET /connect`, `POST /connect`, `POST /token` | Claude's authorization server for the connector (#3997, `web/connector_auth.py`), served only with `OAUTH_ISSUER` set (otherwise 404). `/authorize` admits one client, Claude's, at its one redirect, and sends the browser to the consent page at `/connect`. Agreeing there (a same-origin POST; a missing or `null` `Origin` is 403) starts the FamilySearch sign-in, and the one callback ends it at Claude's redirect with a code that `/token` turns into a token lasting 30 days. Codes and tokens are stored only as sha256. No refresh token is issued, and a refresh request answers `invalid_grant`. `POST /auth/logout` also ends the user's connector tokens. |
 | `GET /api/sessions/{id}/sidecar/{log_id}`, `GET …/image`, `GET …/logs`, `POST …/files` | Sidecars return `{raw, mtime}` and images return the persisted scan (404 when absent); logs answer 501; file uploads are stored and return `{path, sizeBytes}`. |
 | `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
 | `GET /api/feedback/context?sessionId=`, `POST /api/feedback` | The SPA's feedback dialog (U20, below): the files and transcript size a report would carry; then the zip, stored in S3 under `feedback/` and sent nowhere. 200 `{ok, filename}`. |
@@ -67,7 +68,9 @@ U2 in `docs/plan/familysearch-handoff.md`.
   `ALLOWED_EMAILS` (ignored when `GENEALOGY_MAX_USERS` is set), `FAMILYSEARCH_WEB_ENABLED`,
   `FAMILYSEARCH_CONFIG`, `FS_REDIRECT_URI` (unset: `<PUBLIC_URL>/callback`; the callback is
   served at its path), `GENEALOGY_SIGNIN_CALLS_PER_MINUTE` (unset: no sign-in budget; at
-  least 2, since a sign-in takes the code exchange and the identity read) (see the
+  least 2, since a sign-in takes the code exchange and the identity read), `OAUTH_ISSUER`
+  (unset: no connector authorization server; set: it must equal `PUBLIC_URL`, which must
+  have no path, with FamilySearch sign-in on and the chat off) (see the
   `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
   space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
   FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty
@@ -75,7 +78,10 @@ U2 in `docs/plan/familysearch-handoff.md`.
 - **Chat off (#3992)**: the session cookie lasts 24 hours, not 30 days, and the signature
   check ends it on the server too; sign-in asks FamilySearch for no `offline_access`; and
   each sign-in writes a single-use `signin_states` record that the callback consumes, in one
-  atomic `UPDATE`, before it calls FamilySearch, so a replayed callback is refused.
+  atomic `UPDATE`, before it calls FamilySearch, so a replayed callback is refused. A
+  plain browser sign-in creates no user (#3997): only the connector's consent does, so a
+  new identity is told to connect from Claude first, and an existing user's sign-in
+  replaces their FamilySearch token and leaves their connector tokens alone.
 - **Users by FamilySearch id (#3992, chat on and off)**: sign-in finds the user by
   FamilySearch id first, so a FamilySearch email change keeps the account and updates its
   stored email; it is refused when another user holds the new email. Dev-login stays keyed

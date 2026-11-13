@@ -71,6 +71,11 @@ export const LIVEZ_PATH = "/livez";
 /** RFC 9728's protected-resource metadata for `/mcp`. Answered BEFORE the token
  *  check — it is what an unauthenticated client reads to learn where to go. */
 export const PRM_PATH = `/.well-known/oauth-protected-resource${MCP_PATH}`;
+/** The one scope the web tier's authorization server grants
+ *  (`SCOPE`, apps/server/proto/web/connector_auth.py). The door does not check
+ *  it: a connector token is admitted by its row. It is named in the metadata
+ *  and the 401 because that is where a client learns what to ask for. */
+export const CONNECTOR_SCOPE = "genealogy";
 
 /** How long `/healthz` waits on `checkReady` before answering 503 itself: the
  *  backend's own 1.5 s probe deadline (READY_TIMEOUT_MS) plus 500 ms, so a
@@ -604,10 +609,23 @@ function resourceMetadataUrl(issuer: string): string {
 }
 
 /** 401 with `WWW-Authenticate`. With no issuer configured the challenge is a
- *  bare `Bearer`, since there is no metadata document to point at. */
-function sendUnauthorized(res: http.ServerResponse, options: ToolServerOptions): void {
+ *  bare `Bearer`, since there is no metadata document to point at.
+ *
+ *  With one, it is the challenge Claude was measured against (the connector
+ *  probe, issue #3529): `resource_metadata` and `scope` always, and
+ *  `error="invalid_token"` only when a token was sent and refused (RFC 6750
+ *  3.1: a request with no token gets no error code). That last part is what
+ *  tells a client its token is dead, so it signs in again instead of treating
+ *  the server as unreachable. `resource_metadata` stays first on the no-token
+ *  form: `malachi.sh`'s check matches it there. */
+function sendUnauthorized(
+  res: http.ServerResponse,
+  options: ToolServerOptions,
+  tokenRefused: boolean,
+): void {
   const challenge = options.issuer
-    ? `Bearer resource_metadata="${resourceMetadataUrl(options.issuer)}"`
+    ? `Bearer ${tokenRefused ? 'error="invalid_token", ' : ""}` +
+      `resource_metadata="${resourceMetadataUrl(options.issuer)}", scope="${CONNECTOR_SCOPE}"`
     : "Bearer";
   res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": challenge });
   res.end(JSON.stringify(UNAUTHORIZED));
@@ -719,7 +737,7 @@ async function handleMcpPost(
       // One body for every reason: no token, expired, ended grant, blocked
       // user, no FamilySearch token, or one that will not decrypt.
       process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
-      sendUnauthorized(res, options);
+      sendUnauthorized(res, options, bearer !== "");
       return;
     }
     logUserId = caller.userId;
@@ -843,7 +861,8 @@ async function handleMcpPost(
     }
     if (!again || again.userId !== userId) {
       process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
-      sendUnauthorized(res, options);
+      // Always a token that was admitted and is now refused.
+      sendUnauthorized(res, options, true);
       return false;
     }
     principal = connectorPrincipal({
@@ -900,7 +919,12 @@ async function route(
       return;
     }
     const issuer = options.issuer.replace(/\/$/, "");
-    sendJson(res, 200, { resource: `${issuer}${MCP_PATH}`, authorization_servers: [issuer] });
+    sendJson(res, 200, {
+      resource: `${issuer}${MCP_PATH}`,
+      authorization_servers: [issuer],
+      scopes_supported: [CONNECTOR_SCOPE],
+      bearer_methods_supported: ["header"],
+    });
     return;
   }
   if (pathname === LIVEZ_PATH && req.method === "GET") {
