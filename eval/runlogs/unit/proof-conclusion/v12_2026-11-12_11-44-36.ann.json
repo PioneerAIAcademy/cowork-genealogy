@@ -295,7 +295,7 @@
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
       "llm_score": 2,
-      "corrected_score": 2,
+      "corrected_score": 3,
       "comment": "Review run: the agent checked ps_001's narrative and said it is self-contained, since it names each record with date and place, and its citations match src_001, src_003 and src_004 word for word. ps_001 has no bare a_/c_/src_ ids. The judge docked it for three wording issues the agent found itself and named nothing it missed. The rubric's review-mode partial needs a missed issue, so this is a pass."
     },
     {
