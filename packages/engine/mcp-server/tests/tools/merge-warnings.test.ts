@@ -76,6 +76,47 @@ describe("hasSameCensus", () => {
     const c = new Mob(censusDoc("C1", null), "C1");
     expect(hasSameCensus(t, c)).toBe(false);
   });
+
+  // #4503: tree census titles are per-person or `Entry for …`, never the bare
+  // collection title a compacted record_read answer is rebuilt with.
+  const shapes = [
+    'Henry Gaetjen, "United States Census, 1900"',
+    'Entry for John Becker and Louisa Becker, "United States, Census, 1900"',
+    "United States Census, 1900",
+  ];
+  for (const a of shapes) {
+    for (const b of shapes) {
+      it(`matches the collection across title shapes: ${a} ~ ${b}`, () => {
+        const t = new Mob(censusDoc("I1", a), "I1");
+        const c = new Mob(censusDoc("C1", b), "C1");
+        expect(hasSameCensus(t, c)).toBe(true);
+      });
+    }
+  }
+
+  it("does not match two census years in the per-person and Entry-for shapes", () => {
+    const t = new Mob(censusDoc("I1", 'Henry Gaetjen, "United States Census, 1900"'), "I1");
+    const c = new Mob(censusDoc("C1", 'Entry for Henry Gaetjen, "United States, Census, 1910"'), "C1");
+    expect(hasSameCensus(t, c)).toBe(false);
+  });
+
+  it("a tree person citing no source does not read another tree person's census", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "A", gender: "Male", names: [{ given: "Jimmie", surname: "Neal" }], facts: [] },
+        {
+          id: "B",
+          gender: "Female",
+          names: [{ given: "Martha", surname: "Hamby" }],
+          facts: [{ id: "F1", type: "Census", date: "1900", sources: [{ ref: "S1" }] }],
+        },
+      ],
+      sources: [{ id: "S1", title: 'Martha J Hamby, "United States, Census, 1900"' }],
+    };
+    const c = new Mob(censusDoc("C1", "United States Census, 1900"), "C1");
+    expect(hasSameCensus(new Mob(tree, "B"), c)).toBe(true);
+    expect(hasSameCensus(new Mob(tree, "A"), c)).toBe(false);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -859,5 +900,49 @@ describe("merge_warnings takes a record_read answer, full or compacted", () => {
     expect(answer.recordUrl).toBeUndefined();
     const result: any = await mergeWarnings({ projectPath: dir, candidateGedcomx: answer, merges: [["I1", "p1"]] });
     expect(result.ok, JSON.stringify(result.errors)).toBe(true);
+  });
+
+  // #4503: the 1870 Horace Stevens household, 11 personas each with its own
+  // `1:1:` ark, Record url `1:2:M4TT-9LP`. The tree's Edward Tallman cites one
+  // 1870 census source, titled per person; only its url varies.
+  const EDWARD = "p_280302831"; // ark:/61903/1:1:M8N9-JJL
+  const sameCensusOnTallman = async (url: string): Promise<boolean> => {
+    await writeTree({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "Edward", surname: "Tallman" }],
+          facts: [{ id: "F1", type: "Census", date: "1870", standard_date: "1870", sources: [{ ref: "S9" }] }],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S9", title: 'Edward Tallman, "United States, Census, 1870"', url }],
+    });
+    const f = loadRecordReadFixture("record-read-tallman-m8n9-jjl.json");
+    const result: any = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: compacted(f.response, f.recordId),
+      merges: [["I1", EDWARD]],
+    });
+    expect(result.ok, JSON.stringify(result.errors)).toBe(true);
+    return result.warnings.some((w: any) => w.issueType === "hasSameCensus");
+  };
+
+  it("hasSameCensus skips a tree source on the paired persona's own ark, written as a resolver url", async () => {
+    expect(await sameCensusOnTallman("https://familysearch.org/ark:/61903/1:1:M8N9-JJL")).toBe(false);
+  });
+
+  it("hasSameCensus skips a tree source on the candidate's record ark", async () => {
+    expect(await sameCensusOnTallman("https://familysearch.org/ark:/61903/1:2:M4TT-9LP")).toBe(false);
+  });
+
+  it("hasSameCensus fires on household member X's ark paired with persona Y of the same record", async () => {
+    // Horace Stevens' persona ark, paired with Edward Tallman.
+    expect(await sameCensusOnTallman("https://www.familysearch.org/ark:/61903/1:1:M8N9-JJN")).toBe(true);
+  });
+
+  it("hasSameCensus fires on a different record's ark in the same census collection", async () => {
+    expect(await sameCensusOnTallman("https://www.familysearch.org/ark:/61903/1:1:ZZZZ-999")).toBe(true);
   });
 });

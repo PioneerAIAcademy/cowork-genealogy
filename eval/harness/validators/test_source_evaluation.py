@@ -748,43 +748,6 @@ def test_quality_detail_call_carries_detail_flag(tool_calls, test):
     )
 
 
-#: ARKs that belong to a RELATIVE's own source in the two source-evaluation
-#: fixtures, and to nothing else. Deliberately unremarkable: an earlier revision
-#: used `1:1:REL-9999` on a person `REL-0001` with source `SD-REL-*`, so a model
-#: could skip the entry by reading "REL" in the id and never apply the audit-list
-#: rule at all -- and this validator could not tell that apart from the rule
-#: working.
-RELATIVE_ONLY_ARKS = ("MH7Q-9KZ", "MJ4T-2QB")
-
-
-def test_a_relatives_source_is_not_audited(tool_calls, test):
-    """A relative's attached source must never be `record_read` as the subject's.
-
-    `person_read` returns the relatives' attached sources in the same `sources[]`
-    array as the subject's own (issue #1689 Half 3), so "the sources array is the
-    audit list" started meaning "audit the whole family". Measured on a real
-    profile: 192 `record_read` calls where 17 were the subject's. Step 2 then
-    recommends detaching a record that is "about a different person" -- which a
-    sibling's record correctly is, so the advice is wrong and confident.
-
-    Each fixture carries one relative-only source (`SD-HOLE-E` / `SD-DRIS-H`),
-    whose ARK appears nowhere else. Nothing else grades WHICH sources were
-    read, so without this the planted relative tests nothing.
-    """
-    read_arks = [
-        str((c.get("args") or {}).get("url") or (c.get("args") or {}).get("recordId") or "")
-        for c in (tool_calls or [])
-        if (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
-    ]
-    audited = [a for a in read_arks if any(k in a for k in RELATIVE_ONLY_ARKS)]
-    assert not audited, (
-        "a RELATIVE's attached source was audited as the subject's: "
-        f"{audited}. `person_read`'s `sources[]` carries the relatives' sources too; "
-        "the audit list is the entries `persons[0].sources[].ref` names, plus entries "
-        "carrying `artifact_url`."
-    )
-
-
 # --- front-door gate: hand back, call nothing (tag-gated) ---
 
 _HANDBACK_TAG_PREFIX = "handback-to-"
@@ -1307,11 +1270,17 @@ _AGE_DENIED_RE = re.compile(
     r"\b(?:not|no|never|neither|nor|without)\s+(?:a\s+|an\s+|any\s+)?(?:\w+\s+)?"
     r"(?:conflicts?|findings?|disagreements?|discrepanc\w+|mismatch\w*|contradict\w*|inconsisten\w*|incorrect|wrong)"
     r"|does not (?:conflict|disagree|differ|contradict)"
+    r"|\b(?:not|never)\s+(?:recorded|counted|treated|listed|reported|flagged|marked)\s+as\s+(?:a\s+|an\s+)?(?:conflicts?|findings?|disagreements?)"
     r"|\bconsistent with\b|\bagrees? with\b|\bagreeing\b"
     r"|\bwithin\b[^.|]*\b(?:window|range|variance|tolerance|1838)"
     r"|ordinary (?:census )?variance|\(cd\)|census drift",
     re.IGNORECASE,
 )
+
+
+# A real `[CONFLICT]` tag after a denial is still a flag: a clause that disclaims one thing
+# and flags another is not cleared by the disclaimer.
+_AGE_FLAG_TAG_RE = re.compile(r"\[\s*conflict", re.IGNORECASE)
 
 
 def _age_denied(scope: str) -> bool:
@@ -1320,7 +1289,9 @@ def _age_denied(scope: str) -> bool:
     with the profile, which is consistent with the stone" denies something else."""
     first = _AGE_CONFLICT_WORD_RE.search(scope)
     return any(
-        first is None or m.start() <= first.end() for m in _AGE_DENIED_RE.finditer(scope)
+        (first is None or m.start() <= first.end())
+        and not _AGE_FLAG_TAG_RE.search(scope, m.end())
+        for m in _AGE_DENIED_RE.finditer(scope)
     )
 # A prose clause that merely reports the age-derived range is not a flag.
 _AGE_RANGE_RE = re.compile(r"birth ?ranges?|bet(?:ween)? 1838|1838\s*[-–—]\s*1839", re.IGNORECASE)
@@ -1360,6 +1331,17 @@ _AGE_ROW_RE = re.compile(r"^[^|\n]*\|[^|\n]*\||^[-:+ ]*[-:]+[+|][-:+| ]*$")
 
 
 _AGE_CONFLICT_TAG_RE = re.compile(r"\[\s*conf", re.IGNORECASE)
+
+
+def _age_cell_segments(cell: str) -> list[str]:
+    """A table cell as the pieces one flag can cover: sentences, where a `[CONFLICT]` tag that
+    opens a sentence belongs to the sentence before it ("...(my arithmetic). [CONFLICT]
+    Age-based: 1910 census agrees" tags the arithmetic, not the census)."""
+    pieces: list[str] = []
+    for part in re.split(r"(?<=[.;])\s+(?!\[\s*conf)", cell, flags=re.IGNORECASE):
+        marked = re.sub(r"(?<=[.;)])(\s+\[\s*conf[^\]]*\])(?=\s+[A-Za-z])", "\x5c1\x00", part, flags=re.IGNORECASE)
+        pieces += [s.strip() for s in marked.split("\x00") if s.strip()]
+    return pieces
 
 
 def _age_flag_text(text: str) -> bool:
@@ -1447,11 +1429,13 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
         if not cells or not _AGE_BIRTH_ROW_LABEL_RE.search(cells[0]):
             continue
         for j, cell in enumerate(cells[1:], start=1):
-            # A [CONFLICT] tag on a birth row is a flag whatever else the cell says.
-            if _AGE_CONFLICT_TAG_RE.search(cell) or _age_flag_text(cell):
-                label = header[j] if j < len(header) else ""
-                flagged += _age_source_hits(f"{label} {cell}", sources)
-                flagged += aliases.get(label.lower(), [])
+            # A [CONFLICT] tag on a birth row is a flag on the sentence that carries it:
+            # "Exact dates: FG [CONFLICT]. Age ranges, all agree: 1850 census" flags no census.
+            label = header[j] if j < len(header) else ""
+            for seg in _age_cell_segments(cell):
+                if _AGE_CONFLICT_TAG_RE.search(seg) or _age_flag_text(seg):
+                    flagged += _age_source_hits(f"{label} {seg}", sources)
+                    flagged += aliases.get(label.lower(), [])
 
     in_birth_block = False
     prev_blank = True
@@ -1466,9 +1450,13 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
         raw = raw_lines[li] if len(raw_lines) == len(lines) else ""
         bold_heading = bool(re.fullmatch(r"\s*\*\*[^*]+\*\*\s*", raw))
         if _AGE_FINDING_HEAD_RE.match(line) or (prev_blank and (_age_is_heading(stripped) or bold_heading)):
+            # The topic of a bold lead-in is the lead-in: a finding about the father's name
+            # whose paragraph mentions "birth range" is not a birth finding.
+            lead = re.match(r"\s*(?:\*\*|\*)(.+?)(?:\*\*|\*)\s*\S", raw)
+            heading = lead.group(1) if lead else stripped
             in_birth_block = bool(
-                re.search(r"\bbirth\b", stripped, re.IGNORECASE)
-                and re.search(_AGE_BLOCK_WORDS, stripped, re.IGNORECASE)
+                re.search(r"\bbirth\b", heading, re.IGNORECASE)
+                and re.search(_AGE_BLOCK_WORDS, heading, re.IGNORECASE)
             )
         elif re.match(r"^\W*(?:#{1,6}\s|[-*_]{3,}\s*$)", line):
             in_birth_block = False

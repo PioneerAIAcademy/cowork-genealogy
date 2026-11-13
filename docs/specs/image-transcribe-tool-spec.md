@@ -41,8 +41,8 @@
 >    viewer) can show the scan beside its transcription.
 > 3. **Key handling stays config-only (§6.4–§6.5)** — `getOpenRouterApiKey`
 >    reads the key only from the config, never from env. Each runtime's
->    entrypoint or orchestrator fills that config: `config.json`, the `.mcpb`
->    install dialog layered over it, and bridges for e2e, the hosted sandbox
+>    entrypoint or orchestrator fills that config: `config.json`, the `.mcpb`'s
+>    settings layered over it, and bridges for e2e, the hosted sandbox
 >    and the prototype's container.
 >
 > **Phase 0 is COMPLETE — spike PR 723.**
@@ -1207,8 +1207,9 @@ flow. Storage follows the existing per-user config convention exactly:
   `0o600`. Nothing in the engine writes that file.
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
   round-trip the tool drives itself; an API key is a static paste the tool
-  cannot obtain on its own. The user sets the key in the `.mcpb`'s install
-  dialog (the extension's **OpenRouter API key** field, §6.5) or directly in
+  cannot obtain on its own. The user sets the key in the `.mcpb`'s settings
+  (the **OpenRouter API key** field on the extension's **Configure** page in
+  Claude Desktop, §6.5) or directly in
   `~/.familysearch-mcp/config.json` as the `openRouterApiKey` field. It
   never passes through a tool-call argument, so it never appears in the
   session transcript. `openRouterModel` is set in `config.json` only. There is no
@@ -1232,7 +1233,7 @@ as environment and not as a file baked into an image:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
-| **Cowork desktop** | host (`.mcpb`) | the user enters it in the extension's install dialog (`user_config.openrouter_api_key` in `manifest.json`), which Claude Desktop passes as `GENEALOGY_OPENROUTER_API_KEY` and `src/index.ts` layers over `~/.familysearch-mcp/config.json` at start-up (`installConfigFromEnv`); or edits `config.json` directly. The dialog's key wins when both are set |
+| **Cowork desktop** | host (`.mcpb`) | the user enters it on the extension's Configure page in Claude Desktop (`user_config.openrouter_api_key` in `manifest.json`), which Claude Desktop passes as `GENEALOGY_OPENROUTER_API_KEY` and `src/index.ts` layers over `~/.familysearch-mcp/config.json` at start-up (`installConfigFromEnv`); or edits `config.json` directly. The extension's key wins when both are set |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
 | **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service) | compose passes the stack's `OPENROUTER_API_KEY` to the service; the entrypoint layers it and the other per-user keys `PER_USER_ENV` names over the config it starts from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
@@ -1246,7 +1247,7 @@ was claimed here until 2026-09-20, is the stronger sentence that the server make
 `GENEALOGY_OPENROUTER_API_KEY`, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables, which `http.ts` also reads
 only to name them at start-up (`research-append-tool-spec.md` §11.5). The bridge is at the
-**entrypoint** for a container and for the desktop install dialog, and at the
+**entrypoint** for a container and for the desktop extension's settings, and at the
 **orchestrator** for a sandbox; all are outside the tool, which is the line that
 matters. The hosted-path
 `fs_oauth.write_tokens` (`TOKENS_PATH = {HOME}/.familysearch-mcp/tokens.json`,

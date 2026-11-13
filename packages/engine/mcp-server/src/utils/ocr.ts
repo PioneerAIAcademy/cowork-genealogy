@@ -363,7 +363,8 @@ async function postChat(call: {
     throw new Error(
       "The OpenRouter API key was rejected (401). Tell the user to replace it " +
         "with a current key from https://openrouter.ai/keys, wherever they set " +
-        "it: Claude Desktop under Settings → Extensions → Genealogy Research, or " +
+        "it: Claude Desktop under Settings → Desktop app → Extensions → Genealogy " +
+        "Research → Configure, or " +
         "the \"openRouterApiKey\" field in ~/.familysearch-mcp/config.json.",
     );
   }
