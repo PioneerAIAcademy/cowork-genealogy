@@ -84,6 +84,19 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
+// Pass-through stub for the one network call the #4431 searchability pre-read
+// makes. Inert unless a test sets `impl`, so every other test in this file still
+// reaches the real `fsFetch`. It exists so the dispatch test below can exercise
+// `server.ts`'s loader wiring offline — nothing else can see that wire.
+const mockFsFetch = vi.hoisted(() => ({ impl: null as null | ((...a: any[]) => any) }));
+vi.mock("../../src/utils/fs-fetch.js", async (importOriginal) => {
+  const real: any = await importOriginal();
+  return {
+    ...real,
+    fsFetch: (...a: any[]) => (mockFsFetch.impl ? mockFsFetch.impl(...a) : real.fsFetch(...a)),
+  };
+});
+
 import {
   researchAppend,
   researchAppendFromCaller,
@@ -19104,6 +19117,33 @@ describe("research_append — a plan item completed on guaranteed-nil full-text 
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/4102848, 4102858, 4102865/);
+  });
+
+  // The tests above hand `researchAppendFromCaller` a loader directly, so they
+  // cannot see whether `server.ts` passes one. Drop
+  // `fulltextSearchableLoader(principal)` from the research_append arm there and
+  // typecheck passes, the engine suite passes, and the guard is permanently
+  // UNKNOWN in production. This one goes through `createServer`, as a connected
+  // client does, and is the only test that fails on that deletion.
+  it("MUST FIRE — through the MCP dispatch, so server.ts's loader is under test", async () => {
+    await write(research());
+    // The searchability endpoint, answering: none of the asked ids are searchable.
+    mockFsFetch.impl = async () => ({ ok: true, json: async () => ({ ids: [] }) });
+    try {
+      const r = await callTool("research_append", {
+        projectPath: dir,
+        section: "plan_items",
+        op: "update",
+        planId: "pl_001",
+        entryId: "pli_001",
+        fields: { status: "completed" },
+      });
+      expect(r.isError).toBe(true);
+      expect(r.text).toMatch(/does not report as full-text searchable/);
+      expect(await status()).toBe("in_progress");
+    } finally {
+      mockFsFetch.impl = null;
+    }
   });
 
   // THE REGRESSION THIS BLOCK EXISTS FOR. Under a `completed`-only pre-read gate

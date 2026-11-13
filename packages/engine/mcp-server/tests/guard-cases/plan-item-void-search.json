@@ -93,7 +93,7 @@
       "id": "scoped-void-among-productive-searches",
       "expect": "fire",
       "shape": "scoped-void-among-productive",
-      "why": "THE MOTIVATING CASE, from feedback bundle 2026-11-09 (pli_005, Walpole NH town records). Five full-text searches are attributed to the item; four are keyword/place searches that returned thousands of rows, and only one NAMES an image group — which returned nothing and which FamilySearch does not report as searchable. The productive four never searched that volume, so the item is still unread and condition 2 reads only the entries that name a group. The id here, 1987741, is in fact a collection id rather than an image group: the refusal is correct in outcome but reached through the documented unknown-id hole, and its message sends the agent to record_search for exactly that reason.",
+      "why": "THE MOTIVATING CASE, from feedback bundle 2026-11-09 (pli_005, Walpole NH town records). The bundle attributes five full-text searches to the item; the four carried here are three keyword/place searches that returned thousands of rows, and one that NAMES an image group — which returned nothing and which FamilySearch does not report as searchable. The productive three never searched that volume, so the item is still unread and condition 2 reads only the entries that name a group. The id here, 1987741, is in fact a collection id rather than an image group: the refusal is correct in outcome but reached through the documented unknown-id hole, and its message sends the agent to record_search for exactly that reason.",
       "write": "pli_005",
       "searchable": [],
       "research": {
