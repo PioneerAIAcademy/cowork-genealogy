@@ -466,26 +466,41 @@ export interface PlaceRep {
   names: string[];
 }
 
+/** One of a place's own names, in the language FamilySearch files it under
+ *  (Arsdorf's `{ lang: "lb", name: "Ueschdref" }`). */
+export interface PlaceName {
+  lang: string;
+  name: string;
+}
+
+/** A Primary place ID's listing: its representations, and the place's own
+ *  names from the bare entry. */
+export interface PlaceListing {
+  reps: PlaceRep[];
+  names: PlaceName[];
+}
+
 /**
  * Get every representation of a Primary place ID, with its English full name,
- * date range and names, via the Place_resource endpoint (GET
- * /platform/places/{pid}). The response lists the bare place entry (id === pid,
- * no `display`) followed by its representation entries, each with
- * `place.resourceId === pid`.
+ * date range and names, and the place's own names with their languages, via the
+ * Place_resource endpoint (GET /platform/places/{pid}). The response lists the
+ * bare place entry (id === pid, no `display`) followed by its representation
+ * entries, each with `place.resourceId === pid`. Only the bare entry lists every
+ * name: Arsdorf's (10355380) carries `lb` "Ueschdref", its reps only "Arsdorf".
  *
  * Public (no auth) — the places endpoints accept anonymous requests.
  */
-export async function getPlaceReps(
+export async function getPlaceListing(
   pid: string,
   opts: PlaceFetchOptions = {},
-): Promise<PlaceRep[]> {
+): Promise<PlaceListing> {
   const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
 
   const response = await fetchWithRetry(url, {
     headers: { Accept: "application/json", "Accept-Language": "en" },
   }, opts.timeoutMs);
   if (!response.ok) {
-    if (response.status === 404) return [];
+    if (response.status === 404) return { reps: [], names: [] };
     throw new Error(
       `FamilySearch API error: ${response.status} ${response.statusText}`
     );
@@ -493,8 +508,17 @@ export async function getPlaceReps(
 
   const data = (await response.json()) as FSPlaceLookupResponse;
   const reps: PlaceRep[] = [];
+  const names: PlaceName[] = [];
   const seen = new Set<string>();
   for (const entry of data.places ?? []) {
+    if (entry.id === pid && !entry.display) {
+      for (const n of Array.isArray(entry.names) ? entry.names : []) {
+        if (typeof n?.lang === "string" && typeof n.value === "string") {
+          names.push({ lang: n.lang, name: n.value });
+        }
+      }
+      continue;
+    }
     if (entry.place?.resourceId !== pid || !entry.id || seen.has(entry.id)) continue;
     seen.add(entry.id);
     const fullName = entry.display?.fullName;
@@ -508,7 +532,15 @@ export async function getPlaceReps(
         .filter((value): value is string => typeof value === "string"),
     });
   }
-  return reps;
+  return { reps, names };
+}
+
+/** `getPlaceListing`'s representations. */
+export async function getPlaceReps(
+  pid: string,
+  opts: PlaceFetchOptions = {},
+): Promise<PlaceRep[]> {
+  return (await getPlaceListing(pid, opts)).reps;
 }
 
 /** `getPlaceReps`' representation ids, in order. */

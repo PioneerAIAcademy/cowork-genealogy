@@ -131,7 +131,7 @@ for (const [query, want, kind] of CORPUS) {
   console.log(`\n### ${query}   [want ${want}, ${kind}]`);
   console.log(`  exact (${exact.length}): ${exact.slice(0, 3).map((h) => h.fullName).join(" | ") || "-"}`);
   console.log(`  fuzzy (${fuzzy.length}): ${fuzzy.slice(0, 3).map((h) => h.fullName).join(" | ") || "-"}`);
-  console.log(`  shipped placeSearch: ${shipped.results[0]?.fullName ?? "-"}${shipped.matchType ? " [fuzzy]" : ""}`);
+  console.log(`  shipped placeSearch: ${shipped.results[0]?.fullName ?? "-"}${shipped.matchType === "fuzzy" ? " [fuzzy]" : ""}`);
   console.log(`  fires: ${fired.join(", ") || "none"}`);
 }
 

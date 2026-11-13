@@ -802,7 +802,7 @@ describe("fuzzy fallback", () => {
     expect(filtered.matchType).toBe("fuzzy");
   });
 
-  it("has no matchType key on an exact hit", async () => {
+  it("marks an exact hit matchType \"exact\"", async () => {
     routeByUrl([
       { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
@@ -817,7 +817,7 @@ describe("fuzzy fallback", () => {
       contextName: "Idaho",
     });
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
   });
 
   it("returns the fuzzy flag again on a cache hit without re-fetching", async () => {
@@ -847,11 +847,11 @@ describe("fuzzy fallback", () => {
     const result = await placeSearchTool({ placeName: "Klein Kozlau" });
 
     expect(result.results).toEqual([]);
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("~"))).toHaveLength(0);
   });
 
-  it("returns an unflagged empty response when the fuzzy query also matches nothing", async () => {
+  it("returns an empty exact response when the fuzzy query also matches nothing", async () => {
     routeByUrl([
       { match: "search?q=name:%22Blorp%22", json: { entries: [] } },
       { match: "search?q=name:Blorp~", json: { entries: [] } },
@@ -860,7 +860,7 @@ describe("fuzzy fallback", () => {
     const result = await placeSearchTool({ placeName: "Blorp" });
 
     expect(result.results).toEqual([]);
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("Blorp~"))).toHaveLength(1);
   });
 
@@ -1000,7 +1000,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Hospital, Cincinnati, Ohio");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(result.results.map((r) => r.fullName)).toEqual(["Cincinnati, Hamilton, Ohio, United States"]);
     expect(fuzzyFetches()).toBe(1);
   });
@@ -1012,7 +1012,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Xqzwvillage, Germany");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(result.results[0].fullName).toBe("Germany");
     expect(fuzzyFetches()).toBe(1);
   });
@@ -1025,7 +1025,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Sierkopas, Germany");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(result.results[0].fullName).toBe("Germany");
     expect(fuzzyFetches()).toBe(1);
   });
@@ -1042,7 +1042,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Hospital, Cincinnati", "Ohio");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(result.results.map((r) => r.fullName)).toEqual(["Cincinnati, Hamilton, Ohio, United States"]);
   });
 
@@ -1059,7 +1059,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Hospital, Cincinnati, Ohio");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(result.results[0].fullName).toBe("Cincinnati, Hamilton, Ohio, United States");
   });
 
@@ -1076,7 +1076,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Hospital, India");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(result.results[0].fullName).toBe("India");
   });
 
@@ -1093,7 +1093,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Rehrersburg, Pennsylvania");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(fuzzyFetches()).toBe(0);
   });
 
@@ -1102,7 +1102,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
     const result = await placeSearch("Klein Kozlau, Germany");
 
-    expect("matchType" in result).toBe(false);
+    expect(result.matchType).toBe("exact");
     expect(fuzzyFetches()).toBe(0);
   });
 
@@ -1158,7 +1158,7 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
 
       const result = await placeSearch(query);
 
-      expect("matchType" in result).toBe(false);
+      expect(result.matchType).toBe("exact");
       expect(result.results[0].fullName).toBe(rows[0][2]);
       expect(fuzzyFetches()).toBe(0);
     },
@@ -1433,5 +1433,226 @@ describe("placeSearchAllTool", () => {
     expect(result.results.map((r) => r.standardPlace)).toEqual([
       "Paris, Bear Lake, Idaho, United States",
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// matchedName: the place's other name an exact query matched
+//
+// Shapes from the live API, 2026-11-11: `name:"Ueschdref"` returns reps
+// 11970028 and 11970025 (Primary 10355380) and 6720808 (Primary 3932015), all
+// displayed "Arsdorf"; only 10355380's bare listing entry carries lb "Ueschdref".
+// ---------------------------------------------------------------------------
+
+describe("matchedName", () => {
+  function entry(id: string, name: string, fullName: string, pid: string) {
+    return {
+      id,
+      score: 90,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              id,
+              display: { name, fullName, type: "Village" },
+              identifiers: {
+                "http://gedcomx.org/Primary": [`https://api.familysearch.org/platform/places/${pid}`],
+              },
+            },
+          ],
+        },
+      },
+    };
+  }
+
+  function placeDescription(id: string, name: string, fullName: string, pid: string) {
+    return {
+      places: [
+        {
+          id,
+          display: { name, fullName, type: "Village" },
+          identifiers: {
+            "http://gedcomx.org/Primary": [`https://api.familysearch.org/platform/places/${pid}`],
+          },
+        },
+      ],
+    };
+  }
+
+  function listing(pid: string, names: Array<[string, string]>, repIds: string[]) {
+    return {
+      places: [
+        { id: pid, names: names.map(([lang, value]) => ({ lang, value })) },
+        ...repIds.map((id) => ({
+          id,
+          place: { resourceId: pid },
+          display: { name: "Arsdorf", fullName: `Arsdorf ${id}`, type: "Village" },
+          names: [{ lang: "fr", value: "Arsdorf" }],
+        })),
+      ],
+    };
+  }
+
+  const ARSDORF_A = "Arsdorf, Rambrouch, Redange, Luxembourg";
+  const ARSDORF_B = "Arsdorf, Arsdorf, Redange, Luxembourg";
+  const ARSDORF_C = "Arsdorf, Redange, Luxembourg";
+
+  function ueschdrefRoutes(listing10355380: Route): Route[] {
+    return [
+      {
+        match: "search?q=name:%22Ueschdref%22",
+        json: {
+          entries: [
+            entry("11970028", "Arsdorf", ARSDORF_A, "10355380"),
+            entry("6720808", "Arsdorf", ARSDORF_C, "3932015"),
+            entry("11970025", "Arsdorf", ARSDORF_B, "10355380"),
+          ],
+        },
+      },
+      { match: "description/11970028", json: placeDescription("11970028", "Arsdorf", ARSDORF_A, "10355380") },
+      { match: "description/11970025", json: placeDescription("11970025", "Arsdorf", ARSDORF_B, "10355380") },
+      { match: "description/6720808", json: placeDescription("6720808", "Arsdorf", ARSDORF_C, "3932015") },
+      listing10355380,
+      { match: "places/3932015", json: listing("3932015", [["fr", "Arsdorf"]], ["6720808"]) },
+      { match: "attributes", ok: false, status: 404 },
+    ];
+  }
+
+  const ARSDORF_LISTING: Route = {
+    match: "places/10355380",
+    json: listing(
+      "10355380",
+      [["fr", "Arsdorf"], ["lb", "Ueschdref"], ["fr", "Aresdorf"]],
+      ["11970028", "11970025"],
+    ),
+  };
+
+  /** Place_resource listing fetches of `pid` (not description or search calls). */
+  const listingFetches = (pid: string) =>
+    mockFetch.mock.calls.filter(([url]) => String(url).endsWith(`/places/${pid}`)).length;
+  const anyListingFetches = () =>
+    mockFetch.mock.calls.filter(([url]) => /\/places\/\d+$/.test(String(url))).length;
+
+  it("names the other-language name an exact hit matched, once per Primary id", async () => {
+    routeByUrl(ueschdrefRoutes(ARSDORF_LISTING));
+
+    const result = await placeSearch("Ueschdref", "Luxembourg");
+
+    expect(result.matchType).toBe("exact");
+    const byName = new Map(result.results.map((r) => [r.fullName, r.matchedName]));
+    expect(byName.get(ARSDORF_A)).toEqual({ name: "Ueschdref", lang: "lb" });
+    expect(byName.get(ARSDORF_B)).toEqual({ name: "Ueschdref", lang: "lb" });
+    // 3932015's own names do not include Ueschdref.
+    expect(byName.get(ARSDORF_C)).toBeUndefined();
+    expect(listingFetches("10355380")).toBe(1);
+    expect(listingFetches("3932015")).toBe(1);
+  });
+
+  it("place_search returns matchType \"exact\" and the matchedName on each simplified result", async () => {
+    routeByUrl(ueschdrefRoutes(ARSDORF_LISTING));
+
+    const result = await placeSearchTool({ placeName: "Ueschdref", contextName: "Luxembourg" });
+
+    expect(result.matchType).toBe("exact");
+    const hit = result.results.find((r) => r.standardPlace === ARSDORF_A);
+    expect(hit?.matchedName).toEqual({ name: "Ueschdref", lang: "lb" });
+    expect(listingFetches("10355380")).toBe(1);
+    expect(listingFetches("3932015")).toBe(1);
+  });
+
+  it("place_search_all names it on every representation, reusing the listing the search fetched", async () => {
+    routeByUrl(ueschdrefRoutes(ARSDORF_LISTING));
+
+    const result = await placeSearchAllTool({ placeName: "Ueschdref", contextName: "Luxembourg" });
+
+    expect(result.matchType).toBe("exact");
+    const byName = new Map(result.results.map((r) => [r.standardPlace, r.matchedName]));
+    expect(byName.get(ARSDORF_A)).toEqual({ name: "Ueschdref", lang: "lb" });
+    expect(byName.get(ARSDORF_B)).toEqual({ name: "Ueschdref", lang: "lb" });
+    expect(byName.get(ARSDORF_C)).toBeUndefined();
+    expect(listingFetches("10355380")).toBe(1);
+    expect(listingFetches("3932015")).toBe(1);
+  });
+
+  it("names nothing on a fuzzy outcome and fetches no listing (Eschdref)", async () => {
+    routeByUrl([
+      { match: "search?q=name:%22Eschdref%22", json: { entries: [] } },
+      {
+        match: "search?q=name:Eschdref~",
+        json: { entries: [entry("700", "Eschdorf", "Eschdorf, Wiltz, Luxembourg", "7000")] },
+      },
+      { match: "description/700", json: placeDescription("700", "Eschdorf", "Eschdorf, Wiltz, Luxembourg", "7000") },
+      { match: "places/7000", json: listing("7000", [["lb", "Eschdref"]], ["700"]) },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearch("Eschdref", "Luxembourg");
+
+    expect(result.matchType).toBe("fuzzy");
+    expect(result.results[0].matchedName).toBeUndefined();
+    expect(anyListingFetches()).toBe(0);
+  });
+
+  it("costs no extra request when every result is named after the leaf (Paris)", async () => {
+    routeByUrl([
+      {
+        match: "search?q=name:%22Paris%22",
+        json: { entries: [entry("100", "Paris", "Paris, Bear Lake, Idaho, United States", "9001")] },
+      },
+      {
+        match: "description/100",
+        json: placeDescription("100", "Paris", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearch("Paris", "Idaho");
+
+    expect(result.matchType).toBe("exact");
+    expect(result.results[0].matchedName).toBeUndefined();
+    expect(anyListingFetches()).toBe(0);
+  });
+
+  it("names nothing when the exact query matched only a qualifier", async () => {
+    routeByUrl([
+      { match: "search?q=name:Xqzwvillage~", json: { entries: [] } },
+      {
+        match: "search?q=name:%22Xqzwvillage%2C%20Germany%22",
+        json: { entries: [entry("267", "Germany", "Germany", "10026773")] },
+      },
+      { match: "description/267", json: placeDescription("267", "Germany", "Germany", "10026773") },
+      {
+        match: "places/10026773",
+        json: { places: [{ id: "10026773", names: [{ lang: "de", value: "Deutschland" }] }] },
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearch("Xqzwvillage, Germany");
+
+    expect(result.matchType).toBe("exact");
+    expect(result.results.map((r) => r.fullName)).toEqual(["Germany"]);
+    expect(result.results[0].matchedName).toBeUndefined();
+    expect(listingFetches("10026773")).toBe(1);
+  });
+
+  it("returns the results unnamed when the listing fetch fails, and place_search_all fetches it again", async () => {
+    routeByUrl(ueschdrefRoutes({ match: "places/10355380", ok: false, status: 400 }));
+
+    const result = await placeSearch("Ueschdref", "Luxembourg");
+
+    expect(result.matchType).toBe("exact");
+    expect(result.results.map((r) => r.fullName)).toContain(ARSDORF_A);
+    expect(result.results.find((r) => r.fullName === ARSDORF_A)?.matchedName).toBeUndefined();
+
+    // The failure was not cached as an empty listing: the expansion re-fetches
+    // it and keeps the place.
+    routeByUrl(ueschdrefRoutes(ARSDORF_LISTING));
+    const all = await placeSearchAllTool({ placeName: "Ueschdref", contextName: "Luxembourg" });
+    expect(all.results.map((r) => r.standardPlace)).toEqual(
+      expect.arrayContaining([ARSDORF_A, ARSDORF_B]),
+    );
+    // The failed fetch, then the expansion's own.
+    expect(listingFetches("10355380")).toBe(2);
   });
 });
