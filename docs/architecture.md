@@ -1525,9 +1525,11 @@ raise** — every failure path falls through to allowing the call. Model it on
 runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test.ts`
 proves the script *decides* correctly, and nothing else proves a runtime *binds*
 it — which, because the script must never raise, fails silently. `hook-smoke`
-probes `PreToolUse` binding only; a `UserPromptSubmit` hook is shown binding by a hosted
-replay with `GENEALOGY_HOSTED_PLANE` unset whose transcript carries its text. Whether its
-`additionalContext` reaches the model in Cowork is unmeasured.
+probes `PreToolUse` binding only. **Both hooks are now measured in Cowork on Windows
+(44f98b58, 2026-11-09–10):** `PreToolUse` binds — a built-in Read of
+`research.json` was refused in a fresh folder; `UserPromptSubmit` binds and its
+`additionalContext` reaches the model — the routing text was quoted verbatim on 3/3
+probes. A 2026-11-05 negative (no blocking seen) is unexplained — no build was recorded.
 
 > A plugin hook binds in Cowork and the hosted path and in **neither harness**.
 > All three of the unit harness, the e2e harness, and the hosted control plane

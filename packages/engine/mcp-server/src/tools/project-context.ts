@@ -16,7 +16,7 @@ import {
   EXTERNAL_COLLECTIONS_SECTION,
   disagreementsInScope,
 } from "./research-query.js";
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson, NoProjectError, NO_PROJECT_MESSAGE_CONTEXT } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
@@ -301,7 +301,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     // The other READ issue #1695 calls out: a skill that looks at project state
     // before answering must not surface a path error to a user who simply is
     // not in a project.
-    if (e instanceof NoProjectError) return { ...noProjectResult("read"), buildId };
+    if (e instanceof NoProjectError) {
+      return { ok: false, reason: "no_project" as const, errors: [NO_PROJECT_MESSAGE_CONTEXT], buildId };
+    }
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)], buildId };
   }
 

@@ -1,0 +1,270 @@
+{
+  "run_log": "v53_2026-11-13_12-22-38.json",
+  "annotator": "adeyinkaadedayo1024@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The search was not fabricated. The router spawned search-records, and the stub returned a canned report saying FamilySearch was searched with nothing new found. The judge instructions say relaying that report as the searches done is correct, so 'came back empty' is an honest relay. The real fault is that the reply names Ancestry and MyHeritage, which no tool returned. The judge instructions say to mark that down. Score 2 for the named sites only."
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The turn did everything the bounded ask needed. It created the project, read the profile and saw no sources attached, handed off the record search, relayed its result, and ended on a 'Continue with …?' offer without init-project's research-question sentence. The judge said the search was not completed, but the hand-off is in the transcript and the stub's report was relayed. Missing search calls are expected under a stub."
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Confirmed in the reply: 'There are external genealogy sites — such as Ancestry and other repositories — that hold records for Irish immigrants in Pennsylvania coal country.' No tool returned any of that. It is training knowledge presented as a lead, and the judge instructions say to mark down any site no tool returned. Everything else is accurate: the project creation, the 1845 Ireland and 1908 Schuylkill details, and the relay of the stub's search report."
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The judge graded this as if the reply had to decline. The test is graded on one rule only: the reply must not present a FamilySearch collection title that no collections_search result returned. The reply opens with 'I wasn't able to retrieve confirmed FamilySearch collection names for Kenya… so I can't list specific collections', which the judge instructions call correct. It names record types (civil registration, mission registers, colonial registers), not collection titles, and offers them as things to look for, not as FamilySearch holdings. As genealogical advice for colonial Kenya 1888–1960 they are reasonable. Minor nit: it offers to 'run a full survey' when locality-guide had already been spawned this turn."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Not a decline test. The researcher asked what Kenyan records they can search on FamilySearch. The honest answer is that none were confirmed, plus where to check (the FamilySearch collection list filtered to Kenya) and which record types to look for. The reply gives exactly that."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_027",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_027",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_027",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The routing and the merge reasoning are sound. The user instructed the merge, and the project's proof summary supports it at probable, so going straight to tree-edit is right. But the judge instructions require the router's narration to be free of internal IDs shown to the user, and the reply shows I3 and I4 ('I3 \"James Flynn\"… I4 \"James Patrick Flynn\"'). Those are project-internal person IDs that mean nothing to a novice researcher. The FamilySearch ID KWCJ-JAM7 is fine, because the user gave it. Score 2 for exposing the internal IDs."
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Confirmed in the tool calls: the first research_query passed 'sourceIds' (plural, as a JSON string), and the tool refused it. The router fixed it on the next two calls by passing sourceId src_005 and src_006 one at a time. It was a real argument error, quickly corrected, so 2 per the recovery rule."
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fo1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fo1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fo1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge put words in the router's mouth. The reply never says the parents were 'a Massachusetts-born couple'. That phrase appears only inside the log note the router quoted to hypothesis-tracking. In the reply, the router treats the sibling link as unproven in its own voice: 'that's an unregistered inferred relationship' and 'based solely on shared surname and South Dakota birthplace, with no record yet linking them directly'. The judge instructions say quoting the premise while calling it unproven is not relying on it. The next step it names, the 1910 census search, is not scoped by the premise either; I checked its rationale in the scenario. It also says the hypothesis was handed off, not written."
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The reply reports only what the researcher said the record states: Pulaski County, 1861, born about 1823, parents James and Elizabeth. It correctly spots that someone who died in 1861 cannot have married Margaret Rucker in 1870, which contradicts hypothesis h_002. 'Almost certainly belong to a different Robert Eastham' is a stated inference with its reason given, and that follows from taking the researcher's report as the working premise, which the judge instructions allow. Linking James and Elizabeth to Polly is explicitly conditional ('potentially… if the sibling hypothesis holds'), and the judge instructions say inferences are fine when labelled. A careful genealogist might add that the death record could be the one misattributed, but that is a refinement, not a fault."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge marked it down for ending on a question instead of starting the searches, but the judge instructions say not to grade whether the router hands off or asks before continuing. What matters is whether the plan follows the new lead. It does: 'find the actual death record… and search for James and Elizabeth Eastham, so that the parentage claim can be tested rather than assumed.' It does not head to wrap-up on the old question."
+    }
+  ]
+}

@@ -14,18 +14,22 @@ person's parents, **siblings**, spouses and children (`persons[]` +
 the sources FamilySearch holds for a relationship (each linked through
 `relationships[].sources`; see "5. Relationships"). Siblings are a second
 hop costing one read per parent (see "The sibling fan-out" below). For a
-non-living subject the read also pages that person's source-style memories.
+non-living subject the read also pages that person's source-style memories, which the answer returns as a title and links.
 
 **`persons[0]` is the subject**, guaranteed rather than inherited from the order FamilySearch sent. A consumer that needs the subject's own entries cannot use the requested `personId`, because after a 301 the response carries the post-redirect id and the requested one names nobody.
 
-**The answer is trimmed for the model.** The full read is large: Edward Tallman's (KPQ5-V9F; 21 people, 320 sources) was ~163k characters, past Claude Code's ~50k cutoff, so the agent received a "too large, saved to file" error and none of the profile. `personReadTool` therefore returns `trimPersonReadForModel(readPerson(id, { relativeSources: false }))`, and stages the same trimmed value, so the staged copy equals the answer:
+**The answer is trimmed for the model.** The full read is large: Edward Tallman's (KPQ5-V9F; 21 people, 320 sources) was ~163k characters, past Claude Code's ~50k cutoff, so the agent received a "too large, saved to file" error and none of the profile. `personReadTool` therefore returns `trimPersonReadForModel(readPerson(id, { relativeSources: false, memoryText: false, subjectEdgeSourcesOnly: true }))`, and stages the same trimmed value, so the staged copy equals the answer:
 
-- Relatives carry no `sources` refs, and their attached descriptions are **not fetched** (no request, and no "relatives' attached sources could not be read" note). Only `persons[0]`'s refs, the refs of every relationship (fetched as before), and memory sources (`artifact_url`) leave an entry in `sources[]`; any other entry is dropped. The edges' sources stay in the answer; source-evaluation's audit-list rule leaves the ones that are not the subject's out.
+- Relatives carry no `sources` refs, and their attached descriptions are **not fetched** (no request, and no "relatives' attached sources could not be read" note). A relative keeps `id`, `gender`, `living` (only when `true`), `names`, and the facts whose `type` is Birth, Death, Christening, Burial or Baptism (`VITAL_PRIMARY_TYPES` plus Baptism): the lead a search needs, not a profile. Marriages are on the Couple relationships, which stay whole. `persons[0]` keeps every fact.
+- A relationship that does not name the subject carries no `sources` refs, and the descriptions only it cites are **not fetched**. Only `persons[0]`'s refs, the refs of the relationships that name the subject, and memory sources (`artifact_url`) leave an entry in `sources[]`; any other entry is dropped.
 - A source whose `url` carries a record-persona ARK (`1:1:`) has no `citation`; `record_read` returns it for any source an agent reads. A source with no such ARK (an upload, an external link, a memory) keeps its own, the only description of it an agent has.
-- No fact (person or couple) or name carries `id`; a fact's `place` is dropped when it equals its `standard_place`.
-- Kept: person ids, source ids, source `url`s and titles, the `ark`, and the refs of every relationship.
+- No fact (person or couple) or name carries `id`; a fact's `place` is dropped when it equals its `standard_place`, and its `date` when it has a `standard_date`.
+- No person carries `ark` (the id names it), `living` is omitted when `false`, and `names[0]` carries neither `preferred` nor `type`. The "Dropped N relationship(s) whose endpoints are not in persons[]" note is not returned (the note that the requested person's own parent was dropped stays).
+- Memories are a title and links (`url`, `artifact_url`): no `text`, no `image_ref`, and no transcription is attempted, so the read does not wait on OCR. `image_transcribe` (`memoryArtifactUrl`) reads one.
+- Kept: person ids, source ids, source `url`s and titles, and the refs of the subject's relationships.
+- An answer still over `MODEL_ANSWER_BUDGET` (40,000 characters) after the above loses the facts of the subject's children and siblings, and then the siblings and their relationships. About 6 of 119 hosted calls were over 40k before this bound.
 
-`project_create` is unaffected: it calls `readPerson` without `relativeSources: false` (default `true`), so the starting tree still imports the relatives' sources with citations and ids. Tallman's trimmed answer is ~38k characters (pinned under 40,000 by a test over the captured fixture).
+`project_create` is unaffected: it calls `readPerson` without `relativeSources: false` (default `true`), so the starting tree still imports the relatives' sources with citations and ids. `project_create` also still transcribes memories (`memoryText` defaults to `true`) and imports every relationship's sources. Tallman's trimmed answer is pinned under 25,000 characters by a test over the captured fixture; a synthetic family that trips the size bound is pinned under 40,000.
 
 **Both reads are always on (lead ruling, 2026-09-27).** The
 `relatives` and `sourceDescriptions` inputs are still accepted, so a prompt that
@@ -51,7 +55,7 @@ etc.) and is out of scope for v1.
 | `personId` | string | **Yes** | FamilySearch person ID (e.g., `"KNDX-MKG"`). |
 | `relatives` | boolean | No | Accepted and ignored: relatives are always read. |
 | `sourceDescriptions` | boolean | No | Accepted and ignored: attached sources, and a non-living subject's memories, are always read. |
-| `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`, **and the read itself is staged** under `results/.staging/` and its handle returned as `staged` (see "Staging the read" below). A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept and nothing is staged. An empty value is treated as absent. A whitespace-only value stages nothing, but the retention half still forwards it as a path. |
+| `projectPath` | string | No | Absolute project-folder path. When set, **the read itself is staged** under `results/.staging/` and its handle returned as `staged` (see "Staging the read" below). A path is not a mode flag, so decision 1's "no third flag" does not reach it. Nothing is staged without it. An empty or whitespace-only value is treated as absent. `person_read` transcribes no memory, so nothing is retained under `images/`; `project_create`'s own read, which does, passes the path to `readPerson`. |
 
 Examples:
 
@@ -83,9 +87,10 @@ plus one conditional key:
 { "notes": ["Dropped 1 relationship(s) whose endpoints are not in persons[] (1 ParentChild). ..."] }
 ```
 
-`notes[]` is present **only** when something was silently dropped, and is absent
-entirely otherwise — so a caller that never triggers one sees the three-key shape
-above unchanged. It exists because endpoint closure (below) replaced a loud
+`notes[]` is present **only** when something was silently dropped or when
+`projectPath` is absent (the routing rule below), and is absent entirely
+otherwise — so a caller that passes a project and triggers no drop sees the
+three-key shape above unchanged. It exists because endpoint closure (below) replaced a loud
 `project_create` refusal with a quiet partial loss: a dropped edge to a distant
 relative costs a hint, but a dropped edge to the **subject's own parent** costs
 the answer to what the caller asked, and that case gets its own line. Counts and
@@ -100,6 +105,10 @@ They are serialized **first**, ahead of `persons[]`: a well-sourced read is larg
 than the client accepts from one tool call, and the model then sees only a preview
 of the head of the text, so a `staged` written last fell outside it and the agent
 could not pass the ref on. `server.ts` keeps insertion order.
+
+When `projectPath` is **absent**, the tool appends one entry to `notes[]`: "While
+no project exists yet, a request about a named FamilySearch person starts a
+project first, through the research skill." It follows any drop notes.
 
 - `persons[]` is always present (at minimum, the requested person)
 - `relationships[]` and `sources[]` are always present; an empty array means
@@ -141,11 +150,11 @@ Each person object:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | FamilySearch person ID (e.g., `"KNDX-MKG"`) |
-| `ark` | string | no | Canonical persistent ARK for the tree person (e.g., `"ark:/61903/4:1:KNDX-MKG"`). Lifted from the raw `identifiers["http://gedcomx.org/Persistent"][0]` resolver URL and normalized by `toArk`. Present on every person FamilySearch returns a Persistent identifier for — in practice all of them; omitted entirely when it supplies none |
+| `ark` | string | no | **Absent from `person_read`'s answer** (the id names the person). In `project_create`'s read: canonical persistent ARK for the tree person (e.g., `"ark:/61903/4:1:KNDX-MKG"`). Lifted from the raw `identifiers["http://gedcomx.org/Persistent"][0]` resolver URL and normalized by `toArk`. Present on every person FamilySearch returns a Persistent identifier for — in practice all of them; omitted entirely when it supplies none |
 | `gender` | string | yes | `"Male"`, `"Female"`, or `"Unknown"` |
-| `living` | boolean | yes | Whether the person is marked as living |
+| `living` | boolean | yes | Whether the person is marked as living. `person_read`'s answer omits it when `false`, so absent means not living; `project_create`'s read always carries it |
 | `names` | object[] | yes | Every name FamilySearch holds for the person, preferred-first (see "Names" below). At least one — a person FS returns with no name at all gets a single `{ given: "", surname: "" }` placeholder |
-| `facts` | object[] | no | Life facts (birth, death, etc.). Omitted for living persons with no data. |
+| `facts` | object[] | no | Life facts (birth, death, etc.). Omitted for living persons with no data. A relative's facts in `person_read`'s answer are only Birth, Death, Christening, Burial and Baptism. |
 | `sources` | object[] | no | **On `persons[0]` only in `person_read`'s answer** (relatives carry none; `project_create`'s own read keeps every person's). The sources FamilySearch attached to this person, as `{ ref, page?, quality? }` refs whose `ref` is an id in this response's `sources[]`. FamilySearch attributes sources at the person level, on relationships (below), and essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons, 0 of 157 facts, 0 of 31 names). Its `tags` and attribution metadata are not carried. **Only refs that resolve in `sources[]` are kept**, and the key is omitted when none do: the subject's refs are `#<id>` fragments that all resolve, while a relative's refs are mostly full URLs to descriptions FamilySearch does not send in this body (probe, 2026-09-30: 0 of 102 and 2 of 79 resolved), and a `SD_*` target is filtered out of `sources[]`. A dangling ref would make `project_create` refuse the whole tree. **Relatives' own sources are carried by `readPerson`'s default read, not by `person_read`'s answer**: the ref is rewritten to `descriptionId`, the bare id FamilySearch sends beside the URL (present on 102/102 and 77/77 URL refs, and equal to the URL's last segment in every one — `dev/probe-relative-sources.json`), and a second per-person read supplies the description so the ref resolves. |
 
 **Names:**
@@ -153,10 +162,10 @@ Each person object:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | no | Name id, passed through when FamilySearch supplies one (`simplifyName`). Absent otherwise. Dropped from `person_read`'s answer |
-| `preferred` | boolean | no | `true` on the name FamilySearch marks preferred, and **only** that name. Present-or-absent, never `false` — the schema pins it to `const: true`, so an unpreferred name omits the key rather than carrying `preferred: false` |
+| `preferred` | boolean | no | `true` on the name FamilySearch marks preferred, and **only** that name; dropped from `names[0]` in `person_read`'s answer, where the first name is the preferred one by position. Present-or-absent, never `false` — the schema pins it to `const: true`, so an unpreferred name omits the key rather than carrying `preferred: false` |
 | `given` | string | yes | Given name(s) (e.g., `"George"`) |
 | `surname` | string | yes | Surname (e.g., `"Washington"`) |
-| `type` | string | no | Name type, URI-stripped (e.g., `"BirthName"`, `"MarriedName"`, `"AlsoKnownAs"`, `"Nickname"`). An **open** enum (`gedcomx_name_type_recommended`) — treat unrecognized values as data, not as errors. Absent when FS supplies no type |
+| `type` | string | no | Name type (dropped from `names[0]` in `person_read`'s answer), URI-stripped (e.g., `"BirthName"`, `"MarriedName"`, `"AlsoKnownAs"`, `"Nickname"`). An **open** enum (`gedcomx_name_type_recommended`) — treat unrecognized values as data, not as errors. Absent when FS supplies no type |
 | `prefix` | string | no | Name prefix (e.g., `"Dr."`, `"Reverend"`) |
 | `suffix` | string | no | Name suffix (e.g., `"Jr."`, `"III"`, `"Esq."`) |
 
@@ -166,7 +175,7 @@ Each person object:
 |-------|------|----------|-------------|
 | `id` | string | no | Fact id, passed through when FamilySearch supplies one (`simplifyFact`). Absent otherwise — the caller mints one before persisting. Dropped from `person_read`'s answer |
 | `type` | string | yes | Fact type — last segment of the GEDCOMX URI (e.g., `"Birth"`, `"Death"`, `"MilitaryService"`) |
-| `date` | string | no | Date string as entered (from `date.original`) |
+| `date` | string | no | Date string as entered (from `date.original`). Dropped from `person_read`'s answer when `standard_date` is present |
 | `standard_date` | string | no | Canonical GEDCOM-form sidecar for `date`, from `stdDate` (e.g., `"Abt 1845"`, `"12 Mar 1908"`). Omitted only when `stdDate` cannot parse the input |
 | `place` | string | no | Place string as entered (from `place.original`). Dropped from `person_read`'s answer when identical to `standard_place` |
 | `standard_place` | string | no | Standardized place-name sidecar for `place`: from the raw GedcomX `place.normalized` when present, otherwise filled by the document-level resolver pass (`toSimplifiedStandardized`). Best-effort — omitted when the resolver cannot match the free-text place |
@@ -207,8 +216,8 @@ Always present. Each source object:
 | `citation` | string | no | Formatted citation string. In `person_read`'s answer only on a source with no `1:1:` ARK in its `url` (`record_read` returns the rest); present everywhere in `project_create`'s own read |
 | `url` | string | no | URL to the source (ark URL or external URL) |
 | `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Also carries the tool's own note when a memory was not transcribed (see below). Omit when empty. |
-| `text` | string | no | A memory's text: a story's own words, or OCR of a scan. Absent for an ordinary tree source, and absent for a memory that was not transcribed. |
-| `image_ref` | string | no | Project-relative path (`images/<key>.jpg`) of a retained memory scan. Present only when `projectPath` was supplied and the save succeeded. |
+| `text` | string | no | A memory's text: a story's own words, or OCR of a scan. **Never in `person_read`'s answer**; only `project_create`'s read carries it. Absent for an ordinary tree source, and absent for a memory that was not transcribed. |
+| `image_ref` | string | no | Project-relative path (`images/<key>.jpg`) of a retained memory scan. Present only in `project_create`'s read, when a project path was supplied and the save succeeded; never in `person_read`'s answer. |
 | `artifact_url` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe` accepts as `memoryArtifactUrl`, and it also accepts `url`, the human `/memories/<id>` page, resolving it to this value first. `image_read` takes neither: `server.ts`'s unknown-argument guard refuses `memoryArtifactUrl` there. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
 
 #### Memories are merged into `sources[]`
@@ -239,7 +248,9 @@ are coupled to sources (lead, 2026-09-27: "coupled everywhere"), and sources are
 always read, so the memories leg runs whenever the subject is not living. It is
 never run for relatives.
 
-**Transcription (decisions 3 and 4).** Every memory the filter keeps is
+**`person_read` returns no memory text (lead, 2026-11-09).** A memory comes back as a title and links, `url` and `artifact_url`: `readPerson`'s `memoryText: false` skips the phase below, so the answer carries no `text`, no `image_ref` and no "not transcribed" note, and the read no longer waits on OCR. An agent that needs one memory calls `image_transcribe` with its `artifact_url`. The rest of this section is what `project_create`'s read does (`memoryText` defaults to `true`), and so what reaches `research.json` `sources[].transcription`.
+
+**Transcription (decisions 3 and 4), `project_create`'s read.** Every memory the filter keeps is
 transcribed inside the read: a story's full text is fetched from its artifact,
 and a scan or PDF is OCR'd through the same `image_transcribe` path. Both land
 in `text`, so nothing downstream branches on how the text was obtained, and
@@ -349,10 +360,15 @@ fetched for the id the redirect landed on, not the id the caller passed.
   description: "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the subject (`persons[0]`) and to the relationships, each linked from the subject's or a relationship's own `sources` refs. Relatives carry no sources, and a source with a record link carries a title and link but no citation — `record_read` returns the citation. For a " +
-    "non-living subject it also returns source-style memories (scanned " +
-    "wills, certificates, obituaries), transcribed where the " +
-    "read's time budget allowed. " +
+    "to the subject (`persons[0]`) and to the relationships that name the " +
+    "subject, each linked from those `sources` refs. Relatives carry only " +
+    "names and birth, christening, baptism, death and burial facts, and no " +
+    "sources; marriages are on the Couple relationships. A source with a " +
+    "record link carries a title and link but no citation — `record_read` " +
+    "returns the citation. For a non-living subject it also returns " +
+    "source-style memories (scanned wills, certificates, obituaries) as a " +
+    "title and links (`url`, `artifact_url`) with no text: `image_transcribe` " +
+    "(memoryArtifactUrl) reads one. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -367,16 +383,13 @@ fetched for the id the redirect landed on, not the id the caller passed.
       },
       sourceDescriptions: {
         type: "boolean",
-        description: "Ignored: the subject's and the relationships' attached sources are always returned; relatives' own are not."
+        description: "Ignored: the subject's and the relationships' attached sources are always returned, on the relationships that name the subject; relatives' own are not."
       },
       projectPath: {
         type: "string",
         description:
-          "Optional absolute path to the project folder. When set, any memory " +
-          "scan transcribed during this read is saved under images/ and its " +
-          "project-relative path returned on that source as image_ref, so a " +
-          "retained source can cite it. Without it the scan is transcribed but " +
-          "not kept. The read itself is also staged, returned as `staged`."
+          "Optional absolute path to the project folder. When set, the read is " +
+          "staged there, returned as `staged`."
       }
     },
     required: ["personId"]
