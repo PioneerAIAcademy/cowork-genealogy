@@ -161,7 +161,7 @@
 import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
-import { imageSearchTool } from "../src/tools/image-search.js";
+import { listGroupImageIds } from "../src/tools/image-search.js";
 import { volumeSearchTool } from "../src/tools/volume-search.js";
 import { fsFetch } from "../src/utils/fs-fetch.js";
 
@@ -806,7 +806,7 @@ async function sectionB(): Promise<void> {
 
 async function sectionC(): Promise<void> {
   console.log("\n==== SECTION C - Q3: Image K is the K-th sorted child ====\n");
-  const { imageIds } = await imageSearchTool({ imageGroupNumber: ITEM_5_GROUP }, LOCAL);
+  const imageIds = await listGroupImageIds(ITEM_5_GROUP, LOCAL);
   console.log(
     `  ${ITEM_5_GROUP}: ${imageIds.length} images ${imageIds[0]}..${imageIds[imageIds.length - 1]}`,
   );
@@ -867,8 +867,8 @@ async function sectionC(): Promise<void> {
       if (first !== prevLast + 1) problems.push(`#${i}->#${i + 1}: ${prevLast} then ${first}`);
     }
     // The groups must also start at the film's first image and end at its last,
-    // as image_search lists the whole film on the bare DGS.
-    const whole = (await imageSearchTool({ imageGroupNumber: dgs }, LOCAL)).imageIds;
+    // as listGroupImageIds lists the whole film on the bare DGS.
+    const whole = await listGroupImageIds(dgs, LOCAL);
     const firstImage = children[0].images[0];
     const lastGroup = children[children.length - 1];
     const lastImage = lastGroup.images[lastGroup.images.length - 1];
