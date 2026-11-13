@@ -109,9 +109,12 @@ classifications are not yours to send.
   its own `names` entry, the one it shows first first. The tie is a relationship
   or a `statedRelation`.
 - **Names.** Set `type` only where the text says whose surname it is:
-  - `Mary (Johnson) Smith`, `Mary Smith nee Johnson`, `née Johnson`: Johnson
-    `birth`, Smith `married`. A surname the text gives her father is `birth`; one
-    it gives a husband it names is `married`.
+  - `Mary (Johnson) Smith`, `Mary Smith nee Johnson`, `née Johnson`: both names
+    typed, `names: [{ given: "Mary", surname: "Smith", type: "married" },
+    { given: "Mary", surname: "Johnson", type: "birth" }]`. Smith is `married`
+    whether or not the text names her husband.
+  - Elsewhere, a surname the text gives her father is `birth`, and one it gives
+    her husband is `married`.
   - `Mrs. Thomas Flynn` is her own person, `names: [{ surname: "Flynn", type:
     "married" }]` with no given name, and a `couple` to Thomas Flynn.
   - A bracket ending a name (`Julia Rose (Hart)`, `Ann Hart (Cole)`), or several
