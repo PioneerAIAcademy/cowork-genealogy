@@ -177,10 +177,10 @@ otherwise. Do not begin Step 2 until both have returned or failed.
 ## 2. Assess the 7-Point Stop Criteria
 
 **This is the gate.** Assess the seven in the order below. **The verdict stops
-at the first that fails — name it.** Each assessment is 1-2 sentences tied to
-project state: what was met, what failed, and what the evidence could not reach.
-Where a criterion turns on whether a civil registration record could exist for
-this event, state the start date Step 1 read and the page it came from;
+at the first that fails — name it. The assessment does not:** assess all seven
+either way, each 1-2 sentences tied to project state: what was met, what
+failed, and what the evidence could not reach. Where a criterion turns on
+whether a civil registration record could exist for this event, state the start date Step 1 read and the page it came from;
 "registration had not begun" is an assessment only when it rests on that fetched
 date. Declaring requires all seven met, written only in the call's arguments. A
 decline names the blocking criterion and its assessment in `justification`.
