@@ -221,3 +221,44 @@ describe("findRecordedScore: the persona arm (#3552)", () => {
     expect(findRecordedScore(file({ record_role: "father" }), "a_006", "I1", p1)).toBeNull();
   });
 });
+
+describe("findRecordedScore: the role party of a record with no persona ids (#3552)", () => {
+  // A capture: the projection scored the principal, filing no persona id.
+  const file = (over: Partial<RecordedMatchScore> = {}) => ({
+    record_id: ARK,
+    scores: {
+      [scoreKey("a_005", "I1")]: score({
+        record_persona_id: null, record_role: "principal", record_source: "projection", party_resolved: true, ...over,
+      }),
+    },
+  });
+  const principal = { personaId: null, roles: new Set(["principal"]) };
+
+  it("answers another fact of the scored role, against the same tree person", () => {
+    expect(findRecordedScore(file(), "a_006", "I1", principal)?.score).toBe(0.87);
+  });
+
+  it("does not answer for another role of the record", () => {
+    expect(findRecordedScore(file(), "a_006", "I1", { personaId: null, roles: new Set(["father"]) })).toBeNull();
+  });
+
+  it("does not answer for another tree person", () => {
+    expect(findRecordedScore(file(), "a_006", "I2", principal)).toBeNull();
+  });
+
+  it("does not answer from a fetched score, whose party the assertions do not name", () => {
+    expect(findRecordedScore(file({ record_source: "record_read" }), "a_006", "I1", principal)).toBeNull();
+  });
+
+  it("does not answer from a score that compared a named persona", () => {
+    expect(findRecordedScore(file({ record_persona_id: "P1" }), "a_006", "I1", principal)).toBeNull();
+  });
+
+  it("does not answer from an entry written before the party was resolved", () => {
+    expect(findRecordedScore(file({ party_resolved: undefined }), "a_006", "I1", principal)).toBeNull();
+  });
+
+  it("does not let a persona lookup take a persona-less score", () => {
+    expect(findRecordedScore(file(), "a_006", "I1", { personaId: "P1", roles: new Set(["principal"]) })).toBeNull();
+  });
+});

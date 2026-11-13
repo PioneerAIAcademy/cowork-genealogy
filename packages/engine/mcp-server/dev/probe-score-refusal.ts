@@ -95,8 +95,10 @@ async function main(): Promise<void> {
   r = await researchAppend({ projectPath: dir, section: "person_evidence",
     op: "update", entryId: peId, fields: { match_score: 0.995 } } as any);
   console.log(`  update score onto circular   -> ${r.ok ? "ACCEPTED (bypass)" : "REFUSED"}`);
+  const a1: any = await researchAppend(link(dir, "I9", null) as any);
+  const replacementId = a1.ok ? (a1.entry?.id ?? a1.results?.[0]?.entryId) : undefined;
   r = await researchAppend({ projectPath: dir, section: "person_evidence",
-    op: "update", entryId: peId, fields: { superseded_by: "pe_002" } } as any);
+    op: "update", entryId: peId, fields: { superseded_by: replacementId } } as any);
   console.log(`  update superseded_by only    -> ${r.ok ? "ACCEPTED" : "REFUSED (regression)"}`);
 
   // --- #3552: one score per record persona -----------------------------------
