@@ -83,7 +83,7 @@ import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
-import { arkToBareId, toArk } from "../utils/ark.js";
+import { arkToBareId, findDocumentImageArk, toArk } from "../utils/ark.js";
 import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
@@ -5621,6 +5621,69 @@ export async function mergeLinkCheckRefusals(
       "score for the survivor, or have person-evidence lower the link or name its move_bridge. If the record " +
       "does not belong to the survivor, do not merge.",
   ];
+}
+
+/** Whether a source stores evidence that its record was examined, not read from
+ *  an index (lead ruling 2026-09-02, issue #2475 row #1824): a transcription, a
+ *  stored image, or a FamilySearch document-image ARK in `url`. `image_ark` is NOT
+ *  evidence: the extractor stamps it on every index read whose GedcomX names a
+ *  page, and `waitingPages` reads it without a transcription as a page not yet read. */
+function hasOriginalEvidence(source: any): boolean {
+  const filled = (v: unknown) => typeof v === "string" && v.trim() !== "";
+  return (
+    filled(source?.transcription) ||
+    filled(source?.image_filename) ||
+    findDocumentImageArk(typeof source?.url === "string" ? source.url : "") !== undefined
+  );
+}
+
+/** A batch that is the absence browse (`extraction_append`'s `absences[]`): at
+ *  least one assertion append, every one `record_role: "absent"`. Its source may be
+ *  `original` with no stored image (genealogist ruling 2026-09-30). A caller cannot
+ *  produce it: `researchAppendFromCaller` refuses assertion appends. */
+function isAbsenceBatch(ops: ResearchAppendOp[]): boolean {
+  const appends = ops.filter((o) => o?.section === "assertions" && o.op === "append");
+  return appends.length > 0 && appends.every((o) => (o as any).entry?.record_role === "absent");
+}
+
+/** Refusals for sources this call leaves `original` without evidence. Judged on the
+ *  call's end state against the stored entry: a source that becomes `original`
+ *  here, or an `original` that had evidence and loses it. An `original` that never
+ *  had evidence (written before this rule) stays writable. */
+function originalWithoutEvidenceRefusals(
+  before: any,
+  after: any,
+  ops: ResearchAppendOp[],
+  applied: AppliedOp[],
+): { opIndex: number; message: string }[] {
+  if (isAbsenceBatch(ops)) return [];
+  const beforeById = new Map<string, any>(
+    (Array.isArray(before?.sources) ? before.sources : []).map((s: any) => [s?.id, s]),
+  );
+  const afterById = new Map<string, any>(
+    (Array.isArray(after?.sources) ? after.sources : []).map((s: any) => [s?.id, s]),
+  );
+  const out: { opIndex: number; message: string }[] = [];
+  const seen = new Set<string>();
+  for (const a of applied) {
+    if (a.section !== "sources" || a.noop || seen.has(a.entryId)) continue;
+    seen.add(a.entryId);
+    const now = afterById.get(a.entryId);
+    if (now?.source_classification !== "original" || hasOriginalEvidence(now)) continue;
+    const was = beforeById.get(a.entryId);
+    const becameOriginal = was?.source_classification !== "original";
+    const lostEvidence = !becameOriginal && hasOriginalEvidence(was);
+    if (!becameOriginal && !lostEvidence) continue;
+    out.push({
+      opIndex: a.opIndex,
+      message:
+        `source '${a.entryId}' is classified original but stores no evidence that the record itself ` +
+        `was examined. original needs a non-empty transcription, a non-empty image_filename, or a ` +
+        `FamilySearch image ARK (ark:/61903/3:1:… or 3:2:…) in url. A 1:1 ARK is an index entry, ` +
+        `someone else's transcription of the record, so a source read from one is derivative.`,
+    });
+  }
+  return out;
 }
 
 /** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
@@ -11203,6 +11266,12 @@ async function prepareOps(
           const fields: Record<string, unknown> = { ...srcEntry };
           delete fields.id;
           delete fields.gedcomx_source_description_id;
+          // The source keeps the first acquisition's log id: it answers "when did
+          // we first acquire this record?" (lead, 2026-09-02, issue #2475 row
+          // #1824). One with none still gains this call's.
+          if (typeof sameRepo.log_entry_id === "string" && sameRepo.log_entry_id !== "") {
+            delete fields.log_entry_id;
+          }
           ops[sourcesAppendIdx[0]] = { section: "sources", op: "update", entryId: sameRepo.id, fields };
           // The step-3 auto-stamp requires a sources APPEND, which no longer
           // exists — stamp the batch's assertions with the existing id here.
@@ -12716,6 +12785,10 @@ export async function researchAppend(
       }
     }
 
+    const originalRefusals = originalWithoutEvidenceRefusals(beforeResearch, research, ops, applied);
+    if (originalRefusals.length > 0) {
+      return fail(originalRefusals.map((r) => fmt(r.opIndex, r.message)));
+    }
 
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.

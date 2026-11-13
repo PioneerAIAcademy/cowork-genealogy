@@ -150,7 +150,7 @@ const validSource = (id: string) => ({
   gedcomx_source_description_id: "SD-001",
   citation: "1850 U.S. Census, Schuylkill County, PA",
   citation_detail: citationDetail,
-  source_classification: "original",
+  source_classification: "derivative",
   repository: "NARA",
   access_date: "2026-01-01",
 });
@@ -12418,6 +12418,161 @@ describe("research_append (composite persist + enforcement)", () => {
     if (!r.ok || !("results" in r)) return;
     expect(r.sourceReuse?.action).toBe("updated_existing");
     expect(r.sourceReuse?.srcId).toBe("src_001");
+  });
+
+  // ── #2475 row #1824: reuse keeps the first acquisition's log id ──
+
+  it("updated_existing keeps the source's first log_entry_id, and a source with none gains one", async () => {
+    const twoLogs = () => {
+      const research = baseResearch();
+      research.log = [searchLogEntry(null), { ...searchLogEntry(null), id: "log_002" }] as any;
+      return research;
+    };
+    const withFirst = twoLogs();
+    (withFirst.sources[0] as any).log_entry_id = "log_001";
+    await writeProject(withFirst);
+    const reuse = () =>
+      researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: reuseSourceOp("NARA", { log_entry_id: "log_002" }) },
+          { section: "assertions", op: "append", entry: reuseAssertionOp("rec1", "death") },
+        ],
+      });
+    let r = await reuse();
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (r.ok && "results" in r) expect(r.sourceReuse?.action).toBe("updated_existing");
+    expect((await readResearch()).sources[0].log_entry_id).toBe("log_001");
+
+    await writeProject(twoLogs());
+    r = await reuse();
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await readResearch()).sources[0].log_entry_id).toBe("log_002");
+  });
+
+  // ── #2475 row #1824: `original` needs stored evidence (lead, 2026-09-02) ──
+
+  describe("original needs stored evidence (#2475 row #1824)", () => {
+    const INDEX_URL = "https://www.familysearch.org/ark:/61903/1:1:MDEF-123";
+    const originalSource = (extra: Record<string, unknown> = {}) => ({
+      ...sourceOpNoRef(),
+      gedcomx_source_description_id: "SD-001",
+      source_classification: "original",
+      url: INDEX_URL,
+      ...extra,
+    });
+    const callerAppend = (entry: Record<string, unknown>) =>
+      researchAppendFromCaller({ projectPath: dir, section: "sources", op: "append", entry } as any, null);
+    const callerUpdate = (entryId: string, fields: Record<string, unknown>) =>
+      researchAppendFromCaller({ projectPath: dir, section: "sources", op: "update", entryId, fields } as any, null);
+
+    it("refuses a caller's original source on a 1:1 index ARK, and writes nothing", async () => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await callerAppend(originalSource());
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/1:1 ARK is an index entry/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("refuses a lone original source with no url and no assertions in the call", async () => {
+      await writeProject();
+      const { url: _u, ...noUrl } = originalSource();
+      const r = await callerAppend(noUrl);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    it("accepts original with a transcription, a stored image, or a 3:1/3:2 image ARK in url", async () => {
+      for (const extra of [
+        { transcription: "Patrick Flynn, died 12 March 1908" },
+        { image_filename: "images/004022578_00190.jpg" },
+        { url: "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSHN-9L9X" },
+        { url: "https://www.familysearch.org/ark:/61903/3:2:77TF-QRP9" },
+      ]) {
+        await writeProject();
+        const r = await callerAppend(originalSource(extra));
+        expect(r.ok, `${JSON.stringify(extra)}: ${JSON.stringify(r)}`).toBe(true);
+      }
+    });
+
+    it("does not count image_ark as evidence: the extractor stamps it on every index read", async () => {
+      await writeProject();
+      const r = await callerAppend(originalSource({ image_ark: "ark:/61903/3:1:3Q9M-CSHN-9L9X" }));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    it("refuses upgrading a derivative to original without evidence, and accepts it when the same update adds a transcription", async () => {
+      await writeProject();
+      let r = await callerUpdate("src_001", { source_classification: "original" });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/source 'src_001' is classified original/);
+      r = await callerUpdate("src_001", { source_classification: "original", transcription: "the page, read" });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readResearch()).sources[0].source_classification).toBe("original");
+    });
+
+    it("leaves a legacy original with no evidence writable", async () => {
+      const research = baseResearch();
+      (research.sources[0] as any).source_classification = "original";
+      await writeProject(research);
+      const r = await callerUpdate("src_001", { notes: "re-checked" });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+
+    it("refuses an update that strips the only evidence from an original", async () => {
+      const research = baseResearch();
+      Object.assign(research.sources[0] as any, {
+        source_classification: "original",
+        url: "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSHN-9L9X",
+      });
+      await writeProject(research);
+      const r = await callerUpdate("src_001", { url: INDEX_URL });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    const absentAssertion = (role = "absent") => ({
+      ...noId(validAssertion("x")),
+      source_id: undefined,
+      record_id: "1850-census-schuylkill",
+      record_role: role,
+      informant_proximity: "researcher",
+      record_basis: "absent",
+      log_entry_id: "log_001",
+    });
+
+    it("exempts the absence browse: a batch whose assertions are all absent may write original with no image", async () => {
+      await writeProject(sidecarResearch());
+      const { url: _u, ...noUrl } = originalSource();
+      const { source_id: _s, ...absent } = absentAssertion();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: noUrl },
+          { section: "assertions", op: "append", entry: absent },
+        ],
+      });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+
+    it("does not exempt a batch with a non-absent assertion", async () => {
+      await writeProject(sidecarResearch());
+      const { url: _u, ...noUrl } = originalSource();
+      const { source_id: _s, ...absent } = absentAssertion();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: noUrl },
+          { section: "assertions", op: "append", entry: absent },
+          { section: "assertions", op: "append", entry: reuseAssertionOp("rec-new") },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
   });
 
   it("new_source_reused_s: same record_id, different repository → new src_ citing the existing S; no S created", async () => {
