@@ -60,6 +60,11 @@ DORMANT: dict[str, str] = {
         "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4425 "
         "restores it"
     ),
+    "score-variant": (
+        "its only test, ut_person_evidence_013, was deleted again by PR #4556: it "
+        "still treats a low same_person score as a veto in 5 of 6 runs on Sonnet 5 "
+        "medium after the body clause was narrowed; issue #4478 restores it"
+    ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "
