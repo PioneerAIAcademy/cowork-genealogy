@@ -329,7 +329,8 @@ catalog_search({ standardPlace: "<standardPlace>" })
 
 Keep a hit whose title, creator or `filmNotes` name that parish's church books and
 cover the register type and year. For a kept hit, step 4 gets one sentence, after
-the `---`, naming its title and the `filmNumber` of the film note covering the year:
+the `---`, starting `FamilySearch has filmed this register: "<title>", film <filmNumber>`,
+with the `filmNumber` of the film note covering the year, then:
 - `availableOnline: false` → viewable only at a FamilySearch Center or an affiliate
   library. Never offer to read it.
 - `availableOnline: true` → offer to read it, and put the film note's
