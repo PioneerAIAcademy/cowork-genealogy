@@ -121,12 +121,11 @@ export interface PersonQualityInput {
   projectPath?: string;
 }
 
-// One rendered issue. The sentence is the primary payload; conclusionType +
-// conclusionId make it traceable to the exact fact; scoreType groups it.
+// One rendered issue. The sentence is the primary payload; conclusionType names
+// the fact; scoreType groups it.
 export interface QualityIssueOut {
   sentence: string;
   conclusionType?: string;
-  conclusionId?: string;
   scoreType?: string;
 }
 
@@ -137,38 +136,17 @@ export interface QualityCategoryOut {
   score: number | null;
 }
 
-// One attached source as it bears on a single fact.
-export interface QualityFactSourceOut {
-  title: string | null;
-  uri: string | null;
-  agrees: boolean | null;
-}
-
-// One of the person's conclusions (facts), with what drags it down and which
-// attached sources touch it. `issues` holds rendered sentences, not raw ids:
-// upstream gives `affectingIssueIds`, which join onto `FSQualityIssue.id`, and
-// that id is not part of this tool's issue output — so a passthrough would hand
-// the caller ids that join to nothing.
-export interface QualityFactOut {
-  conclusionId: string | null;
-  conclusionType: string | null;
-  relationshipId?: string;
-  score: number | null;
-  issues: string[];
-  sources: QualityFactSourceOut[];
-}
-
 // Two or more attached sources disagreeing about one field, after the pairwise
 // upstream list is grouped by (field name, value set).
 export interface QualityConflictOut {
   field: string;
   values: string[];
-  sources: QualityFactSourceOut[];
+  /** Each source's link: `person_read`'s `url` for it. */
+  sources: string[];
 }
 
 // Present only when the caller passes `detail: true`.
 export interface PersonQualityDetail {
-  facts: QualityFactOut[];
   conflicts: QualityConflictOut[];
 }
 

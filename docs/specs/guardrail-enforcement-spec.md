@@ -178,7 +178,7 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | — | Step boundary (`step_allowed`, `StepGate`) | **prototype worker and both eval harnesses only — NOT Cowork, NOT the hosted alpha** | a second step spawned inside one turn: the turn runs one step, reports it, and ends. The exception is a turn init-project opens, which the step after it groups, so a bounded first message runs its deliverable there. Ships in `packages/engine/plugin/hooks/step_boundary.py` as a **library** loaded with `importlib`, not as a registered plugin hook, so there is no `hooks.json` entry, no matcher-coverage case and no `make hook-smoke` arm. Cowork runs on router prose alone (decision 25, lead 2026-10-21): the cost exposure is the prototype, and a Cowork researcher can press stop. Rider 2's halt rate on the prototype is what would buy the hook later, with numbers rather than a guess | **enforcing on the prototype; absent in Cowork by decision** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
-| §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score. Exempt by tool identity: `extraction_append({ personId })`'s unchecked attachment links (`speculative`, no score, `ATTACHMENT_LINK_RATIONALE`), on an internal flag no caller reaches (lead, 2026-10-19) | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold, then by the persona arm: when the assertion carries a verified `record_persona_id` its record gives one role and names no second person, a `party_resolved` score that compared that persona with the same tree person, under a role the record gives it, answers for every such fact of that persona. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null; that case still falls to the exact key. ADR-0009 constraint 3 holds because the persona arm needs the persona to match, so a second persona of a linked record needs its own score, and the tree person keeps the two links of a relationship assertion apart |
+| §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score. Exempt by tool identity: `extraction_append({ personId })`'s unchecked attachment links (`speculative`, no score, `ATTACHMENT_LINK_RATIONALE`), on an internal flag no caller reaches (lead, 2026-10-19) | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold, then by the persona arm: when the assertion carries a verified `record_persona_id` its record gives one role, a `party_resolved` score that compared that persona with the same tree person, under a role the record gives it, answers for every such fact of that persona. On a record whose live assertions carry no persona id, the party is the `record_role`, and a projected score that filed no persona id answers for every fact of that role that `same_person` would also project rather than fetch (`readsAsFetched`). A fact that names a second person shares its party's score only when another link ties a one-party fact of that party, and none of another party of the record, to the same tree person. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null; that case still falls to the exact key. ADR-0009 constraint 3 holds because the persona arm needs the persona to match, so a second persona of a linked record needs its own score, and the tree person keeps the two links of a relationship assertion apart |
 | §5 | An attachment link is only ever superseded | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` update of an attachment link (`isAttachmentLink`), live or retired, that sets anything but `superseded_by`: raising one in place would skip `same_person`, since the score gate checks an update only when it writes `match_score`, `assertion_id` or `person_id` | **enforcing** (since 2026-10-20; refuses 0 committed links, none carries the rationale yet) |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 | §6 | Section ownership by caller (`namesakes`) | plugin hook — Cowork, hosted, wherever the plugin loads; and both harnesses, which call the shipped predicate | a `namesakes` write from anything but the `search-records` agent and its two co-writers, `search-images` and `search-full-text` (`SECTION_CO_WRITERS`), in either the single-op or `ops[]` form, on append **and** update. A deny names `search-records` only. `merge_tree_persons` re-keys rows by tool identity and never reaches the hook | **enforcing** (since this change; unproven against a real Cowork payload). Writes nothing in a committed run yet: no committed document carries the section |
@@ -1071,6 +1071,45 @@ or changes `date_window` on a question that already has plans is not judged; onl
 plan writes are. Promoting the warning to a refusal needs the ADR-0011 limit-2
 inspection over real windowed plans, which do not exist yet; the first come from
 question-selection's eval run.
+
+### `original` needs stored evidence
+
+**Rule.** `research_append` refuses a call whose end state leaves a source
+`source_classification: "original"` without stored evidence that the record itself
+was examined: a non-empty `transcription`, a non-empty `image_filename`, or a
+FamilySearch document-image ARK (`3:1:` or `3:2:`, the one spelling in
+`utils/ark.ts`) in `url`. It fires on a source that becomes `original` in the call,
+and on an `original` that had evidence and loses it. A `1:1` ARK is an index entry,
+someone else's transcription, so it never qualifies, and there is no free-text
+escape. Lead ruling 2026-09-02.
+
+**Who it binds.** Every writer, judged on the documents and the call's own ops
+(ADR-0011). One batch shape is exempt: at least one assertion append, every one
+`record_role: "absent"`. That is `extraction_append`'s absence browse, which may
+write `original` for a page-by-page image browse with no stored image
+(genealogist ruling 2026-09-30). A caller cannot produce it, because
+`researchAppendFromCaller` refuses assertion appends.
+
+**What it does not count, and why.** `image_ark` is not evidence: it postdates the
+ruling (it was added 2026-11-05) and the extractor stamps it on every index read whose GedcomX names
+a page, while `waitingPages` reads it without a transcription as a page not yet
+read. An `original` that never had evidence, written before the rule, stays
+writable, so old projects are not locked.
+
+**Narrowings of the 2026-09-02 text, chosen on the facts of 2026-11-12.**
+- The upload half (store uploads and set `image_filename` so they can qualify) is
+  not built: the 2026-09-30 document-path ruling makes every document `derivative`
+  or `authored` ("Nothing on this path is `original`",
+  `research-append-tool-spec.md`), so storage to qualify an upload would enable
+  what the later ruling forbids.
+- `3:2:` counts as well as `3:1:`, because `ark.ts` defines both as document images.
+- The absence browse is exempt, as above.
+
+**Cost, measured.** The ruling accepted demoting about 199 of 232 `original`
+sources. Since 2026-10-16 the extractor writes `derivative` for every index read;
+across the 31 e2e runs from 2026-10-17 to 2026-11-12 there are 0 `original`
+sources in 152, so the gate refuses nothing in that corpus. It binds the upgrade
+the extractor's own comment names: a later, evidenced edit after reading the page.
 
 ### A completed plan item needs a log entry naming it
 
