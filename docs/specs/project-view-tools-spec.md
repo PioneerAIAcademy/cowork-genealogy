@@ -80,6 +80,7 @@ checks their types and echoes them, and selects nothing by them.
 |---|---|
 | `document` | Ignored. |
 | `results` | A log id, matching `^log_[a-zA-Z0-9_-]+$`. |
+| `recordSearch` | A record id: an ARK, the same on `https://www.familysearch.org/`, or its bare id, ending in capitals and digits in two or more hyphenated parts. |
 | `image` | An image ref, matching `^images/[A-Za-z0-9._-]+\.jpg$` (`IMAGE_REF_PATTERN`). |
 
 ### `projectPath`
@@ -102,7 +103,7 @@ rule: `A project's /proj_<16 hex> projectPath, from project_list. A call that na
 
 | Tool | `title` | `_meta` |
 |---|---|---|
-| `show_project` | `Show project` | `{ "ui": { "resourceUri": "ui://genealogy/viewer.html" }, "ui/resourceUri": "ui://genealogy/viewer.html" }` |
+| `show_project` | `Show project` | `{ "ui": { "resourceUri": <the page URI> }, "ui/resourceUri": <the page URI> }`, the URI under "The page resource" |
 | `read_project_view` | `Read project view` | `{ "ui": { "visibility": ["app"] } }` |
 
 `show_project` carries both keys because a host may read either.
@@ -122,7 +123,7 @@ rule: `A project's /proj_<16 hex> projectPath, from project_list. A call that na
       tree: object | null;           // tree.gedcomx.json
       startingTree: object | null;   // starting-tree.gedcomx.json
       collections: object | null;    // external-collections.json
-      derived: { folderName: string };
+      derived: Derived;              // below
       echo: object;                  // the call's arguments, projectPath included
     };
   };
@@ -139,6 +140,28 @@ reach the card only through `_meta`.
 | `collections` | The file is absent, unreadable or not its shape. It is background reading, so a bad file does not cost the card. |
 
 `research` is never `null`: a project with no `research.json` is a refusal.
+
+### `derived`
+
+What only the engine computes, from the documents above (`deriveProject`):
+
+```typescript
+{
+  folderName: string;                       // basename of the project path
+  questions: QuestionStatus[] | null;       // questionStates(research, tree)
+  awaitingUser: AwaitingHandOff[] | null;   // awaitingUserHandOffs(research.log)
+  treeChanges: TreeDiffResult | null;       // treeDiff(startingTree → tree); null with no starting tree
+  evaluations: { [evaluationId]: { body: object | null; craft: boolean } };
+}
+```
+
+- `evaluations` has one entry per evaluation whose `superseded_by` is null. Its `body` is
+  the parsed `file_path`, read only when that path matches
+  `^evaluations/[A-Za-z0-9._-]+\.json$`; a path that does not, or a file that cannot be
+  read, gives `body: null`. `craft` is `body.craft === true`, so an unreadable body is not
+  craft, as gps-mentor counts it.
+- `questions`, `awaitingUser` and `treeChanges` are each `null` when computing that field
+  throws on a malformed document, so the card still draws.
 
 ### The 1,000,000-byte rule
 
@@ -166,6 +189,7 @@ arrived at 999,947 bytes and did not at 1,299,948 (`docs/mcp-app-host-probe.md`)
 |---|---|
 | `document` | `{ research, tree, startingTree, collections, derived }`, as `show_project` reads them. No `echo`, and no size rule. |
 | `results` | `{ found: true, results }`, the parsed `results/<id>.json`, or `{ found: false }` when that file is absent. `found: false` is an answer, not an error. A results file the store holds but cannot read is a refusal, never `found: false`. |
+| `recordSearch` | `{ found: true, logId }`: the first `record_search` log entry, in log order, whose kept results hold a row whose `recordId` has the same bare id; else `{ found: false }`. A results file that cannot be read is skipped, so finding a record's search costs one call. |
 | `image` | `{ url, expiresAt }`: a signed link and its expiry in epoch milliseconds. See "Images". |
 
 ---
@@ -174,7 +198,7 @@ arrived at 999,947 bytes and did not at 1,299,948 (`docs/mcp-app-host-probe.md`)
 
 | | |
 |---|---|
-| URI | `ui://genealogy/viewer.html` |
+| URI | `ui://genealogy/viewer-<12 hex>.html`, the first 12 hex of the page's sha256 (`pageUri`); `ui://genealogy/viewer.html` when no page is installed |
 | MIME type | `text/html;profile=mcp-app` |
 | `resources/list` | `{ resources: [{ uri, name: "Genealogy Viewer", mimeType }] }` |
 | `resources/read` | `{ contents: [{ uri, mimeType, text, _meta: { ui: { csp: { resourceDomains } } } }] }` |
@@ -187,6 +211,12 @@ The text comes from `viewerPagePath()` in `src/utils/bundled-data.ts`, which res
 read on `resources/read` and never at start-up. The tools image carries the page, from
 the `page` stage of `apps/server/proto/tools/Dockerfile`. The `.mcpb` and `eb-tools.zip`
 do not.
+
+Claude caches a page per URI, so the URI carries a hash of the page: a deploy or a
+rollback that changes the page lists a new URI, and `show_project`'s `_meta` (`pointAtPage`)
+and `resources/list` name it on every request. `resources/read` accepts the plain URI and
+any `viewer-<12 hex>` version, serves today's page under the URI it was asked for, and
+refuses any other URI.
 
 A server with no page keeps running and answers `resources/read` with the error below.
 The next request answers normally.

@@ -14,12 +14,13 @@ RUN npm ci --ignore-scripts && npx tsc
 
 # The MCP App page, built to one HTML file. --ignore-scripts keeps electron's postinstall
 # out, and with it the root preinstall, so scripts/ need not be here. No CI job builds this
-# image: when the page gains @genealogy/viewer-ui (M1), that package needs its own COPY here.
+# image, so a workspace package the page gains needs its own COPY here.
 FROM node:24-slim AS page
 RUN corepack enable
 WORKDIR /repo
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
 COPY packages/schema packages/schema
+COPY packages/viewer-ui packages/viewer-ui
 COPY apps/mcp-viewer/package.json apps/mcp-viewer/
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter mcp-viewer...
 COPY apps/mcp-viewer apps/mcp-viewer

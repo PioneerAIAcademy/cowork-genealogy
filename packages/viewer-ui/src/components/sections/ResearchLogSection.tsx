@@ -19,13 +19,13 @@ function compareEntries(a: LogEntry, b: LogEntry, key: SortKey, dir: SortDir): n
   let cmp = 0
   switch (key) {
     case 'performed':
-      cmp = a.performed.localeCompare(b.performed)
+      cmp = String(a.performed ?? '').localeCompare(String(b.performed ?? ''))
       break
     case 'tool':
-      cmp = a.tool.localeCompare(b.tool)
+      cmp = String(a.tool ?? '').localeCompare(String(b.tool ?? ''))
       break
     case 'outcome':
-      cmp = a.outcome.localeCompare(b.outcome)
+      cmp = String(a.outcome ?? '').localeCompare(String(b.outcome ?? ''))
       break
     case 'results_examined':
       cmp = a.results_examined - b.results_examined
@@ -72,7 +72,7 @@ export default function ResearchLogSection(): React.JSX.Element {
   // lying to the reader. `knownItemIds` also sends a DANGLING reference off-plan: an
   // entry naming an item that no longer exists is not coverage.
   const knownItemIds = useMemo(
-    () => new Set((research?.plans ?? []).flatMap((plan) => plan.items.map((item) => item.id))),
+    () => new Set((research?.plans ?? []).flatMap((plan) => (Array.isArray(plan.items) ? plan.items : []).map((item) => item.id))),
     [research?.plans]
   )
   const { onPlan, offPlan } = useMemo(

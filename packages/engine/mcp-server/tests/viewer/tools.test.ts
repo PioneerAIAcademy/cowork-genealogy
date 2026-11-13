@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import { setProjectStore } from "../../src/store/project-store.js";
+import { deriveProject } from "../../src/tools/project-view.js";
 import { PUBLIC_URL, realFoldersOnly, refusal, RESEARCH, startViewer, tempFolders, writeProject } from "./harness.js";
 
 realFoldersOnly();
@@ -36,7 +37,7 @@ describe("show_project", () => {
       tree: TREE,
       startingTree: STARTING_TREE,
       collections: COLLECTIONS,
-      derived: { folderName: "root" },
+      derived: deriveProject({ folderName: "root", research: RESEARCH, tree: TREE, startingTree: STARTING_TREE, evaluationBodies: {} }),
       echo: args,
       canary: "CANARY-META-M4X9",
     });
@@ -120,7 +121,7 @@ describe("read_project_view", () => {
       tree: TREE,
       startingTree: STARTING_TREE,
       collections: COLLECTIONS,
-      derived: { folderName: "root" },
+      derived: deriveProject({ folderName: "root", research: RESEARCH, tree: TREE, startingTree: STARTING_TREE, evaluationBodies: {} }),
     });
   });
 
@@ -206,7 +207,7 @@ describe("read_project_view", () => {
 
   it.each([
     ["no part", {}, /part must be one of/],
-    ["a bad part", { part: "recordSearch", id: "x" }, /part must be one of/],
+    ["a bad part", { part: "people", id: "x" }, /part must be one of/],
     ["an unknown argument", { part: "document", section: "x" }, /no argument section/],
   ])("refuses %s", async (_name, args, message) => {
     writeProject(root());

@@ -3,6 +3,7 @@
 // the `.mcpb`, the manifest and the hook maps must not know about them, so
 // `createServer` adds them for a connector caller and every other surface gets
 // `Unknown tool`.
+import { createHash } from "node:crypto";
 import { basename } from "node:path";
 import { ErrorCode, McpError, type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { AppConfig } from "../types/auth.js";
@@ -11,11 +12,31 @@ import { readExternalCollections } from "../utils/external-collections-store.js"
 import { IMAGE_REF_PATTERN, processImageTokens } from "../utils/image-tokens.js";
 import { classifyProjectPath, fileExists, readProjectJson } from "../utils/project-io.js";
 import { webPublicBase } from "../utils/project-links.js";
+import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
+import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 import { readStartingTree } from "../utils/starting-tree.js";
+import { treeDiff, type TreeDiffResult } from "./tree-diff.js";
 
 export const SHOW_PROJECT = "show_project";
 export const READ_PROJECT_VIEW = "read_project_view";
+/** The page's URI with no version: what a server with no page lists. */
 export const PAGE_URI = "ui://genealogy/viewer.html";
+/** Any version of the page: a card that cached an older one still reads today's page. */
+const PAGE_URI_PATTERN = /^ui:\/\/genealogy\/viewer(?:-[0-9a-f]{12})?\.html$/;
+
+/** The page's URI, carrying a hash of the page itself. Claude caches a page per URI,
+ *  so a deploy or a rollback that changes the page reaches cards that read the old one. */
+export function pageUri(html: string | null): string {
+  if (html === null) return PAGE_URI;
+  return `ui://genealogy/viewer-${createHash("sha256").update(html).digest("hex").slice(0, 12)}.html`;
+}
+
+/** The tool list with `show_project` pointing at the page as it is now. */
+export function pointAtPage<T extends { name: string }>(schemas: readonly T[], uri: string): T[] {
+  return schemas.map((schema) =>
+    schema.name === SHOW_PROJECT ? { ...schema, _meta: { ui: { resourceUri: uri }, "ui/resourceUri": uri } } : schema,
+  );
+}
 export const PAGE_MIME_TYPE = "text/html;profile=mcp-app";
 export const PROJECT_META_KEY = "genealogy/project";
 export const UI_EXTENSION = "io.modelcontextprotocol/ui";
@@ -28,7 +49,9 @@ export const MAX_META_BYTES = 1_000_000;
 const LOG_ID_PATTERN = /^log_[a-zA-Z0-9_-]+$/;
 const SHOW_VALUES = ["setup", "plan", "search", "link", "conflict", "hypothesis", "assess", "conclusion", "latest", "file"];
 const PAGE_VALUES = ["case", "compare", "people", "sources", "log"];
-const PART_VALUES = ["document", "results", "image"];
+const PART_VALUES = ["document", "results", "recordSearch", "image"];
+/** A FamilySearch record id inside whatever form a record id takes. */
+const RECORD_ID_PATTERN = /(?:^|[:/])([A-Z0-9]+(?:-[A-Z0-9]+)+)$/;
 const ID_ARGS = ["questionId", "logId", "personId", "planItemId", "sourceId"];
 
 function showProjectSchema(projectRule: string) {
@@ -67,14 +90,19 @@ function readProjectViewSchema(projectRule: string) {
     title: "Read project view",
     description:
       "For the viewer page, not the model. Returns one part of the project: `document` (research, tree, starting " +
-      "tree, collections), `results` (one results file, by log id) or `image` (a signed link to one page image, " +
-      `by image ref). Project rule for projectPath: ${projectRule}`,
+      "tree, collections), `results` (one results file, by log id), `recordSearch` (the record search whose results " +
+      "hold a record, by record id) or `image` (a signed link to one page image, by image ref). " +
+      `Project rule for projectPath: ${projectRule}`,
     inputSchema: {
       type: "object" as const,
       properties: {
         projectPath: { type: "string", description: projectRule },
         part: { type: "string", enum: PART_VALUES, description: "The part to read." },
-        id: { type: "string", description: "`results`: a log id. `image`: an image ref (images/<name>.jpg)." },
+        id: {
+          type: "string",
+          description:
+            "`results`: a log id. `recordSearch`: a record id (an ARK or its bare id). `image`: an image ref (images/<name>.jpg).",
+        },
       },
       required: ["part"],
       additionalProperties: false,
@@ -118,15 +146,92 @@ function requireOneOf(name: string, value: unknown, allowed: string[]): void {
   }
 }
 
+/** Where gps-mentor writes a verdict body. Anything else is not read. */
+const EVALUATION_REF = /^evaluations\/[A-Za-z0-9._-]+\.json$/;
+
+export interface DerivedEvaluation {
+  body: unknown;
+  /** A craft read says how the proof reads, not whether the evidence holds. */
+  craft: boolean;
+}
+
+export interface Derived {
+  folderName: string;
+  questions: QuestionStatus[] | null;
+  awaitingUser: AwaitingHandOff[] | null;
+  treeChanges: TreeDiffResult | null;
+  evaluations: Record<string, DerivedEvaluation>;
+}
+
+function softly<T>(compute: () => T): T | null {
+  try {
+    return compute();
+  } catch {
+    return null;
+  }
+}
+
+function liveEvaluations(research: any): any[] {
+  const all = Array.isArray(research?.evaluations) ? research.evaluations : [];
+  return all.filter((e: any) => typeof e?.id === "string" && e.superseded_by == null);
+}
+
+/** What only the engine can compute, from documents already read. A field that
+ *  throws on a malformed document is null, so the card still draws. */
+export function deriveProject(input: {
+  folderName: string;
+  research: any;
+  tree: any;
+  startingTree: any;
+  evaluationBodies: Record<string, unknown>;
+}): Derived {
+  const { research, tree, startingTree } = input;
+  const evaluations: Record<string, DerivedEvaluation> = {};
+  for (const entry of liveEvaluations(research)) {
+    const body = input.evaluationBodies[entry.id] ?? null;
+    evaluations[entry.id] = { body, craft: (body as { craft?: unknown } | null)?.craft === true };
+  }
+  return {
+    folderName: input.folderName,
+    questions: softly(() => questionStates(research, tree)),
+    awaitingUser: softly(() => awaitingUserHandOffs(research?.log)),
+    treeChanges: startingTree ? softly(() => treeDiff({ before: startingTree, after: tree ?? undefined })) : null,
+    evaluations,
+  };
+}
+
+/** Each live evaluation's body by id; one that cannot be read is left out. */
+async function readEvaluationBodies(projectPath: string, research: any): Promise<Record<string, unknown>> {
+  const bodies: Record<string, unknown> = {};
+  for (const entry of liveEvaluations(research)) {
+    if (typeof entry.file_path !== "string" || !EVALUATION_REF.test(entry.file_path)) continue;
+    try {
+      bodies[entry.id] = await readProjectJson(projectPath, entry.file_path);
+    } catch {
+      // gps-mentor counts an unreadable body as not craft; so does the card.
+    }
+  }
+  return bodies;
+}
+
 /** Every document the page reads, with null for a file the project does not have. */
 async function readDocument(projectPath: string) {
+  const research = await readProjectJson(projectPath, "research.json");
+  const tree = (await fileExists(projectPath, "tree.gedcomx.json")) ? await readProjectJson(projectPath, "tree.gedcomx.json") : null;
+  const startingTree = await readStartingTree(projectPath);
   return {
-    research: await readProjectJson(projectPath, "research.json"),
-    tree: (await fileExists(projectPath, "tree.gedcomx.json")) ? await readProjectJson(projectPath, "tree.gedcomx.json") : null,
-    startingTree: await readStartingTree(projectPath),
+    research,
+    tree,
+    startingTree,
     // Background reading only, so a bad file must not cost the researcher the card.
     collections: await readExternalCollections(projectPath).catch(() => null),
-    derived: { folderName: basename(projectPath) },
+    derived: deriveProject({
+      folderName: basename(projectPath),
+      research,
+      tree,
+      startingTree,
+      evaluationBodies: await readEvaluationBodies(projectPath, research),
+    }),
   };
 }
 
@@ -152,12 +257,40 @@ async function readResults(projectPath: string, id: string) {
   return { found: true, results: await readProjectJson(projectPath, ref) };
 }
 
+/** The bare id of a record id in any of its forms, or null. */
+function bareRecordId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const match = RECORD_ID_PATTERN.exec(value.trim().replace(/[?#].*$/, ""));
+  return match ? match[1] : null;
+}
+
+/** The first `record_search` entry, in log order, whose kept results hold the record. */
+async function findRecordSearch(projectPath: string, research: any, recordId: string) {
+  const log = Array.isArray(research?.log) ? research.log : [];
+  for (const entry of log) {
+    if (entry?.tool !== "record_search" || typeof entry.results_ref !== "string") continue;
+    if (typeof entry.id !== "string" || !LOG_ID_PATTERN.test(entry.id)) continue;
+    let file: any;
+    try {
+      file = await readProjectJson(projectPath, `results/${entry.id}.json`);
+    } catch {
+      continue;
+    }
+    const rows = Array.isArray(file?.payload?.results) ? file.payload.results : [];
+    if (rows.some((row: any) => bareRecordId(row?.recordId) === recordId)) return { found: true, logId: entry.id };
+  }
+  return { found: false };
+}
+
 async function readProjectView(context: ProjectViewContext, args: Args): Promise<CallToolResult> {
   refuseUnknownArgs(READ_SHAPE, READ_PROJECT_VIEW, args);
   requireOneOf("part", args.part, PART_VALUES);
   const { id, part } = args;
   if (part === "results" && !(typeof id === "string" && LOG_ID_PATTERN.test(id))) {
     throw new Error("With part results, id must be a log id such as log_001.");
+  }
+  if (part === "recordSearch" && bareRecordId(id) === null) {
+    throw new Error("With part recordSearch, id must be a record id such as ark:/61903/1:1:QPRC-WPBZ.");
   }
   // Before any signing: the store's readBytes can read documents, so this check
   // is what keeps a token to images.
@@ -173,7 +306,9 @@ async function readProjectView(context: ProjectViewContext, args: Args): Promise
       ? await readDocument(projectPath)
       : part === "results"
         ? await readResults(projectPath, id as string)
-        : context.signImage!(projectPath, id as string);
+        : part === "recordSearch"
+          ? await findRecordSearch(projectPath, await readProjectJson(projectPath, "research.json"), bareRecordId(id)!)
+          : context.signImage!(projectPath, id as string);
   return { content: [{ type: "text", text: "ok" }], structuredContent };
 }
 
@@ -185,19 +320,20 @@ export async function callProjectView(context: ProjectViewContext, name: string,
   throw new Error(`Unknown tool: ${name}`);
 }
 
-export function pageResourceList() {
-  return { resources: [{ uri: PAGE_URI, name: DISPLAY_NAME, mimeType: PAGE_MIME_TYPE }] };
+export function pageResourceList(uri: string) {
+  return { resources: [{ uri, name: DISPLAY_NAME, mimeType: PAGE_MIME_TYPE }] };
 }
 
 export function requirePageUri(uri: string): void {
-  if (uri !== PAGE_URI) throw new McpError(ErrorCode.InvalidParams, "Unknown resource.");
+  if (!PAGE_URI_PATTERN.test(uri)) throw new McpError(ErrorCode.InvalidParams, "Unknown resource.");
 }
 
-export function pageResourceRead(html: string, publicOrigin?: string) {
+/** The page, under the URI it was asked for. */
+export function pageResourceRead(uri: string, html: string, publicOrigin?: string) {
   return {
     contents: [
       {
-        uri: PAGE_URI,
+        uri,
         mimeType: PAGE_MIME_TYPE,
         text: html,
         _meta: { ui: { csp: { resourceDomains: publicOrigin ? [publicOrigin] : [] } } },
@@ -257,11 +393,21 @@ export function connectorProjectView(config: AppConfig): ProjectViewContext {
  *  the Beanstalk bundle carry no page, and that must cost a request, not the server. */
 export function connectorPageRead(uri: string, config: AppConfig) {
   requirePageUri(uri);
-  let html: string;
+  const html = connectorPage();
+  if (html === null) throw new McpError(ErrorCode.InternalError, "The viewer page is not installed on this server.");
+  return pageResourceRead(uri, html, webPublicBase(config));
+}
+
+/** The installed page, or null where none ships (the `.mcpb`, the Beanstalk bundle). */
+function connectorPage(): string | null {
   try {
-    html = readBundledText(viewerPagePath());
+    return readBundledText(viewerPagePath());
   } catch {
-    throw new McpError(ErrorCode.InternalError, "The viewer page is not installed on this server.");
+    return null;
   }
-  return pageResourceRead(html, webPublicBase(config));
+}
+
+/** The page's URI on the connector, read per request so a deploy shows at once. */
+export function connectorPageUri(): string {
+  return pageUri(connectorPage());
 }
