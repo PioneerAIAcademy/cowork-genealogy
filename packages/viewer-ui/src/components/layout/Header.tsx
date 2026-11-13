@@ -5,7 +5,7 @@ import { useResearchData } from '../../contexts/ResearchDataContext'
 import { exportGedcom, gedcomFileName } from '../../lib/gedcom-export'
 import styles from './Header.module.css'
 
-export default function Header(): React.JSX.Element {
+export default function Header({ hideActions = false }: { hideActions?: boolean }): React.JSX.Element {
   const [showFeedback, setShowFeedback] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [printing, setPrinting] = useState(false)
@@ -40,6 +40,7 @@ export default function Header(): React.JSX.Element {
     <>
       <header className={styles.header}>
         <div className={styles.title}>Research Viewer</div>
+        {!hideActions && (
         <div className={styles.controls}>
           {exportError && (
             <span className={styles.exportError} role="alert">
@@ -66,6 +67,7 @@ export default function Header(): React.JSX.Element {
             Send Feedback
           </button>
         </div>
+        )}
       </header>
       {showFeedback && <FeedbackDialog onClose={() => setShowFeedback(false)} />}
       {printing && <PrintView onDone={() => setPrinting(false)} />}

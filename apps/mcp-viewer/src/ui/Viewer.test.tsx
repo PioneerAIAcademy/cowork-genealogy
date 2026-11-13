@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { PROJECT_META_KEY } from '../contract'
 import { COMPOUND_DOC } from '../cards/test-views'
@@ -69,14 +69,5 @@ describe('the page', () => {
     expect(session.getState().heightLimit).toBe(300)
     act(() => app.sendContextChange({ theme: 'dark' }))
     expect(session.getState().heightLimit).toBe(300)
-  })
-
-  it('in fullscreen offers the way back to the card', async () => {
-    const { app } = await mounted()
-    act(() => app.sendContextChange({ displayMode: 'fullscreen' }))
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Back to the card' }))
-    })
-    expect(app.requestDisplayMode).toHaveBeenLastCalledWith({ mode: 'inline' })
   })
 })

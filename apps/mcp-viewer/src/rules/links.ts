@@ -19,7 +19,7 @@ export function installLinkOpener(doc: Document, openLink: (url: string) => unkn
   }
 }
 
-function httpsUrl(href: string | null): string | null {
+export function httpsUrl(href: string | null): string | null {
   if (!href) return null
   let url: URL
   try {

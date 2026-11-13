@@ -116,3 +116,21 @@ describe('Print button', () => {
     expect(screen.getByRole('button', { name: 'Print' })).toBeEnabled()
   })
 })
+
+describe('hideActions', () => {
+  it('draws no Export GEDCOM, Print or Send Feedback, as the MCP App case file asks', () => {
+    vi.mocked(useResearchData).mockReturnValue(buildMockContext())
+    render(<Header hideActions />)
+    for (const name of ['Export GEDCOM', 'Print', 'Send Feedback']) {
+      expect(screen.queryByRole('button', { name })).toBeNull()
+    }
+  })
+
+  it('draws all three when it is not set', () => {
+    vi.mocked(useResearchData).mockReturnValue(buildMockContext())
+    render(<Header />)
+    for (const name of ['Export GEDCOM', 'Print', 'Send Feedback']) {
+      expect(screen.getByRole('button', { name })).toBeTruthy()
+    }
+  })
+})

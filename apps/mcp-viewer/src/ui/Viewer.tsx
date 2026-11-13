@@ -2,7 +2,9 @@ import { useMemo, useSyncExternalStore } from 'react'
 import { cardView } from '../cards/kit/view'
 import { Shell } from '../cards/kit/Shell'
 import { CARDS, cardKind } from '../cards/registry'
+import { fullscreenOffered } from '../display-mode'
 import type { Session } from '../session'
+import { CaseFile } from './CaseFile'
 import { headline } from './status'
 
 export function Viewer({ session }: { session: Session }) {
@@ -11,26 +13,33 @@ export function Viewer({ session }: { session: Session }) {
   const snapshot = state.connection !== 'unreachable' && load.phase === 'ready' ? load.snapshot : null
   const input = useMemo(() => load.input ?? snapshot?.echo ?? {}, [load.input, snapshot])
   const view = useMemo(() => (snapshot ? cardView(snapshot, input) : null), [snapshot, input])
-  const actions =
-    state.display.mode === 'fullscreen'
-      ? [
-          <button key="back" type="button" onClick={() => void session.requestMode('inline')}>
-            Back to the card
-          </button>
-        ]
-      : []
 
+  if (view && state.display.mode === 'fullscreen') return <CaseFile session={session} />
   if (!view) {
     return (
       <main className="page">
-        <Shell title={headline(state)} actions={actions} heightLimit={heightLimit} />
+        <Shell title={headline(state)} heightLimit={heightLimit} />
       </main>
     )
   }
+
+  const canOpen = fullscreenOffered(state.display)
+  const actions = canOpen
+    ? [
+        <button key="file" type="button" onClick={() => void session.openFile()}>
+          Open the case file
+        </button>
+      ]
+    : []
   const Card = CARDS[cardKind(input.show, view)]
   return (
     <main className="page">
-      <Card view={view} heightLimit={heightLimit} actions={actions} />
+      <Card
+        view={view}
+        heightLimit={heightLimit}
+        actions={actions}
+        onSeeResults={canOpen ? (logId) => void session.openFile(logId) : undefined}
+      />
     </main>
   )
 }

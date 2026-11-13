@@ -228,7 +228,7 @@ describe('a result too large for its documents', () => {
     expect(session.getState().load.inputAt).not.toBeNull()
   })
 
-  it('a failed read on a card with no tool input leaves the probes the id', async () => {
+  it('a failed read on a card with no tool input leaves the case-file reads the id', async () => {
     const app = new FakeApp()
     app.callServerTool.mockRejectedValueOnce(new Error('Refused: pick a project.'))
     const { session } = await connected(app)
@@ -237,13 +237,12 @@ describe('a result too large for its documents', () => {
     expect(headline(session.getState())).toBe('Refused: pick a project.')
 
     app.callServerTool.mockResolvedValue(IMAGE_LINK)
-    await session.runImageProbe()
+    expect(await session.transport.getSourceImage('images/probe.jpg')).toBe(IMAGE_LINK.structuredContent.url)
 
     expect(app.reads().at(-1)).toEqual(IMAGE_READ)
-    expect(session.getState().imageProbe).toMatchObject({ status: 'showing' })
   })
 
-  it('the probes have the id while the read is still out', async () => {
+  it('the case-file reads have the id while the read is still out', async () => {
     const app = new FakeApp()
     app.callServerTool.mockImplementationOnce(() => new Promise(() => {}))
     const { session } = await connected(app)
@@ -252,7 +251,7 @@ describe('a result too large for its documents', () => {
     expect(session.getState().load.phase).toBe('fetching')
 
     app.callServerTool.mockResolvedValue(IMAGE_LINK)
-    await session.runImageProbe()
+    await session.transport.getSourceImage('images/probe.jpg')
 
     expect(app.reads()).toEqual([{ part: 'document', projectPath: 'mogan' }, IMAGE_READ])
   })
@@ -277,7 +276,7 @@ describe('a result too large for its documents', () => {
     expect(load.resultCarriedMeta).toBe(true)
 
     app.callServerTool.mockResolvedValue(IMAGE_LINK)
-    await session.runImageProbe()
+    await session.transport.getSourceImage('images/probe.jpg')
     expect(app.reads().at(-1)).toEqual(IMAGE_READ)
   })
 
@@ -583,43 +582,66 @@ describe('reaching the host', () => {
   })
 })
 
-describe('the probes', () => {
-  it('the image probe asks for the first source that has an image', async () => {
+describe("the case file's reads", () => {
+  const LINK = { content: [], structuredContent: { url: 'https://example.test/img/token', expiresAt: 1_000 } }
+
+  it("a page image carries the card's project", async () => {
     const app = new FakeApp()
     const { session } = await connected(app)
     app.sendInput(INPUT)
     app.sendResult(RESULT_WITH_META)
-    app.callServerTool.mockResolvedValue({
-      content: [],
-      structuredContent: { url: 'https://example.test/img/token', expiresAt: 1_000 }
-    })
-    await session.runImageProbe()
+    app.callServerTool.mockResolvedValue(LINK)
 
+    expect(await session.transport.getSourceImage('images/page-1.jpg')).toBe('https://example.test/img/token')
     expect(app.reads()).toEqual([{ part: 'image', id: 'images/page-1.jpg', projectPath: 'mogan' }])
-    expect(session.getState().imageProbe).toMatchObject({ status: 'showing', url: 'https://example.test/img/token' })
   })
 
-  it('a card with no tool input takes projectPath from the snapshot echo', async () => {
+  it('a card with no tool input takes projectPath from the snapshot echo, for results too', async () => {
     const app = new FakeApp()
     const { session } = await connected(app)
     const echo = { show: 'latest', projectPath: '/proj_0123456789abcdef' }
     app.sendResult({ content: [], _meta: { [PROJECT_META_KEY]: { ...META_DOCUMENT, echo } } })
-    app.callServerTool.mockResolvedValue({ content: [], structuredContent: { url: 'https://example.test/img/token' } })
-    await session.runImageProbe()
+    app.callServerTool.mockResolvedValue({ content: [], structuredContent: { found: false } })
 
-    expect(app.reads()).toEqual([{ part: 'image', id: 'images/page-1.jpg', projectPath: '/proj_0123456789abcdef' }])
+    expect(await session.transport.readSidecar('log_002')).toBeNull()
+    expect(app.reads()).toEqual([{ part: 'results', id: 'log_002', projectPath: '/proj_0123456789abcdef' }])
   })
 
-  it('the image probe falls back to images/probe.jpg and reports a refusal', async () => {
+  it('a refused read rejects, so the side panel offers Try again', async () => {
     const app = new FakeApp()
-    app.callServerTool.mockResolvedValue({
-      isError: true,
-      content: [{ type: 'text', text: 'Refused.' }]
-    } as never)
+    app.callServerTool.mockResolvedValue({ isError: true, content: [{ type: 'text', text: 'Refused.' }] } as never)
     const { session } = await connected(app)
-    await session.runImageProbe()
+    await expect(session.transport.readSidecar('log_001')).rejects.toThrow('Refused.')
+  })
+})
 
-    expect(app.reads()).toEqual([{ part: 'image', id: 'images/probe.jpg' }])
-    expect(session.getState().imageProbe).toMatchObject({ status: 'refused', message: 'Refused.' })
+describe('opening the case file', () => {
+  it("asks for fullscreen, reads today's document once, and hands it to the file", async () => {
+    const app = new FakeApp()
+    const { session } = await connected(app)
+    app.sendInput(INPUT)
+    app.sendResult(RESULT_WITH_META)
+    app.callServerTool.mockResolvedValue({ content: [], structuredContent: READ_DOCUMENT as Record<string, unknown> })
+
+    await session.openFile('log_002')
+
+    expect(app.requestDisplayMode).toHaveBeenLastCalledWith({ mode: 'fullscreen' })
+    expect(app.reads()).toEqual([{ part: 'document', projectPath: 'mogan' }])
+    expect(session.getState().fileLogId).toBe('log_002')
+    expect((await session.transport.getProjectState()).label).toBe('From the read')
+    expect(session.getState().load.snapshot).toEqual(META_DOCUMENT)
+  })
+
+  it('keeps the snapshot when the read fails, and a plain open clears the panel', async () => {
+    const app = new FakeApp()
+    const { session } = await connected(app)
+    app.sendInput(INPUT)
+    app.sendResult(RESULT_WITH_META)
+    app.callServerTool.mockRejectedValue(new Error('Store down.'))
+    await session.openFile('log_002')
+    await session.openFile()
+
+    expect(session.getState().fileLogId).toBeNull()
+    expect((await session.transport.getProjectState()).label).toBe('From the snapshot')
   })
 })

@@ -4,6 +4,8 @@ import { COMPOUND_DOC, FLYNN_DOC, MCANDREW_DOC, status } from '../test-views'
 import { conclusionLine, reviewer } from './conclusion'
 import { cardView, currentQuestion, latestKind } from './view'
 import { nextStepWords } from './words'
+import { firstSentence, questionSearches } from './searches'
+import type { ResearchDocument } from '../../contract'
 
 describe('the current question', () => {
   it('a named question wins; an unknown name falls back', () => {
@@ -93,6 +95,30 @@ describe('the reviewer', () => {
     doc.research!.proof_summaries![0].updated = '2026-11-01T00:00:00Z'
     view = cardView(doc, {})
     expect(reviewer(view.research, view.derived, view.proof, view.question)).toBeNull()
+  })
+})
+
+describe("the question's searches", () => {
+  const site = (url: string, capture: boolean) => ({ site: 'ancestry', url_generated: url, capture_received: capture })
+
+  it('include the upload that closes one of its website hand-offs, and nothing else', () => {
+    const research = {
+      plans: [{ id: 'pl_001', question_id: 'q_001', items: [{ id: 'pli_001' }] }],
+      log: [
+        { id: 'log_001', plan_item_id: 'pli_001', tool: 'external_site', outcome: 'partial', external_site: site('https://a.example/s', false) },
+        { id: 'log_002', plan_item_id: null, tool: 'external_site', outcome: 'positive', external_site: site('https://a.example/s', true) },
+        { id: 'log_003', plan_item_id: null, tool: 'external_site', outcome: 'partial', external_site: site('https://a.example/s', false) },
+        { id: 'log_004', plan_item_id: null, tool: 'external_site', outcome: 'positive', external_site: site('https://b.example/s', true) },
+        { id: 'log_005', plan_item_id: 'pli_009', tool: 'record_search', outcome: 'negative', external_site: null }
+      ]
+    } as unknown as ResearchDocument
+    expect(questionSearches(research, 'q_001').map((e) => e.id)).toEqual(['log_001', 'log_002'])
+  })
+
+  it('the first sentence of a note, cut at a word when long', () => {
+    expect(firstSentence('Found her. Then more.')).toBe('Found her.')
+    expect(firstSentence('In St. Louis (MO) she was found.')).toBe('In St. Louis (MO) she was found.')
+    expect(firstSentence(`${'word '.repeat(80)}end.`)?.endsWith('…')).toBe(true)
   })
 })
 

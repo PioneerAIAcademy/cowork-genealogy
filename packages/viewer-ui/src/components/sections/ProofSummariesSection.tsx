@@ -75,18 +75,18 @@ export default function ProofSummariesSection(): React.JSX.Element {
             rawData={ps}
             footer={
               <div className={styles.footer}>
-                {ps.supporting_assertion_ids.length > 0 && (
+                {(ps.supporting_assertion_ids ?? []).length > 0 && (
                   <>
                     <span className={styles.footerLabel}>Assertions:</span>
-                    {ps.supporting_assertion_ids.map((aid) => (
+                    {(ps.supporting_assertion_ids ?? []).map((aid) => (
                       <CrossLink key={aid} id={aid} />
                     ))}
                   </>
                 )}
-                {ps.resolved_conflict_ids.length > 0 && (
+                {(ps.resolved_conflict_ids ?? []).length > 0 && (
                   <>
                     <span className={styles.footerLabel}>Resolved conflicts:</span>
-                    {ps.resolved_conflict_ids.map((cid) => (
+                    {(ps.resolved_conflict_ids ?? []).map((cid) => (
                       <CrossLink key={cid} id={cid} />
                     ))}
                   </>

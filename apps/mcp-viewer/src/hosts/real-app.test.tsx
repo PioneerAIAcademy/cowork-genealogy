@@ -117,13 +117,8 @@ describe('against the real App', () => {
       if (params.arguments?.part === 'image') throw new Error('Host refused.')
       return { isError: true, content: [{ type: 'text', text: 'Server refused.' }] }
     }
-    await session.runImageProbe()
-    expect(session.getState().imageProbe).toMatchObject({ status: 'refused' })
-    expect(session.getState().imageProbe?.message).toContain('Host refused.')
-
-    bridge.oncalltool = async () => ({ isError: true, content: [{ type: 'text', text: 'Server refused.' }] })
-    await session.runImageProbe()
-    expect(session.getState().imageProbe).toMatchObject({ status: 'refused', message: 'Server refused.' })
+    await expect(session.transport.getSourceImage('images/probe.jpg')).rejects.toThrow(/Host refused\./)
+    await expect(session.transport.readSidecar('log_001')).rejects.toThrow('Server refused.')
   })
 
   it('passes read_project_view through to the host with its arguments', async () => {
@@ -133,10 +128,10 @@ describe('against the real App', () => {
       seen.push(params)
       return { content: [], structuredContent: { url: 'https://example.test/img?t=x', expiresAt: 1 } }
     }
-    await session.runImageProbe()
+    const url = await session.transport.getSourceImage('images/probe.jpg')
 
     expect(seen).toHaveLength(1)
     expect(seen[0]).toMatchObject({ name: READ_PROJECT_VIEW, arguments: { part: 'image', id: 'images/probe.jpg' } })
-    expect(session.getState().imageProbe).toMatchObject({ status: 'showing', url: 'https://example.test/img?t=x' })
+    expect(url).toBe('https://example.test/img?t=x')
   })
 })

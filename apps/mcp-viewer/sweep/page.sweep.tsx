@@ -1,12 +1,15 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { expect, it } from 'vitest'
+import { act, render, waitFor } from '@testing-library/react'
+import { PrintModeContext, ResearchDataProvider, sectionComponents, useResearchData, ViewerBody } from '@genealogy/viewer-ui'
+import { expect, it, vi } from 'vitest'
 import { cardView } from '../src/cards/kit/view'
 import { CARDS, cardKind } from '../src/cards/registry'
 import type { ProjectDocument } from '../src/contract'
 import { leftoverIds } from '../src/rules/id-check'
 import { Prose } from '../src/rules/Prose'
+import { McpAppResearchTransport } from '../src/transport/McpAppResearchTransport'
 import type { RuleIndex } from '../src/rules/rule-index'
 
 // `make mcp-viewer-sweep`: the page over every committed end state, as
@@ -108,5 +111,63 @@ it('every card and every narrative renders with no id left, every known pid link
 
   console.log(`projects ${states.length}, narratives ${narratives}, cards ${cards}, problems ${problems.length}`)
   if (process.env.SWEEP_OUT) writeFileSync(process.env.SWEEP_OUT, problems.join('\n'), 'utf-8')
+  expect(problems.length, problems.slice(0, 40).join('\n')).toBe(0)
+})
+
+let selectSection: (key: string) => void = () => {}
+let loaded = false
+
+function Driver() {
+  const { setActiveSection, research } = useResearchData()
+  selectSection = setActiveSection
+  loaded = research !== null
+  return null
+}
+
+it('every case file section renders, expanded, for every project', async () => {
+  const problems: string[] = []
+  const errors: string[] = []
+  const quiet = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const caught = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+    errors.push(args.map(String).join(' ').slice(0, 200))
+  })
+  const keys = Object.keys(sectionComponents)
+  let sections = 0
+  try {
+    for (const { name, document: doc } of staged()) {
+      const transport = new McpAppResearchTransport({ read: async () => ({ found: false }), openLink: () => {} })
+      transport.update(doc)
+      loaded = false
+      errors.length = 0
+      const { container, unmount } = render(
+        <PrintModeContext.Provider value={true}>
+          <ResearchDataProvider transport={transport}>
+            <Driver />
+            <ViewerBody showThemeToggle={false} hideHeaderActions />
+          </ResearchDataProvider>
+        </PrintModeContext.Provider>
+      )
+      try {
+        await waitFor(() => expect(loaded).toBe(true))
+        for (const key of keys) {
+          sections++
+          act(() => selectSection(key))
+          const text = container.textContent ?? ''
+          if (/Couldn.t display/.test(text)) problems.push(`${name} ${key}: the section failed to render`)
+          if (!container.querySelector('h2')) problems.push(`${name} ${key}: no section heading`)
+        }
+        for (const error of errors) problems.push(`${name}: console.error ${error}`)
+      } catch (error) {
+        problems.push(`${name}: threw ${error instanceof Error ? error.message : String(error)}`)
+      } finally {
+        unmount()
+      }
+    }
+  } finally {
+    quiet.mockRestore()
+    caught.mockRestore()
+  }
+  console.log(`case file: sections rendered ${sections}, problems ${problems.length}`)
+  if (process.env.SWEEP_OUT) writeFileSync(`${process.env.SWEEP_OUT}.file`, problems.join('\n'), 'utf-8')
   expect(problems.length, problems.slice(0, 40).join('\n')).toBe(0)
 })

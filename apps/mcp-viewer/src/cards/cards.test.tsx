@@ -92,10 +92,41 @@ describe('the setup card', () => {
   })
 })
 
+describe('the search card', () => {
+  it("counts the question's searches, names the latest in words, and the records kept", () => {
+    const card = drawn(COMPOUND_DOC(), { show: 'search' })
+    expect(card.title).toBe('Searching')
+    expect(card.text).toContain('8 searches: 4 found something, 4 found nothing.')
+    expect(card.text).toContain('The latest search')
+    expect(card.text).toContain('It found nothing.')
+    expect(card.text).toContain('8 records kept')
+    expect(card.text).toContain('6 more in the case file.')
+    expect(leftoverIds(card.text)).toEqual([])
+  })
+
+  it('a logId input picks that search, and offers its results only when it has them', () => {
+    const seen: string[] = []
+    const view = cardView(COMPOUND_DOC(), { show: 'search', logId: 'log_002' })
+    const { container, rerender } = render(<CARDS.search view={view} onSeeResults={(id) => seen.push(id)} />)
+    expect(container.textContent).toContain('This search')
+    expect(container.textContent).toContain('It found something.')
+    ;(container.querySelector('button') as HTMLButtonElement).click()
+    expect(seen).toEqual(['log_002'])
+    rerender(<CARDS.search view={cardView(COMPOUND_DOC(), { logId: 'log_001' })} onSeeResults={() => {}} />)
+    expect(container.querySelector('button')).toBeNull()
+  })
+
+  it('a question with no searches says so', () => {
+    const doc = COMPOUND_DOC()
+    doc.research!.log = []
+    expect(drawn(doc, { show: 'search' }).text).toContain('No searches yet.')
+  })
+})
+
 describe('the registry', () => {
-  it('latest follows the question: concluded shows the conclusion, searching the stub', () => {
+  it('latest follows the question: concluded shows the conclusion, evidence gathered the search card', () => {
     expect(drawn(MCANDREW_DOC(), { show: 'latest' }).title).toBe('The conclusion')
-    expect(drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title).toBe("This step's card is coming")
+    expect(drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title).toBe('Searching')
   })
 
   it('every step has a card, and a stub names the question', () => {

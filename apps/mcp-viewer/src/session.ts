@@ -11,7 +11,7 @@ import {
   type HostKind
 } from './hosts/host'
 import { createCardLoader, INITIAL_LOAD, type LoadState } from './load'
-import { imageProbeRef, isImageLink, type ImageProbe } from './probes'
+import { McpAppResearchTransport } from './transport/McpAppResearchTransport'
 
 export const HOST_CONNECT_TIMEOUT_MS = 10_000
 
@@ -44,7 +44,8 @@ export interface SessionState {
   modeRequests: ModeRequest[]
   /** The host's `containerDimensions` height limit: a fixed height, a maximum, or none. */
   heightLimit: number | null
-  imageProbe: ImageProbe | null
+  /** The search whose results the case file opens in its side panel. */
+  fileLogId: string | null
 }
 
 export interface SessionDeps {
@@ -59,8 +60,10 @@ export interface Session {
   subscribe(listener: () => void): () => void
   start(): Promise<void>
   requestMode(mode: DisplayMode): Promise<void>
-  runImageProbe(): Promise<void>
-  imageSettled(outcome: { ok: boolean; width?: number; height?: number }): void
+  /** Opens the case file on today's documents, with `logId`'s results in its side panel. */
+  openFile(logId?: string): Promise<void>
+  /** The case file's data, one per mount. */
+  readonly transport: McpAppResearchTransport
 }
 
 /** Everything the page knows and does, with no React in it. */
@@ -81,7 +84,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     contextChanges: [],
     modeRequests: [],
     heightLimit: null,
-    imageProbe: null
+    fileLogId: null
   }
   let fileOpenTried = false
 
@@ -104,10 +107,19 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     return document as ProjectDocument
   }
 
+  const transport = new McpAppResearchTransport({
+    read: (args) => host.call(READ_PROJECT_VIEW, { ...projectArgs(), ...args }),
+    openLink: (url) => host.openLink(url)
+  })
+
   const loader = createCardLoader({
     read: (projectPath) => readDocument(projectPath ? { projectPath } : {}),
     now,
-    onChange: (load) => update({ load })
+    onChange: (load) => {
+      const fresh = load.snapshot !== null && load.snapshot !== state.load.snapshot
+      update({ load })
+      if (fresh) transport.update(load.snapshot!)
+    }
   })
 
   const display = createDisplayMode({
@@ -134,10 +146,12 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     update({ modeRequests: [...state.modeRequests, { at, mode, trigger, outcome }] })
   }
 
-  // M0 asks whether a card opened by a typed request can go straight to the file.
+  // A card opened by a typed `show: file` goes straight to the file, on the loader's own read.
   function openFileIfAsked(): void {
     if (fileOpenTried || state.connection !== 'connected' || state.load.input?.show !== 'file') return
     fileOpenTried = true
+    const logId = state.load.input?.logId
+    update({ fileLogId: typeof logId === 'string' ? logId : null })
     if (fullscreenOffered(state.display)) {
       void askForMode('fullscreen', 'show: file')
     } else {
@@ -209,21 +223,16 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
 
     requestMode: (mode) => askForMode(mode, 'button'),
 
-    async runImageProbe() {
-      const ref = imageProbeRef(state.load.snapshot)
-      update({ imageProbe: { ref, status: 'asking' } })
+    async openFile(logId) {
+      update({ fileLogId: logId ?? null })
+      void askForMode('fullscreen', 'button')
       try {
-        const link = await host.call(READ_PROJECT_VIEW, { ...projectArgs(), part: 'image', id: ref })
-        if (!isImageLink(link)) throw new ToolCallError('read_project_view returned no image link.', 'bad_response')
-        update({ imageProbe: { ref, status: 'showing', url: link.url, expiresAt: link.expiresAt } })
-      } catch (err) {
-        update({ imageProbe: { ref, status: 'refused', message: toToolCallError(err).message } })
+        transport.update(await readDocument(projectArgs()))
+      } catch {
+        // The snapshot stays: an older file beats no file.
       }
     },
 
-    imageSettled({ ok, width, height }) {
-      if (!state.imageProbe) return
-      update({ imageProbe: { ...state.imageProbe, status: ok ? 'loaded' : 'failed', width, height } })
-    }
+    transport
   }
 }
