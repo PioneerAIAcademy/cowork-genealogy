@@ -22,18 +22,9 @@ tools:
   - mcp__genealogy__record_search
   - mcp__remote-devices__Genealogy_Research__record_search
   - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__rank_search_matches
-  - mcp__remote-devices__Genealogy_Research__rank_search_matches
-  - mcp__Genealogy_Research__rank_search_matches
   - mcp__genealogy__record_read
   - mcp__remote-devices__Genealogy_Research__record_read
   - mcp__Genealogy_Research__record_read
-  - mcp__genealogy__same_person
-  - mcp__remote-devices__Genealogy_Research__same_person
-  - mcp__Genealogy_Research__same_person
-  - mcp__genealogy__source_attachments
-  - mcp__remote-devices__Genealogy_Research__source_attachments
-  - mcp__Genealogy_Research__source_attachments
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
@@ -52,16 +43,10 @@ tools:
   - mcp__genealogy__tree_query
   - mcp__remote-devices__Genealogy_Research__tree_query
   - mcp__Genealogy_Research__tree_query
-  - mcp__genealogy__wiki_search
-  - mcp__remote-devices__Genealogy_Research__wiki_search
-  - mcp__Genealogy_Research__wiki_search
-  - mcp__genealogy__wiki_read
-  - mcp__remote-devices__Genealogy_Research__wiki_read
-  - mcp__Genealogy_Research__wiki_read
   - mcp__genealogy__catalog_search
   - mcp__remote-devices__Genealogy_Research__catalog_search
   - mcp__Genealogy_Research__catalog_search
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 ---
 
@@ -128,8 +113,6 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 | `probate`, `court`, `land` (and other county-court series) in a **browse-only / barely-indexed** collection (low `recordSearchablePercent`) | `record_search` **then** — | Try `record_search` first. **If it returns nil/near-nil AND the locality survey said this collection covers the place+period, do NOT log negative as absence — the record is un-indexed, not absent.** Handle it per Step 8 item 5, then hand back. This is also the pre-1911-death path: no death certificate exists, so a county estate administration brackets the death |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records; also name `search-external-sites` as the route to FindAGrave |
 
-Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
-
 **This agent never runs `fulltext_search` or delegates to `search-full-text`.** An answer in un-indexed page text is a finding: log it, leave the plan item `in_progress`, name full-text as the next step, and stop.
 
 ## Steps
@@ -163,13 +146,11 @@ search back to it rather than running it yourself.
 
 ### 2. Construct the search query
 
-**Pre-work — issue this before constructing the query. Do not drop the call.**
+**A census search** (the plan item's `record_type` is `census`, or the user asked for a census): send `recordType: "census"` with the census year and the place. The response's `census` block lists each census of that year and place and what its schedule recorded. State what a census schedule collected only from that block; where it is silent, state nothing about the schedule.
 
-- **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
-- **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
-- A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
-- **A state census** (in the US, a year not ending in 0) uses the state's page: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
-- Never state which repository or site outside FamilySearch holds a record set, which counties survive, or that it is available nowhere else, unless a tool result in this run says so; which sites hold it is `search-external-sites`' answer.
+Never state which repository or site outside FamilySearch holds a record set, which counties survive, or that it is available nowhere else, unless a tool result in this run says so; which sites hold it is `search-external-sites`' answer.
+
+**When the plan item's `rationale` says how the collection or place is indexed, or which fields to search, build that query first, exactly as it says.**
 
 **Choose a search strategy:**
 
@@ -192,7 +173,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | `residencePlace` | Plan item jurisdiction | The primary geographic filter |
 | `recordCountry` | Plan item jurisdiction | Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. **Rejected if combined with `batchNumber`** |
 | `batchNumber` | A previous result's `batchNumber` (on `ranked[]` stubs too) — scan the hits, not just the top one | Extraction batch. Anchors alone — send it with no other **search filter** (keep `projectPath`/`subjectId`); add only a `surname` to narrow. Quote it verbatim; never reformat or pad it |
-| `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
+| `collectionId` | The plan item, or a previous result's `collectionId` | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Narrows the result set — see "Relative-name anchors" below before reading a nil as meaningful |
 | `surnameExact`, `givenNameExact`, `birthPlaceExact`, `marriagePlaceExact`, `birthYearExact`, `marriageYearExact`, `fatherGivenNameExact`, `spouseSurnameExact` (and the same `Exact` suffix on every other name, place, and year field) | — | Boolean. **Leave unset unless a rule below says otherwise.** See "Exact-match qualifiers" |
 
@@ -314,13 +295,6 @@ For wildcard rules and fuzzy matching behavior, read the “Name search mechanic
 - Maiden names for married women
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
 
-For the historical reasoning behind why one person's name appears in several
-spellings within one record set — spelling wasn't standardized before
-widespread literacy, and names were written phonetically, filtered through the
-recorder's accent — fetch FamilySearch's own explanation on demand rather than
-reconstructing it here: `wiki_search({ query: "guessing a name variation" })`,
-then `wiki_read` the page it returns.
-
 **Secondary names need variants too — the given name, not just the surname.** The
 variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`
 and other secondary-party parameters: a bride indexed "Urna" when the tree has
@@ -337,8 +311,8 @@ calling a secondary-name search a genuine negative, work this order:
    secondary given name itself** changed.
 3. **Then drop the secondary filter rather than switching repositories.** Run at
    least one principal-only search (no `spouseGivenName`/`fatherSurname`/etc.)
-   with `count: 50`, then `rank_search_matches` with `checkAttachments: true`
-   over the full pool. `attachedToSubject: true` is a strong confirming signal
+   with `subjectId`; the rows come back ranked with attachment status.
+   `attachedToSubject: true` is a strong confirming signal
    here — FamilySearch's own matcher already linked it to this person — even at
    an unremarkable `matchScore`. This is the inverse of Step 4's "attached →
    deprioritize", which is for *discovering new* evidence; when the goal is
@@ -367,8 +341,7 @@ Those two arguments do all of Step 4 for you:
   `subjectId`, those same rows come back **scored and ordered best first**
   (Step 4) — one list, not two.
 - `subjectId` makes the tool **rank the candidates for you** against that subject
-  and return them under `ranked` (see Step 4). You do not call
-  `rank_search_matches` yourself in the normal flow.
+  and return them under `ranked` (see Step 4).
 
 Leave `count` alone. It defaults to 50 when you pass `subjectId` — a deep pool is
 worth fetching precisely because every row comes back scored and ordered — and to
@@ -412,39 +385,19 @@ read `ranked`, don't re-rank.** The tool scored every staged candidate against
 the subject and checked attachments as part of the search. If you find yourself
 about to hand-score a stub list, check whether you passed `subjectId`.
 
-**Two cases still need the standalone `rank_search_matches` tool:**
-
-1. **Re-ranking a logged search later** — pass the finalized
-   `results/<log_id>.json` as `stagedResultsRef`, e.g. to score an old pool
-   against a subject you have since enriched.
-2. **Ranking against a different subject** than the one you searched for —
-   testing whether a candidate pool matches a *sibling* or a hypothesised parent.
-
-```
-rank_search_matches({
-  projectPath,
-  stagedResultsRef,        // staged.resultsRef, or results/<log_id>.json
-  subjectId,               // any persons[].id in tree.gedcomx.json
-  checkAttachments: true
-})
-```
-
 **If `rankingError` came back on the search**, ranking failed but the search did
-not: `results` is intact and unranked. Re-run the standalone tool with the
-`staged.resultsRef` you already hold; if it fails again, surface it and triage
-by hand for that one search.
+not: `results` is intact and unranked. Re-run the search once; if it fails
+again, surface it and triage by hand for that one search.
 
-Whichever path produced it, the ranking scores **every** staged candidate against
-the subject with FamilySearch's own matcher (the engine `same_person` uses),
+The ranking scores **every** staged candidate against
+the subject with FamilySearch's own matcher,
 re-orders by real match quality — **not** FamilySearch's search rank, which is
 unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
 the ranker missed), `matchScore` (0–1),
 `candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
-carries counts and diagnostics only. The bulk GedcomX stays host-side, and a
-per-result `same_person` loop plus a separate `source_attachments` call are both
-unnecessary.
+carries counts and diagnostics only. The bulk GedcomX stays host-side.
 
 Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
 highest. A row the ranker could not score keeps its search position, has no
@@ -455,7 +408,9 @@ candidates; you still confirm the top ones:
 
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
-  consistency. Flag any impossibility as `needs-review` regardless of score —
+  consistency. An indexed role is checked against age even where the schedule
+  could not have stated it: a child indexed as head of household is
+  `needs-review`, never explained away as the indexer's inference. Flag any impossibility as `needs-review` regardless of score —
   score is one input, reason is the arbiter. Write the cross-check result for
   the top match — role against age, birth-year gap to the subject, place — into
   the log `notes` before you triage: a gap over two years or an impossible role
@@ -540,7 +495,7 @@ candidates; you still confirm the top ones:
   disqualifier: an `absent` record is still a candidate, and this is never on
   its own a reason to stop searching or escalate elsewhere. `matchScore` never
   looks at relationships, so an `absent` record can outrank one that names him;
-  `rank_search_matches` says so with `relativeTermNote`.
+  the response says so with `relativeTermNote`.
 - **`batchNumber` on a result opens the whole extraction.** Send it as the only
   search filter, keeping `projectPath` so results stage and log; add `subjectId`
   only on a page you want ranked, since ranking scores every candidate upstream.
@@ -570,8 +525,8 @@ candidates; you still confirm the top ones:
   sentence you are already building, not as a fact appended once the
   candidate reasoning is settled.
   **When a match turns on a field — or before calling one absent — check what
-  that year's schedule actually collected, from the census page fetched in
-  Step 2. Three rules hold whatever the page says:**
+  that year's schedule recorded, in the response's `census` block. Three rules
+  hold:**
   - **State what the schedule recorded; label everything else inferred, and name
     what it was inferred from** (surname, age, listing order). This is not only
     about relationships: any fact the schedule did not collect that year —
@@ -587,6 +542,8 @@ candidates; you still confirm the top ones:
   Non-federal **state censuses** follow their own schedules and often carry
   fields the federal census of that decade lacks — read the collection
   description rather than assuming the federal pattern.
+- **`patronymicSearch` on a response:** send the search it names next, before any other retry.
+- **`childrenSearch` on a response** means the search names a parent and no child and is held to one collection, batch or place. Send the unheld search it names before reporting the couple's children.
 - **Follow a returned `jurisdictionHints`.** When a `record_search` response
   carries a non-empty `jurisdictionHints`, the next 1–2 retries in this same
   plan-item search sequence must set `marriagePlace` or `residencePlace` to
@@ -609,8 +566,8 @@ candidates; you still confirm the top ones:
   answers the question asked — a 1870-census query returning an 1850 result is a
   near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
 
-**When nothing in `matches[]` is a confident match** — or `rank_search_matches`
-returns `subjectResolvable: false` — do **not** conclude the record is absent:
+**When no row is a confident match** — or `ranked.subjectResolvable` is
+`false` — do **not** conclude the record is absent:
 
 - The pool caps at 50, and re-ranking only re-orders what was fetched — it can't
   rescue a target FamilySearch buries past rank 50. So **page deeper**
@@ -630,12 +587,6 @@ returns `subjectResolvable: false` — do **not** conclude the record is absent:
   - *The subject is fine; the pool holds no match.* That is a **real negative**
     for this query. Log it as such and page deeper or narrow — do not re-triage
     the same 50 stubs by hand.
-
-  Do **not** fall back to hand-scoring with `same_person` against the same tree
-  subject: that is the identical starved document the ranker just failed on.
-  `same_person` is a fallback only when you have a *richer* subject document than
-  the tree person — e.g. a confirmed record for this person, compared
-  record-to-record.
 
 **Deduplicate.** Multiple index entries may point to one underlying record; check
 identifiers before treating similar matches as independent.
@@ -715,7 +666,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
-1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
+1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`. When its response carries `planRationale`, search next what that rationale names and you have not searched, then carry on with the levers below.
 2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
@@ -741,7 +692,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
-   **No FamilySearch collection for the record set → hand back after one logged search, planned or ad-hoc.** When the census wiki page shows no FamilySearch collection for the place and year, run and log (Step 5) one `record_search` for them; if it returns no census record, report the year as "not on FamilySearch" and return `Hand-back: search-external-sites — <record set, place, years>; FamilySearch holds no collection for these years`, with `userPresent` as above. A nil on a collection FamilySearch holds is not this case.
+   **A census year FamilySearch does not index → hand back after one logged search, planned or ad-hoc.** When the response's `census.schedules` holds no census for a year the search is for, log that search (Step 5); if it returned no census record of that year, report the year as "not on FamilySearch" and return `Hand-back: search-external-sites — <record set, place, years>; FamilySearch holds no collection for these years`, with `userPresent` as above. A nil on a census that `census.schedules` lists is not this case.
 
    ❌ WRONG: Ending your return with "FamilySearch is exhausted — would you like me to check Ancestry?" Offering the escalation as a question is not escalating.
    ✅ CORRECT: Log the nils, then return "Hand-back: search-external-sites — FamilySearch variants exhausted; <person attributes, plan item, userPresent>".
@@ -1258,7 +1209,7 @@ When a search returns 0 hits with reasonable inputs, try in this order:
 
 **Still 0 hits across all variations:** the records may be unindexed.
 Call `catalog_search` for the place: it indexes filmed and image-only
-holdings that `collections_search` (indexed collections only) cannot see, and a
+holdings the indexed collections do not show, and a
 film note's `imageGroupNumber` feeds `image_search` / `fulltext_search`. A
 small place may be catalogued under its parent: on 0 hits, retry once at the
 parent jurisdiction. Other routes: image browsing, Full-Text Search, or
