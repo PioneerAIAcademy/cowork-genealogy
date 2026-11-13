@@ -100,6 +100,7 @@ export function buildRuleIndex(documents: { research?: unknown; tree?: unknown }
     const page = typeof s.url === 'string' ? PERSON_PAGE_IN.exec(s.url) : null
     if (page && !pidToPerson.has(page[1])) {
       pidToPerson.set(page[1], soleSubject)
+      if (soleSubject && !soleSubject.pid) soleSubject.pid = page[1]
     }
   }
 

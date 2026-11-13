@@ -122,7 +122,7 @@ rule: `A project's /proj_<16 hex> projectPath, from project_list. A call that na
       tree: object | null;           // tree.gedcomx.json
       startingTree: object | null;   // starting-tree.gedcomx.json
       collections: object | null;    // external-collections.json
-      derived: { folderName: string };
+      derived: Derived;              // below
       echo: object;                  // the call's arguments, projectPath included
     };
   };
@@ -139,6 +139,28 @@ reach the card only through `_meta`.
 | `collections` | The file is absent, unreadable or not its shape. It is background reading, so a bad file does not cost the card. |
 
 `research` is never `null`: a project with no `research.json` is a refusal.
+
+### `derived`
+
+What only the engine computes, from the documents above (`deriveProject`):
+
+```typescript
+{
+  folderName: string;                       // basename of the project path
+  questions: QuestionStatus[] | null;       // questionStates(research, tree)
+  awaitingUser: AwaitingHandOff[] | null;   // awaitingUserHandOffs(research.log)
+  treeChanges: TreeDiffResult | null;       // treeDiff(startingTree → tree); null with no starting tree
+  evaluations: { [evaluationId]: { body: object | null; craft: boolean } };
+}
+```
+
+- `evaluations` has one entry per evaluation whose `superseded_by` is null. Its `body` is
+  the parsed `file_path`, read only when that path matches
+  `^evaluations/[A-Za-z0-9._-]+\.json$`; a path that does not, or a file that cannot be
+  read, gives `body: null`. `craft` is `body.craft === true`, so an unreadable body is not
+  craft, as gps-mentor counts it.
+- `questions`, `awaitingUser` and `treeChanges` are each `null` when computing that field
+  throws on a malformed document, so the card still draws.
 
 ### The 1,000,000-byte rule
 

@@ -3,8 +3,7 @@ import { PROJECT_META_KEY, type ToolInput } from './contract'
 import { TOOL_CALL_TIMEOUT_MS } from './hosts/app-host'
 import type { ToolResultEvent } from './hosts/host'
 import { createCardLoader, RESULT_WAIT_MS } from './load'
-import { LINK_PROBE_URL } from './probes'
-import { headline, reportText } from './report'
+import { headline } from './ui/status'
 import {
   FakeApp,
   META_DOCUMENT,
@@ -145,7 +144,6 @@ describe('card loading, once per mount', () => {
     app.sendResult({ ...RESULT_FAILED, structuredContent: {} })
 
     expect(session.getState().load.resultKeys).toEqual(['content', '_meta'])
-    expect(reportText(session.getState())).toContain('first result keys: content, _meta\n')
   })
 
   it('later tool inputs are ignored', async () => {
@@ -217,7 +215,6 @@ describe('a result too large for its documents', () => {
     expect(load.resultCarriedMeta).toBe(true)
     expect(load.snapshot).toEqual(READ_DOCUMENT)
     expect(load.source).toBe('read_project_view call')
-    expect(reportText(session.getState())).toContain('tool input received: none\n')
   })
 
   it('reads with the echoed projectPath when the tool input arrived empty', async () => {
@@ -522,8 +519,7 @@ describe('reaching the host', () => {
     expect(state.display.available).toEqual(['inline', 'fullscreen'])
     expect(applyTheme.mock.calls[0]?.[0]).toMatchObject({ theme: 'dark' })
     expect(headline(state)).toBe('Waiting for the tool call.')
-    expect(reportText(state)).toContain('status: waiting')
-    expect(reportText(state)).not.toContain('reason:')
+    expect(state.unreachableReason).toBeNull()
 
     app.sendInput(INPUT)
     await vi.advanceTimersByTimeAsync(RESULT_WAIT_MS)
@@ -588,31 +584,6 @@ describe('reaching the host', () => {
 })
 
 describe('the probes', () => {
-  it('the size ladder reports characters and time', async () => {
-    const app = new FakeApp()
-    const pad = 'x'.repeat(10_000)
-    app.callServerTool.mockResolvedValue({
-      content: [],
-      structuredContent: { ...READ_DOCUMENT, pad } as Record<string, unknown>
-    })
-    const { session } = await connected(app)
-    app.sendInput(INPUT)
-    await session.runSizeProbe(400_000)
-
-    expect(app.reads().at(-1)).toEqual({ part: 'document', projectPath: 'mogan', pad: 400_000 })
-    expect(session.getState().sizeProbes[0]).toMatchObject({ chars: 400_000, status: 'ok', received: pad.length })
-    expect(session.getState().sizeProbes[0]?.ms).toEqual(expect.any(Number))
-  })
-
-  it('the size ladder reports an error with its code', async () => {
-    const app = new FakeApp()
-    app.callServerTool.mockRejectedValue(Object.assign(new Error('Too large.'), { code: -32000 }))
-    const { session } = await connected(app)
-    await session.runSizeProbe(2_000_000)
-
-    expect(session.getState().sizeProbes[0]).toMatchObject({ status: 'failed', message: 'Too large.', code: '-32000' })
-  })
-
   it('the image probe asks for the first source that has an image', async () => {
     const app = new FakeApp()
     const { session } = await connected(app)
@@ -637,30 +608,6 @@ describe('the probes', () => {
     await session.runImageProbe()
 
     expect(app.reads()).toEqual([{ part: 'image', id: 'images/page-1.jpg', projectPath: '/proj_0123456789abcdef' }])
-  })
-
-  it('the link probe reports how long the host took to answer', async () => {
-    const app = new FakeApp()
-    app.openLink.mockImplementation(async () => {
-      await vi.advanceTimersByTimeAsync(1_500)
-      return {}
-    })
-    const { session } = await connected(app)
-    await session.runLinkProbe()
-
-    expect(app.openLink).toHaveBeenCalledWith({ url: LINK_PROBE_URL }, { timeout: TOOL_CALL_TIMEOUT_MS })
-    expect(session.getState().linkProbe).toEqual({ status: 'answered', ms: 1_500 })
-    expect(reportText(session.getState())).toContain('result: the host answered in 1500 ms')
-  })
-
-  it('the link probe reports a refusal', async () => {
-    const app = new FakeApp()
-    app.openLink.mockResolvedValue({ isError: true })
-    const { session } = await connected(app)
-    await session.runLinkProbe()
-
-    expect(session.getState().linkProbe).toMatchObject({ status: 'refused', message: expect.any(String) })
-    expect(reportText(session.getState())).toMatch(/result: refused after \d+ ms: /)
   })
 
   it('the image probe falls back to images/probe.jpg and reports a refusal', async () => {

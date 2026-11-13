@@ -19,5 +19,6 @@ export function load(dir: string, treeFile = 'tree.gedcomx.json'): Documents {
 
 export const MCANDREW = load('docs/captures/2026-09-29-mcandrew-children')
 export const COMPOUND = load('eval/fixtures/scenarios/compound-objective-fully-covered')
+export const FLYNN = load('eval/fixtures/scenarios/flynn-prior-craft-verdict')
 export const mcandrew: RuleIndex = buildRuleIndex(MCANDREW)
 export const compound: RuleIndex = buildRuleIndex(COMPOUND)

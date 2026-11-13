@@ -121,8 +121,9 @@ describe('against the real App', () => {
     expect(session.getState().imageProbe).toMatchObject({ status: 'refused' })
     expect(session.getState().imageProbe?.message).toContain('Host refused.')
 
-    await session.runSizeProbe(400_000)
-    expect(session.getState().sizeProbes[0]).toMatchObject({ status: 'failed', message: 'Server refused.' })
+    bridge.oncalltool = async () => ({ isError: true, content: [{ type: 'text', text: 'Server refused.' }] })
+    await session.runImageProbe()
+    expect(session.getState().imageProbe).toMatchObject({ status: 'refused', message: 'Server refused.' })
   })
 
   it('passes read_project_view through to the host with its arguments', async () => {
@@ -130,12 +131,12 @@ describe('against the real App', () => {
     const seen: unknown[] = []
     bridge.oncalltool = async (params) => {
       seen.push(params)
-      return { content: [], structuredContent: { pad: 'x'.repeat(10) } }
+      return { content: [], structuredContent: { url: 'https://example.test/img?t=x', expiresAt: 1 } }
     }
-    await session.runSizeProbe(10)
+    await session.runImageProbe()
 
     expect(seen).toHaveLength(1)
-    expect(seen[0]).toMatchObject({ name: READ_PROJECT_VIEW, arguments: { part: 'document', pad: 10 } })
-    expect(session.getState().sizeProbes[0]).toMatchObject({ status: 'ok', received: 10 })
+    expect(seen[0]).toMatchObject({ name: READ_PROJECT_VIEW, arguments: { part: 'image', id: 'images/probe.jpg' } })
+    expect(session.getState().imageProbe).toMatchObject({ status: 'showing', url: 'https://example.test/img?t=x' })
   })
 })

@@ -6,6 +6,7 @@ import {
   callProjectView,
   connectorProjectView,
   connectorProjectViewSchemas,
+  deriveProject,
   MAX_META_BYTES,
   PROJECT_META_KEY,
   READ_PROJECT_VIEW,
@@ -38,6 +39,12 @@ afterEach(async () => {
   await rm(base, { recursive: true, force: true });
 });
 
+/** `derived` for documents with no questions, log or evaluations; its content is
+ *  tested in derived.test.ts. */
+const bareDerived = (folderName: string, startingTree: unknown = null, tree: unknown = null) =>
+  deriveProject({ folderName, research: RESEARCH, tree, startingTree, evaluationBodies: {} });
+const wholeDerived = (folderName: string) => bareDerived(folderName, STARTING_TREE, TREE);
+
 const writeDocument = (name: string, doc: unknown) => writeFile(join(project, name), JSON.stringify(doc), "utf8");
 
 async function writeWholeProject(): Promise<void> {
@@ -62,7 +69,7 @@ describe("show_project", () => {
       tree: TREE,
       startingTree: STARTING_TREE,
       collections: COLLECTIONS,
-      derived: { folderName: FOLDER },
+      derived: wholeDerived(FOLDER),
       echo: args,
     });
   });
@@ -86,7 +93,7 @@ describe("show_project", () => {
         tree: null,
         startingTree: null,
         collections: null,
-        derived: { folderName: FOLDER },
+        derived: bareDerived(FOLDER),
         echo: args(),
       };
       const room = bytes - Buffer.byteLength(JSON.stringify(meta), "utf8");
@@ -104,7 +111,7 @@ describe("show_project", () => {
     it("carries only derived and echo one byte past it", async () => {
       await writeDocument("research.json", { note: noteOfMetaSize(MAX_META_BYTES + 1) });
       const result = await callProjectView(context, SHOW_PROJECT, args());
-      expect(metaOf(result)).toEqual({ derived: { folderName: FOLDER }, echo: args() });
+      expect(metaOf(result)).toEqual({ derived: bareDerived(FOLDER), echo: args() });
       expect(result.isError).toBeUndefined();
       expect(result.content).toHaveLength(1);
     });
@@ -146,7 +153,7 @@ describe("read_project_view", () => {
       tree: TREE,
       startingTree: STARTING_TREE,
       collections: COLLECTIONS,
-      derived: { folderName: FOLDER },
+      derived: wholeDerived(FOLDER),
     });
   });
 

@@ -63,21 +63,48 @@ button {
   cursor: pointer;
 }
 
-.probe-image {
-  display: block;
-  max-width: 100%;
-  margin-bottom: 12px;
+.card {
+  overflow: hidden;
 }
 
-.report {
-  margin: 0;
-  padding: 12px;
-  border: 1px solid var(--color-border-primary, var(--fallback-line));
-  border-radius: 6px;
-  background: var(--color-background-secondary, var(--fallback-panel));
-  font-family: var(--font-mono, ui-monospace, monospace);
+.points {
+  margin: 0 0 12px;
+}
+
+.point {
+  margin-bottom: 10px;
+}
+
+.point dt {
   font-size: 12px;
-  white-space: pre-wrap;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.point dd {
+  margin: 2px 0 0;
   overflow-wrap: anywhere;
-  user-select: text;
+}
+
+.point dd p:last-child,
+.point dd ul:last-child {
+  margin-bottom: 0;
+}
+
+.claims,
+.doubts {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.tier {
+  font-style: italic;
+}
+
+.footer {
+  opacity: 0.75;
+}
+
+a {
+  color: var(--color-text-info, inherit);
 }

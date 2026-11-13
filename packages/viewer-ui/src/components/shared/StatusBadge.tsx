@@ -113,6 +113,11 @@ const statusLabelMap: Record<string, string> = {
   user_declined: 'declined by the researcher'
 }
 
+/** A stored status value as the researcher reads it. */
+export function statusLabel(value: string): string {
+  return statusLabelMap[value] ?? value.replace(/_/g, ' ')
+}
+
 interface StatusBadgeProps {
   value?: string | null
   color?: BadgeColor
@@ -122,6 +127,6 @@ export default function StatusBadge({ value, color }: StatusBadgeProps): React.J
   if (value == null) return null
   const resolvedColor = color ?? statusColorMap[value] ?? 'gray'
   return (
-    <span className={`${styles.badge} ${styles[resolvedColor]}`}>{statusLabelMap[value] ?? value.replace(/_/g, ' ')}</span>
+    <span className={`${styles.badge} ${styles[resolvedColor]}`}>{statusLabel(value)}</span>
   )
 }

@@ -11,7 +11,10 @@ import { readExternalCollections } from "../utils/external-collections-store.js"
 import { IMAGE_REF_PATTERN, processImageTokens } from "../utils/image-tokens.js";
 import { classifyProjectPath, fileExists, readProjectJson } from "../utils/project-io.js";
 import { webPublicBase } from "../utils/project-links.js";
+import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
+import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 import { readStartingTree } from "../utils/starting-tree.js";
+import { treeDiff, type TreeDiffResult } from "./tree-diff.js";
 
 export const SHOW_PROJECT = "show_project";
 export const READ_PROJECT_VIEW = "read_project_view";
@@ -118,15 +121,92 @@ function requireOneOf(name: string, value: unknown, allowed: string[]): void {
   }
 }
 
+/** Where gps-mentor writes a verdict body. Anything else is not read. */
+const EVALUATION_REF = /^evaluations\/[A-Za-z0-9._-]+\.json$/;
+
+export interface DerivedEvaluation {
+  body: unknown;
+  /** A craft read says how the proof reads, not whether the evidence holds. */
+  craft: boolean;
+}
+
+export interface Derived {
+  folderName: string;
+  questions: QuestionStatus[] | null;
+  awaitingUser: AwaitingHandOff[] | null;
+  treeChanges: TreeDiffResult | null;
+  evaluations: Record<string, DerivedEvaluation>;
+}
+
+function softly<T>(compute: () => T): T | null {
+  try {
+    return compute();
+  } catch {
+    return null;
+  }
+}
+
+function liveEvaluations(research: any): any[] {
+  const all = Array.isArray(research?.evaluations) ? research.evaluations : [];
+  return all.filter((e: any) => typeof e?.id === "string" && e.superseded_by == null);
+}
+
+/** What only the engine can compute, from documents already read. A field that
+ *  throws on a malformed document is null, so the card still draws. */
+export function deriveProject(input: {
+  folderName: string;
+  research: any;
+  tree: any;
+  startingTree: any;
+  evaluationBodies: Record<string, unknown>;
+}): Derived {
+  const { research, tree, startingTree } = input;
+  const evaluations: Record<string, DerivedEvaluation> = {};
+  for (const entry of liveEvaluations(research)) {
+    const body = input.evaluationBodies[entry.id] ?? null;
+    evaluations[entry.id] = { body, craft: (body as { craft?: unknown } | null)?.craft === true };
+  }
+  return {
+    folderName: input.folderName,
+    questions: softly(() => questionStates(research, tree)),
+    awaitingUser: softly(() => awaitingUserHandOffs(research?.log)),
+    treeChanges: startingTree ? softly(() => treeDiff({ before: startingTree, after: tree ?? undefined })) : null,
+    evaluations,
+  };
+}
+
+/** Each live evaluation's body by id; one that cannot be read is left out. */
+async function readEvaluationBodies(projectPath: string, research: any): Promise<Record<string, unknown>> {
+  const bodies: Record<string, unknown> = {};
+  for (const entry of liveEvaluations(research)) {
+    if (typeof entry.file_path !== "string" || !EVALUATION_REF.test(entry.file_path)) continue;
+    try {
+      bodies[entry.id] = await readProjectJson(projectPath, entry.file_path);
+    } catch {
+      // gps-mentor counts an unreadable body as not craft; so does the card.
+    }
+  }
+  return bodies;
+}
+
 /** Every document the page reads, with null for a file the project does not have. */
 async function readDocument(projectPath: string) {
+  const research = await readProjectJson(projectPath, "research.json");
+  const tree = (await fileExists(projectPath, "tree.gedcomx.json")) ? await readProjectJson(projectPath, "tree.gedcomx.json") : null;
+  const startingTree = await readStartingTree(projectPath);
   return {
-    research: await readProjectJson(projectPath, "research.json"),
-    tree: (await fileExists(projectPath, "tree.gedcomx.json")) ? await readProjectJson(projectPath, "tree.gedcomx.json") : null,
-    startingTree: await readStartingTree(projectPath),
+    research,
+    tree,
+    startingTree,
     // Background reading only, so a bad file must not cost the researcher the card.
     collections: await readExternalCollections(projectPath).catch(() => null),
-    derived: { folderName: basename(projectPath) },
+    derived: deriveProject({
+      folderName: basename(projectPath),
+      research,
+      tree,
+      startingTree,
+      evaluationBodies: await readEvaluationBodies(projectPath, research),
+    }),
   };
 }
 

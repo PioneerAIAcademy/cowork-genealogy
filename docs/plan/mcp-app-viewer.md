@@ -747,11 +747,11 @@ this same server.
 The two tools and the page move onto the tool server, behind the door.
 `docs/specs/project-view-tools-spec.md` is the contract.
 
-**Built so far:** the skeleton this section describes, with `derived` holding only
-`folderName`. It passes the engine's tests on both store backends.
+**Built so far:** the skeleton this section describes, and `derived` whole. It passes the
+engine's tests on both store backends.
 **Not yet:** no card has drawn through the door. That still needs a seeded test project
-and sign-in (issue #3997). The rename to `Genealogy Research`, `derived` beyond
-`folderName` and the `recordSearch` part are not built.
+and sign-in (issue #3997). The rename to `Genealogy Research` and the `recordSearch` part
+are not built.
 
 - **Where:** `src/tools/project-view.ts` holds the tools, the page's resource and the
   connector's context. `src/` cannot import `viewer/`, so `viewer/` keeps its entry and

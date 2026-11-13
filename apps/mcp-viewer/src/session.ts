@@ -11,7 +11,7 @@ import {
   type HostKind
 } from './hosts/host'
 import { createCardLoader, INITIAL_LOAD, type LoadState } from './load'
-import { imageProbeRef, isImageLink, LINK_PROBE_URL, type ImageProbe, type LinkProbe, type SizeProbe } from './probes'
+import { imageProbeRef, isImageLink, type ImageProbe } from './probes'
 
 export const HOST_CONNECT_TIMEOUT_MS = 10_000
 
@@ -42,9 +42,9 @@ export interface SessionState {
   display: DisplayModeState
   contextChanges: ContextChange[]
   modeRequests: ModeRequest[]
-  sizeProbes: SizeProbe[]
+  /** The host's `containerDimensions` height limit: a fixed height, a maximum, or none. */
+  heightLimit: number | null
   imageProbe: ImageProbe | null
-  linkProbe: LinkProbe | null
 }
 
 export interface SessionDeps {
@@ -59,9 +59,7 @@ export interface Session {
   subscribe(listener: () => void): () => void
   start(): Promise<void>
   requestMode(mode: DisplayMode): Promise<void>
-  runSizeProbe(chars: number): Promise<void>
   runImageProbe(): Promise<void>
-  runLinkProbe(): Promise<void>
   imageSettled(outcome: { ok: boolean; width?: number; height?: number }): void
 }
 
@@ -82,11 +80,9 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     display: INITIAL_DISPLAY,
     contextChanges: [],
     modeRequests: [],
-    sizeProbes: [],
-    imageProbe: null,
-    linkProbe: null
+    heightLimit: null,
+    imageProbe: null
   }
-  let nextProbeId = 1
   let fileOpenTried = false
 
   function update(patch: Partial<SessionState>): void {
@@ -119,6 +115,14 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     onChange: (next) => update({ display: next })
   })
 
+  // A context change without `containerDimensions` leaves the limit as it was.
+  function applyHeightLimit(context: HostContext): void {
+    const dims = context.containerDimensions as { height?: number; maxHeight?: number } | undefined
+    if (!dims) return
+    const limit = typeof dims.height === 'number' ? dims.height : typeof dims.maxHeight === 'number' ? dims.maxHeight : null
+    update({ heightLimit: limit })
+  }
+
   async function askForMode(mode: DisplayMode, trigger: ModeRequest['trigger']): Promise<void> {
     const at = now()
     let outcome: string
@@ -140,10 +144,6 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
       const request: ModeRequest = { at: now(), mode: 'fullscreen', trigger: 'show: file', outcome: 'not offered' }
       update({ modeRequests: [...state.modeRequests, request] })
     }
-  }
-
-  function updateSizeProbe(id: number, patch: Partial<SizeProbe>): void {
-    update({ sizeProbes: state.sizeProbes.map((probe) => (probe.id === id ? { ...probe, ...patch } : probe)) })
   }
 
   return {
@@ -179,6 +179,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
               keys: Object.keys(change)
             }
             update({ contextChanges: [...state.contextChanges, entry] })
+            applyHeightLimit(change)
             display.apply(change)
             applyTheme(change)
           }
@@ -199,6 +200,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
         hostVersion: connection.version ?? null,
         capabilities: connection.capabilities ?? null
       })
+      applyHeightLimit(connection.context)
       display.apply(connection.context)
       applyTheme(connection.context)
       if (host.input) loader.load(host.input)
@@ -206,20 +208,6 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     },
 
     requestMode: (mode) => askForMode(mode, 'button'),
-
-    async runSizeProbe(chars) {
-      const id = nextProbeId++
-      update({ sizeProbes: [...state.sizeProbes, { id, chars, status: 'running' }] })
-      const startedAt = now()
-      try {
-        const document = await readDocument({ ...projectArgs(), pad: chars })
-        const received = typeof document.pad === 'string' ? document.pad.length : 0
-        updateSizeProbe(id, { status: 'ok', ms: now() - startedAt, received })
-      } catch (err) {
-        const { message, code } = toToolCallError(err)
-        updateSizeProbe(id, { status: 'failed', ms: now() - startedAt, message, code })
-      }
-    },
 
     async runImageProbe() {
       const ref = imageProbeRef(state.load.snapshot)
@@ -230,17 +218,6 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
         update({ imageProbe: { ref, status: 'showing', url: link.url, expiresAt: link.expiresAt } })
       } catch (err) {
         update({ imageProbe: { ref, status: 'refused', message: toToolCallError(err).message } })
-      }
-    },
-
-    async runLinkProbe() {
-      update({ linkProbe: { status: 'asking' } })
-      const startedAt = now()
-      try {
-        await host.openLink(LINK_PROBE_URL)
-        update({ linkProbe: { status: 'answered', ms: now() - startedAt } })
-      } catch (err) {
-        update({ linkProbe: { status: 'refused', ms: now() - startedAt, message: toToolCallError(err).message } })
       }
     },
 

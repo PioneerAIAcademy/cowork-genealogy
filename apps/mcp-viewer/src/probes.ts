@@ -1,20 +1,6 @@
 import type { ImageLink, ProjectDocument } from './contract'
 
-// 1.3M puts a result just past the largest project's 1.55 MB research.json, once
-// the project's own ~300 KB rides along.
-export const SIZE_LADDER = [400_000, 1_000_000, 1_300_000, 2_000_000] as const
-
 export const FALLBACK_IMAGE_REF = 'images/probe.jpg'
-
-export interface SizeProbe {
-  id: number
-  chars: number
-  status: 'running' | 'ok' | 'failed'
-  ms?: number
-  received?: number
-  message?: string
-  code?: string
-}
 
 export interface ImageProbe {
   ref: string
@@ -24,14 +10,6 @@ export interface ImageProbe {
   message?: string
   width?: number
   height?: number
-}
-
-export const LINK_PROBE_URL = 'https://www.familysearch.org/'
-
-export interface LinkProbe {
-  status: 'asking' | 'answered' | 'refused'
-  ms?: number
-  message?: string
 }
 
 export function imageProbeRef(snapshot: ProjectDocument | null): string {

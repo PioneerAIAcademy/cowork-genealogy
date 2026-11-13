@@ -7,7 +7,7 @@ import { createArtifactHost, type ClaudeLike, type McpLike } from './artifact-ho
 import { chooseHost, readBootFacts } from './choose-host'
 import { ToolCallError } from './host'
 import { createTabHost, type TabHostDeps } from './tab-host'
-import { headline } from '../report'
+import { headline } from '../ui/status'
 
 afterEach(() => {
   vi.useRealTimers()

@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { PROJECT_META_KEY, READ_PROJECT_VIEW, type ProjectDocument, type ToolInput } from '../contract'
+import { PROJECT_META_KEY, READ_PROJECT_VIEW, type ProjectDocument, type ResearchDocument, type ToolInput } from '../contract'
 import { createAppHost, type AppLike } from '../hosts/app-host'
 import type { BootFacts } from '../hosts/choose-host'
 import type { DisplayMode, HostCapabilities, HostContext, ToolResultEvent } from '../hosts/host'
@@ -12,14 +12,14 @@ export const META_DOCUMENT: ProjectDocument = {
     project: { title: 'From the snapshot' },
     sources: [{}, { image_filename: 'images/page-1.jpg' }],
     questions: [{}]
-  },
+  } as ResearchDocument,
   derived: { folderName: 'snapshot-folder' },
   echo: { show: 'latest' },
   canary: 'CANARY-META-M4X9'
 }
 
 export const READ_DOCUMENT: ProjectDocument = {
-  research: { project: { title: 'From the read' }, sources: [], questions: [] },
+  research: { project: { title: 'From the read' }, sources: [], questions: [] } as unknown as ResearchDocument,
   derived: { folderName: 'read-folder' }
 }
 
