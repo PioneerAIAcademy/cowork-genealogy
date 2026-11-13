@@ -9,7 +9,6 @@
     ".": "./src/index.ts",
     "./contract": "./src/contract.ts",
     "./status-label": "./src/lib/status-label.ts",
-    "./familysearch-url": "./src/lib/familysearch-url.ts",
     "./styles.css": "./src/styles/global.css"
   },
   "scripts": {

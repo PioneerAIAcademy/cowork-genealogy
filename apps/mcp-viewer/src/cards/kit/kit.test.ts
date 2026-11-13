@@ -132,7 +132,9 @@ describe('the next step in words', () => {
     ['proof-conclusion — resolved with no proof summary', 'Write up the conclusion.'],
     ['search-hints — pli_003', "Review FamilySearch's record hints."],
     ['search-records', "Search FamilySearch's records."],
-    ['research-plan', 'Plan the searches.']
+    ['research-plan', 'Plan the searches.'],
+    ['person-evidence — none of this question\'s 4 assertions is linked', 'Link what the records say to the people they are about.'],
+    ['hypothesis-tracking — competing parent sets: I3', 'Weigh the competing sets of parents.']
   ])('%j', (nextStep, words) => {
     expect(nextStepWords(nextStep)).toBe(words)
   })

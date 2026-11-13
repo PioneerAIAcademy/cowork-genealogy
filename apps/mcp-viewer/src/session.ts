@@ -113,8 +113,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
   }
 
   const transport = new McpAppResearchTransport({
-    read: (args) => host.call(READ_PROJECT_VIEW, { ...projectArgs(), ...args }),
-    openLink: (url) => host.openLink(url)
+    read: (args) => host.call(READ_PROJECT_VIEW, { ...projectArgs(), ...args })
   })
 
   const loader = createCardLoader({
@@ -123,7 +122,6 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     onChange: (load) => {
       const fresh = load.snapshot !== null && load.snapshot !== state.load.snapshot
       update(fresh ? { load, fileDocument: load.snapshot } : { load })
-      if (fresh) transport.update(load.snapshot!)
     }
   })
 
@@ -234,7 +232,6 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
       try {
         const document = await readDocument(projectArgs())
         update({ fileDocument: document })
-        transport.update(document)
       } catch {
         // The snapshot stays: an older file beats no file.
       }

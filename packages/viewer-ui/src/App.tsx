@@ -173,13 +173,10 @@ export function ErrorNotice(): React.JSX.Element | null {
  */
 export function ViewerBody({
   showThemeToggle,
-  onProjectTitle,
-  hideHeaderActions = false
+  onProjectTitle
 }: {
   showThemeToggle: boolean
   onProjectTitle?: (title: string | null) => void
-  /** The MCP App's case file has no export, print or feedback: hide those buttons. */
-  hideHeaderActions?: boolean
 }): React.JSX.Element {
   const { research, folderPath, canSelectFolder, activeSection } = useResearchData()
 
@@ -205,7 +202,7 @@ export function ViewerBody({
       <div className={styles.layout}>
         <Sidebar showThemeToggle={showThemeToggle} />
         <div className={styles.main}>
-          <Header hideActions={hideHeaderActions} />
+          <Header />
           <ErrorNotice />
           <FolderNotice />
           <WaitingScreen folderPath={folderPath} canSelectFolder={canSelectFolder} />
@@ -220,7 +217,7 @@ export function ViewerBody({
     <div className={styles.layout}>
       <Sidebar showThemeToggle={showThemeToggle} />
       <div className={styles.main}>
-        <Header hideActions={hideHeaderActions} />
+        <Header />
         <ErrorNotice />
         <FolderNotice />
         <div className={styles.content}>

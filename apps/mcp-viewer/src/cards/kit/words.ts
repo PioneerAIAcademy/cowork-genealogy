@@ -29,7 +29,9 @@ const STEP_WORDS: Array<[RegExp, string]> = [
   [/^research-plan\b/, 'Plan the searches.'],
   [/^search-hints\b/, "Review FamilySearch's record hints."],
   [/^search-records\b/, "Search FamilySearch's records."],
-  [/^search-external-sites\b/, 'Search another website.']
+  [/^search-external-sites\b/, 'Search another website.'],
+  [/^person-evidence\b/, 'Link what the records say to the people they are about.'],
+  [/^hypothesis-tracking\b/, 'Weigh the competing sets of parents.']
 ]
 
 /** The next step named in words. Only the step's name is read; the rest of `nextStep` holds ids. */

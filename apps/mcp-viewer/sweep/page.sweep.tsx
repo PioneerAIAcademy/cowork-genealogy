@@ -140,7 +140,7 @@ it('the new case file draws its pages and every pane with no id left, for every 
   }
   for (const { name, document: doc } of staged()) {
     const research = doc.research ?? {}
-    const transport = new McpAppResearchTransport({ read: async () => ({ found: false }), openLink: () => {} })
+    const transport = new McpAppResearchTransport({ read: async () => ({ found: false }) })
     const base: FileView = {
       research,
       tree: doc.tree,

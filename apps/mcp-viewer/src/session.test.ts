@@ -4,6 +4,7 @@ import { TOOL_CALL_TIMEOUT_MS } from './hosts/app-host'
 import type { ToolResultEvent } from './hosts/host'
 import { createCardLoader, RESULT_WAIT_MS } from './load'
 import { headline } from './ui/status'
+import { projectLabel } from './transport/McpAppResearchTransport'
 import {
   FakeApp,
   META_DOCUMENT,
@@ -628,7 +629,7 @@ describe('opening the case file', () => {
     expect(app.requestDisplayMode).toHaveBeenLastCalledWith({ mode: 'fullscreen' })
     expect(app.reads()).toEqual([{ part: 'document', projectPath: 'mogan' }])
     expect(session.getState().fileLogId).toBe('log_002')
-    expect((await session.transport.getProjectState()).label).toBe('From the read')
+    expect(projectLabel(session.getState().fileDocument)).toBe('From the read')
     expect(session.getState().load.snapshot).toEqual(META_DOCUMENT)
   })
 
@@ -642,6 +643,6 @@ describe('opening the case file', () => {
     await session.openFile()
 
     expect(session.getState().fileLogId).toBeNull()
-    expect((await session.transport.getProjectState()).label).toBe('From the snapshot')
+    expect(projectLabel(session.getState().fileDocument)).toBe('From the snapshot')
   })
 })
