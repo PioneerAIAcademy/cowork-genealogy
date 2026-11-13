@@ -62,7 +62,7 @@ const NO_PROJECT_BASE = "This folder is not a research project — there is no r
 /** The no-project routing rule, carried by project_context, project_list and
  *  person_read when there is no project. */
 export const START_PROJECT_RULE =
-  "A request about a named FamilySearch person starts a project first, through the research skill.";
+  "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.";
 
 /** project_context's own no-project answer: NO_PROJECT_MESSAGE_READ's "standalone"
  *  sentence is replaced by the routing rule. */

@@ -102,9 +102,9 @@ than the client accepts from one tool call, and the model then sees only a previ
 of the head of the text, so a `staged` written last fell outside it and the agent
 could not pass the ref on. `server.ts` keeps insertion order.
 
-When `projectPath` is **absent**, the tool appends one entry to `notes[]`: "A
-request about a named FamilySearch person starts a project first, through the
-research skill." It follows any drop notes.
+When `projectPath` is **absent**, the tool appends one entry to `notes[]`: "While
+no project exists yet, a request about a named FamilySearch person starts a
+project first, through the research skill." It follows any drop notes.
 
 - `persons[]` is always present (at minimum, the requested person)
 - `relationships[]` and `sources[]` are always present; an empty array means

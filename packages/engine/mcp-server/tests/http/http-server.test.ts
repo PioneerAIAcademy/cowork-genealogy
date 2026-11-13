@@ -1095,7 +1095,7 @@ describe("tool server over Streamable HTTP", () => {
         expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
         expect(body.message).toBe(
           "No project yet: pass newProjectPath as projectPath to start one. " +
-            "A request about a named FamilySearch person starts a project first, through the research skill.",
+            "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.",
         );
       });
 

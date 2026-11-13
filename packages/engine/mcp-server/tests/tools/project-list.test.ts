@@ -38,7 +38,7 @@ describe("project_list", () => {
         "The task's working folder is the project: pass its absolute path as projectPath. " +
         "This answer does not say whether the folder holds a project yet: call project_context " +
         "with that path before routing, and route on what it returns. " +
-        "A request about a named FamilySearch person starts a project first, through the research skill.",
+        "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.",
     });
   });
 
@@ -93,7 +93,7 @@ describe("project_list", () => {
     expect(result.newProjectPath).toBe(SCOPED_ANCHOR);
     expect(result.message).toBe(
       "No project yet: pass newProjectPath as projectPath to start one. " +
-        "A request about a named FamilySearch person starts a project first, through the research skill.",
+        "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.",
     );
   });
 
