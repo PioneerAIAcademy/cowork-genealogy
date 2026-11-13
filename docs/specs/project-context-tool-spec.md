@@ -38,8 +38,13 @@ thousands. This tool computes it host-side.
 ## 2. The tool
 
 ```typescript
-project_context({ projectPath: string })
+project_context({ projectPath: string, include?: ("persons" | "sources")[] })
 ```
+
+`include` is an optional closed list naming the larger lists to return; an
+unknown value is refused with `{ ok: false, errors, buildId }`. This stage
+returns every list whether or not it is passed (§3, "A projection, not a query
+language").
 
 Read-only: opens `research.json` and `tree.gedcomx.json`, writes nothing,
 never creates a `.bak`. Not a validator — malformed *entries* are skipped
@@ -669,10 +674,17 @@ drops out. It reads every fresh staged file while any source waits, as
 
 ## 3. Decisions recorded
 
-- **A projection, not a query language.** One fixed shape, no field
-  selectors — the consumer is one agent prompt, and a stable shape is what
-  lets that prompt say "check `persons[].parentIds`". *Rejected:* jq-style
-  path parameters (open-ended context cost, un-promptable).
+- **A projection, not a query language.** The shape is stable so an agent
+  prompt can say "check `persons[].parentIds`"; the only selector is `include`,
+  a **closed list** of the larger lists to return (values `"persons"` and
+  `"sources"`), not open-ended field selection. A list rather than `includeX`
+  booleans because the conclusion-tree work adds `"status"` and `"view"` to the
+  same list (lead, 2026-11-09). *Rejected:* jq-style path parameters
+  (open-ended context cost, un-promptable). **This stage returns every list
+  whether or not `include` is passed** — the parameter is accepted and
+  validated only, and an unknown value is refused (`ok:false`); the default
+  then narrows persons to the subjects' one-hop family and drops `sources`
+  from the default in a later stage.
 - **No assertion bodies.** Per-assertion detail (values, classifications) is
   deliberately excluded — it is exactly the growing payload the diet
   removes. Refinement flows get the specific `a_` ids from the delegating

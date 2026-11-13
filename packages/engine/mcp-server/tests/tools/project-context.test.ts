@@ -1027,3 +1027,87 @@ describe("project_context and project_create links", () => {
     });
   });
 });
+
+// Stage 1 of #4422 introduces `include` inert: accepted and validated, but the
+// answer is byte-identical whether or not it is passed. The default flip
+// (persons → subjects' one-hop family, sources on request) is a later stage.
+describe("project_context include parameter (#4422 stage 1)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-include-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writePopulated() {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify(
+        {
+          project: {
+            id: "rp_001",
+            objective: "Test",
+            status: "active",
+            subject_person_ids: ["I1"],
+            created: "2026-01-01",
+            updated: "2026-01-01",
+          },
+          questions: [{ id: "q_001", question: "Who were William's parents?", status: "open" }],
+          sources: [{ id: "src_001", repository: "FamilySearch", gedcomx_source_description_id: "S1" }],
+          assertions: [{ id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:AAAA-111" }],
+        },
+        null,
+        2,
+      ),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify(
+        {
+          persons: [
+            { id: "I1", gender: "Male", names: [{ id: "N1", given: "William", surname: "Bottermiller", preferred: true }] },
+            { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Bottermiller" }] },
+          ],
+          relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
+          sources: [{ id: "S1", title: "1880 census" }],
+        },
+        null,
+        2,
+      ),
+    );
+  }
+
+  it("is inert: the answer is byte-identical with include omitted, each value, and both", async () => {
+    await writePopulated();
+    const omitted = await projectContext({ projectPath: dir }, LOCAL);
+    const variants = [
+      await projectContext({ projectPath: dir, include: ["persons"] }, LOCAL),
+      await projectContext({ projectPath: dir, include: ["sources"] }, LOCAL),
+      await projectContext({ projectPath: dir, include: ["persons", "sources"] }, LOCAL),
+      await projectContext({ projectPath: dir, include: [] }, LOCAL),
+    ];
+    expect(omitted.ok).toBe(true);
+    const baseline = JSON.stringify(omitted);
+    for (const v of variants) expect(JSON.stringify(v)).toBe(baseline);
+  });
+
+  it("refuses an unknown value, keeping buildId, and does not read the project", async () => {
+    // No project files written: validation happens before the file reads, so an
+    // unknown value is refused on its own merits rather than erroring on the read.
+    for (const include of [["view"], ["bogus"], ["persons", "nope"]]) {
+      const r = await projectContext({ projectPath: dir, include: include as any }, LOCAL);
+      expect(r.ok).toBe(false);
+      if (r.ok) continue;
+      expect(r.reason).toBeUndefined();
+      expect(r.buildId).toBe(readBuildInfo().version);
+      expect(r.errors.join(" ")).toContain("persons, sources");
+    }
+  });
+
+  it("refuses a non-array include", async () => {
+    const r = await projectContext({ projectPath: dir, include: "persons" as any }, LOCAL);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.join(" ")).toContain("persons, sources");
+  });
+});

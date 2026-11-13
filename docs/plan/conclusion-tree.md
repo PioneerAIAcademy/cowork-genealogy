@@ -263,7 +263,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
   - `src/utils/question-state.ts`: `nextStep` gains the matching arms.
   - `docs/specs/schemas/owed-findings-vectors.json` (new) pins the list. Spec: `docs/specs/project-context-tool-spec.md`.
 - **`src/utils/conclusion-status.ts` (new)** joins every tree fact and edge to claims and the import baseline by Decisions 31 and 32, and returns its Decision 6 status.
-  - `src/tools/project-context.ts` returns it only under `include: ["status"]`, a closed enum; the default projection gains only `claimKinds` and `owedFindings`.
+  - `src/tools/project-context.ts` returns it only under `include: ["status"]` — adding `"status"` to the existing `include` closed list (the parameter and its `"persons"`/`"sources"` values already shipped); the default projection gains only `claimKinds` and `owedFindings`.
   - The parent-count warnings skip a parent whose edge reads set aside or ruled out (Decision 26) on all three paths that compute them:
     - the `person_warnings` tool (`src/tools/person-warnings.ts`), which reads research.json for it;
     - the write gate: `checkWarningGate` (`src/tools/tree-edit.ts`) passes the research.json it already holds through `introducedWarnings` and `warningsForPerson` (`src/validation/introduced-warnings.ts`), which covers `tree_edit`, `tree_correct`, `materialize_facts` and `merge_tree_persons`;
@@ -313,7 +313,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
   - `test_bounded_conclusion_is_tiered_and_encoded` requires a Death `fact` claim on I1 carrying the bracket, and a Death fact on I1 exactly when that claim is affirmed at `probable` or better. Today it requires the fact at `possible` too (lead ruling, 2026-08-21). `test_accepts_possible_with_an_encoded_bracket` and `test_rejects_possible_that_never_reached_the_tree` in `eval/harness/tests/unit/test_proof_conclusion_validator.py` change with it: the first gains the bracket claim, and the second rejects a `probable` bracket claim that never reached the tree.
 - **Specs:**
   - `docs/specs/research-append-tool-spec.md` (the rules) and `docs/specs/guardrail-enforcement-spec.md` (new rows);
-  - `docs/specs/project-context-tool-spec.md`: the `include` parameter; §3's "no field selectors" rewritten, its one-consumer premise gone; "a few hundred tokens" replaced by the measured median of 3,571 and maximum of 14,636 characters over the 202 committed final projects.
+  - `docs/specs/project-context-tool-spec.md`: adds the `"status"` value to the existing `include` list (the parameter itself and §3's "no field selectors" rewrite already shipped); "a few hundred tokens" replaced by the measured median of 3,571 and maximum of 14,636 characters over the 202 committed final projects.
 
 **What does not change**
 - There is no tree field, no new research.json section and no question field.
