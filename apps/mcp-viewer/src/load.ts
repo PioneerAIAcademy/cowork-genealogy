@@ -38,15 +38,16 @@ export interface CardLoaderDeps {
   onChange(state: LoadState): void
 }
 
-function metaSnapshot(result: ToolResultEvent): ProjectDocument | null {
+function metaEntry(result: ToolResultEvent): ProjectDocument | null {
   const entry = (result._meta as Record<string, unknown> | undefined)?.[PROJECT_META_KEY]
   return typeof entry === 'object' && entry !== null ? (entry as ProjectDocument) : null
 }
 
 /**
- * Loads the project once per mount. Only the first tool result counts, and it
- * decides the card whenever it arrives, even over a read already made; only a
- * cancellation or a dispose that came first stops it. The read happens at most
+ * Loads the project once per mount. Only the first tool result counts. Holding
+ * the documents or an error, it decides the card whenever it arrives, even over
+ * a read already made; only a cancellation or a dispose that came first stops
+ * it. Holding neither, it leaves the card to the read. The read happens at most
  * once, and never after dispose.
  */
 export function createCardLoader(deps: CardLoaderDeps) {
@@ -85,7 +86,7 @@ export function createCardLoader(deps: CardLoaderDeps) {
 
   return {
     toolInput(input: ToolInput): void {
-      if (state.input) return
+      if (state.inputAt !== null) return
       set({ input, inputAt: deps.now() })
       if (!resultSeen && !stopped) timer = setTimeout(read, RESULT_WAIT_MS)
     },
@@ -94,17 +95,22 @@ export function createCardLoader(deps: CardLoaderDeps) {
       if (resultSeen || stopped) return
       resultSeen = true
       clearTimer()
-      const snapshot = metaSnapshot(result)
-      set({ resultAt: deps.now(), resultKeys: Object.keys(result), resultCarriedMeta: snapshot !== null })
-      if (snapshot) {
+      const entry = metaEntry(result)
+      set({ resultAt: deps.now(), resultKeys: Object.keys(result), resultCarriedMeta: entry !== null })
+      if (entry?.research) {
         readDropped = true
-        set({ phase: 'ready', snapshot, source: 'result _meta', message: null })
+        set({ phase: 'ready', snapshot: entry, source: 'result _meta', message: null })
       } else if (result.isError) {
         readDropped = true
         set({ phase: 'failed', snapshot: null, source: null, message: resultText(result) })
       } else {
-        // A host sends the input first; if one did not, the read goes with no
-        // projectPath, which the server resolves or refuses.
+        // A result too large for its documents still echoes the call's arguments.
+        // inputAt stays null: the report says whether a tool input really came.
+        if (typeof state.input?.projectPath !== 'string' && entry?.echo) {
+          set({ input: { ...state.input, ...entry.echo } })
+        }
+        // A host sends the input first; if one did not, and no echo stands in, the
+        // read goes with no projectPath, which the server resolves or refuses.
         read()
       }
     },

@@ -8,17 +8,23 @@
 import type { Principal } from "../auth/principal.js";
 import { loadConfig } from "../auth/config.js";
 import { getProjectStore } from "../store/project-store.js";
+import type { AppConfig } from "../types/auth.js";
 
 export interface ProjectLinks {
   /** `<webPublicUrl>/upload/<id>`, the web tier's upload page (#4001) — only when `uploadsEnabled`. */
   uploadUrl?: string;
 }
 
+/** `webPublicUrl` with no trailing slash, or `""` when it is unset. */
+export function webPublicBase(config: AppConfig): string {
+  return typeof config.webPublicUrl === "string" ? config.webPublicUrl.trim().replace(/\/+$/, "") : "";
+}
+
 export async function projectLinks(principal: Principal): Promise<ProjectLinks> {
   const id = getProjectStore().projectId;
   if (!id) return {};
   const config = await loadConfig(principal);
-  const base = typeof config.webPublicUrl === "string" ? config.webPublicUrl.trim().replace(/\/+$/, "") : "";
+  const base = webPublicBase(config);
   if (!base || config.uploadsEnabled !== true) return {};
   return { uploadUrl: `${base}/upload/${id}` };
 }
