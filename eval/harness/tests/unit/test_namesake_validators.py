@@ -512,3 +512,49 @@ def test_hands_subject_rejects(prompt, message):
 def test_hands_subject_fails_when_search_images_was_never_spawned():
     with pytest.raises(AssertionError, match="No recorded spawn of 'search-images'"):
         research.test_delegation_hands_subject(HTEST, [], before())
+
+
+# --- search-records: the Cedillo pool (issue #4042) -------------------------
+
+CEDILLO = {"id": "ut_search_records_cdl", "tags": ["cedillo-no-rule-out"]}
+CEDILLO_POOL = row(
+    name="Nicolasa Cedillo",
+    log_entry_ids=["log_001"],
+    notes="pool: ark:/61903/1:1:X7FS-6T4L (d. 1943, mother Julia) and X7FM-YRGN (d. 1945, parents Ventura Cedillo, María Jesús Amaya)",
+)
+
+
+def cedillo_after(*rows):
+    return state(log=[{"id": "log_001", "tool": "record_search"}], namesakes=list(rows))
+
+
+def test_cedillo_check_ignores_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(), {"id": "x", "tags": []})
+
+
+def test_cedillo_check_passes_on_the_pool_row():
+    records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(CEDILLO_POOL), CEDILLO)
+
+
+def test_cedillo_check_passes_with_no_row():
+    records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(), CEDILLO)
+
+
+def test_cedillo_check_passes_beside_an_unrelated_namesake():
+    other = row(id="ns_002", name="Nicolasa Cedillo Hernandez", record_ids=["ark:/61903/1:1:X7JJ-K94N"], notes="born 1956")
+    records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(other), CEDILLO)
+
+
+@pytest.mark.parametrize(
+    "rows, message",
+    [
+        ([row(record_ids=["ark:/61903/1:1:X7FM-YRGN"], notes="other parents")], r"lists \['X7FM-YRGN'\]"),
+        ([CEDILLO_POOL, row(id="ns_002", record_ids=["X7FS-6T4L"], notes="spouse")], r"lists \['X7FS-6T4L'\]"),
+        ([CEDILLO_POOL, row(id="ns_002", record_ids=["ark:/61903/1:1:X7LS-KMLK"], notes="a different Santiago")], r"lists \['X7LS-KMLK'\]"),
+        ([row(record_ids=["X7FS-X3LL"], notes="a daughter, not her")], r"lists \['X7FS-X3LL'\]"),
+    ],
+)
+def test_cedillo_check_rejects(rows, message):
+    with pytest.raises(AssertionError, match=message):
+        records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(*rows), CEDILLO)

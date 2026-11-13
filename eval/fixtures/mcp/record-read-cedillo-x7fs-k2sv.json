@@ -1,0 +1,244 @@
+{
+  "tool": "record_read",
+  "description": "Carved from feedback bundle feedback-2026-10-30T07-56-13-719275Z.zip (issue #4042): the 1904 civil birth of Maria Dolores Cedillo at Santa Lucia, naming her parents Santiago Cedillo and Nicolasa Cedillo and Nicolasa's parents Ventura Cedillo and Jesus Amaya (Nicolasa's persona is X7FS-K2SL). Gedcomx from results/log_026.json.",
+  "args": {
+    "recordId": "~X7FS-K2SV"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_310191651078",
+        "ark": "ark:/61903/1:1:X7FS-K2SV",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Santiago",
+            "surname": "Cedillo"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310191651077",
+        "ark": "ark:/61903/1:1:X7FS-K2SJ",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Maria Dolores",
+            "surname": "Cedillo"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "26 de marzo de 1904",
+            "standard_date": "26 Mar 1904"
+          },
+          {
+            "type": "BirthRegistration",
+            "primary": true,
+            "date": "4 de abril de 1904",
+            "standard_date": "4 Apr 1904",
+            "place": "Santa Lucía, Intibucá, Honduras",
+            "standard_place": "Santa Lucía, Intibucá, Honduras"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310191651081",
+        "ark": "ark:/61903/1:1:X7FS-K2SL",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Nicolasa",
+            "surname": "Cedillo"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310191651082",
+        "ark": "ark:/61903/1:1:X7FS-K2SG",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Valentin",
+            "surname": "Cedillo"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310191651083",
+        "ark": "ark:/61903/1:1:X7FS-K2SP",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Patricia",
+            "surname": "Márquez"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310191651079",
+        "ark": "ark:/61903/1:1:X7FS-K2SK",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Ventura",
+            "surname": "Cedillo"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310191651080",
+        "ark": "ark:/61903/1:1:X7FS-K2S2",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Jesús",
+            "surname": "Amaya"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "p_310191651078",
+        "person2": "p_310191651081"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310191651083",
+        "child": "p_310191651078"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310191651082",
+        "child": "p_310191651078"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310191651078",
+        "child": "p_310191651077"
+      },
+      {
+        "type": "Couple",
+        "person1": "p_310191651082",
+        "person2": "p_310191651083"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310191651080",
+        "child": "p_310191651081"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310191651081",
+        "child": "p_310191651077"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310191651079",
+        "child": "p_310191651081"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_182560687699",
+        "resource_type": "Record",
+        "title": "Registro para Maria Dolores Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FS-K2SJ : Thu Aug 06 09:14:00 UTC 2026), Entry for Maria Dolores Cedillo and Santiago Cedillo, 4 de abril de 1904.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HZDP-NBNK",
+        "coverage": {
+          "date_range": "4 de abril de 1904",
+          "record_type": "Birth"
+        }
+      },
+      {
+        "id": "sd_c_2135627",
+        "resource_type": "Collection",
+        "title": "Honduras, Civil Registration, 1841-1968",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "coverage": {
+          "place_rep_id": "173",
+          "date_range": "1841/1968",
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-77CN-RHY1-D",
+        "coverage": {
+          "place_rep_id": "0",
+          "date_range": "1900-01/1904-07",
+          "record_type": "Birth"
+        }
+      },
+      {
+        "id": "sd_auto_M9J1-QL6",
+        "resource_type": "auto",
+        "title": "Honduras, Intibucá, Births, from 1875 to 30 June 2024",
+        "coverage": {
+          "place_rep_id": "5270",
+          "date_range": "+1875-01-01T00:00:00Z/+2024-06-30T23:59:59Z"
+        }
+      },
+      {
+        "id": "src_p_p_310191651078",
+        "resource_type": "Person",
+        "url": "#p_310191651078"
+      }
+    ],
+    "places": [
+      {
+        "id": "441572",
+        "name": "Santa Lucía, Intibucá, Honduras",
+        "latitude": 13.92,
+        "longitude": -88.3901
+      }
+    ]
+  }
+}
