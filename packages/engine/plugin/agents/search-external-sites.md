@@ -327,8 +327,8 @@ catalog_search({ standardPlace: "<standardPlace>" })
 ```
 
 Keep a hit whose title, creator or `filmNotes` name that parish's church books and
-cover the register type and year. For a kept hit, step 4 gets one sentence naming
-its title and the `filmNumber` of the film note covering the year:
+cover the register type and year. For a kept hit, step 4 gets one sentence, after
+the `---`, naming its title and the `filmNumber` of the film note covering the year:
 - `availableOnline: false` → viewable only at a FamilySearch Center or an affiliate
   library. Never offer to read it.
 - `availableOnline: true` → offer to read it, and put the film note's
@@ -511,7 +511,8 @@ plain prose:
    sentence saying FamilySearch holds it too and can be searched there instead
    — here, after the `---`, Case A or Case B;
 7. when `catalog_search` kept a filmed copy of the register (step 2b), its
-   sentence from step 2b.
+   sentence from step 2b, with the film number — here, after the `---`, never
+   only in the caller lines.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
