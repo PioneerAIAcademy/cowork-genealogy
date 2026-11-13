@@ -1,4 +1,5 @@
 import type { Principal } from "../auth/principal.js";
+import { connectorReauthMessage, isConnector } from "../auth/config.js";
 import { getProjectStore } from "../store/project-store.js";
 import { matchPairs } from "../utils/matcher.js";
 import type { MatchCall, MatcherBackend } from "../types/matcher.js";
@@ -1190,8 +1191,14 @@ async function applyAttachments(
     }
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;
-    // Best-effort: an attachments failure must not fail the rank. Leave the
-    // attachedTo* fields unset rather than asserting a wrong answer.
+    // A connector caller whose FamilySearch session has ended must be told: with
+    // the matcher service scoring the pairs, this is the rank's only FamilySearch
+    // call, and swallowing it would return a ranking and no way to sign in again.
+    if (isConnector(principal) && err instanceof Error && err.message === connectorReauthMessage(principal)) {
+      throw err;
+    }
+    // Best-effort: any other attachments failure must not fail the rank. Leave
+    // the attachedTo* fields unset rather than asserting a wrong answer.
   }
 }
 

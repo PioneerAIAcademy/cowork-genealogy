@@ -83,9 +83,10 @@ plus one conditional key:
 { "notes": ["Dropped 1 relationship(s) whose endpoints are not in persons[] (1 ParentChild). ..."] }
 ```
 
-`notes[]` is present **only** when something was silently dropped, and is absent
-entirely otherwise — so a caller that never triggers one sees the three-key shape
-above unchanged. It exists because endpoint closure (below) replaced a loud
+`notes[]` is present **only** when something was silently dropped or when
+`projectPath` is absent (the routing rule below), and is absent entirely
+otherwise — so a caller that passes a project and triggers no drop sees the
+three-key shape above unchanged. It exists because endpoint closure (below) replaced a loud
 `project_create` refusal with a quiet partial loss: a dropped edge to a distant
 relative costs a hint, but a dropped edge to the **subject's own parent** costs
 the answer to what the caller asked, and that case gets its own line. Counts and
@@ -100,6 +101,10 @@ They are serialized **first**, ahead of `persons[]`: a well-sourced read is larg
 than the client accepts from one tool call, and the model then sees only a preview
 of the head of the text, so a `staged` written last fell outside it and the agent
 could not pass the ref on. `server.ts` keeps insertion order.
+
+When `projectPath` is **absent**, the tool appends one entry to `notes[]`: "While
+no project exists yet, a request about a named FamilySearch person starts a
+project first, through the research skill." It follows any drop notes.
 
 - `persons[]` is always present (at minimum, the requested person)
 - `relationships[]` and `sources[]` are always present; an empty array means

@@ -1,0 +1,1549 @@
+{
+  "project": {
+    "id": "rp_hinrich_burmeister_spouse",
+    "objective": "Did Hinrich Burmeister of Sch\u00f6nberg (b. 1653) have a son Hinrich baptised 29 July 1687, and is the 'Elsch Burmeister' named as the child's mother his first wife Liesbeth Oldenburg?",
+    "subject_person_ids": [
+      "G8CJ-7VL"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-11-12"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the mother of the child Hinrich Burmeister baptised at Sch\u00f6nberg on 29 July 1687, son of Hinrich Burmeister of Sch\u00f6nberg (b. 1653)?",
+      "rationale": "The objective turns on one child event: the 29 July 1687 baptism of a son Hinrich, whose mother the record names as 'Elsch Burmeister'. The tree has no 1687 baptism. Its only Hinrich son of this couple (P71D-DRJ) is christened 18 Aug 1683 and attached to Liesbeth Oldenburg, who married in Oct 1682 and died 4 Jan 1689, so a 1687 child would fall within her first marriage. Whether the 1683 entry and the 1687 baptism are one child or two is unresolved, and it decides whether the tree's assignment to Liesbeth stands. Naming the mother as the fact asked for lets the answer confirm or refute the identification of Elsch with Liesbeth Oldenburg.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1687-1687",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-11-12",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_005",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_019",
+        "a_021",
+        "a_025",
+        "a_028"
+      ],
+      "search_stop": {
+        "stopped_because": "resources_spent",
+        "justification": "Wrapping up at the researcher's request rather than continuing research. All 8 items on plan pl_001 are closed: pli_001 skipped (inaccessible \u2014 person_record_matches blocked by e2e hook, pending FamilySearch hints never triaged); pli_002, pli_003, pli_005, pli_006 completed; pli_004 and pli_008 skipped (fallback_not_triggered); pli_007 skipped (answered \u2014 FAN/sponsor corroboration judged unnecessary). The outstanding gap flagged earlier \u2014 G8CJ-7VL was never formally ruled out as the father of the 9 May 1687 Hinrich Burmeister baptism (QPV4-2MW3, mother 'Anna Burmeister'), a second, unexplained Hinrich Burmeister baptism in Sch\u00f6nberg only 11 weeks before the target 29 Jul 1687 event \u2014 remains unresolved. The researcher acknowledges this gap and has chosen to conclude now rather than pursue it further. Overturn risk: high \u2014 if the 9 May 1687 father is a distinct Hinrich Burmeister/Anna household rather than G8CJ-7VL, the father-identity underlying the 29 Jul 1687 baptism, and so the whole 'Elsch Burmeister' = Liesbeth Oldenburg identification, could be mistaken.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011"
+        ],
+        "stop_criteria": null,
+        "not_reached": [
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "pli_001 (review pending FamilySearch hints on G8CJ-7VL) skipped inaccessible \u2014 person_record_matches was blocked by the e2e PreToolUse hook; hints never listed or triaged."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "pli_004 (browse-only image review of film 69805, Taufen 1640-1749, at Jul 1687, as fallback for pli_002) skipped \u2014 fallback_not_triggered because pli_002's indexed search already found QPV4-RPYG."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "pli_007 (FAN item: baptisms of Oldenburg-relative children and sponsors named in the 1683/1687 baptisms) skipped answered \u2014 judged unnecessary to proceed given the existing probable Elsch=Liesbeth Oldenburg identification."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "pli_008 (neighboring-parish contingency search: Herrnburg, Carlow, Selmsdorf, Demern, Schlagsdorf, Ziethen, 1687) skipped \u2014 fallback_not_triggered because its parent fallback pli_004 was itself not triggered."
+          },
+          {
+            "kind": "deferred",
+            "log_entry_id": "log_004",
+            "wiki_title": null,
+            "description": "Disambiguation of the 9 May 1687 Sch\u00f6nberg baptism of Hinrich Burmeister (QPV4-2MW3, mother Anna Burmeister) from the father of the 29 Jul 1687 baptism (QPV4-RPYG) was never pursued after log_004 flagged that several men named Hinrich Burmeister likely existed in the parish at this date; no sponsor/FAN check or image review has distinguished the two households. The researcher has chosen to conclude without pursuing this."
+          }
+        ]
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-12",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "fs_hints",
+          "jurisdiction": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1683-1689",
+          "repository": "FamilySearch",
+          "rationale": "Review pending FamilySearch hints on G8CJ-7VL before searching \u2014 an attached hint may already answer the question.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "person_record_matches is blocked in this e2e run (PreToolUse hook refused the call), so the pending FamilySearch hints for G8CJ-7VL could not be listed or triaged."
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1687",
+          "repository": "FamilySearch",
+          "rationale": "Target record: the 29 July 1687 baptism of Hinrich, son of Hinrich Burmeister. Search collection 4132032 (Mecklenburg-Strelitz Catholic and Lutheran Church Records, 1664-1937), name-searchable (personCount above 0 per loc_001). The tree has no 1687 baptism; its only Hinrich child (P71D-DRJ) is christened 18 Aug 1683 to Liesbeth Oldenburg. Search Hinrich/Henrich/Hinrick Burmeister/Burmester/Bormeister and mother Elsch/Elsche/Else/Elisabeth/Liesbeth. loc_001 warns the parish standard-place dates (1701-1871) understate the register, which starts 1640; confirm it is the Sch\u00f6nberg near Ratzeburg. Read the entry for the mother's name, father's status, and godparents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1682-1693",
+          "repository": "FamilySearch",
+          "rationale": "Sort out whether the 1683 christening (P71D-DRJ, 18 Aug 1683) and the 1687 baptism are one child or two. Search collection 4132032 (name-searchable) for all baptisms with father Hinrich Burmeister 1682-1693, including Jochim (18 Dec 1692, Anna Meyborg). Two same-named sons would mean the tree's one child covers two events; both naming Liesbeth would support the identification. Also check for a Burmeister namesake father in the parish (the 1653 Hinrich's own father died 1658, but another same-name household may exist).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1687",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for the indexed search: browse-only image review of film 69805 (Taufen 1640-1749, imageGroupNumber 102151198 per loc_001) at July 1687, reading the entry directly for the mother's name as written ('Elsch') and the sponsors. Use if the index misses or misreads the entry; also verifies any indexed hit against the original image.",
+          "fallback_for": "pli_002",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "pli_002 completed and found QPV4-RPYG, so the image-browse fallback was not needed."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1682-1690",
+          "repository": "FamilySearch",
+          "rationale": "Tree records the Oct 1682 marriage of Hinrich and Liesbeth Oldenburg (24 Oct 1682) and a 27 Feb 1690 marriage to Anna Meyborg. Find both entries (collection 4132032, name-searchable; film 69807 Heiraten 1640-1809 as image fallback). The 1682 entry tests whether the bride is recorded as Elsch/Elisabeth; the 1690 date puts Anna after the 1687 birth so she cannot be its mother unless an earlier union exists. Also look for any marriage of a Hinrich Burmeister with an Elsch between 1683 and 1687 that would suggest a different wife.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1687-1693",
+          "repository": "FamilySearch",
+          "rationale": "Burials (Tote): Liesbeth Oldenburg's burial Jan 1689 (tree: died 4 Jan 1689) and the 1687 child's own burial if he died young; the entry may name her as wife of Hinrich Burmeister and give an age or origin (tree: born Rupensdorf, 1656). Burial of any child Hinrich between 1687 and 1693 also bears on whether he is P71D-DRJ (whose Death fact has no date). Collection 4132032 first; film 69807 (Tote 1642-1809) as the image route.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1683-1689",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: baptisms of children of Oldenburg relatives (Rupensdorf family) and of sponsors named at the 1683 and 1687 baptisms. Godparents are often kin; an Oldenburg sponsor, or a sibling baptism naming Liesbeth Oldenburg as mother, would link the 'Elsch' of 1687 to her. Take sponsor names from the entries found in items 2-4.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Sponsor/FAN corroboration not required to proceed: existing evidence already answers the question at probable (mother Elsch Burmeister = Liesbeth Oldenburg). Caller's label 'not_needed' is not a valid category; 'answered' used."
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Herrnburg, Carlow, Selmsdorf, Demern, Schlagsdorf and Ziethen parishes, Mecklenburg-Strelitz",
+          "date_range": "1687",
+          "repository": "FamilySearch",
+          "rationale": "Contingency per loc_001: neighboring parishes under the same AG. Sch\u00f6nberg jurisdiction sometimes held a family's baptism. Search only if the entry is not in Sch\u00f6nberg's own register (items 2 and 4). Carlow is notable because Anna Meyborg was christened there in 1659.",
+          "fallback_for": "pli_004",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Fallback for pli_004, which was itself not triggered."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T19:29:09.639Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "deathYearFrom": 1687,
+        "deathYearTo": 1693,
+        "deathPlace": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+        "recordCountry": "Germany"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 285,
+      "notes": "Burmeister deaths/burials 1687-1693, Schoenberg/Ratzeburg. 285 hits, no Schoenberg burial of a Hinrich/child. Nearby: Burmester burial 5 Jan 1689 (b.1689) and Heinrich Burmester burial 14 Aug 1690 b.1650, both Herrnburg - not tied to subject; needs-review, birthYearConflict -3 on latter.",
+      "staged_ref": "results/.staging/21942ec0-a9e1-4b73-9d5c-4438cca055b1.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T19:29:09.665Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Oldenburg",
+        "givenName": "Liesbeth",
+        "deathYearFrom": 1688,
+        "deathYearTo": 1690,
+        "recordCountry": "Germany"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 161,
+      "notes": "Liesbeth Oldenburg death 1688-1690. Ranker: no candidate above 0.01. Only Oldenburg burials 1688 and 1689 at Ratzeburg (no given name, not Schoenberg), unverified. Marriage 24 Oct 1682 Schoenberg Hinrich Burmeister + Liesabeth Ollenborgs seen incidentally. No Schoenberg burial for Liesbeth found.",
+      "staged_ref": "results/.staging/a43ff5b3-b07b-4ba8-be6a-f80718b91fe1.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T19:29:10.210Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "fatherGivenName": "Hinrich",
+        "fatherSurname": "Burmeister",
+        "birthYearFrom": 1682,
+        "birthYearTo": 1693,
+        "collectionId": "4132032"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 2,
+      "notes": "Collection 4132032 (Mecklenburg-Strelitz) pinned, father Hinrich Burmeister, 1682-1693: only 2 irrelevant hits (David 1731 groom; Jochim as father). No Sch\u00f6nberg baptisms in this collection.",
+      "staged_ref": "results/.staging/6959afdd-e5d9-4a74-b4cd-57bcf9837fbd.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T19:29:10.214Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "fatherGivenName": "Hinrich",
+        "birthYearFrom": 1680,
+        "birthYearTo": 1695,
+        "birthPlace": "Sch\u00f6nberg, Mecklenburg"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 4719,
+      "notes": "Collection pin dropped; Sch\u00f6nberg baptisms with father Hinrich Burmeister in coll 3015626: Hinrich 18 Aug 1683 (QPVH-33NS), Hinrich 9 May 1687 (QPV4-2MW3), Hinrich 29 Jul 1687 (QPV4-RPYG), Hinrich 20 Jan 1691 (QPV4-G7GT); also Anke 18 Jun 1683, Jochim 11 May 1686, Han\u00df 22 Aug 1686, Engell 17 Feb 1686, Jochim 16 Oct 1690, Jochim 1692. Birth-year conflict flags are expected (subject is the father, b.1653); these are children, not the subject. Anke Jun 1683 and Hinrich Aug 1683 only 2 months apart, and 9 May and 29 Jul 1687 only 11 weeks apart, so several fathers named Hinrich Burmeister likely exist in Sch\u00f6nberg or index dates are off; unresolved.",
+      "staged_ref": "results/.staging/d7528f37-c9a1-4c4c-b446-1a9d494114e8.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T19:29:11.468Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "givenName": "Hinrich",
+        "marriageYearFrom": 1680,
+        "marriageYearTo": 1692,
+        "marriagePlace": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz"
+      },
+      "outcome": "positive",
+      "results_examined": 43,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 43,
+      "notes": "Hinrich Burmeister marriage 1680-1692 Sch\u00f6nberg/Ratzeburg. No marriage record with him as principal; hits are mostly child baptisms/in-law entries, none confirming the 1682 or 1690 marriage. Top score 0.33 (father role on a child record), not a match for the marriage. Derivative index only.",
+      "staged_ref": "results/.staging/84c4aff2-4c05-4ee9-911d-f966eb1ad357.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T19:29:11.479Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "spouseSurname": "Meyborg",
+        "recordType": "marriage",
+        "marriageYearFrom": 1682,
+        "marriageYearTo": 1690
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 1070,
+      "notes": "Burmeister + spouse surname Meyborg, 1682-1690, no place. 47 of 50 name no spouse; no Meyborg marriage found. Two marriage hits (Peter Burmeister 1685 Siebeneichen; Catharina Burmeister 2 Oct 1682 M\u00f6lln, a female Burmeister, not Hinrich) are not the target. Place-free so noisy; 1070 total.",
+      "staged_ref": "results/.staging/cf18a93b-17a2-453b-ab5d-f056823720b4.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T19:29:28.349Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "givenName": "Hinrich",
+        "collectionId": "4132032",
+        "birthYearFrom": 1685,
+        "birthYearTo": 1689
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil in pinned collection 4132032; unpinned retry follows."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T19:29:28.349Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burm*",
+        "givenName": "Hinrich",
+        "collectionId": "4132032",
+        "birthYearFrom": 1680,
+        "birthYearTo": 1695
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Wildcard nil in pinned collection 4132032; unpinned retry follows."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T19:29:28.349Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "recordCountry": "Germany",
+        "birthYearFrom": 1685,
+        "birthYearTo": 1689,
+        "fatherGivenName": "Hinrich"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 20795,
+      "notes": "Unpinned, father Hinrich: Schonberg baptism of Hinrich Burmeister 29 Jul 1687 (QPV4-RPYG, collection 3015626, unattached) and 9 May 1687 (QPV4-2MW3, attached to other). Birth-year-conflict flag is vs father subject b.1653; expected as target is his son. Mother not in stub.",
+      "staged_ref": "results/.staging/a166625e-b0d5-4114-a534-e2acdb672fae.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T19:29:28.358Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burmeister",
+        "givenName": "Hinrich",
+        "birthYearFrom": 1685,
+        "birthYearTo": 1689,
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 3801,
+      "notes": "Unpinned retry, same names 1685-1689; same Schonberg 1687 baptisms plus 19 Jul 1685 Hinrich baptism at Schonberg.",
+      "staged_ref": "results/.staging/c4422fe8-f0e1-441b-accb-986367dd040a.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T19:29:28.364Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Burm*",
+        "givenName": "Hinrich",
+        "birthYearFrom": 1680,
+        "birthYearTo": 1695,
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 5012,
+      "notes": "Unpinned wildcard Burm* 1680-1695; other Schonberg Hinrich baptisms 1683, 1691, 1693 (Burmeister/Burmeister variants). Ranker found no strong match to the father subject, as expected.",
+      "staged_ref": "results/.staging/64afeb4b-0ef5-43a1-8f9c-d6d70e38033a.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-11-12T19:30:08.606Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QPV4-RPYG"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "staged_ref": "results/.staging/791a8ab4-d697-48f3-ae25-dfb98cf463b6.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": null,
+      "performed": "2026-11-12T19:30:08.609Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QPV4-2MW3"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "staged_ref": "results/.staging/d22393e6-7599-453b-b6bf-5bad0fdc30b9.json"
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": null,
+      "performed": "2026-11-12T19:30:08.613Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QPV4-KKZK"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "staged_ref": "results/.staging/fdd7529e-cdb4-4e84-b9b8-64c031c9ed76.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPV4-RPYG : Sat Jul 26 23:19:35 UTC 2025), Entry for Hinrich Burmeister and Hinrich Burmeister, 29. Juli 1687.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Eintrag f\u00fcr Hinrich Burmeister, \u201eDeutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\u201c",
+        "when_created": "1687",
+        "when_accessed": "2026-11-12",
+        "where": "Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971",
+        "where_within": "ark:/61903/1:1:QPV4-RPYG"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_012",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QRBQ-DRQ4",
+      "image_ark": "ark:/61903/3:1:3Q9M-CS49-R56Z",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPV4-2MW3 : Sat Jul 26 19:50:15 UTC 2025), Entry for Hinrich Burmeister and Hinrich Burmeister, 9. Mai 1687.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Eintrag f\u00fcr Hinrich Burmeister, \u201eDeutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\u201c",
+        "when_created": "1687",
+        "when_accessed": "2026-11-12",
+        "where": "Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971",
+        "where_within": "ark:/61903/1:1:QPV4-2MW3"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_013",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QRB3-BH5D",
+      "image_ark": "ark:/61903/3:1:3Q9M-CS49-R56X",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPV4-KKZX : Thu Oct 16 07:16:48 UTC 2025), Entry for Hinrich Burmeister and Liesabeth Ollenborgs, 24 Oct 1682.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Eintrag f\u00fcr Hinrich Burmeister, \u201eDeutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\u201c",
+        "when_created": "1682",
+        "when_accessed": "2026-11-12",
+        "where": "Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971",
+        "where_within": "ark:/61903/1:1:QPV4-KKZK"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_014",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QRBQ-ZHCQ",
+      "image_ark": "ark:/61903/3:1:3Q9M-CS49-R93L-X",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Hinrich Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hinrich",
+        "surname": "Burmeister"
+      },
+      "record_persona_id": "p_104690766532",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "29. Juli 1687",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "29. Juli 1687",
+      "place": "Sch\u00f6nberg, Sch\u00f6nberg, Mecklenburg-Strelitz, Deutschland",
+      "record_persona_id": "p_104690766532",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4",
+      "standard_place": "Sch\u00f6nberg, Mecklenburg-Strelitz, Germany"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Hinrich Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hinrich",
+        "surname": "Burmeister"
+      },
+      "record_persona_id": "p_104690766542",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_104690766542",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Elsch Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Elsch",
+        "surname": "Burmeister"
+      },
+      "record_persona_id": "p_104690766548",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_104690766548",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Elsch Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_104690766532",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hinrich Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_104690766532",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QPV4-RPYG",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Elsch Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_104690766542",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:QRBQ-DRQ4"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Hinrich Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hinrich",
+        "surname": "Burmeister"
+      },
+      "record_persona_id": "p_104690610183",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "9. Mai 1687",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "9. Mai 1687",
+      "place": "Sch\u00f6nberg, Sch\u00f6nberg, Mecklenburg-Strelitz, Deutschland",
+      "record_persona_id": "p_104690610183",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D",
+      "standard_place": "Sch\u00f6nberg, Mecklenburg-Strelitz, Germany"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Hinrich Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hinrich",
+        "surname": "Burmeister"
+      },
+      "record_persona_id": "p_104690610193",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_104690610193",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Anna Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Anna",
+        "surname": "Burmeister"
+      },
+      "record_persona_id": "p_104691012005",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_104691012005",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Anna Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_104690610183",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hinrich Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_104690610183",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QPV4-2MW3",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Anna Burmeister",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_104690610193",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:QRB3-BH5D"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Hinrich Burmeister",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hinrich",
+        "surname": "Burmeister"
+      },
+      "record_persona_id": "p_104690600414",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_104690600414",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Liesabeth Ollenborgs",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Liesabeth",
+        "surname": "Ollenborgs"
+      },
+      "record_persona_id": "p_104690600419",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_104690600419",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Claus Ollenborgs",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Claus",
+        "surname": "Ollenborgs"
+      },
+      "record_persona_id": "p_104690600426",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_104690600426",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "24 Oct 1682",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "24 Oct 1682",
+      "place": "Sch\u00f6nberg, Sch\u00f6nberg, Nordwestmecklenburg, Mecklenburg-Vorpommern, Deutschland",
+      "record_persona_id": "p_104690600414",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ",
+      "standard_place": "Sch\u00f6nberg, Kreis Nordwestmecklenburg, Mecklenburg-Vorpommern, Germany"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "24 Oct 1682",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "24 Oct 1682",
+      "place": "Sch\u00f6nberg, Sch\u00f6nberg, Nordwestmecklenburg, Mecklenburg-Vorpommern, Deutschland",
+      "record_persona_id": "p_104690600419",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ",
+      "standard_place": "Sch\u00f6nberg, Kreis Nordwestmecklenburg, Mecklenburg-Vorpommern, Germany"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Claus Ollenborgs",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "record_persona_id": "p_104690600419",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:QPV4-KKZK",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Liesabeth Ollenborgs",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_104690600414",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:QRBQ-ZHCQ"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_005",
+      "person_id": "GV6M-YN8",
+      "confidence": "probable",
+      "match_score": 0.026722474,
+      "rationale": "Mother named 'Elsch Burmeister' at the 29 Jul 1687 baptism (Sch\u00f6nberg). 'Elsch' is a Low German pet form of Elisabeth, the same root as 'Liesbeth/Liesabeth' used for this tree person in the 1682 marriage record (a_021). FamilySearch's Germany Naming Customs wiki confirms dialectal/nickname given-name variants are common in this era/region (illustrated for 'Barbara' with many forms, e.g. B\u00e4rbel, Wawerl) though it does not name 'Elsch' specifically. same_person scores this persona only 0.027 against Liesbeth Oldenburg because it compares literal given-name strings, which the dialect variant defeats on its face. Qualitatively: the baptism date (29 Jul 1687) falls within this woman's documented marriage (24 Oct 1682 to her death 4 Jan 1689); the record's father, correlatively identified as her husband Hinrich Burmeister of Sch\u00f6nberg (see note below), is consistent throughout. No contradicting birthplace, birth date, or parent is recorded for her, so no core_identifier_conflict applies. Capped at probable (not confident): the given-name equivalence rests on onomastic plausibility rather than a documented spelling-variant list, and the record's father persona itself could not be formally linked above speculative in this project (he shares his given name with his own father and his own son in the tree; see summary), so this mother identification currently stands on the marriage-window/place correlation alone. This is the project's central open question.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_006",
+      "person_id": "GV6M-YN8",
+      "confidence": "probable",
+      "match_score": 0.026722474,
+      "rationale": "Sex 'Female' on the same mother persona as a_005; same identification applies (score 0.027, see a_005 rationale).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_009",
+      "person_id": "GV6M-YN8",
+      "confidence": "probable",
+      "match_score": 0.026722474,
+      "rationale": "Second party named by a_009 ('spouse of Elsch Burmeister', from the father's own persona) is the mother. Same mother-persona score (0.027) as a_005; see a_005 rationale.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_007",
+      "person_id": "GV6M-YN8",
+      "confidence": "probable",
+      "match_score": 0.026722474,
+      "rationale": "Second party named by a_007 ('child of Elsch Burmeister', from the child's own persona) is the mother. Same mother-persona score (0.027) as a_005; see a_005 rationale.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_021",
+      "person_id": "GV6M-YN8",
+      "confidence": "confident",
+      "match_score": 0.98724014,
+      "rationale": "Bride 'Liesabeth Ollenborgs' at the 24 Oct 1682 Sch\u00f6nberg marriage \u2014 matches tree-attested Liesbeth Oldenburg exactly on date and place. 'Ollenborgs' vs 'Oldenburg': FamilySearch's Germany Naming Customs wiki confirms the genitive '-s' ending as a normal German surname rendering (daughter/wife of the named family), plus general dialect spelling variation \u2014 not a different family name. Score 0.987; obvious match (exact date/place to the tree-attested marriage).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_022",
+      "person_id": "GV6M-YN8",
+      "confidence": "confident",
+      "match_score": 0.98724014,
+      "rationale": "Sex 'Female' on the same bride persona as a_021 (score 0.987).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_026",
+      "person_id": "GV6M-YN8",
+      "confidence": "confident",
+      "match_score": 0.98724014,
+      "rationale": "Marriage date fact on the bride's own persona, same persona as a_021 (score 0.987); matches tree-attested marriage date exactly.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_027",
+      "person_id": "GV6M-YN8",
+      "confidence": "confident",
+      "match_score": 0.98724014,
+      "rationale": "Bride's own-party relationship assertion ('child of Claus Ollenborgs'); same bride persona as a_021 (score 0.987).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_028",
+      "person_id": "GV6M-YN8",
+      "confidence": "confident",
+      "match_score": 0.98724014,
+      "rationale": "Second party named by a_028 ('spouse of Liesabeth Ollenborgs', from the groom's own persona) is the bride. Same bride-persona score (0.987) as a_021.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_001",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "New stub minted from this persona (child 'Hinrich Burmeister', christened 29 Jul 1687, Sch\u00f6nberg). Not scored: comparing a record persona to a person created out of it is circular. Distinct from P71D-DRJ (christened 18 Aug 1683, a different baptism 4 years earlier) \u2014 if the parent identification is correct, this is a previously unrecorded second son of the same name, consistent with the German naming custom of reusing a deceased elder child's name (FamilySearch Germany Naming Customs wiki); no death record for P71D-DRJ was found in this project, so that remains an open question.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_002",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Christening fact on the same new child persona as a_001; same stub, no independent score (minted from this persona).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_007",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Child's own-party relationship assertion ('child of Elsch Burmeister'); same new stub as a_001, no independent score.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_008",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Child's own-party relationship assertion ('child of Hinrich Burmeister'); same new stub as a_001, no independent score. The second party this assertion names (the father) is NOT linked to G8CJ-7VL in this project: the research_append writer caps that link at speculative because G8CJ-7VL shares his given name with his own father (P9PK-53N, d. 1658) and his own son (P71D-DRJ, chr. 1683) in the tree, and no record in this project independently dates them apart from the tree's pre-existing dates. Per policy, with no user present a match capped at speculative becomes a no-link rather than being written; see the project summary.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_003",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.93752056,
+      "rationale": "Father persona (p_104690766542, QPV4-RPYG, 29 Jul 1687 baptism) named 'Hinrich Burmeister' scores 0.938 against G8CJ-7VL (b. 30 Nov 1653, d. 26 Feb 1693) \u2014 age ~34 at the baptism, same place (Sch\u00f6nberg), name exact match. Two namesake candidates sharing the given name in the tree were considered and formally ruled out by hypothesis-tracking: h_002 (P9PK-53N, d. 1658 \u2014 dead 29 years before this 1687 baptism) and h_003 (P71D-DRJ, chr. 1683 \u2014 about 4 years old in 1687). h_001 (active) identifies G8CJ-7VL as the sole viable candidate for this father/groom identity. No core identifier conflict.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_004",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.93752056,
+      "rationale": "Same father persona (p_104690766542) and same score (0.938) as a_003 \u2014 sex assertion carries no second person, covered by the same same_person call. See a_003 rationale for namesake ruling (h_002, h_003 ruled out; h_001 active).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_008",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.93752056,
+      "rationale": "a_008 is the child's own-party relationship assertion ('child of Hinrich Burmeister'); this pe_ entry is for the second party it names, the father. Same father persona (p_104690766542) and same_person score (0.938) as a_003/a_004, scored directly against G8CJ-7VL with recordRole=father. Previously capped at speculative/no-link (see pe_016) pending resolution of the namesake ambiguity; h_002 (P9PK-53N, d. 1658) and h_003 (P71D-DRJ, chr. 1683) are now formally ruled out by hypothesis-tracking as chronologically impossible, and h_001 (active) names G8CJ-7VL as the sole viable candidate. The child's own link to I4 (stub) from pe_016 is unaffected.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_009",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.93752056,
+      "rationale": "a_009 is the father's own persona asserting 'spouse of Elsch Burmeister'; this pe_ entry is for the first party (the father himself), distinct from pe_003 which links the second party (the mother) to GV6M-YN8. Same father persona (p_104690766542) and same_person score (0.938) as a_003/a_004 \u2014 no additional call needed for the first-party link. Namesake candidates h_002 (d. 1658) and h_003 (chr. 1683) ruled out by hypothesis-tracking as chronologically impossible; h_001 names G8CJ-7VL as the sole viable candidate.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_019",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.99384826,
+      "rationale": "Groom persona (p_104690600414, QPV4-KKZK, 24 Oct 1682 marriage) named 'Hinrich Burmeister' scores 0.994 against G8CJ-7VL (b. 30 Nov 1653, d. 26 Feb 1693) \u2014 age ~29 at marriage, same place (Sch\u00f6nberg), name exact match. Namesake candidates h_002 (P9PK-53N, d. 1658 \u2014 24 years dead by this 1682 marriage) and h_003 (P71D-DRJ, chr. 1683 \u2014 not yet born) formally ruled out by hypothesis-tracking as chronologically impossible; h_001 (active) names G8CJ-7VL as the sole viable candidate.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_020",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.99384826,
+      "rationale": "Same groom persona (p_104690600414) and same score (0.994) as a_019 \u2014 sex assertion carries no second person, covered by the same same_person call. See a_019 rationale for namesake ruling.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_025",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.99384826,
+      "rationale": "Marriage fact (24 Oct 1682, Sch\u00f6nberg) on the groom's own persona (p_104690600414); same score (0.994) as a_019 \u2014 no second person named by this fact assertion. See a_019 rationale for namesake ruling (h_002, h_003 ruled out; h_001 active).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_028",
+      "person_id": "G8CJ-7VL",
+      "confidence": "confident",
+      "match_score": 0.99384826,
+      "rationale": "a_028 is the groom's own persona asserting 'spouse of Liesabeth Ollenborgs'; this pe_ entry is for the first party (the groom himself), distinct from pe_009 which links the second party (the bride) to GV6M-YN8. Same groom persona (p_104690600414) and same_person score (0.994) as a_019/a_020/a_025 \u2014 no additional call needed for the first-party link. Namesake candidates h_002 (d. 1658) and h_003 (chr. 1683) ruled out by hypothesis-tracking as chronologically impossible; h_001 names G8CJ-7VL as the sole viable candidate.",
+      "created": "2026-11-12"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Hinrich Burmeister (tree person G8CJ-7VL, b. 30 Nov 1653, d. 26 Feb 1693) of Sch\u00f6nberg was the father of the child Hinrich baptised 29 July 1687 (QPV4-RPYG) and the groom Hinrich Burmeister who married Liesabeth Ollenborgs on 24 Oct 1682 (QPV4-KKZK).",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_008",
+        "a_009",
+        "a_019",
+        "a_020",
+        "a_025",
+        "a_028"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Identity hypothesis. Candidates P9PK-53N (d. 1658) and P71D-DRJ (chr. 1683) are registered as competing hypotheses. Person-evidence check: no person_evidence link exists in the project for a_003, a_004, a_019, a_020 or a_025 to G8CJ-7VL, so the reported 0.937-0.994 scores were not found in the stored records; a_009 and a_028 link to GV6M-YN8 (mother/bride), and a_008 is capped at speculative (pe_016). The candidate's identity with the father/groom personas therefore still needs a confirmed person_evidence link before supported status. The 1653 birth and 1682/1687 ages are tree facts, not yet verified against the records.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_002",
+      "claim": "Hinrich Burmeister (tree person P9PK-53N, father of G8CJ-7VL, d. 1658) was the father of the 1687 baptised child and the 1682 groom Hinrich Burmeister.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [],
+      "ruled_out": true,
+      "ruled_out_reason": "Chronological impossibility: tree person P9PK-53N has a dated death in 1658, 24 years before the 24 Oct 1682 marriage (QPV4-KKZK) and 29 years before the 29 July 1687 baptism (QPV4-RPYG). A man dead since 1658 cannot be a groom in 1682 or a father in 1687.",
+      "notes": "Competing candidate for the same-name identity question (sharing the name with G8CJ-7VL). Ruled out on the tree's death date.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_003",
+      "claim": "Hinrich Burmeister (tree person P71D-DRJ, child of G8CJ-7VL, christened 18 Aug 1683) was the groom of 24 Oct 1682 or the father of the 29 July 1687 baptised child.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [],
+      "ruled_out": true,
+      "ruled_out_reason": "Chronological impossibility: tree person P71D-DRJ was christened 18 Aug 1683, so was born after the 24 Oct 1682 marriage in which a groom Hinrich Burmeister is named, and was about four years old at the 29 July 1687 baptism. A child of that age cannot be a groom in 1682 or a father in 1687.",
+      "notes": "Competing candidate for the same-name identity question (sharing the name with G8CJ-7VL). Ruled out on the tree's christening date; the birth date and christening date are tree facts not yet checked against the source records.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "argument",
+      "shortfall": "gap",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_005",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_019",
+        "a_021",
+        "a_025",
+        "a_028"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched: the FamilySearch indexed collection 'Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971' (Sch\u00f6nberg parish) for the 29 Jul 1687 baptism (QPV4-RPYG), the 9 May 1687 baptism of another Hinrich Burmeister (QPV4-2MW3) and the 24 Oct 1682 marriage (QPV4-KKZK); all are derivative index entries. Not reached: pending FamilySearch hints on G8CJ-7VL (pli_001, inaccessible); browse of film 69805 (Taufen 1640-1749) images at July 1687; neighbouring-parish baptisms (Herrnburg, Carlow, Selmsdorf, Demern, Schlagsdorf, Ziethen); sponsor/FAN check of the Oldenburg relatives; a burial or death record for P71D-DRJ (chr. 1683) and for the 1687 child; the 1689 burial of Liesbeth. The 9 May 1687 Hinrich/Anna household was not formally disambiguated by independent evidence beyond the spouse contradiction. The search was ended at the researcher's request (resources_spent).",
+      "narrative_markdown": "## Question\nWho was the mother of the child Hinrich Burmeister baptised at Sch\u00f6nberg on 29 July 1687, son of Hinrich Burmeister of Sch\u00f6nberg (b. 1653)? The objective has two parts: did Hinrich Burmeister (b. 1653) have a son Hinrich baptised on that date, and is the mother, recorded as \"Elsch Burmeister\", his first wife Liesbeth Oldenburg?\n\n## Conclusion\nThe evidence supports, at the **probable** tier, that (1) the child baptised 29 July 1687 was a son of Hinrich Burmeister (b. 30 Nov 1653, tree person G8CJ-7VL), and (2) \"Elsch Burmeister\" is his wife Liesbeth Oldenburg (GV6M-YN8, recorded in the marriage entry as Liesabeth Ollenborgs). The child is a second son named Hinrich, distinct from the Hinrich christened 18 Aug 1683 (P71D-DRJ).\n\n## Evidence\n**The baptism.** The 29 July 1687 Sch\u00f6nberg entry names the child Hinrich Burmeister, the father Hinrich Burmeister and the mother \"Elsch Burmeister\" (\"Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\", FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QPV4-RPYG : Sat Jul 26 23:19:35 UTC 2025, Entry for Hinrich Burmeister and Hinrich Burmeister, 29. Juli 1687). Classification: derivative index of the original church register; the information (parentage) is primary, stated by the presenting parent, and direct for the parentage but indirect for the mother's identity as Liesbeth, because the entry gives only a first name and a married surname.\n\n**The marriage.** On 24 Oct 1682 at Sch\u00f6nberg, groom Hinrich Burmeister married Liesabeth Ollenborgs, daughter of Claus Ollenborgs (\"Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971\", FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QPV4-KKZX : Thu Oct 16 07:16:48 UTC 2025, Entry for Hinrich Burmeister and Liesabeth Ollenborgs, 24 Oct 1682). Derivative; primary information given by the parties themselves. The groom matches G8CJ-7VL at similarity 0.994 and the bride matches Liesbeth Oldenburg at 0.987 (Ollenborgs being a genitive/dialect rendering of Oldenburg). Tree fact: Liesbeth Oldenburg's Death on 4 Jan 1689 (Sch\u00f6nberg) means she was alive and married to G8CJ-7VL at the 1687 baptism; his second marriage, to Anna Meyborg, was on 27 Feb 1690.\n\n**Correlation.** The father in the 1687 baptism matches G8CJ-7VL (similarity 0.938; Sch\u00f6nberg; age about 33). The other same-named tree men are excluded by date: P9PK-53N died in 1658 and P71D-DRJ was christened in 1683. \"Elsch\" is a Low German pet form of Elisabeth, as is Liesbeth, so a man whose recorded wife in 1682 was Liesabeth and whose recorded wife in 1687 was Elsch, in the same parish, had the same wife by the simplest reading. A name-string comparison scores this poorly (0.027) only because the dialect variants differ literally; the FamilySearch Germany Naming Customs wiki confirms such variants are normal but does not list Elsch specifically.\n\n## The competing household\nA baptism of another Hinrich Burmeister on 9 May 1687, mother Anna Burmeister (https://www.familysearch.org/ark:/61903/1:1:QPV4-2MW3), falls only eleven weeks before the target baptism. The two cannot be children of one mother, and G8CJ-7VL's wife in May 1687 was Liesbeth, not Anna (Anna Meyborg married him only in 1690). That record therefore belongs to a different Hinrich Burmeister household in the same small parish. This is why the father in the July record is identified by the marriage and tree chronology rather than by name alone. It is also the main residual risk: the exclusion rests on the spouse contradiction and on tree dates, not on an independent sponsor, occupation or house-number identification, and no separate Hinrich Burmeister of the right age with a wife named Elsch/Elisabeth has been ruled out by a register search. If the July father were that other man, the identification of Elsch with Liesbeth would fall. Overturn risk is high for that reason.\n\n## The second son\nP71D-DRJ (christened 18 Aug 1683, the couple's child) and the 1687 child are different baptisms four years apart. A second son with the same name is consistent with the German custom of reusing the name of a child who died; no burial for P71D-DRJ was found, so that remains open.\n\n## Limitations\nAll three records are derivative index entries; I did not examine register images. Pending FamilySearch hints, film 69805 images, neighbouring-parish registers, godparent (FAN) evidence, and burial records for the elder son and for Liesbeth (1689) were not reached and could corroborate or overturn the link. No conflict is registered. The finding is probable, not proved, because the mother's identity rests on a name-variant equivalence plus marriage-window consistency, with a named competing household not independently excluded.",
+      "claims": [
+        {
+          "claim": "Hinrich Burmeister (b. 1653) was father of the child baptised 29 July 1687",
+          "proof_tier": "probable",
+          "shortfall": "gap",
+          "supporting_assertion_ids": [
+            "a_003",
+            "a_008",
+            "a_019",
+            "a_028"
+          ],
+          "relationship": {
+            "type": "ParentChild",
+            "parent": "G8CJ-7VL",
+            "child": "I4"
+          }
+        },
+        {
+          "claim": "Elsch Burmeister (mother) is Liesbeth Oldenburg",
+          "proof_tier": "probable",
+          "shortfall": "gap",
+          "supporting_assertion_ids": [
+            "a_005",
+            "a_007",
+            "a_009",
+            "a_021",
+            "a_025"
+          ],
+          "relationship": {
+            "type": "ParentChild",
+            "parent": "GV6M-YN8",
+            "child": "I4"
+          }
+        }
+      ],
+      "updated": "2026-11-12T19:52:14.200Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Mecklenburg-Strelitz, Germany",
+      "for_place": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz (Lutheran Parish)",
+      "time_period": "1683-1689",
+      "jurisdictions": [
+        {
+          "name": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1701/1871"
+        },
+        {
+          "name": "Sch\u00f6nberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1806/1871"
+        },
+        {
+          "name": "Sch\u00f6nberg, Mecklenburg-Strelitz, Germany",
+          "date_range": "1871/1933"
+        },
+        {
+          "name": "Sch\u00f6nberg, Kreis Nordwestmecklenburg, Mecklenburg-Vorpommern, Germany",
+          "date_range": "1994/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4132032",
+          "title": "Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937",
+          "date_range": "1664-1937",
+          "person_count": 440965,
+          "record_count": 28930
+        }
+      ],
+      "quirks": [
+        "FamilySearch's standard-place record for the Sch\u00f6nberg Lutheran Parish is dated 1701-1871, but the parish's own church book (catalog koha:266682) runs 1640-1875 and so covers the 1687 baptism well before 1701 \u2014 trust the catalog record and film dates, not the standard-place date range, when judging coverage for this period.",
+        "FamilySearch carries at least four distinct Sch\u00f6nberg place entries in the Mecklenburg area (the Mecklenburg-Strelitz parish/municipality near Ratzeburg, a separate Mecklenburg-Schwerin populated place, and the modern Nordwestmecklenburg municipality) plus an unrelated Sch\u00f6nberg Parish in Schleswig-Holstein \u2014 confirm which Sch\u00f6nberg before citing any record; this guide covers the Mecklenburg-Strelitz Sch\u00f6nberg near Ratzeburg (AG. Sch\u00f6nberg), 16 km east of L\u00fcbeck.",
+        "Sch\u00f6nberg's Kirchenbuch (catalog koha:266682) bundles baptisms, marriages, burials and confirmations across several microfilms split by date range \u2014 request film 69805 ('Taufen 1640-1749', imageGroupNumber 102151198) for a 1687 baptism, not the later films (69806-69810).",
+        "The collection 'Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937' (FamilySearch collection 4132032) likely draws on the same parish films and should be searched by name (Hinrich Burmeister) before ordering the film directly.",
+        "The FamilySearch Wiki's country-level Research Tips page states all German records are organized in the FamilySearch catalog by their 1871 place name \u2014 Sch\u00f6nberg's AG. (Amtsgericht) designation reflects that convention."
+      ],
+      "guide_markdown": "# Locality Guide: Sch\u00f6nberg, Mecklenburg-Strelitz, Germany (1683\u20131689)\n\n## Jurisdiction overview\n- **Place:** Sch\u00f6nberg, a Lutheran parish/municipality in the district (Amtsgericht) of Sch\u00f6nberg, Mecklenburg-Strelitz, located roughly 16 km east of L\u00fcbeck.\n- **Note on identity:** FamilySearch's place index lists several Sch\u00f6nberg entries for the Mecklenburg area at different dates (1701\u20131871 and 1806\u20131871 for the Ratzeburg/Mecklenburg-Strelitz parish and municipality, 1871\u20131933 for a later municipality record, and the modern 1994\u2013 Nordwestmecklenburg municipality) \u2014 these are successive standard-place records for the same town as jurisdictional status changed, not different places.\n- **Parent jurisdiction (period):** Mecklenburg-Strelitz.\n- **Key historical context:** The period 1683\u20131689 falls within the post-Thirty Years' War recovery era in Mecklenburg; Lutheran parish record-keeping was already well established at Sch\u00f6nberg by this date (the surviving church book begins in 1640).\n\n## Boundary changes\nThe FamilySearch place database shows Sch\u00f6nberg's jurisdictional label changing over time (parish 1701\u20131871, municipality 1806\u20131871, municipality 1871\u20131933, modern municipality 1994\u2013) while its physical location and lat/long are constant. No tool result in this survey identifies an actual territorial split or re-parenting of Sch\u00f6nberg itself during 1683\u20131689; the parish's own record series (1640\u20131875) runs continuously through the target window.\n\n## Available record types\n\n### Church records (the record type that matters for this inquiry)\n- **Denomination:** Evangelische Kirche (Lutheran), the only denomination this survey found recorded for Sch\u00f6nberg.\n- **Record types:** The parish's Kirchenbuch (catalog entry koha:266682, creator \"Evangelische Kirche Sch\u00f6nberg (AG. Sch\u00f6nberg, Mecklenburg-Strelitz)\") covers baptisms (Taufen), marriages (Heiraten), burials (Tote) and confirmations (Konfirmationen), 1640\u20131875.\n- **Microfilms:** Six films split the run by date and record type \u2014 film 69805 \"Taufen 1640-1749\" (imageGroupNumber 102151198) is the one covering a 29 July 1687 baptism; film 69807 \"Taufen, Tote 1642-1809, Heiraten 1640-1809\" (imageGroupNumber 102151200) also spans 1687 for burials and marriages. Later films (69806, 69808-69810) cover 1750 onward and are out of scope for this inquiry.\n- **Where held:** FamilySearch's catalog marks this title available at the Granite Mountain Record Vault, the FamilySearch Library, and Online \u2014 the catalog entry (koha:266682) states \"Online\" availability for these microfilmed images.\n- **Indexed collection:** The collections_search result \"Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937\" (FamilySearch collection id 4132032, 440,965 persons) spans 1664\u20131937 and overlaps the target period; this is almost certainly an index/image set drawn from the same parish films, including Sch\u00f6nberg's, and should be searched by name first.\n- **Gaps:** This survey found no indication the 1640\u20131875 Kirchenbuch has gaps; no wiki page or catalog note states any loss for this specific parish.\n- **Language:** German (Kirchenbuch entries of this period are typically German, sometimes with Latin terms).\n\n### Census records\nNo civil or state census existed in Mecklenburg-Strelitz in the 1680s; this record type is inapplicable to the target period.\n\n### Probate and court records\nNo catalog or collection result specific to Sch\u00f6nberg probate/court records surfaced in this survey. The Germany Research Tips page (country level) notes German probate-relevant actions (bequests, inheritance) were often recorded in local court records (\"Schuld- und Pfandprotokolle\") rather than a dedicated probate series \u2014 consult the regional state archive for Mecklenburg-Strelitz if needed.\n\n### Land records\nNot surveyed in detail for this inquiry; no tool result returned land records specific to Sch\u00f6nberg for 1683\u20131689.\n\n### Military records\nNo conflict-specific military records were returned for Sch\u00f6nberg in this period by any tool call in this survey.\n\n### Cemetery records\nNo FindAGrave or BillionGraves coverage for 17th-century Sch\u00f6nberg burials was returned; burials of this date would be in the parish Kirchenbuch itself (Tote series), not a separate cemetery record.\n\n### Newspaper records\nNot applicable \u2014 no newspapers existed in 1680s Mecklenburg-Strelitz.\n\n### Immigration/emigration records\nNot applicable to the research question at hand (a 1687 baptism); no port-of-entry or passenger records bear on this locality/period.\n\n### Tax records\nNo Sch\u00f6nberg-specific tax records were returned by this survey's tool calls.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Catalog entry koha:266682 (Kirchenbuch 1640-1875, 6 films, marked \"Online\"); collection id 4132032 \"Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937\" (440,965 persons) | Both are the primary and (likely) only route to the 1687 baptism itself | Free |\n\n**Coverage of this survey:** `volume_search` scoped to the Sch\u00f6nberg Lutheran Parish standard place returned 0 digitized volumes (likely because the digitized/indexed breakdown is filed under the broader Mecklenburg-Strelitz place, not the parish-specific standard place); `catalog_search` confirms the relevant Kirchenbuch and its six films directly. A broader `volume_search` on Mecklenburg-Strelitz, Germany for 1680-1690 returned 40 matching volumes/coverages, of which this response detailed the first page (10); the Sch\u00f6nberg Taufen film specifically was not among that first page, so the full set was not examined for a volume_search match to the exact parish film.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| FamilySearch Library (Granite Mountain Record Vault / Salt Lake) | Microfilm copies of the original Sch\u00f6nberg Kirchenbuch (per catalog koha:266682) | In-person at a FamilySearch Library/affiliate, or online where digitized |\n\nNo tool result in this survey named the German archive holding the original manuscript register (the catalog's note says microfilm was \"aufgenommen von Manuskripten in Goslar,\" i.e., filmed from manuscripts in Goslar) \u2014 originals are not confirmed to be held at Goslar itself by any source beyond this filming note, and no other repository is named, so the custodian of the originals is unconfirmed by this survey.\n\n## Records NOT online\nThis survey found no record series for Sch\u00f6nberg that are confirmed offline-only; the Kirchenbuch for the target period is marked \"Online\" in the catalog.\n\n## Known record losses\nNo tool result in this survey states any loss for the Sch\u00f6nberg Kirchenbuch; the series is continuous 1640\u20131875 per the catalog.\n\n## Research tips\n- All German records are organized in the FamilySearch catalog by their 1871 place name, so Sch\u00f6nberg appears under Mecklenburg-Strelitz in the catalog rather than any later or current province name (https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies).\n- Work from the known to the unknown and document each generation's births via church records before relying on the tree (https://www.familysearch.org/en/wiki/Germany_Getting_Started).\n- Check witnesses at a baptism \u2014 they are often relatives and can resolve ambiguity between same-named individuals in the same parish (https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies).\n- Because the FamilySearch Wiki's `home`, `getting_started`, `online_records`, and `research_tips` pages have no dedicated Sch\u00f6nberg/Mecklenburg-Strelitz-level article (the parish-level `home` page returned \"No wiki page found\"), the country-level Germany pages are the best available guidance; consult the Mecklenburg-Strelitz GenWiki page (http://wiki-de.genealogy.net/Mecklenburg-Strelitz) for more local detail.\n- Given the neighboring parishes listed in the catalog search under the same AG. Sch\u00f6nberg jurisdiction (Herrnburg, Carlow, Selmsdorf, Demern, Domhof Ratzeburg, Schlagsdorf, Ziethen), search these adjoining parish Kirchenb\u00fccher if the 1687 baptism is not found in Sch\u00f6nberg's own register, since families sometimes used a neighboring church.\n- Search the collection \"Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937\" (FamilySearch collection 4132032) by name first, since it is indexed and may surface the Hinrich Burmeister baptism without browsing film 69805 image by image.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1680,
+        "end_year": 1690,
+        "total_volumes": 40,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 16,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Death",
+            "volumes": 16,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Cemetery",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Marriage",
+            "volumes": 16,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious",
+            "volumes": 40,
+            "browse_only": 3,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Baptism",
+            "volumes": 34,
+            "browse_only": 3,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Death",
+            "volumes": 14,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Marriage",
+            "volumes": 15,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Confirmation",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-12"
+    }
+  ]
+}

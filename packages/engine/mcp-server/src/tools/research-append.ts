@@ -13117,6 +13117,53 @@ function boundErrors(lines: readonly string[]): string[] {
   ];
 }
 
+/** A namesake row that lists records cites the log entry of the search or read
+ *  that returned them (lead, 2026-11-12). Without one nothing ties the row to
+ *  what returned its records and no persona can be stamped. One finding per row
+ *  the call appended, or whose `record_ids` or `log_entry_ids` it changed, that
+ *  ends with a record id and no log entry, keyed to the last op that wrote it. A
+ *  pool row, which lists no record, is not judged, and neither is a row written
+ *  before this rule whose two fields the call leaves as they were. */
+export function namesakeRowLogCheck(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+): Array<{ index: number; message: string }> {
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const was = (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []) as any[];
+  const lastOp = new Map<string, number>();
+  applied.forEach((a, i) => {
+    if (a.section === "namesakes" && !a.noop) lastOp.set(a.entryId, i);
+  });
+  const filled = (v: unknown): string[] =>
+    (Array.isArray(v) ? v : []).filter((x): x is string => typeof x === "string" && x.trim() !== "");
+  const findings: Array<{ index: number; message: string }> = [];
+  for (const [id, index] of lastOp) {
+    const row = rows.find((r) => r && r.id === id);
+    if (!row) continue;
+    const records = filled(row.record_ids);
+    if (records.length === 0 || filled(row.log_entry_ids).length > 0) continue;
+    const prior = was.find((r) => r && r.id === id);
+    if (
+      prior &&
+      JSON.stringify(filled(prior.record_ids)) === JSON.stringify(records) &&
+      filled(prior.log_entry_ids).length === 0
+    ) {
+      continue;
+    }
+    const about = [row.name, row.place, row.time_period].filter((x) => typeof x === "string" && x !== "");
+    findings.push({
+      index,
+      message:
+        `The namesakes row${about.length > 0 ? ` for ${about.join(", ")}` : ""} lists ` +
+        `${records.map((r) => `'${r}'`).join(", ")} and cites no log entry, so nothing ties it to the search ` +
+        "or read that returned that record. Nothing was written. Send it again with `log_entry_ids` holding " +
+        "the log_ id research_log_append returned for that search or read.",
+    });
+  }
+  return findings;
+}
+
 /** The namesake cap's findings on a call, each labelled with the batch index of the op
  *  it is keyed to. `applied` is in step with the findings' own indexes. */
 function namesakeMessages(
@@ -13128,6 +13175,7 @@ function namesakeMessages(
   startingTree: SimplifiedGedcomX | null,
 ): string[] {
   return [
+    ...namesakeRowLogCheck(before, after, applied),
     ...namesakeCallCheck(before, after, applied, startingPersonIds, startingTree),
     ...circularCorroborationCallCheck(before, after, applied, startingTree),
   ].map((f) =>
