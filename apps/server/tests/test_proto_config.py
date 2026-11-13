@@ -1141,6 +1141,8 @@ def test_committed_requirements_are_the_uv_export(tier):
         ("web", "psycopg-binary", None),
         # #3980: imported only with PG_POOL_MAX_SIZE set, so no other test would miss it.
         ("web", "psycopg-pool", None),
+        # #3997: imported only with OAUTH_ISSUER set (web/connector_auth.py), so no other test would miss it.
+        ("web", "mcp", None),
         ("worker", "claude-agent-sdk", "0.2.172"),
         ("worker", "psycopg-binary", None),
         ("worker", "botocore", None),

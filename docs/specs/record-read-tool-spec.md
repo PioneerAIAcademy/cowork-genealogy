@@ -157,14 +157,37 @@ is `collectionTitle`, else the first double-quoted run of `citation` with
 trailing punctuation removed (FamilySearch often quotes the title with its
 comma, `"United States Census, 1860,"`), else the citation.
 
-The rebuilt source gives `hasSameCensus` a candidate title: a persona with no
-source refs reads every candidate source title. It matches only a tree source
-titled with the bare collection name, and tree census sources rarely are:
-`extraction_append` titles a FamilySearch record's source with its Record source
-title (`Entry for John Becker and Louisa Becker, "United States, Census, 1900"`),
-and `person_read` titles each source per person (`Henry Gaetjen, "United States
-Census, 1940"`). Neither equals the rebuilt title, so on a project tree the check
-seldom fires.
+The rebuilt source gives `hasSameCensus` a candidate title and url: a persona
+with no source refs reads every candidate source. The check compares census
+collection names, not whole titles: the first double-quoted run of a title, else
+the whole title, lowercased with trailing `,`/`.` dropped and `, Census` folded to
+` Census`. So `extraction_append`'s Record-source title (`Entry for John Becker and
+Louisa Becker, "United States, Census, 1900"`), `person_read`'s per-person title
+(`Henry Gaetjen, "United States Census, 1940"`) and the rebuilt bare collection
+title of one census all match. The tree side reads only the sources its person,
+facts and names reference; an unsourced tree person never fires.
+
+Before comparing, it drops each tree census source whose url, as a canonical ark
+(`toArk`, so `www.` or not), is the paired candidate persona's `ark` or the
+candidate's record (`1:2:`) ark — `S1.url` on a compacted answer. That source is
+this record, not a second enumeration. A tree source with no url is never
+dropped, and its ark is read from `url`, never `citation` (the two can name
+different personas of one record). Accepted gaps:
+
+- (a) A wrong pairing inside one household fires, and a tree source carrying
+  another household member's persona ark falsely fires.
+- (b) A persona beyond the persona cap (`personsOmitted`) carries no ark, so its
+  tree source is not skipped.
+- (c) A tree source with a non-FamilySearch url is compared by title only. A
+  title with no quoted collection (`Household of David Bagley, United States
+  Census, 1820`) or a variant spelling (`Minnesota, State Census` against
+  `Minnesota State Census`) does not match.
+- (d) A tree source on the record's `1:2:` ark is skipped whoever it is paired
+  with, so a wrong pairing there stays silent.
+
+`packages/engine/mcp-server/dev/replay-same-census.ts` replays every committed
+e2e `merge_warnings` call under the old and the current rule and prints each pair
+whose result changed.
 
 ## 8. The eval harness
 
