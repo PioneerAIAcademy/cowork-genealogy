@@ -3,11 +3,15 @@
     "f1": "true",
     "f2": "true",
     "f3": "partial",
-    "f4": "true"
+    "f4": "false"
   },
-  "proof_quality_score": 3,
   "notes": {
-    "f3": "Date and twin detail correct; place field is under-specified — standardized to 'Poulton le Fylde' without the St. Chad parish/church name that the finding calls for."
+    "f1": "R19 links John Swarbrick (L88T-VT4) to Robert, sourced to the 20 Dec 1797 christening; ps_001 names 'John Swarbrick of Carleton, Husbandman'.",
+    "f2": "R20 links Grace Collinson (P6MH-1N8) to Robert; ps_001 names her, cites the 1788 marriage and quotes the original register.",
+    "f3": "Birth 19 Dec 1797 and christening 20 Dec 1797 at Poulton le Fylde recorded on Robert, and ps_001 states he was a twin, but St. Chad is not in the fact and the twin John was not added to the tree.",
+    "f4": "Robert's father is John, not William, but I1 Robert (chr. 11 Jun 1797, Hambleton, sourced to the Hambleton entry S1), I2 William Swarbrick and I3 Ann were written into the tree, unlinked."
   },
-  "annotator": "EdmondOware"
+  "annotator": "benter-070",
+  "findings_hash": "8fe33e4ca191d0a41d99a4d2d009acc5d64db3fe0e5a64c47d614f5a395196a3",
+  "blind_bundle_digest": "fcf8906d49a9defbbcc9aa9b4872875aa4c358fda9a0af015a85d308d285b1a0"
 }
