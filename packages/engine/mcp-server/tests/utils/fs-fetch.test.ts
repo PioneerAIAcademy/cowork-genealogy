@@ -174,7 +174,7 @@ describe("recordFamilySearchStatus", () => {
   it("records the status AFTER a 401 re-read, not the first one", async () => {
     // A bearer never re-reads (handle401 returns at once for a non-local
     // principal), so the recorded status is that 401 -- which is the status the
-    // call actually got, and the one E3's session-end rule keys on.
+    // call actually got, and the one the door's log line shows.
     const seen: number[] = [];
     const p = connectorPrincipal({
       accessToken: "fs-tok",

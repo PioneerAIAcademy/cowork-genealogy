@@ -13,7 +13,7 @@ import type {
   MatchConfidence,
   MatchStatus,
 } from "../types/match-by-id.js";
-import { rejectedTokenMessage } from "../auth/config.js";
+import { isHostedMode, rejectedTokenMessage } from "../auth/config.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 const API_URL =
@@ -275,10 +275,12 @@ async function throwForBadStatus(
 ): Promise<never> {
   const text = await response.text().catch(() => "");
   if (response.status === 401 || response.status === 403) {
-    const desktop =
-      `FamilySearch match API rejected the request: ${response.status} ${response.statusText}. ` +
-      `Call the login tool to authenticate.`;
-    throw new Error(response.status === 401 ? await rejectedTokenMessage(principal, desktop) : desktop);
+    const rejected = `FamilySearch match API rejected the request: ${response.status} ${response.statusText}.`;
+    const desktop = `${rejected} Call the login tool to authenticate.`;
+    if (response.status === 401) throw new Error(await rejectedTokenMessage(principal, desktop));
+    // A 403 is a refusal of this request, not an ended session. A hosted caller
+    // has no login tool, so it is not sent to one.
+    throw new Error((await isHostedMode(principal)) ? rejected : desktop);
   }
   if (response.status === 400) {
     throw new Error(`FamilySearch rejected the id "${queryArk}" as a malformed ARK.`);

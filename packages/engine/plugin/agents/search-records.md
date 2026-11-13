@@ -364,7 +364,7 @@ to re-run, never a reason to skip ranking or logging. If a `stagingError`
 persists across one retry, surface it to the user. (A nil search correctly has no
 handle — nothing was found to retain.)
 
-**If the search fails due to authentication:** tell the user: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
+**If the search fails due to authentication:** give the user the tool's message as it is, with any link it carries. If it names the login tool, add: "Ask me to log you in, or type `login`."
 
 **A zero-result search is NOT an authentication failure.** Auth problems throw an
 error ("User is not logged in to FamilySearch…" / "FamilySearch session not
