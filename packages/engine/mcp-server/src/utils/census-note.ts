@@ -9,11 +9,9 @@ import {
   CENSUS_FRAGMENTS,
   CENSUS_TABLE,
   US_RELATIONSHIP_COLUMN_FROM,
-  placeMatches,
-  rowCovers,
-  segments,
   type CensusRow,
 } from "../data/census-table.js";
+import { foldPlaceKey, listedOneWordPlace } from "./one-word-places.js";
 
 export interface CensusSchedule {
   year: number;
@@ -71,23 +69,75 @@ function searchedPlace(input: CensusNoteInput): string | undefined {
   );
 }
 
-/** The forms cover the place; or the place is a bare country they lie in; or the
- *  place leaves its country off ("Dodge County, Wisconsin") and a form without
- *  its own country is a whole-segment suffix of it. The last reading is not
- *  taken when the search names another country: "Tbilisi, Georgia" searched
- *  with `recordCountry: "Georgia"` is not the US state. */
-function formsCover(forms: readonly string[], place: string, recordCountry?: string): boolean {
-  if (placeMatches(forms, place)) return true;
-  const want = segments(place);
-  if (want.length === 1 && forms.some((f) => segments(f).pop() === want[0])) return true;
-  const named = recordCountry?.trim().toLowerCase();
+/** A place's comma segments, each folded as the one-word list folds a key. */
+function folded(place: string): string[] {
+  return place
+    .split(",")
+    .map((s) => foldPlaceKey(s.trim()))
+    .filter((s) => s !== "");
+}
+
+/** `whole` ends with every segment of `part`, in order. */
+function endsWith(whole: readonly string[], part: readonly string[]): boolean {
+  return part.length > 0 && part.length <= whole.length && part.every((s, i) => s === whole[whole.length - part.length + i]);
+}
+
+/** Every jurisdiction the census table names, folded, once each. */
+const TABLE_FORMS: readonly string[][] = [
+  ...new Set([...CENSUS_TABLE, ...CENSUS_FRAGMENTS].flatMap((r) => r.covers)),
+].map(folded);
+
+/** A segment written after a listed place agrees with its standard place when it
+ *  ends the words of one of that place's parents: "Georgia" agrees with
+ *  "Tbilisi, Republic of Georgia", "New York" does not agree with "Essex,
+ *  England, United Kingdom". Each later segment is matched to a later parent. */
+function agrees(standard: readonly string[], later: readonly string[]): boolean {
+  const parents = standard.slice(1);
+  let k = 0;
+  for (const seg of later) {
+    const words = seg.split(" ");
+    while (k < parents.length && !endsWith(parents[k].split(" "), words)) k++;
+    if (k === parents.length) return false;
+    k++;
+  }
+  return true;
+}
+
+/**
+ * The place the text stands for, as folded segments.
+ *
+ * 1. The most specific segment the one-word list resolves (the engine's own place
+ *    standard) whose standard place agrees with every segment written after it.
+ *    "Tbilisi, Georgia" is Tbilisi, Republic of Georgia; "Essex, New York" skips
+ *    Essex, which the list puts in England, and is New York, United States.
+ * 2. Else a jurisdiction of the census table written without its country:
+ *    "Androscoggin, Maine" is in Maine, United States, which the list leaves out.
+ * 3. Else the text as written.
+ *
+ * The segments written before the one resolved are kept in front of it.
+ */
+export function resolveCensusPlace(text: string, recordCountry?: string): string[] {
+  const raw = text.split(",").map((s) => s.trim()).filter((s) => s !== "");
+  const place = raw.map((s) => foldPlaceKey(s));
+  for (let i = 0; i < raw.length; i++) {
+    const standard = listedOneWordPlace(raw[i], recordCountry ?? null);
+    if (standard === null) continue;
+    const resolved = folded(standard);
+    if (agrees(resolved, place.slice(i + 1))) return [...place.slice(0, i), ...resolved];
+  }
+  for (const form of TABLE_FORMS) {
+    const body = form.slice(0, -1);
+    if (endsWith(place, body) && !endsWith(place, form)) return [...place.slice(0, place.length - body.length), ...form];
+  }
+  return place;
+}
+
+/** The census area and the place overlap: one of the forms lies in the place,
+ *  or the place lies in one of them. */
+function overlaps(forms: readonly string[], place: readonly string[]): boolean {
   return forms.some((f) => {
-    const form = segments(f);
-    if (named && form[form.length - 1] !== named) return false;
-    const withoutCountry = form.slice(0, -1);
-    if (withoutCountry.length === 0 || withoutCountry.length > want.length) return false;
-    const tail = want.slice(want.length - withoutCountry.length);
-    return withoutCountry.every((seg, i) => seg === tail[i]);
+    const form = folded(f);
+    return endsWith(place, form) || endsWith(form, place);
   });
 }
 
@@ -145,13 +195,17 @@ export function censusNote(
   const place = searchedPlace(input);
   if (!place) return undefined;
   const country = str(input.recordCountry);
+  // The search's country is part of the place when the text does not name it:
+  // "Kent" with `recordCountry: "United States"` is not Kent, England.
+  const named = country !== undefined && folded(place).includes(foldPlaceKey(country));
+  const resolved = resolveCensusPlace(country === undefined || named ? place : `${place}, ${country}`, country);
 
   const rows = table
-    .filter((r) => r.year >= from && r.year <= to && formsCover(r.covers, place, country))
+    .filter((r) => r.year >= from && r.year <= to && overlaps(r.covers, resolved))
     .sort((a, b) => a.year - b.year);
   const fragmentYears = [
     ...new Set(
-      CENSUS_FRAGMENTS.filter((f) => f.year >= from && f.year <= to && formsCover(f.covers, place, country)).map(
+      CENSUS_FRAGMENTS.filter((f) => f.year >= from && f.year <= to && overlaps(f.covers, resolved)).map(
         (f) => f.year,
       ),
     ),
@@ -167,7 +221,7 @@ export function censusNote(
   }
   if (!asked) return undefined;
 
-  const indexedYears = [...new Set(table.filter((r) => rowCovers(r, place)).map((r) => r.year))].sort(
+  const indexedYears = [...new Set(table.filter((r) => overlaps(r.covers, resolved)).map((r) => r.year))].sort(
     (a, b) => a - b,
   );
   if (indexedYears.length === 0 && fragmentYears.length === 0) return undefined;

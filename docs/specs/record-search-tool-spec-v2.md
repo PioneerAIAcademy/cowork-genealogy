@@ -1322,8 +1322,29 @@ Fires when one of:
 - No `recordType`, a single residence year, and a place: only when a census of
   that year covers the place.
 
-A place may be written with or without its country ("Dodge County, Wisconsin"),
-and a bare country takes every census of that year in it.
+The place is resolved before any census is matched (`resolveCensusPlace`):
+
+1. The most specific part the one-word list resolves, the engine's own place
+   standard, whose standard place agrees with every part written after it. A
+   later part agrees when it ends the words of one of that place's parents.
+   "Tbilisi, Georgia" is Tbilisi, Republic of Georgia; "Essex, New York" skips
+   Essex, which the list puts in England, and is New York, United States; bare
+   "Georgia" is the US state (lead ruling, 2026-10-26).
+2. Else a jurisdiction of the census table written without its country, for the
+   states the list leaves out or lists only for US records ("Androscoggin,
+   Maine", "Hill, Texas").
+3. Else the text as written. A bare town such as "Birmingham" resolves to nothing.
+
+The search's `recordCountry` is part of the place when the text does not name it,
+so "Kent" with `recordCountry: "United States"` is not Kent, England. A census
+matches when its area and the resolved place overlap, either inside the other:
+the whole-US 1900 census covers "Milwaukee, Wisconsin", and a search of "United
+States" in 1885 lists the state censuses taken that year.
+
+Replayed 2026-11-12 over every census-shaped search in the e2e runs, unit runs and
+tester sessions then on hand, the resolver added a block where there was none (US
+places written without the country after 1880, English and Welsh counties without
+the country) and changed no other answer.
 
 ```json
 "census": {
