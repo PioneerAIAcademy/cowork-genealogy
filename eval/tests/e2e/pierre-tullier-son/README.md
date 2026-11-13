@@ -36,7 +36,7 @@ marriage of Pierre Jacques Dominique Tuilier and Anne Constance Victoire
 Depuydt (France, Nord, Parish and Civil Registration, 1524-1893). The hint
 persona `ark:/61903/1:1:8NJR-PD3Z` is the groom's **father**, "Pierre
 Tuilier", and he is the subject: the groom is a son of Pierre Albert Tullier
-and Constance Dorothé Leys, born 2 November 1799 at Houtkerque. The index's
+and Constance Dorothé Leys, born 1 Nov 1799, registered 2 Nov, at Houtkerque. The index's
 "b. 1796" for the groom is wrong.
 
 What decided it:
@@ -52,9 +52,10 @@ What decided it:
   #856's "predates their marriage by four years" argument rested on the
   1796, so it falls with it.
 - **The 1799 Houtkerque birth fits.** Pierre Jacques Dominique Tuiller was born
-  2 Nov 1799 at Houtkerque, son of Pierre Tuiller (`ark:/61903/1:1:DPJ5-4QW2`;
+  1 Nov 1799, registered 2 Nov, at Houtkerque, son of Pierre Tuiller (`ark:/61903/1:1:DPJ5-4QW2`;
   mother indexed "Constance Coley"). The given names match the 1825 groom
-  exactly, and so do the place and the date.
+  exactly, and so do the place and the date. The
+  index's 2 Nov is the registration date (11 Brumaire an VIII), not the birth.
 - **Only one Pierre Tuilier × Constance Ley couple exists.** Searches of the
   Nord collection (3216848) on Tuilier with a Constance and Ley spouse or
   mother, 1795-1805 and later, return one couple: Pierre Albert Tuilier and
@@ -108,18 +109,19 @@ with `image_transcribe`, and none is licensed:
 - **Civil-marriage film.** It is unindexed, so nothing on it can be checked.
 
 The finding therefore stands on the index alone. The index has the groom's
-death-age birth year of 1798-1799, the 2 Nov 1799 Houtkerque birth with
+death-age birth year of 1798-1799, the 1 Nov 1799 Houtkerque birth (registered 2 Nov) with
 matching given names, and one candidate couple. The images agree with that
 index case. `image_basis` is set because the image arks are cited and the
 readings were used, not because they were needed.
 
 **How this was done.** Retrieval was tool-assisted: `record_read`,
 `record_search`, `volume_search`/`volume_bisect`/`image_search` and
-`image_transcribe`, run by Claude Code on 2026-11-12. The identity call was
-made in that session too. Issue #4445 asks for a second genealogist's opinion
-before this is relied on, and that review has not happened yet.
+`image_transcribe`, run on 2026-11-12. Isaac (Paaboat) read the evidence and
+made the identity call. Issue #4445 asks for a second genealogist's opinion
+before this is relied on. EdmondOware reviewed this on 2026-11-13, re-read the
+records live, and confirmed the call.
 
 `expected-findings.json` is one required finding: the couple had a son Pierre
-Jacques Dominique, born 2 Nov 1799 at Houtkerque. The #856 avoid guard and
+Jacques Dominique, born 1 Nov 1799, registered 2 Nov, at Houtkerque. The #856 avoid guard and
 its documented-negative finding were removed, because they penalised the
 correct answer.

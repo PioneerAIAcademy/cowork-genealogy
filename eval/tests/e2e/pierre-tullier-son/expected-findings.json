@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Pierre Albert Tullier (PID GPX7-28P) and his wife Constance Dorothé Leys had a son, Pierre Jacques Dominique Tuilier, born 2 November 1799 in Houtkerque, Nord, France (registered 11 Brumaire an VIII), a few months before their 12 March 1800 parish marriage at Bambecque. He married Anne Constance Victoire Depuydt at Bambecque on 21 June 1825 and died there on 8 September 1877. The 1825 marriage index's groom birth year of 1796 is wrong: the act gives his age as 25 and his birth as Houtkerque, 10 Brumaire an VIII, and 1796 is the bride's year (born 19 Germinal an IV). Pass = the agent's final tree.gedcomx.json carries this son as a child of Pierre Albert Tullier and Constance Dorothé Leys, born 1799 (not 1796), at Houtkerque.",
+      "description": "Pierre Albert Tullier (PID GPX7-28P) and his wife Constance Dorothé Leys had a son, Pierre Jacques Dominique Tuilier, born 1 November 1799 (10 Brumaire an VIII) in Houtkerque, Nord, France, registered 2 Nov (11 Brumaire an VIII), a few months before their 12 March 1800 parish marriage at Bambecque. The index's 2 Nov is the registration date, not the birth. He married Anne Constance Victoire Depuydt at Bambecque on 21 June 1825 and died there on 8 September 1877. The 1825 marriage index's groom birth year of 1796 is wrong: the act gives his age as 25 and his birth as Houtkerque, 10 Brumaire an VIII, and 1796 is the bride's year (born 19 Germinal an IV). Pass = the agent's final tree.gedcomx.json carries this son as a child of Pierre Albert Tullier and Constance Dorothé Leys, born 1799 (not 1796), at Houtkerque.",
       "details": {
         "subject_person": {
           "name": "Pierre Albert Tullier",
@@ -12,7 +12,7 @@
         "relation": "child",
         "target_person": {
           "name": "Pierre Jacques Dominique Tuilier (Tuiller)",
-          "birth": "2 November 1799, Houtkerque, Nord, France"
+          "birth": "1 November 1799, registered 2 Nov, Houtkerque, Nord, France"
         }
       },
       "supporting_sources": [
