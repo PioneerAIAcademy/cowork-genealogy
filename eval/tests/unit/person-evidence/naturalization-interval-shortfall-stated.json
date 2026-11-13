@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_person_evidence_n5r",
+    "skill": "person-evidence",
+    "name": "An arrival too soon before a naturalization for the residence the law required is named, and caps those links at probable",
+    "type": "positive",
+    "description": "Hermann Gaetjen's 1875 San Francisco Great Register entry gives a naturalization on 13 Aug 1875, and a Germans to America index entry gives an arrival at New York on 2 Jun 1871. That is about four years and two months, while the 1802 act required five years' residence, so the earliest lawful date on these records is June 1876. Nothing in the project shows an earlier residence, a U.S. Army discharge (1862 act) or a naturalized father. The agent must compare the interval with the requirement and name the shortfall in the rationale of the arrival's or the naturalization's entry; neither links to I1 above probable (lead ruling 2026-11-01). Copy of gaetjen-namesake-confident-link with the namesakes removed (issue #3969); before the rule, 0 of 9 runs raised the shortfall.",
+    "tags": [
+      "gaetjen-naturalization-interval",
+      "naturalization-shortfall",
+      "score-discipline",
+      "re-invoke-safe"
+    ]
+  },
+  "input": {
+    "delegation": "Question: q_001 (when and from where in Germany did Hermann Gaetjen immigrate; tree I1 Hermann, husband of I4 Amelia Nichols, father of I2 Henry Joseph b. 5 May 1878 San Francisco and I3 Amelia Otillie b. 23 Aug 1883 California).\nLink these to the right person in the tree:\n- src_001, assertions a_001 to a_009: 1875 San Francisco Great Register, Hermann Gatjen, 21, b. Germany, fireman, 5 Cook Street, naturalized 13 Aug 1875, California 4th District Court.\n- src_002, assertions a_010 to a_014: Germans to America Index, Herm Gaetjen, b. 1854 Prussia, arrived New York 2 Jun 1871.\nDecide identity yourself with same_person scoring. I1's only birth fact (about 1859) is unsourced. If the evidence does not support linking either persona to I1, put that persona on a separate stub instead of I1, not on both, and say so.\n\nprojectPath: <workspace>",
+    "scenario": "gaetjen-naturalization-interval"
+  },
+  "mcp_fixtures": [
+    "same-person-gaetjen-voter-1875",
+    "same-person-gaetjen-arrival-1871",
+    "same-person-gaetjen-voter-1875-stub",
+    "same-person-gaetjen-arrival-1871-stub"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 1200,
+    "sdk_message_silence_seconds": 600
+  },
+  "judge_context": [
+    "The arrival (a_014, New York, 2 June 1871) and the naturalization (a_007, California 4th District Court, 13 August 1875) are about four years and two months apart. The 1802 act required five years' residence in the United States; the 1824 provision for those who arrived as minors waived the earlier declaration but not the five years. On these records the earliest lawful date is June 1876. Nothing in the project shows an earlier U.S. residence (which would make the 1871 arrival a return trip), an honorable U.S. Army discharge (the 1862 act's one year), or a father naturalized while Hermann was a minor.",
+    "Decided rule (lead, 2026-11-01): an unexplained shortfall caps the arrival's and the naturalization's links at `probable`, and the `rationale` names it: both dates, the interval and the requirement. It is not a `core_identifier_conflict`, and the interval alone never lowers a link to `speculative`: an overstated residence does not bear on identity. Other facts of the two records keep their ordinary tiers.",
+    "A `speculative` tier whose `core_identifier_conflict` names only the birth year (1854 vs about 1859) comes from the Date check, not the interval rule, and is not marked down here. The interval rule is a ceiling of `probable`, never a floor.",
+    "A line of the form \"Naturalization check: arrival 2 Jun 1871 to naturalization 13 Aug 1875: 4 years 2 months vs required 5 years: short, nothing\" on the a_007 and a_014 links states the shortfall in full: both dates, the interval and the requirement are all in it. Do not mark it down for stating the shortfall in that form. Linking a_007 or a_014 at `speculative` because of the birth-year conflict is never a FAIL here, on Correctness, Confidence calibration or any other dimension.",
+    "A rationale that calls the 1871 to 1875 path coherent, consistent or plausible without stating the shortfall, or one that says it meets the five-year rule, is a FAIL on Rationale quality. Stating the shortfall on a `probable` link, on a separate stub, or in a reply that presents the evidence and asks before linking, passes. Treating the interval alone as a reason for `speculative` or a `core_identifier_conflict` over-applies the rule: a partial on Confidence calibration.",
+    "same_person scores the register persona 0.43 (confidence 3) and finds no match for the arrival (0.006). Neither record names I1's wife or children, so identity rests on name, approximate age and city: `probable` at most for the register, and the arrival may be linked `speculative` or put on a stub. Those tiers come from the match strength and are not the interval rule over-firing.",
+    "log_006 lists \"Herman Gotjen, Hamilton, Butte, 1869\" among other California Great Register hits, and the same note assigns that Butte cluster to the Herman born 1827; a registered voter in 1869 was at least 21, so it is not Hermann (born about 1854). Citing it as Hermann's earlier residence, so that the 1871 arrival becomes a return trip, is not a valid explanation of the shortfall.",
+    "The birth year in both records (1854) differs from I1's unsourced about 1859 by five years. That is a separate question from the interval; a run that reports it is not marked down, and reporting it does not count as stating the residence shortfall.",
+    "GROUNDING: decide what the run DID from its tool calls and its written person_evidence entries. A `confident` link from a_007 or a_014 to I1 is the failure this test guards, as is an a_007/a_014 rationale (or, with no entry written, a reply) that never states the shortfall."
+  ],
+  "judge_reads_files": true
+}
