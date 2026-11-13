@@ -1,6 +1,6 @@
 {
   "tool": "person_warnings",
-  "description": "person_warnings on Patrick (I1) returns relativesHasAgeRangeGreaterThan120 -- the warning fires because his father Thomas has an implausible lifespan, not Patrick himself. personId in the warning is Thomas's id (I2). Used by ut_check_warnings_008 to test relative-mob handling.",
+  "description": "person_warnings on Patrick (I1) returns relativesHasAgeRangeGreaterThan120 -- the warning fires because his father Thomas has an implausible lifespan, not Patrick himself. As the tool does for this tag, the warning's personId/personName are the anchor, Patrick (I1), and relatedPersonId names the relative, Thomas (I2). Used by ut_check_warnings_008 to test relative-mob handling.",
   "args": {
     "personId": "I1"
   },
@@ -11,8 +11,8 @@
         "scoreType": "COHERENCE",
         "issueType": "relativesHasAgeRangeGreaterThan120",
         "severity": "implausible",
-        "personId": "I2",
-        "personName": "Thomas Flynn",
+        "personId": "I1",
+        "personName": "Patrick Flynn",
         "message": "A relative of this person has a lifespan greater than 120 years, which is implausible.",
         "relatedPersonId": "I2",
         "facts": [
@@ -20,6 +20,11 @@
             "id": "F3",
             "type": "Birth",
             "date": "~1818"
+          },
+          {
+            "id": "F4",
+            "type": "Death",
+            "date": "1945"
           }
         ]
       }

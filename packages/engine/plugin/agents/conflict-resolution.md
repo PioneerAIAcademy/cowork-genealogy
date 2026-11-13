@@ -15,8 +15,8 @@ description: >-
   review their confidence (use person-evidence), to extract a record (use
   extraction_append), build a timeline (use timeline), or write a conclusion (use
   proof-conclusion).
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -294,7 +294,13 @@ a second time.
 `research_append`, filling all four resolved fields plus the status on
 the same write — the tool enforces the resolved-completeness invariant
 (every field non-null) and `preferred_assertion_id ∈
-competing_assertion_ids`, validates, and writes atomically:
+competing_assertion_ids`, validates, and writes atomically. **A
+`resolution_rationale` for a `status: "resolved"` write may not hedge
+on evidence you do not yet have** ("consider this settled only if…",
+"provisional pending…") — if the call is not confident enough to stand
+without a future record, write `status: "unresolved"` instead; a
+genuine limit on confidence belongs in `weighing_analysis`, not as a
+qualifier on the resolution itself:
 
 ```
 research_append({
@@ -307,6 +313,7 @@ research_append({
     "weighing_analysis": "<prose>",
     "resolution_rationale": "<four-part prose, see below>",
     "preferred_assertion_id": "a_002",
+    "resolution_kind": "competitor",
     "status": "resolved"
   }
 })
@@ -323,7 +330,10 @@ Appendix C for full guidance). **Completeness
 outranks the word cap:** in a three-or-more-way conflict, name every
 non-preferred assertion and say why each is less reliable, even if that
 runs past ~250 words — the cap is a default for the simple case, never a
-license to drop a competing assertion from the analysis. The four parts:
+license to drop a competing assertion from the analysis. A competing
+assertion that agrees with the preferred one is also named, with a
+clause on what it adds — it is not owed a "less reliable" explanation.
+The four parts:
 
 1. **State the problem** — What fact is in dispute and why it matters
 2. **Lay out the conflicting evidence** — Present each side with its
@@ -333,12 +343,13 @@ license to drop a competing assertion from the analysis. The four parts:
 3. **Explain which version is more reliable and why** — Cite the
    specific weighing factors and defensible rationale that apply
 4. **Explain why the less reliable evidence exists** — Provide a
-   historically grounded reason for the error, drawn from the
-   *named pattern* in Appendix B
-   (calendar changes, boundary shifts, age estimation,
+   historically grounded reason for the error, naming the specific
+   pattern (calendar changes, boundary shifts, age estimation,
    immigration-origin confusion, relationship-term confusion,
-   derivative transcription errors) — cite the specific documented
-   source class, not a generic "informants make mistakes." Tie it
+   derivative transcription errors) in your own words as part of the
+   prose — cite the specific documented source class, not a generic
+   "informants make mistakes." **Never cite "Appendix B" or any
+   instruction document by name in `resolution_rationale`.** Tie it
    to the informant's epistemic position: who provided the fact,
    whether they could have known it firsthand, how much time had
    passed, and what they were likely reporting instead. ("A
@@ -592,6 +603,9 @@ Suggest next steps:
   "unresolved" is better than a premature resolution (Standard 49).
 - **A reading the user disputes is recorded with [?], and the conflict
   is settled by another record or by the user.**
+- **A record's own page reading its index differently is not a conflict.**
+  Open none for it. Report both readings; another record or the
+  researcher's own reading settles it.
 - **Date conflicts require a `convert_calendar` call — no exceptions.**
   Call it once per competing date before stating any calendar fact or
   ruling on the dates. A correct answer reached without the call is a

@@ -64,6 +64,8 @@ def test_positive_appends_browse_log_entry(before_state, after_state, test):
             "redirect-no-browse: the volume is indexed, so the skill correctly "
             "performs no browse and writes no log entry"
         )
+    if "confirm-read" in test.get("tags", []):
+        pytest.skip("confirm-read: one page read by ARK is not a browse")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -142,13 +144,15 @@ def test_cap_refusal_relayed_and_logged_partial(
 ):
     """Tag-gated: on the cap refusal (#3010) the agent makes one
     `image_transcribe` call, logs the browse `partial`, and returns NOT READ,
-    the refusal, its link and its route advice, inventing no page.
+    the refusal, its link and its route advice, inventing no page. The link
+    must also sit after the final `---` (#4256): the caller prints only that
+    tail to the researcher, so a link kept above it never reaches them.
 
     The expected text is read from the fixture, which
     `packages/engine/mcp-server/tests/packaging/image-cap-fixture.test.ts` pins
     to the refusal `browse-budget.ts` throws. Moved from the retired
     image-reader suite (#2490)."""
-    from harness.skill_runner import subject_reply_text
+    from harness.skill_runner import subject_reply_text, tail_after_final_rule
 
     if "cap-refusal" not in test.get("tags", []):
         pytest.skip("not an image-cap refusal test")
@@ -172,6 +176,9 @@ def test_cap_refusal_relayed_and_logged_partial(
     )
     assert "Image cap reached" in reply, "the return does not quote the cap refusal"
     assert link in reply, f"the return drops the refused image's link {link}"
+    assert link in tail_after_final_rule(reply), (
+        f"the refused image's link {link} is not after the final `---`, so the researcher never sees it"
+    )
     for label in ("**Transcription:**", "**Extracted facts:**"):
         assert label not in reply, f"the return presents a {label} section for an image that was never read"
 
@@ -323,6 +330,8 @@ def test_browse_log_never_labelled_image_transcribe(before_state, after_state, t
             "a cap refusal stops the browse at a page read, so its partial log "
             "may name image_transcribe"
         )
+    if "confirm-read" in test.get("tags", []):
+        pytest.skip("confirm-read: one page read by ARK is not a browse")
     relabelled = [
         entry.get("id")
         for entry in _new_log_entries(before_state, after_state)

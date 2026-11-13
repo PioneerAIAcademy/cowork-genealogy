@@ -160,7 +160,7 @@ in-repo answer.
 
 ## Phase 4's person pick, under step mode (asked 2026-10-19)
 
-**The contradiction.** `docs/plan/research-step-mode.md`'s integration table keeps
+**The contradiction.** The step-mode plan's integration table (since retired into `docs/specs/research-step-mode-spec.md`) kept
 phase 4's person pick, as "the setup step's report: candidate cards, then the
 researcher's reply". But the lead's 2026-10-15 one-front-door directive had already
 removed `person_search` from `init-project` and made a FamilySearch PID mandatory.

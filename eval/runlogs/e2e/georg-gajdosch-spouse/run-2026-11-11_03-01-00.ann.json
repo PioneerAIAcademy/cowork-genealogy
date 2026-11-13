@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "notes": {
+    "f1": "The subject K69J-F7Y keeps Dorothea and Joannes, and nothing links Catharina or the 1718 Anna to him; the two Georgs are deliberately left unmerged. But a separate Georg (I1), Catharina (I2), Anna (I3) and their relationships R7-R9 were written into the tree from the 1718 Anna entry, which the finding lists among the rejected records.",
+    "f2": "Found the evidence for the right answer (log_026: Joannes and Martin eight days apart, two Georgs in Lidecko) but stopped short of the required conclusion: both hypotheses left active, Dorothea described as neither confirmed nor refuted, and the 1718 Anna not assigned to the other Georg."
+  },
+  "annotator": "benter-070",
+  "findings_hash": "34d733ba9cd4412b2fe1d2898b54d01fbf38d9d30fa0081240e5c446dd1f64fe",
+  "blind_bundle_digest": "a8cb0ca17d7bf8e0024d01663681cf13b2e442b15558294bbea65269ab5bf6d0"
+}

@@ -1,0 +1,200 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~XFXS-8Y5"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_10581904733",
+        "ark": "ark:/61903/1:1:XFXS-8YP",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "34aab1df-e40e-4d2a-be0c-46cc02a27dd0",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Orran"
+          }
+        ],
+        "facts": [
+          {
+            "id": "61f55df6-eaaa-486a-a12b-a61c6c1bcb05",
+            "type": "Birth",
+            "place": "Essex New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904734",
+        "ark": "ark:/61903/1:1:XFXS-8Y5",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "7b8c9937-5f4f-47b2-bdfe-8c9578e13549",
+            "type": "BirthName",
+            "given": "Edward"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904735",
+        "ark": "ark:/61903/1:1:XFXS-8YR",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "fb050e7e-e0fd-4064-9356-0d135c69c584",
+            "type": "BirthName",
+            "given": "Clarissa"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904736",
+        "ark": "ark:/61903/1:1:XFXS-8YT",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "1b0caed9-33da-4fae-816a-d5dbc976e7a5",
+            "type": "BirthName",
+            "surname": "Perry",
+            "given": "Nellie Mary"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "f17d5cd0-1a43-46e6-a7ec-8744e3efd047",
+        "type": "Couple",
+        "person1": "p_10581904733",
+        "person2": "p_10581904736",
+        "facts": [
+          {
+            "id": "1ecd06bb-ad49-40d7-b618-becf7c9982a9",
+            "type": "Marriage",
+            "primary": true,
+            "date": "12 Nov 19...",
+            "place": "Vermont, United States"
+          }
+        ]
+      },
+      {
+        "id": "2698962f-6dba-4dac-a9d5-f87a3467ddcc",
+        "type": "ParentChild",
+        "parent": "p_10581904735",
+        "child": "p_10581904733"
+      },
+      {
+        "id": "5e9587e4-e74a-4e4f-a888-6e52a5983a07",
+        "type": "Couple",
+        "person1": "p_10581904734",
+        "person2": "p_10581904735"
+      },
+      {
+        "id": "c1d97e0c-c1b8-4fa8-b0c0-894a404e37b6",
+        "type": "ParentChild",
+        "parent": "p_10581904734",
+        "child": "p_10581904733"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1103444332",
+        "resource_type": "Record",
+        "title": "Entry for Orran Tollman and Nellie Mary Perry, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8YP : Sat Jul 06 11:30:15 UTC 2024), Entry for Orran Tollman and Edward, 12 Nov 19....",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9FDH-C4G",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1784223",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-1954",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/1954",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-682P-WY",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "title:1871-1908",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_10581904736",
+        "resource_type": "Person",
+        "title": "Nellie Mary Perry, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8YT : Sat Jul 06 11:30:15 UTC 2024), Orran Tollman and Nellie Mary Perry, 12 Nov 19....",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8YT"
+      },
+      {
+        "id": "sd_p_10581904735",
+        "resource_type": "Person",
+        "title": "Clarissa, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8YR : Sat Jul 06 11:30:15 UTC 2024), Clarissa in entry for Orran Tollman and Nellie Mary Perry, 12 Nov 19....",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8YR"
+      },
+      {
+        "id": "sd_p_10581904734",
+        "resource_type": "Person",
+        "title": "Edward, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8Y5 : Sat Jul 06 11:30:15 UTC 2024), Edward in entry for Orran Tollman and Nellie Mary Perry, 12 Nov 19....",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8Y5"
+      },
+      {
+        "id": "sd_p_10581904733",
+        "resource_type": "Person",
+        "title": "Orran Tollman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8YP : Sat Jul 06 11:30:15 UTC 2024), Orran Tollman and Nellie Mary Perry, 12 Nov 19....",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8YP"
+      },
+      {
+        "id": "sd_auto_M9J1-78M",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Births, from 0003 to 2009",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0003-01-01T00:00:00Z/+2009-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HT-682P-WY",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HT-682P-WY"
+  }
+}

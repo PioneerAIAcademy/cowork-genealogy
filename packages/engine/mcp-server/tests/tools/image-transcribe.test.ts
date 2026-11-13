@@ -1,4 +1,4 @@
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, connectorPrincipal } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, readFile, mkdir, writeFile, readdir } from "fs/promises";
 import { tmpdir } from "os";
@@ -29,6 +29,22 @@ vi.mock("../../src/utils/image-group.js", async (importOriginal) => {
   return { ...actual, imageGroupPlace: imageGroupPlaceMock };
 });
 
+// A transparent spy on runOcr (issue #3996's connector time-budget tests):
+// forwards to the real implementation (so every existing test's OCR behavior
+// over the stubbed OpenRouter fetch is unchanged) while recording the
+// `timeoutMs` the tool actually computed and passed down.
+const runOcrSpy = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/ocr.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/ocr.js")>();
+  return {
+    ...actual,
+    runOcr: (req: Parameters<typeof actual.runOcr>[0]) => {
+      runOcrSpy(req);
+      return actual.runOcr(req);
+    },
+  };
+});
+
 import {
   imageTranscribeTool,
   imageTranscribeMcpTool,
@@ -44,6 +60,7 @@ import {
   configureTranscriptionCap,
   withTranscriptionSlot,
   __resetTranscriptionSlotsForTests,
+  OCR_TIMEOUT_MS,
 } from "../../src/utils/ocr.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
 import { imageReadTool } from "../../src/tools/image-read.js";
@@ -130,6 +147,7 @@ beforeEach(() => {
   getOpenRouterApiKeyMock.mockReset();
   getOpenRouterModelMock.mockReset();
   fetchFsImageBytesMock.mockReset();
+  runOcrSpy.mockReset();
   getOpenRouterApiKeyMock.mockResolvedValue("test-key");
   getOpenRouterModelMock.mockResolvedValue(MODEL);
   fetchFsImageBytesMock.mockResolvedValue({
@@ -271,6 +289,9 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
       // memoryShape — false for an ark, so the artifact content-type widening
       // and the no-token path stay off for every pre-existing caller.
       false,
+      // opts — empty for a LOCAL/non-connector caller (#3996): the connector
+      // time budget never applies here.
+      {},
     ]);
     expect(result.viewerUrl).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
@@ -287,6 +308,7 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
       undefined,
       LOCAL,
       false,
+      {},
     ]);
   });
 });
@@ -462,10 +484,10 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     expect(result.found).toBeUndefined();
   });
 
-  it("withholds found from the staged element and the digest too on a truncated read (@yinkid28)", async () => {
+  it("withholds found from the staged element too on a truncated read, and the digest never carries it (@yinkid28)", async () => {
     // The NOT-FOUND suppression is the harm case, but the withhold must reach
-    // every surface a caller triages on — the staged element and the digest,
-    // not only the top-level field.
+    // every surface a caller triages on — the staged element, not only the
+    // top-level field. The digest carries no markers at all.
     mockOpenRouterOk("Row 1: Schreck family", "length");
     const dir = await mkdtemp(join(tmpdir(), "imgt-trunc-found-"));
     try {
@@ -478,7 +500,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
       expect(result.found).toBeUndefined();
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(result.digest).not.toHaveProperty("found");
-      expect(result.digest?.truncated).toBe(true);
+      expect(result.digest).not.toHaveProperty("truncated");
       const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
       expect(envelope.payload.results[0]).not.toHaveProperty("found");
       expect(envelope.payload.results[0].truncated).toBe(true);
@@ -637,7 +659,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
     // The rejected key is replaced in the extension's settings or config.json,
     // so the instruction must name both and must not route a fresh key through
     // a tool call.
-    expect(message).toContain("Settings → Extensions → Genealogy Research");
+    expect(message).toContain("Desktop app → Extensions → Genealogy Research → Configure");
     expect(message).toContain("~/.familysearch-mcp/config.json");
     expect(message).not.toMatch(/configure_openrouter/i);
     expect(message).not.toMatch(/\b(?:ask|paste|send|share|enter)\b/i);
@@ -1192,6 +1214,7 @@ describe("imageTranscribeTool — memory artifacts", () => {
       undefined,
       LOCAL,
       true,
+      {},
     ]);
   });
 
@@ -1442,8 +1465,8 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(envelope.returned_count).toBe(1);
     expect(envelope.payload.query).toEqual({ file: "uploads/obit.jpg", lookingFor: "Mays" });
     expect(envelope.payload.results).toHaveLength(1);
-    // The staged element and the digest carry the second call's verdict — the
-    // transcription itself no longer ends in a FOUND/NOT FOUND line.
+    // The staged element carries the second call's verdict — the transcription
+    // itself no longer ends in a FOUND/NOT FOUND line.
     expect(envelope.payload.results[0]).toMatchObject({
       id: "capture:obit",
       source: { file: "uploads/obit.jpg" },
@@ -1460,8 +1483,8 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
       id: "capture:obit",
       chars: "Obituary text".length,
       excerpt: "Obituary text",
-      found: "FOUND",
     });
+    expect(result.found).toBe("FOUND");
   });
 
   it("stages a FamilySearch read too, keyed by its imageId, alongside the retained scan", async () => {
@@ -1479,12 +1502,13 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(result.digest?.id).toBe("004884748_02613");
   });
 
-  it("bounds the digest excerpt and carries the truncation marker", async () => {
+  it("bounds the digest excerpt; the truncation marker rides the top level and the staged element", async () => {
     await writeFile(join(dir, "uploads", "long.jpg"), JPEG);
     const long = "x".repeat(1_000);
     mockOpenRouterOk(long, "length");
     const result = await transcribe({ file: "uploads/long.jpg", projectPath: dir }, LOCAL);
-    expect(result.digest).toEqual({ id: "capture:long", chars: 1_000, excerpt: "x".repeat(300), truncated: true });
+    expect(result.digest).toEqual({ id: "capture:long", chars: 1_000, excerpt: "x".repeat(300) });
+    expect(result.truncated).toBe(true);
     const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
     expect(envelope.payload.results[0].truncated).toBe(true);
   });
@@ -1697,6 +1721,69 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(r.staged).not.toBeNull();
     expect(r.transcription).toBe("Memory text");
   });
+
+  it("shapes the staged and the no-project answer with the one compactor: no metadata, no nameExpansion", async () => {
+    mockOpenRouterOk("Elizabeth Martin, spinster");
+    mockOpenRouterOk("FOUND");
+    const staged = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", projectPath: dir, lookingFor: "Elizabeth Martin" },
+      LOCAL,
+    );
+    mockOpenRouterOk("Elizabeth Martin, spinster");
+    mockOpenRouterOk("FOUND");
+    const inline = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", lookingFor: "Elizabeth Martin" },
+      LOCAL,
+    );
+    if ("ok" in staged || "ok" in inline) throw new Error("unexpected no-project answer");
+    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "staged", "viewerUrl"]);
+    expect(Object.keys(inline).sort()).toEqual(["found", "transcription", "viewerUrl"]);
+  });
+
+  it("cuts a no-project page over the bound at a line boundary, saying so, keeping found and setting no truncated", async () => {
+    const rows: string[] = [];
+    for (let i = 1; rows.join("\n").length < 40_000; i++) {
+      rows.push(`Row ${i}:  Weber, Anna Maria    farmer's daughter    Alsweiler    3 Jan 1853`);
+    }
+    const page = rows.join("\n");
+    mockOpenRouterOk(page);
+    mockOpenRouterOk("FOUND");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", lookingFor: "Weber" }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    // The found check read the whole page, not the part returned.
+    const checkBody = JSON.parse((mockFetch.mock.calls[1] as [string, RequestInit])[1].body as string);
+    expect(checkBody.messages[0].content[0].text).toContain(rows[rows.length - 1]);
+    expect(page.startsWith(r.transcription!)).toBe(true);
+    expect(r.transcription!.length).toBeLessThan(page.length);
+    expect(r.found).toBe("FOUND");
+    expect(r).not.toHaveProperty("truncated");
+    expect(r.truncationNotice).toMatch(/^Only the first [\d,]+ of the page's [\d,]+ characters are shown here/);
+    expect(JSON.stringify(r).length).toBeLessThanOrEqual(37_000);
+  });
+
+  it("returns a no-project page under the bound whole, with no notice", async () => {
+    mockOpenRouterOk("Moses Dustin, Captain");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.transcription).toBe("Moses Dustin, Captain");
+    expect(r).not.toHaveProperty("truncationNotice");
+  });
+
+  it("cleans the OCR layout before the found check and staging, and digests the cleaned text", async () => {
+    mockOpenRouterOk("Name      \r\nAnna Weber\t\n\n\n\n==========\nPeter Weber");
+    mockOpenRouterOk("FOUND");
+    const r = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", projectPath: dir, lookingFor: "Weber" },
+      LOCAL,
+    );
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    const cleaned = "Name\nAnna Weber\n\n===\nPeter Weber";
+    const checkBody = JSON.parse((mockFetch.mock.calls[1] as [string, RequestInit])[1].body as string);
+    expect(checkBody.messages[0].content[0].text).toContain(cleaned);
+    const envelope = JSON.parse(await readFile(join(dir, r.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].transcription).toBe(cleaned);
+    expect(r.digest).toEqual({ id: "004884748_02613", chars: cleaned.length, excerpt: "Name\nAnna Weber\nPeter Weber" });
+  });
 });
 
 describe("imageTranscribeTool — a Memories PAGE url (#2987)", () => {
@@ -1855,5 +1942,81 @@ describe("the transcription cap binds to image_transcribe", () => {
     // No cap configured: the wrapper calls straight through and the tool fails
     // on its own input, not on a slot.
     await expect(imageTranscribeTool({ imageId: "004022578_00190", projectPath: "/nope" }, LOCAL)).rejects.not.toThrow(/transcriptions, its limit/);
+  });
+});
+
+describe("imageTranscribeTool — connector time budget (self-hosted beta E5, #3996)", () => {
+  // Carries i=/cc=, so resolveFsImageInput gives it a fallbackUrl — the thing
+  // a connector caller must NOT be offered a second attempt against.
+  const ARK = "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041";
+  const connector = () => connectorPrincipal({ accessToken: "tok", userId: "user-a" });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("makes one fetch attempt with no fallback, at a timeout well under the 180s budget", async () => {
+    mockOpenRouterOk("page");
+    await transcribe({ ark: ARK }, connector());
+
+    expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(1);
+    const [, fallbackUrl, , , opts] = fetchFsImageBytesMock.mock.calls[0];
+    expect(fallbackUrl).toBeUndefined();
+    expect(opts.timeoutMs).toBeGreaterThan(0);
+    expect(opts.timeoutMs).toBeLessThanOrEqual(30_000);
+  });
+
+  it("keeps the fallback retry and the default (unbudgeted) fetch timeout for a LOCAL caller", async () => {
+    mockOpenRouterOk("page");
+    await transcribe({ ark: ARK }, LOCAL);
+
+    const [, fallbackUrl, , , opts] = fetchFsImageBytesMock.mock.calls[0];
+    expect(fallbackUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9PT-V9Q2-2");
+    expect(opts).toEqual({});
+  });
+
+  it("clamps the OCR budget to what the overall 180s budget has left, minus the staging margin", async () => {
+    // monotonicNow() (performance.now()), not Date — the connector budget is
+    // computed from it (utils/fs-budget.ts's monotonic-clock convention), so
+    // only `performance` needs faking; advancing it is what "elapsed time"
+    // means to the code under test.
+    vi.useFakeTimers({ toFake: ["performance"] });
+    // The fetch "takes" 150s of the 180s budget.
+    fetchFsImageBytesMock.mockImplementationOnce(async () => {
+      vi.advanceTimersByTime(150_000);
+      return { bytes: new Uint8Array([1, 2, 3]), contentType: "image/jpeg", sizeBytes: 3 };
+    });
+    mockOpenRouterOk("page");
+
+    await transcribe({ ark: ARK }, connector());
+
+    expect(runOcrSpy).toHaveBeenCalledTimes(1);
+    const req = runOcrSpy.mock.calls[0][0];
+    // 180s budget - 150s elapsed - 5s staging margin = 25s, well under the full
+    // 180s OCR_TIMEOUT_MS a LOCAL caller would get.
+    expect(req.timeoutMs).toBeGreaterThan(0);
+    expect(req.timeoutMs).toBeLessThan(26_000);
+  });
+
+  it("gives a LOCAL caller the full OCR_TIMEOUT_MS regardless of elapsed time", async () => {
+    vi.useFakeTimers({ toFake: ["performance"] });
+    fetchFsImageBytesMock.mockImplementationOnce(async () => {
+      vi.advanceTimersByTime(150_000);
+      return { bytes: new Uint8Array([1, 2, 3]), contentType: "image/jpeg", sizeBytes: 3 };
+    });
+    mockOpenRouterOk("page");
+
+    await transcribe({ ark: ARK }, LOCAL);
+
+    const req = runOcrSpy.mock.calls[0][0];
+    expect(req.timeoutMs).toBe(OCR_TIMEOUT_MS);
+  });
+
+  it("still honors person_read's own tighter ocrTimeoutMs under a connector principal", async () => {
+    mockOpenRouterOk("page");
+    await imageTranscribeTool({ ark: ARK }, connector(), { ocrTimeoutMs: 5_000 });
+
+    const req = runOcrSpy.mock.calls[0][0];
+    expect(req.timeoutMs).toBe(5_000);
   });
 });

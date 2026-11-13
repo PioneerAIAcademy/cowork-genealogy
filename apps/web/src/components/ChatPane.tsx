@@ -456,8 +456,6 @@ export default function ChatPane({
       setActivity(null)
       return
     }
-    // Not chat content: without this return the fold would open an empty bubble.
-    if (kind === 'auto_continue_paused') return
     if (kind === 'usage') {
       // Per-turn cost/tokens, emitted once just before turn_done. Not a chat
       // message — bubble it up to the (alpha-gated) session cost meter.
@@ -861,6 +859,8 @@ export default function ChatPane({
               type into was the only part that shrank. */}
           <textarea
             className="chatTextarea"
+            autoCorrect="off"
+            spellCheck={false}
             placeholder={
               !ready
                 ? 'Connecting…'

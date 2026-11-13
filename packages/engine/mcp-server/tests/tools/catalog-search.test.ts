@@ -191,7 +191,52 @@ describe("catalog_search — hydration", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1); // the search only
     expect(r.hits[0].hydrated).toBe(false);
-    expect(r.hits[0].url).toBeUndefined();
+    expect(r.hits[0].id).toBeUndefined();
+  });
+
+  it("returns neither the item url, nor authors, nor a film note's indexed, and every other field as before", async () => {
+    // The url is the Catalog's item record, which answers 401 without a sign-in
+    // token; no plugin body reads `authors` or `indexed`. The url still drives
+    // hydration, so the item call is made to it. Notes that differ only in
+    // `fs_indexed` are one reel, since the answer no longer carries it.
+    respond(
+      {
+        totalHits: 1,
+        searchHits: [{ metadataHit: { metadata: {
+          title: [{ value: "Parish registers, 1750-1900" }],
+          creator: [{ value: "A parish" }],
+          identifier: { value: `${ITEM}koha:1` },
+          repositoryCalls: [{ title: "FamilySearch Library" }, { title: "Online" }],
+        } } }],
+      },
+      { source: {
+        note: { text: "Originals held by the diocese." },
+        author: { value: "A parish" },
+        subject: { value: "A place - Church records" },
+        film_note: [
+          { filmno: "111", digital_film_no: "999", fs_indexed: "Y", copy_location: "Granite Mountain Record Vault", text: "Baptisms 1750-1790" },
+          { filmno: "111", digital_film_no: "999", fs_indexed: "N", copy_location: "Granite Mountain Record Vault", text: "Marriages 1750-1790" },
+        ],
+        available_online: "Y",
+      } },
+    );
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(String(mockFetch.mock.calls[1][0])).toBe(`${ITEM}koha:1`);
+    expect(r.hits[0]).toStrictEqual({
+      id: "koha:1",
+      title: "Parish registers, 1750-1900",
+      creator: "A parish",
+      repositoryCalls: ["FamilySearch Library", "Online"],
+      hydrated: true,
+      notes: ["Originals held by the diocese."],
+      subjects: ["A place - Church records"],
+      filmNotes: [{
+        filmNumber: "111",
+        imageGroupNumber: "999",
+        text: "Baptisms 1750-1790 | Marriages 1750-1790",
+      }],
+      availableOnline: true,
+    });
   });
 
   it("normalizes a repeated field from one value, several, and absent", async () => {
@@ -231,20 +276,16 @@ describe("catalog_search — hydration", () => {
     expect(r.hits[1].notes).toEqual(["n1", "n2"]);
     expect(r.hits[2].notes).toEqual([]);
 
-    expect(r.hits[0].authors).toEqual(["a1"]);
-    expect(r.hits[1].authors).toEqual(["a1", "a2"]);
-    expect(r.hits[2].authors).toEqual([]);
-
     expect(r.hits[0].subjects).toEqual(["s1"]);
     expect(r.hits[1].subjects).toEqual(["s1", "s2"]);
     expect(r.hits[2].subjects).toEqual([]);
   });
 
-  it("maps every film-note field to its own key, and carries neither shelf nor imageStartNumber", async () => {
+  it("maps every film-note field to its own key, and carries none of shelf, imageStartNumber and indexed", async () => {
     // The fields were seven near-identical spreads, where one mistyped repeat
-    // would be invisible; only two were asserted. `shelf` and
-    // `item_image_start_no` arrive from the service and are not carried: no
-    // plugin body, validator or fixture reads them (spec, Response).
+    // would be invisible; only two were asserted. `shelf`,
+    // `item_image_start_no` and `fs_indexed` arrive from the service and are not
+    // carried: no plugin body, validator or fixture reads them (spec, Response).
     respond(
       { totalHits: 1, searchHits: [hit("koha:1")] },
       { source: { film_note: {
@@ -261,12 +302,10 @@ describe("catalog_search — hydration", () => {
     expect(r.hits[0].filmNotes?.[0]).toEqual({
       filmNumber: "111",
       imageGroupNumber: "999",
-      indexed: "Yes",
-      copyLocation: "Granite Mountain Record Vault",
       text: "Baptisms 1750-1790",
     });
     expect(Object.keys(r.hits[0].filmNotes?.[0] ?? {})).toEqual([
-      "filmNumber", "imageGroupNumber", "indexed", "copyLocation", "text",
+      "filmNumber", "imageGroupNumber", "text",
     ]);
   });
 
@@ -493,7 +532,7 @@ describe("catalog_search — shapes the second review found", () => {
       { source: { note: { text: "n" } } },
     );
     const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
-    expect(r.hits[0].url).toBe(`${ITEM}koha:1`);
+    expect(String(mockFetch.mock.calls[1][0])).toBe(`${ITEM}koha:1`);
     expect(r.hits[0].id).toBe("koha:1");
     expect(r.hits[0].hydrated).toBe(true);
   });
@@ -514,7 +553,7 @@ describe("catalog_search — shapes the second review found", () => {
     });
     const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(r.hits[0].url).toBeUndefined();
+    expect(r.hits[0].id).toBeUndefined();
   });
 
   it("reads a title, repository and identifier that collapsed to bare strings", async () => {
@@ -534,7 +573,8 @@ describe("catalog_search — shapes the second review found", () => {
     const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
     expect(r.hits[0].title).toBe("A bare string title");
     expect(r.hits[0].repositoryCalls).toEqual(["Online"]);
-    expect(r.hits[0].url).toBe(`${ITEM}koha:1`);
+    expect(r.hits[0].id).toBe("koha:1");
+    expect(String(mockFetch.mock.calls[1][0])).toBe(`${ITEM}koha:1`);
   });
 });
 
@@ -727,17 +767,16 @@ describe("catalog_search — reader consistency", () => {
     expect(r.hits[0].notes).toEqual(["1416754"]);
   });
 
-  it("reads .value before .text identically for notes, authors and subjects", async () => {
-    // notes read .text first while authors/subjects/title read .value first,
+  it("reads .value before .text identically for notes and subjects", async () => {
+    // notes read .text first while subjects/title read .value first,
     // so one element carrying both was read two different ways.
     const both = { value: "from-value", text: "from-text" };
     respond(
       { totalHits: 1, searchHits: [hit("koha:1")] },
-      { source: { note: both, author: both, subject: both } },
+      { source: { note: both, subject: both } },
     );
     const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
     expect(r.hits[0].notes).toEqual(["from-value"]);
-    expect(r.hits[0].authors).toEqual(["from-value"]);
     expect(r.hits[0].subjects).toEqual(["from-value"]);
   });
 
@@ -969,7 +1008,6 @@ describe("catalog_search — shapes found by the fourth review", () => {
     const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
     expect(mockFetch).toHaveBeenCalledTimes(1); // no item call
     expect(r.hits[0].id).toBeUndefined();
-    expect(r.hits[0].url).toBeUndefined();
   });
 
   it("names the Catalog when a 200 is not JSON", async () => {
@@ -1077,7 +1115,7 @@ describe("catalog_search — the exhaustive sweep", () => {
     );
     const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
     expect(r.hits[0].title).toBe("Real");
-    expect(r.hits[0].url).toBe(`${ITEM}koha:1`);
+    expect(r.hits[0].id).toBe("koha:1");
     expect(r.hits[0].hydrated).toBe(true);
   });
 
@@ -1521,19 +1559,26 @@ describe("catalog_search — errors", () => {
 // A hydrated item can carry a film note per frame range, dozens of them on one
 // reel. Notes that agree on every field but `text` are one entry, texts joined
 // with " | " in order. Nothing is dropped, and notes that differ in ANY other
-// field stay apart: the plugin reads `copyLocation` and the numbers off each
-// entry, so a merge across them would make an entry say something no note said.
+// field stay apart: the plugin reads the numbers off each entry, so a merge
+// across them would make an entry say something no note said. The copy location
+// is not read, so one reel held in two places is one entry.
 
 /** The answer the tool gave for "Ireland" + "Catholic parish registers baptism
  *  marriage" on 2026-10-22, saved verbatim by `dev/try-catalog-search.ts --save`
  *  at the defaults (count 25, hydrate 10) before film notes were merged or
- *  budgeted: 433 hits, 25 returned, 10 hydrated, 55,803 characters. */
-const IRELAND: CatalogSearchResult = JSON.parse(
+ *  budgeted: 433 hits, 25 returned, 10 hydrated, 55,803 characters. Its hits still
+ *  carry the item `url` and `authors`, which the tool no longer returns. Its film
+ *  notes' `copyLocation` was deleted by hand when the tool stopped returning it. */
+const IRELAND: SavedAnswer = JSON.parse(
   readFileSync(
     new URL("../fixtures/catalog-search/ireland-catholic-parish-registers.answer.json", import.meta.url),
     "utf-8",
   ),
 );
+
+/** A hit as the tool answered on 2026-10-22, with the item `url` and `authors` it no longer returns. */
+type SavedHit = CatalogHit & { url?: string; authors?: string[] };
+type SavedAnswer = Omit<CatalogSearchResult, "hits"> & { hits: SavedHit[] };
 
 /** One film note in the shape the service returns it. */
 const note = (o: Record<string, string>): Record<string, string> => ({
@@ -1562,8 +1607,6 @@ describe("catalog_search — one entry per reel", () => {
       {
         filmNumber: "100",
         imageGroupNumber: "900",
-        indexed: "Y",
-        copyLocation: "Granite Mountain Record Vault",
         text: "MIC 1/1-10 baptisms | MIC 1/11-20 marriages | MIC 1/21-30 burials",
       },
     ]);
@@ -1572,8 +1615,6 @@ describe("catalog_search — one entry per reel", () => {
   it.each([
     ["filmno", "101"],
     ["digital_film_no", "901"],
-    ["fs_indexed", "N"],
-    ["copy_location", "FamilySearch Library"],
   ])("two notes that differ only in %s stay apart", async (field, other) => {
     const entries = await notesOf(note({ text: "a" }), note({ text: "b", [field]: other }));
     expect(entries).toHaveLength(2);
@@ -1581,21 +1622,38 @@ describe("catalog_search — one entry per reel", () => {
   });
 
   it("a note missing a field the other has stays apart from it", async () => {
-    const { copy_location: _gone, ...noCopy } = note({ text: "b" });
-    const entries = await notesOf(note({ text: "a" }), noCopy);
+    const { digital_film_no: _gone, ...noDgs } = note({ text: "b" });
+    const entries = await notesOf(note({ text: "a" }), noDgs);
     expect(entries).toHaveLength(2);
-    expect(entries[1]).not.toHaveProperty("copyLocation");
+    expect(entries[1]).not.toHaveProperty("imageGroupNumber");
   });
 
-  it("notes that differ only in a field the answer no longer carries are one reel", async () => {
-    // `shelf` is where the reel sits, not which reel it is.
+  it("one reel held in two places (vault and library) is one entry, with no copyLocation", async () => {
+    const entries = await notesOf(note({ text: "a" }), note({ text: "b", copy_location: "FamilySearch Library" }));
+    expect(entries).toEqual([{ filmNumber: "100", imageGroupNumber: "900", text: "a | b" }]);
+  });
+
+  it("the vault and library copies of one note give its text once, not twice", async () => {
     const entries = await notesOf(
-      note({ text: "a", shelf: "Film" }),
-      note({ text: "b", shelf: "B1 Floor Film" }),
+      note({ text: "Baptisms 1750-1790" }),
+      note({ text: "Marriages 1750-1790" }),
+      note({ text: "Baptisms 1750-1790", copy_location: "FamilySearch Library" }),
+      note({ text: "Marriages 1750-1790", copy_location: "FamilySearch Library" }),
     );
+    expect(entries).toEqual([
+      { filmNumber: "100", imageGroupNumber: "900", text: "Baptisms 1750-1790 | Marriages 1750-1790" },
+    ]);
+  });
+
+  it.each([
+    // `shelf` is where the reel sits, not which reel it is.
+    ["shelf", "Film", "B1 Floor Film", "shelf"],
+    ["fs_indexed", "Y", "N", "indexed"],
+  ])("notes that differ only in %s, which the answer no longer carries, are one reel", async (field, one, other, key) => {
+    const entries = await notesOf(note({ text: "a", [field]: one }), note({ text: "b", [field]: other }));
     expect(entries).toHaveLength(1);
     expect(entries[0].text).toBe("a | b");
-    expect(entries[0]).not.toHaveProperty("shelf");
+    expect(entries[0]).not.toHaveProperty(key);
   });
 
   it("a note with no text adds no separator, and a reel with no text at all has no text key", async () => {
@@ -1622,9 +1680,9 @@ describe("catalog_search — one entry per reel", () => {
     ]);
   });
 
-  it("hydration reads neither shelf nor item_image_start_no, even when the service sends them", async () => {
+  it("hydration reads none of shelf, item_image_start_no and fs_indexed, even when the service sends them", async () => {
     const [entry] = await notesOf(note({ text: "a", shelf: "Film", item_image_start_no: "42" }));
-    expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "indexed", "copyLocation", "text"]);
+    expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "text"]);
     // A note with nothing but those two is no entry at all, not an empty one: it
     // would claim the item was filmed while naming neither the film nor the DGS.
     respond({ totalHits: 1, searchHits: [hit("koha:1")] }, { source: { film_note: { shelf: "Film", item_image_start_no: "7" } } });
@@ -1645,7 +1703,7 @@ describe("catalog_search — one entry per reel", () => {
         { filmNumber: "1", imageGroupNumber: "2", indexed: "Y", shelf: "Film", copyLocation: "V", text: "t", imageStartNumber: "7", mystery: "x" },
       ] as unknown as CatalogFilmNote[];
       const [entry] = mergeFilmNotes(saved);
-      expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "indexed", "copyLocation", "text"]);
+      expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "text"]);
     });
 
     // The reel key is derived from FILM_FIELDS, so these loop over it: a field
@@ -1654,14 +1712,12 @@ describe("catalog_search — one entry per reel", () => {
     const full = (o: CatalogFilmNote = {}): CatalogFilmNote => ({
       filmNumber: "10",
       imageGroupNumber: "20",
-      indexed: "Y",
-      copyLocation: "V",
       text: "t",
       ...o,
     });
 
     it("the reel key is every field of the film-note table but text", () => {
-      expect(identity.length).toBeGreaterThanOrEqual(4);
+      expect(identity).toEqual(["filmNumber", "imageGroupNumber"]);
       expect(FILM_FIELDS.map(([key]) => key)).toContain("text");
       for (const key of identity) {
         const entries = mergeFilmNotes([full(), full({ [key]: "other", text: "u" })]);
@@ -1697,7 +1753,7 @@ describe("catalog_search — one entry per reel", () => {
       expect(entries.length).toBeGreaterThan(1);
       for (const [i, e] of entries.entries()) {
         const { text: _t, ...reel } = e;
-        expect(reel).toEqual({ filmNumber: "10", imageGroupNumber: "20", indexed: "Y", copyLocation: "V" });
+        expect(reel).toEqual({ filmNumber: "10", imageGroupNumber: "20" });
         expect((e.text ?? "").length).toBeLessThanOrEqual(REEL_TEXT_CAP);
         // Each run is as full as it can be: the next note would have passed the cap.
         const next = entries[i + 1]?.text?.split(" | ")[0];
@@ -1758,7 +1814,7 @@ describe("catalog_search — one entry per reel", () => {
     const merged = mergeFilmNotes(original);
     // The reel, as the rule defines it, counted here independently of the code.
     const reelOfNote = (n: CatalogFilmNote): string =>
-      JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.indexed ?? null, n.copyLocation ?? null]);
+      JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null]);
     const reels = [...new Set(original.map(reelOfNote))];
     expect(merged.length).toBeLessThan(original.length);
     // Every reel is there, its entries sit together, and reels keep the order they first appeared in.
@@ -1794,7 +1850,7 @@ describe("catalog_search — one entry per reel", () => {
 /** What the service would have answered to produce `saved`: the search body and
  *  one item body per hydrated hit, in hit order. `saved` is the tool's own
  *  output, so this is its inverse; the first test below proves the round trip. */
-function upstreamFor(saved: CatalogSearchResult): { search: unknown; items: unknown[] } {
+function upstreamFor(saved: SavedAnswer): { search: unknown; items: unknown[] } {
   const search = {
     totalHits: saved.totalHits,
     searchHits: saved.hits.map((h) => ({
@@ -1835,7 +1891,7 @@ function upstreamFor(saved: CatalogSearchResult): { search: unknown; items: unkn
 /** The distinct reels of a note list, by the rule, counted independently of the code. */
 const reelKeys = (notes: readonly CatalogFilmNote[]): Set<string> =>
   new Set(
-    notes.map((n) => JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.indexed ?? null, n.copyLocation ?? null])),
+    notes.map((n) => JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null])),
   );
 
 /** `small` is some of `big`'s entries, whole, in `big`'s order. */
@@ -1867,8 +1923,6 @@ const reels = (count: number, textLength = 40, from = 0): object[] =>
 const entryFor = (j: number, textLength = 40): CatalogFilmNote => ({
   filmNumber: String(1_000_000 + j),
   imageGroupNumber: String(5_000_000 + j),
-  indexed: "Y",
-  copyLocation: "Granite Mountain Record Vault",
   text: `${j}:`.padEnd(textLength, "x"),
 });
 
@@ -1895,10 +1949,10 @@ function paddedIreland(count: number): CatalogSearchResult {
 
 /** A hydrated hit as the fit sees it, holding these entries already merged. */
 function hitOf(id: string, entries: CatalogFilmNote[], extra: Partial<CatalogHit> = {}): CatalogHit {
-  return { id, title: id, repositoryCalls: [], url: `https://example.test/${id}`, hydrated: true, filmNotes: entries, ...extra };
+  return { id, title: id, repositoryCalls: [], hydrated: true, filmNotes: entries, ...extra };
 }
 
-/** `entryFor` with a text of that length: an entry whose JSON is 124 characters more. */
+/** `entryFor` with a text of that length: an entry whose JSON is 110 characters more. */
 const bigEntry = (j: number, textLength: number): CatalogFilmNote => entryFor(j, textLength);
 
 /** An answer around those hits, as the fit sees it. */
@@ -1942,14 +1996,17 @@ describe("catalog_search — the answer stays under the spill line", () => {
 
     expect(size(r)).toBeLessThan(CLI_SPILL_CHARS);
     expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
-    // Every hit is still listed, in order, and nothing but film notes changed.
+    // Every hit is still listed, in order, and nothing but film notes changed,
+    // save that no hit carries the item `url` or `authors` any more.
     expect(r.hits).toHaveLength(25);
     expect(r.hits.map((h) => h.id)).toEqual(IRELAND.hits.map((h) => h.id));
     for (const [i, h] of r.hits.entries()) {
       const { filmNotes: _f, filmNotesTotal: _t, filmNotesHint: _h, ...rest } = h;
-      const { filmNotes: _sf, ...saved } = IRELAND.hits[i];
-      expect(rest).toEqual(saved);
+      const { filmNotes: _sf, url: _u, authors: _a, ...saved } = IRELAND.hits[i];
+      expect(rest).toStrictEqual(saved);
     }
+    expect(IRELAND.hits.every((h) => h.url !== undefined)).toBe(true);
+    expect(JSON.stringify(r)).not.toMatch(/"(url|authors|indexed)":/);
     expect(r.totalHits).toBe(433);
     expect(r.returned).toBe(25);
 
@@ -1989,9 +2046,8 @@ describe("catalog_search — the answer stays under the spill line", () => {
     expect(giant.filmNotesHint).toContain("call again with hydrate: 1");
     expect(giant.filmNotesHint).toContain("keywords that name this item");
     expect(giant.filmNotesHint).not.toContain("hydrate fewer");
-    // The hit's url is the Catalog's item record (401 without a token): not a way back.
-    expect(giant.url).toBeTruthy();
-    expect(giant.filmNotesHint).not.toContain(giant.url as string);
+    // The Catalog's item record (401 without a token) is not a way back.
+    expect(giant.filmNotesHint).not.toContain(ITEM);
     expect(giant.filmNotesHint).not.toContain("catalog entry");
     expect(giant.filmNotesHint).not.toContain("\n");
     // The nine others list everything they have and carry neither field.
@@ -2046,7 +2102,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
         // The first entries, in order, whole: nothing cut mid-entry.
         expect(listed).toEqual(Array.from({ length: listed.length }, (_, j) => entryFor(j)));
         expect(h.filmNotesHint).toMatch(new RegExp(`^${listed.length} of ${n} film-note entries are listed`));
-        expect(h.filmNotesHint).not.toContain(h.url as string);
+        expect(h.filmNotesHint).not.toContain(ITEM);
       }
     });
 
@@ -2136,11 +2192,10 @@ describe("catalog_search — the answer stays under the spill line", () => {
 
   describe("fitFilmNotes, on its own", () => {
     const entries = (n: number): CatalogFilmNote[] => Array.from({ length: n }, (_, j) => entryFor(j, 60));
-    const hitWith = (id: string, n: number, withUrl = true): CatalogHit => ({
-      id,
+    const hitWith = (id: string, n: number, withId = true): CatalogHit => ({
+      ...(withId ? { id } : {}),
       title: id,
       repositoryCalls: [],
-      ...(withUrl ? { url: `https://example.test/${id}` } : {}),
       hydrated: true,
       filmNotes: entries(n),
     });
@@ -2196,7 +2251,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
       }
     });
 
-    it("says nothing about a hit it did not cut, and a hit with no url is offered only the keywords", () => {
+    it("says nothing about a hit it did not cut, and a hit with no id is offered only the keywords", () => {
       const r = answer(hitWith("a", 3), hitWith("b", 90, false));
       fitFilmNotes(r, 6_000);
       expect(r.hits[0]).not.toHaveProperty("filmNotesTotal");
@@ -2488,7 +2543,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
       expect(r.hits[2].filmNotesHint).not.toMatch(/hydrate/i);
     });
 
-    it("the position that counts is among the hits that carry a url: an off-host hit above does not move it", async () => {
+    it("the position that counts is among the hits that carry an id: an off-host hit above does not move it", async () => {
       // `hydrate` reaches the first N hits with a usable url. The giant is second
       // in the list and first among those, so hydrate 1 reaches it.
       const elsewhere = { metadataHit: { metadata: { title: [{ value: "elsewhere" }], identifier: { value: "https://example.test/x" }, repositoryCalls: [] } } };
@@ -2503,8 +2558,8 @@ describe("catalog_search — the answer stays under the spill line", () => {
       expect(r.hits[1].filmNotesHint).toContain("call again with hydrate: 1");
     });
 
-    it("a hit with no url is offered only the keywords", () => {
-      const r = answerOf([hitOf("a", Array.from({ length: 90 }, (_, j) => bigEntry(j, 60)), { url: undefined })]);
+    it("a hit with no id is offered only the keywords", () => {
+      const r = answerOf([hitOf("a", Array.from({ length: 90 }, (_, j) => bigEntry(j, 60)), { id: undefined })]);
       fitFilmNotes(r, 6_000);
       expect(r.hits[0].filmNotesTotal).toBe(90);
       expect(r.hits[0].filmNotesHint).toContain(keywordsWay);
@@ -2526,7 +2581,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
       expect(h.filmNotesTotal).toBeGreaterThan(listed.length);
       expect(h.filmNotesHint).toMatch(new RegExp(`^${listed.length} of ${h.filmNotesTotal} film-note entries are listed`));
       for (const e of listed) {
-        expect(e).toMatchObject({ filmNumber: "100", imageGroupNumber: "900", indexed: "Y" });
+        expect(e).toMatchObject({ filmNumber: "100", imageGroupNumber: "900" });
         expect((e.text ?? "").length).toBeLessThanOrEqual(REEL_TEXT_CAP);
       }
       // Whole notes only: every entry's text splits back into notes the Catalog sent.
@@ -2568,13 +2623,12 @@ describe("catalog_search — the answer stays under the spill line", () => {
       const int = (lo: number, hi: number): number => lo + Math.floor(rand() * (hi - lo + 1));
       const hits: CatalogHit[] = [];
       for (let i = 0; i < shape.hits; i++) {
-        const hasUrl = rand() < 0.9;
-        const hydrated = hasUrl && rand() < 0.8;
+        const hasId = rand() < 0.9;
+        const hydrated = hasId && rand() < 0.8;
         const h: CatalogHit = {
-          id: `h${i}`,
+          ...(hasId ? { id: `h${i}` } : {}),
           title: "t".repeat(int(1, 120)),
           repositoryCalls: rand() < 0.5 ? ["Online"] : [],
-          ...(hasUrl ? { url: `https://example.test/h${i}` } : {}),
           hydrated,
         };
         if (hydrated) {
@@ -2586,8 +2640,6 @@ describe("catalog_search — the answer stays under the spill line", () => {
             return {
               filmNumber: String(100 + reel),
               imageGroupNumber: String(900 + reel),
-              indexed: "Y",
-              copyLocation: "Vault",
               ...(length > 0 ? { text: `${j}:`.padEnd(Math.max(length, 3), "x") } : {}),
             };
           });
@@ -2599,8 +2651,8 @@ describe("catalog_search — the answer stays under the spill line", () => {
 
     /** The `hydrate` value that reaches a hit, when it is fewer than the call used. */
     function reachedBy(r: CatalogSearchResult, h: CatalogHit): number | undefined {
-      if (!h.url) return undefined;
-      const position = r.hits.slice(0, r.hits.indexOf(h) + 1).filter((x) => x.url).length;
+      if (h.id === undefined) return undefined;
+      const position = r.hits.slice(0, r.hits.indexOf(h) + 1).filter((x) => x.id !== undefined).length;
       return position < r.hydrateRequested ? position : undefined;
     }
 
@@ -2781,7 +2833,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
       `${n} more ${n === 1 ? "hit was" : "hits were"} left off the end, to keep this answer under the size limit. ` +
       "Ask with a smaller count, or a narrower query.";
 
-    it.each([100, 120, 200])("count %i at the defaults comes back within the budget, with the hits left off its end counted", async (count) => {
+    it.each([120, 200])("count %i at the defaults comes back within the budget, with the hits left off its end counted", async (count) => {
       // The film notes were fitted, yet the hits alone passed the budget and then the
       // spill line (count 120 was 50,950 characters), and a hit cut for it blamed `hydrate`.
       const padded = paddedIreland(count);
@@ -2831,7 +2883,6 @@ describe("catalog_search — the answer stays under the spill line", () => {
       id: `b${i}`,
       title: `Bare hit number ${i}`.padEnd(120, "."),
       repositoryCalls: ["Online"],
-      url: `https://example.test/b${i}`,
       hydrated: false,
     });
     const bareAnswer = (n: number): CatalogSearchResult => answerOf(Array.from({ length: n }, (_, i) => bare(i)));
@@ -2939,12 +2990,11 @@ describe("catalog_search — the answer stays under the spill line", () => {
 // ─── The recorded eval fixtures ─────────────────────────────────────────────────
 //
 // `eval/fixtures/mcp/catalog-search-*.json` stand in for the tool in every unit
-// eval run, so the agent is graded on what they say. They were reshaped with the
-// tool's own `shapeAnswer` (`dev/reshape-catalog-fixtures.ts`), not edited by
-// hand, and this keeps them there: a change to the answer's shape that does not
-// reshape them fails here, instead of leaving the evals graded on an answer the
-// tool no longer gives. `mcp-fixture-shape.test.ts` checks keys one level down
-// from the response and does not see film notes.
+// eval run, so the agent is graded on what they say. This keeps them in the shape
+// the tool returns: a change to the answer's shape that does not reshape them
+// fails here, instead of leaving the evals graded on an answer the tool no longer
+// gives. `mcp-fixture-shape.test.ts` checks keys one level down from the response
+// and does not see film notes.
 
 /** What is wrong with the cut fields of a recorded answer, if anything. A cut list carries its total and its
  *  hint together, and the total is more than the entries it lists; an answer that left hits off carries its
@@ -2989,8 +3039,8 @@ describe("catalog_search — the recorded eval fixtures", () => {
     // cut list without its total and its hint (an `{ error }` envelope is left as it is).
     expect(shapeAnswer(structuredClone(fixture.response))).toEqual(fixture.response);
     expect(cutFieldProblems(fixture.response)).toEqual([]);
-    // The two fields the answer no longer carries, anywhere in the file.
-    expect(JSON.stringify(fixture)).not.toMatch(/"(shelf|imageStartNumber)"/);
+    // The fields the answer no longer carries, anywhere in the file.
+    expect(JSON.stringify(fixture)).not.toMatch(/"(shelf|imageStartNumber|url|authors|indexed)"/);
   });
 
   describe("the guard on the cut fields", () => {

@@ -99,6 +99,8 @@ import {
   planItemSearchedSkipInvariants,
   planItemCompletionRecordTypeInvariants,
   recordDocumentArk,
+  LOCALITY_GUIDE_HEADINGS,
+  missingGuideHeadings,
 } from "../../src/tools/research-append.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
@@ -648,7 +650,7 @@ describe("research_append (Phase 1)", () => {
       // proof-conclusion lands the concluded value by setting `primary`, and
       // `primary` is not a detach trigger, so the backlink survives a
       // conclusion. The correction must still land — a known-wrong concluded
-      // value on the upload target is worse — but never quietly.
+      // value on the deliverable is worse — but never quietly.
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink({ primary: true }));
 
       const r = await researchAppend({
@@ -690,7 +692,7 @@ describe("research_append (Phase 1)", () => {
 
     it("(15) warns when a correction DELETES a fact field, blank string included", async () => {
       // A blank string withdraws a claim exactly as null does, and is the
-      // likelier typo. Either way it deleted data from the upload target, so it
+      // likelier typo. Either way it deleted data from the deliverable, so it
       // must not be silent — the shape the malformed branch was added for.
       for (const blank of ["", "   "]) {
         await writeProject(
@@ -1492,7 +1494,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "re-read: the entry is faint" },
-      });
+      }, null);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.filesWritten).toEqual(["research.json"]);
@@ -1512,7 +1514,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.validation.warnings).toContain("could not resolve standard_place for 'Hilperton' (left unset)");
@@ -1539,7 +1541,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
@@ -1769,7 +1771,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(r.resolvedPlaces).toBeUndefined();
@@ -1790,7 +1792,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(r.unresolvedPlaces).toEqual([PROSE]);
@@ -2027,6 +2029,54 @@ describe("research_append (Phase 1)", () => {
     const pe = await readResearch();
     expect(pe.person_evidence).toHaveLength(2); // old entry not deleted
     expect(pe.person_evidence.find((e: any) => e.id === "pe_001").superseded_by).toBe("pe_002");
+  });
+
+  describe("superseded_by names the link that replaces it", () => {
+    const link = (id: string, assertion_id: string, superseded_by: string | null = null) => ({
+      id, assertion_id, person_id: "I1", confidence: "probable", rationale: "match", created: "2026-01-01", superseded_by,
+    });
+    async function project(personEvidence: Record<string, unknown>[]) {
+      const research = baseResearch();
+      research.assertions = [validAssertion("a_001"), validAssertion("a_002")];
+      research.person_evidence = personEvidence;
+      await writeProject(research);
+    }
+    const retire = (entryId: string, superseded_by: string) =>
+      researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId, fields: { superseded_by } });
+
+    it("refuses a link for another assertion, and writes nothing", async () => {
+      await project([link("pe_001", "a_001"), link("pe_002", "a_002")]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await retire("pe_001", "pe_002");
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)?.join(" ")).toMatch(/links a different assertion \('a_002'\)/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("refuses an id that names no entry, and itself", async () => {
+      await project([link("pe_001", "a_001")]);
+      expect(errorsOf(await retire("pe_001", "pe_999"))?.join(" ")).toMatch(/names no person_evidence entry/);
+      expect(errorsOf(await retire("pe_001", "pe_001"))?.join(" ")).toMatch(/cannot be superseded by itself/);
+    });
+
+    it("accepts a replacement appended earlier in the same batch, and refuses the update placed before it", async () => {
+      await project([link("pe_001", "a_001"), link("pe_002", "a_002")]);
+      await attestPairing(dir);
+      const append = { section: "person_evidence", op: "append", entry: { assertion_id: "a_001", person_id: "I1", confidence: "probable", match_score: 0.9, rationale: "score 0.9", superseded_by: null } };
+      const update = { section: "person_evidence", op: "update", entryId: "pe_001", fields: { superseded_by: "pe_003" } };
+      const wrongOrder = await researchAppend({ projectPath: dir, ops: [update, append] } as any);
+      expect(wrongOrder.ok).toBe(false);
+      expect(errorsOf(wrongOrder)?.join(" ")).toMatch(/names no person_evidence entry/);
+      const ok = await researchAppend({ projectPath: dir, ops: [append, update] } as any);
+      expect(ok.ok, JSON.stringify(ok)).toBe(true);
+      expect((await readResearch()).person_evidence.find((e: any) => e.id === "pe_001").superseded_by).toBe("pe_003");
+    });
+
+    it("leaves a pointer written before this rule editable", async () => {
+      await project([link("pe_001", "a_001", "pe_002"), link("pe_002", "a_002")]);
+      const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { rationale: "corrected note" } });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
   });
 
   it("rejects update of a non-existent id and writes nothing", async () => {
@@ -3674,7 +3724,7 @@ describe("research_append (Phase 3)", () => {
     const timeline = (events: unknown[]) => ({ label: "test timeline", person_ids: ["I1"], events, gaps: [] });
     const placeWarnings = (r: any) => r.validation.warnings.filter((w: string) => /standard_place '/.test(w));
     const append = (events: unknown[]) =>
-      researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never);
+      researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never, null);
     const events = async () => (await readResearch()).timelines[0].events;
     const realPlace = vi.mocked(familySearchPlace);
     const spelled = (fullName: string) => ({ fullName, places: [{ placeId: "1" }] });
@@ -3757,7 +3807,7 @@ describe("research_append (Phase 3)", () => {
             fields: { events: [ev("Schuylkill, Kansas", OTHER, 10), ev(null, "Atlantis", 20)] },
           },
         ],
-      } as never);
+      } as never, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([
@@ -4353,6 +4403,60 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // #4366: `claims` is optional and the schema types it as an array, so a
+  // null is refused rather than persisted into a file that fails its schema.
+  describe("claims: null is refused; omission and [] are the ways to say none", () => {
+    const nameClaim = { claim: "name", proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: ["a_001"], name: { person: "I1", given: "John" } };
+    const summary = (extra: Record<string, unknown>) => ({
+      question_id: "q_001", tier: "possible", vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: ["a_001"], resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals", narrative_markdown: "## Conclusion\n...",
+      ...extra,
+    });
+    const linked = () => phase3Research();
+
+    it("an append with claims: null is refused, nothing is written, and the error says to omit it", async () => {
+      await writeProject(linked());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({ claims: null }),
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toContain("'claims' is null — omit the field");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      const omitted = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({}),
+      } as never);
+      expect(errorsOf(omitted) ?? []).toEqual([]);
+      expect(omitted.ok).toBe(true);
+    });
+
+    it("a project already holding claims: null still accepts an unrelated write", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: null }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "project", op: "update", fields: { title: "Smith origins" },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).project.title).toBe("Smith origins");
+    });
+
+    it("an update with claims: [] clears the claims of a summary that holds them", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: [nameClaim] }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields: { claims: [] },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].claims).toEqual([]);
+    });
+  });
+
   // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
   // question puts it at the write boundary rather than in prose. Until
   // 2026-09-21 it lived only in the agent body and the eval validator, and
@@ -4681,6 +4785,141 @@ describe("research_append (Phase 3)", () => {
     it("a scalar above every claim is refused by the bound", async () => {
       const errors = await refusal([relationshipClaim("possible")], "probable");
       expect(errors.join("\n")).toContain("tier 'probable' exceeds the strongest of claims[].proof_tier ('possible')");
+    });
+  });
+
+  // Ruling 10 (#4286): a value the record's own page disputes counts as doubtful.
+  // a_001 (rec1, birth "1850") is the index; a_050 is the page's reading of it.
+  describe("a value its own page disputes (#4286, ruling 10)", () => {
+    const pageReading = (more: Record<string, unknown> = {}) => ({
+      ...validAssertion("a_050"),
+      value: "1851 [?]",
+      disputes_assertion_id: "a_001",
+      ...more,
+    });
+    const disputed = (more: Record<string, unknown> = {}) => {
+      const r = phase3Research();
+      r.assertions.push(pageReading(more));
+      return r;
+    };
+    const proof = (narrative: string, tier = "probable") => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      shortfall: tier === "not_proved" ? "gap" : "gap",
+      supporting_assertion_ids: ["a_001"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals",
+      narrative_markdown: narrative,
+    });
+    const appendProof = (narrative: string, tier?: string) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry: proof(narrative, tier) } as never);
+    const RULE = /reads differently: the index reads "1850", the page reads "1851"/;
+
+    it("refuses a proof citing it whose narrative names one reading", async () => {
+      await writeProject(disputed());
+      const r = await appendProof("John was born in 1850, per the census index.");
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(RULE);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/Either write both readings in, or stop citing it/);
+    });
+
+    it("accepts the same proof once the narrative names both readings", async () => {
+      await writeProject(disputed());
+      const r = await appendProof("The index gives 1850; the page itself reads 1851. John was born about 1850.");
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(RULE);
+      expect(errorsOf(r) ?? []).toEqual([]);
+    });
+
+    it("accepts a proof that cites a value no page disputes", async () => {
+      await writeProject(phase3Research());
+      const r = await appendProof("John was born in 1850, per the census index.");
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(/reads differently/);
+      expect(errorsOf(r) ?? []).toEqual([]);
+    });
+
+    it("leaves a not_proved summary alone", async () => {
+      await writeProject(disputed());
+      const r = await appendProof("Nothing settles the year.", "not_proved");
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(RULE);
+    });
+
+    it("runs on any update to a summary written before the page was read", async () => {
+      const r0 = disputed();
+      r0.proof_summaries = [{ id: "ps_001", ...proof("John was born in 1850."), updated: "2026-01-01T00:00:00Z" }];
+      await writeProject(r0);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields: { shortfall: "ceiling" },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(RULE);
+    });
+
+    const withResearcherReading = () => {
+      const r0 = disputed();
+      r0.log.push({ id: "log_090", performed: "2026-01-02T00:00:00Z", tool: "user_provided", query: { recordId: "rec1" }, outcome: "positive", results_examined: 1, plan_item_id: null, external_site: null });
+      r0.assertions.push({ ...validAssertion("a_051"), value: "1851", disputes_assertion_id: "a_001", log_entry_id: "log_090" });
+      return r0;
+    };
+
+    it("is settled for a proof that cites the researcher's own reading", async () => {
+      await writeProject(withResearcherReading());
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append",
+        entry: { ...proof("John was born in 1851, as the researcher reads the page."), supporting_assertion_ids: ["a_051"] },
+      } as never);
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(/reads differently/);
+    });
+
+    it("still refuses a proof that cites the value the researcher read differently", async () => {
+      await writeProject(withResearcherReading());
+      const r = await appendProof("John was born in 1850, per the census index.");
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/reads differently: the index reads "1850"/);
+    });
+
+    it("follows a re-extracted index assertion to its successor", async () => {
+      const r0 = phase3Research();
+      r0.assertions[0] = { ...r0.assertions[0], superseded_by: "a_060" };
+      r0.assertions.push({ ...validAssertion("a_060"), value: "1850" }, pageReading());
+      r0.person_evidence = liveLinks("a_060");
+      await writeProject(r0);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: { ...proof("Born 1850."), supporting_assertion_ids: ["a_060"] },
+      } as never);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(RULE);
+    });
+
+    it("refuses a confident link to it when no other record ties the person, naming both exits", async () => {
+      const r0 = disputed();
+      r0.person_evidence = [];
+      await writeProject(r0);
+      await attestEveryAssertion(dir);
+      const r = await researchAppend({
+        projectPath: dir, section: "person_evidence", op: "append",
+        entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "Names match.", match_score: null, created: "2026-07-18", superseded_by: null },
+      } as never);
+      expect(r.ok).toBe(false);
+      const msg = (errorsOf(r) ?? []).join(" ");
+      expect(msg).toMatch(/is disputed by its own page \(a_050 reads "1851 \[\?\]"\)/);
+      expect(msg).toMatch(/lower the link to 'probable'/);
+      expect(msg).toMatch(/stop citing this value/);
+    });
+
+    it("refuses a conflict that prefers it with no other record behind it", async () => {
+      const r0 = disputed();
+      r0.assertions.push({ ...validAssertion("a_002"), value: "1849" });
+      r0.conflicts = [{ ...validConflict(), id: "c_001", competing_assertion_ids: ["a_001", "a_002"] }];
+      await writeProject(r0);
+      const r = await researchAppend({
+        projectPath: dir, section: "conflicts", op: "update", entryId: "c_001",
+        fields: {
+          status: "resolved", independence_analysis: "independent", weighing_analysis: "index wins",
+          resolution_rationale: "the index is clearer", preferred_assertion_id: "a_001",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/'a_001' is disputed by its own page/);
     });
   });
 
@@ -7842,17 +8081,34 @@ describe("research_append (batch ops)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok || !("results" in r)) return;
+    // One `person_evidence` append now returns THREE rows (#4226): a_001,
+    // a_002 and a_003 all carry record_id "rec1" at role "principal", so they
+    // are one record entry, and linking a_002 claims the whole of it.
     expect(r.results.map((x) => `${x.section}:${x.entryId}`)).toEqual([
       "sources:src_002",
       "assertions:a_002",
       "assertions:a_003",
       "person_evidence:pe_001",
+      "person_evidence:pe_002",
+      "person_evidence:pe_003",
     ]);
     const research = await readResearch();
     expect(research.sources).toHaveLength(2);
     expect(research.assertions.map((a: any) => a.id)).toEqual(["a_001", "a_002", "a_003"]);
     expect(research.assertions[1].source_id).toBe("src_002"); // intra-batch forward ref persisted + validated
-    expect(research.person_evidence).toHaveLength(1);
+    expect(research.person_evidence).toHaveLength(3);
+    // The caller's row is theirs; the other two are the tool's, carry the
+    // caller's confidence, no score, and say what they came from.
+    expect(research.person_evidence[0]).toMatchObject({
+      id: "pe_001", assertion_id: "a_002", person_id: "I1", confidence: "confident", rationale: "match",
+    });
+    expect(research.person_evidence.slice(1).map((pe: any) => pe.assertion_id).sort()).toEqual(["a_001", "a_003"]);
+    for (const pe of research.person_evidence.slice(1)) {
+      expect(pe.person_id).toBe("I1");
+      expect(pe.confidence).toBe("confident"); // inherited from the trigger
+      expect(pe.match_score).toBeNull();
+      expect(pe.rationale).toMatch(/^Derived from the link on a_002: the same record entry \(rec1\/principal\)/);
+    }
   });
 
   it("(d2) appends a plan + its items in one batch, referencing the predicted plan id pl_001", async () => {
@@ -13270,14 +13526,19 @@ describe("research_append — detected core-identifier contradiction", () => {
 
   // ut_person_evidence_001's shape: a conflict already resolved for the tree's
   // birthplace leaves the losing assertion a weighed, set-aside claim.
-  async function withConflict(conflict: Record<string, unknown>, stated: Record<string, unknown> = {}) {
-    await write(stated);
+  async function withConflict(
+    conflict: Record<string, unknown>,
+    stated: Record<string, unknown> = {},
+    treeBirth: Record<string, unknown> = {},
+    others: Record<string, unknown>[] = [],
+  ) {
+    await write(stated, treeBirth);
     const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     r.conflicts = [{
       id: "c_001", conflict_type: "fact", description: "Birthplace: Ireland or Trier",
       disputed_attribute: "birth_place", competing_assertion_ids: ["a_001", "a_050"],
       blocks_question_ids: [], ...conflict,
-    }];
+    }, ...others];
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
   }
 
@@ -13326,6 +13587,164 @@ describe("research_append — detected core-identifier contradiction", () => {
   it("still caps when the conflict is moot", async () => {
     await withConflict({ status: "moot", preferred_assertion_id: "a_001" });
     expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  // Feedback #4208 (#4255): Benjamin Raymond, born 1774, baptized with his
+  // sister on 15 Mar 1786. conflict-resolution found a late group baptism and
+  // marked the conflict moot; the cap stayed on.
+  const lateBaptism = { fact_type: "christening", value: "Baptized 15 March 1786", date: "15 March 1786", place: null };
+  const bornIn1774 = { date: "1774" };
+  const bothAnalyses = {
+    independence_analysis: "The parish register and the family record were made independently.",
+    weighing_analysis: "The register baptizes two children of different ages on one day; the births stand.",
+    resolution_rationale: "A late group baptism, not a second birth date.",
+  };
+  const mootBirthDate = (fields: Record<string, unknown> = bothAnalyses) =>
+    ({ status: "moot", disputed_attribute: "birth_date", ...fields });
+  const identityConflict = (status: string, competing: string[], preferred: string | null = null) => ({
+    id: "c_002", conflict_type: "identity", description: "Same Benjamin?",
+    identity_question: "Is the Benjamin baptized in 1786 the tree's Benjamin?",
+    competing_assertion_ids: competing, preferred_assertion_id: preferred, blocks_question_ids: [], status,
+    ...(status === "unresolved" ? {} : bothAnalyses),
+  });
+  // The baptism's other entries -- the child's own name, which is what an
+  // identity conflict usually names, and his father's -- and another record's.
+  const childsName = { ...validAssertion("a_049"), record_id: "rec_bapt", fact_type: "name", value: "John Smith" };
+  const fathersName = {
+    ...validAssertion("a_052"), record_id: "rec_bapt", record_role: "father", fact_type: "name", value: "Thomas Smith",
+  };
+  const otherRecord = { ...validAssertion("a_051"), record_id: "rec_other" };
+  async function addAssertions(...extra: Record<string, unknown>[]) {
+    const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r.assertions.push(...extra);
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+  }
+  const refusedOnTheGap = async () => {
+    const r = await researchAppend(link("probable"));
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors?.join(" ");
+    expect(errors).toMatch(/christening in 1786/);
+    expect(errors).toMatch(/12-year gap/);
+  };
+  const accepted = async () => {
+    const r = await researchAppend(link("probable"));
+    expect(r.ok ? [] : failure(r).errors).toEqual([]);
+  };
+
+  it("caps a 12-year late baptism with no conflict", async () => {
+    await write(lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  it("still caps the late baptism while the birth-date conflict is unresolved", async () => {
+    await withConflict({ status: "unresolved", disputed_attribute: "birth_date" }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  // It is the moot status that settles, not the analyses being written.
+  it("still caps the late baptism while an unresolved conflict carries both analyses", async () => {
+    await withConflict({ status: "unresolved", disputed_attribute: "birth_date", ...bothAnalyses }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  it("does NOT cap the late baptism once a moot birth-date conflict carries both analyses", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774);
+    await accepted();
+  });
+
+  // The refusal is where the agent learns what lifts the cap, so it must say a
+  // rationale-only moot does not, and who writes the conflict.
+  it("still caps the late baptism when the moot conflict carries only a resolution_rationale", async () => {
+    await withConflict(mootBirthDate({ resolution_rationale: bothAnalyses.resolution_rationale }), lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+    const errors = failure(await researchAppend(link("probable"))).errors?.join(" ");
+    expect(errors).toMatch(/'moot' carrying independence_analysis and weighing_analysis/);
+    expect(errors).toMatch(/while any identity conflict names that record's person/);
+    expect(errors).toMatch(/conflict-resolution/);
+  });
+
+  it.each(["independence_analysis", "weighing_analysis"])(
+    "still caps the late baptism when the moot conflict's %s is blank",
+    async (field) => {
+      await withConflict(mootBirthDate({ ...bothAnalyses, [field]: "   " }), lateBaptism, bornIn1774);
+      await refusedOnTheGap();
+    },
+  );
+
+  it("still caps the late baptism when the moot conflict disputed another attribute", async () => {
+    await withConflict({ ...mootBirthDate(), disputed_attribute: "death_date" }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  // A birthplace dispute weighed the place, not the record's christening date.
+  it("still caps the christening date when the moot conflict disputed the birthplace", async () => {
+    await withConflict({ ...mootBirthDate(), disputed_attribute: "birth_place" }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  it("does NOT cap a birthplace once a moot birth-place conflict carries both analyses", async () => {
+    await withConflict({ status: "moot", ...bothAnalyses });
+    await accepted();
+  });
+
+  it("still caps the late baptism when the moot conflict is between other assertions", async () => {
+    await withConflict({ ...mootBirthDate(), competing_assertion_ids: ["a_001", "a_051"] }, lateBaptism, bornIn1774);
+    await addAssertions(otherRecord);
+    await refusedOnTheGap();
+  });
+
+  // As on the resolved arm, the preferred assertion is the one that stands.
+  it("still caps the assertion a moot conflict prefers", async () => {
+    await withConflict(mootBirthDate({ ...bothAnalyses, preferred_assertion_id: "a_050" }), lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  // `moot` is also how a fact conflict ends when its record turns out to be
+  // someone else; that must not lift the cap onto the wrong person.
+  it.each<[string, string, string[], string | null]>([
+    ["an unresolved identity conflict names the christening", "unresolved", ["a_050"], null],
+    ["a moot identity conflict names the christening", "moot", ["a_050"], null],
+    ["a resolved identity conflict prefers the other record", "resolved", ["a_001", "a_050"], "a_001"],
+    ["an identity conflict doubts the other competitor's person", "unresolved", ["a_001"], null],
+  ])("still caps the late baptism when %s", async (_doubt, status, competing, preferred) => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict(status, competing, preferred)]);
+    await refusedOnTheGap();
+  });
+
+  // An identity conflict usually names the persona's name, not its christening.
+  it("still caps the late baptism when the identity conflict names the child's name", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("unresolved", ["a_049"])]);
+    await addAssertions(childsName);
+    await refusedOnTheGap();
+  });
+
+  // A resolved identity conflict does not say which way it settled: one in the
+  // corpus prefers an assertion of the person its rationale rejects. So it
+  // keeps the cap whether it reads "same person" or "not this person".
+  it("still caps the late baptism once an identity conflict resolves the child as the same person", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("resolved", ["a_049"], "a_049")]);
+    await addAssertions(childsName);
+    await refusedOnTheGap();
+  });
+
+  it("still caps when a resolved identity conflict rejected the child", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [
+      { ...identityConflict("resolved", ["a_049"], "a_049"), resolution_rationale: "The baptized Benjamin is NOT the tree's Benjamin." },
+    ]);
+    await addAssertions(childsName);
+    await refusedOnTheGap();
+  });
+
+  it("does NOT let an identity conflict over another person on the baptism keep the cap", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("unresolved", ["a_052"])]);
+    await addAssertions(fathersName);
+    await accepted();
+  });
+
+  it("does NOT let an identity conflict over another record's assertion keep the cap", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("unresolved", ["a_051"])]);
+    await addAssertions(otherRecord);
+    await accepted();
   });
 });
 
@@ -13458,11 +13877,13 @@ describe("research_append — detected contradiction, two-party assertions", () 
   });
 
   it("does NOT pair with a one-party link the same call supersedes", async () => {
-    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    // pe_901 is the link that replaces pe_900 for the same assertion (a
+    // superseded_by must name one).
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }, { id: "pe_901", ...entry("a_061", "I2", "speculative") }]);
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { superseded_by: "pe_999" } },
+        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { superseded_by: "pe_901" } },
         { section: "person_evidence", op: "append", entry: entry("a_060", "I1", "confident") },
       ],
     } as any);
@@ -18083,6 +18504,302 @@ describe("research_append: a localities first place must be in the place standar
     expect(errors.join(" ")).toMatch(/ops\[1\]/);
     expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
     expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+});
+
+// research-append-tool-spec §5.14: a guide written into a project carries the
+// template's three level-two headings, matched as the eval validator's `_heading()`
+// matches them (eval/harness/validators/test_locality_guide.py).
+describe("research_append: a localities guide carries the template's three headings (#4479)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-guide-test-"));
+    vi.mocked(checkFirstPlace).mockClear();
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch()) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const GUIDE = [
+    "# Locality Guide: Funchal, Madeira (1840-1900)",
+    "",
+    "## Jurisdiction overview",
+    "- **Formed:** 1835 as a district of Madeira",
+    "",
+    "## Available record types",
+    "### Church records",
+    "- Parish registers from 1539 (Funchal, Se).",
+    "",
+    "## Research tips",
+    "- Search the parish, not the district.",
+  ].join("\n");
+  /** GUIDE with one heading renamed the way Sonnet renamed it on ut_locality_guide_010. */
+  const without = (title: string) =>
+    GUIDE.replace(`## ${title}`, "## Where to look for copies or substitutes");
+  const entry = (guide?: unknown) => ({
+    place: "Portugal",
+    for_place: "Funchal, Madeira, Portugal",
+    jurisdictions: [{ name: "Funchal, Madeira, Portugal", date_range: "1835-" }],
+    collections: [],
+    quirks: ["Indexed only at district level."],
+    pages_read: [{ section: "home", url: "u1", found: true }],
+    source: "locality-guide",
+    ...(guide === undefined ? {} : { guide_markdown: guide }),
+  });
+  const append = (guide?: unknown) =>
+    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(guide) });
+  /** The refusal lines alone: a single-op failure also carries the section's worked example. */
+  const refusals = (r: Awaited<ReturnType<typeof researchAppend>>) =>
+    failure(r).errors.filter((line) => !line.startsWith("worked example for"));
+
+  it.each([...LOCALITY_GUIDE_HEADINGS])(
+    "refuses a guide missing '## %s', names only that heading, writes nothing, looks nothing up",
+    async (title) => {
+      await writeProject();
+      const r = await append(without(title));
+      expect(r.ok).toBe(false);
+      expect(refusals(r)).toHaveLength(1);
+      const msg = refusals(r).join(" ");
+      expect(msg).toContain(`heading '## ${title}'. Add it as its own line`);
+      for (const other of LOCALITY_GUIDE_HEADINGS.filter((t) => t !== title)) {
+        expect(msg).not.toContain(`'## ${other}'`);
+      }
+      expect((await readResearch()).localities ?? []).toHaveLength(0);
+      expect(checkFirstPlace).not.toHaveBeenCalled();
+    },
+  );
+
+  it("accepts a guide carrying all three headings", async () => {
+    await writeProject();
+    const r = await append(GUIDE);
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+  });
+
+  it("accepts a guide with sections beyond the three", async () => {
+    await writeProject();
+    const r = await append(
+      `${GUIDE}\n\n## Record-type reminders\n- Tithe books.\n\n## Where to look for copies or substitutes\n- The district archive.`,
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a heading in any case, with a suffix", async () => {
+    await writeProject();
+    const r = await append(GUIDE.replace("## Available record types", "## AVAILABLE RECORD TYPES (1840-1900)"));
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses a level-three heading standing in for a level-two one", async () => {
+    await writeProject();
+    const r = await append(GUIDE.replace("## Available record types", "### Available record types"));
+    expect(r.ok).toBe(false);
+    expect(refusals(r).join(" ")).toContain("'## Available record types'");
+  });
+
+  it("refuses the heading's words in mid-line", async () => {
+    await writeProject();
+    const r = await append(GUIDE.replace("## Research tips", "See also: ## Research tips"));
+    expect(r.ok).toBe(false);
+    expect(refusals(r).join(" ")).toContain("'## Research tips'");
+  });
+
+  it("refuses an empty guide, naming all three headings", async () => {
+    await writeProject();
+    const msg = refusals(await append("")).join(" ");
+    for (const title of LOCALITY_GUIDE_HEADINGS) expect(msg).toContain(`'## ${title}'`);
+    expect(msg).toContain("headings '## Jurisdiction overview', '## Available record types', '## Research tips'. Add each as its own line");
+  });
+
+  it("does not check a null guide or an absent one", async () => {
+    await writeProject();
+    expect((await append(null)).ok).toBe(true);
+    expect((await append()).ok).toBe(true);
+    const locs = (await readResearch()).localities;
+    expect(locs).toHaveLength(2);
+    expect(locs[0].guide_markdown).toBeNull();
+    expect(Object.hasOwn(locs[1], "guide_markdown")).toBe(false);
+  });
+
+  it("leaves a persisted heading-less guide alone on an update that does not set it", async () => {
+    const research: any = baseResearch();
+    research.localities = [{ id: "loc_001", ...entry("Prose only, written before the rule."), created: "2026-01-01" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { collections: [{ id: "4237104", title: "Portugal, Church Books", date_range: "1539-1911" }] },
+    });
+    expect(r.ok).toBe(true);
+    const loc = (await readResearch()).localities[0];
+    expect(loc.collections).toHaveLength(1);
+    expect(loc.guide_markdown).toBe("Prose only, written before the rule.");
+  });
+
+  it("refuses an update that sets a heading-less guide, and accepts one that sets it to null", async () => {
+    await writeProject();
+    expect((await append(GUIDE)).ok).toBe(true);
+    const bad = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { guide_markdown: "## Funchal\nThe registers are at the district archive." },
+    });
+    expect(bad.ok).toBe(false);
+    expect(refusals(bad).join(" ")).toContain("'## Jurisdiction overview'");
+    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+    const cleared = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { guide_markdown: null },
+    });
+    expect(cleared.ok).toBe(true);
+  });
+
+  it("in a batch, names only the refused op, writes nothing and makes no place lookup", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: entry(GUIDE) },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors;
+    expect(errors.join(" ")).toMatch(/ops\[1\]: .*'## Research tips'/);
+    expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+  });
+
+  it("in a batch, names every refused guide, not only the first", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: entry(without("Jurisdiction overview")) },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    const errors = failure(r).errors;
+    expect(errors.filter((e) => e.startsWith("ops[0]: guide_markdown"))).toHaveLength(1);
+    expect(errors.filter((e) => e.startsWith("ops[1]: guide_markdown"))).toHaveLength(1);
+  });
+
+  it("returns a refusal an earlier check collected together with the guide's", async () => {
+    await writeProject();
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoId, gedcomx_source_description_id: "S999" } },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toMatch(/ops\[0\]: gedcomx_source_description_id 'S999' not found/);
+    expect(msg).toMatch(/ops\[1\]: guide_markdown lacks .*'## Research tips'/);
+  });
+
+  it.each([
+    ["a number", 5, "a number"],
+    ["an array of lines", ["## Jurisdiction overview", "## Available record types", "## Research tips"], "an array"],
+    ["an object", { text: GUIDE }, "an object"],
+  ])("refuses a guide that is %s, which the schema check does not type", async (_label, guide, got) => {
+    await writeProject();
+    const r = await append(guide);
+    expect(r.ok).toBe(false);
+    expect(refusals(r).join(" ")).toContain(`guide_markdown must be the whole guide as one markdown string, not ${got}`);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+
+  it("refuses an update that sets a non-string guide", async () => {
+    await writeProject();
+    expect((await append(GUIDE)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { guide_markdown: 7 },
+    });
+    expect(refusals(r).join(" ")).toContain("not a number");
+    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+  });
+
+  it("still reads the collection catalog on a call it refuses, which warms it for the re-send", async () => {
+    // Deliberate (spec §5.14, "Not covered"): skipping the read would leave a cold
+    // cache for the corrected re-send, whose counts research-plan reads.
+    await writeProject();
+    const loader = vi.fn(async () => new Map());
+    const refused = await researchAppendFromCaller(
+      {
+        projectPath: dir,
+        section: "localities",
+        op: "append",
+        entry: {
+          ...entry(without("Research tips")),
+          collections: [{ id: "4237104", title: "Portugal, Church Books", date_range: "1539-1911" }],
+        },
+      } as never,
+      loader,
+    );
+    expect(refused.ok).toBe(false);
+    expect(loader).toHaveBeenCalledTimes(1);
+  });
+
+  it("tells the agent to add the heading and re-send, never to drop the guide", async () => {
+    await writeProject();
+    const msg = refusals(await append(without("Available record types"))).join(" ");
+    expect(msg).toMatch(/guide_markdown/);
+    expect(msg).toMatch(/re-send/);
+    expect(msg).not.toMatch(/omit|null|leave (it )?out|drop|remove|shorten|skip/i);
+  });
+
+  it("attaches the localities worked example, and that example passes the rule", async () => {
+    await writeProject();
+    const r = await append(without("Jurisdiction overview"));
+    expect(failure(r).errors.some((line) => line.startsWith("worked example for 'localities'"))).toBe(true);
+    expect(missingGuideHeadings(JSON.parse(__testing.EXAMPLES.localities).guide_markdown)).toEqual([]);
+  });
+});
+
+// The engine and the eval grader must agree on every shape, or a guide the tool
+// accepted fails the test that exists to catch it. Expected values are the
+// validator's own `_heading()` answers on these strings after the other two
+// headings; the same table runs against `_heading()` itself in
+// eval/harness/tests/unit/test_locality_guide_validators.py. Change one, change both.
+describe("missingGuideHeadings agrees with the eval validator's _heading() (#4479)", () => {
+  const BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n";
+  it.each([
+    ["## Research tips\nx", true],
+    ["x\n## Research tips", true],
+    ["x\r\n## Research tips", true],
+    ["x\r## Research tips", false],
+    ["x\u2028## Research tips", false],
+    ["x\u2029## Research tips", false],
+    ["## Re\u017fearch tips", true],
+    ["## RESEARCH TIPS (1840)", true],
+    ["### Research tips", false],
+    ["Notes: ## Research tips", false],
+    [" ## Research tips", false],
+    ["##\tResearch tips", true],
+    ["##Research tips", false],
+    ["## research tipsy", true],
+    ["", false],
+    ["##  Research tips", true],
+    ["# Research tips", false],
+    ["Research tips", false],
+    ["##\nResearch tips", false],
+    ["##\u00a0Research tips", false],
+    ["> ## Research tips", false],
+    ["- ## Research tips", false],
+    ["## Research tips and tricks", true],
+  ])("%j has the heading: %s", (tail, found) => {
+    expect(missingGuideHeadings(BEFORE + tail)).toEqual(found ? [] : ["Research tips"]);
+  });
+
+  it("does not count a heading behind a byte-order mark at the very start", () => {
+    expect(missingGuideHeadings("\ufeff## Research tips\n## Jurisdiction overview\n## Available record types")).toEqual([
+      "Research tips",
+    ]);
   });
 });
 

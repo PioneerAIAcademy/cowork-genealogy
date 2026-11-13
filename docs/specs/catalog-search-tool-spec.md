@@ -264,22 +264,18 @@ an error; the flag tells the agent its place filter is looser than it asked for.
   hydrationTimedOut: boolean,
   hydrateRequested: number,     // how many hits hydration was asked for
   hits: [{
-    id?: string,                // "koha:123456"; absent with `url`, since it
-                                // is derived from it
+    id?: string,                // "koha:123456"; absent when the hit has no
+                                // usable item URL, since it is derived from it
     title: string,
     creator?: string,
     repositoryCalls: string[],  // access signal, see below
-    url?: string,
     hydrated: boolean,
     // present only when hydrated:
     notes?: string[],
-    authors?: string[],
     subjects?: string[],
     filmNotes?: [{                // one entry per reel (a dense reel is several), see below
       filmNumber?: string,        // legacy microfilm
       imageGroupNumber?: string,  // DGS — feeds image_search / fulltext_search
-      indexed?: string,
-      copyLocation?: string,
       text?: string,              // what the reel covers; several notes' texts joined with " | "
     }],
     filmNotesTotal?: number,      // only when filmNotes was cut short: how many entries the item has
@@ -295,23 +291,32 @@ an error; the flag tells the agent its place filter is looser than it asked for.
 `returned` is the number of hits in `hits`: the `count` asked for, or fewer when
 the Catalog had fewer or when some were left off the end (`hitsOmitted`).
 
+A hit carries no item URL. The URL is the Catalog's item record, which answered
+401 without a sign-in token when probed on 2026-10-22, so neither an agent nor a
+person can open it. The tool uses it only to hydrate the hit, and `id` is its
+item segment. The item's `author` list is not carried either: no plugin body,
+validator or recorded fixture reads it. Nor is a film note's `copy_location`:
+the hit's `repositoryCalls` names the same places ("Online", "FamilySearch
+Library", "Granite Mountain Record Vault"), so it only repeated them on every
+reel.
+
 ### Film notes: one entry per reel
 
 One reel can carry many film notes, each with its own `text` and the same
 numbers. The tool returns one entry per reel, and a dense reel as several.
 
-Film notes that agree on all four of `filmNumber`, `imageGroupNumber`,
-`indexed` and `copyLocation` are one reel, and become one entry. Their `text`
+Film notes that agree on both `filmNumber` and `imageGroupNumber` are one reel,
+and become one entry. Their `text`
 values are joined with `" | "`, in the order the Catalog gave them. A note with
 no text adds nothing, not even a separator. Entries come out in the order their
-reel first appeared. The four fields are every field of the tool's film-note
+reel first appeared. The two fields are every field of the tool's film-note
 table but `text`, so the reel key is derived from the one list the tool reads
 fields from, and a field added to that table becomes part of the key. The key is
-the four values written as JSON, so one field cannot run into the next: film
+the two values written as JSON, so one field cannot run into the next: film
 number `1` with image group `23` is not film number `12` with image group `3`.
 
 A reel whose joined text would pass 2,000 characters is several entries in a
-row. Each carries the reel's four fields and a run of whole note texts, joined
+row. Each carries the reel's two fields and a run of whole note texts, joined
 the same way and in the same order, and a run is closed when the next note would
 take it past 2,000. A note is never cut in two, so a note longer than that stands
 alone. The point is the size budget below: a reel merged into one entry cannot be
@@ -321,21 +326,25 @@ dense reel can still be listed when all of it cannot, and large enough that an
 ordinary reel stays one entry. The entries of a reel sit together, and a reel's
 next entry is its next run.
 
-Nothing is lost. Every text is kept, once. Notes that differ in any one of the
-four fields stay apart, and so does a note that lacks a field another has. The
-same reel held in two places is therefore two entries. That matters because the
-plugin reads `copyLocation` and `imageGroupNumber` off each entry as a fact
-about one reel, and a merge across a difference would give an entry that says
+Nothing is lost. Every distinct text is kept, once: a text the reel already has
+is not joined again. Notes that differ in either field stay apart, and so does a
+note that lacks a field another has. The same reel held in two places (the
+vault and the library) is one entry, since the copy location is no longer
+carried; its two copies carry the same notes, so without that rule each text
+would appear twice. Keeping reels apart
+matters because the plugin reads `filmNumber` and `imageGroupNumber` off each
+entry as a fact about one reel, and a merge across a difference would give an entry that says
 something no note said. Splitting the joined `text` of the entries of a reel
 back into its notes is exact while no note text contains the separator. None did
 in the answers that `packages/engine/mcp-server/dev/try-catalog-search.ts` saved
 on 2026-10-22.
 
-`shelf` and `imageStartNumber` are not carried. `shelf` names the format or
-shelving area (for example `Digital`, `Film`, `Fiche`, `B1 Floor Film`), not
-which reel it is. `imageStartNumber`, the Catalog's `item_image_start_no`, was
-absent from every film note in those same answers. No plugin body, validator or
-recorded fixture reads either field.
+`shelf`, `imageStartNumber` and `indexed` are not carried. `shelf` names the
+format or shelving area (for example `Digital`, `Film`, `Fiche`, `B1 Floor Film`),
+not which reel it is. `imageStartNumber`, the Catalog's `item_image_start_no`, was
+absent from every film note in those same answers. `indexed` is the Catalog's
+`fs_indexed`. No plugin body, validator or recorded fixture reads any of the
+three, so notes that differ only in one of them are one reel.
 
 ### `filmNotesTotal` and `filmNotesHint`
 
@@ -352,17 +361,15 @@ listed.
 
 `filmNotesHint` is one line. It says how many entries are listed, out of how
 many, and the way to the rest that can work for this hit. `hydrate` is a prefix
-count over the hits that carry a `url`, so a smaller value un-hydrates the hits
-below that position and leaves more room to the hits above it. The hint
-therefore says "call again with `hydrate: r`", where `r` is the position of this
-hit among the hits that carry a `url`, only when `r` is fewer than the `hydrate`
-the call used. At `hydrate: 1`, or for the last hit the call hydrated, a smaller
-`hydrate` would un-hydrate the hit itself, so the hint does not offer it. The
-other way, "search with keywords that name this item", is always offered: a
+count over the hits that carry an `id` (the hits with a usable item URL), so a
+smaller value un-hydrates the hits below that position and leaves more room to
+the hits above it. The hint therefore says "call again with `hydrate: r`", where
+`r` is the position of this hit among the hits that carry an `id`, only when `r`
+is fewer than the `hydrate` the call used. At `hydrate: 1`, or for the last hit
+the call hydrated, a smaller `hydrate` would un-hydrate the hit itself, so the
+hint does not offer it. The other way, "search with keywords that name this item", is always offered: a
 search that matches the item alone hydrates it alone. The hint names no input the
-tool does not have. It does not name the hit's `url`: that is the Catalog's item
-record, which answered 401 without a sign-in token when probed on 2026-10-22, so
-neither an agent nor a person can open it.
+tool does not have, and not the Catalog's item record (see **Response**).
 
 ### `hitsOmitted` and `hitsOmittedHint`
 
@@ -401,8 +408,9 @@ to a third-party host.
 So: the value must be a string beginning
 `https://www.familysearch.org/service/search/catalog/item/`. A hit whose
 `identifier` is absent, non-string, or off-prefix is returned `hydrated: false`
-and **no request is made for it**. Nothing is reconstructed — the check only
-refuses a URL we did not measure.
+and **no request is made for it**, and it carries no `id`. Nothing is
+reconstructed — the check only refuses a URL we did not measure. The URL is not
+in the answer (see **Response**).
 
 `id` on the response is the item segment following the prefix (`koha:3308785`) — the remainder stripped at the first `/`, `?` or `#`, not the whole remainder, which would carry a query string or a trailing path into a citation. The probe measured 25/25 bare ids, so the two read the same today; they are written to stay that way —
 carried for citation, not used to build the request. Both namespaces occur —
@@ -421,8 +429,9 @@ Under the item's single `source` object, **`note`, `author`, `subject` and
 `film_note` are an object when there is one value and an array when there are
 several**, and `film_note` is **absent** when the item was never filmed — 12 of
 18 sampled items had none, 6 had a single object, others arrays of up to 29
-(probe F). Every one of the four is normalized to an array before it is read,
-and the one-value, several-values and absent cases are each tested.
+(probe F). Every one of them the tool reads (all but `author`) is normalized to
+an array before it is read, and the one-value, several-values and absent cases
+are each tested.
 
 ### `digital_film_no` is an image group number
 
@@ -564,7 +573,7 @@ reach the second case, since a run is at most 2,000 characters unless it is one
 note.
 
 Tests pin the bound at the default `count`, at `hydrate` 1, 10 and 25, with items
-of up to 1,804 entries, at `count` 100, 120 and 200, and over random answers
+of up to 1,804 entries, at `count` 120 and 200, and over random answers
 against a brute-force search for the least a list can cost. They pin the two
 exceptions.
 
@@ -577,8 +586,12 @@ Both columns are measured on that saved answer with the same script: `--from FIL
 for "before", and `--from FILE --shape` for "after", which puts the answer through
 `shapeAnswer`, the function the tool ends in. So the columns hold the same hits and
 differ only by the shaping, and they are the saved answers re-shaped, not fresh
-live runs. The Catalog moves, so a live re-run differs a little: the Ireland call
-came back 55,803 and, run again at once, 55,802.
+live runs. The saved answers still carry each hit's item URL and `author` list,
+which the tool no longer returns (see **Response**), so the tool's own answer to
+the same hits is smaller, or, where the budget binds, lists more entries: the
+Ireland hit at rank 1 lists 16 of its 19. The Catalog moves, so a live re-run
+differs a little: the Ireland call came back 55,803 and, run again at once,
+55,802.
 
 | call | before | after | what the answer holds |
 |---|--:|--:|---|
@@ -600,13 +613,13 @@ two ways to the rest through this tool, the same two its `filmNotesHint` offers
 where they can work:
 
 - **Call again with the `hydrate` that reaches the hit.** The room is shared among
-  the hydrated hits, and `hydrate` is a prefix count over the hits that carry a
-  `url`, so `hydrate: r`, with `r` the hit's position among them, leaves the hits
+  the hydrated hits, and `hydrate` is a prefix count over the hits that carry an
+  `id`, so `hydrate: r`, with `r` the hit's position among them, leaves the hits
   below it unhydrated and the room to the ones above. It helps only when `r` is
   fewer than the `hydrate` the call used. At `hydrate: 1`, or for the last hit the
   call hydrated, a smaller value would un-hydrate the hit itself, and the hint does
   not offer it. With `hydrate: 1` the Ireland hit at rank 1 lists all 19 of its
-  entries, where at the default it lists 15. A test pins that.
+  entries, where at the default it lists 16. A test pins that.
 - **Search with keywords that name the item.** A search that matches the item
   alone hydrates it alone, which is the same thing by another road.
 
@@ -627,12 +640,11 @@ was cut either way, so nothing is cut without saying so.
 ### Recorded answers
 
 The recorded answers in `eval/fixtures/mcp/catalog-search-*.json` stand in for
-the tool in the eval runs, so they are held in the shape the tool returns. They
-were reshaped by running each through `shapeAnswer`, with
-`packages/engine/mcp-server/dev/reshape-catalog-fixtures.ts`, not by hand, and a
-test fails if shaping any of them would change it, or if one carries a total
-without its hint, a hint without its total, a total that is not more than the
-entries it lists, or the same slips in the two hit-list fields. An `{ error }`
+the tool in the eval runs, so they are held in the shape the tool returns. A
+test fails if shaping any of them would change it, if one carries a field the
+tool no longer returns (`shelf`, `imageStartNumber`, `url`, `authors`,
+`indexed`), or if one carries a total without its hint, a hint without its
+total, a total that is not more than the entries it lists, or the same slips in the two hit-list fields. An `{ error }`
 envelope has no hits and is left as it is. Shaping a shaped answer changes
 nothing: a hit that carries `filmNotesTotal` is counted as it stands and is not
 merged again, and an answer that carries `hitsOmitted` keeps it.
@@ -715,7 +727,8 @@ readers and every access uses one of them:
 |---|---|
 | the **rep** id reaches `q.placeId` | the Maine → Timor-Leste substitution (probe C) |
 | `m.queryRequireDefault=on` is always sent | 12,344 vs 2,046,826 (probe B) |
-| `note`/`author`/`subject`/`film_note` normalize from object, array and absent | XML collapse (probe F) |
+| `note`/`subject`/`film_note` normalize from object, array and absent | XML collapse (probe F) |
+| a hydrated hit carries neither the item URL nor `authors`, and its film notes no `indexed`; the item call is still made to that URL; every other field is as before | the URL answers 401 without a sign-in token, and no plugin body reads `authors` or `indexed` |
 | hydration deadline abandons in-flight calls | fake timers, one item resolving at 90 s, `advanceTimersByTimeAsync(120_000)`; asserts `hydrationTimedOut: true` and `hydrated: false`. **Not** a never-resolving mock — with the deadline removed that hangs to the vitest timeout instead of failing an assertion. This departs from the issue's trap wording, which predates the break table |
 | `offset` is never sent | the silent-ignore trap (probe E) |
 | `BROWSER_USER_AGENT` and the bearer are both sent | probe A |
@@ -753,23 +766,23 @@ readers and every access uses one of them:
 | an empty rep id reports `placeResolved: false` | `buildQuery` branches on truthiness, so the flag must too |
 | `exactPlace` alone is refused | silently dropping it answered a wider question than the agent asked |
 | a bare-number element survives `asArray` | `str` has a number branch; the element level did not |
-| `notes`, `authors` and `subjects` read one element the same way | `notes` read `.text` first and the others `.value` first |
+| `notes` and `subjects` read one element the same way | `notes` read `.text` first and the others `.value` first |
 | an item url carrying a query string still yields a bare `id` | the response field and its spec disagreed |
 | a failed item response is drained | 25 unconsumed undici bodies per call under the degraded regime |
 | an item landing exactly on the deadline is discarded | the expiry timer fires AT the deadline, so `>` let it write after the race settled |
 | the 403 does not state its cause as fact | a 403 cannot be told from a missing entitlement, which waiting never clears |
 | `parseUpstreamErrorBody` falls through to `detail` when `errors` yields nothing | present-but-unusable is not absent |
-| every film-note field maps to its own key, and `shelf` and `imageStartNumber` are not carried | the five fields are one table read once each, where seven near-identical spreads let a mistyped repeat go unseen; the two dropped fields stay dropped, as the service sends them |
-| hydration reads neither `shelf` nor `item_image_start_no` when the service sends them, and a note with nothing but those two is no entry | a field added to the table by mistake would otherwise reach the entry only through the reel key; a note of `{}` claims the item was filmed while naming neither the film nor the DGS |
+| every film-note field maps to its own key, and `shelf`, `imageStartNumber`, `indexed` and `copyLocation` are not carried | the three fields are one table read once each, where seven near-identical spreads let a mistyped repeat go unseen; the dropped fields stay dropped, as the service sends them |
+| hydration reads none of `shelf`, `item_image_start_no` and `fs_indexed` when the service sends them, and a note with nothing but `shelf` and `item_image_start_no` is no entry | a field added to the table by mistake would otherwise reach the entry only through the reel key; a note of `{}` claims the item was filmed while naming neither the film nor the DGS |
 | `hydrateRequested` is echoed | with the defaults 15 of 25 hits are `hydrated: false` purely for sitting past the window |
 | place resolution eating the budget names the place | otherwise a bare `timed out after 0ms` quoting the query URL |
 | a 400 carries the Catalog's own `detail` | the service says which parameter it rejected; discarding it left the agent retrying the same query |
 | notes on one reel become one entry, texts joined with `" \| "` in the order given; a note with no text adds no separator, and a reel with no text has no `text` key | the merge rule, and a stray separator or an empty `text` |
-| two notes that differ only in `filmno`, `digital_film_no`, `fs_indexed` or `copy_location` stay apart, and so does a note missing a field the other has | a merge across a difference gives an entry that says something no note said; the same reel held in two places must stay two entries, because the plugin reads `copyLocation` off each |
+| two notes that differ only in `filmno` or `digital_film_no` stay apart, and so does a note missing a field the other has; two that differ only in `copy_location` are one entry with no `copyLocation` | a merge across a difference gives an entry that says something no note said; the copy location is not carried, so one reel held in two places is one reel |
 | the reel key is every field of the film-note table but `text`, looped over the table: a note differing only in one of them is a second entry, and every field of the table is on the entry | a field added to the table is a field the key and the entry carry, with no second list to forget |
 | the reel key cannot run one field into the next: film number `1` with image group `23` is not `12` with `3`, for every adjacent pair of key fields | the key as a plain join passed every other test |
 | a field that is absent and a field never set are the same reel | the key writes an absent field the same way whichever way it is absent |
-| notes that differ only in `shelf` are one reel | `shelf` is where the reel sits, not which reel it is |
+| notes that differ only in `shelf`, or only in `fs_indexed`, are one reel | `shelf` is where the reel sits, not which reel it is, and the answer carries neither |
 | entries keep the order their reel first appeared in, and a later note joins its reel's entry | the Catalog's order is the order the agent reads |
 | a reel whose joined text passes the cap is several entries in a row, each with the reel's fields and whole notes, each run as full as it can be, and the texts in order are the notes' | a reel merged into one entry cannot be cut, and the 720-note reel was 50,033 characters at the default `count` |
 | a joined text of exactly the cap is one entry and one character more is two; a note longer than the cap stands alone with its neighbours in order; the runs of a dense reel sit together ahead of the next reel | the edges of the split |
@@ -779,7 +792,7 @@ readers and every access uses one of them:
 | 720 notes on one reel, at the default `count`, come back within the budget, with a total and a hint, and whole notes only | the dense reel the merge used to turn into one entry nothing could cut |
 | the saved Ireland answer rebuilds into upstream responses | `packages/engine/mcp-server/tests/fixtures/catalog-search/ireland-catholic-parish-registers.answer.json` is the tool's own answer of 2026-10-22 at the defaults, before the merge and the budget (433 hits, 25 returned, 10 hydrated, 55,803 characters); the tests that follow feed the tool responses rebuilt from it |
 | the answer budget is 40,000, at least 10,000 under the 50,000 spill line | every other budget test imports the constant, so a changed value would leave them true; this one pins the value |
-| the Ireland call at the defaults stays under the spill line and the budget, lists all 25 hits, changes nothing but the film notes, and keeps the DGS on a hydrated hit's first entry | the call that was 55,803 characters |
+| the Ireland call at the defaults stays under the spill line and the budget, lists all 25 hits, changes nothing but the film notes and the item URL and `authors` it no longer carries, and keeps the DGS on a hydrated hit's first entry | the call that was 55,803 characters |
 | on that call only the giant at rank 1 is cut; it lists some of its entries, whole and in the item's order, with all seven reels' numbers (the last two DGS among them), a total that is the entry count, and a hint that says "call again with hydrate: 1" and the keywords; the other nine carry neither field | a list that ended at the first entry that did not fit lost two reels while a third of the budget stayed unused |
 | `hydrate: 1` on that call lists every entry of the giant, with no total and no hint | the way back that needs no new input |
 | a Norway-sized page (ten hydrated items of 3 to 1,804 entries) is within the budget at the defaults, lists all 25 hits, and cuts each giant to a prefix of its own entries (they are equal-sized, so skipping lists the same); 25 giants at `hydrate: 25` are within it too; one giant alone gets far more entries than when ten share the room | the 1,476,812-character case is bounded by the shaping, not by the default |
@@ -790,17 +803,17 @@ readers and every access uses one of them:
 | ten hits of two entries of about 150 characters each, offered 250 each, are all listed whole; on saved answers padded to count 100, no cut hit is bigger than the same hit whole | a cut that adds two fields can cost more than the entries it removes |
 | a cut skips an entry that does not fit and goes on listing the ones after it; it tries the first entry of every reel before a reel's later ones; it lists a reel by a later entry when its first does not fit; what it lists is whole and in the item's order | a large entry ended the list while room stayed, and a dense reel could take the room another reel's numbers needed |
 | the exact size of 10 entries lists them all and one character less lists one fewer, and the same at 100 | the two fields grow a character when the number listed gains a digit, and a cap measured for one digit count let the tenth entry in a character over the budget |
-| the hint names the hydrate value that reaches the hit only when one is given, and always the keywords; at `hydrate` 1 it never says to hydrate, a giant at rank 2 of a call that hydrated ten is told `hydrate: 2`, a giant at the last rank a call hydrated and a hit with no `url` are offered only the keywords, and an off-host hit above a giant does not move the value | `hydrate` is a prefix count over the hits that carry a `url`, so "hydrate fewer" at hydrate 1, or for a hit below rank 1, un-hydrates the hit |
+| the hint names the hydrate value that reaches the hit only when one is given, and always the keywords; at `hydrate` 1 it never says to hydrate, a giant at rank 2 of a call that hydrated ten is told `hydrate: 2`, a giant at the last rank a call hydrated and a hit with no `id` are offered only the keywords, and an off-host hit above a giant does not move the value | `hydrate` is a prefix count over the hits that carry an `id`, so "hydrate fewer" at hydrate 1, or for a hit below rank 1, un-hydrates the hit |
 | a cut keeps at least one entry when the rest of the answer already exceeds the budget; a single huge entry is listed whole and is not called cut, and the hit beside it is listed at its floor; one hit whose fields other than the film notes pass the budget is listed whole with the rest left off | the two cases the bound allows to go over |
 | every character is counted, the two fields a cut hit adds included, at five budgets; over random answers the answer is its base plus what the lists cost | the serialized answer is at most the budget |
 | over random answers the answer ends within the budget whenever a brute-force search finds a listing within it, and otherwise hits are left off the end only as far as it takes with every hit at its floor, and the hits that stay are then fitted into the room the others freed; an answer that fits is left exactly as it came | the floors are reserved, nothing is left off that need not be, and the room a hit left off frees is not wasted |
 | over random answers shaping a shaped answer changes nothing, every cut is some of the item's entries whole and in order, never none and never all, and a cut hit costs less than the whole hit; shaping is also idempotent on the shapes the first version moved | cutting it again would count the entries it lists as the entries it has, and `filmNotesTotal` would understate the item |
-| a hit that was not cut carries neither `filmNotesTotal` nor `filmNotesHint`, and the hint never names the hit's `url` | the two fields appear only when something was left out, and the `url` is an API record nobody can open |
-| counts 100, 120 and 200 at the defaults come back within the budget with the hits left off their end counted (`returned`, `hitsOmitted`, `hitsOmittedHint`); count 200 with no hydration is bounded by the hits alone; count 25 is unchanged and carries neither field | the film notes were fitted, yet the hits alone passed the spill line |
+| a hit that was not cut carries neither `filmNotesTotal` nor `filmNotesHint`, and the hint never names the Catalog's item record | the two fields appear only when something was left out, and that record is an API endpoint nobody can open |
+| counts 120 and 200 at the defaults come back within the budget with the hits left off their end counted (`returned`, `hitsOmitted`, `hitsOmittedHint`); count 200 with no hydration is bounded by the hits alone; count 25 is unchanged and carries neither field | the film notes were fitted, yet the hits alone passed the spill line |
 | hits are left off the end until the answer fits and exactly as many as it takes; an answer that fits loses none and carries neither field; an answer shaped again into a smaller budget adds to its count; one hit is kept however small the budget; `1 more hit was` for one | the bound on the hit list |
 | a hit beside a 39,000-character hit is listed whole once that hit is left off, not held at its floor | a fit made before hits are left off cuts the hits that stay for room nobody then uses |
 | an `{ error }` envelope comes back from `shapeAnswer` as it came | it has no hits, and a tool can return that envelope |
-| every `catalog-search-*.json` under `eval/fixtures/mcp/` is unchanged by shaping, carries neither `shelf` nor `imageStartNumber`, and has no cut field without its partner, and the glob finds the files it guards; the guard on the cut fields rejects a total without its hint, a hint without its total, a total that is not more than the entries listed, and the same slips in the two hit-list fields, and passes a cut answer, an uncut one and an error envelope | the recorded evals are graded on an answer the tool still gives. `mcp-fixture-shape.test.ts` reads keys one level below the response and does not see film notes |
+| every `catalog-search-*.json` under `eval/fixtures/mcp/` is unchanged by shaping, carries none of `shelf`, `imageStartNumber`, `url`, `authors` and `indexed`, and has no cut field without its partner, and the glob finds the files it guards; the guard on the cut fields rejects a total without its hint, a hint without its total, a total that is not more than the entries listed, and the same slips in the two hit-list fields, and passes a cut answer, an uncut one and an error envelope | the recorded evals are graded on an answer the tool still gives. `mcp-fixture-shape.test.ts` reads keys one level below the response and does not see film notes |
 
 ## Live check
 

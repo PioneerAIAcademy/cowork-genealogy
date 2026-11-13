@@ -215,6 +215,8 @@ export interface Assertion {
   /** Non-null means retired by a re-extraction: the replacing `a_` id, or "retracted". */
   superseded_by?: string | null
   superseded_reason?: string | null
+  /** Tool-stamped: the index assertion on the same source this page reading disputes. */
+  disputes_assertion_id?: string
 }
 
 /**
@@ -486,8 +488,10 @@ export interface Namesake {
   time_period?: string | null
   record_ids: string[]
   log_entry_ids?: string[]
-  /** Stamped by research_append: listed record id to the persona its search or read result names. */
+  /** Stamped by research_append: listed record id to the persona its search or read result names, when that persona shares a given word with the row's name. */
   record_persona_ids?: Record<string, string>
+  /** Stamped by research_append: the earliest birth year among those personas, each sharing a given word with the row's name. */
+  birth_year?: number
   notes?: string | null
   created: string
 }
