@@ -9,8 +9,8 @@ Fork of `flynn-exhaustive-ready` with four plan-item changes:
   providing direct primary evidence of parentage (replaces the death
   certificate as the direct evidence source).
 - **pli_007** (later censuses 1870-1900): `skipped` -> `completed` --
-  1870 census confirms continued co-residence; 1880/1900 show Patrick
-  in own household.
+  1870 census confirms continued co-residence; 1880 shows Patrick in
+  own household.
 - **pli_008** (church records): `skipped` -> `completed` (#2269) -- the
   St. John the Baptist (Pottsville) baptismal register read for
   1845-1850, `log_008`, negative. It had been skipped on the claim that
