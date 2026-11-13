@@ -1093,7 +1093,10 @@ describe("tool server over Streamable HTTP", () => {
         const body = JSON.parse((await listProjects()).text);
         expect(body.projects).toEqual([]);
         expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
-        expect(body.message).toBe("No project yet: pass newProjectPath as projectPath to start one.");
+        expect(body.message).toBe(
+          "No project yet: pass newProjectPath as projectPath to start one. " +
+            "A request about a named FamilySearch person starts a project first, through the research skill.",
+        );
       });
 
       it("an id that is not /proj_ shaped is not listed", async () => {

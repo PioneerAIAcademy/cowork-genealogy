@@ -16,7 +16,7 @@ import {
   EXTERNAL_COLLECTIONS_SECTION,
   disagreementsInScope,
 } from "./research-query.js";
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson, NoProjectError, NO_PROJECT_MESSAGE_CONTEXT } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
@@ -32,11 +32,6 @@ import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
 
 const QUESTION_TRUNCATE_AT = 140;
-
-export const NO_PROJECT_CONTEXT_MESSAGE =
-  "This folder is not a research project — there is no research.json here." +
-  " There is no project state to read." +
-  " A request about a named FamilySearch person starts a project first, through the research skill.";
 
 export interface ProjectContextInput {
   projectPath: string;
@@ -302,7 +297,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     // before answering must not surface a path error to a user who simply is
     // not in a project.
     if (e instanceof NoProjectError) {
-      return { ok: false, reason: "no_project" as const, errors: [NO_PROJECT_CONTEXT_MESSAGE], buildId };
+      return { ok: false, reason: "no_project" as const, errors: [NO_PROJECT_MESSAGE_CONTEXT], buildId };
     }
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)], buildId };
   }

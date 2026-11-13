@@ -1520,7 +1520,7 @@ runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test
 proves the script *decides* correctly, and nothing else proves a runtime *binds*
 it — which, because the script must never raise, fails silently. `hook-smoke`
 probes `PreToolUse` binding only. **Both hooks are now measured in Cowork on Windows
-(44f98b58, 2026-11-09–10, #4176):** `PreToolUse` binds — a built-in Read of
+(44f98b58, 2026-11-09–10):** `PreToolUse` binds — a built-in Read of
 `research.json` was refused in a fresh folder; `UserPromptSubmit` binds and its
 `additionalContext` reaches the model — the routing text was quoted verbatim on 3/3
 probes. A 2026-11-05 negative (no blocking seen) is unexplained — no build was recorded.

@@ -7,6 +7,7 @@
 // reads can run to megabytes. Spec: docs/specs/project-list-tool-spec.md.
 
 import { getProjectStore } from "../store/project-store.js";
+import { START_PROJECT_RULE } from "../utils/project-io.js";
 import { preferredDisplayName } from "./project-context.js";
 
 export interface ProjectListSubject {
@@ -57,7 +58,7 @@ const FOLDER_MESSAGE =
   "The task's working folder is the project: pass its absolute path as projectPath. " +
   "This answer does not say whether the folder holds a project yet: call project_context " +
   "with that path before routing, and route on what it returns. " +
-  "A request about a named FamilySearch person starts a project first, through the research skill.";
+  START_PROJECT_RULE;
 
 /** Parsed JSON at `ref`, or null when it is absent or not JSON. Any other failure
  *  rejects: nulls would read as a project about nobody. */
@@ -121,9 +122,8 @@ function hostedMessage(listed: number, hasNew: boolean, truncated: boolean): str
     parts.push(
       listed > 0 || truncated
         ? "To start a project for a person none of them is about, pass newProjectPath as projectPath."
-        : "No project yet: pass newProjectPath as projectPath to start one.",
+        : `No project yet: pass newProjectPath as projectPath to start one. ${START_PROJECT_RULE}`,
     );
-    parts.push("A request about a named FamilySearch person starts a project first, through the research skill.");
   } else {
     parts.push("No other project can be started here.");
   }

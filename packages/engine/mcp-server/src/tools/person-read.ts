@@ -5,6 +5,7 @@ import {
   simplifySourceDescription,
 } from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { START_PROJECT_RULE } from "../utils/project-io.js";
 import {
   fetchMemories,
   fetchPortraitId,
@@ -142,7 +143,7 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
     ...result,
     notes: [
       ...(result.notes ?? []),
-      "A request about a named FamilySearch person starts a project first, through the research skill.",
+      START_PROJECT_RULE,
     ],
   };
 }

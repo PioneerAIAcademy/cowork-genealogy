@@ -164,11 +164,10 @@ because the person may be in a project the list left out. With no
 `project_list` tool at all (an expired connector sign-in, or a desktop extension
 older than this tool), it says the genealogy tools are not connected and stops.
 
-Both `message` values — the folder-mode string and the hosted-mode "No project
-yet" string — carry the routing rule: "A request about a named FamilySearch
-person starts a project first, through the research skill." The folder-mode
-string appends it after the redirect to `project_context`; the hosted-mode
-string appends it after the "No project yet" or "To start a project…" sentence.
+The folder-mode `message` and the hosted-mode "No project yet" `message` end
+with the routing rule: "A request about a named FamilySearch person starts a
+project first, through the research skill." A hosted listing that names any
+project, or is cut, does not carry it.
 
 ## 3. Tests
 

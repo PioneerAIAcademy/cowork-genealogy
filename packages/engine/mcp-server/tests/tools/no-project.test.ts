@@ -52,10 +52,10 @@ import { censusChildrenGapTool } from "../../src/tools/census-children-gap.js";
 import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
 import { validateResearchSchema } from "../../src/tools/validate-research-schema.js";
 import {
+  NO_PROJECT_MESSAGE_CONTEXT,
   NO_PROJECT_MESSAGE_READ,
   NO_PROJECT_MESSAGE_WRITE,
 } from "../../src/utils/project-io.js";
-import { NO_PROJECT_CONTEXT_MESSAGE } from "../../src/tools/project-context.js";
 
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
@@ -218,7 +218,7 @@ describe("an existing directory holding neither project file", () => {
       // project_context has its own text (not shared with other readers) carrying the routing rule.
       const expectedMessage =
         tool === "project_context"
-          ? NO_PROJECT_CONTEXT_MESSAGE
+          ? NO_PROJECT_MESSAGE_CONTEXT
           : READERS.has(tool)
             ? NO_PROJECT_MESSAGE_READ
             : NO_PROJECT_MESSAGE_WRITE;
