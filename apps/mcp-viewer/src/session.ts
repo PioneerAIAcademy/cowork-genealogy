@@ -46,6 +46,8 @@ export interface SessionState {
   heightLimit: number | null
   /** The search whose results the case file opens in its side panel. */
   fileLogId: string | null
+  /** The newest document the case file has: the card's snapshot, then what opening the file read. */
+  fileDocument: ProjectDocument | null
 }
 
 export interface SessionDeps {
@@ -64,6 +66,8 @@ export interface Session {
   openFile(logId?: string): Promise<void>
   /** The case file's data, one per mount. */
   readonly transport: McpAppResearchTransport
+  /** Tells the model, in words, what the researcher has open. Posts nothing; silent where the host cannot. */
+  tellModel(text: string): void
 }
 
 /** Everything the page knows and does, with no React in it. */
@@ -84,7 +88,8 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     contextChanges: [],
     modeRequests: [],
     heightLimit: null,
-    fileLogId: null
+    fileLogId: null,
+    fileDocument: null
   }
   let fileOpenTried = false
 
@@ -117,7 +122,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     now,
     onChange: (load) => {
       const fresh = load.snapshot !== null && load.snapshot !== state.load.snapshot
-      update({ load })
+      update(fresh ? { load, fileDocument: load.snapshot } : { load })
       if (fresh) transport.update(load.snapshot!)
     }
   })
@@ -227,12 +232,19 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
       update({ fileLogId: logId ?? null })
       void askForMode('fullscreen', 'button')
       try {
-        transport.update(await readDocument(projectArgs()))
+        const document = await readDocument(projectArgs())
+        update({ fileDocument: document })
+        transport.update(document)
       } catch {
         // The snapshot stays: an older file beats no file.
       }
     },
 
-    transport
+    transport,
+
+    tellModel(text) {
+      if (!host.tellModel || !state.capabilities?.updateModelContext) return
+      void host.tellModel(text).catch(() => {})
+    }
   }
 }

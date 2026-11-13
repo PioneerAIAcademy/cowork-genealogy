@@ -10,6 +10,12 @@ import type { ProjectDocument } from '../src/contract'
 import { leftoverIds } from '../src/rules/id-check'
 import { Prose } from '../src/rules/Prose'
 import { McpAppResearchTransport } from '../src/transport/McpAppResearchTransport'
+import { FileContext, type FileView } from '../src/file/FileContext'
+import { LogPage } from '../src/file/LogPage'
+import type { PaneTarget } from '../src/file/model'
+import { Pane } from '../src/file/Panes'
+import { SourcesPage } from '../src/file/SourcesPage'
+import { buildRuleIndex } from '../src/rules/rule-index'
 import type { RuleIndex } from '../src/rules/rule-index'
 
 // `make mcp-viewer-sweep`: the page over every committed end state, as
@@ -111,6 +117,54 @@ it('every card and every narrative renders with no id left, every known pid link
 
   console.log(`projects ${states.length}, narratives ${narratives}, cards ${cards}, problems ${problems.length}`)
   if (process.env.SWEEP_OUT) writeFileSync(process.env.SWEEP_OUT, problems.join('\n'), 'utf-8')
+  expect(problems.length, problems.slice(0, 40).join('\n')).toBe(0)
+})
+
+it('the new case file draws its pages and every pane with no id left, for every project', () => {
+  const host = document.createElement('div')
+  const problems: string[] = []
+  let drawn = 0
+  const draw = (where: string, view: FileView, body: React.ReactElement) => {
+    drawn++
+    try {
+      host.innerHTML = renderToStaticMarkup(<FileContext.Provider value={view}>{body}</FileContext.Provider>)
+    } catch (error) {
+      problems.push(`${where}: threw ${error instanceof Error ? error.message : String(error)}`)
+      return
+    }
+    const text = (host.textContent ?? '').replace(/\s+/g, ' ')
+    for (const hit of leftoverIds(text)) {
+      const token = hit.slice(hit.indexOf(': ') + 2)
+      const at = text.indexOf(token)
+      problems.push(`${where}: ${hit} | …${text.slice(Math.max(0, at - 60), at + token.length + 30)}…`)
+    }
+  }
+  for (const { name, document: doc } of staged()) {
+    const research = doc.research ?? {}
+    const transport = new McpAppResearchTransport({ read: async () => ({ found: false }), openLink: () => {} })
+    const base: FileView = {
+      research,
+      tree: doc.tree,
+      startingTree: doc.startingTree,
+      collections: doc.collections,
+      derived: doc.derived ?? {},
+      index: buildRuleIndex({ research, tree: doc.tree }),
+      transport,
+      pane: null,
+      open: () => {},
+      close: () => {}
+    }
+    draw(`${name} sources`, base, <SourcesPage />)
+    draw(`${name} log`, base, <LogPage />)
+    const targets: PaneTarget[] = [
+      ...(research.sources ?? []).map((s) => ({ kind: 'record' as const, id: s.id })),
+      ...(research.log ?? []).map((e) => ({ kind: 'search' as const, id: e.id })),
+      ...[...base.index.persons.keys()].map((id) => ({ kind: 'person' as const, id }))
+    ]
+    for (const target of targets) draw(`${name} ${target.kind} ${target.id}`, { ...base, pane: target }, <Pane />)
+  }
+  console.log(`new case file: drawn ${drawn}, problems ${problems.length}`)
+  if (process.env.SWEEP_OUT) writeFileSync(`${process.env.SWEEP_OUT}.new`, problems.join('\n'), 'utf-8')
   expect(problems.length, problems.slice(0, 40).join('\n')).toBe(0)
 })
 

@@ -263,9 +263,6 @@ export function proseMarkdown(text: string, index: RuleIndex): string {
     return token
   })
   out = out.replace(/\bARK:?[ \t]*(?=\uE000)/g, '')
-  for (const [name, held] of personHolds) {
-    out = out.replace(`${name} (${held})`, held)
-  }
 
   const edits: Edit[] = []
   for (const match of out.matchAll(RUN_RE)) {
@@ -275,6 +272,13 @@ export function proseMarkdown(text: string, index: RuleIndex): string {
     out = out.slice(0, edit.start) + edit.text + out.slice(edit.end)
   }
   out = tidyBrackets(out)
+
+  // A person's name straight before a bracket holding only their page link, once the
+  // ids are names too ("**I1** (KWJ6-RPH)"): the name becomes the link, the bracket goes.
+  for (const [name, held] of personHolds) {
+    const escaped = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    out = out.replace(new RegExp(`${escaped(name)}(\\*{0,2})[ \\t]*\\(${escaped(held)}\\)`), `${held}$1`)
+  }
 
   for (let i = 0; i < 4 && out.includes(HOLD_OPEN); i++) {
     out = out.replace(HOLD_RE, (_m, n: string) => held[Number(n)])

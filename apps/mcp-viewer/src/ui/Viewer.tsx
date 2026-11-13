@@ -4,6 +4,7 @@ import { Shell } from '../cards/kit/Shell'
 import { CARDS, cardKind } from '../cards/registry'
 import { fullscreenOffered } from '../display-mode'
 import type { Session } from '../session'
+import { NewCaseFile } from '../file/NewCaseFile'
 import { CaseFile } from './CaseFile'
 import { headline } from './status'
 
@@ -14,7 +15,14 @@ export function Viewer({ session }: { session: Session }) {
   const input = useMemo(() => load.input ?? snapshot?.echo ?? {}, [load.input, snapshot])
   const view = useMemo(() => (snapshot ? cardView(snapshot, input) : null), [snapshot, input])
 
-  if (view && state.display.mode === 'fullscreen') return <CaseFile session={session} />
+  if (view && state.display.mode === 'fullscreen') {
+    // Until M3-4 the new file is reached by name: `show: file` with a `page`.
+    return input.show === 'file' && typeof input.page === 'string' ? (
+      <NewCaseFile session={session} input={input} />
+    ) : (
+      <CaseFile session={session} />
+    )
+  }
   if (!view) {
     return (
       <main className="page">

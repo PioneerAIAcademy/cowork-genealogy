@@ -68,6 +68,8 @@ export class FakeApp implements AppLike {
 
   requestDisplayMode = vi.fn(async ({ mode }: { mode: DisplayMode }): Promise<{ mode: DisplayMode }> => ({ mode }))
 
+  updateModelContext = vi.fn(async (_params: { content: Array<{ type: 'text'; text: string }> }): Promise<unknown> => ({}))
+
   getHostContext = (): HostContext => this.context
   getHostCapabilities = (): HostCapabilities => this.capabilities
   getHostVersion = () => ({ name: 'Fake Host', version: '9.9.9' })

@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { leftoverIds } from './id-check'
-import { Prose } from './Prose'
+import { plainProse, Prose } from './Prose'
 import { buildRuleIndex, type RuleIndex } from './rule-index'
 import { COMPOUND, compound, mcandrew } from './test-data'
 
@@ -176,5 +176,18 @@ describe('the id check', () => {
 
   it('passes on the McAndrew and compound proofs as rendered', () => {
     expect(leftoverIds(shown(COMPOUND.research.proof_summaries[0].narrative_markdown, compound).text)).toEqual([])
+  })
+})
+
+describe('plain text under the rules', () => {
+  it('names and links become their words, and markup goes', () => {
+    expect(plainProse('Did **I1** (KWJ6-RPH) marry in `1850`?', compound)).toBe('Did Elizabeth Mariah Turnbow marry in 1850?')
+    expect(plainProse('the child_1 role, kept', compound)).toBe('the child_1 role, kept')
+  })
+
+  it('a short value draws inline, with no paragraph', () => {
+    const { container } = render(<Prose text="child of I1 (I1)" index={compound} inline />)
+    expect(container.querySelector('p')).toBeNull()
+    expect(container.textContent).toBe('child of Elizabeth Mariah Turnbow')
   })
 })

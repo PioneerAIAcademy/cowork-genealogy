@@ -128,6 +128,19 @@ describe('the tab host', () => {
     expect(tabHost(reply, '?show=nonsense').host.input).toEqual({ show: 'latest' })
   })
 
+  it('the tab carries the case file page and the item to open', () => {
+    const reply = async () => jsonResponse({})
+    const search = '?show=file&projectPath=mogan&page=log&logId=log_002&sourceId=src_001&personId=I1&other=x'
+    expect(tabHost(reply, search).host.input).toEqual({
+      show: 'file',
+      projectPath: 'mogan',
+      page: 'log',
+      logId: 'log_002',
+      sourceId: 'src_001',
+      personId: 'I1'
+    })
+  })
+
   it('offers both modes as a local toggle and opens links with window.open', async () => {
     const { host, open } = tabHost(async () => jsonResponse({}))
     const connection = await host.connect(NO_LISTENERS)
