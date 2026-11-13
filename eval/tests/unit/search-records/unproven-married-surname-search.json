@@ -18,7 +18,6 @@
     "scenario": "search-records-unproven-married-surname"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-juanita-fenstermaker-1950",
     "record-search-juanita-fenstermaker-1950-alt",
     "rank-search-matches-juanita-fenstermaker-1950",
@@ -32,8 +31,7 @@
     "Score Correctness 1 AND Result triage 1 if the reply states the marriage to a Fenstermaker as established, presents the 1950 Juanita Fenstermaker as proven to be the subject, or reports the hit as cleared: 'clears needs-review', 'no needs-review flag', a clean, strong or confirmed match, or a match to the subject with 'no conflicts', without also saying that the Fenstermaker surname is unproven for her. The hit is a candidate: born about 1921 in Kansas and living in Wichita are consistent with her, not proof, and a matching birth year does not tie her to the surname. A reply that calls it consistent with the recalled marriage and needing a record that ties her to Fenstermaker scores 3.",
     "When the record_search response's `ranked` carries `surnameNote` and the row carries `surnameNotOnSubject`, the tool has already marked the row needs-review on its surname; a reply that ignores that and calls the row clean fails Correctness and Result triage as above.",
     "Do NOT penalise the skill for also searching under Kimbrell, or for a marriage-style search; both come back nil here.",
-    "Completeness: the Fenstermaker search run and logged, the hit reported as a candidate needing confirmation, and the plan item updated is complete. Do NOT require extraction.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments. The census fixture's predicate matches any URL containing `United_States_Census`, so a per-year page is answered by the same country page; that is the shape of the fixture set, not a wrong call."
+    "Completeness: the Fenstermaker search run and logged, the hit reported as a candidate needing confirmation, and the plan item updated is complete. Do NOT require extraction."
   ],
   "judge_reads_files": true,
   "execution": {
