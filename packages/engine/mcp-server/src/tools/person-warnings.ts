@@ -7,6 +7,7 @@
 
 import { getProjectStore } from "../store/project-store.js";
 import { findAnchor } from "../utils/tree-person.js";
+import { toArk } from "../utils/ark.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedFact,
@@ -4611,15 +4612,21 @@ function eventsOutsideOneWindow(
   return "none";
 }
 
+interface CensusSource {
+  title: string;
+  url?: string;
+}
+
 /**
- * Census collection titles associated with a mob's anchor person. Titles live
- * in the top-level `SimplifiedGedcomX.sources[].title`, reached via the
- * ref→id join from the anchor's person/fact/name source references. When the
- * anchor carries no source references (e.g. a single-record candidate
- * document), we fall back to all of the document's source titles. Returns only
- * census-ish titles (containing "Census"). Empty when there are no sources.
+ * Census sources (title and url) associated with a mob's anchor person. They
+ * live in the top-level `SimplifiedGedcomX.sources[]`, reached via the ref→id
+ * join from the anchor's person/fact/name source references. With
+ * `fallbackToAll`, an anchor carrying no source references (a single-record
+ * candidate document) reads every source in its document; without it, such an
+ * anchor has no census sources. Returns only census-ish titles (containing
+ * "Census"). Empty when there are no sources.
  */
-function getCensusTitles(mob: Mob): string[] {
+function getCensusSources(mob: Mob, fallbackToAll: boolean): CensusSource[] {
   const sources = mob.tree.sources ?? [];
   if (sources.length === 0) return [];
   const person = mob.getPerson();
@@ -4634,37 +4641,89 @@ function getCensusTitles(mob: Mob): string[] {
     for (const r of n.sources ?? []) if (r.ref !== undefined) refIds.add(r.ref);
   }
 
-  const pickAll = refIds.size === 0;
-  const titles: string[] = [];
+  const pickAll = fallbackToAll && refIds.size === 0;
+  const out: CensusSource[] = [];
   for (const s of sources) {
-    if (s.title === undefined) continue;
-    if (pickAll || (s.id !== undefined && refIds.has(s.id))) titles.push(s.title);
+    if (s.title === undefined || !s.title.includes("Census")) continue;
+    if (pickAll || (s.id !== undefined && refIds.has(s.id))) {
+      out.push(s.url !== undefined ? { title: s.title, url: s.url } : { title: s.title });
+    }
   }
-  return titles.filter((t) => t.includes("Census"));
+  return out;
 }
 
 /**
- * Java MobWarnings.hasSameCensus (warnings.java:724). Two personas that share
- * the exact same census collection title cannot be the same person — a census
- * enumerates each person once, so the same census appearing on both sides of
- * a merge means the pairing conflated two distinct enumerated individuals. The
+ * The census collection a source title names, normalized for comparison: the
+ * first double-quoted run when the title has one (`Henry Gaetjen, "United
+ * States Census, 1940"`, `Entry for …, "United States, Census, 1900"`), else
+ * the whole title; lowercased, whitespace collapsed, trailing `,`/`.` dropped,
+ * and `, Census` folded to ` Census` (FamilySearch spells `United States,
+ * Census, 1900` and `United States Census, 1900` for one collection).
+ */
+function censusCollectionKey(title: string): string {
+  const quoted = /["“]([^"”]+)["”]/.exec(title);
+  return (quoted ? quoted[1] : title)
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/,\s*census\b/g, " census")
+    .replace(/[\s,.]+$/, "")
+    .trim();
+}
+
+const RECORD_ARK_PREFIX = "ark:/61903/1:2:";
+
+/**
+ * Java MobWarnings.hasSameCensus (warnings.java:724). Two personas that cite
+ * the same census collection cannot be the same person — a census enumerates
+ * each person once, so the same census appearing on both sides of a merge
+ * means the pairing conflated two distinct enumerated individuals. The
  * strongest census bad-merge signal.
+ *
+ * Matches on the normalized collection name (`censusCollectionKey`), so a
+ * per-person title, an `Entry for …` title and a bare collection title of one
+ * census match each other. Before comparing, drops every target census source
+ * whose url, as a canonical ark, is the paired candidate persona's ark or a
+ * record (`1:2:`) ark among the candidate's census source urls: that source is
+ * this very record, not a second enumeration. A target source with no url is
+ * never dropped; the target's ark is read from `url` only, never `citation`.
+ * The target reads only the sources its person, facts and names reference —
+ * an unsourced tree person never fires; the candidate falls back to every
+ * source in its document when its persona references none.
+ *
+ * Accepted gaps (issue #4503 ruling; measured by `dev/replay-same-census.ts`):
+ * (a) a wrong pairing inside one household fires, and a tree source carrying
+ * another household member's persona ark falsely fires; (b) a persona beyond
+ * record_read's persona cap carries no ark, so its tree source is not skipped;
+ * (c) a source with a non-FamilySearch url is compared by title only, and a
+ * title with no quoted collection (`Household of …, United States Census,
+ * 1820`) or a variant spelling (`Minnesota, State Census`) does not match;
+ * (d) a tree source on the record's `1:2:` ark is skipped whoever it is paired
+ * with, so a wrong pairing there stays silent.
  *
  * Documented divergences from Java: (1) Java concatenates titles into one
  * string split on `MobMergeUtil.TITLE_DELIMITER`; our simplified model stores
- * one title per source, so we compare title arrays directly (no delimiter
- * split). (2) Non-English census titles are not handled (warnings.java TODOs
- * this too) — v1 keys on the English "Census" substring. Degrades to false
- * (no warning, never throws) when either side lacks a usable title.
+ * one title per source, so we compare per source (no delimiter split).
+ * (2) Non-English census titles are not handled (warnings.java TODOs this too)
+ * — v1 keys on the English "Census" substring. Degrades to false (no warning,
+ * never throws) when either side lacks a usable title.
  */
 export function hasSameCensus(target: Mob, candidate: Mob): boolean {
-  const targetTitles = getCensusTitles(target);
-  const candidateTitles = getCensusTitles(candidate);
-  if (targetTitles.length === 0 || candidateTitles.length === 0) return false;
-  for (const a of targetTitles) {
-    for (const b of candidateTitles) if (a === b) return true;
+  const candidateSources = getCensusSources(candidate, true);
+  if (candidateSources.length === 0) return false;
+  const sameRecord = new Set<string>();
+  const personaArk = candidate.getPerson().ark;
+  if (personaArk) sameRecord.add(toArk(personaArk));
+  for (const s of candidateSources) {
+    if (s.url === undefined) continue;
+    const ark = toArk(s.url);
+    if (ark.startsWith(RECORD_ARK_PREFIX)) sameRecord.add(ark);
   }
-  return false;
+  const targetKeys = getCensusSources(target, false)
+    .filter((s) => s.url === undefined || !sameRecord.has(toArk(s.url)))
+    .map((s) => censusCollectionKey(s.title));
+  if (targetKeys.length === 0) return false;
+  const candidateKeys = new Set(candidateSources.map((s) => censusCollectionKey(s.title)));
+  return targetKeys.some((k) => candidateKeys.has(k));
 }
 
 // ─── Merge-mode check wrappers ───────────────────────────────────────────────

@@ -18,6 +18,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
 });
 
+import { START_PROJECT_RULE } from "../../src/utils/project-io.js";
 import { personReadTool, readPerson, trimPersonReadForModel } from "../../src/tools/person-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import type { GedcomXSourceReference } from "../../src/types/gedcomx.js";
@@ -1348,8 +1349,8 @@ describe("personReadTool — sibling fan-out", () => {
       { personId: SUBJECT, relatives: true },
       LOCAL,
     );
-    expect(out.notes).toBeUndefined();
-    expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
+    expect(out.notes).toEqual([START_PROJECT_RULE]);
+    expect(Object.keys(out).sort()).toEqual(["notes", "persons", "relationships", "sources"]);
   });
 
   it("holds the fan-out at FOUR parent reads in flight, and still reads all five", async () => {
@@ -2532,7 +2533,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
     });
     expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-M`]);
     // A read that lost nothing says nothing, and adds no top-level key.
-    expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
+    expect(Object.keys(out).sort()).toEqual(["notes", "persons", "relationships", "sources"]);
   });
 
   it("puts a child-and-parents relationship's ref on BOTH parent edges", async () => {
@@ -2695,7 +2696,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
     expect("sources" in second).toBe(false);
     expect(out.sources.map((s) => s.id)).toEqual(["SRC-OK"]);
     // Visible, not silent: a count in the response, the ids on stderr.
-    expect(out.notes).toEqual([expect.stringMatching(/^2 of 3 source descriptions .*could not be read/)]);
+    expect(out.notes).toEqual([expect.stringMatching(/^2 of 3 source descriptions .*could not be read/), START_PROJECT_RULE]);
     const log = stderr.mock.calls.map((c) => String(c[0])).join("");
     expect(log).toContain("SRC-GONE");
     expect(log).toContain("SRC-DOWN");
@@ -2740,7 +2741,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
     expect(descriptionReads()).toEqual([]);
     // Pruned like any dangling ref, and not reported: there was nothing to read.
     expect("sources" in out.relationships[0]).toBe(false);
-    expect(out.notes).toBeUndefined();
+    expect(out.notes).toEqual([START_PROJECT_RULE]);
   });
 });
 
@@ -2837,7 +2838,7 @@ describe("person_read's answer is trimmed for the model (#4384)", () => {
     expect("sources" in kid).toBe(false);
     expect(out.sources.map((s) => s.id)).toEqual(["SUBJ-SRC"]);
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(out.notes).toBeUndefined();
+    expect(out.notes).toEqual([START_PROJECT_RULE]);
   });
 
   it("cuts a relative's residence from the answer, but not from project_create's read (#4420)", async () => {
