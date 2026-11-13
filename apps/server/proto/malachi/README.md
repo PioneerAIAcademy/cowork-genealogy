@@ -76,8 +76,16 @@ Keep `UPLOADS_ENABLED=false` in the env file until a page serves the upload link
 `project_context` offers. It sets both tiers, and `make malachi-up` applies a change.
 
 OpenRouter linking is off and stays off in `compose.yml`, so nobody can transcribe until they are
-seeded. Put the key in `OPENROUTER_SEED_KEY` in the env file, have the person connect from Claude once, then
-run `make malachi-openrouter EMAIL=`. Seed one person at a time, on the lead's say.
+seeded. Put the key in `OPENROUTER_SEED_KEY` in the env file. Then either:
+
+- **Seed everyone as they connect.** Set `OPENROUTER_SEED_AT_CONNECT=true` in the env file and run
+  `make malachi-up`. From then on, a user the connector's consent creates gets the key on their
+  row, so they can read images from their first conversation. It is off by default, the lead
+  turns it on, and `make malachi-up` refuses to start the web tier with it on and no key.
+- **Seed one person.** Have them connect from Claude once, then run
+  `make malachi-openrouter EMAIL=`. Anyone who connected before seeding was turned on needs this.
+
+Only a new row is seeded. An existing user's key is never written at sign-in.
 
 ## Day to day
 
@@ -89,7 +97,7 @@ run `make malachi-openrouter EMAIL=`. Seed one person at a time, on the lead's s
 | `make malachi-backup` | `pg_dump` and a mirror of MinIO to `DATA_DIR/backups/<UTC>/`, with the stack up. Keeps the newest `KEEP` (14), each a full copy. Under 14 needs `CONFIRM=yes`: pruning runs before any restore check. |
 | `make malachi-restore-check` | Restores the newest backup into a scratch database, then checks the ledger and every blob against the mirror. |
 | `make malachi-export EMAIL=` or `PROJECT=` | A project's files in `DATA_DIR/exports/<id>/`, what the web tier's download would give, with its `MISSING.txt`. |
-| `make malachi-openrouter EMAIL=` | Encrypts the env file's `OPENROUTER_SEED_KEY` onto that user's row. They must have connected from Claude once. |
+| `make malachi-openrouter EMAIL=` | Encrypts the env file's `OPENROUTER_SEED_KEY` onto that user's row. They must have connected from Claude once. Not needed for users who connect while `OPENROUTER_SEED_AT_CONNECT` is `true`. |
 | `make beta-block-user ACCOUNT=` | Blocks one user: their cookie and their connector token are refused from the next request. |
 | `make beta-delete-user ACCOUNT= CODE=` | Checks the deletion code, then prints the account, its projects and what would be deleted. `CONFIRM=yes` deletes. See below. |
 | `make malachi-prune` | Removes this stack's superseded images, and build cache older than a week. Build cache has no owner, so that half reaches everyone on the host. |

@@ -124,11 +124,16 @@ def _argv(service: dict) -> str:
     return " ".join(str(p) for p in parts)
 
 
+# A secret whose blank is its off state, so it cannot be a required ${VAR:?}. The shape rule
+# pins where it may sit and what it may be; the web tier refuses seeding on with no key.
+BLANK_WHEN_OFF = {"OPENROUTER_SEED_KEY"}
+
+
 def password_violations(doc: dict) -> list[str]:
     out = []
     for name, service in doc["services"].items():
         for key, value in _env(service).items():
-            if SECRET_NAME.search(key) and not REQUIRED_VALUE.fullmatch(value):
+            if SECRET_NAME.search(key) and key not in BLANK_WHEN_OFF and not REQUIRED_VALUE.fullmatch(value):
                 out.append(f"default password: {name} {key} is not a bare ${{VAR:?}}")
             match = DSN_PASSWORD.search(_required_as_name(value))
             if match and not re.fullmatch(r"<\w+>", match.group(1)):
@@ -191,6 +196,13 @@ def shape_violations(doc: dict) -> list[str]:
     for key in ("FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE"):
         if web.get(key) != f"${{{key}:-}}":
             out.append(f"sign-in: web's {key} comes from the env file")
+    # Seeding at first connect is the lead's switch, off unless the env file says true.
+    for key in ("OPENROUTER_SEED_AT_CONNECT", "OPENROUTER_SEED_KEY"):
+        if web.get(key) != f"${{{key}:-}}":
+            out.append(f"seeding: web's {key} comes from the env file, blank by default")
+        for name, service in services.items():
+            if name != "web" and key in _env(service):
+                out.append(f"seeding: only web holds {key}, not {name}")
     # Both tiers print the issuer, and a client compares the two; the web tier's is also
     # what registers Claude's sign-in routes at all (#3997).
     for name, env in (("tools", tools), ("web", web)):
@@ -369,6 +381,14 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "tools' issuer from a second setting", _set_env("tools", "OAUTH_ISSUER", "${OAUTH_ISSUER:-}")),
     ("shape", "a redirect the env file cannot reach", _drop_env("web", "FS_REDIRECT_URI")),
     ("shape", "a sign-in budget the env file cannot reach", _drop_env("web", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")),
+    ("shape", "seeding the env file cannot turn on", _drop_env("web", "OPENROUTER_SEED_AT_CONNECT")),
+    ("shape", "seeding on for everyone", _set_env("web", "OPENROUTER_SEED_AT_CONNECT", "true")),
+    ("shape", "seeding with no key to give", _drop_env("web", "OPENROUTER_SEED_KEY")),
+    ("shape", "the seed key on the tool server", _set_env("tools", "OPENROUTER_SEED_KEY", "${OPENROUTER_SEED_KEY:-}")),
+    ("shape", "the seed key on the edge", _set_env("edge", "OPENROUTER_SEED_KEY", "${OPENROUTER_SEED_KEY:-}")),
+    ("shape", "a seed key written into the file", _set_env("web", "OPENROUTER_SEED_KEY", "sk-or-v1-x")),
+    ("shape", "a required seed key, which would refuse a stack that seeds nobody",
+     _set_env("web", "OPENROUTER_SEED_KEY", "${OPENROUTER_SEED_KEY:?set in the env file}")),
     ("shape", "owner DSN on web", _set_env("web", "MIGRATE_PG_DSN", "x")),
     ("shape", "owner on tools", _set_env("tools", "GENEALOGY_PG_DSN",
                                          "postgresql://postgres:${POSTGRES_PASSWORD:?x}@postgres:5432/genealogy")),
@@ -447,7 +467,7 @@ def test_the_template_carries_no_secret_and_no_port():
                   if line and not line.startswith("#"))
     for key in ("POSTGRES_PASSWORD", "DML_PASSWORD", "MINIO_ROOT_PASSWORD", "SESSION_SECRET", "FS_TOKEN_ENC_KEY",
                 "ALLOWED_EMAILS", "WIKI_API_URL", "POP_STATS_URL", "FS_REDIRECT_URI",
-                "GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "OPENROUTER_SEED_KEY",
+                "GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "OPENROUTER_SEED_KEY", "OPENROUTER_SEED_AT_CONNECT",
                 "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS"):
         assert values[key] == "", key
     assert values["UPLOADS_ENABLED"] == "false"
@@ -456,8 +476,12 @@ def test_the_template_carries_no_secret_and_no_port():
     assert "EDGE_PORT" not in values
 
 
-def test_no_service_sees_the_seed_key():
-    assert "OPENROUTER_SEED_KEY" not in COMPOSE.read_text(encoding="utf-8")
+def test_only_the_web_tier_holds_the_seed_key_and_only_from_the_env_file():
+    """The web tier encrypts it onto a user its consent creates, when the env file turns
+    that on. It already holds FS_TOKEN_ENC_KEY, which decrypts every stored copy."""
+    services = _load()["services"]
+    holders = {name: _env(s)["OPENROUTER_SEED_KEY"] for name, s in services.items() if "OPENROUTER_SEED_KEY" in _env(s)}
+    assert holders == {"web": "${OPENROUTER_SEED_KEY:-}"}
 
 
 def test_malachi_sh_knows_the_development_keys():

@@ -145,11 +145,14 @@ export function connectorLogoutMessage(principal: Principal): string {
 }
 
 /** A connector caller has no settings page and no config file: on this beta
- *  the key that reads images is put on an account by its administrator. */
+ *  the key that reads images is put on an account by its administrator. It rules
+ *  out the browser by name: told only to carry on, a model read the page through
+ *  the user's own signed-in browser, where nothing is saved to the project. */
 export const CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE =
   "Reading images is not turned on for this account, so this image was not transcribed. " +
   "Tell the user it is turned on per account by the beta's administrator, and carry on " +
-  "without this image. Do not ask the user to paste a key into the chat.";
+  "without this image. Do not read the image any other way, such as through a web browser: " +
+  "nothing read that way is saved to the project. Do not ask the user to paste a key into the chat.";
 
 // The one variable the stdio entrypoint reads. manifest.json's `user_config`
 // asks for the key on the extension's Configure page in Claude Desktop, and its

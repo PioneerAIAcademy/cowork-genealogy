@@ -281,7 +281,8 @@ class FakeStore:
         return self.users.get(user_id)
 
     async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None,
-                          create: bool = True, accept_terms: bool = False) -> User:
+                          create: bool = True, accept_terms: bool = False,
+                          openrouter_key_enc: str | None = None) -> User:
         """PgStore.upsert_user's four steps (#3992), without the locks."""
         email = email.strip().lower()
         by_email = next((u for u in self.users.values() if u.email == email), None)
@@ -303,6 +304,8 @@ class FakeStore:
             if max_users is not None and len(self.users) >= max_users:
                 raise AdmissionRefused(email)
             user = User(f"usr_{len(self.users) + 1}", email, familysearch_id=familysearch_id or None)
+            if openrouter_key_enc is not None:
+                self.openrouter_keys[user.id] = openrouter_key_enc
         self.users[user.id] = user
         if accept_terms and user.blocked_at is None:
             self.terms_accepted.setdefault(user.id, self.now())
@@ -1516,7 +1519,7 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
             "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS",
             "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED", "FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE",
-            "OAUTH_ISSUER")
+            "OAUTH_ISSUER", "OPENROUTER_SEED_AT_CONNECT", "OPENROUTER_SEED_KEY")
 
 
 @pytest.fixture(autouse=True)

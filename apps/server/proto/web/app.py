@@ -73,6 +73,8 @@ GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user c
 PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
 UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
 OPENROUTER_LINKING_ENABLED (unset or false: no /openrouter route; true or false only),
+OPENROUTER_SEED_AT_CONNECT (unset or false: nobody is seeded; true: a user the connector's
+consent creates gets OPENROUTER_SEED_KEY, encrypted, on their row),
 FS_REDIRECT_URI (unset: PUBLIC_URL + /callback; the callback route is served at its path),
 GENEALOGY_SIGNIN_CALLS_PER_MINUTE (unset: no sign-in budget; a whole number of at least 2:
 the code exchange and identity read share that many calls per sliding minute),
@@ -501,7 +503,7 @@ class Store(Protocol):
     async def get_user(self, user_id: str) -> User | None: ...
     async def upsert_user(
         self, email: str, familysearch_id: str | None, *, max_users: int | None = None, create: bool = True,
-        accept_terms: bool = False,
+        accept_terms: bool = False, openrouter_key_enc: str | None = None,
     ) -> User: ...
     # #3992: single-use sign-in state (017 signin_states), keyed by auth.state_sha256.
     async def create_signin_state(self, state_sha256: str) -> None: ...
@@ -1522,9 +1524,13 @@ class PgStore:
 
     async def upsert_user(
         self, email: str, familysearch_id: str | None, *, max_users: int | None = None, create: bool = True,
-        accept_terms: bool = False,
+        accept_terms: bool = False, openrouter_key_enc: str | None = None,
     ) -> User:
         """The user for this FamilySearch identity, created on first sign-in (#3992).
+
+        ``openrouter_key_enc`` (``OPENROUTER_SEED_AT_CONNECT``), ciphertext, goes on a row
+        this call inserts, in the insert itself. An existing user's key is never written:
+        not one they linked, not one an administrator cleared.
 
         With ``create=False`` (#3997: a chat-off sign-in the connector's consent did not
         start) an identity with no row raises NoAccount instead of being inserted; an
@@ -1554,7 +1560,7 @@ class PgStore:
 
         email = email.strip().lower()
         new_id = "usr_" + uuid.uuid4().hex[:16]
-        insert = ("INSERT INTO users (id, email, familysearch_id) VALUES (%s, %s, %s) "
+        insert = ("INSERT INTO users (id, email, familysearch_id, openrouter_key_enc) VALUES (%s, %s, %s, %s) "
                   "ON CONFLICT DO NOTHING")
         by_email = self._USER + " WHERE email = %s FOR UPDATE"
         by_id = self._USER + " WHERE familysearch_id = %s FOR UPDATE"
@@ -1603,7 +1609,7 @@ class PgStore:
                             if (await cur.fetchone())["n"] >= max_users:
                                 raise AdmissionRefused(email)
                     if user is None:
-                        await conn.execute(insert, (new_id, email, familysearch_id or None))
+                        await conn.execute(insert, (new_id, email, familysearch_id or None, openrouter_key_enc))
                         user = await existing(conn)
                     if user is None:
                         # The insert hit a conflict whose row neither read finds: another
@@ -2541,9 +2547,12 @@ def create_app(
         try:
             # #3997: with the chat off, only the connector's consent (terms accepted) creates
             # a user; a plain browser sign-in is for users who already have an account.
+            # A user that consent creates is seeded for image reading when the tier says so.
+            seed = auth.openrouter_seed_key() if pending is not None else None
             user = await store.upsert_user(
                 email, str(fs_id) if fs_id else None, max_users=auth.max_users(),
                 create=app.state.chat or pending is not None, accept_terms=pending is not None,
+                openrouter_key_enc=auth.encrypt(seed) if seed else None,
             )
         except NoAccount:
             # Only a tier that serves the connector's sign-in can point at it.
