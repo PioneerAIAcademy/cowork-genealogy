@@ -2,8 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const mockFulltext = vi.hoisted(() => vi.fn());
+// Mocks what this module CALLS. The batching itself moved to
+// `fulltext-searchable.ts` when `research_append` needed the same thing, and is
+// tested there against the single-request fetch (`fulltext-searchable.test.ts`,
+// "batches at 100" / "null if any batch failed"). What is under test here is
+// that volume-rollup asks for every name and propagates a null answer.
 vi.mock("../../src/utils/fulltext-searchable.js", () => ({
-  fetchFulltextSearchable: mockFulltext,
+  fetchFulltextSearchableBatched: mockFulltext,
 }));
 
 import {
@@ -150,14 +155,16 @@ describe("fetchAllGroups", () => {
 });
 
 describe("volumeRollup", () => {
-  it("checks full text in batches of 100 and marks browseOnly unknown if one batch fails", async () => {
+  it("asks about every volume and marks browseOnly unknown when the answer is null", async () => {
     const { search } = pagedSearch(250);
     mockFulltext.mockImplementation(async (names: string[]) =>
       names.includes("g200") ? null : new Set<string>(),
     );
     const r = await volumeRollup(BASE, LOCAL, search);
-    expect(mockFulltext).toHaveBeenCalledTimes(3);
-    expect(mockFulltext.mock.calls.every(([names]) => names.length <= FULLTEXT_BATCH)).toBe(true);
+    // One delegated call carrying every name; the chunking is the helper's job
+    // and is pinned in fulltext-searchable.test.ts.
+    expect(mockFulltext).toHaveBeenCalledTimes(1);
+    expect(mockFulltext.mock.calls[0][0]).toHaveLength(250);
     expect(r.byRecordType).toEqual([{ group: "Census", volumes: 250, browseOnly: null, fulltextOnly: null }]);
   });
 

@@ -50,14 +50,9 @@ DORMANT: dict[str, str] = {
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"
     ),
-    "tier-disproved-q001": (
-        "its only tests, ut_proof_conclusion_d3c and _006, were deleted by PR #4341: "
-        "three validators charge research_append's own removal of unanchored persons "
-        "to the agent; issue #4425 restores them"
-    ),
     "tier-proved-q001": (
         "its only test, ut_proof_conclusion_002, was deleted by PR #4341: Sonnet 5.5 "
-        "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4425 "
+        "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4460 "
         "restores it"
     ),
     "naturalization-exception": (
