@@ -692,7 +692,7 @@ def _matricula(**over):
 
 
 GOOD_TAIL = (
-    "Invocation: hand-off.\n---\nOpen the Matricula link and search Ochtrup. FamilySearch filmed the "
+    "Invocation: hand-off.\n---\nOpen the Matricula link, then Suchen → Ortssuche for Ochtrup. FamilySearch filmed the "
     "same Catholic register as film 876540, viewable only at a FamilySearch Center or affiliate library.\n"
     "Next, upload the page."
 )
@@ -704,7 +704,12 @@ def test_browse_catalog_quiet_on_a_named_center_only_film():
 
 def test_browse_catalog_quiet_on_a_replay_with_no_recorded_response():
     calls = [_catalog(response=False), _matricula()]
-    expect_passes(lambda: check_browse_catalog(calls, "x\n---\nOpen the Matricula link.", BROWSE_CATALOG))
+    expect_passes(lambda: check_browse_catalog(calls, "x\n---\nOpen the Matricula link, then Suchen → Ortssuche.", BROWSE_CATALOG))
+
+
+def test_browse_catalog_quiet_on_the_place_search_given_as_its_url():
+    tail = GOOD_TAIL.replace("Suchen → Ortssuche", "the place search at https://data.matricula-online.eu/de/suchen/")
+    expect_passes(lambda: check_browse_catalog([_catalog(), _matricula()], tail, BROWSE_CATALOG))
 
 
 def test_browse_catalog_skips_untagged_tests():
@@ -722,8 +727,16 @@ def test_browse_catalog_skips_untagged_tests():
         ([_catalog(), _matricula()], GOOD_TAIL.replace("film 876540", "film 8765401"), "names none of the center-only films"),
         ([_catalog(), _matricula()], GOOD_TAIL + " I can read image group 008109455 for you.", "offers a read"),
         ([_catalog(available_online=True), _matricula()], GOOD_TAIL, "no center-only film"),
+        (
+            [_catalog(), _matricula()],
+            GOOD_TAIL.replace(
+                "Suchen → Ortssuche for Ochtrup",
+                "find Ochtrup in the places/dioceses list (Diocese of Münster)",
+            ),
+            "never gives Matricula's place search",
+        ),
     ],
-    ids=["no_catalog", "no_build", "no_projectpath", "film_only_above_the_line", "film_number_inside_a_longer_one", "offers_the_group", "no_center_only_hit"],
+    ids=["no_catalog", "no_build", "no_projectpath", "film_only_above_the_line", "film_number_inside_a_longer_one", "offers_the_group", "no_center_only_hit", "diocese_list_route"],
 )
 def test_browse_catalog_fires(calls, reply, match):
     expect_fires(lambda: check_browse_catalog(calls, reply, BROWSE_CATALOG), match)

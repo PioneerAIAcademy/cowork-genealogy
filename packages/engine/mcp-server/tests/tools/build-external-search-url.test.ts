@@ -1985,6 +1985,21 @@ describe("build_external_search_url", () => {
       }
     });
 
+    it("with the site's front page as baseUrl: the same place-search note as no baseUrl", () => {
+      for (const [site, baseUrl] of [
+        ["matricula", "https://data.matricula-online.eu/en/"],
+        ["matricula", "https://data.matricula-online.eu/de"],
+        ["archion", "https://www.archion.de/de/"],
+        ["archion", "https://www.archion.de/"],
+      ] as const) {
+        const r = buildExternalSearchUrl({ site, baseUrl, attributes: {} });
+        expect(r.ok, baseUrl).toBe(true);
+        if (!r.ok) return;
+        const note = r.notes.find((n) => n.startsWith("no parish URL supplied"));
+        expect(note, baseUrl).toMatch(/place search/);
+      }
+    });
+
     it("with a baseUrl: no place-search step, which would send the researcher to find a parish already in hand", () => {
       for (const [site, baseUrl] of [
         ["archion", BAIERSBRONN],

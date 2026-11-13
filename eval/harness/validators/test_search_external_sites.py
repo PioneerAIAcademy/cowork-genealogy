@@ -635,6 +635,8 @@ def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_
         errors.append("the catalog_search responses carry no center-only film, so this test cannot judge the hand-off")
     elif films and not any(re.search(rf"(?<!\d){f}(?!\d)", tail) for f in films):
         errors.append(f"the researcher's text names none of the center-only films {sorted(films)}")
+    if any(b.get("site") == "matricula" for b in builds) and not re.search(r"Ortssuche|matricula-online\.eu/\w+/suchen", tail):
+        errors.append("the researcher's text never gives Matricula's place search (Suchen → Ortssuche), the route the tool's note carries")
     offered = sorted(g for g in groups if re.search(rf"(?<!\d)0*{g}(?!\d)", tail))
     if offered:
         errors.append(f"the researcher's text names center-only image group(s) {offered}, which offers a read it cannot give")

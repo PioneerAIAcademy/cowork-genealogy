@@ -491,6 +491,9 @@ sites**:
   were measured live 2026-11-13, with no login: Matricula's search for
   Ochtrup listed `muenster/ochtrup-st-lambertus`, and Archion's for
   Baiersbronn listed 37 registers under *Dekanat Freudenstadt / Baiersbronn*.
+  The site's own front page passed as `baseUrl` (`/`, `/de/` or `/en/` on the
+  site's host — `external_links_search` returns Matricula's) counts as no
+  `baseUrl` and gets the same note.
   The place-search step goes in this note and not in the standing browse-path
   note, because the standing note rides every call. Put there, it would send a
   researcher who already holds the parish page to search for it. The cause was an
