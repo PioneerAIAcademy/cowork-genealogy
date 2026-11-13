@@ -1,0 +1,366 @@
+{
+  "run_log": "v7_2026-11-13_13-40-09.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the shared household informant and the independent James Brown source, but it also correctly notes that the analysis should have more explicitly emphasized that the same person—likely Thomas Flynn or his wife—may have provided the information in both censuses. The uncertainty was appropriately preserved, so this is a limited omission."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the 1870 record as independent and notes its limited factual content. However, it also correctly flags that the analysis should have examined the 1870 enumerator's informant proximity more specifically, including whether the information could derive from the earlier household chain."
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the lack of independence because the marriage index is a derivative abstract rather than an independent witness. However, it appropriately flags the unsupported speculation about whether the mother's name refers to the same woman; the analysis should have stayed grounded in the record details instead of introducing an unsubstantiated alternative."
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
