@@ -5,6 +5,7 @@ import {
   simplifySourceDescription,
 } from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { START_PROJECT_RULE } from "../utils/project-io.js";
 import {
   fetchMemories,
   fetchPortraitId,
@@ -65,9 +66,10 @@ export const personReadToolSchema = {
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the person AND to each relative, each linked from a person's or a " +
-    "relationship's own `sources` refs — so what is attached to the SUBJECT is " +
-    "the entries its own refs point at, plus any carrying `artifact_url`. For a " +
+    "to the subject (`persons[0]`) and to the relationships, each linked from " +
+    "the subject's or a relationship's own `sources` refs. Relatives carry no " +
+    "sources, and a source with a record link carries a title and link but no " +
+    "citation — `record_read` returns the citation. For a " +
     "non-living subject it also returns source-style memories (scanned " +
     "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
@@ -86,8 +88,8 @@ export const personReadToolSchema = {
       sourceDescriptions: {
         type: "boolean",
         description:
-          "Ignored: attached sources are always returned — the subject's and the "
-          + "relatives' own.",
+          "Ignored: the subject's and the relationships' attached sources are "
+          + "always returned; relatives' own are not.",
       },
       projectPath: {
         type: "string",
@@ -115,7 +117,13 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
-  const { result, resolvedId } = await readPerson(personId.trim(), { projectPath }, principal);
+  const { result: full, resolvedId } = await readPerson(
+    personId.trim(),
+    { projectPath, relativeSources: false },
+    principal,
+  );
+  // Trimmed BEFORE staging, so the staged copy is exactly the answer.
+  const result = trimPersonReadForModel(full);
 
   // Staged AFTER the memories merge, so the staged document is exactly what this
   // call returns. Best-effort, like record_read: a staging failure never fails
@@ -131,8 +139,62 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       ...result,
     };
   }
-  return result;
+  return {
+    ...result,
+    notes: [
+      ...(result.notes ?? []),
+      START_PROJECT_RULE,
+    ],
+  };
 }
+
+/**
+ * The model-facing answer: the full read minus what no reader of `person_read` uses.
+ * Pure; `project_create` never calls it, so the starting tree keeps everything.
+ *
+ * - every person but `persons[0]` (the subject) loses its `sources` refs;
+ * - a source no remaining ref points at, and that is not a memory (`artifact_url`, `text` or
+ *   `image_ref`), is dropped;
+ * - relationships keep their `sources` refs (issue #3229); source-evaluation's audit-list
+ *   rule leaves the ones that are not the subject's out, and issue #4420 owns trimming them;
+ * - `citation` goes from every source whose `url` carries a record-persona ARK
+ *   (`record_read` returns it); a source with no `1:1:` ARK keeps its own, the only
+ *   description of it an agent has;
+ * - `id` goes from every fact and name; `place` goes from a fact equal to its
+ *   `standard_place`.
+ * Person ids, source ids and `url`s, and the relationships' own refs stay.
+ */
+export function trimPersonReadForModel(result: PersonReadResult): PersonReadResult {
+  const trimFact = (f: TreeFact): TreeFact => {
+    const { id: _id, ...rest } = f;
+    if (rest.place !== undefined && rest.place === rest.standard_place) delete rest.place;
+    return rest;
+  };
+  const persons = result.persons.map((p, i) => {
+    const { sources: _sources, ...rest } = p;
+    const kept: TreePerson = i === 0 ? { ...p } : rest;
+    kept.names = p.names.map(({ id: _id, ...n }) => n);
+    if (p.facts) kept.facts = p.facts.map(trimFact);
+    return kept;
+  });
+  const relationships = result.relationships.map((r) =>
+    r.facts ? { ...r, facts: r.facts.map(trimFact) } : r,
+  );
+  const pointedAt = new Set<string>();
+  for (const holder of [...persons, ...relationships]) {
+    for (const { ref } of holder.sources ?? []) pointedAt.add(ref);
+  }
+  const sources = result.sources
+    .filter((s) => pointedAt.has(s.id) || s.artifact_url !== undefined || s.text !== undefined || s.image_ref !== undefined)
+    .map((s) => {
+      if (s.url === undefined || !RECORD_ARK.test(s.url)) return s;
+      const { citation: _citation, ...rest } = s;
+      return rest;
+    });
+  return { ...result, persons, relationships, sources };
+}
+
+const RECORD_ARK = /1:1:/;
 
 /** What a memory is, for a caller that classifies it: a `story` carries its own
  *  words, a `document` is a scan (an image or a PDF). */
@@ -161,10 +223,11 @@ export interface PersonReadOutcome {
  */
 export async function readPerson(
   personId: string,
-  opts: { projectPath?: string; deadline?: number },
+  opts: { projectPath?: string; deadline?: number; relativeSources?: boolean },
   principal: Principal,
 ): Promise<PersonReadOutcome> {
   const { projectPath } = opts;
+  const relativeSources = opts.relativeSources !== false;
   // Anchored HERE, before the tree read, so the read and the memories paging
   // are spent inside the same budget the 60s bridge abort measures.
   const deadline = opts.deadline ?? Date.now() + OCR_PHASE_BUDGET_MS;
@@ -204,7 +267,7 @@ export async function readPerson(
   // run in sequence the memories phase can consume all of it -- OCR waits out the full
   // budget -- after which every relative is skipped and the response carries a note
   // saying so instead of their sources.
-  const relativeIds = relativesWithRefs(result, resolvedId);
+  const relativeIds = relativeSources ? relativesWithRefs(result, resolvedId) : [];
   const relativesPending: Promise<RelativeSourcesResult> =
     relativeIds.length > 0
       ? // The `.catch` is load-bearing, not defensive. This promise is created BEFORE
@@ -1498,9 +1561,9 @@ function extractPersonRef(ref: string): string {
 
 // ─── Shape sources ───────────────────────────────────────────────────────
 
-/** FamilySearch's own `SD_*` entries are metadata, not sources. */
+/** FamilySearch's own `SD_*` entries (any case) are metadata, not sources. */
 function isMetadataSource(id: string): boolean {
-  return id.startsWith("SD_");
+  return id.toUpperCase().startsWith("SD_");
 }
 
 function shapeSources(
