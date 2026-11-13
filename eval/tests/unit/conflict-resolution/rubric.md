@@ -18,9 +18,11 @@ Did the skill apply the GPS preponderance hierarchy? Original sources outweigh d
 
 **Weighing may not rest on facts the record does not carry.** Where an assertion is recorded `information_quality: indeterminate` with an informant the record calls unknown, possible or likely, the weighing must treat that informant as undetermined. Naming them with a certainty the record withholds, giving them firsthand or eyewitness knowledge of the disputed fact, or assigning them a family relationship the project holds only as an unproved hypothesis, each fails the dimension — the last most seriously, because a resolution that assumes the parentage the research question is trying to prove is circular.
 
-- **pass:** `weighing_analysis` cites specific assertion attributes (informant proximity, temporal distance, source classification) and applies the preponderance hierarchy to them.
-- **partial:** Weighing is applied but invokes the hierarchy abstractly without grounding in the specific assertions' attributes.
-- **fail:** No weighing analysis; or the hierarchy is applied incorrectly (later recollection preferred over contemporary recording without justification); or the weighing contradicts the independence finding on the same write, however well either field reads alone; or it rests on an informant identity, relationship, or firsthand knowledge the record does not establish.
+**This dimension owns Part 4 of `resolution_rationale`** — the explanation of why the less reliable evidence exists. It is graded here and nowhere else, not under Completeness or Correctness.
+
+- **pass:** `weighing_analysis` cites specific assertion attributes (informant proximity, temporal distance, source classification) and applies the preponderance hierarchy to them. Part 4 of `resolution_rationale` names the historical pattern behind the less reliable evidence in plain words, and states the informant's relationship to the subject, whether they could have known the fact firsthand, and how long after the event they reported it.
+- **partial:** Weighing is applied but invokes the hierarchy abstractly without grounding in the specific assertions' attributes; or Part 4 names the pattern but omits one of the informant's relationship, firsthand knowledge, or time elapsed.
+- **fail:** No weighing analysis; or the hierarchy is applied incorrectly (later recollection preferred over contemporary recording without justification); or the weighing contradicts the independence finding on the same write, however well either field reads alone; or it rests on an informant identity, relationship, or firsthand knowledge the record does not establish; or Part 4 names no historical pattern, or cites "Appendix B" or any instruction document.
 
 ## Resolution completeness
 
