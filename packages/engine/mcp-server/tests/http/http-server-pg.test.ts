@@ -899,13 +899,19 @@ if (!DSN || !ENDPOINT) {
         expect(await res.json()).toEqual({ error: "Not found" });
       });
 
-      it("B's read_project_view on A's project is 403 and signs nothing", async () => {
+      it("B's read_project_view on A's project is refused as not B's and signs nothing", async () => {
         const a = await seedConnector();
         const b = await seedConnector();
         const projectPath = await seedOwned(a.userId, "A's alone");
         await ownedStore(projectPath, a.userId).writeBytes(projectPath, "images/scan.jpg", randomBytes(16));
         const r = await connCall(b.token, "read_project_view", { part: "image", id: "images/scan.jpg", projectPath });
-        expect(r.status, r.text).toBe(403);
+        // A refused tools/call on the connector path is a tool error carrying the door's
+        // message, so the card shows it as text.
+        expect(r.status, r.text).toBe(200);
+        expect(JSON.parse(r.text).result, r.text).toEqual({
+          content: [{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }],
+          isError: true,
+        });
         expect(r.text).not.toContain("/img");
         expect(r.text).not.toContain("expiresAt");
       });

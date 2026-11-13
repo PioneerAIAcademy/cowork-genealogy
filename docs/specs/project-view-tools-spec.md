@@ -270,15 +270,18 @@ is plain, not the dispatcher's `{"error":...}` JSON, because a card shows it.
 
 ### The door
 
-These happen before any tool runs, so they are HTTP refusals on `/mcp` and not tool
-results. A card's call sees a failed request.
+These happen before any tool runs. A `401` and a `400` are HTTP refusals on `/mcp`, and a
+card's call sees a failed request. A `tools/call` refused for the owner or the lookup is
+answered `200` with a tool error under the call's own id, so the model and the card read
+the door's message as text; a request with no tool call (`initialize`, `tools/list`, a
+notification) keeps the status in brackets.
 
 | Condition | Status | Message |
 |---|---|---|
 | No admitted connector token | `401`, with `WWW-Authenticate` | `Not authenticated. Sign in again to reconnect.` |
 | `projectPath` is not a string, or not `/proj_<16 hex>` | `400` | `projectPath must be /proj_ followed by 16 lowercase hex characters.` |
-| The project has another owner, or a NULL one | `403` | `This project is not yours.` |
-| The token or owner lookup fails | `503` | `Project authorization is unavailable.` |
+| The project has another owner, or a NULL one | `200`, `isError` (`403`) | `NOT_YOUR_PROJECT_MESSAGE`: `This project is not yours, so this call did not run. Use a projectPath that project_list returns.` |
+| The token or owner lookup fails | `200`, `isError` (`503`) | `AUTHORIZATION_UNAVAILABLE_MESSAGE`: `The server could not check this call just now, so it did not run. This is a temporary problem on the server, not a missing project and not a sign-in problem. Wait a moment and send the same call again.` |
 
 ### The page resource
 
@@ -360,7 +363,7 @@ differ, and the tool server accepts none of them:
 - `tests/http/http-server-pg.test.ts`, "the connector door (E1)", on real Postgres and
   MinIO: `/img` returning the bytes written; one owner's token never returning another's
   same-named image; a good token with no blob row; another owner's `read_project_view`
-  answering `403` and signing nothing; `show_project` on a fresh path leaving no
+  answering a tool error with `NOT_YOUR_PROJECT_MESSAGE` and signing nothing; `show_project` on a fresh path leaving no
   `projects` row.
 - `tests/viewer/`: the thin server, with its probes.
 - `make engine-smoke-http` and `make engine-smoke-stdio`: rows marked `connectorOnly` in
