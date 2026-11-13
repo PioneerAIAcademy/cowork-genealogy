@@ -455,8 +455,15 @@ then by persona: when the link's assertion carries a `record_persona_id` P that
 its record's assertions give exactly one role, and names no second person, an
 entry with `party_resolved`, `record_persona_id` P, the same `tree_person_id`,
 and a `record_role` the record gives P answers for that link. So one call per
-(persona, tree person) covers every fact of the persona that carries P except a
-relationship, marriage or other two-person assertion, which needs its own call. It rests on one assumption, stated
+(persona, tree person) covers every fact of the persona that carries P. A
+relationship, marriage or other two-person assertion is covered only when another
+link ties a one-party fact of P, and none of another party, to the same tree
+person (parties keyed by `recordPartyKeyer`);
+otherwise its link may be about the other party and it needs its own call. On a
+record whose assertions carry no persona id (a capture), for an assertion that
+reads as projected (`readsAsFetched`), the party is the `record_role`: an entry with `record_persona_id: null`, `record_source:
+"projection"` and that role answers for every fact of that role, under the same
+two-person rule. It rests on one assumption, stated
 rather than tested: a live `record_read` and a staged `record_read` or
 `record_search` of one record give its persons the same `id`, so the persona the
 fetched route resolves is the one extraction stamped. If they ever differ, the

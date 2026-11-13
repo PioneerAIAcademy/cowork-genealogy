@@ -706,13 +706,15 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 
 **1:many relationship with GedcomX:** Multiple research sources can reference the same `gedcomx_source_description_id`. This is the expected pattern when the same underlying record is accessed through different repositories — e.g., the 1850 census via FamilySearch (original image, `source_classification: "original"`) and via Ancestry (derivative index, `source_classification: "derivative"`). They are different sources of the same record, per GPS practice. The GedcomX source description represents the underlying record; the research sources represent distinct access paths with distinct classifications.
 
+**One record acquired twice is one source.** A record is often found first as an index entry and read again later from the register image; the second extraction refines the existing source in place rather than adding a new one (`extraction_append` reports this as `sourceReuse.action: "updated_existing"`). The source keeps the `log_entry_id` of the first acquisition — it answers "when did we first acquire this record?" — while each assertion's `log_entry_id` names the research act that produced that particular claim, so the two legitimately differ and neither is stale. Whether we examined the original is answered by `source_classification` together with `transcription`/`image_filename` (or an image ARK in `url`), never by comparing the two log ids. Do not reconcile them.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Source ID (`src_` prefix) |
 | `gedcomx_source_description_id` | string | yes | Foreign key to `tree.gedcomx.json` `sources[].id` |
 | `citation` | string | yes | Formatted citation per Evidence Explained |
 | `citation_detail` | object | yes | Structured citation breakdown. See below |
-| `source_classification` | `source_classification` | yes | Original, Derivative, or Authored — classified at the source level |
+| `source_classification` | `source_classification` | yes | Original, Derivative, or Authored — classified at the source level. `original` needs stored evidence: a `transcription`, an `image_filename`, or a FamilySearch image ARK in `url` (`research_append` refuses it otherwise; `guardrail-enforcement-spec.md` §5) |
 | `repository` | string | yes | Where this source is held |
 | `access_date` | string | yes | ISO 8601 date when the source was accessed |
 | `url` | string or null | no | URL to the digital source |
@@ -796,7 +798,7 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 
 | `fact_type` | Shape | Example |
 |-------------|-------|---------|
-| `name` | `{ "given", "surname" }` | `{ "given": "Patrick", "surname": "Flynn" }` |
+| `name` | `{ "given", "surname", "type"? }` — `type` is `birth`, `married`, `nickname` or `also_known_as`, written only by `extraction_append`'s documents path where the text says which; `materialize_facts` mints it as `BirthName`/`MarriedName`/`Nickname`/`AlsoKnownAs`, and any other value, or none, mints no type | `{ "given": "Grace", "surname": "Whitaker", "type": "birth" }` |
 | `birth`, `death`, `burial` | `{ "year", "place" }` | `{ "year": 1845, "place": "Ireland" }` — `year` as number for comparison |
 | `residence` | `{ "place" }` | `{ "place": "Schuylkill County, Pennsylvania" }` |
 | `marriage` | `{ "spouse_given", "spouse_surname", "place" }` | `{ "spouse_given": "Mary", "spouse_surname": "Kelly" }` |
