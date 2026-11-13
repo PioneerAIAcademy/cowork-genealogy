@@ -2,6 +2,12 @@
 // Packages the Cowork plugin at releases/genealogy-plugin.zip, or with
 // --connector, a versioned marketplace layout and connector zip.
 //
+// The connector build is ONE install: it adds a `.mcp.json` at the plugin's
+// root naming the remote tool server (--server-url), so installing the plugin
+// brings its connector with it. The Cowork build never carries one: there the
+// tool server is the .mcpb desktop extension, and a second registration of the
+// same tools under another name would leave every agent's `tools:` unmatched.
+//
 // Cross-platform (Node) replacement for the former package-plugin.sh, so it
 // runs natively wherever Node does -- no bash, and no `zip` binary (Git Bash
 // on Windows ships neither reliably). The .zip is written with a tiny built-in
@@ -67,10 +73,12 @@ function parseOptions() {
         version: { type: "string" },
         marketplace: { type: "string" },
         out: { type: "string" },
+        "server-url": { type: "string" },
       },
     });
-    if (!values.connector && [values.version, values.marketplace, values.out].some((v) => v !== undefined)) {
-      throw new Error("--version, --marketplace and --out require --connector");
+    const connectorOnly = [values.version, values.marketplace, values.out, values["server-url"]];
+    if (!values.connector && connectorOnly.some((v) => v !== undefined)) {
+      throw new Error("--version, --marketplace, --server-url and --out require --connector");
     }
     if (values.connector) {
       if (!values.version || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(values.version)) {
@@ -79,6 +87,12 @@ function parseOptions() {
       if (!values.marketplace || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(values.marketplace)) {
         throw new Error("--connector requires a kebab-case --marketplace name");
       }
+      if (!isServerUrl(values["server-url"])) {
+        throw new Error(
+          "--connector requires --server-url https://<host>/mcp, the tool server's public URL " +
+            "exactly as users reach it: https, a lowercase host, the path /mcp, and nothing else",
+        );
+      }
       if (values.out === "") throw new Error("--out must not be empty");
     }
     return values;
@@ -86,6 +100,34 @@ function parseOptions() {
     console.error(error.message);
     process.exit(1);
   }
+}
+
+/**
+ * The tool server's URL as the `.mcp.json` will carry it. Only the canonical
+ * spelling is accepted (it must survive `new URL` unchanged), so the URL a
+ * user's Claude connects to is byte for byte the one the server's metadata
+ * names: a typo here ships in every install and fails at sign-in.
+ */
+function isServerUrl(value) {
+  if (typeof value !== "string") return false;
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  return url.protocol === "https:" && value === `${url.origin}/mcp`;
+}
+
+/** The server's name in `.mcp.json`. Claude builds each tool's name from it
+ *  (`mcp__Genealogy_Research__…`), and every agent's `tools:` lists that
+ *  spelling from the same manifest field (tests/packaging/agent-tool-names.test.ts). */
+function connectorServerName() {
+  const manifest = JSON.parse(readFileSync(join(ROOT, "packages", "engine", "mcp-server", "manifest.json"), "utf8"));
+  if (typeof manifest.display_name !== "string" || !manifest.display_name) {
+    throw new Error("packages/engine/mcp-server/manifest.json has no display_name");
+  }
+  return manifest.display_name;
 }
 
 function pluginEntries() {
@@ -97,7 +139,7 @@ function pluginEntries() {
   }));
 }
 
-function packageConnector(entries, pluginJson, plugin, { version, marketplace, out }) {
+function packageConnector(entries, pluginJson, plugin, { version, marketplace, out, "server-url": serverUrl }) {
   out = out === undefined ? join(RELEASES, "plugin-marketplace") : resolve(out);
   if (isWithin(out, ROOT) || isWithin(PLUGIN, out)) {
     console.error("--out must not be the repo root, an ancestor of it, or inside packages/engine/plugin");
@@ -117,6 +159,14 @@ function packageConnector(entries, pluginJson, plugin, { version, marketplace, o
   }
   plugin.version = version;
   pluginJson.data = Buffer.from(JSON.stringify(plugin, null, 2) + "\n", "utf8");
+  // The shape Claude connected from in the live test (issue #3529, item 14): an
+  // http server at the plugin's root, under the name the agents' tool lists use.
+  const mcpJson = { mcpServers: { [connectorServerName()]: { type: "http", url: serverUrl } } };
+  entries.push({
+    name: ".mcp.json",
+    data: Buffer.from(JSON.stringify(mcpJson, null, 2) + "\n", "utf8"),
+    mtime: pluginJson.mtime,
+  });
   rmSync(out, { recursive: true, force: true });
   for (const { name, data } of entries) {
     const dest = join(out, "plugins", "genealogy-research", name);

@@ -45,6 +45,7 @@ from web.app import (  # noqa: E402
     EmailTaken,
     EventRow,
     IdentityMismatch,
+    NoAccount,
     ProjectNotOwned,
     SessionBusy,
     SessionRetired,
@@ -112,6 +113,12 @@ class FakeStore:
         self.openrouter_keys: dict[str, str] = {}
         # #3992: signin_states, state_sha256 -> used_at (None while unused).
         self.signin_states: dict[str, datetime | None] = {}
+        # #3997: authorization_codes and connector_tokens by sha256, users.terms_accepted_at,
+        # and the clock their expiry reads (a test moves it).
+        self.authorization_codes: dict[str, dict[str, Any]] = {}
+        self.connector_tokens: dict[str, dict[str, Any]] = {}
+        self.terms_accepted: dict[str, datetime] = {}
+        self.now = lambda: datetime.now(tz=timezone.utc)
 
     def seed_session(
         self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
@@ -273,7 +280,8 @@ class FakeStore:
     async def get_user(self, user_id: str) -> User | None:
         return self.users.get(user_id)
 
-    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None,
+                          create: bool = True, accept_terms: bool = False) -> User:
         """PgStore.upsert_user's four steps (#3992), without the locks."""
         email = email.strip().lower()
         by_email = next((u for u in self.users.values() if u.email == email), None)
@@ -290,10 +298,14 @@ class FakeStore:
             if familysearch_id and not user.familysearch_id and user.blocked_at is None:
                 user = dataclasses.replace(user, familysearch_id=familysearch_id)
         else:
+            if not create:
+                raise NoAccount(email)
             if max_users is not None and len(self.users) >= max_users:
                 raise AdmissionRefused(email)
             user = User(f"usr_{len(self.users) + 1}", email, familysearch_id=familysearch_id or None)
         self.users[user.id] = user
+        if accept_terms and user.blocked_at is None:
+            self.terms_accepted.setdefault(user.id, self.now())
         return user
 
     async def create_signin_state(self, state_sha256: str) -> None:
@@ -319,7 +331,40 @@ class FakeStore:
         self.allowed = set(emails)
 
     async def revoke_sessions(self, user_id: str) -> None:
-        self.users[user_id] = dataclasses.replace(self.users[user_id], sessions_revoked_at=datetime.now(tz=timezone.utc))
+        now = datetime.now(tz=timezone.utc)
+        self.users[user_id] = dataclasses.replace(self.users[user_id], sessions_revoked_at=now)
+        # #3997: sign-out also ends the user's connector tokens and unexchanged codes.
+        for token in self.connector_tokens.values():
+            if token["user_id"] == user_id and token["ended_at"] is None:
+                token["ended_at"] = now
+        self.authorization_codes = {k: v for k, v in self.authorization_codes.items() if v["user_id"] != user_id}
+
+    async def issue_authorization_code(self, code_sha256: str, user_id: str, pending: dict[str, Any],
+                                       lifetime_s: int) -> None:
+        """PgStore's, with a clock of its own (``self.now``) in place of Postgres's."""
+        self.authorization_codes[code_sha256] = {
+            "user_id": user_id, **{k: pending[k] for k in (
+                "client_id", "redirect_uri", "redirect_uri_provided_explicitly", "code_challenge", "scopes", "resource",
+            )},
+            "expires_at": self.now() + timedelta(seconds=lifetime_s),
+        }
+
+    async def load_authorization_code(self, code_sha256: str) -> dict[str, Any] | None:
+        row = self.authorization_codes.get(code_sha256)
+        if row is None or row["expires_at"] <= self.now():
+            return None
+        return {k: v for k, v in row.items() if k != "expires_at"}
+
+    async def exchange_authorization_code(self, code_sha256: str, token_sha256: str, lifetime_s: int) -> bool:
+        row = self.authorization_codes.get(code_sha256)
+        if row is None or row["expires_at"] <= self.now():
+            return False
+        del self.authorization_codes[code_sha256]
+        self.connector_tokens[token_sha256] = {
+            "user_id": row["user_id"], "client_id": row["client_id"], "scopes": row["scopes"],
+            "resource": row["resource"], "expires_at": self.now() + timedelta(seconds=lifetime_s), "ended_at": None,
+        }
+        return True
 
     async def store_grant(self, user_id: str, access_token_enc: str, refresh_token_enc: str | None,
                           expires_at: datetime) -> None:
@@ -1470,7 +1515,8 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
             "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS",
-            "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED", "FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")
+            "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED", "FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE",
+            "OAUTH_ISSUER")
 
 
 @pytest.fixture(autouse=True)

@@ -10,7 +10,7 @@
       "control-flow",
       "continuation",
       "search-continue-authorized-in-message",
-      "topical-fixture-required",
+      "census-search",
       "direct-arm"
     ]
   },
@@ -19,7 +19,6 @@
     "scenario": "search-continue-authorized-in-message"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-1880-census-sheahan",
     "record-search-church-sheahan-collectionid",
     "record-search-church-sheahan-anyplace",
@@ -33,8 +32,7 @@
     "Non-compliant behavior: a `record_search` for pli_002, a log entry for it, or a status update moving it off `planned` in this call.",
     "This judges CONTROL FLOW via base Completeness, not search quality -- do not score Completeness down for imperfect query construction on pli_001 (that is Search strategy's and Tool Arguments' job); score Completeness low ONLY for executing pli_002 in this call.",
     "If the agent stops before pli_001 completes for a reason like an authentication error, that is not a Completeness violation of this rule.",
-    "SCOPE NOTE: the message explicitly says extraction will be handled separately, precisely so the agent stays on the search this test is about. If it nonetheless attempts to delegate to extraction, note it, but do not let a downstream tool-scoping problem inside that delegation drag down Completeness.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+    "SCOPE NOTE: the message explicitly says extraction will be handled separately, precisely so the agent stays on the search this test is about. If it nonetheless attempts to delegate to extraction, note it, but do not let a downstream tool-scoping problem inside that delegation drag down Completeness."
   ],
   "judge_reads_files": true,
   "execution": {
