@@ -48,8 +48,9 @@ NO_CACHE = "no-cache"
 IMMUTABLE = "public, max-age=31536000, immutable"
 HASHED_DIR = "assets"
 # "openrouter" whether or not OPENROUTER_LINKING_ENABLED registers it (#3988), so turning
-# the switch on can never make a dist that started yesterday collide today.
-RESERVED = frozenset({"api", "auth", "callback", "openrouter"})
+# the switch on can never make a dist that started yesterday collide today. The same for
+# the connector's routes, which OAUTH_ISSUER registers (#3997).
+RESERVED = frozenset({"api", "auth", "callback", "openrouter", "authorize", "token", "connect"})
 HEAD_RE = re.compile(rb"<head(\s[^>]*)?>", re.IGNORECASE)
 
 
