@@ -1,5 +1,5 @@
 import type { Locality } from '@genealogy/schema'
-import { statusLabel } from '@genealogy/viewer-ui'
+import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import { list, strings } from '../cards/kit/view'
 import { plainProse, Prose } from '../rules/Prose'
 import { overturnRisk } from './case-model'

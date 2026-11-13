@@ -1,5 +1,5 @@
 import type { Assertion, Conflict, Hypothesis, NotReachedEntry, PlanItem, ProofSummary, Question, Source } from '@genealogy/schema'
-import { statusLabel } from '@genealogy/viewer-ui'
+import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import { isLive, list, strings } from '../cards/kit/view'
 import type { DerivedQuestion, ResearchDocument } from '../contract'
 import { isPageImageArk, type RuleIndex } from '../rules/rule-index'

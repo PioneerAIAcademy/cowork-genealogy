@@ -1,5 +1,5 @@
 import type { Question } from '@genealogy/schema'
-import { statusLabel } from '@genealogy/viewer-ui'
+import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import { useEffect, useState } from 'react'
 import { conclusionLine, reviewer } from '../cards/kit/conclusion'
 import { questionSearches, recordsKept } from '../cards/kit/searches'

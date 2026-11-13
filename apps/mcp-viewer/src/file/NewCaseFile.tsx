@@ -76,14 +76,17 @@ function SearchBox() {
 
 /** The new case file: pages with content, a search box over all of it, and one pane beside the page. */
 export function NewCaseFile({ session, input }: { session: Session; input: ToolInput }) {
-  const { fileDocument } = useSyncExternalStore(session.subscribe, session.getState)
+  const { fileDocument, fileLogId } = useSyncExternalStore(session.subscribe, session.getState)
   const document: ProjectDocument = fileDocument ?? {}
   const research = document.research ?? {}
   const index = useMemo(() => buildRuleIndex({ research, tree: document.tree }), [research, document.tree])
   const pages = pagesWithContent(research, document.collections)
   const wanted = typeof input.page === 'string' && pages.includes(input.page as PageKey) ? (input.page as PageKey) : null
   const [page, setPage] = useState<PageKey | null>(wanted)
-  const [pane, setPane] = useState<PaneTarget | null>(() => initialPane(input))
+  // A card's button names its search in the session; a typed `show: file` names it in the input.
+  const [pane, setPane] = useState<PaneTarget | null>(() =>
+    fileLogId ? { kind: 'search', id: fileLogId } : initialPane(input)
+  )
   const [focus, setFocus] = useState<CaseFocus | null>(() => {
     const questionId = typeof input.questionId === 'string' ? input.questionId : undefined
     const planItemId = typeof input.planItemId === 'string' ? input.planItemId : undefined

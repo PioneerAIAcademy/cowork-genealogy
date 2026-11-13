@@ -1,5 +1,5 @@
 import type { Source } from '@genealogy/schema'
-import { statusLabel } from '@genealogy/viewer-ui'
+import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import { useCallback, useEffect, useState } from 'react'
 import { outcomeWords } from '../cards/kit/searches'
 import { list } from '../cards/kit/view'

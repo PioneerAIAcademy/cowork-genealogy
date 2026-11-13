@@ -1,13 +1,13 @@
 import type { GedcomxData, ResearchData } from '@genealogy/schema'
-import {
-  resolveFamilySearchTarget,
-  type ExternalCollectionsData,
-  type FeedbackResult,
-  type ProjectStateSnapshot,
-  type ResearchTransport,
-  type SidecarRead,
-  type SubscriptionHandlers
+import type {
+  ExternalCollectionsData,
+  FeedbackResult,
+  ProjectStateSnapshot,
+  ResearchTransport,
+  SidecarRead,
+  SubscriptionHandlers
 } from '@genealogy/viewer-ui'
+import { resolveFamilySearchTarget } from '@genealogy/viewer-ui/familysearch-url'
 import type { ProjectDocument } from '../contract'
 import { httpsUrl } from '../rules/links'
 

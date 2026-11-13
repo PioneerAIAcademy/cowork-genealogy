@@ -1,5 +1,5 @@
 import type { Assertion, LogEntry, PersonEvidence, Source } from '@genealogy/schema'
-import { statusLabel } from '@genealogy/viewer-ui'
+import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import type { ResearchDocument } from '../contract'
 import { isLive, list, strings } from '../cards/kit/view'
 import { recordTitle } from '../rules/prose-markdown'

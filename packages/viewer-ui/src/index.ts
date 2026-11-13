@@ -18,7 +18,7 @@ export type {
 
 export { setOpenExternal, openExternal, setOpenFamilySearch, openFamilySearch } from './lib/external'
 export { resolveFamilySearchTarget } from './lib/familysearch-url'
-export { statusLabel } from './components/shared/StatusBadge'
+export { statusLabel } from './lib/status-label'
 export { sectionComponents } from './sections'
 export { PrintModeContext } from './contexts/PrintModeContext'
 export { EXTERNAL_COLLECTIONS_FILE } from './lib/externalCollections'

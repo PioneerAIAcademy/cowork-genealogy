@@ -126,9 +126,40 @@ describe('the new case file', () => {
     expect(text(pane())).toContain('Elizabeth Mariah Turnbow')
   })
 
-  it('show: file with no page still opens the case file of today', async () => {
+  it('show: file with no page opens on its first page', async () => {
     await fileOn(COMPOUND_DOC(), {})
+    expect(document_().querySelector('.file-main h2')?.textContent).toBe('The case')
+  })
+
+  it("a card's buttons open this file: Open the case file, and See the results with its search in the pane", async () => {
+    const { app } = await fileOn(COMPOUND_DOC(), { show: 'search', logId: 'log_002' })
     expect(screen.queryByRole('navigation', { name: 'Pages' })).toBeNull()
-    await waitFor(() => expect(screen.getByText('Research Viewer')).toBeTruthy())
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'See the results' }))
+    })
+    expect(screen.getByRole('navigation', { name: 'Pages' })).toBeTruthy()
+    await waitFor(() => expect(text(pane())).toContain('What it found'))
+    expect(app.reads().filter((r) => r?.part === 'document')).toHaveLength(1)
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Back to the card' }))
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open the case file' }))
+    })
+    expect(document_().querySelector('.file-main h2')?.textContent).toBe('The case')
+  })
+
+  it('a link in agent prose opens once through the host and never moves the frame', async () => {
+    const doc = COMPOUND_DOC()
+    doc.research!.proof_summaries![0].narrative_markdown += '\n\nSee [x](https://evil.example) and https://example.com/page.'
+    const { app } = await fileOn(doc, { page: 'case' })
+    for (const href of ['https://evil.example', 'https://example.com/page']) {
+      const anchor = document_().querySelector(`a[href="${href}"]`) as HTMLAnchorElement
+      const click = new MouseEvent('click', { bubbles: true, cancelable: true })
+      anchor.dispatchEvent(click)
+      expect(click.defaultPrevented).toBe(true)
+    }
+    await waitFor(() => expect(app.openLink).toHaveBeenCalledTimes(2))
+    expect(app.openLink.mock.calls.map(([p]) => p.url)).toEqual(['https://evil.example/', 'https://example.com/page'])
   })
 })

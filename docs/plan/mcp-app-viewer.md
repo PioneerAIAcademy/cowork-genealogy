@@ -706,6 +706,11 @@ project produces a file that carries the rating and the reviewer's verdict.
 
 ### M3: The new case file and the demo script (before the demo)
 
+**Built so far:** the shell, pane and search box, The case, Sources and Log. The new file
+replaced `ViewerBody` early (lead, 2026-11-13), to keep the page near the size M0 tested:
+`ViewerBody` had taken it to 1.11 MB, and the swap brings it to 904 KB. People and Compare
+are not built, so timelines, namesakes and rejected links are unreachable until they land.
+
 The new file replaces `ViewerBody`: its shell, right-hand pane and search box; The
 case with So far, the evidence grid and Leads; Compare with FamilySearch; People,
 Sources and Log; and `show_project` opening each page by id. A record's search results,

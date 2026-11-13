@@ -1,4 +1,4 @@
-import { statusLabel } from '@genealogy/viewer-ui'
+import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import type { QuestionState } from '../../contract'
 
 /** A stored value as the researcher reads it: a tier, a shortfall, a verdict. */

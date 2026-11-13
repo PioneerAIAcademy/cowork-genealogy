@@ -1,5 +1,5 @@
-/** Where each of today's viewer sections lives in the new case file. M3-4 retires
- *  `ViewerBody` only when no row is pending. */
+/** Where each of the old viewer's sections lives in the new case file. A pending row is
+ *  content the card's case file cannot reach until that PR lands. */
 export const SECTION_HOMES: Record<string, string> = {
   project_overview: 'The case: the objective and subjects at its top, then So far or the conclusion',
   questions: 'The case: the question switch, each question with its rationale and stop criteria',
