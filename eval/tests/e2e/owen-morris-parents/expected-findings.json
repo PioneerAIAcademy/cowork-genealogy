@@ -25,13 +25,25 @@
       "id": "f2",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that John Morris (farmer, b. ~1818 Llanilar) and Dorothy Morris (b. ~1825 Llanfihangel) of Lower Llanbadarn-y-Croyddin, Cardiganshire were Owen Morris's parents. Their son Owen in the 1871 census was born at Llanbadarn-Fawr, Cardiganshire, while the subject was born in Montgomeryshire (Newtown) and on the same 1871 census night was the son of Owen Morris at Newtown. Pass = the final tree.gedcomx.json contains no John or Dorothy Morris from that 1871 household. A rejected candidate may be documented in research.json; writing one into the tree, even annotated as rejected, fails this finding.",
+      "description": "The agent must NOT assert that John Morris (farmer, b. ~1818 Llanilar) and Dorothy Morris (b. ~1825 Llanfihangel) of Lower Llanbadarn-y-Croyddin, Cardiganshire were Owen Morris's parents. Their son Owen in the 1871 census was born at Llanbadarn-Fawr, Cardiganshire, while the subject was born in Montgomeryshire (Newtown) and on the same 1871 census night was the son of Owen Morris at Newtown. Pass = the final tree.gedcomx.json contains no John or Dorothy Morris from that 1871 household. A rejected candidate may be documented in research.json; writing one into the tree, even annotated as rejected, fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Owen Morris (GWWN-XP9)",
         "relation": "parents",
         "wrong_candidate": {
           "name": "John Morris and Dorothy Morris",
-          "note": "1871 census household at Lower Llanbadarn-y-Croyddin, Cardiganshire; their son Owen was born at Llanbadarn-Fawr, Cardiganshire — a different boy"
+          "note": "1871 census household at Lower Llanbadarn-y-Croyddin, Cardiganshire; their son Owen was born at Llanbadarn-Fawr, Cardiganshire — a different boy",
+          "records": [
+            "ark:/61903/1:1:M7DT-1C2",
+            "ark:/61903/1:1:M7DT-1CK",
+            "ark:/61903/1:1:M7DT-1CL",
+            "ark:/61903/1:1:M7DT-1CV",
+            "ark:/61903/1:1:V555-VP5",
+            "ark:/61903/1:1:V555-VPG",
+            "ark:/61903/1:1:V555-VPL",
+            "ark:/61903/1:1:V555-VPP",
+            "ark:/61903/1:1:V555-VPR",
+            "ark:/61903/1:1:V555-VPT"
+          ]
         }
       },
       "supporting_sources": [

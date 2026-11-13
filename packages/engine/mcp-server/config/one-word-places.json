@@ -3,16 +3,16 @@
   "what": "One-word place texts, folded, and the FamilySearch place each standardizes to: the lead's 2026-10-26 list, with each entry's condition on the record's country or on the accents as written.",
   "source": "one_word_places_final.json",
   "source_version": 2,
-  "source_sha256": "51c0b9c49d4d2997fb20f77a05791b1eec9f7dc813e2958aa8c256970ebe5a78",
+  "source_sha256": "aa7345c12f1a8eaf0998a0a3ed708035e7a8915ed400c6579e738f87338e084a",
   "built_by": "dev/build-one-word-places.ts",
-  "entries": 1124,
+  "entries": 1126,
   "by_kind": {
-   "always": 1084,
+   "always": 1086,
    "except_record_countries": 3,
    "record_country": 35,
    "accented_spellings": 2
   },
-  "entries_sha256": "f467c82aacbe37193a377958afdf02c7f8f661345981411452f5d9a9fddf6398"
+  "entries_sha256": "747ef9c8c2089b902e35c3b1ca030317027ac9f0a4af15e05e6ddb0780b980f2"
  },
  "entries": {
   "aabenraa": "Aabenraa, Denmark",
@@ -449,6 +449,7 @@
   "gelderland": "Gelderland, Netherlands",
   "geneva": "Geneva, Switzerland",
   "georgia": "Georgia, United States",
+  "georgia republic": "Republic of Georgia",
   "ger": "Germany",
   "germany": "Germany",
   "ghana": "Ghana",
@@ -1119,6 +1120,7 @@
   "tacuarembo": "Tacuarembó, Uruguay",
   "tamaulipas": "Tamaulipas, Mexico",
   "tasmania": "Tasmania, Australia",
+  "tbilisi": "Tbilisi, Republic of Georgia",
   "telemark": "Telemark, Norway",
   "temixtitan": "Mexico",
   "tenn": "Tennessee, United States",

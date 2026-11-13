@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_search_hints_012",
+    "skill": "search-hints",
+    "name": "A sign-in message: the hints item is left as it was, and the user gets the tool's message",
+    "type": "positive",
+    "description": "The router hands search-hints the planned hints item pli_007 for Patrick Flynn (LZNY-BRF), and person_record_matches answers with a sign-in message: the user is not logged in to FamilySearch. A lapsed session is not an inaccessible source, so triage leaves pli_007 exactly as it was (planned, no skip fields), logs nothing, gives the user the tool's message, and stops (issue #3995).",
+    "tags": [
+      "triage",
+      "writes-nothing",
+      "item-ends:untouched",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Review the pending FamilySearch hints on Patrick Flynn for plan item pli_007.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-hints-item"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-refused",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "person_record_matches returns a sign-in message: \"User is not logged in to FamilySearch. Call the login tool to authenticate.\" The hints could not be read; that is not the same as there being no hints",
+    "The hints item pli_007 is left exactly as it was: still planned, with no status write and no skip_category. Setting it skipped or inaccessible is wrong here, because signing in again makes the hints readable",
+    "No log entry is written, and in particular no negative entry claiming there are no hints",
+    "No hint lines or recommendations are invented for hints that were never read",
+    "The reply gives the user the tool's message that they are not logged in to FamilySearch, in the tool's words or close to them, and stops. search-hints holds no login tool, so calling one is not expected"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

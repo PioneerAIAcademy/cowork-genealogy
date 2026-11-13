@@ -76,6 +76,10 @@ proto-web = [
     # store; proto/web/sidecar.py needs a client. Imported lazily, so a deployment
     # with no blob store still serves every other route.
     "boto3>=1.34,<2",
+    # #3997: the connector's authorization server runs on the SDK's /authorize and /token
+    # handlers (proto/web/connector_auth.py). Imported lazily, only with OAUTH_ISSUER set.
+    # The same range as the dev group's, which the suite installs.
+    "mcp>=1.28.1,<2",
 ]
 # The SDK pin is the flush-mode pin (session_store_flush="eager" is SDK-side) and the CLI
 # pin (the wheel bundles Claude Code). Same version as `sandbox`: every tier runs one CLI.

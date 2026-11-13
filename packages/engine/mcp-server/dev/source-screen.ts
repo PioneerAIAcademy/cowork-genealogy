@@ -1013,11 +1013,6 @@ export function donorTitle(record: Json, donorArk: string): string {
   return collection ? `${name}, "${collection}"` : name;
 }
 
-function donorCitation(record: Json, title: string, donorArk: string): string {
-  const rec = (record?.sources ?? []).find((s: Json) => /^record$/i.test(String(s?.resource_type ?? "")));
-  return rec?.citation ?? `${title}, FamilySearch (https://www.familysearch.org/${donorArk})`;
-}
-
 /**
  * Add the donor source to a copy's person-read, tree and audit, at the subject
  * level, looking like the tree's own sources. Pure: returns new documents.
@@ -1035,7 +1030,6 @@ export function applyWrongPersonPlant(
   const source = {
     id: sourceId,
     title,
-    citation: donorCitation(donorRecord, title, donorArk),
     url: `https://www.familysearch.org/${donorArk}`,
   };
   for (const doc of [read, tree]) {

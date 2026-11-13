@@ -54,6 +54,7 @@ import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/co
 import {
   readMatchScores,
   findRecordedScore,
+  readsAsFetched,
   type MatchScoreFile,
   type ScoredPersona,
 } from "../utils/match-scores.js";
@@ -2410,6 +2411,9 @@ function personEvidenceScoreInvariants(
   // Assertion ids this very call creates. They cannot carry a score yet, and the
   // refusal has to say so rather than prescribe an impossible `same_person` call.
   createdAssertions?: ReadonlySet<string>,
+  // The links this call leaves standing, which say whether a two-party
+  // assertion's link is about its own party (`scoredPersonaOf`).
+  personLinks?: ReadonlyArray<PersonLink>,
 ): string[] {
   const assertions: any[] = research?.assertions ?? [];
   // The batch map first: it carries the ids this call's own assertion appends
@@ -2476,13 +2480,13 @@ function personEvidenceScoreInvariants(
   // called with and the pair this entry carries. Keying on the PARTY instead
   // could not see a score written by the fetched route, which resolves a real
   // persons[].id where the assertion carries null. Then the persona arm: a score
-  // that compared this assertion's verified persona with this tree person
-  // answers for every fact of that persona (#3552; match-scores.ts header). A
-  // second persona of the record is a different persona, so ADR-0009
-  // constraint 3 holds.
+  // that compared this assertion's party with this tree person answers for every
+  // fact of that party (#3552; match-scores.ts header). A second party of the
+  // record is a different party, so ADR-0009 constraint 3 holds.
   const file = matchScores.get(recordId) ?? null;
-  const persona = scoredPersonaOf(assertion, recordId, assertions, batchAssertions);
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id, persona) !== null) return [];
+  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
+  const persona = scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
+  if (persona && findRecordedScore(file, null, entry.person_id, persona) !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
@@ -2498,8 +2502,13 @@ function personEvidenceScoreInvariants(
     : "";
   // The persona arm is why one call is enough per persona; say so, or the agent
   // repeats the identical call for each fact.
+  const partyName = persona
+    ? persona.personaId !== null
+      ? `persona '${persona.personaId}'`
+      : `the '${[...persona.roles][0]}' party`
+    : "";
   const personaHint = persona
-    ? ` One score covers every fact of persona '${persona.personaId}' on this record: score it ` +
+    ? ` One score covers every fact of ${partyName} on this record: score it ` +
       `once for '${entry.person_id}' and the links for its other facts need no further call.`
     : "";
   // An assertion this same call CREATES cannot already have a score: `same_person`
@@ -2528,25 +2537,59 @@ function personEvidenceScoreInvariants(
   ];
 }
 
-/** The persona a link's assertion is about, with the roles its record gives it,
- *  or undefined when no score can be shared: the assertion carries no persona
- *  id; it names a second person (`isTwoParty`), so its link may be about that
- *  other party; or the record gives the id to more than one role, so it names no
- *  single party (`same_person` passes over such an id the same way). The
- *  record's assertions are gathered with `sameRecord`, the rule `same_person`
- *  scores by, from `batchAssertions` (the document plus this call's appends)
- *  when given. */
+/** The party a link's assertion is about, with the roles its record gives it,
+ *  or undefined when no score can be shared. The party is the assertion's
+ *  persona id, or, on a record whose live assertions carry no persona id at all
+ *  (a capture), its `record_role`, which is how the projection `same_person`
+ *  scores there groups the record. None when the assertion carries no persona
+ *  id on a record that names some, since only a fetch could say which persona it
+ *  is; when it carries none and reads as fetched (`readsAsFetched`), since that
+ *  score files the fetched persona's id; when the record gives the id to more
+ *  than one role, so it names no single party (`same_person` passes over such an
+ *  id the same way); and when it names a second person (`isTwoParty`), unless
+ *  the one-party facts of the record linked to the same tree person all fall in
+ *  this party under `recordPartyKeyer` (the key the relational gates use), and
+ *  at least one does. The record's live assertions are gathered with
+ *  `sameRecord`, the rule `same_person` scores by, from `batchAssertions` (the
+ *  document plus this call's appends) when given. */
 function scoredPersonaOf(
   assertion: any,
+  entry: any,
   recordId: string,
+  log: unknown,
   assertions: readonly any[],
   batchAssertions?: Map<string, any>,
+  personLinks?: ReadonlyArray<PersonLink>,
 ): ScoredPersona | undefined {
-  const personaId = assertion?.record_persona_id;
-  if (typeof personaId !== "string" || personaId === "" || isTwoParty(assertion?.fact_type)) return undefined;
   const pool = batchAssertions ? [...batchAssertions.values()] : assertions;
-  const roles = personaRolesById(pool.filter((a) => sameRecord(a?.record_id, recordId))).get(personaId);
-  return roles !== undefined && roles.size === 1 ? { personaId, roles } : undefined;
+  const onRecord = pool.filter((a) => isLiveAssertion(a) && sameRecord(a?.record_id, recordId));
+  const rolesById = personaRolesById(onRecord);
+  const pid = assertion?.record_persona_id;
+  let party: ScoredPersona | undefined;
+  if (typeof pid === "string" && pid !== "") {
+    const roles = rolesById.get(pid);
+    if (roles !== undefined && roles.size === 1) party = { personaId: pid, roles };
+  } else {
+    const role = assertion?.record_role;
+    if (
+      rolesById.size === 0 && typeof role === "string" && role !== "" && role !== "absent" &&
+      !readsAsFetched(assertion, log)
+    ) {
+      party = { personaId: null, roles: new Set([role]) };
+    }
+  }
+  if (party === undefined || !isTwoParty(assertion?.fact_type)) return party;
+  const partyKey = recordPartyKeyer(onRecord);
+  const own = partyKey(assertion);
+  if (own === null) return undefined;
+  const byId = new Map(onRecord.map((a) => [a?.id, a]));
+  const linked = new Set<string | null>();
+  for (const l of personLinks ?? []) {
+    if (l.person_id !== entry.person_id || l.assertion_id === entry.assertion_id) continue;
+    const other = byId.get(l.assertion_id);
+    if (other && !isTwoParty(other.fact_type)) linked.add(partyKey(other));
+  }
+  return linked.size === 1 && linked.has(own) ? party : undefined;
 }
 
 /** Whether a record persona `same_person` could score against is reachable for
@@ -5010,8 +5053,8 @@ export function namesakeCitationRefusals(
             `'${c.personId}' has a recorded namesake (${named.map((r: any) => `'${r.id}'`).join(", ")}), so a record goes ` +
             `onto '${c.personId}''s facts and names only when something in it ties it to '${c.personId}'. The ` +
             `${c.label} this op ${c.added ? "adds" : "changes"} cites ${ref} (research source '${src}'), and ${reason}. ` +
-            `Nothing was written. Cite only records that tie to '${c.personId}', or hand the link to the ` +
-            "person-evidence agent, which owns person_evidence, to tie it first; a relationship added in this same " +
+            `Nothing was written. Cite only records that tie to '${c.personId}', or return ` +
+            "`Hand-back: person-evidence` so the person-evidence agent, which owns person_evidence, ties it first; a relationship added in this same " +
             "call does not count, so add it in an earlier call.",
         });
       }
@@ -5039,7 +5082,38 @@ export function namesakeCallCheck(
       .filter((id: unknown) => !rowIdsBefore.has(id)),
   );
   const findings: Array<{ index: number | null; message: string }> = [];
-  for (const { entry, rows, pairs, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree })) {
+  const asserted = assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree });
+  const assertedIds = new Set(asserted.map((a) => a.entry?.id));
+  // The person's links the cap would refuse that this call did not assert, by
+  // source: a refusal names them, so lowering the new link is not taken for
+  // the whole fix while an older link from the same record stands above it.
+  const standing = new Map<string, Map<string, string[]>>();
+  const standingOn = (p: string, source: string): string[] => {
+    let bySource = standing.get(p);
+    if (!bySource) {
+      bySource = new Map();
+      standing.set(p, bySource);
+      const v = namesakeVerdicts(p, after.research, after.tree, {
+        startingPersonIds,
+        voucherPairs: vouchingPairs(before, after),
+        derivedPairs: true,
+        startingTree,
+      });
+      const byId = new Map<string, any>(
+        ((after.research?.person_evidence ?? []) as any[]).filter((e) => e && typeof e.id === "string").map((e) => [e.id, e]),
+      );
+      for (const [id, other] of v?.verdicts ?? []) {
+        if (other.allowed || assertedIds.has(id)) continue;
+        const e = byId.get(id);
+        if (!e) continue;
+        const list = bySource.get(other.source) ?? [];
+        list.push(`'${id}' (assertion '${e.assertion_id}', '${e.confidence}')`);
+        bySource.set(other.source, list);
+      }
+    }
+    return bySource.get(source) ?? [];
+  };
+  for (const { entry, rows, pairs, verdict } of asserted) {
     if (verdict.allowed) continue;
     // #4226: as in `circularCorroborationCallCheck` — the cap judges a (person,
     // record) pairing, which a derived row shares with its trigger, so its
@@ -5052,7 +5126,14 @@ export function namesakeCallCheck(
         break;
       }
     }
-    findings.push({ index, message: namesakeRefusal(entry, rows, verdict, addedInCall, pairs) });
+    const others = standingOn(entry.person_id, verdict.source);
+    const tail =
+      others.length > 0
+        ? ` The same cap holds ${others.join(", ")} from source '${verdict.source}' on '${entry.person_id}', ` +
+          `which this call leaves as it is: lower ${others.length > 1 ? "them" : "it"} to 'speculative' in this ` +
+          `call too, unless you first link what ties them.`
+        : "";
+    findings.push({ index, message: namesakeRefusal(entry, rows, verdict, addedInCall, pairs) + tail });
   }
   return findings;
 }
@@ -5525,6 +5606,7 @@ export async function mergeLinkCheckRefusals(
       ...unexplainedMoveInvariants(entry, after.research, after.tree, batchAssertions),
       ...personEvidenceScoreInvariants(
         entry, after.research, after.tree, matchScores, batchAssertions, false, startingPersonIds, new Set<string>(),
+        personLinks,
       ),
     ];
     for (const f of findings) {
@@ -9920,6 +10002,7 @@ function applyOne(
           op.op === "append",
           startingPersonIds,
           createdAssertions,
+          personLinks,
         ),
       );
     }
@@ -10694,6 +10777,70 @@ async function checkLocalityFirstPlaces(
 function localityBody(op: any): unknown {
   if (!op || op.section !== "localities") return undefined;
   return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+}
+
+/** The locality-guide template's level-two headings a saved guide must carry
+ *  (spec §5.14). The template is `agents/locality-guide.md`'s output format;
+ *  `tests/packaging/locality-guide-headings.test.ts` fails when they part. */
+export const LOCALITY_GUIDE_HEADINGS = ["Jurisdiction overview", "Available record types", "Research tips"] as const;
+
+/** `_heading()` in eval/harness/validators/test_locality_guide.py, which grades
+ *  the saved guide: `^##[ \t]+<title>` under Python's IGNORECASE | MULTILINE.
+ *  The lookbehind and `u` keep it to Python's answers: JS `m` also starts a line
+ *  after a lone `\r`, U+2028 and U+2029, and `i` without `u` does not fold `ſ`.
+ *  Python alone still matches `İ` or `ı` for an `i`. */
+const GUIDE_HEADING_PATTERNS = LOCALITY_GUIDE_HEADINGS.map(
+  (title) => [title, new RegExp(`(?<![^\\n])##[ \\t]+${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "iu")] as const,
+);
+
+/** The template headings `markdown` lacks, in template order. */
+export function missingGuideHeadings(markdown: string): string[] {
+  return GUIDE_HEADING_PATTERNS.filter(([, pattern]) => !pattern.test(markdown)).map(([title]) => title);
+}
+
+/**
+ * Refuse a `localities` write whose `guide_markdown` lacks a template heading
+ * (spec §5.14). Runs on an append, and on an update whose `fields` set the key. An
+ * absent key and `null` are the schema's to allow, and a persisted guide is never
+ * re-read. Any other non-string is refused here, since `validator.ts` does not type
+ * this field. Synchronous, so it runs even when an earlier `prepareOps` check has
+ * already collected a refusal, and both come back in one call.
+ */
+function localityGuideHeadingRefusals(
+  ops: ResearchAppendOp[],
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const out: string[] = [];
+  for (const [i, op] of ops.entries()) {
+    const body = localityBody(op);
+    const guide = body && typeof body === "object" ? (body as Record<string, unknown>).guide_markdown : undefined;
+    if (guide === undefined || guide === null) continue;
+    if (typeof guide !== "string") {
+      const got = Array.isArray(guide) ? "an array" : typeof guide === "object" ? "an object" : `a ${typeof guide}`;
+      out.push(
+        fmt(
+          i,
+          `guide_markdown must be the whole guide as one markdown string, not ${got}. Re-send this ` +
+            `entry with it as a string carrying the template's ` +
+            `${LOCALITY_GUIDE_HEADINGS.map((t) => `'## ${t}'`).join(", ")} lines.`,
+        ),
+      );
+      continue;
+    }
+    const missing = missingGuideHeadings(guide);
+    if (missing.length === 0) continue;
+    const many = missing.length > 1;
+    out.push(
+      fmt(
+        i,
+        `guide_markdown lacks the locality guide template's heading${many ? "s" : ""} ` +
+          `${missing.map((t) => `'## ${t}'`).join(", ")}. Add ${many ? "each" : "it"} as its own line ` +
+          "beginning with exactly those words after two #s, put the guide's text for that section " +
+          "under it, and re-send this entry with the whole guide.",
+      ),
+    );
+  }
+  return out;
 }
 
 /** The `collections` lists of a batch's `localities` writes, by op index: an
@@ -11736,6 +11883,7 @@ async function prepareOps(
   }
   errors.push(...retiredAssertionCitations(ops, research, fmt));
 
+  errors.push(...localityGuideHeadingRefusals(ops, fmt));
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
   if (errors.length === 0) stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
@@ -12979,6 +13127,53 @@ function boundErrors(lines: readonly string[]): string[] {
   ];
 }
 
+/** A namesake row that lists records cites the log entry of the search or read
+ *  that returned them (lead, 2026-11-12). Without one nothing ties the row to
+ *  what returned its records and no persona can be stamped. One finding per row
+ *  the call appended, or whose `record_ids` or `log_entry_ids` it changed, that
+ *  ends with a record id and no log entry, keyed to the last op that wrote it. A
+ *  pool row, which lists no record, is not judged, and neither is a row written
+ *  before this rule whose two fields the call leaves as they were. */
+export function namesakeRowLogCheck(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+): Array<{ index: number; message: string }> {
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const was = (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []) as any[];
+  const lastOp = new Map<string, number>();
+  applied.forEach((a, i) => {
+    if (a.section === "namesakes" && !a.noop) lastOp.set(a.entryId, i);
+  });
+  const filled = (v: unknown): string[] =>
+    (Array.isArray(v) ? v : []).filter((x): x is string => typeof x === "string" && x.trim() !== "");
+  const findings: Array<{ index: number; message: string }> = [];
+  for (const [id, index] of lastOp) {
+    const row = rows.find((r) => r && r.id === id);
+    if (!row) continue;
+    const records = filled(row.record_ids);
+    if (records.length === 0 || filled(row.log_entry_ids).length > 0) continue;
+    const prior = was.find((r) => r && r.id === id);
+    if (
+      prior &&
+      JSON.stringify(filled(prior.record_ids)) === JSON.stringify(records) &&
+      filled(prior.log_entry_ids).length === 0
+    ) {
+      continue;
+    }
+    const about = [row.name, row.place, row.time_period].filter((x) => typeof x === "string" && x !== "");
+    findings.push({
+      index,
+      message:
+        `The namesakes row${about.length > 0 ? ` for ${about.join(", ")}` : ""} lists ` +
+        `${records.map((r) => `'${r}'`).join(", ")} and cites no log entry, so nothing ties it to the search ` +
+        "or read that returned that record. Nothing was written. Send it again with `log_entry_ids` holding " +
+        "the log_ id research_log_append returned for that search or read.",
+    });
+  }
+  return findings;
+}
+
 /** The namesake cap's findings on a call, each labelled with the batch index of the op
  *  it is keyed to. `applied` is in step with the findings' own indexes. */
 function namesakeMessages(
@@ -12990,6 +13185,7 @@ function namesakeMessages(
   startingTree: SimplifiedGedcomX | null,
 ): string[] {
   return [
+    ...namesakeRowLogCheck(before, after, applied),
     ...namesakeCallCheck(before, after, applied, startingPersonIds, startingTree),
     ...circularCorroborationCallCheck(before, after, applied, startingTree),
   ].map((f) =>

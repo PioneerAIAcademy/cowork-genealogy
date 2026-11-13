@@ -6,7 +6,7 @@ Grading dimensions for all conflict-resolution unit tests. Evaluated by the LLM 
 
 Did the skill assess whether competing sources are truly independent? Two derivative indexes of the same original are not independent. Two census records with different enumerators but the same household informant may not be fully independent for the facts that informant reported. The analysis must be specific to the conflict's fact type, not a generic statement about the sources.
 
-- **pass:** `independence_analysis` names the specific informants and records involved, and explains whether they share an information chain for the disputed fact.
+- **pass:** `independence_analysis` names the specific informants and records involved, and explains whether they share an information chain for the disputed fact. Where the record leaves an informant undetermined, preserving that uncertainty is correct. Do not deduct for failing to establish who the informant was. Do deduct for upgrading the record's hedge ("likely" → "almost certainly").
 - **partial:** Independence is asserted but reasoning is generic ("the sources are independent because they're different documents") without inspecting the informant chain.
 - **fail:** No independence analysis, or independence claimed where a shared informant clearly undermines it, or an on-file derivative of a source already inside the conflict goes unmentioned. A derivative index of the same original is one source, not two — it must be named and set aside even when it is absent from `competing_assertion_ids`, because a reader counting sources will otherwise count it.
 
@@ -28,6 +28,6 @@ Did the resolution address ALL competing assertions, not just the two most obvio
 
 **This dimension owns the identity-dependency judgement.** Where a competing assertion's person-link is covered by an unresolved identity conflict, that is graded here and nowhere else — not under Correctness, and a per-test `judge_context` may not reassign it to another dimension.
 
-- **pass:** `resolution_rationale` names every competing assertion and explains why the non-preferred ones are less reliable.
-- **partial:** Resolution covers the preferred assertion plus one non-preferred but leaves another non-preferred unaddressed.
+- **pass:** `resolution_rationale` names every competing assertion and explains why the non-preferred ones are less reliable. An assertion on the preferred side that is not `preferred_assertion_id` must be named, with what it adds (or why it adds little, e.g. it shares the preferred assertion's informant). It is not owed a "less reliable" explanation. Grouping it with the preferred assertion as one informant unit is correct when the independence analysis says so, but the rationale still names it.
+- **partial:** Resolution covers the preferred assertion plus one non-preferred but leaves another non-preferred unaddressed, or a same-side assertion is not named.
 - **fail:** Resolution names only the preferred assertion and ignores why the others were rejected, or it treats a competing assertion as a settled attribute of the research subject while an unresolved identity conflict covers that assertion's person-link. Until the identity question is answered the competing assertions are not known to describe one person, so the disagreement is not yet established as a conflict at all — resolving over it, without saying so, presents a contingent result as a decided one.

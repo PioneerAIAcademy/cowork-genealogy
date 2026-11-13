@@ -99,6 +99,8 @@ import {
   planItemSearchedSkipInvariants,
   planItemCompletionRecordTypeInvariants,
   recordDocumentArk,
+  LOCALITY_GUIDE_HEADINGS,
+  missingGuideHeadings,
 } from "../../src/tools/research-append.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
@@ -17562,6 +17564,203 @@ describe("research_append — one score per record persona covers its facts (#35
     const r = await write({ section: "assertions", op: "append", entry: birthplace }, link("a_051"));
     expect(errorsOf(r) ?? []).toEqual([]);
   });
+
+  it("shares a persona's score onto its two-party fact when a one-party fact goes to the same person", async () => {
+    await writeProject();
+    await score({});
+    expect(errorsOf(await write(link("a_011"), link("a_050"))) ?? []).toEqual([]);
+  });
+
+  it("shares it when the one-party link was written earlier", async () => {
+    await writeProject();
+    await score({});
+    expect(errorsOf(await write(link("a_011"))) ?? []).toEqual([]);
+    expect(errorsOf(await write(link("a_050"))) ?? []).toEqual([]);
+  });
+
+  it("does not share it onto a two-party fact whose person holds another party's facts", async () => {
+    // I2 holds the father's name, so a_050's link to I2 is about the father, and
+    // a score comparing P1 with I2 is the wrong comparison for it.
+    await writeProject();
+    await score({ tree_person_id: "I2" });
+    await score({ assertion_id: "a_020", record_persona_id: "F1", record_role: "father", tree_person_id: "I2" });
+    const r = await write(link("a_020", "I2"), link("a_050", "I2"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not share it when the same person also holds another party's one-party fact", async () => {
+    // I2 holds both P1's birth and F1's name, so which party a_050's link is
+    // about is open again, and P1's score cannot answer for it.
+    await writeProject();
+    await score({ tree_person_id: "I2" });
+    await score({ assertion_id: "a_020", record_persona_id: "F1", record_role: "father", tree_person_id: "I2" });
+    const r = await write(link("a_011", "I2"), link("a_020", "I2"), link("a_050", "I2"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not share it when the same person also holds another party's fact with no persona id", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.push(fact("a_021", null, "father", "birth"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score({});
+    await score({ assertion_id: "a_021", record_persona_id: null, record_role: "father" });
+    const r = await write(link("a_010"), link("a_021"), link("a_050"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not read a retired fact's link as tying the two-party fact to its party", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.push({ ...fact("a_012", "P1", "principal", "residence"), superseded_by: "retracted" });
+    r0.person_evidence = [{
+      id: "pe_900", ...link("a_012").entry,
+    }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score({});
+    const r = await write(link("a_050"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+});
+
+describe("research_append — one score per party of a record with no persona ids (#3552)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-capture-score-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // A researcher's capture of a death certificate: no assertion carries a persona
+  // id. a_110-a_112 are the deceased's, a_113 the father's, a_114 the deceased's
+  // relationship to the father.
+  const REC = "capture:george-burns-death-cert-1914";
+  const fact = (id: string, role: string, fact_type = "name") => ({
+    ...validAssertion(id, "src_010"),
+    record_id: REC,
+    record_persona_id: null,
+    record_role: role,
+    fact_type,
+    value: `${id} value`,
+  });
+  async function writeProject() {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      fact("a_110", "principal"),
+      fact("a_111", "principal", "death"),
+      fact("a_112", "principal", "burial"),
+      fact("a_113", "father"),
+      fact("a_114", "principal", "relationship"),
+    ] as any;
+    r.sources = [...r.sources, { id: "src_010", gedcomx_source_description_id: "S1" }] as any;
+    const tree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Burns" }] }],
+    };
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  async function score(over: Record<string, unknown> = {}) {
+    await recordMatchScore(dir, {
+      record_id: REC,
+      record_persona_id: null,
+      record_role: "principal",
+      tree_person_id: "I1",
+      score: 0.98,
+      scorer: "familysearch",
+      model: null,
+      assertion_id: "a_110",
+      record_source: "projection",
+      computed: "2026-11-11T00:00:00Z",
+      party_resolved: true,
+      ...(over as any),
+    });
+  }
+  const link = (assertionId: string, personId = "I1") => ({
+    section: "person_evidence" as const,
+    op: "append" as const,
+    entry: {
+      assertion_id: assertionId,
+      person_id: personId,
+      confidence: "probable",
+      rationale: "Names match.",
+      match_score: 0.98,
+      created: "2026-11-11",
+      superseded_by: null,
+    },
+  });
+  const write = (...ops: any[]) => researchAppend({ projectPath: dir, ops } as any);
+
+  it("accepts every fact of the scored role with one score", async () => {
+    await writeProject();
+    await score();
+    expect(errorsOf(await write(link("a_110"), link("a_111"), link("a_112"))) ?? []).toEqual([]);
+  });
+
+  it("still needs its own score for another role of the record", async () => {
+    await writeProject();
+    await score();
+    expect((await write(link("a_113"))).ok).toBe(false);
+  });
+
+  it("does not share the score with another tree person", async () => {
+    await writeProject();
+    await score();
+    expect((await write(link("a_111", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share a fetched score, whose party the assertions do not name", async () => {
+    await writeProject();
+    await score({ record_source: "record_read" });
+    expect((await write(link("a_111"))).ok).toBe(false);
+  });
+
+  it("does not share across roles once one fact of the record carries a persona id", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.find((a: any) => a.id === "a_113").record_persona_id = "F1";
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score();
+    expect((await write(link("a_111"))).ok).toBe(false);
+  });
+
+  it("shares the score onto the role's two-party fact when a one-party fact goes to the same person", async () => {
+    await writeProject();
+    await score();
+    expect(errorsOf(await write(link("a_111"), link("a_114"))) ?? []).toEqual([]);
+    expect((await write(link("a_114", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share the role's score onto its two-party fact linked alone", async () => {
+    await writeProject();
+    await score();
+    expect(failure(await write(link("a_114"))).errors?.join(" ")).toMatch(/assertion 'a_114'.*no same_person score behind it/);
+  });
+
+  it("names the role in the refusal, so one call is made per party", async () => {
+    await writeProject();
+    const r = await write(link("a_111"));
+    expect(failure(r).errors?.join(" ")).toMatch(/One score covers every fact of the 'principal' party/);
+  });
+
+  it("neither shares a role's score nor promises one onto a fact that reads as fetched", async () => {
+    // same_person files a fetched persona's own id for a_111 here, so the
+    // projected score of a_110 cannot answer for it.
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.log = [{
+      id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_read", query: {},
+      outcome: "positive", results_examined: 1, external_site: null, results_ref: null,
+    }];
+    r0.assertions.find((a: any) => a.id === "a_111").log_entry_id = "log_001";
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score();
+    const errors = failure(await write(link("a_111"))).errors?.join(" ") ?? "";
+    expect(errors).toMatch(/assertion 'a_111'.*no same_person score behind it/);
+    expect(errors).not.toMatch(/One score covers/);
+  });
 });
 
 describe("research_append — a resolve names how it was settled (resolution_kind, #1852)", () => {
@@ -18502,6 +18701,302 @@ describe("research_append: a localities first place must be in the place standar
     expect(errors.join(" ")).toMatch(/ops\[1\]/);
     expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
     expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+});
+
+// research-append-tool-spec §5.14: a guide written into a project carries the
+// template's three level-two headings, matched as the eval validator's `_heading()`
+// matches them (eval/harness/validators/test_locality_guide.py).
+describe("research_append: a localities guide carries the template's three headings (#4479)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-guide-test-"));
+    vi.mocked(checkFirstPlace).mockClear();
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch()) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const GUIDE = [
+    "# Locality Guide: Funchal, Madeira (1840-1900)",
+    "",
+    "## Jurisdiction overview",
+    "- **Formed:** 1835 as a district of Madeira",
+    "",
+    "## Available record types",
+    "### Church records",
+    "- Parish registers from 1539 (Funchal, Se).",
+    "",
+    "## Research tips",
+    "- Search the parish, not the district.",
+  ].join("\n");
+  /** GUIDE with one heading renamed the way Sonnet renamed it on ut_locality_guide_010. */
+  const without = (title: string) =>
+    GUIDE.replace(`## ${title}`, "## Where to look for copies or substitutes");
+  const entry = (guide?: unknown) => ({
+    place: "Portugal",
+    for_place: "Funchal, Madeira, Portugal",
+    jurisdictions: [{ name: "Funchal, Madeira, Portugal", date_range: "1835-" }],
+    collections: [],
+    quirks: ["Indexed only at district level."],
+    pages_read: [{ section: "home", url: "u1", found: true }],
+    source: "locality-guide",
+    ...(guide === undefined ? {} : { guide_markdown: guide }),
+  });
+  const append = (guide?: unknown) =>
+    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(guide) });
+  /** The refusal lines alone: a single-op failure also carries the section's worked example. */
+  const refusals = (r: Awaited<ReturnType<typeof researchAppend>>) =>
+    failure(r).errors.filter((line) => !line.startsWith("worked example for"));
+
+  it.each([...LOCALITY_GUIDE_HEADINGS])(
+    "refuses a guide missing '## %s', names only that heading, writes nothing, looks nothing up",
+    async (title) => {
+      await writeProject();
+      const r = await append(without(title));
+      expect(r.ok).toBe(false);
+      expect(refusals(r)).toHaveLength(1);
+      const msg = refusals(r).join(" ");
+      expect(msg).toContain(`heading '## ${title}'. Add it as its own line`);
+      for (const other of LOCALITY_GUIDE_HEADINGS.filter((t) => t !== title)) {
+        expect(msg).not.toContain(`'## ${other}'`);
+      }
+      expect((await readResearch()).localities ?? []).toHaveLength(0);
+      expect(checkFirstPlace).not.toHaveBeenCalled();
+    },
+  );
+
+  it("accepts a guide carrying all three headings", async () => {
+    await writeProject();
+    const r = await append(GUIDE);
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+  });
+
+  it("accepts a guide with sections beyond the three", async () => {
+    await writeProject();
+    const r = await append(
+      `${GUIDE}\n\n## Record-type reminders\n- Tithe books.\n\n## Where to look for copies or substitutes\n- The district archive.`,
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a heading in any case, with a suffix", async () => {
+    await writeProject();
+    const r = await append(GUIDE.replace("## Available record types", "## AVAILABLE RECORD TYPES (1840-1900)"));
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses a level-three heading standing in for a level-two one", async () => {
+    await writeProject();
+    const r = await append(GUIDE.replace("## Available record types", "### Available record types"));
+    expect(r.ok).toBe(false);
+    expect(refusals(r).join(" ")).toContain("'## Available record types'");
+  });
+
+  it("refuses the heading's words in mid-line", async () => {
+    await writeProject();
+    const r = await append(GUIDE.replace("## Research tips", "See also: ## Research tips"));
+    expect(r.ok).toBe(false);
+    expect(refusals(r).join(" ")).toContain("'## Research tips'");
+  });
+
+  it("refuses an empty guide, naming all three headings", async () => {
+    await writeProject();
+    const msg = refusals(await append("")).join(" ");
+    for (const title of LOCALITY_GUIDE_HEADINGS) expect(msg).toContain(`'## ${title}'`);
+    expect(msg).toContain("headings '## Jurisdiction overview', '## Available record types', '## Research tips'. Add each as its own line");
+  });
+
+  it("does not check a null guide or an absent one", async () => {
+    await writeProject();
+    expect((await append(null)).ok).toBe(true);
+    expect((await append()).ok).toBe(true);
+    const locs = (await readResearch()).localities;
+    expect(locs).toHaveLength(2);
+    expect(locs[0].guide_markdown).toBeNull();
+    expect(Object.hasOwn(locs[1], "guide_markdown")).toBe(false);
+  });
+
+  it("leaves a persisted heading-less guide alone on an update that does not set it", async () => {
+    const research: any = baseResearch();
+    research.localities = [{ id: "loc_001", ...entry("Prose only, written before the rule."), created: "2026-01-01" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { collections: [{ id: "4237104", title: "Portugal, Church Books", date_range: "1539-1911" }] },
+    });
+    expect(r.ok).toBe(true);
+    const loc = (await readResearch()).localities[0];
+    expect(loc.collections).toHaveLength(1);
+    expect(loc.guide_markdown).toBe("Prose only, written before the rule.");
+  });
+
+  it("refuses an update that sets a heading-less guide, and accepts one that sets it to null", async () => {
+    await writeProject();
+    expect((await append(GUIDE)).ok).toBe(true);
+    const bad = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { guide_markdown: "## Funchal\nThe registers are at the district archive." },
+    });
+    expect(bad.ok).toBe(false);
+    expect(refusals(bad).join(" ")).toContain("'## Jurisdiction overview'");
+    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+    const cleared = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { guide_markdown: null },
+    });
+    expect(cleared.ok).toBe(true);
+  });
+
+  it("in a batch, names only the refused op, writes nothing and makes no place lookup", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: entry(GUIDE) },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors;
+    expect(errors.join(" ")).toMatch(/ops\[1\]: .*'## Research tips'/);
+    expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+  });
+
+  it("in a batch, names every refused guide, not only the first", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: entry(without("Jurisdiction overview")) },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    const errors = failure(r).errors;
+    expect(errors.filter((e) => e.startsWith("ops[0]: guide_markdown"))).toHaveLength(1);
+    expect(errors.filter((e) => e.startsWith("ops[1]: guide_markdown"))).toHaveLength(1);
+  });
+
+  it("returns a refusal an earlier check collected together with the guide's", async () => {
+    await writeProject();
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoId, gedcomx_source_description_id: "S999" } },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toMatch(/ops\[0\]: gedcomx_source_description_id 'S999' not found/);
+    expect(msg).toMatch(/ops\[1\]: guide_markdown lacks .*'## Research tips'/);
+  });
+
+  it.each([
+    ["a number", 5, "a number"],
+    ["an array of lines", ["## Jurisdiction overview", "## Available record types", "## Research tips"], "an array"],
+    ["an object", { text: GUIDE }, "an object"],
+  ])("refuses a guide that is %s, which the schema check does not type", async (_label, guide, got) => {
+    await writeProject();
+    const r = await append(guide);
+    expect(r.ok).toBe(false);
+    expect(refusals(r).join(" ")).toContain(`guide_markdown must be the whole guide as one markdown string, not ${got}`);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+
+  it("refuses an update that sets a non-string guide", async () => {
+    await writeProject();
+    expect((await append(GUIDE)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { guide_markdown: 7 },
+    });
+    expect(refusals(r).join(" ")).toContain("not a number");
+    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+  });
+
+  it("still reads the collection catalog on a call it refuses, which warms it for the re-send", async () => {
+    // Deliberate (spec §5.14, "Not covered"): skipping the read would leave a cold
+    // cache for the corrected re-send, whose counts research-plan reads.
+    await writeProject();
+    const loader = vi.fn(async () => new Map());
+    const refused = await researchAppendFromCaller(
+      {
+        projectPath: dir,
+        section: "localities",
+        op: "append",
+        entry: {
+          ...entry(without("Research tips")),
+          collections: [{ id: "4237104", title: "Portugal, Church Books", date_range: "1539-1911" }],
+        },
+      } as never,
+      loader,
+    );
+    expect(refused.ok).toBe(false);
+    expect(loader).toHaveBeenCalledTimes(1);
+  });
+
+  it("tells the agent to add the heading and re-send, never to drop the guide", async () => {
+    await writeProject();
+    const msg = refusals(await append(without("Available record types"))).join(" ");
+    expect(msg).toMatch(/guide_markdown/);
+    expect(msg).toMatch(/re-send/);
+    expect(msg).not.toMatch(/omit|null|leave (it )?out|drop|remove|shorten|skip/i);
+  });
+
+  it("attaches the localities worked example, and that example passes the rule", async () => {
+    await writeProject();
+    const r = await append(without("Jurisdiction overview"));
+    expect(failure(r).errors.some((line) => line.startsWith("worked example for 'localities'"))).toBe(true);
+    expect(missingGuideHeadings(JSON.parse(__testing.EXAMPLES.localities).guide_markdown)).toEqual([]);
+  });
+});
+
+// The engine and the eval grader must agree on every shape, or a guide the tool
+// accepted fails the test that exists to catch it. Expected values are the
+// validator's own `_heading()` answers on these strings after the other two
+// headings; the same table runs against `_heading()` itself in
+// eval/harness/tests/unit/test_locality_guide_validators.py. Change one, change both.
+describe("missingGuideHeadings agrees with the eval validator's _heading() (#4479)", () => {
+  const BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n";
+  it.each([
+    ["## Research tips\nx", true],
+    ["x\n## Research tips", true],
+    ["x\r\n## Research tips", true],
+    ["x\r## Research tips", false],
+    ["x\u2028## Research tips", false],
+    ["x\u2029## Research tips", false],
+    ["## Re\u017fearch tips", true],
+    ["## RESEARCH TIPS (1840)", true],
+    ["### Research tips", false],
+    ["Notes: ## Research tips", false],
+    [" ## Research tips", false],
+    ["##\tResearch tips", true],
+    ["##Research tips", false],
+    ["## research tipsy", true],
+    ["", false],
+    ["##  Research tips", true],
+    ["# Research tips", false],
+    ["Research tips", false],
+    ["##\nResearch tips", false],
+    ["##\u00a0Research tips", false],
+    ["> ## Research tips", false],
+    ["- ## Research tips", false],
+    ["## Research tips and tricks", true],
+  ])("%j has the heading: %s", (tail, found) => {
+    expect(missingGuideHeadings(BEFORE + tail)).toEqual(found ? [] : ["Research tips"]);
+  });
+
+  it("does not count a heading behind a byte-order mark at the very start", () => {
+    expect(missingGuideHeadings("\ufeff## Research tips\n## Jurisdiction overview\n## Available record types")).toEqual([
+      "Research tips",
+    ]);
   });
 });
 

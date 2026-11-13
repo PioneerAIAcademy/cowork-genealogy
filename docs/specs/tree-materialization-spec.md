@@ -990,18 +990,29 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   pass, and the persona arm only fills an absent or `Unknown` one, so a supplied
   `gender` overrides the persona's own `gender`/`sex` assertions. Omit it to
   take the record's.
-- **No name type is invented.** `nameType` is optional and the field is
-  **omitted** when the caller does not supply one. This differs from the persona
-  arm, which records `BirthName`, and the difference is deliberate: a persona's
-  `name` assertion is that person's own recorded name, whereas a party named
-  inside someone *else's* assertion is often named by a surname that is not her
-  birth surname — *"survived by his wife Mary Smith"* gives the husband's. A
+- **No name type is invented, on either arm.** `nameType` is optional and the
+  field is **omitted** when the caller does not supply one. A party named inside
+  someone *else's* assertion is often named by a surname that is not her birth
+  surname — *"survived by his wife Mary Smith"* gives the husband's. A
   `BirthName` on that node would be a claim the record never made, carried under
   a resolved ref that says the record made it, which is the precise failure this
   spec exists to prevent. Omitting is legal (the tree schema requires only
   `id`/`given`/`surname`) and is what most of the corpus does; the caller names
   the type when the record settles it, as a marriage register does for a bride's
-  maiden name. §4.5 therefore holds in full: a
+  maiden name. The persona arm follows the same rule (Richard, 2026-11-12): it
+  mints a type only when the name assertion's
+  `structured_value.type` states one — `birth`→`BirthName`,
+  `married`→`MarriedName`, `nickname`→`Nickname`,
+  `also_known_as`→`AlsoKnownAs` — and any other value, or none, mints no type.
+  Only `extraction_append`'s documents path writes that key, from what the
+  record-structurer read in the document's own words. It is never taken from the
+  FamilySearch index, which types every persona `BirthName` whatever the record
+  says: the 1911 census household of Leonard Pragnell (persona XW43-WKV) gives
+  all ten people `BirthName`, his wife Sarah under her married surname among
+  them. A persona's own name is often not her birth name for the same reason a
+  named party's is not: a married woman's census or death entry gives her
+  husband's surname. No eval validator or e2e grader reads name type, so the
+  change moves no eval run. §4.5 therefore holds in full: a
   `marriage` assertion still never becomes a person-level fact, and the Couple
   event stays on the edge.
 - **Idempotent for a given `personId`** — a re-run unions the ref onto the

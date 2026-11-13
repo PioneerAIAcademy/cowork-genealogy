@@ -4,16 +4,14 @@ cd %~dp0
 echo === Cowork Genealogy - Build the Cowork plugin (.zip) ===
 echo.
 echo Packs releases\genealogy-plugin.zip, the skills and agents Cowork runs.
-echo After it builds, upload it in Claude Desktop -^> Cowork -^> Customize -^>
-echo Add -^> Upload Plugin, then FULLY QUIT and reopen Desktop. Rebuild and
-echo reinstall whenever a skill under packages\engine\plugin changes.
+echo After it builds, upload it in Claude Desktop -^> Customize -^> Plugins -^>
+echo + Add -^> Upload plugin, then FULLY QUIT Desktop ^(tray icon -^> Exit^) and
+echo reopen it. Rebuild and reinstall whenever a skill under
+echo packages\engine\plugin changes.
 echo.
-echo Already have an older copy installed? REMOVE it in Cowork -^> Customize
-echo first, then upload the new .zip -- that is the reliable way to be sure
-echo you are running the new skills.
-echo.
-echo Upload it from the COWORK tab, not the Code tab -- they keep separate
-echo plugin lists, and a plugin added in Code will not appear in Cowork.
+echo Already have an older copy installed? REMOVE it first ^(Customize -^>
+echo Plugins -^> Yours -^> ... -^> Remove^), then upload the new .zip -- that is
+echo the reliable way to be sure you are running the new skills.
 echo.
 echo This runs scripts\package-plugin.mjs with Node (same as "make plugin"). No
 echo bash or zip needed -- just Node, which Setup.bat already installs.
@@ -33,8 +31,8 @@ set RC=%errorlevel%
 
 echo.
 if "%RC%"=="0" (
-  echo Built releases\genealogy-plugin.zip. Upload it in Cowork -^> Customize,
-  echo then fully quit and reopen Desktop.
+  echo Built releases\genealogy-plugin.zip. Upload it in Customize -^> Plugins,
+  echo then fully quit Desktop ^(tray icon -^> Exit^) and reopen it.
 ) else (
   echo Build failed ^(exit %RC%^). Scroll up for the error.
 )

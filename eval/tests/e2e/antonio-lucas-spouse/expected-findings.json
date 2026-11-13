@@ -4,13 +4,32 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Antonio Fernandes Lucas (PID GK89-82B, b. 1838, Santo António, Funchal, Madeira, son of José Fernandes Lucas and Francisca Luisa) had a wife named Antonia de Jesus, or any child by her, distinct from his tree-recorded wife Maria Joana. The Antonio Fernandes Lucas who partnered with Antonia de Jesus at the sítio of Encruzilhadas — and buried three children by her there between 1889 and 1896 (a recurring couple, not a one-time clerical entry) — is independently identified by his own 1895 death record as \"Antonio Fernandes Lucas Junior,\" born 1840, a shoemaker, son of Manuel/Manoel Fernandes Lucas and Luiza de Jesus: different parents entirely from GK89-82B's documented José Fernandes Lucas and Francisca Luisa. That death record also dates his death to 25 Nov 1895 — before GK89-82B's tree-documented family with Maria Joana produced their daughter Julia in 1899, a chronological impossibility if they were the same man. A second, independent Registro Civil record — Julia's own 1967 death entry — names her father Antônio Fernandes Lucas's wife as Maria Joana Joana, not Antonia de Jesus, confirming the 1890 marriage held for the rest of the couple's documented lives. Pass = the agent's final tree.gedcomx.json contains no second spouse Antonia de Jesus and no child by her for this subject. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Antonio Fernandes Lucas (PID GK89-82B, b. 1838, Santo António, Funchal, Madeira, son of José Fernandes Lucas and Francisca Luisa) had a wife named Antonia de Jesus, or any child by her, distinct from his tree-recorded wife Maria Joana. The Antonio Fernandes Lucas who partnered with Antonia de Jesus at the sítio of Encruzilhadas — and buried three children by her there between 1889 and 1896 (a recurring couple, not a one-time clerical entry) — is independently identified by his own 1895 death record as \"Antonio Fernandes Lucas Junior,\" born 1840, a shoemaker, son of Manuel/Manoel Fernandes Lucas and Luiza de Jesus: different parents entirely from GK89-82B's documented José Fernandes Lucas and Francisca Luisa. That death record also dates his death to 25 Nov 1895 — before GK89-82B's tree-documented family with Maria Joana produced their daughter Julia in 1899, a chronological impossibility if they were the same man. A second, independent Registro Civil record — Julia's own 1967 death entry — names her father Antônio Fernandes Lucas's wife as Maria Joana Joana, not Antonia de Jesus, confirming the 1890 marriage held for the rest of the couple's documented lives. Pass = the agent's final tree.gedcomx.json contains no second spouse Antonia de Jesus and no child by her for this subject. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Antonio Fernandes Lucas (GK89-82B)",
         "relation": "spouse",
         "wrong_candidate": {
           "name": "Antonia de Jesus, partner of a different, identifiable \"Antonio Fernandes Lucas Junior\" (b. 1840, d. 25 Nov 1895) at Encruzilhadas, Santo António",
-          "note": "Ruled out on two independent grounds: (1) parentage — the Encruzilhadas Antonio's own death record names his parents as Manuel/Manoel Fernandes Lucas and Luiza de Jesus, not GK89-82B's José Fernandes Lucas and Francisca Luisa; (2) chronology — that Antonio died 25 Nov 1895, before GK89-82B's documented family with Maria Joana produced a daughter (Julia) in 1899"
+          "note": "Ruled out on two independent grounds: (1) parentage — the Encruzilhadas Antonio's own death record names his parents as Manuel/Manoel Fernandes Lucas and Luiza de Jesus, not GK89-82B's José Fernandes Lucas and Francisca Luisa; (2) chronology — that Antonio died 25 Nov 1895, before GK89-82B's documented family with Maria Joana produced a daughter (Julia) in 1899",
+          "records": [
+            "ark:/61903/1:1:65RW-V553",
+            "ark:/61903/1:1:65RW-V559",
+            "ark:/61903/1:1:65RW-V55S",
+            "ark:/61903/1:1:6B2L-FKD5",
+            "ark:/61903/1:1:6B2L-FKDG",
+            "ark:/61903/1:1:6B2L-FKDP",
+            "ark:/61903/1:1:6B9G-1FR9",
+            "ark:/61903/1:1:6BCT-KZMJ",
+            "ark:/61903/1:1:6BCT-KZMK",
+            "ark:/61903/1:1:6BCT-KZMV",
+            "ark:/61903/1:1:6BCY-B2F4",
+            "ark:/61903/1:1:6BCY-B2FH",
+            "ark:/61903/1:1:6BCY-B2FW",
+            "ark:/61903/1:1:6YGB-P2V2",
+            "ark:/61903/1:1:6YGB-P2VG",
+            "ark:/61903/1:1:6YGB-P2VL",
+            "ark:/61903/1:1:6YGB-P2VP"
+          ]
         }
       },
       "supporting_sources": [

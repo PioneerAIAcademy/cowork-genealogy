@@ -173,7 +173,8 @@ Otherwise proceed.
 
 Only when you hold `planItemId` and `planId`; with none, triage writes nothing. Set the item once at the end of triage, by how it went. All status writes go through `research_append` on `plan_items` — the only project write triage makes:
 
-- **`person_record_matches` refused or unavailable** (every e2e run blocks it): the hints cannot be read. Set the item `skipped`, `skip_category: "inaccessible"`, `skip_reason` naming why. No log entry.
+- **A sign-in message from any tool** ("FamilySearch session not accepted…", "not logged in", "Reconnect FamilySearch"): leave the item as it is, with no status write and no log entry. Give the user the tool's message as it is, with any link it carries, and stop.
+- **`person_record_matches` refused for any other reason, or unavailable** (every e2e run blocks it): the hints cannot be read. Set the item `skipped`, `skip_category: "inaccessible"`, `skip_reason` naming why. No log entry.
 - **The person has no FamilySearch id** (a local id with no `ark` in the tree): set the item `skipped`, `skip_category: "inaccessible"`, `skip_reason` saying the person has no FamilySearch id. No log entry.
 - **No pending hints:** log one negative entry naming the item, then set it `completed` (completing an item needs a log entry that names it):
 

@@ -170,7 +170,7 @@ Plus whatever you actually touched:
 | Plugin agent frontmatter, tool binding, or the MCP-unavailable abort path | `make agent-smoke`. A missing prerequisite fails it rather than skipping it. Its registration arm also runs in CI (`server-tests.yml`); its dead-stub arm runs only here. |
 | `packages/engine/plugin/hooks/` — `hooks.json`'s matcher or `guard_project_files.py` | `make hook-smoke` for the **binding** (does a runtime load `hooks.json` and block?), `make engine-test` for the script's **decisions**. `agent-smoke` used to be named here and cannot see a hook at all — it reads the init handshake, which carries nothing hook-shaped. `hook-smoke` hard-errors without a key rather than skipping. It proves the **hosted** loader only; Cowork's is reachable only by a human in a live session. |
 | An e2e fixture | `make e2e-validate TEST=<slug>` |
-| Anything user-facing | Run it. `make server` / `make web`, or the Claude Desktop install path. |
+| Anything user-facing | Run it. `make server` / `make web`, or in Claude in your own account, as [`DEVELOPMENT.md`](../DEVELOPMENT.md) § "Testing a change before it reaches anyone" says. |
 | An HTTP route or `apps/server/` auth/allowlist code, anything that reads a token or writes to `~/.familysearch-mcp/`, or anything that renders user-supplied data in the viewer | `/security-review` |
 
 Then exercise the thing you built, once, by hand.
