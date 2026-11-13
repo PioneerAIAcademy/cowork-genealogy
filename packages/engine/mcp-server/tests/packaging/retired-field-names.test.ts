@@ -310,6 +310,8 @@ const ALLOWED2: Record<string, string> = {
     "one test function name (test_new_question_exhaustive_declaration_unstarted) retains the old name for attribution",
   "eval/harness/validators/test_research_exhaustiveness.py":
     "one test function name (test_no_exhaustive_declaration) retains the old name for attribution",
+  "eval/harness/tests/unit/test_research_exhaustiveness_wiki_fetch_validator.py":
+    "imports the validator function test_no_exhaustive_declaration by name to pin d3c's tag (#4323)",
 
   // ── Rename attribution comments — cite the old name to document the rename ──
   "eval/harness/e2e/guardrail_shadow_report.py":

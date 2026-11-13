@@ -264,10 +264,10 @@ _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
 # Scope, which is load-bearing: every instruction here addresses "You" — the main
 # thread. NONE of it reaches the spawned agent, which receives only the `prompt`
 # argument (the delegation verbatim). That matters because the agent must still
-# use its own tools: four of the five research-exhaustiveness twins are gated by
-# `test_fetches_registration_start_date`, which requires a `wiki_read` call from
-# the AGENT. A reader who mistakes "call no other tool" for a session-wide rule
-# would fail those four on a check unrelated to this arm.
+# use its own tools: every research-exhaustiveness direct test that reaches Step 1
+# is gated by `test_fetches_registration_start_date`, which requires a
+# `wiki_read` call from the AGENT. A reader who mistakes "call no other tool" for
+# a session-wide rule would fail those tests on a check unrelated to this arm.
 #
 # The markers exist so the relay is copyable as a block, and so
 # `test_direct_delegation_relayed_verbatim`'s failure message can show what the
