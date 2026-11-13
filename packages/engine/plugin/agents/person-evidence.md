@@ -15,8 +15,8 @@ description: >-
   (use extraction_append); resolve a conflict where multiple candidates compete
   (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
   after proof-conclusion).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5
+effort: medium
 tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
@@ -455,11 +455,15 @@ never replaces it (see step 3).
    project. You assemble nothing.
 
    Call it **once per record persona and candidate**. That score covers every
-   assertion carrying the same `record_persona_id` except one that names a
-   second person (a relationship, marriage or couple event); write the covered
-   links with the same `match_score` and no further call. An assertion that
-   names a second person, or whose `record_persona_id` is null, needs its own
-   call.
+   assertion carrying the same `record_persona_id`, and on a record where no
+   assertion carries one, every assertion of the same `record_role`. Write the
+   covered links with the same `match_score` and no further call. One that
+   names a second person (a relationship, marriage or couple event) is covered
+   only when the candidate is the person the assertion is about and you also
+   link one of that person's other facts to it. Linked to the second person it
+   names, it is never covered: make that call with `recordRole` (below). An
+   assertion whose `record_persona_id` is null on a record where others carry
+   one needs its own call.
 
    For the **second party** of a relationship or marriage assertion — the party
    the assertion names but is not itself about — add `recordRole` (or
@@ -732,8 +736,8 @@ record. Make that change yourself and report it.
   when the candidate was minted from the persona itself (step 2). **The
   writer now enforces both halves of this.** A link for a reachable
   persona is REFUSED unless `same_person` actually scored that record
-  persona against that person (for a null `record_persona_id`, that
-  assertion), so "no score was obtained" is no longer an option there:
+  persona against that person (step 1 says which facts one score
+  covers), so "no score was obtained" is no longer an option there:
   make the call first. And a link to a person minted from this very record is refused
   if it carries a score at all, whatever the record's retrieval route —
   a number there came from a different comparison. Leave it null and say

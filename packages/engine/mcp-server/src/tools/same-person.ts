@@ -36,7 +36,7 @@ import {
   sameRecord,
   type RecordPersonaGroup,
 } from "../utils/record-persona.js";
-import { recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
+import { readsAsFetched, recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
 import { Mob } from "../utils/mob.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { arkToBareId } from "../utils/ark.js";
@@ -730,15 +730,7 @@ export function buildRecordedScore(
   const recordId = String(assertion.record_id ?? "");
   if (recordId === "") return null;
 
-  const log: any[] = Array.isArray(research?.log) ? research.log : [];
-  const logEntry = log.find((l) => l?.id === assertion.log_entry_id);
-  const fetchable =
-    Boolean(assertion.record_persona_id) ||
-    logEntry?.tool === "record_read" ||
-    logEntry?.tool === "person_record_matches" ||
-    (logEntry !== undefined &&
-      PERSONA_BEARING_PRODUCERS.has(logEntry.tool) &&
-      Boolean(logEntry.results_ref));
+  const fetchable = readsAsFetched(assertion, research?.log);
 
   return {
     record_id: recordId,

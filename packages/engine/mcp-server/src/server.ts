@@ -25,6 +25,7 @@ import { loginTool, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
 import { collectionCatalogLoader, collectionsSearchTool, type CollectionsSearchInput } from "./tools/collections-search.js";
+import { fulltextSearchableLoader } from "./utils/fulltext-searchable.js";
 import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
@@ -47,7 +48,7 @@ import {
 } from "./tools/person-ancestors.js";
 import { treeGapsTool } from "./tools/tree-gaps.js";
 import type { TreeGapsInput } from "./types/tree-gaps.js";
-import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
+import { recordReadMcpTool, type RecordReadInput } from "./tools/record-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
 import { wikiReadTool, type WikiReadInput } from "./tools/wiki-read.js";
@@ -547,7 +548,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "record_read") {
       try {
         const args = request.params.arguments as unknown as RecordReadInput;
-        const result = await recordReadTool(args, principal);
+        const result = await recordReadMcpTool(args, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }]
         };
@@ -784,7 +785,11 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "research_append") {
       try {
         const args = request.params.arguments as unknown as ResearchAppendInput;
-        const result = await researchAppendFromCaller(args, collectionCatalogLoader(principal));
+        const result = await researchAppendFromCaller(
+          args,
+          collectionCatalogLoader(principal),
+          fulltextSearchableLoader(principal),
+        );
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

@@ -4666,7 +4666,7 @@ def test_the_prompt_routes_a_first_message_with_no_project_and_names_no_deleted_
     """#3768's routing sentence lived in DELIVERY_GUIDANCE; it moved to the project note
     when `research_delivered` was deleted (step mode phase 2) rather than going with it."""
     prompt = _options(config_dir=str(tmp_path)).system_prompt["append"]
-    assert "a request to research a person is not a single lookup" in prompt
+    assert "starts a project first" in prompt
     assert "research_delivered" not in prompt
 
 
@@ -6590,7 +6590,7 @@ def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatc
 
 
 def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
-    """A turn init-project opens is grouped by the step after it (plan section H), so
+    """A turn init-project opens is grouped by the step after it (spec section H), so
     that step replaces init-project in `turns.step`; nothing else is ever overwritten."""
     executed: list[tuple] = []
 

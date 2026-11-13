@@ -1,10 +1,10 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, whose first live sign-in is owed), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E3's sign-in link and wording (issue #3995; its run with a planted dead token is owed), E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
-- A limited beta of the research assistant as a remote MCP connector, for people the lead invites. They add the connector, install the plugin and sign in with FamilySearch. Nothing else is installed locally.
+- A limited beta of the research assistant as a remote MCP connector, for people the lead invites. They install the plugin, connect it from the plugin's Connectors tab and sign in with FamilySearch. Nothing else is installed locally.
 - MCP App cards show the research in the conversation ([the MCP App plan](mcp-app-viewer.md)). There is no browser viewer.
 - It runs two of the three tiers in [the handoff plan](familysearch-handoff.md): the Python web tier with chat off, and the MCP tool server. There is no worker and no queue, because Claude runs in the user's own Claude app.
 - The web tier serves sign-in, a few plain pages, uploads, the download and the policies.
@@ -14,7 +14,7 @@
 - The lead's two agents build the remote server and the MCP App. The team builds the rest from issues. Richard reviews every change to the handoff's code. Each change is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says.
 - The lead does what needs his accounts, his server or GeneFun: FamilySearch's approval (P0.1), the sign-in redirect (P0.4), the live sittings, the policies (L1), every decision and the final deletion.
 
-## Decisions (lead, 2026-10-25 to 2026-11-05)
+## Decisions (lead, 2026-10-25 to 2026-11-12)
 
 | Topic | Decision |
 |---|---|
@@ -25,11 +25,12 @@
 | Schema | The handoff's numbered files in `apps/server/proto/sql/`, plus new numbered files for the beta's tables. One schema for both. |
 | Sign-in | Claude's sign-in server lives in the web tier, on the Python MCP SDK's handlers, and shares one FamilySearch callback with browser sign-in. |
 | Re-sign-in | Users sign in again when their FamilySearch session ends. Nothing refreshes a FamilySearch token on the server. |
-| Tokens | One long connector token lifetime, 30 days proposed, with no refresh token, if sitting 2 shows Claude keeps using it. If not, our own refresh token on our own token. |
+| Tokens | One long connector token lifetime with no refresh token (lead, 2026-11-12). Sitting 2 held one for about 4 days. 30 days proposed; the length is the lead's call. |
 | Front door | One door on the tool server. Every caller presents our own token, and the door loads that user's stored FamilySearch token and OpenRouter key. |
 | Projects | `projectPath` carries an id the server mints. The user who first writes to it owns it. |
+| Testing and deploys | One server and no test server. Everyone tests their own branch in their own Claude account first: skills, agents and hooks through their own plugin on the connector, tools through the branch's `.mcpb` in a Cowork task with a folder, cards in `make viewer`'s tab. What exists only on the connector is first tried on this server, so only the lead deploys, backs up first, undoes a bad deploy by redeploying the previous commit, and deploys nothing during the demo or its rehearsals. A test server comes when an hour's breakage would hurt users the lead cannot message. Recipes: `DEVELOPMENT.md`, "Testing a change before it reaches anyone". |
 | UI | MCP App cards and a case file, in one connector named exactly "Genealogy Research". |
-| Surface | claude.ai and Desktop Chat are the primary surfaces, because project data lives on the server and nothing sits on the user's disk. Cowork is no longer tested. Claude's plugin docs say a chat session ignores a plugin's agents and hooks. What research a chat session gets is undecided. |
+| Surface | claude.ai and Desktop Chat are the primary surfaces, because project data lives on the server and nothing sits on the user's disk. Cowork is no longer tested. An ordinary chat runs the plugin's agents and hook, measured in P0.2 item 12; an Incognito chat runs neither, and what research it should offer is undecided. |
 | Sign-up | An allowlist the lead keeps. Each user needs a FamilySearch account whose email no other user has. Removing an email does not end a connector token; one SQL update does, if it is ever needed. |
 | Web pages | Plain pages from the web tier. No SPA in the beta. |
 | Uploads | Plain files, on a plain upload page: the original, plus a PDF's own text when the browser finds a text layer. Claude reads or transcribes them with existing tools. |
@@ -39,7 +40,7 @@
 | Retention | Everything is deleted when the beta ends, sign-ins and OpenRouter keys included. Nothing is migrated. |
 | Settings | One env file on `malachi`, mode 600, outside the repo. |
 | Limits | Per user, 4 calls at a time and a pause when FamilySearch answers 429. One shared FamilySearch budget and a transcription cap. A blocked user is refused at the door. |
-| Plugin | A hand-installed zip for the demo and the first users, and a GitHub marketplace if the beta grows. The goal is one install on the account, covering web and desktop, with the connector bundled if item 14 passes. |
+| Plugin | One install (lead, 2026-11-12): the plugin's `.mcp.json` names the `Genealogy Research` server, so skills, agents, hook, connector and cards arrive together, with one connection for every surface (P0.2 item 14). A hand-installed zip for the demo and the first users, and a GitHub marketplace if the beta grows. |
 | Policies | A short privacy policy and terms from GeneFun, Inc., in place before the first invited user. |
 | Other deployments | The desktop extension, the Fly-hosted alpha, the handoff's chat screens and Electron keep running through the demo, with fixes only and no new features. The lead decides again after it. |
 | Older extensions | Not supported. The research router needs `project_list`; without it, the router says the genealogy tools are not connected and stops. |
@@ -60,7 +61,7 @@ Funnel sends `https://malachi.taild68f1b.ts.net/` to 127.0.0.1:8006, where an ng
 | Paths on the edge | Goes to |
 |---|---|
 | `/healthz` and `/api/health` (the deep checks) | A fixed 404 |
-| `/mcp`, `/.well-known/oauth-protected-resource/mcp`, and `/img/*` with the MCP App's fold | Tool server |
+| `/mcp`, `/.well-known/oauth-protected-resource/mcp`, and `/img` (token in the query) with the MCP App's fold | Tool server |
 | Everything else: `/`, `/api/*`, `/auth/*`, `/.well-known/oauth-authorization-server`, `/authorize`, `/token`, the consent page, `/callback`, `/privacy`, `/terms`, `/upload/*`, `/livez` | Web tier |
 
 **A connector tool call:**
@@ -79,7 +80,7 @@ Funnel sends `https://malachi.taild68f1b.ts.net/` to 127.0.0.1:8006, where an ng
 - a FamilySearch call answers 401, and the tool returns a message with a sign-in link, over HTTP 200;
 - the user opens the link, signs in, and says "continue" in the same task. `store_grant` replaces the token, and the door reads it on the next call.
 
-A 401 from the door itself has no way back in the chat: the tools fail, then vanish, and the user reconnects under Settings → Connectors. So nothing answers 401 at the door because a FamilySearch session ended.
+A 401 from the door itself brings up Claude's "Reconnect a connector to keep using it" card in the conversation: one click and a browser approval sign in again, and the open conversation continues (P0.2 item 11, seen in Desktop Chat). Even so, nothing answers 401 at the door because a FamilySearch session ended.
 
 **Data.**
 - **Postgres.** The web and tool tiers each use a DML-only role. `migrate` runs with the owner role and then grants that role its tables.
@@ -113,25 +114,23 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 | Item | Result so far |
 |---|---|
 | 1. Tool prefix | It comes only from the connector's name. Under "Genealogy Research", agents get their tools; under any other name they spawn with only `Read`. |
-| 2. Agents and approvals | Agents work under that name. Every call after the first asked for approval. On a personal account, "Always allow" stopped the prompts for that tool, in new tasks too. Still to measure: whether it reaches agents, whether the hook's `permissionDecision: "allow"` removes the prompt, and an org account. |
+| 2. Agents and approvals | Agents work under that name, in claude.ai and Desktop Chat too. In Desktop Chat, "Always allow" chosen at a prompt does not save; set on the connector's page it does, and it reaches agents, new conversations, a Desktop restart and a reconnect. Connecting it again from the plugin's Connectors tab after deleting it resets approvals. Still to measure: whether the hook's `permissionDecision: "allow"` removes the prompt, and an org account. |
 | 3. Hook | The `PreToolUse` hook fires on connector calls. |
-| 4. Limits | Measured 2026-11-08: the per-call timeout is 230 s, with 60, 120 and 240 s sleeps. Not measured: the result-size limit, through Funnel. |
+| 4. Limits | Through Funnel, in Desktop Chat: a call times out after 230 s (120 s finished, 240 s did not). A 40,000-character result reaches the model whole; at 100,000 only a 2 KB preview does and the rest goes to a file the model reads with a shell; at 160,000 the model gets an error and the file. |
 | 5. Tool delivery | Every advertised tool arrives on a fresh add. |
 | 6. Sign-in | Recorded: Claude's client document, the `/authorize` and `/token` parameters, and that it accepts a grant with no refresh token. Not measured: whether a sign-in started in one Claude account can finish in another. If it can, report it to Anthropic, and the launch decision goes to the lead. |
-| 7. Folder access | `Read` cannot see the project folder. |
+| 7. Folder access | `Read` cannot see the project folder. `search-images` and `search-hints` reach staged results through `sidecar_read` on the connector (2026-11-08), which asks for approval like any tool. |
 | 8. Updates | Not measured: installing a newer zip over the old one, on a second Claude account. |
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
-| 10. Reconnect | Not measured: with a live connector token and an expired FamilySearch session, whether the tools stay, whether the link reaches the user from the main thread and from an agent, and whether "continue" works in the same task. |
-| 11. Long token | Not measured: whether a long `expires_in` with no refresh token still works, in a new task and in the open one, and, when that token dies, what reconnecting takes. |
-| 12. Surfaces | Claude's plugin docs say chat ignores agents and hooks. On an account with the unified home there is no selector: a conversation starts as chat and moves to a cloud session when it needs code or files. On the lead's account the model lists an `Agent` tool in chat, and others report plugin agents and hooks running in web sessions, unreliably. Not measured here: whether claude.ai and Desktop Chat run this plugin's agents and hook on the first message, whether research moves a unified conversation at all, and whether the card and the sign-in link behave alike on each. |
-| 13. Door refusals | Not measured: what the researcher, the model and the card see when the door answers 400, 403 or 503, and whether the connector then works with no new sign-in. A bad result could move these to `isError`, on the connector path only. 401 stays HTTP. |
-| 14. One install | Not measured: a plugin whose `.mcp.json` names the server. Claude's docs say the entry appears on the plugin's Connectors tab, where the user connects and signs in, so skills, agents, hook and connector arrive together on the account. Still to learn: whether its tools keep the `mcp__Genealogy_Research__` prefix the agents list, because Claude Code's docs name a bundled server's tools `mcp__plugin_<plugin>_<server>__…`. |
-| 15. Server instructions | Not measured: whether an MCP server's `instructions` reach the model on each surface, and which tool a first message calls first there. A rule carried in a tool's answer only reaches a model that calls that tool. |
+| 10. Reconnect | With a live connector token and an expired FamilySearch session, the tools stay, the message and its link reach the user unchanged from the main thread, from an agent and in a new conversation, and "continue" works in the same conversation on the same token. The link is not clickable in a Desktop Chat reply, even in plain prose. Once, in Desktop 5.1231, Claude told the user to open it only if the address was their own server, partly because the stub's answers looked like a test connector. |
+| 11. Long token | Holds: a token with no refresh token worked about 4 days later, through idle days and a Desktop update, in the open conversation and a new one. Claude sends an expired token, so the door decides expiry. When a token dies, a "Reconnect a connector to keep using it" card appears in the conversation (seen in Desktop Chat, 5.1231); one click and a browser approval sign in again, and the open conversation continues with its approvals kept. With a refresh token, Claude refreshes silently, in the open conversation, in an agent and in a new one. |
+| 12. Surfaces | An ordinary chat at claude.ai or in Desktop is a cloud session from its first call (`CLAUDE_CODE_ENTRYPOINT=remote_cowork`), with the account's plugins synced, so the plugin's agents spawn on the first message (3 of 3 at claude.ai) and the hook binds; no conversation moved. An Incognito chat at claude.ai is a plain chat: no shell, no `Agent` tool and no hook, and the research skill declines. Cards draw on all three and in the iPhone app, which lists the connector but shows no plugin. |
+| 13. Door refusals | Measured; the MCP App record's **Door refusals** block has each cell. A 400 keeps our message. On a 403 the host replaces it everywhere, and it reads as a firewall block. On a 503 the model's path drops it, while the card's call keeps it inside the error string. The connector works afterwards with no new sign-in. So on the connector path a `tools/call` refused for someone else's project, or by a failed lookup, is a tool error carrying our message (lead, 2026-11-12); a request with no tool call keeps its 403 or 503, a 400 is unchanged, and 401 stays HTTP. |
+| 14. One install | Works. Connected from the plugin's Connectors tab, the `.mcp.json` server becomes an ordinary account connector (Web, Custom): it keeps the `mcp__Genealogy_Research__` names, agents spawn and cards draw at claude.ai and in Desktop Chat, one connection covers every surface including the phone, and it has the usual connector switch, which stays off in new conversations until switched back on. claude.ai labels its card rows "Unverified" (tooltip: "Custom · Not verified by Anthropic" and the host); Desktop shows no badge, and a hand-added connector showed none at claude.ai on 2026-11-08, so the cause is not separated from a claude.ai change. After the old connector was deleted, connecting through the plugin at the same URL kept its sign-in, so the real connector's first connection must show a fresh one. |
+| 15. Server instructions | They are not in the model's context before a conversation's first tool call on any surface, and it has them after that. In Incognito the host attached them to the first tool result, and the model once withheld them as embedded text. A first research message calls `project_list` first at claude.ai and in Desktop Chat; in Incognito the research request called nothing, while the plan request called `project_list` first. A rule carried in a tool's answer only reaches a model that calls that tool. |
 
-**When each runs:**
-- **Sitting 1:** item 10 on the main thread and in an agent, approvals in agents, `sidecar_read` in `search-images` and `search-hints`, item 4, a stub card on a signed-in connector, the MCP App's open cells, and items 12, 13 and 15. The card and the refusals run on each surface, and the refusals run last.
-- **Sitting 2, at least 25 hours later, 45 minutes:** item 11, item 10's `--refresh` run, then item 14, which removes the connector.
-- **Before the first invited user:** items 6, 8 and 9.
+**When each runs:** sitting 1 ran on 2026-11-08 and sitting 2 on 2026-11-12, in Claude
+Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 
 **Done when:** each item has a recorded result in a comment on issue #3529.
 
@@ -165,9 +164,8 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **`login`, `logout` and the missing-OpenRouter-key message** are worded by `principal.surface`, and `login` returns the same link.
 - **`project_context`** carries `signInUrl` when the session has ended, from a `GET /platform/users/current` memoised briefly, so the next turn shows the link even if an agent's summary lost it. `docs/specs/project-context-tool-spec.md` changes with it.
 - **`auth_status`,** for connector callers, reports the account id and checks the session with the same `GET`.
-- **Sites that miss the message today:** `collections_search`'s bare 401, `match-by-id`'s 403 wording, and `rank_search_matches`, which should rethrow a rejected token.
-- **Agents.** `search-records` replaces the tool's message with "type `login`", and `init-project` with "log in, and stop"; they relay it instead. `search-hints` leaves an item as it is on a sign-in message, so a lapsed session is not recorded as an inaccessible source. Wording follows sitting 1. Each edit owes `make eval-skill` or a senior's `eval-cosmetic-skip` label.
-- **Comments.** Five still cite the dropped session-end rule: `src/auth/principal.ts`, `src/http-server.ts`, `src/store/pg-s3-project-store.ts`, `tests/utils/fs-fetch.test.ts` and `tests/http/http-server.test.ts`.
+- **Sites that miss the message today:** `collections_search`'s bare 401, `match-by-id`'s 403 wording, and `rank_search_matches`, which rethrows a connector caller's rejected token from its attachments step.
+- **Agents.** `search-records`' instructions tell it to replace the tool's message with "type `login`" (in sitting 1 it relayed the link unchanged), and `init-project` with "log in, and stop"; they relay it instead. `search-hints` leaves an item as it is on a sign-in message, so a lapsed session is not recorded as an inaccessible source. Wording follows sitting 1. Each edit owes `make eval-skill` or a senior's `eval-cosmetic-skip` label.
 - **Done when:** tests pin each wording, and a dead token gives the link at every site above.
 
 **E4 Limits.**
@@ -190,17 +188,19 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **W2 Sign-in.**
 - **Users** are keyed by FamilySearch id, with a unique index. Email stays required and unique: an identity with no email, or with one another user has, is refused with a message.
-- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/auth/logout` ends it on the server, with every other session the user holds and their connector tokens, so signing out also disconnects Claude until the user reconnects under Settings → Connectors.
+- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/auth/logout` ends it on the server, with every other session the user holds and their connector tokens, so signing out also disconnects Claude until the user reconnects, from the Reconnect card in the conversation or under Customize → Connectors.
 - **Requests:**
   - the consent POST needs a same-origin `Origin`, and a missing or null `Origin` is refused there;
   - `/token` takes no `Origin` check, because it carries no cookie and the code and the PKCE verifier authenticate it;
   - other cookie routes keep `SameSite=Lax`, as today.
 - **The FamilySearch redirect URI** defaults to `<public URL>/callback`, and `FS_REDIRECT_URI` overrides it.
-- **Claude's authorization server (issue #3997)** runs on the Python MCP SDK's handlers (`create_auth_routes`, with `mcp` moved from the dev group into `proto-web`):
+- **Claude's authorization server (issue #3997)** runs on the Python MCP SDK's `/authorize` and `/token` handlers (`create_auth_routes`, with `mcp` added to `proto-web`). `OAUTH_ISSUER` on the web tier turns it on, and the tier refuses to start unless that equals `PUBLIC_URL`, with FamilySearch sign-in on and chat off:
   - **Metadata:** our own, advertising client metadata documents, `none` and `S256`, with no registration or revocation endpoint. The issuer is one setting, printed byte for byte the same by both tiers' metadata.
-  - **Clients:** `/authorize` checks a fixed allowlist of Claude's client documents, recorded in P0.2. Each entry sets `token_endpoint_auth_method` none, `grant_types` `[authorization_code]` and the advertised scope.
-  - **Consent:** the consent page names the client and its redirect host, links the policies, says everything is deleted when the beta ends, records the terms acceptance and refuses framing.
+  - **Clients:** `/authorize` checks a fixed allowlist of Claude's client documents, recorded in P0.2: one client id and its one redirect. Each entry sets `token_endpoint_auth_method` none and the advertised scope.
+  - **Refresh:** no refresh token is issued, and the metadata advertises `authorization_code` only. A refresh request answers `invalid_grant`, the code that sends a client back to `/authorize`: Claude may still hold a refresh token from an earlier server at the same URL (P0.2 item 14).
+  - **Consent:** the consent page names the client and its redirect host, says to continue only if the user just clicked Connect in Claude, links the policies, says everything is deleted when the beta ends, records the terms acceptance and refuses framing.
   - **Codes and tokens:** stored only as hashes, and the code is deleted when it is exchanged. One constant sets the token's lifetime.
+  - **The door's 401** names the metadata and the scope, and says `error="invalid_token"` when a token was sent and refused, as the probe did.
 - **One callback** serves both flows, told apart by the signed state cookie. With chat off, it consumes the single-use state record before it calls FamilySearch; with chat on, the signed state cookie alone guards it, as today. It stores the FamilySearch token, encrypted with Fernet as today. With chat off it creates a user only in the connector flow, with the terms accepted, under the allowlist. A plain browser sign-in by an existing user replaces their FamilySearch token and leaves their connector token alone. It refuses a blocked user.
 - **FamilySearch budget (issue #3992),** off unless set: the code exchange and the identity read share one small process-wide budget. A missing, mismatched or used state is refused without touching it. Past the budget, the callback answers 503 "busy, try again" with the state intact.
 - **Done when:**
@@ -213,6 +213,11 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
   - the web tier's issuer equals the tools tier's `authorization_servers[0]`, byte for byte;
   - with chat off, an existing user's plain browser sign-in replaces the FamilySearch token, leaves the connector token unchanged, and the next tool call uses the new token;
   - after `/auth/logout`, a tool call with that user's connector token gets 401 from the tools tier.
+- **Owed at the first deploy, by hand,** because no test reaches Claude's own client:
+  1. the consent page's Agree button answers 303 in a real browser, not 403;
+  2. the first connection shows a fresh sign-in (`/authorize`, then a token), though Claude may first send a refresh token an earlier server at this URL issued;
+  3. a dead token at the door brings up Claude's Reconnect card;
+  4. a sign-in started in one Claude account cannot be finished in a browser signed in to another (P0.2 item 6, and launch gate 4).
 
 **W3 Project routes.** Shipped: uploads, the download, OpenRouter linking (off on `malachi`), the policy routes, the account data with its deletion code, and the viewer data routes, of which the beta uses only `GET /api/projects`, for W4's list. Project routes are keyed by project and owner-checked.
 
@@ -221,7 +226,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **`/`, signed in:** the FamilySearch account's name, "go back to Claude and say continue", the account id and deletion code, and the user's projects, each with upload and download links.
 - **`/upload/<project id>`:** pdf.js sends the text layer beside the original, with progress. Serve pdf.js from the tier. `uploadUrl` points here.
 - **OpenRouter link and unlink,** shown only when linking is on.
-- **Done when:** the done-when list on issue #4001 passes. Issue #3997 adds the bare landing first, because without it a sign-in ends on a 404.
+- **Done when:** the done-when list on issue #4001 passes.
 
 ### Schema and deletion
 
@@ -235,11 +240,11 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **G3 Connector name (issue #3529 item 1).** The connector is named exactly "Genealogy Research", so `mcp__Genealogy_Research__…` is the bare spelling every agent already lists. No agent or test changes. Under any other name, agents spawn with only `Read`. The org admin page has no rename, and one org cannot add the same URL twice, so a wrong name means deleting and re-adding the connector. A user who also runs the `.mcpb` gets two servers on that prefix, so D4 tells them to turn it off.
 
-**G4 Hook-only rules.** The hook fires on connector calls in a Cowork task (issue #3529 item 3), so these rules hold there as they do on the desktop. Claude's docs say chat runs no hooks and no agents. Today the research skill says that without an `Agent` tool, research runs only in a Cowork task, and stops. The Surface decision settles that line.
+**G4 Hook-only rules.** The hook fires on connector calls in a Cowork task (issue #3529 item 3) and in an ordinary chat (P0.2 item 12), so these rules hold there as they do on the desktop. An Incognito chat runs no hook and no agents, and the research skill there says research needs its agents, and stops. The Surface decision settles that line.
 
 **G5 Capture wording (issue #3990).** Shipped in PR #4387. `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
 
-**G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, and the no-`Agent` line the Surface decision sets. Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds.
+**G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, the no-`Agent` line the Surface decision sets, and connector wording for an empty or unavailable connector that does not point at a desktop extension (in sitting 1 a chat told the user to "update its desktop extension"). Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector VERSION= MARKETPLACE= SERVER_URL=https://<host>/mcp` builds. It writes the plugin's `.mcp.json`, naming `Genealogy Research` at that URL (the one-install decision); `make plugin` and the harnesses get none.
 
 **Issue #3836**, agents reading project files directly, is closed: the tools, the agents' reads and the hook's deny have shipped. Issue #4311 moved the last two reads to tools.
 
@@ -259,22 +264,21 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **Done when:** stopping `tools` emails the lead, and yesterday's `ev=tool_call` lines survive a redeploy.
 
-**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before warming approvals, because a change to a tool's metadata means removing and re-adding the connector. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name>` builds `releases/genealogy-plugin-connector.zip`.
+**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before warming approvals, because a change to a tool's metadata means removing and re-adding the connector. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp` builds `releases/genealogy-plugin-connector.zip`.
 
 **D4 Onboarding page.**
-1. Add the custom connector through the prefilled link (`https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Genealogy%20Research&connectorUrl=…`), keeping its name. Any other name leaves every agent without its tools.
-2. Sign in.
-3. Install the plugin once from the Plugins page. It follows the Claude account.
+1. Install the plugin once from the Plugins page. It follows the Claude account.
+2. On the plugin's Connectors tab, connect `Genealogy Research` and sign in. That one connection covers claude.ai, Desktop and the phone, though the phone shows no plugin, so whether research runs there is not measured.
 
 The page also says:
 - **Where research runs,** from the Surface decision.
 - **A paid Claude plan:** plugins need one.
 - **Living people:** do not store information about living people.
 - **This is a beta:** nothing promises your work survives, so download what you want to keep.
-- **No desktop extension** on that Claude account: turn it off under Settings → Extensions on each computer, or use a second Claude account.
-- **Signing in again:** what to expect when FamilySearch ends a session, and when the connector token itself expires (reconnect under Settings → Connectors), written from the sittings.
+- **No desktop extension** on that Claude account: turn it off under Settings → Desktop app → Extensions on each computer, or use a second Claude account.
+- **Signing in again:** when FamilySearch ends a session, the tool's message gives a sign-in link; sign in, then say "continue" and the call that failed runs again. In Desktop Chat the link is plain text and needs copying into a browser. When the connector token itself expires, Desktop Chat shows a "Reconnect a connector to keep using it" card in the conversation: click Reconnect, approve in the browser, and carry on. claude.ai and the phone were not tested.
 - **Feedback:** where to email it, with the conversation pasted in.
-- **Team and Enterprise plans:** an Owner adds the connector and makes the plugin available.
+- **Team and Enterprise plans:** an Owner makes the plugin available, which brings the connector with it. Not measured on an organization account.
 
 **L1 Policies.** A short privacy policy and terms, published by GeneFun, Inc. at `/privacy` and `/terms`, accepted on the consent page.
 
@@ -299,15 +303,15 @@ A public text or unit test drawn from a report names no account id or anyone who
 
 The first invited user waits for all of these.
 
-1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/code-review ultra`.
+1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/review`. `/code-review ultra` runs only where one of those calls for it (lead, 2026-11-12).
 2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat and Desktop Chat:
-   1. add the connector, sign in and install the plugin;
+   1. install the plugin, connect it from its Connectors tab and sign in;
    2. research a person, and see the cards and case file;
    3. upload a capture;
    4. start a second project, then resume the first in a new task;
    5. let the session end, sign in again from the link, and continue;
    6. install a newer zip over the old one.
-3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix.
+3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. Whether D4 tells users to set it on the page is the lead's call.
 4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
 5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1.
 
@@ -324,7 +328,7 @@ When FamilySearch hosts the open beta:
 Each of these is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there.
 - **Done:** PR #3852's `project_list` and router step; W1; W3's routes; E1; E4's process-wide and per-user limits; S1's schema files.
 - **Web tier,** `apps/server/proto/web/`: W2 and W4. With chat off, sign-in asks for no `offline_access` and the callback stores no refresh token. Chat on stays the default.
-- **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings nine packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt` and `sse-starlette`. Before W2 merges, Richard reviews the dependency change.
+- **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings ten packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt`, `sse-starlette`, and `pywin32`, pinned under a win32 marker only. Before W2 merges, Richard reviews the dependency change.
 - **The tool server,** `packages/engine/mcp-server/`: E2, E3 and E5, and the MCP App's fold into `createServer`.
 - **The plugin,** which `eb-worker.zip` carries: G5's wording, E3's and E5's agent lines, and G6.
 
@@ -334,8 +338,8 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 
 | Item | Issue | Who | Due |
 |---|---|---|---|
-| W2 Claude's authorization server | issue #3997 | remote-server agent | 19 Nov |
-| E3 Sign-in link and wording | issue #3995 | remote-server agent | 23 Nov |
+| W2 Claude's authorization server | issue #3997 | remote-server agent | Merged; the first live sign-in is owed |
+| E3 Sign-in link and wording | issue #3995 | remote-server agent | Merged; the run with a planted dead token is owed |
 | D2 Monitoring | none | remote-server agent | Before invited users |
 | MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The demo |
 | G6 The router PR | issue #4297 | MCP App agent | Before launch |
@@ -355,7 +359,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 | When | Work |
 |---|---|
 | Sun 8 Nov | Sitting 1 |
-| At least 25 hours later | Sitting 2. Then the token lifetime, E3 and the Surface decision are settled here |
+| Thu 12 Nov | Sitting 2. A long token with no refresh, and one install, are decided; the length is the lead's call, and E3 follows from the results |
 | By 13 Nov | E2 merged; the stack up on `malachi` with the edge off |
 | About 19 Nov | The first live sign-in |
 | About 23 Nov | A full run with cards, a planted dead token, and signing in again |
@@ -373,12 +377,12 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 ## Risks
 
 - **The first real run.** No real token, plugin agent or hosted router has gone through the door together. Stage it: curl with a real token, then a seeded connector, then sign-in.
-- **The long token.** If Claude stops using a token with no refresh token, we add refresh on our own token. If the tools vanish on a tool-level message, E3's design changes.
-- **Approvals.** A run makes over 100 tool calls, mostly in agents. If "Always allow" does not reach agents, a run prompts on nearly every call.
-- **The per-call limit.** Measured 2026-11-08 at 230 s (P0.2 item 4). `project_create` needs about 55 s; `image_transcribe` for a connector caller is now held to a 180 s budget (E5), leaving room for the trip both ways. The result-size limit stays unmeasured, in Claude or Funnel.
+- **The long token.** Sitting 2 held one for about 4 days, and the tools stayed on a tool-level message. Past that is unmeasured; a refresh token on our own token works silently if it is ever needed.
+- **Approvals.** A run makes over 100 tool calls, mostly in agents. "Always allow" set on the connector's page reaches agents; chosen at a prompt in Desktop Chat it does not save, so a user who only clicks the prompt is asked on every call.
+- **The per-call limit.** Measured 2026-11-08 at 230 s (P0.2 item 4). `project_create` needs about 55 s; `image_transcribe` for a connector caller is now held to a 180 s budget (E5), leaving room for the trip both ways.
 - **The wrong server.** A `.mcpb` left on shares the connector's prefix, so research can land on disk and look right. The first reply must say `hosted`.
 - **One host.** A single server, with `/wiki` and `/pop-stats` on the same machine and the same Funnel. A lost disk loses users' research, and D4 and the terms say so.
-- **Research in chat.** Claude's docs say a chat session runs no hooks or agents, but the MCP App's host record shows the model listing `Agent` in chat on one account. This plugin is 2 skills and 31 agents. If the tool is there, the research skill's no-`Agent` line does not stop, and a run may fall to a general-purpose stand-in with no agent's tool list, which the hook would let through. Item 12 settles which. Either way, a rule that must hold in chat has to be a tool rule.
+- **Research in Incognito.** An ordinary chat runs the plugin's agents and hook (P0.2 item 12). An Incognito chat runs neither: the research skill declines, and the main thread can call `record_search` itself. A rule that must hold in every chat, Incognito included, has to be a tool rule.
 - **A new account.** Research on the primary surfaces rests on plugin skills and agents reaching chat. If a new account gets neither, research does not run there at all, so acceptance step 2 is the main risk to the beta.
 - **A test on the lead's account.** It runs a variant plugin, so cards working there say nothing about the zip users install. Only acceptance step 2 does.
 - **One account's load.** E4's per-user cap holds an account to 4 tool calls running at a time, and its calls past that wait. Each waiting call has still passed the door (up to two lookups and its body read), and nothing bounds how many wait.

@@ -196,7 +196,7 @@ this ADR records behaviour rather than citing them:
   **Contradicted 2026-10-19:** it fired, on startup and on resume (below).
 
 **What the step-mode phase-0 probe found (Cowork, 2026-10-19).** Phase 0 of
-`docs/plan/research-step-mode.md`, measured with a recorder plugin on
+`docs/specs/research-step-mode-spec.md`, measured with a recorder plugin on
 `PreToolUse` (matcher `.*`), `UserPromptSubmit`, `SessionStart` and `Stop`. The
 kit was deleted once these results were in. It lived in a step-probe folder
 under `apps/server/dev/`, and is in git history on the PR #3262 branch
@@ -358,6 +358,38 @@ numbers behind it rather than on a guess (lead, 2026-10-19).
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding
 environment, and enforcing-vs-shadow status.
+
+**Cowork hook census, 2026-09-24, issue #2088 (macOS and Windows).** Two configurations:
+one with a project folder connected, one without. Working directory `/home/claude`, tool
+spelling `mcp__remote-devices__Genealogy_Research__…`, `device_bash` available — both
+match the Cowork device-bridge row. Key findings:
+
+- **`UserPromptSubmit`'s `additionalContext` reaches the model.** Step 3 (tool-call leg):
+  asked to list every `PROBE-` token that reached it, the session returned all 6 verbatim.
+  This directly answers question 3 in the issue's body ("does injected context reach the
+  model?"), which ADR-0003 rested on as unmeasured. It does.
+- **`SessionStart` fires on resume.** Both configurations fired `SessionStart` with
+  `source: "resume"` after a multi-minute idle, contradicting the 2026-07-30 finding that
+  it did not fire in Cowork. Cold-start remains unmeasured in this census. The finding now
+  recorded in this ADR's Decision section ("did not fire") applies only to that one 2026-07-30
+  cold-start probe; it may differ by run mode or build.
+- **`SubagentStop` fired 15 times with no subagent spawned by the tester.** Each carried a
+  real `agent_id` and an empty `agent_type`. Whether these represent Cowork internal
+  housekeeping or something else is not known.
+- The session fabricated a Slack post mid-run. Neither claim about its own hook-visible
+  actions should be trusted without log verification.
+
+**Windows Cowork hook-binding probe (2026-11-09–10, 44f98b58, #4176).** Six
+replays in empty folders on DESKTOP-5G72195 (Windows, "This computer"), build
+44f98b58, plugin version 0.0.1+2026-11-06.44f98b58. A 2026-11-05 negative (no
+blocking seen) is unexplained — no build was recorded.
+
+- **`PreToolUse` binds.** A read of `research.json` in a fresh folder was
+  refused ("BLOCKED: guard_project_files"). Measured 2026-11-09, build 44f98b58.
+- **`UserPromptSubmit` binds and its `additionalContext` reaches the model.**
+  Three probes (each in a new empty folder) asked the model to quote the hook
+  context verbatim. All three returned the routing text word for word.
+  Measured 2026-11-10, build 44f98b58.
 
 ## Revisit when
 

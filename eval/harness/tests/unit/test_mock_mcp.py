@@ -2300,8 +2300,42 @@ def test_live_record_read_stages_the_record_as_production_does(tmp_path):
     assert envelope["payload"]["query"] == {"recordId": "68Q9-K34P"}
     [element] = envelope["payload"]["results"]
     assert element["recordId"] == "68Q9-K34P"
-    assert element["gedcomx"]["persons"] == body["persons"]
+    # The sidecar keeps the full document; the inline answer is compacted (#4415).
+    assert [p["id"] for p in element["gedcomx"]["persons"]] == [p["id"] for p in body["persons"]]
+    assert element["gedcomx"]["sources"], "the staged record keeps its sources"
+    assert element["gedcomx"]["persons"][0]["names"][0]["id"] == "N1"
+    assert "sources" not in body
+    assert all("id" not in n for p in body["persons"] for n in p.get("names", []))
     assert "staged" not in element["gedcomx"]
+
+
+@pytest.mark.requires_engine_build
+def test_served_record_read_with_no_project_is_compacted(tmp_path):
+    """Production's server compacts every record_read answer (#4415)."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-tallman-2v7m-6qm"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "2V7M-6QM"}))
+    assert "sources" not in body and "places" not in body
+    assert body["citation"]
+    assert body["recordUrl"] == "https://www.familysearch.org/ark:/61903/1:2:99FF-4NZ4"
+    assert {p["id"] for p in body["persons"]} == {"p_15021461819", "p_15021461820", "p_15021461821"}
+
+
+@pytest.mark.requires_engine_build
+def test_served_record_read_cites_the_persona_the_call_asked_for(tmp_path):
+    """The compactor gets the call's `recordId`, not the fixture's `~` predicate.
+    Edward is the record's second persona, so a lookup that found nobody would
+    fall back to the Record citation, which names Orrin first."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-tallman-2v7m-6qm"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "ark:/61903/1:1:2V7M-6QM"})
+    )
+    assert "Edward Tallman in entry for Orrin Tallman" in body["citation"], body["citation"]
 
 
 @pytest.mark.requires_engine_build
@@ -2353,6 +2387,44 @@ def test_record_read_stages_nothing_without_projectpath_or_with_resultsref(tmp_p
 _PERSON_READ_ARGS = {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True}
 
 
+def _trimmed_by_engine(full):
+    """The COMPILED `trimPersonReadForModel` run over a full read, independent of
+    the mock's own call to it."""
+    from harness import mock_mcp
+
+    url = mock_mcp._node_module_url(mock_mcp._MCP_BUILD / "tools" / "person-read.js")
+    script = (
+        f"import {{ trimPersonReadForModel }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " process.stdout.write(JSON.stringify(trimPersonReadForModel(JSON.parse(readFileSync(0, 'utf-8')))));"
+    )
+    proc = mock_mcp._run_node_eval(script, json.dumps(full), timeout=60)
+    assert proc.returncode == 0, proc.stderr
+    return json.loads(proc.stdout)
+
+
+@pytest.mark.requires_engine_build
+def test_person_read_serves_the_model_facing_trim_not_the_full_read(tmp_path):
+    """The Tallman fixture is a live capture of the FULL read (163k chars); the
+    mock must hand the agent production's answer, under the 40k pin (#4384)."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-read-tallman-attached-sources"], FIXTURES_DIR, workspace=tmp_path
+    )
+    raw = json.loads(
+        (FIXTURES_DIR / "person-read-tallman-attached-sources.json").read_text(encoding="utf-8")
+    )["response"]
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "person_read", {"personId": raw["persons"][0]["id"], "relatives": True, "sourceDescriptions": True})
+    )
+    assert len(json.dumps(raw, separators=(",", ":"))) > 150_000
+    assert len(json.dumps(body, separators=(",", ":"))) < 40_000
+    assert all("citation" not in s for s in body["sources"] if "1:1:" in s.get("url", ""))
+    for person in body["persons"][1:]:
+        assert "sources" not in person
+    for person in body["persons"]:
+        assert all("id" not in f for f in person.get("facts", []))
+
+
 @pytest.mark.requires_engine_build
 def test_person_read_is_staged_when_given_project_path(tmp_path):
     """Production stages every `person_read` given a projectPath and returns
@@ -2378,11 +2450,14 @@ def test_person_read_is_staged_when_given_project_path(tmp_path):
     envelope = json.loads((tmp_path / staged["resultsRef"]).read_text(encoding="utf-8"))
     assert envelope["tool"] == "person_read"
     assert envelope["payload"]["query"] == _PERSON_READ_ARGS
+    # The answer and the staged copy are the model-facing trim of the fixture
+    # (#4384), not the fixture itself.
+    answer = {k: v for k, v in body.items() if k != "staged"}
+    assert answer == _trimmed_by_engine(fixture)
+    assert answer != fixture
     assert envelope["payload"]["results"] == [
-        {"personId": "LZNY-BRF", "gedcomx": fixture}
+        {"personId": "LZNY-BRF", "gedcomx": answer}
     ]
-    # The rest of the response is the fixture, unchanged.
-    assert {k: v for k, v in body.items() if k != "staged"} == fixture
     # `staged` leads, as production serializes it (#3384), so a truncated
     # preview of an over-limit response still carries the ref.
     assert next(iter(body)) == "staged"
@@ -2441,6 +2516,17 @@ def test_person_read_staging_degrades_on_node_failure(tmp_path, monkeypatch, fai
             tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
         )
     assert calls, "the node call was never reached"
+    assert out == response
+
+
+def test_person_read_trim_warns_when_the_engine_build_is_missing(tmp_path, monkeypatch):
+    """An untrimmed answer is a harness fault and must say so, not pass as production's shape."""
+    from harness import mock_mcp
+
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", tmp_path / "no-build")
+    response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
+    with pytest.warns(UserWarning, match="could not be trimmed"):
+        out = mock_mcp._trim_person_read(response)
     assert out == response
 
 

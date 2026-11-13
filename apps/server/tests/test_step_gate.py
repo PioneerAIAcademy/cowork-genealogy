@@ -399,7 +399,7 @@ def test_a_seeded_gate_never_rewrites_the_turns_step(boundary):
 
 
 def test_after_init_project_the_group_fixing_step_is_persisted_too(boundary):
-    """The step after init-project fixes the turn's group (plan section H), so a
+    """The step after init-project fixes the turn's group (spec section H), so a
     redelivery must seed from it, not from init-project."""
     seen: list[tuple] = []
     g = gate(boundary, on_first_step=lambda step, mode: seen.append((step, mode)))

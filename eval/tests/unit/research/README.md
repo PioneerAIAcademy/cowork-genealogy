@@ -143,6 +143,29 @@ session, which a fresh-context test cannot seed; the proof-conclusion
 tree-encoding and `exhaustive_declared` rows reach the same agent that
 `ut_research_s59` already asserts.
 
+## One plan item per search agent (issue #4441)
+
+`ut_research_fo1` (`route-plan-items-one-per-agent.json`) runs
+`search-continue-authorized-in-message`, whose active plan has two open items, on a
+job-shaped message. `fans-out-plan-items` gates
+`test_search_spawns_cover_each_open_item`: one `search-records` spawn per open item
+with no `fallback_for`, the handed items equal to that set, and no spawn carrying
+six or more consecutive words of the researcher's message. Whether the spawns share
+one assistant message is not checked, but `search-records` keeps the stop stub, so a
+router that sends them one after the other records one spawn and fails.
+
+`test_delegation_hands_plan_item_verbatim` reads the handed item from the spawn's
+`plan_item:` block. It fails a spawn with two blocks, two id lines, or an id line
+naming a different item, and accepts any id-line spelling (`planItemId:`,
+`Plan item ID:`) or none.
+
+`ut_research_uh1` clones `ut_research_fsh` on an `--autonomous` run. SKILL.md
+passes `userPresent: no` to `search-hints` only on an `--autonomous` run, and the
+agent reads a missing field as yes. `delegates-user-present-no-hints` adds the
+field to `test_spawn_carries_its_step_mode_fields`. Its `search-external-sites`
+twin, `delegates-user-present-no-external`, has no test yet: the router left the
+field out in 1 of 3 scratch runs, and issue #4554 tracks the fix and the test.
+
 ## What is NOT covered (and why)
 
 - **Second-opinion verdict handling**: gps-mentor is not a routing row; it
@@ -302,6 +325,20 @@ offered … Continue." shape, `stop_at_stub` on `record-structurer`; its
 `test_search_hit_review_yes_extracts_the_matches`, which asserts one spawn whose
 single source carries the hit's id and the ref verbatim. The width of five spawns
 per message is not checked: no run record says which message a spawn came from.
+
+## Hand-back routing (issue #4358)
+
+Both run on `anders-unna-marriage-search` (one planned item) with `search-records`
+stubbed to return a `Hand-back: <owner> — <request>` line above the final `---`.
+`ut_research_hb1` (`handback-same-group-spawned.json`) names `search-external-sites`,
+in the search group, and carries `handback-spawns:search-external-sites`.
+`ut_research_hb2` (`handback-cross-group-not-spawned.json`) names `research-plan`,
+another group, and carries `handback-no-spawn:research-plan`.
+`test_handback_routing_follows_the_step_group` reads the hook records for a main-thread
+spawn of each named agent. The stub reply reaches the router as an agent return (the
+canned text rides in the hook's denial reason), so the router acts on its `Hand-back:`
+line. The validator checks the spawn, not that the report names a cross-group owner or
+ends on "Continue with …?"; the judge reads that part.
 
 ## Attached records (issue #3516)
 

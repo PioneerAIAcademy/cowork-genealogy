@@ -512,6 +512,12 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 
+# What record_search adds to an answer to say how to search next:
+# `patronymicSearch`, `childrenSearch` and `census`. Computed by the compiled
+# `searchAdvice` from the call's own arguments and the answer's counts, so no
+# fixture carries a copy.
+_SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
 _VOLUME_SEARCH_JS = _MCP_BUILD / "tools" / "volume-search.js"
@@ -696,6 +702,34 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
     except Exception as exc:  # noqa: BLE001 — advisory, never fails the call
         warnings.warn(f"mock record_search could not compute surnameVariantHints ({exc})", stacklevel=2)
         return None
+
+
+def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Production's `searchAdvice` for a `record_search` call, as (key, value)
+    pairs in the order production serializes them before `results`. Empty when
+    nothing applies, the build predates it, or node fails (with a warning: a
+    harness fault must not look like the model ignoring the advice)."""
+    if not _compiled_module_present(_SEARCH_ADVICE_JS, "record_search responses will carry no search advice"):
+        return []
+    script = (
+        f"import {{ searchAdvice, SEARCH_ADVICE_KEYS }} from '{_node_module_url(_SEARCH_ADVICE_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const advice = searchAdvice(input.args, input.counts);"
+        " process.stdout.write(JSON.stringify("
+        " SEARCH_ADVICE_KEYS.filter((k) => advice[k]).map((k) => [k, advice[k]])));"
+    )
+    try:
+        counts = {"totalMatches": response.get("totalMatches"), "ranked": response.get("ranked")}
+        proc = _run_node_eval(
+            script, json.dumps({"args": args, "counts": counts}), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return [(k, v) for k, v in json.loads(proc.stdout.strip())]
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock record_search could not compute its search advice ({exc})", stacklevel=2)
+        return []
 
 
 def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
@@ -1141,6 +1175,47 @@ def _record_birth_ranges(response: dict[str, Any]) -> dict[str, str] | None:
         return None
 
 
+#: The compiled function production's server applies to every `record_read`
+#: answer at the MCP boundary (#4415).
+_RECORD_READ_COMPACTOR = "compactRecordReadAnswer"
+
+
+def _compact_record_read(response: dict[str, Any], record_id: str) -> dict[str, Any]:
+    """Run the compiled `compactRecordReadAnswer` on a served `record_read`.
+
+    `record_id` is the agent's call `recordId`, never the fixture's
+    `args.recordId`, which carries the `~` predicate prefix. Applied after
+    staging, so the staged sidecar keeps the full document, as production's
+    does. Returns the response untouched, with a warning, when the build is
+    absent or node fails.
+    """
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock record_read compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {_RECORD_READ_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" process.stdout.write(JSON.stringify({_RECORD_READ_COMPACTOR}(input.response, input.recordId)));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"response": response, "recordId": record_id}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+            store=False,
+        )
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock record_read compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock record_read compaction failed in node ({exc})", stacklevel=2)
+        return response
+
+
 def _stage_record_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1441,6 +1516,50 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     return str(out.get("message") or f"{field} could not be read")
 
 
+def _trim_person_read(response: dict[str, Any]) -> dict[str, Any]:
+    """Trim a canned full `person_read` to the model-facing answer (#4384).
+
+    Runs the COMPILED `trimPersonReadForModel`, so every fixture is cut exactly
+    as production cuts its answer. Returns the response untrimmed, with a
+    warning, when node or the build is unavailable: a harness fault, never a
+    production shape.
+    """
+    person_read_js = _MCP_BUILD / "tools" / "person-read.js"
+    if not person_read_js.exists():
+        _warn_untrimmed(f"no engine build at {person_read_js}")
+        return response
+    url = _node_module_url(person_read_js)
+    script = (
+        f"import {{ trimPersonReadForModel }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const r = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(trimPersonReadForModel(r)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            _warn_untrimmed(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+            return response
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("persons"), list):
+            _warn_untrimmed("the trim returned no `persons`")
+            return response
+        return parsed
+    except Exception as e:
+        _warn_untrimmed(f"{type(e).__name__}: {e}")
+        return response
+
+
+def _warn_untrimmed(why: str) -> None:
+    warnings.warn(
+        f"mock person_read could not be trimmed ({why}); the response goes back in the "
+        "full shape production no longer returns, so results for this call are not "
+        "comparable to production",
+        stacklevel=2,
+    )
+
+
 def _stage_person_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1713,6 +1832,16 @@ def create_mock_server(
                     _workspace, args, response, _stored_rows.get(source_name)
                 )
 
+            # Production's person_read answers, and stages, the model-facing trim
+            # of the full read (#4384). A fixture holds the full read, which
+            # project_create's stand-in keeps reading from the manifest.
+            if (
+                _name == "person_read"
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _trim_person_read(response)
+
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.
             if (
@@ -1874,6 +2003,18 @@ def create_mock_server(
             if _name == "record_read" and isinstance(response, dict) and "indexFields" in response:
                 response = {k: v for k, v in response.items() if k != "indexFields"}
 
+            # Production's server compacts every record_read answer at the MCP
+            # boundary (#4415): after staging, so the sidecar stays full, and with
+            # the agent's own `recordId`. The extraction_append records map below
+            # is in-process in production and stays full.
+            if (
+                _name == "record_read"
+                and isinstance(response, dict)
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _compact_record_read(response, str(args.get("recordId") or ""))
+
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
             # The fixture keeps the full page; this is what production sends.
@@ -1984,9 +2125,14 @@ def create_mock_server(
                         reordered.setdefault(_key, _value)
                     response = reordered
 
+            # The search advice, as production adds it: each key before `results`.
+            if _name == "record_search" and isinstance(response, dict) and "error" not in response:
+                for _advice_key, _advice in _search_advice(dict(args), response):
+                    response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
+
             # Production serializes surnameVariantHints immediately before
-            # `results`, after the pre-`results` notes above — placed last so
-            # the order matches.
+            # `results`, after the pre-`results` notes and the advice above —
+            # placed last so the order matches.
             if isinstance(response, dict) and SURNAME_VARIANT_HINTS_KEY in response:
                 response = _place_before_results(response, SURNAME_VARIANT_HINTS_KEY)
 
