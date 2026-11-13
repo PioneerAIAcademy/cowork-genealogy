@@ -366,9 +366,13 @@ from it, and an unannotated tool defaults to "not read-only".
       only repeats the name goes.
     - Inside brackets a run is a citation, so it goes. So does a run with no name.
     - A run that goes takes the space before it and any label directly before that
-      (`see`, `see also`, `assertion(s)`, `source(s)`, `tree person(s)`, `for`, `as`).
-      A separator left at a bracket's edge goes, and so does a bracket left with no
-      letter or digit. The words beside an id stay, because agents put evidence there.
+      (`see`, `see also`, `assertion(s)`, `source(s)`, `tree source(s)`,
+      `tree person(s)`, `for`, `as`, `ARK`), and a joiner (`and`, `or`, `vs`, `&`) that
+      would be left hanging. A separator left at a bracket's edge goes, and so does a
+      bracket left with no letter or digit. The words beside an id stay, because agents
+      put evidence there.
+    - An inline code span is shown as plain text, `c\_001` reads as `c_001`, and a
+      record's title loses any id inside it before it names a link.
     - A prototype over the 7,910 proof narratives and link rationales that hold ids
       left no id behind, with about 38 orphaned `'s` and 138 stranded prepositions,
       against 530 and 1,268 if every id is removed.
@@ -663,7 +667,8 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   `(src_001/S26, child_1 role, assertions a_034–a_039)` renders as `(child_1 role)`,
   `born 1887 (S28).` renders as `born 1887.`, `born to I1 and I2` and `I4's birth fact`
   render the names, `I4 (John Vincent Mogan)` shows the name once, and the id check
-  also fails on `src_003/` and on a rendered bracket holding no letter or digit;
+  also fails on `src_003/` and on a rendered bracket holding only separators (a
+  researcher's `[?]` is text, not debris);
 - `(KWJ6-RPH)` in the compound proof links to the person page, `1:2:30` renders as
   text, `https://evil.example/ark:/61903/1:1:QPRC-WPBZ` stays whole with no "on
   FamilySearch" label, a tree source with an Ancestry url leaves its id removed with no
