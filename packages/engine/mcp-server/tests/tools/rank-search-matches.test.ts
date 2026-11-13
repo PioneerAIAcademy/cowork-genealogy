@@ -30,6 +30,8 @@ vi.mock("../../src/auth/config.js", async (orig) => ({
 }));
 
 import { rankSearchMatches, SURNAME_NOT_ON_SUBJECT_NOTE } from "../../src/tools/rank-search-matches.js";
+import { connectorReauthMessage, REJECTED_TOKEN_MESSAGE } from "../../src/auth/config.js";
+import { connectorPrincipal } from "../../src/auth/principal.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { scorePair } from "../../src/utils/match-engine.js";
 import { sourceAttachmentsTool } from "../../src/tools/source-attachments.js";
@@ -900,6 +902,43 @@ describe("rank_search_matches", () => {
         expect(m).not.toHaveProperty("attachedToSubject");
         expect(m).not.toHaveProperty("attachedToOther");
       }
+    });
+
+    describe("when the attachments read fails (self-hosted beta E3)", () => {
+      const connector = connectorPrincipal({
+        accessToken: "dead-token",
+        userId: "u_1",
+        config: { webPublicUrl: "https://beta.example" },
+      });
+      async function rankAs(who: Parameters<typeof rankSearchMatches>[1], failure: Error) {
+        await writeTree(treeOf({ id: SUBJECT_ID }));
+        const ref = await stage([candidate({ recordId: ATTACHED, primaryId: "p1" })]);
+        scorePairMock.mockResolvedValue(scoreResult(0.8));
+        sourceAttachmentsMock.mockRejectedValue(failure);
+        return rankSearchMatches(
+          { projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID, checkAttachments: true },
+          who,
+        );
+      }
+
+      it("a connector caller whose FamilySearch session ended gets the sign-in link, not a ranking without it", async () => {
+        await expect(rankAs(connector, new Error(connectorReauthMessage(connector)))).rejects.toThrow(
+          'FamilySearch session not accepted. Sign in again at https://beta.example/auth/familysearch/login, ' +
+            'then come back here and say "continue". Nothing is lost.',
+        );
+      });
+
+      it("any other failure still leaves a connector caller's ranking standing, flags unset", async () => {
+        const out = await rankAs(connector, new Error("FamilySearch source-attachments API error: 500"));
+        expect(out.matches).toHaveLength(1);
+        expect(out.matches[0]).not.toHaveProperty("attachedToSubject");
+      });
+
+      it("the desktop is as before: a rejected session in this step does not fail the ranking", async () => {
+        const out = await rankAs(LOCAL, new Error(REJECTED_TOKEN_MESSAGE));
+        expect(out.matches).toHaveLength(1);
+        expect(out.matches[0]).not.toHaveProperty("attachedToSubject");
+      });
     });
   });
 

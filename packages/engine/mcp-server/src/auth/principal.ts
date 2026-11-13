@@ -37,7 +37,7 @@ export type Principal =
       /**
        * Which door this request came through (self-hosted beta E1). REQUIRED,
        * so every construction site chooses rather than inheriting a default
-       * that is wrong for half of them: E3's session-end and wording, E4b's
+       * that is wrong for half of them: E3's sign-in wording, E4b's
        * per-user limits and E5's refusals all branch on it, and each would
        * silently take the worker's branch for a connector caller.
        */

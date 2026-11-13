@@ -125,5 +125,5 @@ def test_the_alpha_still_routes_a_first_message_with_no_project_to_research(tmp_
     """#3768's hosted routing sentence lived in DELIVERY_GUIDANCE; it moved to the project
     note rather than going with the tool. The worker's twin is in test_proto_worker.py."""
     alpha = real_agent.build_options(tmp_path).system_prompt["append"]
-    assert "a request to research a person is not a single lookup" in alpha
+    assert "starts a project first" in alpha
     assert "research_delivered" not in alpha

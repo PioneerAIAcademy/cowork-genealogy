@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, whose first live sign-in is owed), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, whose first live sign-in is owed), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E3's sign-in link and wording (issue #3995; its run with a planted dead token is owed), E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -164,9 +164,8 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 - **`login`, `logout` and the missing-OpenRouter-key message** are worded by `principal.surface`, and `login` returns the same link.
 - **`project_context`** carries `signInUrl` when the session has ended, from a `GET /platform/users/current` memoised briefly, so the next turn shows the link even if an agent's summary lost it. `docs/specs/project-context-tool-spec.md` changes with it.
 - **`auth_status`,** for connector callers, reports the account id and checks the session with the same `GET`.
-- **Sites that miss the message today:** `collections_search`'s bare 401, `match-by-id`'s 403 wording, and `rank_search_matches`, which should rethrow a rejected token.
+- **Sites that miss the message today:** `collections_search`'s bare 401, `match-by-id`'s 403 wording, and `rank_search_matches`, which rethrows a connector caller's rejected token from its attachments step.
 - **Agents.** `search-records`' instructions tell it to replace the tool's message with "type `login`" (in sitting 1 it relayed the link unchanged), and `init-project` with "log in, and stop"; they relay it instead. `search-hints` leaves an item as it is on a sign-in message, so a lapsed session is not recorded as an inaccessible source. Wording follows sitting 1. Each edit owes `make eval-skill` or a senior's `eval-cosmetic-skip` label.
-- **Comments.** Five still cite the dropped session-end rule: `src/auth/principal.ts`, `src/http-server.ts`, `src/store/pg-s3-project-store.ts`, `tests/utils/fs-fetch.test.ts` and `tests/http/http-server.test.ts`.
 - **Done when:** tests pin each wording, and a dead token gives the link at every site above.
 
 **E4 Limits.**
@@ -340,7 +339,7 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | Item | Issue | Who | Due |
 |---|---|---|---|
 | W2 Claude's authorization server | issue #3997 | remote-server agent | Merged; the first live sign-in is owed |
-| E3 Sign-in link and wording | issue #3995 | remote-server agent | 23 Nov |
+| E3 Sign-in link and wording | issue #3995 | remote-server agent | Merged; the run with a planted dead token is owed |
 | D2 Monitoring | none | remote-server agent | Before invited users |
 | MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The demo |
 | G6 The router PR | issue #4297 | MCP App agent | Before launch |
