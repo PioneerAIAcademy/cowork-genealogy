@@ -12471,8 +12471,8 @@ describe("research_append (composite persist + enforcement)", () => {
       const before = await readFile(join(dir, "research.json"), "utf-8");
       const r = await callerAppend(originalSource());
       expect(r.ok).toBe(false);
-      expect(errorsOf(r).join(" ")).toMatch(/classified original but stores no evidence/);
-      expect(errorsOf(r).join(" ")).toMatch(/1:1 ARK is an index entry/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/1:1 ARK is an index entry/);
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
     });
 
@@ -12481,7 +12481,7 @@ describe("research_append (composite persist + enforcement)", () => {
       const { url: _u, ...noUrl } = originalSource();
       const r = await callerAppend(noUrl);
       expect(r.ok).toBe(false);
-      expect(errorsOf(r).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
     });
 
     it("accepts original with a transcription, a stored image, or a 3:1/3:2 image ARK in url", async () => {
@@ -12501,14 +12501,14 @@ describe("research_append (composite persist + enforcement)", () => {
       await writeProject();
       const r = await callerAppend(originalSource({ image_ark: "ark:/61903/3:1:3Q9M-CSHN-9L9X" }));
       expect(r.ok).toBe(false);
-      expect(errorsOf(r).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
     });
 
     it("refuses upgrading a derivative to original without evidence, and accepts it when the same update adds a transcription", async () => {
       await writeProject();
       let r = await callerUpdate("src_001", { source_classification: "original" });
       expect(r.ok).toBe(false);
-      expect(errorsOf(r).join(" ")).toMatch(/source 'src_001' is classified original/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/source 'src_001' is classified original/);
       r = await callerUpdate("src_001", { source_classification: "original", transcription: "the page, read" });
       expect(r.ok, JSON.stringify(r)).toBe(true);
       expect((await readResearch()).sources[0].source_classification).toBe("original");
@@ -12531,7 +12531,7 @@ describe("research_append (composite persist + enforcement)", () => {
       await writeProject(research);
       const r = await callerUpdate("src_001", { url: INDEX_URL });
       expect(r.ok).toBe(false);
-      expect(errorsOf(r).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
     });
 
     const absentAssertion = (role = "absent") => ({
@@ -12571,7 +12571,7 @@ describe("research_append (composite persist + enforcement)", () => {
         ],
       });
       expect(r.ok).toBe(false);
-      expect(errorsOf(r).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
     });
   });
 

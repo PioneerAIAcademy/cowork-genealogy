@@ -5541,17 +5541,6 @@ export async function mergeLinkCheckRefusals(
   ];
 }
 
-/** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
- *  source and the resulting project holds ≥THRESHOLD sources but zero assertions;
- *  null otherwise. Gated on a real (non-noop) `sources` append so it fires at the
- *  moment of sourcing and never nags an unrelated write in an already-imbalanced
- *  project, and self-silences the instant one assertion lands. The `op:"append"`
- *  gate covers the real reported shape: the composite `sourceDescription` persist
- *  requires exactly one `sources` append op, while a source-reuse fold converts it
- *  to `op:"update"` (which does not grow `sources.length`) and is correctly
- *  skipped. Tool-name neutral on purpose — it also fires for `extraction_append`
- *  (which routes through researchAppend), whose `record-extractor` caller is
- *  denied `research_append`, so it must not name a specific write tool. */
 /** Whether a source stores evidence that its record was examined, not read from
  *  an index (lead ruling 2026-09-02, issue #2475 row #1824): a transcription, a
  *  stored image, or a FamilySearch document-image ARK in `url`. `image_ark` is NOT
@@ -5615,6 +5604,17 @@ function originalWithoutEvidenceRefusals(
   return out;
 }
 
+/** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
+ *  source and the resulting project holds ≥THRESHOLD sources but zero assertions;
+ *  null otherwise. Gated on a real (non-noop) `sources` append so it fires at the
+ *  moment of sourcing and never nags an unrelated write in an already-imbalanced
+ *  project, and self-silences the instant one assertion lands. The `op:"append"`
+ *  gate covers the real reported shape: the composite `sourceDescription` persist
+ *  requires exactly one `sources` append op, while a source-reuse fold converts it
+ *  to `op:"update"` (which does not grow `sources.length`) and is correctly
+ *  skipped. Tool-name neutral on purpose — it also fires for `extraction_append`
+ *  (which routes through researchAppend), whose `record-extractor` caller is
+ *  denied `research_append`, so it must not name a specific write tool. */
 function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): string | null {
   const appendedSource = applied.some(
     (a) => a.section === "sources" && a.op === "append" && !a.noop,
