@@ -104,9 +104,10 @@ place fetchers all hit anonymous endpoints.
 | `startYear` | integer | No | Earliest year of interest, inclusive (e.g., `1730`). Omit for all periods. |
 | `endYear` | integer | No | Latest year of interest, inclusive (e.g., `1810`). Must be ≥ `startYear`. Omit for all periods. |
 | `recordTypeGroups` | string[] | No | One or more record-type group names from the closed vocabulary in [Record-type filtering](#record-type-filtering). Results are restricted to volumes carrying at least one matching coverage. Multiple groups are **OR**-ed. Omit to search all record types. |
-| `pageSize` | integer | No | Volumes per page, 1–100. Defaults to **50**, the most that fits the [answer-size budget](#answer-size) on every measured page. Sent as the request body's `pageSize`, so it is part of what a `pageToken` is bound to. |
+| `pageSize` | integer | No | Volumes per page, 1–50. Defaults to **50**, or **10** when `summary` is set (see [Answer size](#answer-size) and [Summary](#summary-record-type-rollup)). Sent as the request body's `pageSize`, so it is part of what a `pageToken` is bound to: the next page sends the `query.pageSize` the previous page echoed. |
 | `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`/`pageSize`** that produced it (see [Pagination](#pagination)). |
 | `summary` | boolean | No | First page only (refused with `pageToken`). Adds `summary`: every matching volume, not just this page, counted by record-type group. See [Summary](#summary-record-type-rollup). |
+| `omitSearchable` | boolean | No | Drop already-searchable volumes (`fulltextSearchable: true`, or `recordSearchablePercent` ≥ 50) out of `results`, replacing each with a one-line entry in `searchableOmitted`. See [Omitting already-searchable volumes](#omitting-already-searchable-volumes). Ignored by `summary`, which still counts every volume. |
 
 ### Fixed fields (always sent in the group-search request body)
 
@@ -114,7 +115,7 @@ place fetchers all hit anonymous endpoints.
 |-------|-------|-----------|
 | `types` | `["NATURAL"]` | Only query Natural Groups, for correct granularity |
 | `active` | `true` | Only return available groups |
-| `pageSize` | the `pageSize` input, else `50` | One page per call (see [Pagination](#pagination) and [Answer size](#answer-size)) |
+| `pageSize` | the `pageSize` input, else `10` with `summary`, else `50` | One page per call (see [Pagination](#pagination) and [Answer size](#answer-size)) |
 | `returnChildCounts` | `true` | Populates `childCount` / `indexedChildCount` / `noIndexableDataChildCount` **inline** on each group in the search response |
 
 `returnChildCounts: true` is sent, and the group-search response returns the
@@ -213,7 +214,7 @@ coverage: {
 | **OR across the array** | `[124410]`→4, `[123402]`→81, `[124410,123402]`→**85**. Intersection would return 0. | `or` |
 | **Unknown id contributes nothing** | Alone it returns `totalCount: 0` with status `200` — indistinguishable from "no such records here". Alongside a valid id it is silently dropped (`[124410,999999]`→4). | `or` |
 | **Filters groups, not coverages** | A matching group is returned with **all** its coverage rows, including types that did not match. Harjager filtered on `124410` returns 4 groups carrying 48 matching rows **and 48 non-matching** ones (`123363` Census — a different root). Consumers must not assume every returned `recordType` satisfies the filter. | `containment` |
-| **The date window filters groups too** | The same is true of `startYear`/`endYear`: a matched group carries coverage rows entirely outside the requested range. A Harjager query for 1650–1720 returns groups whose rows include 1846–1858. Do not treat a returned `dateRange` as being within the requested window. | `containment` |
+| **The date window filters groups too** | The same is true of `startYear`/`endYear`: a matched group carries coverage rows entirely outside the requested range. A Harjager query for 1650–1720 returns groups whose rows include 1846–1858. Do not treat a returned `dateRange` as being within the requested window. The tool lists every row: search-images reads a volume's record types to tell a film of several record sets from a single-type one. | `containment` |
 
 Because containment is applied server-side, a group needs only its **anchor**
 concept id — not an enumeration of the types beneath it.
@@ -650,9 +651,10 @@ on the full `groupName` is exact — no prefix fallback is needed.
 | Field | Type | Description |
 |-------|------|-------------|
 | `query` | object | Echo of input (`standardPlace`, `startYear?`, `endYear?`, `recordTypeGroups?`) plus the effective `pageSize`, always present, so a follow-up page can repeat it |
-| `totalResults` | number | `totalCount` from the API (across all pages) |
+| `totalResults` | number | `totalCount` from the API (across all pages) — unaffected by `omitSearchable` |
 | `nextPageToken` | string? | Present only when more pages remain; pass back as `pageToken` |
-| `results` | VolumeGroup[] | The matched image groups (this page) |
+| `results` | VolumeGroup[] | The matched image groups (this page), minus any `omitSearchable` moved to `searchableOmitted` |
+| `searchableOmitted` | string[]? | Present only when `omitSearchable` was set. See [Omitting already-searchable volumes](#omitting-already-searchable-volumes) |
 
 **Each `VolumeGroup`:**
 
@@ -799,12 +801,16 @@ each — and that repetition was most of an oversized page.
     "list the volume's images, or with fulltext_search to search its text. " +
     "Each coverage row lists every place (`places`) that shares its date range and " +
     "record type. " +
-    "Results are paginated, 50 volumes a page by default — pass back nextPageToken " +
+    "Results are paginated, 50 volumes a page by default and 10 with summary — " +
+    "pass back nextPageToken " +
     "(with the same standardPlace, years, record-type groups and pageSize) as " +
     "pageToken to get the next page. A volume carrying coverageCount had its " +
     "coverages shortened to fit the answer; call again with a smaller pageSize, " +
     "starting from the first page, to see them all. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
+    "Set omitSearchable to drop already-searchable volumes from results into " +
+    "one-line entries in searchableOmitted, so a browse-planning caller is not " +
+    "shown volumes it would only decline. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -841,10 +847,11 @@ each — and that repetition was most of an oversized page.
       pageSize: {
         type: "integer",
         minimum: 1,
-        maximum: 100,
+        maximum: 50,
         description:
-          "Volumes per page, 1–100. Defaults to 50. Every page of one search " +
-          "must use the same pageSize.",
+          "Volumes per page, 1–50. Defaults to 50, or 10 with summary. Every page " +
+          "of one search must use the same pageSize, so the next page sends the " +
+          "query.pageSize the previous page echoed.",
       },
       pageToken: {
         type: "string",
@@ -863,6 +870,19 @@ each — and that repetition was most of an oversized page.
           "coverages reach, parents included. First page only — not with pageToken. " +
           "Slower: it reads all matching volumes. If it cannot be computed, the page " +
           "still returns, with `summaryError` saying why.",
+      },
+      omitSearchable: {
+        type: "boolean",
+        description:
+          "Set true to drop volumes that are already fulltextSearchable or at " +
+          "least 50% recordSearchablePercent out of results, replacing each with " +
+          "a one-line entry in searchableOmitted: " +
+          "`<indexed|full-text> | <recordType> | <dateRange> | <places>`. Runs on " +
+          "this page only, so results can be empty while nextPageToken is set — " +
+          "check both results and searchableOmitted, and page again, before " +
+          "concluding nothing was found. totalResults is unaffected. Use when " +
+          "the goal is to find a volume worth browsing image by image, not one " +
+          "already reachable by record_search or fulltext_search.",
       },
     },
     required: ["standardPlace"],
@@ -889,7 +909,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `startYear` not an integer year | Throw: `"startYear must be an integer year (e.g., 1730)."` |
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
-| `pageSize` not a whole number from 1 to 100 | Throw: `"pageSize must be a whole number from 1 to 100."` — before any request. Covers `0`, `101`, `2.5`, `NaN` and a numeric string (`"50"`), since the server checks argument names, not types |
+| `pageSize` not a whole number from 1 to 50 | Throw: `"pageSize must be a whole number from 1 to 50."` — before any request. Covers `0`, `51`, `2.5`, `NaN` and a numeric string (`"50"`), since the server checks argument names, not types |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
 | `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
 | `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — the server checks argument names, not types — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
@@ -897,8 +917,9 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
-| Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ body, when non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range, recordTypeGroups and pageSize, omitting pageToken."` A real 409 arrives bodyless, so `statusText` is empty and the generic row below rendered it as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
-| Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}.{ body, when non-empty }"` |
+| Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ detail, when the body is non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range, recordTypeGroups and pageSize, omitting pageToken."` A 409 can arrive bodyless with an empty `statusText`, which the generic row below rendered as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
+| Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}.{ detail, when the body is non-empty }"` |
+| Upstream error body (both rows above) | The `{ detail }` is the JSON body's `message`, else the first line of its `trace`, else the body text, with whitespace collapsed and cut to 200 characters (the 200th an ellipsis). A real 409 body is a JSON error envelope (`timestamp`, `status`, `error`, `trace`, `message`, `path`) of about 10,000 characters, almost all of it the Java stack trace in `trace`; its `error` is just `"Conflict"`, so it is not used |
 | Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
 | Group missing inline count fields | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
 | **Full-text** check fails (after 3 retries) | Set `fulltextSearchable` to `null` for the batch; continue |
@@ -914,7 +935,7 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
 
 1. Validate `standardPlace` (required), the integer years
    (`startYear`/`endYear`, with `endYear` ≥ `startYear`) and `pageSize` (a whole
-   number from 1 to 100, when present).
+   number from 1 to 50, when present).
 2. Resolve `standardPlace` → `placeId` via `standardPlaceToPlaceId`,
    then `placeId` → `placeRepIds` via `placeIdToRepIds` (both anonymous).
 3. If `recordTypeGroups` is present and non-empty, map each name through the
@@ -1011,11 +1032,57 @@ Measured on the hosted feedback bundles of 2026-10-05 to 2026-10-19, where 10 of
 | Darwen, Lancashire 1770–1830 | 34 | 49,936 | 27,373 | 27,373 |
 | Neidenburg, East Prussia 1915–1930 | 87 | 43,140 | 19,684 | 30,775 |
 
-So at the default page of 50 the budget never fires on any measured call, and it
-is a backstop for denser places and for a caller who asks for 100. A page size
-alone could not have fixed Freeborn: its first seven volumes are statewide muster
-rolls of ~5,400 characters each, and only 12 volumes fit in 40,000 unmerged. The
+Those four fit at the default page of 50 by merging alone, but the budget does
+fire there: of 43 hosted answers at the default page from 2026-10-29 to
+2026-11-08, 5 were shortened, with `coverageCount` on 15–42 volumes.
+
+The page maximum is 50 so that the last cap fits on every measured page: at one row per volume
+the densest hosted page measured averages 454 characters a volume, about 23,000
+characters at 50 volumes and 45,000 at 100.
+
+A page size alone could not have fixed Freeborn: its first seven volumes are
+statewide muster rolls of ~5,400 characters each, and only 12 volumes fit in 40,000 unmerged. The
 Freeborn page is pinned as `tests/fixtures/volume-search/freeborn-1870-1900.json`.
+
+### Omitting already-searchable volumes
+
+`omitSearchable: true` runs **after** mapping and **before** the answer-size
+budget above, so its lines count toward `RESULT_CHAR_BUDGET` — measure the
+whole answer, lines included; the budget's `COVERAGE_CAPS` shortening still
+only ever cuts `coverages` on a volume still in `results`.
+
+A volume is omitted when either *known* signal qualifies: `fulltextSearchable
+=== true`, or `recordSearchablePercent >= 50`. A `null` keeps a volume only
+when *no* known signal qualifies it — a volume at 95% `recordSearchablePercent`
+with `fulltextSearchable: null` is still omitted. The other reading (any
+`null` keeps the volume) would disable the filter on every page where the
+full-text sub-fetch fails, since that sets `fulltextSearchable: null` on every
+volume in the batch (see [the full-text sub-fetch](#full-text-searchability-sub-fetch)).
+
+A volume that clears the bar is dropped from `results` and replaced by one
+line per distinct `<indexed|full-text> | <recordType> | <dateRange> |
+<places>` in `searchableOmitted` — distinct across the whole page, so two
+volumes that print identically collapse to one line, exactly as
+[merging coverage rows](#merging-coverage-rows) collapses places that share a
+date range and record type. A volume at or above 50%
+`recordSearchablePercent` is labelled `indexed` regardless of its
+`fulltextSearchable` value — search-images routes an indexed volume to
+`record_search` first; everything else that clears the bar is `full-text`.
+`recordType` falls back to `concept-id:<recordTypeConceptId>` in that slot
+exactly as a `SimplifiedCoverage` row does, so two different untyped sets do
+not collapse into one line. `places` are joined with `; ` rather than `, `,
+since a place name is itself comma-separated. A volume with no coverage rows
+still contributes one line (with its three other slots empty), so it is not
+silently dropped from the answer.
+
+`searchableOmitted` is always an array (possibly empty) when the flag was
+set, never absent, so a caller can treat "both `results` and
+`searchableOmitted` are empty, with no `nextPageToken`" as the one true nil —
+see [Pagination](#pagination). `totalResults` is upstream's count and is
+unaffected; the filter runs on this page's already-fetched volumes only.
+`summary` ignores the flag entirely: the rollup counts every matching volume
+regardless, since a place survey needs the true count of what exists, not what
+this page chose to summarize.
 
 ---
 
@@ -1050,13 +1117,18 @@ docs):
 > fully-qualified name, resolution is exact-match and stable in practice; if a
 > stale cursor is ever rejected, the caller simply re-issues page 1.
 
-The tool returns **one page per call** — `pageSize` groups, 50 by default and at
-most 100 — plus `nextPageToken` when more remain. The default is 50 because that is
-what fits the [answer-size budget](#answer-size) on every measured page without
-shortening a volume's coverages. It does **not** auto-aggregate all
+The tool returns **one page per call** — `pageSize` groups, 50 by default (10 with
+`summary`) and at most 50 — plus `nextPageToken` when more remain (see
+[Answer size](#answer-size)). It does **not** auto-aggregate all
 pages — that would walk every page (and full-text batch) for what is
 usually just a scoping question. `totalResults` tells the caller how many
 groups exist in total.
+
+With `omitSearchable`, `results` can be `[]` on a page that still carries
+`nextPageToken` — every volume this page fetched was already searchable, and
+more pages remain. A caller must check `results`, `searchableOmitted` **and**
+`nextPageToken` together before concluding nothing is left to browse: an empty
+`results` with a `nextPageToken` present is "page again," not "nothing here."
 
 ---
 
@@ -1067,8 +1139,13 @@ groups exist in total.
 cannot. On 2026-10-22, hosted locality-guide surveys matched a median of 24–81
 volumes, a 90th percentile of 700–1,000 and a maximum of 4,261, so a 10-row
 volume list would have been complete in about 1 survey in 7. The counts are
-always complete. research-plan's own calls are narrow (median 0 volumes) and do
-not ask for it.
+always complete, so with `summary` the page defaults to 10 volumes, a sample
+beside them. `summary` is refused with `pageToken`, so a later page defaults to
+50 and must send the `query.pageSize` the previous page echoed to match the
+token. research-plan's calls are not
+narrow — hosted ones from 2026-10-15 to 2026-11-08 matched up to 8,276 volumes,
+and three answers reached about 39,000 characters — but it rarely asks for
+`summary`.
 
 **Output** — `summary` beside the usual page:
 
@@ -1167,8 +1244,30 @@ images are digitized, indexed, or full-text processed.
 | `tests/packaging/mcp-fixture-shape.test.ts` | Check every `volume_search` eval fixture's `query`, volumes and coverage rows against the interfaces above — the top-level check cannot see inside `results[]` |
 | `eval/fixtures/mcp/volume-search-*.json` | Regenerated in the new shape |
 | `dev/try-volume-search.ts` | `--pageSize`; print the compact answer's size; `--sizeOnly` to skip the dump |
-| `dev/probe-dgs-items.ts` | Derive the prefix from `imageGroupNumber`; read `places[0]`; send `pageSize: 100` so its 10-page walk keeps its reach |
+| `dev/probe-dgs-items.ts` | Derive the prefix from `imageGroupNumber`; read `places[0]`; send `pageSize: 50` over at most 20 pages |
 | `docs/specs/image-search-tool-spec.md` | Drop the reference to `volume_search`'s `imageGroupPrefix` |
+
+### Edits for the answer guards
+
+| File | Edit |
+|---|---|
+| `src/types/volume-search.ts` | The `pageSize` comment |
+| `src/tools/volume-search.ts` | Page maximum 50; page default 10 with `summary`; error bodies cut to their message; the schema descriptions |
+| `tests/tools/volume-search.test.ts` | Cases 28, 31, 32 and 34–40 |
+| `docs/catalog.md` | `pageSize` 1–50 and the `summary` page default in the `volume_search` row |
+
+### Edits for `omitSearchable`
+
+| File | Edit |
+|---|---|
+| `src/types/volume-search.ts` | `omitSearchable?` on `VolumeSearchInput`; `searchableOmitted?` on `VolumeSearchResult` |
+| `src/tools/volume-search.ts` | `filterSearchableVolumes` (exported pure function), called before `fitToBudget`; the `omitSearchable` schema property and description clause |
+| `tests/tools/volume-search.test.ts` | Cases 41–44 |
+| `docs/catalog.md` | Name `omitSearchable` in the `volume_search` row |
+| `eval/harness/harness/mock_mcp.py` | A post-processing branch (beside the `includeFacets` gate) that calls the compiled `filterSearchableVolumes` on a canned fixture when the call's own `args.omitSearchable` is true |
+| `eval/harness/tests/unit/test_mock_mcp.py` | A test serving a `volume_search` fixture with `omitSearchable: true`, asserting the searchable volumes left `results`, and that the same fixture without the flag is unchanged |
+| `packages/engine/plugin/agents/search-images.md` | Pass `omitSearchable: true` in step 2 and in "No project"; a target in `searchableOmitted` is declined like one found in `results`; the nil check requires both lists empty and no `nextPageToken`; page again on an empty `results` with `nextPageToken` set |
+| `eval/tests/unit/search-images/direct-boundary-indexed-volume.json` | Reword `judge_context` to grade the decline on the `searchableOmitted` line rather than citing `recordSearchablePercent` directly |
 
 ---
 
@@ -1208,16 +1307,27 @@ images are digitized, indexed, or full-text processed.
 | 21 | An unresolvable `standardPlace` keeps its own wording and does not borrow the ambiguity text | The two failures stay distinguishable |
 | 22 | A candidate list longer than 8 is capped at 8 | Hint cap, mirroring `record_search` |
 | 23 | A bodyless 409 carries the re-issue-from-page-1 recovery and never renders as a bare `409 .` | Paging conflict |
-| 24 | A 409 **with** a body includes it alongside the recovery | Upstream detail preserved |
+| 24 | A 409 **with** a short plain-text body includes it alongside the recovery | Upstream detail preserved |
 | 25 | A non-409 non-OK keeps `{status} {statusText}.`, appends any body, and does **not** carry the pageToken advice | Generic arm, previously covered by no test |
 | 26 | The real Freeborn first page at the default `pageSize` sends `pageSize: 50`, fits under 40,000 characters, and no volume carries `coverageCount` | Default page fits by merging alone |
 | 27 | On that page every upstream `(place, dateRange, recordType)` triple is in the answer | Merge is lossless |
-| 28 | The full 100-volume Freeborn page at `pageSize: 100` stays under the budget, keeps all 100 volumes and `nextPageToken`, and every shortened volume carries `coverageCount` > its row count | Budget backstop |
+| 28 | A 50-volume page of Freeborn's densest volumes (31+ rows each) stays under the budget, keeps all 50 volumes and `nextPageToken`, and every shortened volume carries `coverageCount` > its row count | Budget backstop |
 | 29 | `fitToBudget` returns an in-budget answer unchanged, marks only the volumes it cut, cuts the longest volume first and leaves neighbours it has room for whole, and keeps every volume when nothing fits | Budget rules |
 | 30 | `mergeCoverages` merges on the visible `recordType` despite differing concept ids, keeps id-only rows apart, merges en-dash, em-dash, spaced-hyphen and hyphen spellings of one span, dedupes places in order, and lists no blank place | Merge key |
-| 31 | A caller's `pageSize` is sent and echoed; `1` and `100` are accepted | Page size |
-| 32 | `0`, `101`, `2.5`, `-1`, `NaN` and `"50"` are refused before any request | Page-size validation |
+| 31 | A caller's `pageSize` is sent and echoed; `1` and `50` are accepted | Page size |
+| 32 | `0`, `51`, `100`, `2.5`, `-1`, `NaN` and `"50"` are refused before any request | Page-size validation |
 | 33 | The 409 recovery names `pageSize` | Paging conflict |
+| 34 | A 409 whose body is the JSON error envelope with a ~10,000-character `trace` carries only its `message`, plus the recovery, in under 600 characters | Error body cut |
+| 35 | A body with a `trace` and no `message` carries the trace's first line only | Error body cut |
+| 36 | A long plain-text body on the generic arm is cut to 200 characters, ending in an ellipsis | Error body cut |
+| 37 | The schema's `pageSize` maximum is the 50 the validator enforces | Page size |
+| 38 | `summary` with no `pageSize` sends and echoes `pageSize: 10` | Summary page |
+| 39 | `summary` with a `pageSize` keeps it | Summary page |
+| 40 | The real Freeborn first page searched 1870–1900 lists every upstream `(place, dateRange, recordType)` triple, including the rows wholly outside those years, and no volume carries `coveragesOutsideYears` | Every row listed |
+| 41 | A 50-volume page with 40 searchable volumes (`fulltextSearchable` or ≥50% `recordSearchablePercent`) returns 10 in `results` and the 40 as lines in `searchableOmitted`, at under half the flag-off size; `totalResults` is unaffected | `omitSearchable` collapse |
+| 42 | A volume whose signals are both `null` stays in `results`; a volume at or above the bar with `fulltextSearchable: null` (a failed full-text sub-fetch) is still omitted | `omitSearchable` null handling |
+| 43 | With the flag false or absent, the answer carries no `searchableOmitted` and is byte-identical to today's | `omitSearchable` off |
+| 44 | `filterSearchableVolumes`: labels a ≥50%-indexed-and-fulltext volume `indexed`; a sub-50% fulltext-only volume `full-text`; falls back to `concept-id:<id>` when `recordType` is absent; joins `places` with `; `; dedupes identical lines across volumes; still emits one line for a volume with no coverage rows | Pure-function rules |
 
 ### Smoke test
 

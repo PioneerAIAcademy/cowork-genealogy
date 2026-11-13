@@ -15,8 +15,8 @@ description: >-
   records in Pennsylvania). Also do not use for narrative historical context
   like migration or why an event happened (use historical-context), or a
   general Wikipedia summary of the place (use search-wikipedia).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5
+effort: low
 tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
@@ -70,9 +70,11 @@ tools:
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
-**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero or truncated results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it, never present a truncated `recordCount` as the verified total, never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain.
+**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A `collections_search` answer with `truncated: true` is not a coverage gap. Never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it.
 
 **A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
+
+**Preserve the distinction between original custodians and derivative holders.** When a tool result describes a repository as holding only a derivative — an abstract, transcription, published volume, microfilm copy, or compiled index — do not present that repository as a possible co-holder of the original registers, even if it holds a large or prominently named collection of derivative material. The repository a tool result identifies as holding originals is the original holder; one it describes as holding abstracts, transcriptions, or compiled records drawn from other sources is not an original-register custodian. A claim that "originals might also be at X" when no tool result places originals there is unsourced speculation — omit it.
 
 ## Steps
 
@@ -139,13 +141,13 @@ wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Record
 wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 ```
 
-`collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern).
+`collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern). Build a collection's link from the answer's `collectionUrl`, replacing `{id}` with the row's `id`.
 
 `volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. `summary` counts every matching volume by record-type group (`browseOnly`, `fulltextOnly`) — use it for how many volumes of each kind exist, never a count of the page. The page details only its own volumes: when `totalResults` exceeds them, say so with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." Fetch further pages only if the researcher asks. When the response has no `summary`, carries `summaryError`, or says `complete: false`, say the counts are missing or partial. Never count volumes yourself. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
 
-`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` (and each `filmNotes` entry's `copyLocation`) says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you fetched. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
+`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. **Report each catalog hit's start date exactly as its `title` or `subjects` give it — never substitute an approximation or a date from memory.** Name the catalog entry number (the numeric id in the hit) when citing a catalog result. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you fetched. Say it in the same sentence that first names the parish register as the source, in the Church records section and in `summary_for_user`, not only in the research tips. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
 
-`external_links_search` returns FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages), deduplicated, and with `projectPath` stores the place's full list in the project. When `inlineCapped` is true, or to list one record type, read `research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })`. `totalForPlace === 0` means FS has no curated external links for this place.
+`external_links_search` returns FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages), deduplicated, and with `projectPath` stores the place's full list in the project. When `inlineCapped` is true, or to list one record type, read `research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })`. `totalForPlace === 0` means FS has no curated external links for this place. **Surface regional indexes by name in the guide** — if the results include a county or regional BMD or transcription site, name it and the URL the tool returned, not just "external links available".
 
 ### 4. Classify access levels
 
@@ -178,7 +180,7 @@ research_append({
     for_place: "Schuylkill County, Pennsylvania",  // the specific place of interest, if narrower
     time_period: "1840-1880",
     jurisdictions: [ /* from place_search_all — EACH entry is exactly { name, date_range }, no other keys */ ],
-    collections: [ /* from collections_search: { id, title, date_range, person_count, record_count } — the counts are its personCount / recordCount */ ],
+    collections: [ /* from collections_search: { id, title, date_range, person_count } — person_count is its personCount */ ],
     quirks: [
       // short, actionable gotchas a searcher must know — distilled from the FamilySearch Wiki
       // research-tips / online-records pages. This is ALSO where any border/name
@@ -213,7 +215,7 @@ Do not put the applied per-search decision here; that goes in a plan item's
 
 **Stay inside the allowed fields — a stray key fails the whole write.** Each
 `jurisdictions[]` entry has exactly two keys, `name` and `date_range`; each
-`collections[]` entry only `id`, `title`, `date_range`, `person_count`, `record_count`. Do **not** add any
+`collections[]` entry only `id`, `title`, `date_range`, `person_count`. Do **not** add any
 other key (no `note`, `comment`, `records`, etc.) to these objects. When you have
 a sentence of searcher advice — a boundary/name succession like "records before
 1878 were filed under the predecessor county", an indexing gotcha, a language
@@ -235,7 +237,7 @@ field on a jurisdiction or collection.
 
 ## Important rules
 
-- **Be specific about availability.** Name counts and record types concretely — not "records may exist" but "FamilySearch has 3 digitized but unindexed image volumes of Schuylkill County probate records, browsable image by image."
+- **Be specific about availability.** Name counts and record types concretely — not "records may exist" but "FamilySearch has 3 digitized but unindexed image volumes of Schuylkill County probate records, browsable image by image." When citing a `collections_search` result, name its collection number and its title exactly as the tool returned them, not just the record type it represents.
 - **Note gaps honestly.** If records were destroyed or don't exist for this period, say so clearly.
 - **Never state a registration date without naming its level.** Registration began at different levels in different years, so a bare "X didn't require vital registration until <year>" is wrong whichever year you pick — as is the mirror error of citing an early local date as though no later requirement followed. Take both the level (town/parish, county, statewide) and the year from the `{Jurisdiction}_Vital_Records` page fetched in Step 3, give the level with every date, and cite that page. Where it states an early local system *and* a later statewide one, report both — the later system does not cancel the earlier series. If it gives no date, say the FamilySearch Wiki does not state one rather than supplying a year yourself.
 - **Match records to the target window.** Flag record classes that predate the period (e.g., colonial/Mission-era) or postdate it (e.g., later civil registration) as background context, not prime sources for the years asked, and note where civil infrastructure was sparse or absent in those years. Conversely, if a collection's date range overlaps the target period, include it — don't dismiss a record class as out-of-period and then list it as available.
@@ -390,6 +392,8 @@ is what tells the researcher where to route the search.
 - **Denominations present:** [list with approximate founding dates]
 - **Record types:** [baptisms, marriages, burials, confirmations]
 - **Where held:** [parish, diocese, FamilySearch microfilm, etc.]
+- **Gaps:** [each denomination or span of years with no surviving or online
+  registers] → [the returned index or repository that bears on it, by name]
 - **Language:** [language of records if not English]
 
 ### Census records
@@ -451,15 +455,19 @@ is what tells the researcher where to route the search.
 ## Repository guide
 
 ### Online repositories
-| Repository | Collections for this place | Access |
-|---|---|---|
-| FamilySearch | [list with record counts] | Free |
-| Ancestry | [list] | Subscription |
-| [Others] | [list] | [Access type] |
+| Repository | Collections for this place | Gap it fills | Access |
+|---|---|---|---|
+| FamilySearch | [list with person counts] | [gap] | Free |
+| Ancestry | [list] | [gap] | Subscription |
+| [Others] | [list] | [gap] | [Access type] |
 
 [List a repository or online index only with a URL a tool result returned —
-never one from memory — and name which gap (a "Records NOT online" entry or a
-pre-filing-period gap) each index helps fill.]
+never one from memory. One row per repository, with the URL a tool result
+gave for that repository; never join two repositories in one row or name
+("X / Y", "X (Y)") unless a tool result says one runs the other. **Gap it fills** names a gap this guide states — a
+denomination, a span of years, a "Records NOT online" entry, a known loss —
+never "subscription", "additional records" or "more coverage". The same
+index goes on that gap's **Gaps** line above.]
 
 **Coverage of this survey:** [state how much of the digitized material the
 volumes above represent. When `volume_search` returned a `nextPageToken`, or

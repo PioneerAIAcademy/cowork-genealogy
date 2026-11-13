@@ -563,9 +563,9 @@ agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
-| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide`, `person-evidence` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan`, `search-records` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection`, `source-evaluation` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan`, `search-records`, `source-evaluation` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection`, `person-evidence` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
 | **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
 > **A skill cannot set its model or effort.** To route a step to a different
@@ -679,8 +679,11 @@ Architecturally:
   is the one stamped on that open turn of that project (U4). Every other request
   is the connector path: the bearer is looked up by sha256 in
   `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
-  `projectPath` rather than a header, and a refusal is 401 with
-  `WWW-Authenticate`) are entrypoints that only connect
+  `projectPath` rather than a header, a refusal is 401 with
+  `WWW-Authenticate`, and a call naming no project binds a store that refuses
+  every project tool and answers `project_list` with the caller's projects plus
+  one fresh path, which `make engine-smoke-http` checks against a seeded second
+  user) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -868,20 +871,34 @@ There **is** an orchestrator, and it is a skill:
    overrides a direct request for a downstream skill and sends the router back
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
-3. **One mode, in the router.** It runs the loop in one continuous turn — no
-   clarifying questions, decisions logged to the audit-trail fields — for every
-   run, with no flag to turn it on. **`--autonomous` gates no branch in any
-   plugin body**: the router's went with S2, and six others
-   (`search-external-sites`, `question-selection`, `search-records`,
+3. **One loop, in the router.** It runs every job the same way: one step per turn
+   where a host replies (below; in Cowork a "keep going" runs the steps in one
+   turn), decisions logged to the audit-trail fields. **Only the router reads
+   `--autonomous`,** for a trigger and two rules. Its own flag branch went with
+   S2, and six others (`search-external-sites`, `question-selection`, `search-records`,
    `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`) were
    folded in beside it on the lead's call, because the browser never sends the
-   flag and every one of those branches was dead on a hosted run.
-   `agents/person-evidence.md` was left out: its resolve-downward rule still
-   applies only to "an autonomous `/research` run", in words rather than the
-   flag, which a browser turn never is. The string survives in exactly two
-   places: the trigger list in `research/SKILL.md`'s description, and the
-   message the e2e harness and `make proto-demo` still build. So no offline suite
-   sees the difference; only the paid eval runs do.
+   flag and every one of those branches was dead on a hosted run. The router has
+   since come to read it again: besides the trigger in its description, an
+   autonomous message is always a job, never a bounded ask, and the router hands
+   `userPresent: no` to
+   `search-external-sites` and `search-hints`, which get it on no other run, and to
+   `person-evidence`, which also gets it on a "Keep going." or "Wrap it up." turn
+   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those agents read that
+   field, not the string. `agents/person-evidence.md` was left out of the folding; its
+   resolve-downward rule now applies when its delegation says `userPresent: no`.
+   `agents/search-records.md` hands back `userPresent: no` for
+   search-external-sites only when its delegation says the search is part of an
+   autonomous run, which the router's search-records delegation does not carry;
+   the router sets the field itself when it spawns search-external-sites. Outside
+   the plugin, the flag is sent by the e2e harness's opening message; by
+   `opening_prompt` in `apps/server/proto/demo.py`, the prototype's default opener
+   (`make proto-demo` when no `--prompt` is given, and the `cap_main_real` and
+   `concurrent_rss_heavy` cases of `make proto-bounds`; their `-aws` twins run the
+   same scripts); and by the two research unit tests that pin the trigger and the
+   always-a-job rule (`ut_research_005`, `ut_research_023`).
+   Offline suites pin that the flag is sent; none can see what the router does
+   with it. Only the paid eval runs do.
    **gps-mentor runs only when the user asks for a second opinion, and the router
    does not yield on its verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
@@ -904,9 +921,23 @@ There **is** an orchestrator, and it is a skill:
    status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. These describe the *job*, not the turn.
+6. **The attached-records step runs in code, before the first question.** The
+   "Objective but no questions" row calls, for each `subjectPersonIds` entry,
+   `extraction_append({ projectPath, personId })` (extract every indexed record
+   FamilySearch has attached to the person and link each as an unchecked
+   attachment link) and then `timeline_build({ projectPath, personId })` (the
+   person's timeline, built from those links), before `@plugin:question-selection`.
+   Two main-thread tool calls per subject and no agent: 5.0–19.7 s cold to read,
+   extract and link 5–20 attached records (live, 2026-11-04,
+   `docs/specs/research-append-tool-spec.md` §11.8) and 50 ms to 1.4 s for the
+   timeline (`docs/specs/timeline-build-tool-spec.md` §8). "A timeline for a
+   person" is a bounded ask that runs the same two calls and stops. Attachment
+   links are checked only on request: person-evidence takes them up only for a
+   question whose assertions have no other live link
+   (`docs/specs/research-append-tool-spec.md` §11.8).
 
    **A turn runs ONE step** (step mode, decision 25,
-   `docs/plan/research-step-mode.md`): it reports the step and ends with
+   `docs/specs/research-step-mode-spec.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
    stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
    enforces that boundary on the FS prototype always, on every e2e run (the e2e
@@ -1007,7 +1038,12 @@ they have different fixes, and only one of them is a description problem.
    **The instrument for an agent is a routing negative**, not the optimizer: a
    test with a `user_message`, no `grade_on_invariant`, and a
    `negative.correct_skill` naming the agent asserts that the utterance routes
-   there, and the harness resolves an agent file as a valid target.
+   there, and the harness resolves an agent file as a valid target. Its message
+   must be one the agent can act on (for an agent that acts on a person, the
+   message names one): the harness stubs the spawn, so a hand-back the agent
+   would return is never seen. A message naming no person and no edit is
+   correctly answered with a clarifying question, not a hand-off, so it is not a
+   routing negative.
    `research`'s suite hosts them (`eval/tests/unit/research/route-agent-*.json`),
    because a message the main thread should hand straight to an agent must not
    enter `research` first. A negative that sets `grade_on_invariant` is not one:
@@ -1453,8 +1489,8 @@ enforcing-vs-shadow status.
   spawn check, which can make the runtime refuse the agent — see §5.2.
 - **Rebuild only where it matters.** The unit harness and Claude Code read your
   working tree — no rebuild. Cowork runs the uploaded `.zip`: `make plugin`, then
-  **remove the old plugin before uploading the new one** (Cowork tab, not the
-  Code tab — separate plugin lists), then fully quit and reopen Claude Desktop.
+  **remove the old plugin before uploading the new one** (Customize → Plugins → Yours),
+  then fully quit and reopen Claude Desktop.
   Full table: `docs/skill-lifecycle.md` → "Rebuilding and reinstalling", which
   opens by calling this "the single most common way to spend an hour testing a
   fix that was never loaded."
@@ -1556,8 +1592,11 @@ into `results/.staging/` and return a
 handle plus a **reduced** inline copy, which `research_log_append` later
 finalizes. The reduction differs by tool: `record_search` drops `gedcomx`,
 `collectionUrl`, and empty `treeMatches`, hoists `collectionTitle` into a
-response-level map, and de-duplicates `events`; `fulltext_search` drops
-`textDocument`; both leave
+response-level map, and de-duplicates `events`; `fulltext_search`, on every
+answer whether staged or not, drops `textDocument`, caps its `names`, `places`
+and `dates` lists and records their full counts, cuts them further while the
+page is over `TOOL_RESULT_CHAR_BUDGET`, and hoists `collectionTitle` into a
+`collections` map (`fulltext-search-tool-spec.md`, "Answer compaction"); both leave
 name/date/place stubs for triage. `external_links_search` stages nothing since
 2026-10: its durable copy is `external-collections.json` (above). **The full payload travels
 search tool → disk → log-append and never round-trips through the model**
@@ -1612,7 +1651,7 @@ edit and re-emit.**
 > **14 of the 17** `research.json` sections — missing `project`,
 > `researcher_profile`, and `warning_justifications`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
-> sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
+> one-hop family), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
 >
 > **That gap is not why `Read` cannot be revoked, and the arithmetic matters
@@ -1694,7 +1733,7 @@ product one.)*
 |---|---|---|
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
 | 2 | the prose table in `docs/specs/research-schema-spec.md` (and `simplified-gedcomx-spec.md` Section 5) | `make engine-test` (`enum-drift.test.ts`) — closed-enum value rows only; the field tables and prose descriptions stay unchecked |
-| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema); for a new section also `ID_PREFIXES` and the section's own `validate*` pass | `make engine-test`; the `validate*` pass, nothing |
+| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema); for a new section also `ID_PREFIXES` and the section's own `validate*` pass | `make engine-test`; the `validate*` pass, only one rule: an optional field the schema types without a null branch must be refused when null, derived from the schema by the "null on an optional, non-nullable property" table in `tests/validation/validator.test.ts`. The pass's other checks are pinned by nothing |
 | 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry; the section's `DEF_FOR` row in `tests/packaging/research-append-examples.test.ts` | `make engine-test` requires an example for every `RESEARCH_APPEND_SECTIONS` section and a `DEF_FOR` row for every example, checks each against the schema, and round-trips every registry example through `research_append` (`SECTIONS_WITH_EXAMPLES` in `tests/tools/research-append.test.ts`, read from the registry) |
@@ -1779,6 +1818,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
+| `apps/mcp-viewer` | the MCP App page: research cards drawn inside Claude, served by the thin server in `packages/engine/mcp-server/viewer/`. Neither ships in an artifact (`docs/plan/mcp-app-viewer.md`). |
 | `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
@@ -2100,7 +2140,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 |---|---|---|
 | **`make test-all`** (= `scripts/test.sh`) | **everything offline**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. Deterministic and free — **no suite in it calls a model**, which is what keeps it ~30s and therefore actually run. | anything needing a model or a live API: a single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
 | `make test` | `test-js` + `server-test` | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage, and this is **not** the eval-harness gate despite what `CLAUDE.md` and `DEVELOPMENT.md` imply |
-| `make test-js` | the JS workspace (turbo): web, electron, viewer-ui, schema, eval/app — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace); eval/app's Playwright suite (needs a browser — its own CI job) |
+| `make test-js` | the JS workspace (turbo): web, electron, mcp-viewer, viewer-ui, schema, eval/app — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace); eval/app's Playwright suite (needs a browser — its own CI job) |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
 | `make engine-test-pg` | the same suite with every tool's project I/O on `PgS3ProjectStore` (`PROTO_STORE=pg`, the compose Postgres + MinIO; CI's `vitest-pg` job), failing on any skipped test, then the harness's live `--store pg` cases (`test_pg_store_switch.py`), then `proto-store-test`'s keyless arm. The tests still seed and assert on disk: `tests/helpers/pg-routing-store.ts` mirrors each project directory into its own Postgres project around every call | the cases marked `fileStoreOnly(...)` (symlinks, nesting, permissions, the rename seam, a document that is not JSON), which run on the file store in this leg too; per-request binding and the claim fence (`http-server-pg.test.ts` and the store suite own those); any skill or agent on Postgres (the paid half of U15) |
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
@@ -2288,7 +2328,7 @@ changes how a correct change is made:
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
   4. **Step mode's boundary is enforced on one plane and graded on another.** Under
-     `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19, amended
+     `docs/specs/research-step-mode-spec.md` decision 25 (lead, 2026-10-19, amended
      2026-10-21), a step ends by asking the researcher with `AskUserQuestion`, and what
      stops a model starting the next step without asking differs by plane: the FS
      prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
@@ -2340,13 +2380,20 @@ decides changes nothing about whether the gate runs. **Generalized: it changes w
 decides, not what the run can reach.** `question-selection` applies the same shape —
 with nobody waiting to answer, skip the ask and take the action.
 
-Since 2026-09-23 this is no longer a *mode* difference at all: no plugin body reads
-`--autonomous`, so the rule is unconditional and the question is only ever "can a human
-act on this right now?". Two bodies keep a genuine two-sided answer because a human
-sometimes CAN — `agents/person-evidence.md` (a user who asked for a link can adjudicate
-it; mid-run nobody can) and `search-external-sites` (a user who named the plan item will
-capture it; mid-run nobody will). Both have eval fixtures on each side. Production behaviour is preserved; only the prompt is
-gone.
+Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
+"can a human act on this right now?". Three bodies keep a genuine two-sided answer because
+a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
+`agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
+can), `search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will) and `search-hints` (a user who asked for a hint review will give verdicts;
+mid-run nobody will). Each has eval fixtures on each side. The mode difference survives in
+the router, which sets that field from the flag: on an autonomous e2e run the router hands
+search-external-sites and search-hints `userPresent: no` where a hosted "Keep going." run
+leaves them at `yes` (search-hints gets no field, which means yes). So an autonomous e2e
+run is meant never to reach their `yes` side, but no check makes the router send the field
+to those two (the research unit suite checks it only on person-evidence's spawn): one
+committed step-mode run spawned search-external-sites without it, and its capture item
+stayed waiting (`docs/specs/e2e-test-spec.md` §5).
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months. The first is fixed; the second stands:
@@ -2400,10 +2447,13 @@ check that would have caught your change, say so in the PR** rather than implyin
 CI covered you (§9.4).
 
 **Write a rule that behaves differently when no user is present.** Ask which of the two
-things it removes — a pause, or a capability (§9.5). Note that the flag itself is
-retired: no plugin body reads `--autonomous`, so the condition is the situation, not a
-string in the message. Removing the pause is the
-established shape and is fine: decide instead of asking, and log the decision.
+things it removes: a pause, or a capability (§9.5). Note that no agent reads
+`--autonomous`: key an agent's rule on the `userPresent` field of its delegation, not on a
+string in the message. The router sets that field per agent: in its spawn-fields paragraph
+(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-hints, in its
+routing-table row; a new agent that needs it also needs its own line in the router.
+Removing the pause is the established shape and is fine: decide instead of asking, and
+log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
 is almost never what you want. If a headless run genuinely cannot perform the step,
 supply its input as a fixture rather than deleting the step, and if you cannot do

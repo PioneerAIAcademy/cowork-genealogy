@@ -1,0 +1,289 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~QPQL-F9N3"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_104362411284",
+        "ark": "ark:/61903/1:1:QPQG-XXG5",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "a45a1d69-9cfc-4d5b-8d86-75012f0c5d4b",
+            "type": "BirthName",
+            "given": "Alfred M",
+            "surname": "Bissonette"
+          }
+        ],
+        "facts": [
+          {
+            "id": "31dccac9-6b80-4b79-b5a6-e383ccd2abad",
+            "type": "Birth",
+            "date": "1864",
+            "standard_date": "1864"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104361616349",
+        "ark": "ark:/61903/1:1:QPQL-F9X1",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "40ffa1f6-2262-4063-866e-e94e3c1bebe9",
+            "type": "BirthName",
+            "given": "Blanche",
+            "surname": "Tolman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "aa4d6399-149a-45ea-bb94-95e56aca4563",
+            "type": "Birth",
+            "date": "1873",
+            "standard_date": "1873"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104361616325",
+        "ark": "ark:/61903/1:1:QPQL-F9X7",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "e3b4adf0-ccb3-487d-b2c2-4209491ecd8a",
+            "type": "BirthName",
+            "given": "Marble",
+            "surname": "Bissonette"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104361616338",
+        "ark": "ark:/61903/1:1:QPQL-F9XV",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "99341de8-9504-47ca-b5b4-c8a5c9c8a6c1",
+            "type": "BirthName",
+            "given": "Clarisa",
+            "surname": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104361616383",
+        "ark": "ark:/61903/1:1:QPQL-F9N3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "5f354670-c72a-4805-ad55-7d9582ed09ec",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tolman"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104361616391",
+        "ark": "ark:/61903/1:1:QPQL-F9N8",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "81805bd4-f68e-40d1-bd67-ecab792529e2",
+            "type": "BirthName",
+            "given": "Claresa",
+            "surname": "Wodet"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "a36ee861-1678-4bf4-89b5-66f6936a792a",
+        "type": "ParentChild",
+        "parent": "p_104361616383",
+        "child": "p_104361616349"
+      },
+      {
+        "id": "d907a9c4-8f4e-4fca-9d5e-1b91d3b1e226",
+        "type": "Couple",
+        "person1": "p_104361616383",
+        "person2": "p_104361616391"
+      },
+      {
+        "id": "28f6f94c-a027-4e2c-a37e-1ef8e1b978b3",
+        "type": "ParentChild",
+        "parent": "p_104361616391",
+        "child": "p_104361616349"
+      },
+      {
+        "id": "285ac4f9-3eef-462d-8f56-f37fc06a6c95",
+        "type": "ParentChild",
+        "parent": "p_104361616338",
+        "child": "p_104362411284"
+      },
+      {
+        "id": "90607a08-bf63-4393-a6b6-c35a7abac726",
+        "type": "Couple",
+        "person1": "p_104362411284",
+        "person2": "p_104361616349",
+        "facts": [
+          {
+            "id": "247e5fac-61c6-49bc-834d-e94581768c03",
+            "type": "Marriage",
+            "primary": true,
+            "date": "4 January 1893",
+            "standard_date": "4 Jan 1893",
+            "place": "Winooski, Vermont",
+            "standard_place": "Winooski, Chittenden, Vermont, United States"
+          }
+        ]
+      },
+      {
+        "id": "b49381ff-2cd6-405c-8e98-41a4e06bbb05",
+        "type": "ParentChild",
+        "parent": "p_104361616325",
+        "child": "p_104362411284"
+      },
+      {
+        "id": "3096fc7f-1c46-4757-ab7c-7f3496de8593",
+        "type": "Couple",
+        "person1": "p_104361616325",
+        "person2": "p_104361616338"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_106196691272",
+        "resource_type": "Record",
+        "title": "Entry for Alfred M Bissonette and Blanche Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQG-XXG5 : Fri Mar 08 01:06:05 UTC 2024), Entry for Alfred M Bissonette and Blanche Tolman, 4 January 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:QR24-MPKS",
+        "coverage": {
+          "place_rep_id": "5405290",
+          "date_range": "4 January 1893",
+          "record_type": "Vital",
+          "standard_place": "Winooski, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_c_1987653",
+        "resource_type": "Collection",
+        "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1699/2005",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-899S-FG45",
+        "coverage": {
+          "place_rep_id": "5404972",
+          "date_range": "1883–1896",
+          "record_type": "Marriage",
+          "standard_place": "Colchester, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_104361616383",
+        "resource_type": "Person",
+        "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQL-F9N3 : Fri Mar 08 01:06:05 UTC 2024), Edward Tolman in entry for Alfred M Bissonette and Blanche Tolman, 4 January 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQL-F9N3"
+      },
+      {
+        "id": "sd_p_104361616391",
+        "resource_type": "Person",
+        "title": "Claresa Wodet, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQL-F9N8 : Fri Mar 08 01:06:05 UTC 2024), Claresa Wodet in entry for Alfred M Bissonette and Blanche Tolman, 4 January 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQL-F9N8"
+      },
+      {
+        "id": "sd_p_104362411284",
+        "resource_type": "Person",
+        "title": "Alfred M Bissonette, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQG-XXG5 : Fri Mar 08 01:06:05 UTC 2024), Alfred M Bissonette and Blanche Tolman, 4 January 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQG-XXG5"
+      },
+      {
+        "id": "sd_p_104361616349",
+        "resource_type": "Person",
+        "title": "Blanche Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQL-F9X1 : Fri Mar 08 01:06:05 UTC 2024), Alfred M Bissonette and Blanche Tolman, 4 January 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQL-F9X1"
+      },
+      {
+        "id": "sd_p_104361616325",
+        "resource_type": "Person",
+        "title": "Marble Bissonette, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQL-F9X7 : Fri Mar 08 01:06:05 UTC 2024), Marble Bissonette in entry for Alfred M Bissonette and Blanche Tolman, 4 January 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQL-F9X7"
+      },
+      {
+        "id": "sd_p_104361616338",
+        "resource_type": "Person",
+        "title": "Clarisa White, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQL-F9XV : Fri Mar 08 01:06:05 UTC 2024), Clarisa White in entry for Alfred M Bissonette and Blanche Tolman, 4 January 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQL-F9XV"
+      },
+      {
+        "id": "sd_auto_M9J1-WM8",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Marriages, from 10 January 1500 to 2006",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+1500-01-10T00:00:00Z/+2006-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_5405290"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QS7-899S-FG45",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QS7-899S-FG45"
+  }
+}

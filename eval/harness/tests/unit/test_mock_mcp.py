@@ -618,6 +618,35 @@ def test_no_log_note_without_a_project_path(tmp_path):
     assert "unloggedSearches" not in body
 
 
+@pytest.mark.requires_engine_build
+def test_unlogged_note_lists_only_the_calling_tools_searches(tmp_path):
+    """A search-records agent is never told to log a search a parallel
+    search-full-text agent made (issue #4386): the backlog is scoped to the
+    calling tool, in production and so in the mock."""
+    (tmp_path / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "fulltext-search-flynn-witnesses"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    fulltext_args = {"keywords": "+Flynn", "projectPath": str(tmp_path)}
+    first = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", fulltext_args))
+    assert first.get("staged"), "test assumes staging succeeded — check the build"
+
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+        )
+    )
+    assert "unloggedSearches" not in body
+
+    # The fulltext caller is still told about its own.
+    again = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", fulltext_args))
+    assert first["staged"]["resultsRef"] in again["unloggedSearches"]
+
+
 def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):
     """A fabricated ranking would be worse than none — the absence is honest."""
     server, call_log, tools_by_name = create_mock_server(
@@ -664,16 +693,19 @@ def test_fulltext_search_strips_textDocument_once_staged(tmp_path):
     assert body["results"][0].get("highlightTerms")
 
 
-def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
-    """No projectPath -> nothing staged -> nothing to strip (matches the real
-    tool's `if (out.staged)` guard — never strips an un-staged search)."""
+@pytest.mark.requires_engine_build
+def test_fulltext_search_compacts_the_answer_when_not_staged(tmp_path):
+    """No projectPath -> nothing staged, but fulltext-search.ts compacts every
+    answer, so the transcript still does not reach the agent."""
     server, call_log, tools_by_name = create_mock_server(
         ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
     )
     result = _invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn"})
     body = _extract_response_dict(result)
     assert "staged" not in body
-    assert "textDocument" in body["results"][0]
+    assert "textDocument" not in body["results"][0]
+    assert body["results"][0].get("names")
+    assert body["results"][0].get("highlightTerms")
 
 
 # --- fulltext_search serves facets only on includeFacets (#3973) ---------------
@@ -730,6 +762,75 @@ def test_fulltext_search_withholding_facets_does_not_strip_them_from_the_fixture
         _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "includeFacets": True})
     )
     assert body["facets"] == _fixture_facets()
+
+
+# --- volume_search applies omitSearchable only when asked (#4414) -------------
+# Production moves an already-searchable volume (fulltextSearchable, or >= 50%
+# recordSearchablePercent) out of `results` into a `searchableOmitted` line
+# only when the call's own `omitSearchable` is true. A fixture carries the
+# unfiltered shape unconditionally.
+
+_MIXED_VOLUMES_FIXTURE = "volume-search-schuylkill-mixed"
+
+
+@pytest.mark.requires_engine_build
+def test_volume_search_serves_the_fixture_unfiltered_without_omit_searchable(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_MIXED_VOLUMES_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "volume_search", {"standardPlace": "Schuylkill, Pennsylvania, United States"})
+    )
+    assert "error" not in body, body
+    assert [g["imageGroupNumber"] for g in body["results"]] == [
+        "007621224",
+        "004812990",
+        "004288771",
+    ]
+    assert "searchableOmitted" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_volume_search_moves_searchable_volumes_to_lines_with_omit_searchable(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_MIXED_VOLUMES_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "volume_search",
+            {"standardPlace": "Schuylkill, Pennsylvania, United States", "omitSearchable": True},
+        )
+    )
+    assert "error" not in body, body
+    # The 96%-indexed and the 4%-but-fulltext volumes both leave `results`; the
+    # 0%/not-fulltext browse-only volume stays.
+    assert [g["imageGroupNumber"] for g in body["results"]] == ["004288771"]
+    assert body["searchableOmitted"] == [
+        "indexed | U.S. Federal Census | 1850-1860 | Schuylkill, Pennsylvania, United States",
+        "full-text | Probate Records | 1845-1880 | Schuylkill, Pennsylvania, United States",
+    ]
+    # totalResults is upstream's count, unaffected by the filter.
+    assert body["totalResults"] == 3
+
+
+@pytest.mark.requires_engine_build
+def test_volume_search_omit_searchable_does_not_mutate_the_shared_fixture(tmp_path):
+    """The fixture response is shared across calls: a filtered call must not
+    cost a later unfiltered call its searchable volumes."""
+    server, call_log, tools_by_name = create_mock_server(
+        [_MIXED_VOLUMES_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    _invoke(
+        tools_by_name,
+        "volume_search",
+        {"standardPlace": "Schuylkill, Pennsylvania, United States", "omitSearchable": True},
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "volume_search", {"standardPlace": "Schuylkill, Pennsylvania, United States"})
+    )
+    assert len(body["results"]) == 3
+    assert "searchableOmitted" not in body
 
 
 def test_facets_gate_has_not_drifted_from_the_typescript_source():
@@ -1135,15 +1236,19 @@ def test_record_search_response_is_compacted_once_staged(tmp_path):
         assert "collectionUrl" not in row
         assert "collectionTitle" not in row, "hoisted into response-level collections"
         assert row.get("treeMatches") != [], "empty treeMatches is dropped"
-    # The hoist landed, and the field the re-ranker needs survived.
+    # The hoist landed. primaryId goes: the re-ranker reads it from the staged
+    # file, not the answer (issue #4386).
     assert body["collections"], "per-row titles hoist into one response-level map"
-    assert all(row.get("primaryId") for row in body["results"])
+    assert all("primaryId" not in row for row in body["results"])
+    # The staged file keeps the query, so the answer drops its echo.
+    assert "query" not in body
+    assert "paginationCappedAt" not in body
 
 
-def test_unstaged_record_search_is_not_compacted(tmp_path):
-    """The other half. Compaction is only correct once the sidecar holds the
-    full payload — an exploratory search with no `projectPath` retains nothing,
-    so stripping its inline results would destroy the only copy."""
+@pytest.mark.requires_engine_build
+def test_unstaged_record_search_is_compacted(tmp_path):
+    """No projectPath -> nothing staged, but record-search.ts compacts every
+    answer (issue #4386), so the mock hands the agent the same stubs."""
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
     )
@@ -1152,9 +1257,58 @@ def test_unstaged_record_search_is_not_compacted(tmp_path):
     )
     body = _extract_response_dict(result)
     assert not body.get("staged")
-    assert any("gedcomx" in row for row in body["results"]), (
-        "an un-staged search keeps full fidelity inline"
+    for row in body["results"]:
+        assert "gedcomx" not in row
+        assert "collectionUrl" not in row
+        assert "collectionTitle" not in row
+    assert body["collections"]
+    assert all("primaryId" not in row for row in body["results"])
+    # Nothing staged: the echo is the query's only copy.
+    assert body["query"]
+
+
+@pytest.mark.requires_engine_build
+def test_record_search_whose_staging_failed_is_compacted(tmp_path):
+    """A projectPath whose staging fails stages nothing; production compacts the
+    answer all the same, so the mock does too."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path / "missing"
     )
+    with pytest.warns(UserWarning, match="staging printed nothing"):
+        result = _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path / "missing")},
+        )
+    body = _extract_response_dict(result)
+    assert not body.get("staged")
+    assert all("gedcomx" not in row for row in body["results"])
+    assert body["collections"]
+
+
+@pytest.mark.requires_engine_build
+def test_unstaged_dixon_page_fits_the_tool_result_budget(tmp_path):
+    """The 100-row Dixon page with no projectPath, as server.ts serializes it
+    (compact JSON), stays under 40,000 characters (issue #4386)."""
+    fixture = json.loads(
+        (FIXTURES_DIR / "record-search-dixon-virginia-1840-census.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert len(json.dumps(fixture["response"], separators=(",", ":"))) > 50_000, (
+        "the fixture no longer overflows, so this test proves nothing"
+    )
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-dixon-virginia-1840-census"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {"surname": "Dixon", "residenceYearFrom": 1840, "residenceYearTo": 1840, "count": 100},
+    )
+    body = _extract_response_dict(result)
+    assert len(body["results"]) == 100
+    assert len(json.dumps(body, separators=(",", ":"), ensure_ascii=False)) < 40_000
 
 
 def test_mapping_failure_response_does_not_get_the_negative_log_note(tmp_path):
@@ -1287,6 +1441,56 @@ def test_person_warnings_runs_with_place_lookups_disabled(tmp_path, monkeypatch)
     tool_scripts = [x for x in scripts if "rejectUnknownArgs" not in x]
     assert len(tool_scripts) == 1
     assert "personWarningsTool(input, { placeCoords: async () => null })" in tool_scripts[0]
+
+
+@pytest.mark.skipif(
+    not (BUILD_TOOLS / "research-append.js").exists(),
+    reason="engine build required for the live research_append handler",
+)
+def test_research_append_runs_with_the_collection_catalog_disabled(tmp_path, monkeypatch):
+    """research_append is called with a null catalog loader, so the locality
+    collection-count stamp never reaches FamilySearch here (issue #4385)."""
+    scripts: list[str] = []
+    spy = _NodeEvalSpy(stdout='{"ok": true}')
+
+    def _recording(script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT, *, store=True):
+        scripts.append(script)
+        return spy(script, input_str, timeout)
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _recording)
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    scripts.clear()
+    _invoke(tools_by_name, "research_append", {"projectPath": str(tmp_path), "section": "notes", "op": "append", "entry": {}})
+    tool_scripts = [x for x in scripts if "rejectUnknownArgs" not in x]
+    assert len(tool_scripts) == 1
+    assert "researchAppendFromCaller as run" in tool_scripts[0]
+    assert "await run(input, null)" in tool_scripts[0]
+
+
+@pytest.mark.skipif(
+    not (BUILD_TOOLS / "research-append.js").exists(),
+    reason="engine build required for the live research_append handler",
+)
+def test_research_append_keeps_a_locality_count_unstamped_in_the_harness(tmp_path):
+    """Through the real compiled writer: a locality's collection count is kept as
+    written, with no catalog warning, because the harness skips the stamp."""
+    scenario = REPO_ROOT / "eval/fixtures/scenarios/mid-research-flynn"
+    for name in ("research.json", "tree.gedcomx.json"):
+        (tmp_path / name).write_text((scenario / name).read_text(encoding="utf-8"), encoding="utf-8")
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    entry = {
+        "place": "Illinois, United States",
+        "collections": [{"id": "1803969", "title": "Illinois, State Census, 1855", "person_count": 0, "record_count": 5}],
+        "pages_read": [{"section": "home", "url": "u1", "found": True}],
+        "source": "locality-guide",
+    }
+    result = _invoke(tools_by_name, "research_append", {"projectPath": str(tmp_path), "section": "localities", "op": "append", "entry": entry})
+    reply = json.loads(result["content"][0]["text"])
+    assert reply["ok"] is True, reply
+    assert not any("catalog" in w for w in reply["validation"]["warnings"]), reply
+    stored = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))["localities"][-1]["collections"][0]
+    assert stored["person_count"] == 0
+    assert stored["record_count"] == 5
 
 
 @pytest.mark.skipif(
@@ -2096,8 +2300,42 @@ def test_live_record_read_stages_the_record_as_production_does(tmp_path):
     assert envelope["payload"]["query"] == {"recordId": "68Q9-K34P"}
     [element] = envelope["payload"]["results"]
     assert element["recordId"] == "68Q9-K34P"
-    assert element["gedcomx"]["persons"] == body["persons"]
+    # The sidecar keeps the full document; the inline answer is compacted (#4415).
+    assert [p["id"] for p in element["gedcomx"]["persons"]] == [p["id"] for p in body["persons"]]
+    assert element["gedcomx"]["sources"], "the staged record keeps its sources"
+    assert element["gedcomx"]["persons"][0]["names"][0]["id"] == "N1"
+    assert "sources" not in body
+    assert all("id" not in n for p in body["persons"] for n in p.get("names", []))
     assert "staged" not in element["gedcomx"]
+
+
+@pytest.mark.requires_engine_build
+def test_served_record_read_with_no_project_is_compacted(tmp_path):
+    """Production's server compacts every record_read answer (#4415)."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-tallman-2v7m-6qm"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "2V7M-6QM"}))
+    assert "sources" not in body and "places" not in body
+    assert body["citation"]
+    assert body["recordUrl"] == "https://www.familysearch.org/ark:/61903/1:2:99FF-4NZ4"
+    assert {p["id"] for p in body["persons"]} == {"p_15021461819", "p_15021461820", "p_15021461821"}
+
+
+@pytest.mark.requires_engine_build
+def test_served_record_read_cites_the_persona_the_call_asked_for(tmp_path):
+    """The compactor gets the call's `recordId`, not the fixture's `~` predicate.
+    Edward is the record's second persona, so a lookup that found nobody would
+    fall back to the Record citation, which names Orrin first."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-tallman-2v7m-6qm"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "ark:/61903/1:1:2V7M-6QM"})
+    )
+    assert "Edward Tallman in entry for Orrin Tallman" in body["citation"], body["citation"]
 
 
 @pytest.mark.requires_engine_build
@@ -2149,6 +2387,44 @@ def test_record_read_stages_nothing_without_projectpath_or_with_resultsref(tmp_p
 _PERSON_READ_ARGS = {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True}
 
 
+def _trimmed_by_engine(full):
+    """The COMPILED `trimPersonReadForModel` run over a full read, independent of
+    the mock's own call to it."""
+    from harness import mock_mcp
+
+    url = mock_mcp._node_module_url(mock_mcp._MCP_BUILD / "tools" / "person-read.js")
+    script = (
+        f"import {{ trimPersonReadForModel }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " process.stdout.write(JSON.stringify(trimPersonReadForModel(JSON.parse(readFileSync(0, 'utf-8')))));"
+    )
+    proc = mock_mcp._run_node_eval(script, json.dumps(full), timeout=60)
+    assert proc.returncode == 0, proc.stderr
+    return json.loads(proc.stdout)
+
+
+@pytest.mark.requires_engine_build
+def test_person_read_serves_the_model_facing_trim_not_the_full_read(tmp_path):
+    """The Tallman fixture is a live capture of the FULL read (163k chars); the
+    mock must hand the agent production's answer, under the 40k pin (#4384)."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-read-tallman-attached-sources"], FIXTURES_DIR, workspace=tmp_path
+    )
+    raw = json.loads(
+        (FIXTURES_DIR / "person-read-tallman-attached-sources.json").read_text(encoding="utf-8")
+    )["response"]
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "person_read", {"personId": raw["persons"][0]["id"], "relatives": True, "sourceDescriptions": True})
+    )
+    assert len(json.dumps(raw, separators=(",", ":"))) > 150_000
+    assert len(json.dumps(body, separators=(",", ":"))) < 40_000
+    assert all("citation" not in s for s in body["sources"] if "1:1:" in s.get("url", ""))
+    for person in body["persons"][1:]:
+        assert "sources" not in person
+    for person in body["persons"]:
+        assert all("id" not in f for f in person.get("facts", []))
+
+
 @pytest.mark.requires_engine_build
 def test_person_read_is_staged_when_given_project_path(tmp_path):
     """Production stages every `person_read` given a projectPath and returns
@@ -2174,11 +2450,14 @@ def test_person_read_is_staged_when_given_project_path(tmp_path):
     envelope = json.loads((tmp_path / staged["resultsRef"]).read_text(encoding="utf-8"))
     assert envelope["tool"] == "person_read"
     assert envelope["payload"]["query"] == _PERSON_READ_ARGS
+    # The answer and the staged copy are the model-facing trim of the fixture
+    # (#4384), not the fixture itself.
+    answer = {k: v for k, v in body.items() if k != "staged"}
+    assert answer == _trimmed_by_engine(fixture)
+    assert answer != fixture
     assert envelope["payload"]["results"] == [
-        {"personId": "LZNY-BRF", "gedcomx": fixture}
+        {"personId": "LZNY-BRF", "gedcomx": answer}
     ]
-    # The rest of the response is the fixture, unchanged.
-    assert {k: v for k, v in body.items() if k != "staged"} == fixture
     # `staged` leads, as production serializes it (#3384), so a truncated
     # preview of an over-limit response still carries the ref.
     assert next(iter(body)) == "staged"
@@ -2240,6 +2519,17 @@ def test_person_read_staging_degrades_on_node_failure(tmp_path, monkeypatch, fai
     assert out == response
 
 
+def test_person_read_trim_warns_when_the_engine_build_is_missing(tmp_path, monkeypatch):
+    """An untrimmed answer is a harness fault and must say so, not pass as production's shape."""
+    from harness import mock_mcp
+
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", tmp_path / "no-build")
+    response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
+    with pytest.warns(UserWarning, match="could not be trimmed"):
+        out = mock_mcp._trim_person_read(response)
+    assert out == response
+
+
 def test_person_read_staging_warns_when_the_engine_build_is_missing(tmp_path, monkeypatch):
     """The commonest harness cause, and the one that used to be silent."""
     from harness import mock_mcp
@@ -2290,16 +2580,29 @@ def test_build_external_search_url_without_projectpath_writes_nothing(tmp_path):
     assert _logged(ws) == []
 
 
+def _store_fetched_place(ws, place: str) -> None:
+    """The entry external_links_search leaves for a place it looked up."""
+    (ws / "external-collections.json").write_text(
+        json.dumps({"places": {place: {"rows": []}}}), encoding="utf-8"
+    )
+
+
 @pytest.mark.requires_engine_build
 def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     """A projectPath the agent sent is rebased onto the workspace and honoured."""
     ws = _hand_off_workspace(tmp_path)
+    _store_fetched_place(ws, "Pennsylvania, United States")
     _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
     out = _extract_response_dict(
         _invoke(
             tools,
             "build_external_search_url",
-            {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/somewhere/else"},
+            {
+                "site": "findagrave",
+                "attributes": {"surname": "Flynn"},
+                "projectPath": "/somewhere/else",
+                "standardPlace": "Pennsylvania, United States",
+            },
         )
     )
     assert out["ok"] is True
@@ -2307,6 +2610,29 @@ def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     assert [e["id"] for e in log] == [out["logId"]]
     assert log[0]["outcome"] == "partial"
     assert log[0]["external_site"]["url_generated"] == out["url"]
+
+
+@pytest.mark.requires_engine_build
+def test_build_external_search_url_refuses_an_unfetched_place_in_the_workspace(tmp_path):
+    """The engine's place gate (#4410) reaches the agent through the mock: a
+    site-wide build for a place never looked up is refused and logs nothing."""
+    ws = _hand_off_workspace(tmp_path)
+    _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
+    out = _extract_response_dict(
+        _invoke(
+            tools,
+            "build_external_search_url",
+            {
+                "site": "findagrave",
+                "attributes": {"surname": "Flynn"},
+                "projectPath": "/somewhere/else",
+                "standardPlace": "Pennsylvania, United States",
+            },
+        )
+    )
+    assert out["ok"] is False
+    assert out["reason"] == "place_not_fetched"
+    assert _logged(ws) == []
 
 
 # --- external_links_search stores the place's list (#2995) ---------------------
@@ -2512,7 +2838,7 @@ def test_surname_hint_degrades_with_a_warning_on_node_failure(tmp_path, monkeypa
 
     with pytest.warns(UserWarning, match="nil-search node call failed"):
         unlogged, hint = mock_mcp._unlogged_staged_handles(
-            tmp_path, args={"surname": "Halsteinsdatter"}, response={"totalMatches": 0}
+            tmp_path, "record_search", args={"surname": "Halsteinsdatter"}, response={"totalMatches": 0}
         )
     assert (unlogged, hint) == ([], None)
 
@@ -2608,9 +2934,16 @@ def test_image_transcribe_stages_the_page_and_drops_the_inline_text(tmp_path):
     assert body.get("staged"), body.get("stagingError")
     assert "transcription" not in body, "the page went back inline although it was staged"
     assert body["digest"]["chars"] == len(full)
-    assert body["digest"]["excerpt"] == full[:300]
+    # The compiled `transcriptionDigest`, not a raw prefix: the blank line goes.
+    excerpt = body["digest"]["excerpt"]
+    assert len(excerpt) <= 300
+    assert excerpt.startswith("Will Book G, page 112. Schuylkill County, Pennsylvania.\nIn the name of God, Amen.")
     assert body["digest"]["id"] == "007936749_00008"
-    assert body["metadata"]["model"]
+    assert set(body["digest"]) == {"id", "chars", "excerpt"}
+    # Production's compactor drops what no caller reads; the staged element
+    # keeps the model and the size.
+    assert "metadata" not in body
+    assert "nameExpansion" not in body
     envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
     assert envelope["tool"] == "image_transcribe"
     assert envelope["payload"]["query"] == _WILL_ARGS
@@ -2665,6 +2998,60 @@ def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path)
     assert body["transcription"].startswith("Will Book G, page 112.")
     for key in ("staged", "digest", "imageRef", "stagingError"):
         assert key not in body
+
+
+def _messy_page_server(tmp_path, transcription):
+    """A mock server over one canned page carrying production's in-process
+    extras (`metadata`, `nameExpansion`), with the workspace at `tmp_path`."""
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "page.json").write_text(json.dumps({
+        "tool": "image_transcribe",
+        "args": {"imageId": "~"},
+        "response": {
+            "transcription": transcription,
+            "found": "FOUND",
+            "nameExpansion": {"original": "Anna", "expanded": "Anna (also known as Ann)", "expansions": {"Anna": ["Ann"]}},
+            "metadata": {"imageId": "004884748_02613", "contentType": "image/jpeg", "model": "m", "sizeBytes": 3},
+        },
+    }), encoding="utf-8")
+    _s, _c, tools_by_name = create_mock_server(["page"], fixtures, workspace=tmp_path)
+    return tools_by_name
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_staged_page_is_cleaned_before_staging_and_digested_by_the_build(tmp_path):
+    """Production cleans the OCR layout before staging and digests the cleaned
+    text; the mock runs the same compiled functions, so `digest.chars` matches
+    the staged element the e2e orchestrator joins on."""
+    _copy_scenario(tmp_path)
+    tools_by_name = _messy_page_server(tmp_path, "Name      \r\nAnna Weber\t\n\n\n\n==========\nPeter Weber")
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "image_transcribe", {"imageId": "004884748_02613", "projectPath": str(tmp_path)})
+    )
+    assert body.get("staged"), body.get("stagingError")
+    cleaned = "Name\nAnna Weber\n\n===\nPeter Weber"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["payload"]["results"][0]["transcription"] == cleaned
+    assert body["digest"] == {"id": "004884748_02613", "chars": len(cleaned), "excerpt": "Name\nAnna Weber\nPeter Weber"}
+    assert sorted(body) == ["digest", "found", "staged"]
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_without_a_project_runs_the_compiled_compactor(tmp_path):
+    """The no-project answer goes through production's compactor too: the text
+    cleaned and cut at the inline bound with a notice, `found` kept, no
+    `truncated`, and `metadata` and `nameExpansion` dropped."""
+    rows = [f"Row {i}:  Weber, Anna Maria    farmer's daughter    Alsweiler   " for i in range(1, 700)]
+    tools_by_name = _messy_page_server(tmp_path, "\n".join(rows))
+    result = _invoke(tools_by_name, "image_transcribe", {"imageId": "004884748_02613"})
+    body = _extract_response_dict(result)
+    assert not result.get("is_error"), body
+    assert sorted(body) == ["found", "transcription", "truncationNotice"]
+    assert body["found"] == "FOUND"
+    assert body["transcription"].startswith("Row 1:  Weber, Anna Maria    farmer's daughter    Alsweiler\nRow 2:")
+    assert len(json.dumps(body["transcription"], ensure_ascii=False)) - 2 <= 36_000
+    assert body["truncationNotice"].startswith("Only the first ")
 
 
 def test_image_transcribe_on_a_folder_that_is_not_a_project_stages_nothing(tmp_path):
@@ -2764,8 +3151,8 @@ def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypa
 
 
 def test_principal_sets_match_each_compiled_tools_arity():
-    """The harness calls a compiled tool as `input`, `input, LOCAL` or `LOCAL`, then any
-    `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
+    """The harness calls a compiled tool as `input`, `input, LOCAL`, `LOCAL` or with nothing,
+    then any `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
     function's required-parameter count must equal what the harness passes before the
     extras: a tool that gains a `principal` without joining `_COMPILED_TOOLS_WITH_PRINCIPAL`
     runs with it undefined."""
@@ -2785,6 +3172,18 @@ def test_principal_sets_match_each_compiled_tools_arity():
         for tool in tools
     }
     assert json.loads(result.stdout) == passed
+
+
+@pytest.mark.requires_engine_build
+def test_project_list_runs_live_with_no_arguments(tmp_path):
+    """The arity test above pins the tables, not the call the f-string builds from them: a
+    call still naming `LOCAL` with no import breaks only here, at harness runtime."""
+    _server, _call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+
+    result = _invoke(tools_by_name, "project_list", {})
+
+    assert result.get("is_error") is not True
+    assert _extract_response_dict(result)["mode"] == "folder"
 
 
 # --- the unknown-argument guard (issue #3947) --------------------------------
@@ -2902,3 +3301,99 @@ def test_guard_fails_open_and_warns_when_the_build_is_missing(monkeypatch, tmp_p
 
     with pytest.warns(UserWarning, match="rebuild packages/engine/mcp-server"):
         assert mock_mcp._reject_unknown_args("record_search", {"q": "x"}) is None
+
+
+# ── birthRanges on record_read (issue #4127) ─────────────────────────────────
+# The mock calls the compiled `birthRangesFor`, so a fixture never carries one.
+
+_RECORD_EXTRACT_JS = REPO_ROOT / "packages/engine/mcp-server/build/utils/record-extract.js"
+
+
+def _tallman_census(birth, age, year):
+    return {
+        "persons": [
+            {
+                "id": "p1",
+                "names": [{"given": "Edward", "surname": "Tallman"}],
+                "facts": [
+                    {"type": "Birth", "date": birth},
+                    {"type": "Census", "date": year, "place": "Vermont, United States"},
+                ],
+            }
+        ],
+        "indexFields": {"p1": {"age": age}},
+    }
+
+
+def test_record_birth_ranges_comes_from_the_compiled_helper():
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+    assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11 years", "1850")) == {
+        "p1": "Bet 1838 and 1839"
+    }
+    assert mock_mcp._record_birth_ranges(_tallman_census("31 Jan 1839", "74", "1913")) is None
+    assert mock_mcp._record_birth_ranges({"persons": []}) is None
+
+
+def test_record_birth_ranges_degrades_with_a_warning_on_node_failure(monkeypatch):
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+    with pytest.warns(UserWarning, match="birthRanges"):
+        assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11", "1850")) is None
+
+
+def _census_index_fixture(tmp_path):
+    fx = tmp_path / "fx"
+    fx.mkdir()
+    (fx / "record-read-tall.json").write_text(
+        json.dumps(
+            {
+                "tool": "record_read",
+                "args": {"recordId": "TALL-0001"},
+                "response": {
+                    "persons": [
+                        {
+                            "id": "p1",
+                            "names": [{"given": "Edward", "surname": "Tallman"}],
+                            "facts": [
+                                {"type": "Birth", "date": "1839"},
+                                {"type": "Census", "date": "1850", "place": "Vermont, United States"},
+                            ],
+                        }
+                    ],
+                    "indexFields": {"p1": {"age": "11"}},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return fx
+
+
+@pytest.mark.requires_engine_build
+def test_no_project_record_read_carries_birth_ranges_and_no_index_fields(tmp_path):
+    fx = _census_index_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-tall"], fx, workspace=tmp_path)
+    body = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "TALL-0001"}))
+    assert body["birthRanges"] == {"p1": "Bet 1838 and 1839"}
+    assert "indexFields" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_staged_record_read_keeps_birth_ranges_out_of_the_staged_gedcomx(tmp_path):
+    (tmp_path / "research.json").write_text(json.dumps({"project": {"id": "rp_x"}, "questions": []}), encoding="utf-8")
+    fx = _census_index_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-tall"], fx, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "TALL-0001", "projectPath": str(tmp_path)})
+    )
+    assert body["birthRanges"] == {"p1": "Bet 1838 and 1839"} and "indexFields" not in body
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    [element] = envelope["payload"]["results"]
+    assert "birthRanges" not in element["gedcomx"]
+    assert element["indexFields"] == {"p1": {"age": "11"}}

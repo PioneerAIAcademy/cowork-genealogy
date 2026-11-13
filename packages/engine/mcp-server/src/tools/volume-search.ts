@@ -50,10 +50,17 @@ const TITLE_PREFIX_RE = /^title:\s*/;
 
 // At 100 volumes a page, 10 of 33 hosted calls overflowed TOOL_RESULT_CHAR_BUDGET's
 // limit (issue #3611); Freeborn, Minnesota 1870–1900 reached 99,517. After merging
-// coverage rows, the worst 50-volume window measured on those bundles is 36,939,
-// so 50 fits with no truncation and fitToBudget is a backstop, not the normal path.
+// coverage rows, the worst 50-volume window measured on those bundles is 36,939.
+// The maximum is 50 too: at one coverage row per volume the densest hosted page
+// measured comes to about 23,000 characters at 50 and 45,000 at 100, so only at
+// 50 does fitToBudget's last cap fit.
 const DEFAULT_PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 100;
+const MAX_PAGE_SIZE = 50;
+// With `summary` the counts cover every volume, so the page is a sample.
+const SUMMARY_PAGE_SIZE = 10;
+// An upstream error body carries a Java stack trace (about 10,000 characters on
+// a real 409); its message is all a caller can act on.
+const UPSTREAM_DETAIL_MAX = 200;
 export const RESULT_CHAR_BUDGET = TOOL_RESULT_CHAR_BUDGET;
 // Coverage rows kept per volume, tried in order, only when a page is still over
 // budget after merging. Volumes are never dropped: the upstream cursor has
@@ -144,7 +151,7 @@ async function callGroupSearch(
     // nothing to act on. Read the body so the message carries whatever upstream
     // did say, and say nothing about WHY it said it: no 409 here is reproducible,
     // and a guessed upstream diagnosis is a claim we cannot defend.
-    const body = (await response.text().catch(() => "")).trim();
+    const body = upstreamDetail(await response.text().catch(() => ""));
     const detail = body ? ` ${body}` : "";
     if (response.status === 409) {
       throw new Error(
@@ -160,6 +167,30 @@ async function callGroupSearch(
   }
 
   return (await response.json()) as MetadataRmsSearchResponse;
+}
+
+/**
+ * The part of an upstream error body a caller can read: the JSON body's
+ * `message`, else the first line of its `trace`, else the text itself, with
+ * whitespace collapsed and cut to UPSTREAM_DETAIL_MAX characters.
+ */
+function upstreamDetail(text: string): string {
+  let detail = text.trim();
+  if (!detail) return "";
+  try {
+    const parsed: unknown = JSON.parse(detail);
+    if (parsed && typeof parsed === "object") {
+      const { message, trace } = parsed as Record<string, unknown>;
+      if (typeof message === "string" && message.trim()) detail = message;
+      else if (typeof trace === "string" && trace.trim()) detail = trace.trim().split("\n")[0];
+    }
+  } catch {
+    // Not JSON: the text is the detail.
+  }
+  detail = detail.replace(/\s+/g, " ").trim();
+  return detail.length > UPSTREAM_DETAIL_MAX
+    ? `${detail.slice(0, UPSTREAM_DETAIL_MAX - 1)}…`
+    : detail;
 }
 
 function computeRecordSearchablePercent(group: MetadataRmsGroup): number | null {
@@ -335,6 +366,72 @@ export function fitToBudget(
   return { ...result, results: groups };
 }
 
+// A volume is already reachable by a faster tool than browsing once either
+// signal clears this bar: fulltext_search once fulltextSearchable is true, or
+// record_search once at least half its indexable images are indexed. Below the
+// bar, or when a signal is null (unknown), the volume stays a browse candidate.
+const SEARCHABLE_PERCENT_THRESHOLD = 50;
+
+function isAlreadySearchable(group: VolumeGroup): boolean {
+  return (
+    group.fulltextSearchable === true ||
+    (group.recordSearchablePercent != null &&
+      group.recordSearchablePercent >= SEARCHABLE_PERCENT_THRESHOLD)
+  );
+}
+
+// A volume at or above the threshold is reachable by record_search regardless
+// of its full-text status, so "indexed" wins the label even when the volume is
+// also full-text searchable -- search-images routes an indexed volume to
+// search-records first.
+function searchableLabel(group: VolumeGroup): "indexed" | "full-text" {
+  return group.recordSearchablePercent != null &&
+    group.recordSearchablePercent >= SEARCHABLE_PERCENT_THRESHOLD
+    ? "indexed"
+    : "full-text";
+}
+
+function searchableOmittedLine(label: string, coverage: SimplifiedCoverage): string {
+  const recordType =
+    coverage.recordType ??
+    (coverage.recordTypeConceptId != null ? `concept-id:${coverage.recordTypeConceptId}` : "");
+  const places = coverage.places.join("; ");
+  return `${label} | ${recordType} | ${coverage.dateRange ?? ""} | ${places}`;
+}
+
+/**
+ * Collapse this page's already-searchable volumes (fulltextSearchable, or at
+ * least SEARCHABLE_PERCENT_THRESHOLD% recordSearchablePercent) to one line
+ * each in `searchableOmitted`, leaving only volumes still worth a browse in
+ * `results`. A volume with no known qualifying signal (both null, or neither
+ * clears the bar) stays in `results` -- a null never omits on its own. Lines
+ * are deduped by their full text across the whole page; a volume with no
+ * coverage rows still contributes one line, so it is not silently dropped.
+ * Pure function of its input: called identically by the tool and, on a canned
+ * fixture, by the eval mock (CLAUDE.md, "Code reuse").
+ */
+export function filterSearchableVolumes(result: VolumeSearchResult): VolumeSearchResult {
+  const kept: VolumeGroup[] = [];
+  const seen = new Set<string>();
+  const lines: string[] = [];
+  for (const group of result.results) {
+    if (!isAlreadySearchable(group)) {
+      kept.push(group);
+      continue;
+    }
+    const label = searchableLabel(group);
+    const rows = group.coverages.length > 0 ? group.coverages : [{ places: [] }];
+    for (const coverage of rows) {
+      const line = searchableOmittedLine(label, coverage);
+      if (!seen.has(line)) {
+        seen.add(line);
+        lines.push(line);
+      }
+    }
+  }
+  return { ...result, results: kept, searchableOmitted: lines };
+}
+
 export async function volumeSearchTool(
   input: VolumeSearchInput,
   principal: Principal
@@ -382,7 +479,7 @@ export async function volumeSearchTool(
     ? conceptIdsForGroups(input.recordTypeGroups)
     : undefined;
 
-  const pageSize = input.pageSize ?? DEFAULT_PAGE_SIZE;
+  const pageSize = input.pageSize ?? (input.summary ? SUMMARY_PAGE_SIZE : DEFAULT_PAGE_SIZE);
 
   const body: MetadataRmsSearchRequest = {
     coverage: {
@@ -441,7 +538,7 @@ export async function volumeSearchTool(
   if (typeof summary === "string") result.summaryError = summary;
   else if (summary) result.summary = summary;
 
-  return fitToBudget(result);
+  return fitToBudget(input.omitSearchable ? filterSearchableVolumes(result) : result);
 }
 
 export const volumeSearchSchema = {
@@ -457,12 +554,16 @@ export const volumeSearchSchema = {
     "list the volume's images, or with fulltext_search to search its text. " +
     "Each coverage row lists every place (`places`) that shares its date range and " +
     "record type. " +
-    "Results are paginated, 50 volumes a page by default — pass back nextPageToken " +
+    "Results are paginated, 50 volumes a page by default and 10 with summary — " +
+    "pass back nextPageToken " +
     "(with the same standardPlace, years, record-type groups and pageSize) as " +
     "pageToken to get the next page. A volume carrying coverageCount had its " +
     "coverages shortened to fit the answer; call again with a smaller pageSize, " +
     "starting from the first page, to see them all. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
+    "Set omitSearchable to drop already-searchable volumes from results into " +
+    "one-line entries in searchableOmitted, so a browse-planning caller is not " +
+    "shown volumes it would only decline. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -499,10 +600,11 @@ export const volumeSearchSchema = {
       pageSize: {
         type: "integer",
         minimum: 1,
-        maximum: 100,
+        maximum: 50,
         description:
-          "Volumes per page, 1–100. Defaults to 50. Every page of one search " +
-          "must use the same pageSize.",
+          "Volumes per page, 1–50. Defaults to 50, or 10 with summary. Every page " +
+          "of one search must use the same pageSize, so the next page sends the " +
+          "query.pageSize the previous page echoed.",
       },
       pageToken: {
         type: "string",
@@ -521,6 +623,19 @@ export const volumeSearchSchema = {
           "coverages reach, parents included. First page only — not with pageToken. " +
           "Slower: it reads all matching volumes. If it cannot be computed, the page " +
           "still returns, with `summaryError` saying why.",
+      },
+      omitSearchable: {
+        type: "boolean",
+        description:
+          "Set true to drop volumes that are already fulltextSearchable or at " +
+          "least 50% recordSearchablePercent out of results, replacing each with " +
+          "a one-line entry in searchableOmitted: " +
+          "`<indexed|full-text> | <recordType> | <dateRange> | <places>`. Runs on " +
+          "this page only, so results can be empty while nextPageToken is set — " +
+          "check both results and searchableOmitted, and page again, before " +
+          "concluding nothing was found. totalResults is unaffected. Use when " +
+          "the goal is to find a volume worth browsing image by image, not one " +
+          "already reachable by record_search or fulltext_search.",
       },
     },
     required: ["standardPlace"],

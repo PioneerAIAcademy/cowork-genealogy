@@ -2064,11 +2064,12 @@ async def _run_agent(
                     if _step_turns and _step_turns[-1].halt_offer is None:
                         _step_turns[-1].halt_offer = _gate.halt_offer
                 return _out
-            # Allowed, so if it was a step this turn OPENED with, record which.
+            # Allowed, so if it was the step that fixed this turn's group, record
+            # which (init-project, then the step after it when one runs).
             # `next_auto_reply` keys on the step a turn ran, and the gate is the
             # only thing that knows: by the time the turn ends, the spawn is just
             # another tool call among dozens.
-            if _step_turns and _step_turns[-1].step is None and _gate.first_step:
+            if _step_turns and _gate.first_step and _step_turns[-1].step != _gate.first_step:
                 _step_turns[-1].step = _gate.first_step
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
@@ -3442,7 +3443,7 @@ async def run_single_ask_turn(
     """Send ONE ordinary user turn into a built workspace and return its record.
 
     Spec §16. A function of one message on purpose: under step mode
-    (docs/plan/research-step-mode.md §F) a single ask is one step turn. No stall
+    (docs/specs/research-step-mode-spec.md §F) a single ask is one step turn. No stall
     resume — that sends a second message. Subagent capture runs here, while
     ``workspace`` exists, because the real work of a single ask is usually in a
     subagent and the main-thread usage alone leaves most of the spend out.

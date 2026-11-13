@@ -31,7 +31,7 @@ ENGINE_BUILD  := $(ENGINE_DIR)/build/index.js
 ENGINE_DEPS   := $(ENGINE_DIR)/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
-# Root pnpm workspace (web, electron, viewer-ui, schema, eval/app). Reinstall when the
+# Root pnpm workspace (web, electron, mcp-viewer, viewer-ui, schema, eval/app). Reinstall when the
 # root manifest, the lockfile, the member list, or ANY member's manifest
 # changes. A member's package.json is listed because it carries that member's
 # lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
@@ -125,9 +125,13 @@ clean-deps: ## Remove all node_modules (force a from-scratch install; use after 
 # prerequisite: make reads the .make-installed stamp timestamps once at startup,
 # so a single `reinstall: clean-deps install` would still see the (now-deleted)
 # stamps as up-to-date and skip the JS installs. The recursive call re-evaluates
-# them post-clean.
+# them post-clean. The Node and npm check runs first, as its own recipe line, so
+# a version the installs would refuse stops this before anything is deleted (a
+# prerequisite would be unordered under -j).
 .PHONY: reinstall
-reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+reinstall: ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+	node scripts/check-node-floor.mjs
+	$(MAKE) clean-deps
 	$(MAKE) install
 
 # ── Worktrees ────────────────────────────────────────────────────
@@ -268,6 +272,20 @@ server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1
 electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
 	pnpm --filter @genealogy/electron dev
 
+.PHONY: mcp-viewer-build
+mcp-viewer-build: $(JS_DEPS) ## Build the MCP App page and copy it to the viewer server
+	pnpm --filter mcp-viewer build
+	mkdir -p $(ENGINE_DIR)/viewer/page
+	cp apps/mcp-viewer/dist/index.html $(ENGINE_DIR)/viewer/page/viewer.html
+
+# `cd … && pwd` rather than abspath: Cowork project folders often hold spaces.
+.PHONY: viewer
+viewer: mcp-viewer-build $(ENGINE_DEPS) ## Open the MCP App viewer in a browser tab: make viewer PROJECT=<folder> [PORT=8090]
+	@test -n "$(PROJECT)" || { echo "usage: make viewer PROJECT=<folder> [PORT=8090]"; exit 2; }
+	@test -d "$(PROJECT)" || { echo "make viewer: no such folder: $(PROJECT)"; exit 2; }
+	root="$$(cd "$(PROJECT)" && pwd)" && cd $(ENGINE_DIR) && \
+	  npx tsx viewer/cli.ts --local --root "$$root" $(if $(PORT),--port $(PORT))
+
 # ── Quality / tests ──────────────────────────────────────────────
 .PHONY: typecheck
 typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
@@ -302,7 +320,7 @@ test: ## Quick loop: JS workspace + server tests (a subset of test-all)
 	$(MAKE) server-test
 
 .PHONY: test-js
-test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema, eval/app (turbo)
+test-js: $(JS_DEPS) ## JS workspace tests — web, electron, mcp-viewer, viewer-ui, schema, eval/app (turbo)
 	pnpm test
 
 .PHONY: server-test
@@ -518,7 +536,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_admission.py tests/test_proto_admission_pg.py tests/test_proto_pool.py tests/test_proto_pool_pg.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter.py tests/test_proto_openrouter_pg.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_admission.py tests/test_proto_admission_pg.py tests/test_proto_pages.py tests/test_proto_pool.py tests/test_proto_pool_pg.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter.py tests/test_proto_openrouter_pg.py tests/test_proto_connector_auth.py tests/test_proto_connector_auth_pg.py tests/test_malachi_user_admin_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -534,7 +552,7 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_admission_pg.py tests/test_proto_pool_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_admission_pg.py tests/test_proto_pool_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter_pg.py tests/test_proto_connector_auth_pg.py tests/test_malachi_user_admin_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -1066,6 +1084,82 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# client ID, so you don't have to open a Claude session to log in.
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
+
+# ── The malachi stack (apps/server/proto/malachi/) ──
+# Run on the host from a plain clone: no prerequisite here touches node or uv. README.md there
+# has the bring-up order. Make hands command-line variables to malachi.sh as environment.
+MALACHI_ENV ?= $(HOME)/.config/genealogy-beta/env
+MALACHI_PROJECT ?= genealogy-beta
+MALACHI := MALACHI_ENV="$(MALACHI_ENV)" MALACHI_PROJECT="$(MALACHI_PROJECT)" apps/server/proto/malachi/malachi.sh
+
+.PHONY: malachi-up
+malachi-up: ## Build and start the stack, the edge last; EDGE=off leaves port 8006 free
+	$(MALACHI) up
+
+.PHONY: malachi-check
+malachi-check: ## Health, routes, deployed sha, disk: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
+	$(MALACHI) check
+
+.PHONY: malachi-logs
+malachi-logs: ## One service's recent log: SERVICE= [TAIL=200] [FOLLOW=1]
+	$(MALACHI) logs
+
+# A Make recipe, not a script function: the checkout replaces malachi.sh, and a running bash
+# reads its script as it goes. Each $(MAKE) reads the checked-out Makefile.
+.PHONY: malachi-deploy
+malachi-deploy: ## Deploy a commit: REF=<sha>, a clean tree, then up and check
+	@test -n "$(REF)" || { echo "malachi-deploy: REF=<sha> is required" >&2; exit 2; }
+	@printf '%s' "$(REF)" | grep -Eq '^[0-9a-f]{7,40}$$' || { echo "malachi-deploy: REF must be a sha; a branch name reads this clone's stale copy" >&2; exit 2; }
+	@test -z "$$(git status --porcelain)" || { echo "malachi-deploy: the tree is not clean" >&2; exit 1; }
+	git fetch origin
+	git checkout --detach "$(REF)"
+	$(MAKE) malachi-up
+	$(MAKE) malachi-check
+
+.PHONY: malachi-backup
+malachi-backup: ## Dump Postgres and mirror MinIO to DATA_DIR/backups/<UTC> [KEEP=14; under 14 needs CONFIRM=yes]
+	$(MALACHI) backup
+
+.PHONY: malachi-restore-check
+malachi-restore-check: ## Restore the newest backup into a scratch database and check its objects [BACKUP=<name>]
+	$(MALACHI) restore-check
+
+.PHONY: malachi-restore
+malachi-restore: ## Load a backup into a wiped stack: CONFIRM=yes [BACKUP=<name>], then malachi-up
+	$(MALACHI) restore
+
+.PHONY: malachi-export
+malachi-export: ## A project's files to DATA_DIR/exports/<id>/: EMAIL= or PROJECT=
+	$(MALACHI) export
+
+.PHONY: malachi-openrouter
+malachi-openrouter: ## Encrypt the env file's OPENROUTER_SEED_KEY onto one user's row: EMAIL=
+	$(MALACHI) openrouter
+
+.PHONY: beta-block-user
+beta-block-user: ## Block one beta user: ACCOUNT=<id>. Their cookie and connector token are refused from the next request
+	@$(MALACHI) block-user
+
+# @: the recipe never prints the code. It reaches malachi.sh as environment, the container on stdin.
+.PHONY: beta-delete-user
+beta-delete-user: ## Delete one beta user's rows, objects and exports: ACCOUNT=<id> CODE=<deletion code>; reports only, until CONFIRM=yes
+	@$(MALACHI) delete-user
+
+.PHONY: malachi-prune
+malachi-prune: ## Free Docker's root: this stack's old images, and everyone's build cache older than a week
+	$(MALACHI) prune
+
+.PHONY: malachi-down
+malachi-down: ## Stop the stack; the data stays
+	$(MALACHI) down
+
+.PHONY: malachi-wipe
+malachi-wipe: ## Delete Postgres and MinIO data: CONFIRM=yes. Keeps backups and the env file
+	$(MALACHI) wipe
+
+.PHONY: malachi-rehearsal
+malachi-rehearsal: ## Bring the whole stack up, through every target but malachi-prune, on this Mac under its own name; cleans up after itself
+	apps/server/proto/malachi/rehearsal.sh
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
@@ -1684,8 +1778,8 @@ plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
 
 .PHONY: plugin-connector
-plugin-connector: ## Build the plugin's connector release into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name>
-	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)'
+plugin-connector: ## Build the one-install connector plugin (its .mcp.json names the tool server) into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp
+	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)' --server-url '$(SERVER_URL)'
 
 .PHONY: cowork-install
 cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)
@@ -1694,21 +1788,29 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	# click-path is printed rather than automated: both installs are Claude
 	# Desktop UI actions with no CLI.
 	@printf '\n=== Built. Now install BOTH, then fully quit and reopen Claude Desktop ===\n\n'
-	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings -> Extensions ->\n'
-	@printf '   Advanced Settings -> Install extension -> releases/genealogy-mcp.mcpb\n'
-	@printf '   (install straight over the old copy -- no uninstall needed)\n\n'
-	@printf '2. Plugin (.zip):  Claude Desktop -> COWORK tab -> Customize ->\n'
-	@printf '   REMOVE any existing Genealogy Research plugin, then Add -> Upload\n'
-	@printf '   Plugin -> releases/genealogy-plugin.zip\n'
-	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
-	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
+	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings (Cmd+, or Ctrl+,) ->\n'
+	@printf '   Desktop app -> Extensions: Manage -> Advanced settings ->\n'
+	@printf '   Install extension -> pick this file:\n'
+	@printf '     %s\n' '$(CURDIR)/releases/genealogy-mcp.mcpb'
+	@printf '   -> Install, then Install again. Old copy installed? The window\n'
+	@printf '   offers only Uninstall: click it, confirm, then Install. That clears\n'
+	@printf '   a key saved under Configure (a key in ~/.familysearch-mcp/config.json\n'
+	@printf '   stays); paste it again there.\n\n'
+	@printf '2. Plugin (.zip):  Claude Desktop -> Customize -> Plugins -> Yours ->\n'
+	@printf '   REMOVE any existing Genealogy Research plugin (... -> Remove),\n'
+	@printf '   then + Add -> Upload plugin -> pick this file:\n'
+	@printf '     %s\n' '$(CURDIR)/releases/genealogy-plugin.zip'
+	@printf '   -> Upload\n\n'
+	@printf '3. Fully QUIT Claude Desktop (Cmd+Q on a Mac, Ctrl+Q on Linux), then\n'
+	@printf '   reopen it.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
 
 # The prototype's three Elastic Beanstalk source bundles (U12, docs/plan/familysearch-handoff.md),
 # every dependency vendored: releases/eb-{web,worker,tools}.zip + releases/eb-bundles.json. The
 # builder stages outside the repo and needs node >= 22 with the engine's npm, the pnpm workspace
-# installed, and the network (PyPI, npm, the RDS truststore). pip is the version the AL2023
-# Python 3.12 platform ships; pyyaml is apps/server/uv.lock's (test_eb_bundles checks it).
+# installed (which takes Node 22.22.2+ on 22, 24.15+ on 24, or 26+), and the network (PyPI, npm,
+# the RDS truststore). pip is the version the AL2023 Python 3.12 platform ships; pyyaml is
+# apps/server/uv.lock's (test_eb_bundles checks it).
 # ARGS passes through to the builder only (make eb-bundles ARGS="--arch x86_64 --rds-ca FILE"); the
 # verifier always dry-runs both arches, so a single-arch build fails it.
 EB_PIP    := 26.2.1

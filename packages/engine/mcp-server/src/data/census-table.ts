@@ -1,5 +1,5 @@
-// The censuses `timeline_build` expects a person to appear in (issue #3516,
-// decision 14). A census gap means FamilySearch likely holds a record that could
+// The censuses `timeline_build` expects a person to appear in (issue #3516;
+// lead, 2026-10-21). A census gap means FamilySearch likely holds a record that could
 // be attached and is not, and a false `high` gap is worse than a missed one, so a
 // row exists only where both hold:
 //
@@ -47,6 +47,12 @@ export interface CensusFragment {
 /** US federal schedules that name only the head of household. Also read by
  *  research_log_append's pre-1880 census note gate. */
 export const HEAD_ONLY_US_CENSUS_YEARS: ReadonlySet<number> = new Set([1790, 1800, 1810, 1820, 1830, 1840]);
+
+/** The first US federal census whose schedule has a relationship-to-head column. */
+export const US_RELATIONSHIP_COLUMN_FROM = 1880;
+
+/** The same for England and Wales, and Scotland: 1841 has none. */
+export const BRITISH_RELATIONSHIP_COLUMN_FROM = 1851;
 
 /** Censuses that survive only as fragments: never a row, never an expected year. */
 export const CENSUS_FRAGMENTS: readonly CensusFragment[] = [

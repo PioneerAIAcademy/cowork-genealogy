@@ -191,9 +191,8 @@ AGENT_ONLY_TOOLS = {
         "tree-edit",
     ),
     "project_create": ("init-project",),
-    "rank_search_matches": ("search-records",),
     "record_search": ("search-records", "survey-surname"),
-    "same_person": ("person-evidence", "search-records"),
+    "same_person": ("person-evidence",),
     "tree_correct": ("proof-conclusion", "tree-edit"),
     "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
     "tree_gaps": ("tree-survey",),
@@ -209,7 +208,6 @@ AGENT_ONLY_TOOLS = {
         "research-exhaustiveness",
         "research-plan",
         "search-full-text",
-        "search-records",
         "timeline",
     ),
     "wiki_search": (
@@ -218,7 +216,6 @@ AGENT_ONLY_TOOLS = {
         "locality-guide",
         "search-familysearch-wiki",
         "search-full-text",
-        "search-records",
     ),
     "wikipedia_search": ("historical-context", "locality-guide", "search-wikipedia"),
 }
@@ -385,7 +382,7 @@ OWNED_APPENDS = {"questions": "question-selection"}
 
 # Claim-scoped routing over SEVERAL fields: section -> (the BARE agent name that
 # may make the claim, the fields whose truthy value is the claim, the status
-# value that is the claim). Fourth granularity, and why none of the three above
+# values that are the claim). Fourth granularity, and why none of the three above
 # holds it.
 #
 # `conflicts` cannot be a whole-section route: six skills legitimately OPEN a
@@ -393,10 +390,10 @@ OWNED_APPENDS = {"questions": "question-selection"}
 # every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
 # on one field set to one value; the conflict's analytical product is spread over
 # seven fields and a status. So the rule keys on the PRODUCT: an op that sets
-# `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
-# a re-open that sets `status: "unresolved"` and clears the analysis, claim
-# nothing and pass. `resolution_kind` and `resolved_value` are listed so a write
-# carrying only those cannot slip past as a non-claim.
+# `status: "resolved"` or `"moot"`, or carries any analysis field truthy. A
+# skeleton open, and a re-open that sets `status: "unresolved"` and clears the
+# analysis, claim nothing and pass. `resolution_kind` and `resolved_value` are
+# listed so a write carrying only those cannot slip past as a non-claim.
 OWNED_CLAIMS = {
     "conflicts": (
         "conflict-resolution",
@@ -412,7 +409,7 @@ OWNED_CLAIMS = {
             # an analysed conflict and end the research with no weighing.
             "weighed_log_entry_ids",
         ),
-        "resolved",
+        ("resolved", "moot"),
     ),
 }
 
@@ -583,7 +580,7 @@ MAIN_THREAD_FIELD_REASON = (
 
 CLAIM_REASON = (
     "Recording a conflict's analysis or resolution from here is disabled — "
-    "settling `{section}` (a `status: \"resolved\"`, or any of {fields}) is owned "
+    "settling `{section}` (a `status` of \"resolved\" or \"moot\", or any of {fields}) is owned "
     "by the {agent} agent, which weighs source independence and the "
     "preponderance of evidence before it decides. Delegate it: invoke "
     "`@plugin:{agent}` and let it make the research_append call. Only the "
@@ -790,8 +787,8 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     `OWNED_SECTIONS` nor `AGENT_WRITABLE_SECTIONS`, so every consumer must
     branch on `rule` and never on the shape of the first element. A fifth,
     `claim`, returns the bare section of an `OWNED_CLAIMS` route: a conflict's
-    analytical product (a resolve, or any analysis field), reached by anyone
-    but its owning agent. A sixth, `owned_append`, returns the bare section of
+    analytical product (a resolve or a moot, or any analysis field), reached
+    by anyone but its owning agent. A sixth, `owned_append`, returns the bare section of
     an `OWNED_APPENDS` route: an `op: "append"` there, made by anyone but its
     owning agent. A seventh, `main_thread_field`, returns a dotted
     `section.field` from `MAIN_THREAD_FIELDS`: a field keyed on presence,
@@ -940,16 +937,18 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
         # owning agent. After the lane check, so an agent with no business in
         # the section at all is told that, not that the claim belongs
         # elsewhere. Both payload keys, for the same fail-open reason as the two
-        # loops above. A moot is claimed too: the tool refuses one without a
-        # `resolution_rationale`, which is a claim field.
+        # loops above. A moot is claimed by its status, not only by the
+        # `resolution_rationale` the tool requires with it: on a conflict that
+        # already carries its analyses, a bare `status: "moot"` writes no claim
+        # field, and such a moot lifts the core-identifier cap.
         claim = OWNED_CLAIMS.get(section)
         if claim is not None and caller != claim[0]:
-            _owner, claim_fields, claim_status = claim
+            _owner, claim_fields, claim_statuses = claim
             for key in ("fields", "entry"):
                 payload_obj = op.get(key)
                 if not isinstance(payload_obj, dict):
                     continue
-                if payload_obj.get("status") == claim_status or any(
+                if payload_obj.get("status") in claim_statuses or any(
                     payload_obj.get(f) for f in claim_fields
                 ):
                     return (section, "claim", caller)
@@ -1005,7 +1004,7 @@ def deny_reason(denied: tuple) -> str:
             agent=OWNED_DECLARATIONS[(owned_section, field)],
         )
     elif rule == "claim":
-        owner, claim_fields, _status = OWNED_CLAIMS[section]
+        owner, claim_fields, _statuses = OWNED_CLAIMS[section]
         reason = CLAIM_REASON.format(
             section=section,
             fields=", ".join(f"`{f}`" for f in claim_fields),

@@ -21,12 +21,21 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
                                                 404 unless UPLOADS_ENABLED=true)
   GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
-  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie;
+                   served at FS_REDIRECT_URI's path, /callback by default, #3992)
   GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
                                                 only with the chat off (#3993); 404 with it on
+  GET  /           onboarding signed out, account and projects signed in; chat off only (#4001)
+  GET  /upload/{project_id}, /pdfjs/{name}, /pdfjs/cmaps/{name}
+                   the upload page (UPLOADS_ENABLED), the pdf.js it loads, and the character
+                   maps a CID-keyed CJK font needs for text extraction; chat off (#4001, #4448)
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
                                                 with OPENROUTER_LINKING_ENABLED=true; cookie needed)
+  GET  /.well-known/oauth-authorization-server, GET|POST /authorize, POST /token, GET|POST /connect
+                                                Claude's authorization server for the connector
+                                                (#3997, web/connector_auth.py; served only with
+                                                OAUTH_ISSUER set)
   GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
   GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
   GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
@@ -64,6 +73,11 @@ GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user c
 PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
 UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
 OPENROUTER_LINKING_ENABLED (unset or false: no /openrouter route; true or false only),
+FS_REDIRECT_URI (unset: PUBLIC_URL + /callback; the callback route is served at its path),
+GENEALOGY_SIGNIN_CALLS_PER_MINUTE (unset: no sign-in budget; a whole number of at least 2:
+the code exchange and identity read share that many calls per sliding minute),
+OAUTH_ISSUER (unset: no connector authorization server; set: it must equal PUBLIC_URL, with
+FamilySearch sign-in on and the chat off),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -121,7 +135,9 @@ from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse,
+)
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from starlette.datastructures import MutableHeaders
 from starlette.routing import get_route_path
@@ -129,6 +145,27 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
+# #4001: the vendored pdf.js the upload page loads (static/pdfjs/README.md), served by name
+# from this fixed set only, so no path a request carries reaches the filesystem.
+PDFJS_DIR = HERE / "static" / "pdfjs"
+PDFJS_FILES = frozenset({"pdf.min.mjs", "pdf.worker.min.mjs"})
+# #4448: the vendored character maps a CID font with no /ToUnicode table needs for text
+# extraction. Built once from the *.bcmap names on disk -- never LICENSE, which stays
+# unservable here exactly as the top-level static/pdfjs/LICENSE already is at /pdfjs/LICENSE.
+PDFJS_CMAPS_DIR = PDFJS_DIR / "cmaps"
+PDFJS_CMAP_FILES = frozenset(p.name for p in PDFJS_CMAPS_DIR.glob("*.bcmap"))
+
+
+def _serve_allowlisted(dir_: Path, allowed: frozenset[str], name: str, media_type: str) -> Response:
+    """Serve ``dir_ / name`` when ``name`` is in ``allowed``, else 404 -- membership is
+    checked before any path is built, so a name outside the allow-list never reaches the
+    filesystem. Shared by every ``/pdfjs/...`` route; a {name} path parameter never matches
+    a request carrying a '/'."""
+    if name not in allowed:
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(dir_ / name, media_type=media_type, headers={"Cache-Control": "public, max-age=3600"})
+
+
 SQL_DIR = PROTO_DIR / "sql"
 # enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
@@ -145,8 +182,12 @@ from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
+from web import pages  # noqa: E402  (#4001: the chat-off tier's own pages)
 from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
+
+# The minted project-id shape (auth.PROJECT_ID_PATTERN), the only one the upload page takes.
+UPLOAD_PAGE_ID_RE = re.compile(auth.PROJECT_ID_PATTERN)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
     IMAGE_REF_RE,
@@ -188,8 +229,18 @@ READY_STATEMENT_TIMEOUT_MS = 1500
 # Every table and function this tier queries; a missing one fails `postgres`.
 WEB_TABLES = ("sessions", "projects", "turns", "session_events", "session_seq", "session_activity",
               "session_entries", "tool_calls", "documents", "blobs", "staging", "users",
-              "allowed_emails", "familysearch_tokens")
+              "allowed_emails", "familysearch_tokens", "signin_states", "connector_tokens",
+              "authorization_codes")
 WEB_FUNCTIONS = ("next_session_seq(text)",)
+# PgStore.delete_session's deletes, which malachi's user_admin.py runs too to delete a
+# user. A session's rows: one of grants.SESSION_TABLES, then `sessions` itself.
+SESSION_ROW_DELETE_SQL = "DELETE FROM {table} WHERE session_id = %s"
+# A project's own rows, in this order, `projects` last. Each goes only once no session opens
+# the project: a project another session still opens keeps its owner.
+PROJECT_TABLES = ("documents", "blobs", "staging", "projects")
+PROJECT_ROW_DELETE_SQL = (
+    "DELETE FROM {table} WHERE project_id = %s AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = %s)"
+)
 READY_SQL = (
     "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
     "UNION ALL SELECT f FROM unnest(%s::text[]) f WHERE to_regprocedure(f) IS NULL"
@@ -352,9 +403,21 @@ class IdentityMismatch(Exception):
     signed in as the existing user."""
 
 
+class EmailTaken(IdentityMismatch):
+    """#3992: a known FamilySearch account now reports an email another user holds, so the
+    sign-in cannot move the account to it. A subclass, so a caller that catches only
+    IdentityMismatch still refuses; the callback answers it with its own page."""
+
+
 class AdmissionRefused(Exception):
     """A new user's sign-in found ``GENEALOGY_MAX_USERS`` users already (blocked users
     count). No row is written; the callback answers 403 before any grant."""
+
+
+class NoAccount(Exception):
+    """#3997: a sign-in for an identity with no user row, where the caller may not create
+    one (``upsert_user(create=False)``): with the chat off, only the connector's consent
+    creates a user. No row is written; the callback answers 403 before any grant."""
 
 
 # #3985: status, API detail and sign-in page text ({who}: the escaped account, {fail}: the
@@ -369,10 +432,23 @@ ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
 }
 
 
+class SessionRefused(HTTPException):
+    """``current_user``'s refusal of a signed-in user (#4001): the API answer is unchanged,
+    an HTTPException with the reason's status and detail, but it carries the reason and the
+    account email, so a page can say what happened and to whom without matching text."""
+
+    def __init__(self, reason: str, email: str) -> None:
+        status, detail, _page = ADMISSION_REFUSALS[reason]
+        super().__init__(status_code=status, detail=detail)
+        self.reason = reason
+        self.email = email
+
+
 class AdmissionBusy(Exception):
     """A capped sign-in could not take the user's row (a returning user) or the admission
-    lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``; the callback answers 503 and
-    nothing is written."""
+    lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``, or a racing sign-in took the
+    email or the FamilySearch id between this one's read and its write, or deadlocked with it
+    (#3992); the callback answers 503 and nothing is written. A retry lands on the right branch."""
 
 
 @dataclass(frozen=True)
@@ -423,7 +499,20 @@ class Store(Protocol):
     async def request_stop(self, session_id: str) -> bool: ...
     # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
     async def get_user(self, user_id: str) -> User | None: ...
-    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User: ...
+    async def upsert_user(
+        self, email: str, familysearch_id: str | None, *, max_users: int | None = None, create: bool = True,
+        accept_terms: bool = False,
+    ) -> User: ...
+    # #3992: single-use sign-in state (017 signin_states), keyed by auth.state_sha256.
+    async def create_signin_state(self, state_sha256: str) -> None: ...
+    async def signin_state_unused(self, state_sha256: str) -> bool: ...
+    async def consume_signin_state(self, state_sha256: str) -> bool: ...
+    # #3997: the connector's codes and tokens (017), keyed by sha256 (web/connector_auth.py).
+    async def issue_authorization_code(
+        self, code_sha256: str, user_id: str, pending: dict[str, Any], lifetime_s: int,
+    ) -> None: ...
+    async def load_authorization_code(self, code_sha256: str) -> dict[str, Any] | None: ...
+    async def exchange_authorization_code(self, code_sha256: str, token_sha256: str, lifetime_s: int) -> bool: ...
     async def is_allowed(self, email: str) -> bool: ...
     async def sync_allowlist(self, emails: set[str]) -> None: ...
     async def revoke_sessions(self, user_id: str) -> None: ...
@@ -1157,22 +1246,19 @@ class PgStore:
                 if (await cur.fetchone())["live"]:
                     raise SessionBusy(session_id)
                 for table in grants.SESSION_TABLES:
-                    await conn.execute(f"DELETE FROM {table} WHERE session_id = %s", (session_id,))  # noqa: S608 - fixed names
+                    await conn.execute(SESSION_ROW_DELETE_SQL.format(table=table), (session_id,))
                 # The transcript is keyed by the SDK session id (004), not this one, and a
                 # subagent's rows share it under a `subagents/...` subpath: this removes
                 # exactly what the spend meter (worker SESSION_USAGE_SQL) counts.
                 await conn.execute(grants.TRANSCRIPT_DELETE_SQL,
                                    (grants.transcript_ids(session_id, row["sdk_session_id"]),))
-                await conn.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
+                await conn.execute(SESSION_ROW_DELETE_SQL.format(table="sessions"), (session_id,))
                 # The project goes only with its LAST session. A project another session
                 # still opens must keep its documents -- and must keep its projects row,
                 # or its owner is gone and the next dev-login create could claim it.
-                for table in ("documents", "blobs", "staging", "projects"):
-                    await conn.execute(
-                        f"DELETE FROM {table} WHERE project_id = %s "  # noqa: S608 - fixed names
-                        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = %s)",
-                        (row["project_id"], row["project_id"]),
-                    )
+                for table in PROJECT_TABLES:
+                    await conn.execute(PROJECT_ROW_DELETE_SQL.format(table=table),
+                                       (row["project_id"], row["project_id"]))
         return True
 
     async def list_projects(self, owner_id: str) -> list[dict[str, Any]]:
@@ -1434,58 +1520,134 @@ class PgStore:
             row = await cur.fetchone()
         return self._user(row) if row else None
 
-    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
-        """The user for this email, created on first sign-in. The FamilySearch id is
-        pinned on first sight; a later sign-in presenting a DIFFERENT one raises
-        IdentityMismatch (trust on first use). A blocked user is returned unpinned, so the
-        caller's refusal writes nothing.
+    async def upsert_user(
+        self, email: str, familysearch_id: str | None, *, max_users: int | None = None, create: bool = True,
+        accept_terms: bool = False,
+    ) -> User:
+        """The user for this FamilySearch identity, created on first sign-in (#3992).
+
+        With ``create=False`` (#3997: a chat-off sign-in the connector's consent did not
+        start) an identity with no row raises NoAccount instead of being inserted; an
+        existing user is updated and returned as below. With ``accept_terms`` (the consent
+        click) the terms acceptance is recorded, once, in the same transaction that finds or
+        creates the user, so no user the consent created exists without it; never for a
+        blocked user, whose row a refusal leaves unchanged.
+
+        With a FamilySearch id, in this order: (1) a row with this id is the user, and a new
+        email FamilySearch reports replaces the stored one, unless another row holds it
+        (EmailTaken); (2) else a row with this email and no id gets the id pinned (trust
+        on first use); (3) a row with this email and a different id is IdentityMismatch; (4)
+        else a new row. Without one (dev-login) the email alone keys the user. A blocked user
+        is returned unchanged -- not pinned, its email not updated -- so the caller's refusal
+        writes nothing; every other refusal raises inside the transaction, so it writes nothing
+        either.
 
         With ``max_users`` (#3985, ``GENEALOGY_MAX_USERS``), an existing user is returned
         whatever the count, without the admission lock; a new one is inserted only while
-        ``users`` holds fewer rows, else AdmissionRefused. Only a new email takes the
-        tier-wide admission lock, and counts and inserts under it, so two sign-ins at cap-1
-        cannot both pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the
-        user's row raises AdmissionBusy."""
+        ``users`` holds fewer rows, else AdmissionRefused. Only a new user takes the tier-wide
+        admission lock, and counts and inserts under it, so two sign-ins at cap-1 cannot both
+        pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the user's row
+        raises AdmissionBusy. So does a unique violation (a racing sign-in took this email or
+        id between the read and the write, and a retry finds the row it wrote) and a deadlock
+        (two users each reporting the other's email at once)."""
         from psycopg import errors
 
         email = email.strip().lower()
         new_id = "usr_" + uuid.uuid4().hex[:16]
-        insert = "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING"
-        select = self._USER + " WHERE email = %s FOR UPDATE"
+        insert = ("INSERT INTO users (id, email, familysearch_id) VALUES (%s, %s, %s) "
+                  "ON CONFLICT DO NOTHING")
+        by_email = self._USER + " WHERE email = %s FOR UPDATE"
+        by_id = self._USER + " WHERE familysearch_id = %s FOR UPDATE"
+
+        async def existing(conn: Any) -> User | None:
+            """Steps 1-3: the user this identity already is, updated; None for a new one."""
+            if familysearch_id:
+                row = await (await conn.execute(by_id, (familysearch_id,))).fetchone()
+                if row is not None:
+                    user = self._user(row)
+                    if user.blocked_at is None and user.email != email:
+                        taken = await (await conn.execute(by_email, (email,))).fetchone()
+                        if taken is not None:
+                            raise EmailTaken(email)
+                        await conn.execute("UPDATE users SET email = %s WHERE id = %s", (email, user.id))
+                        user = replace(user, email=email)
+                    return user
+            row = await (await conn.execute(by_email, (email,))).fetchone()
+            if row is None:
+                return None
+            user = self._user(row)
+            if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                raise IdentityMismatch(email)
+            if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                await conn.execute("UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id))
+                user = replace(user, familysearch_id=familysearch_id)
+            return user
+
         try:
             async with await self._connect() as conn:
                 async with conn.transaction():
-                    row = None
-                    if max_users is None:
-                        await conn.execute(insert, (new_id, email))
-                    else:
-                        # One bounded wait for both locks below. An existing user, row-locked
-                        # so a concurrent delete waits; else the admission lock, the same read
-                        # again (a sign-in for this email may have inserted while this one
-                        # waited), the count, the insert.
+                    if max_users is not None:
+                        # One bounded wait for every lock below: the user's row, else the
+                        # admission lock, then the same reads again (a sign-in for this
+                        # identity may have inserted while this one waited), the count, the
+                        # insert.
                         await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
-                        row = await (await conn.execute(select, (email,))).fetchone()
-                        if row is None:
-                            await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
-                            row = await (await conn.execute(select, (email,))).fetchone()
-                        if row is None:
+                    user = await existing(conn)
+                    if user is None and not create:
+                        raise NoAccount(email)
+                    if user is None and max_users is not None:
+                        await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
+                        user = await existing(conn)
+                        if user is None:
                             cur = await conn.execute("SELECT count(*) AS n FROM users")
                             if (await cur.fetchone())["n"] >= max_users:
                                 raise AdmissionRefused(email)
-                            await conn.execute(insert, (new_id, email))
-                    if row is None:
-                        row = await (await conn.execute(select, (email,))).fetchone()
-                    user = self._user(row)
-                    if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
-                        raise IdentityMismatch(email)
-                    if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                    if user is None:
+                        await conn.execute(insert, (new_id, email, familysearch_id or None))
+                        user = await existing(conn)
+                    if user is None:
+                        # The insert hit a conflict whose row neither read finds: another
+                        # identity's row holds this email and a racing sign-in changed it.
+                        raise AdmissionBusy(email)
+                    if accept_terms and user.blocked_at is None:
                         await conn.execute(
-                            "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
+                            "UPDATE users SET terms_accepted_at = COALESCE(terms_accepted_at, now()) WHERE id = %s",
+                            (user.id,),
                         )
-                        user = replace(user, familysearch_id=familysearch_id)
-        except errors.LockNotAvailable as exc:
+        except (errors.LockNotAvailable, errors.UniqueViolation, errors.DeadlockDetected) as exc:
+            # DeadlockDetected: two users each took their own row and then the other's, each
+            # reporting the other's email. Postgres aborts one; a retry refuses it as EmailTaken.
             raise AdmissionBusy(email) from exc
         return user
+
+    async def create_signin_state(self, state_sha256: str) -> None:
+        """Record one sign-in's state (#3992, chat off). Rows older than the state cookie's life
+        (``auth.FS_OAUTH_MAX_AGE``) can never pass the callback, whose cookie has expired, so
+        each insert deletes them, through 019's index on ``created_at``: the table holds about
+        ten minutes of sign-ins."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(
+                    "DELETE FROM signin_states WHERE created_at < now() - make_interval(secs => %s)",
+                    (auth.FS_OAUTH_MAX_AGE,),
+                )
+                await conn.execute("INSERT INTO signin_states (state_sha256) VALUES (%s)", (state_sha256,))
+
+    async def signin_state_unused(self, state_sha256: str) -> bool:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT 1 FROM signin_states WHERE state_sha256 = %s AND used_at IS NULL", (state_sha256,)
+            )
+            return (await cur.fetchone()) is not None
+
+    async def consume_signin_state(self, state_sha256: str) -> bool:
+        """One atomic UPDATE: of two concurrent callbacks with one state, exactly one gets True."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE signin_states SET used_at = now() WHERE state_sha256 = %s AND used_at IS NULL RETURNING 1",
+                (state_sha256,),
+            )
+            return (await cur.fetchone()) is not None
 
     async def is_allowed(self, email: str) -> bool:
         async with await self._connect() as conn:
@@ -1503,8 +1665,75 @@ class PgStore:
                     await conn.execute("INSERT INTO allowed_emails (email) VALUES (%s)", (email,))
 
     async def revoke_sessions(self, user_id: str) -> None:
+        """Sign-out: every browser session of the user, and (#3997) every connector token and
+        every code not yet exchanged, in one transaction, so signing out also disconnects
+        Claude. The door refuses a token whose ``ended_at`` is set.
+
+        The codes go first. An exchange running at the same moment has either not yet
+        deleted its code, and then this DELETE takes it and the exchange gets no token, or
+        holds its row, and then this DELETE waits for the exchange to commit and the UPDATE
+        after it sees the new token. The other order leaves that token live."""
         async with await self._connect() as conn:
-            await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
+            async with conn.transaction():
+                await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
+                await conn.execute("DELETE FROM authorization_codes WHERE user_id = %s", (user_id,))
+                await conn.execute(
+                    "UPDATE connector_tokens SET ended_at = now() WHERE user_id = %s AND ended_at IS NULL", (user_id,)
+                )
+
+    # -- the connector's codes and tokens (#3997, 017) ---------------------------------
+
+    async def issue_authorization_code(
+        self, code_sha256: str, user_id: str, pending: dict[str, Any], lifetime_s: int,
+    ) -> None:
+        """Store one authorization code's hash for ``pending`` (``connector_auth.checked_pending``).
+        Expiry is Postgres's ``now()`` plus ``lifetime_s``. Each insert deletes the codes
+        already past expiry, so the table holds about two minutes of sign-ins."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute("DELETE FROM authorization_codes WHERE expires_at <= now()")
+                await conn.execute(
+                    "INSERT INTO authorization_codes (code_sha256, user_id, client_id, redirect_uri, "
+                    "redirect_uri_provided_explicitly, code_challenge, scopes, resource, expires_at) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, now() + make_interval(secs => %s))",
+                    (code_sha256, user_id, pending["client_id"], pending["redirect_uri"],
+                     pending["redirect_uri_provided_explicitly"], pending["code_challenge"],
+                     list(pending["scopes"]), pending["resource"], lifetime_s),
+                )
+
+    _CODE_COLUMNS = ("user_id, client_id, redirect_uri, redirect_uri_provided_explicitly, code_challenge, "
+                     "scopes, resource")
+
+    async def load_authorization_code(self, code_sha256: str) -> dict[str, Any] | None:
+        """An unexpired code's row, or None. Reads only: the exchange is what consumes it."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                f"SELECT {self._CODE_COLUMNS} FROM authorization_codes WHERE code_sha256 = %s AND expires_at > now()",
+                (code_sha256,),
+            )
+            row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def exchange_authorization_code(self, code_sha256: str, token_sha256: str, lifetime_s: int) -> bool:
+        """Turn one code into one token: the DELETE takes the code's row, so of two
+        exchanges of one code the second deletes nothing and returns False, and the token's
+        hash is inserted in the same transaction. Only hashes are stored."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                cur = await conn.execute(
+                    "DELETE FROM authorization_codes WHERE code_sha256 = %s AND expires_at > now() "
+                    "RETURNING user_id, client_id, scopes, resource",
+                    (code_sha256,),
+                )
+                row = await cur.fetchone()
+                if row is None:
+                    return False
+                await conn.execute(
+                    "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, resource, expires_at) "
+                    "VALUES (%s, %s, %s, %s, %s, now() + make_interval(secs => %s))",
+                    (token_sha256, row["user_id"], row["client_id"], list(row["scopes"]), row["resource"], lifetime_s),
+                )
+        return True
 
     # -- OpenRouter key (#3988, 016) ---------------------------------------------------
 
@@ -1945,6 +2174,15 @@ def create_app(
     app.state.uploads = auth.uploads_setting()
     # #3988: off unless true; a bad value refuses here. Off registers no /openrouter route.
     app.state.openrouter = auth.openrouter_linking_enabled()
+    # #3992: the sign-in budget, None when unset; a bad value refuses here.
+    calls = auth.signin_calls_per_minute()
+    app.state.signin_budget = auth.SigninBudget(calls) if calls is not None else None
+    # #3992: the callback's route path, from FS_REDIRECT_URI; a bad value refuses here.
+    app.state.callback_path = auth.callback_path()
+    # #3997: the connector's authorization server, None when OAUTH_ISSUER is unset; a bad
+    # value refuses here. Its routes are registered below, just before the SPA mount.
+    oauth_issuer = auth.oauth_issuer()
+    app.state.connector = None
     app.state.store = store
     # #3985: a chat-off tier has no queue, even when a caller passes one.
     app.state.queue = queue if app.state.chat else None
@@ -1967,7 +2205,10 @@ def create_app(
 
     # Every route that returns one user's data goes here: it gets `private, no-store` and
     # `Vary: Cookie`, refusals included. A new per-user route outside these prefixes gets neither.
-    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects")
+    # Chat off, "/" is the page that carries the deletion code (#4001), and "/upload" the
+    # upload page that follows it. Chat on, "/" is the SPA's index.html, which stays
+    # `no-cache`, so neither is added. The match is per path segment: "/" covers only "/".
+    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects") + (() if app.state.chat else ("/", "/upload"))
 
     class ProjectCacheHeaders:
         def __init__(self, app: ASGIApp) -> None:
@@ -2076,7 +2317,7 @@ def create_app(
 
     async def current_user(request: Request) -> User:
         """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
-        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME), chat=app.state.chat)
         if data is None:
             raise HTTPException(status_code=401, detail="Not signed in")
         store = _store(request)
@@ -2086,8 +2327,7 @@ def create_app(
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
         if (reason := await _admission_refusal(request, user.email, user)) is not None:
-            status, detail, _page = ADMISSION_REFUSALS[reason]
-            raise HTTPException(status_code=status, detail=detail)
+            raise SessionRefused(reason, user.email)
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -2149,7 +2389,8 @@ def create_app(
 
     def _signed_in(response: Response, user: User) -> dict:
         response.set_cookie(
-            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(chat=app.state.chat),
+            **auth.cookie_kwargs(),
         )
         return {"id": user.id, "email": user.email}
 
@@ -2159,7 +2400,7 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
-        # #3988: always sent, so the browser app (#4001) shows the OpenRouter page only on true.
+        # #3988: always sent, so a client can offer OpenRouter linking only on true.
         config["openrouter"] = app.state.openrouter
         return config
 
@@ -2178,14 +2419,26 @@ def create_app(
 
     @app.post("/auth/logout")
     async def logout(request: Request, response: Response) -> dict:
-        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        """Ends every session the user holds and, since #3997, their connector tokens.
+
+        With the connector's sign-in on, a cookie that is already revoked ends nothing:
+        otherwise a stale cookie could keep disconnecting Claude for the rest of its life.
+        Without it there is no connector token to protect, and sign-out is the handoff's,
+        unchanged: any cookie with a valid signature revokes."""
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME), chat=app.state.chat)
         if data is not None:
-            await _store(request).revoke_sessions(data["uid"])
+            store = _store(request)
+            stale = False
+            if app.state.connector is not None:
+                user = await store.get_user(data["uid"])
+                stale = user is None or auth.revoked(data.get("iat"), user.sessions_revoked_at)
+            if not stale:
+                await store.revoke_sessions(data["uid"])
         response.delete_cookie(auth.COOKIE_NAME, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
         return {"ok": True}
 
     @app.get("/auth/familysearch/login")
-    async def familysearch_login(next: str | None = None) -> Response:
+    async def familysearch_login(request: Request, next: str | None = None) -> Response:
         if not auth.familysearch_configured():
             raise HTTPException(
                 status_code=501,
@@ -2193,31 +2446,75 @@ def create_app(
             )
         verifier, challenge = auth.pkce()
         state = secrets.token_urlsafe(16)
-        resp = RedirectResponse(auth.authorize_url(challenge, state))
+        if not app.state.chat:
+            # #3992: the single-use record the callback consumes before it calls FamilySearch.
+            await _store(request).create_signin_state(auth.state_sha256(state))
+        resp = RedirectResponse(auth.authorize_url(challenge, state, chat=app.state.chat))
         resp.set_cookie(
             auth.FS_OAUTH_COOKIE, auth.oauth_state_cookie(verifier, state, next),
             max_age=auth.FS_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
         )
         return resp
 
-    @app.get("/callback")
-    async def familysearch_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
-        """The registered FamilySearch redirect: a TOP-LEVEL /callback (auth.redirect_uri).
+    async def _claim_signin_state(request: Request, state: str, fail: str) -> Response | None:
+        """The sign-in's claim on FamilySearch (#3992), after the signed state cookie has
+        matched ``state``: None to go on, else the refusal. One helper, so the connector flow
+        (#3997) runs the same check. With the chat off: the state's record must be present and
+        unused (400), then the budget (503), then the one atomic consume (400 if a racing
+        callback won). With it on, the cookie alone guards the state, as in the handoff, and
+        only the budget applies. A refusal before the budget leaves it untouched, and the
+        budget's own 503 consumes nothing and keeps the ``fs_oauth`` cookie, so a reload
+        retries."""
+        store = _store(request)
+        digest = auth.state_sha256(state)
+        if not app.state.chat and not await store.signin_state_unused(digest):
+            return HTMLResponse(f"This sign-in link was already used or has expired. {fail}", status_code=400)
+        budget = app.state.signin_budget
+        if budget is not None and not budget.try_take(2):  # the code exchange and the identity read
+            return HTMLResponse("Sign-in is busy; try again.", status_code=503)
+        if not app.state.chat and not await store.consume_signin_state(digest):
+            if budget is not None:
+                budget.give_back(2)  # a racing callback won; this one calls nothing
+            return HTMLResponse(f"This sign-in link was already used or has expired. {fail}", status_code=400)
+        return None
 
-        Order matters, and each refusal writes nothing: state, code exchange, identity,
+    @app.get(app.state.callback_path)
+    async def familysearch_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
+        """The registered FamilySearch redirect, served at ``auth.callback_path()``:
+        ``FS_REDIRECT_URI``'s path, a TOP-LEVEL /callback by default (auth.redirect_uri).
+
+        Order matters, and each refusal writes nothing: state, its claim
+        (``_claim_signin_state``: the single-use record and the sign-in budget), code exchange, identity,
         allowlist (none under ``GENEALOGY_MAX_USERS``), then the user (refused if the email is
         pinned to another FamilySearch account, if it is new and the cap is reached, or if it
         is blocked), and only then the grant -- encrypted here, so the store sees ciphertext.
         The write takes the patron's grant write lock (``PgStore.store_grant``), so it never
         interleaves with a refresh; while a refresher holds the lock past
         ``grants.WRITE_LOCK_TIMEOUT_S`` it answers 503 and the patron signs in again. Every
-        later write is the refresh loop's (U3)."""
+        later write is the refresh loop's (U3).
+
+        One callback serves both flows (#3997), told apart by the signed state cookie: a
+        sign-in the connector's consent page started (``connector_auth``) ends with an
+        authorization code at the client's redirect, where a plain one ends on this tier.
+        With the chat off, only that flow creates a user."""
         fail = "FamilySearch sign-in failed; return to the app and try again."
         data = auth.read_oauth_state_cookie(request.cookies.get(auth.FS_OAUTH_COOKIE))
         if data is None:
             return HTMLResponse(f"Missing or invalid OAuth state. {fail}", status_code=400)
+        # #3997: a sign-in the connector's consent page started carries its authorization
+        # request in the cookie. It is re-checked against the allowlist here, and a cookie
+        # that claims the flow without a valid request is refused before anything is spent.
+        pending = None
+        if "connector" in data:
+            connector = app.state.connector
+            pending = connector.checked_pending(data["connector"]) if connector is not None else None
+            if pending is None or data.get("terms") is not True:
+                return HTMLResponse(f"Missing or invalid OAuth state. {fail}", status_code=400)
+            fail = "FamilySearch sign-in failed; go back to Claude and connect again."
         if not code or not state or state != data.get("state"):
             return HTMLResponse(f"OAuth state mismatch. {fail}", status_code=400)
+        if (refusal := await _claim_signin_state(request, state, fail)) is not None:
+            return refusal
         token_json = await auth.exchange_code(code, str(data.get("verifier") or ""))
         if token_json is None:
             return HTMLResponse(f"Token exchange failed. {fail}", status_code=502)
@@ -2242,7 +2539,26 @@ def create_app(
             return refused(reason)
         fs_id = identity.get("id")
         try:
-            user = await store.upsert_user(email, str(fs_id) if fs_id else None, max_users=auth.max_users())
+            # #3997: with the chat off, only the connector's consent (terms accepted) creates
+            # a user; a plain browser sign-in is for users who already have an account.
+            user = await store.upsert_user(
+                email, str(fs_id) if fs_id else None, max_users=auth.max_users(),
+                create=app.state.chat or pending is not None, accept_terms=pending is not None,
+            )
+        except NoAccount:
+            # Only a tier that serves the connector's sign-in can point at it.
+            how = (f"Add the {html.escape(pages.CONNECTOR_NAME)} connector in Claude and connect from there; "
+                   "that creates it." if app.state.connector is not None
+                   else "This server is not creating accounts. Ask the administrator.")
+            return HTMLResponse(
+                f"There is no account here yet for <strong>{html.escape(email)}</strong>. {how}", status_code=403,
+            )
+        except EmailTaken:
+            return HTMLResponse(
+                f"Your FamilySearch account's email, <strong>{html.escape(email)}</strong>, already belongs "
+                "to another user here, so this sign-in cannot move your account to it. Ask the administrator.",
+                status_code=403,
+            )
         except IdentityMismatch:
             return HTMLResponse(
                 f"<strong>{html.escape(email)}</strong> is already linked to a different FamilySearch "
@@ -2258,7 +2574,8 @@ def create_app(
             return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
         if (reason := await _admission_refusal(request, email, user)) is not None:
             return refused(reason)
-        refresh = token_json.get("refresh_token")
+        # A chat-off tier runs no refresher, so a stored refresh token would sit unread.
+        refresh = token_json.get("refresh_token") if app.state.chat else None
         try:
             await store.store_grant(
                 user.id,
@@ -2268,9 +2585,21 @@ def create_app(
             )
         except GrantBusy:
             return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
-        resp = RedirectResponse(auth.redirect_target(data.get("next")))
+        if pending is not None:
+            # The connector flow ends at the client, with a code only its PKCE verifier can
+            # exchange (POST /token). Only the code's hash is stored.
+            connector = app.state.connector
+            auth_code = secrets.token_urlsafe(32)
+            await store.issue_authorization_code(
+                connector.sha256_hex(auth_code), user.id, pending, connector.CODE_LIFETIME_S,
+            )
+            resp = RedirectResponse(connector.client_redirect(pending, auth_code), status_code=302,
+                                    headers=connector.REDIRECT_HEADERS)
+        else:
+            resp = RedirectResponse(auth.redirect_target(data.get("next")))
         resp.set_cookie(
-            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(chat=app.state.chat),
+            **auth.cookie_kwargs(),
         )
         resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
@@ -2287,13 +2616,19 @@ def create_app(
         resp.delete_cookie(auth.OR_OAUTH_COOKIE, **auth.cookie_kwargs())
         return resp
 
+    async def _openrouter_linked(request: Request, user_id: str) -> bool:
+        """Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written
+        under another key is no key to the tool server either (#3984). GET /openrouter and
+        the landing page (#4001) both read it here."""
+        return auth.decrypt(await _store(request).openrouter_key_enc(user_id)) is not None
+
     @linking.get("/openrouter")
     async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
-        """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key.
+        """``{linked: bool}``, whether the caller has a usable OpenRouter key. Never the key.
         Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written under
         another key is no key to the tool server either (#3984), so the page offers a relink."""
         response.headers["Cache-Control"] = "private, no-store"
-        return {"linked": auth.decrypt(await _store(request).openrouter_key_enc(user.id)) is not None}
+        return {"linked": await _openrouter_linked(request, user.id)}
 
     @linking.get("/openrouter/link")
     async def openrouter_link(next: str | None = None, user: User = Depends(current_user)) -> Response:
@@ -3010,6 +3345,91 @@ def create_app(
     # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
 
+    def _refused_page(exc: SessionRefused, up: str = "") -> HTMLResponse:
+        """A refused session's page on ``/`` and ``/upload/<id>`` (``up="../"``): its
+        reason's wording, naming the account, and never the account data."""
+        _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
+        message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
+        return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready", up=up),
+                            status_code=exc.status_code)
+
+    @beta.api_route("/", methods=["GET", "HEAD"])
+    async def home(request: Request) -> HTMLResponse:
+        """#4001: onboarding signed out, the account and projects signed in. Registered before
+        ``spa.mount_spa``, so with the chat off it wins over any SPA build, for HEAD too. A
+        refused session (blocked, not allowed, not ready) gets its reason's wording, naming
+        the account, instead of the onboarding, so a blocked patron is not sent round the
+        sign-in again."""
+        try:
+            user = await current_user(request)
+        except SessionRefused as exc:
+            return _refused_page(exc)
+        except HTTPException as exc:
+            if exc.status_code != 401:
+                raise
+            sign_in = ("familysearch" if auth.familysearch_configured()
+                       else "dev" if auth.dev_login_enabled() else None)
+            return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
+        linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
+        projects = await _store(request).list_projects(user.id)
+        # Upload links only where the page answers: uploads on and a minted id (a seeded
+        # or demo id would link to a 404).
+        uploadable = (frozenset(p["id"] for p in projects if UPLOAD_PAGE_ID_RE.fullmatch(str(p["id"])))
+                      if app.state.uploads is True else frozenset())
+        return HTMLResponse(pages.signed_in_page(
+            public_url=auth.public_url(), email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
+            deletion_code=auth.deletion_code(user.id), projects=projects,
+            openrouter_linked=linked, uploadable=uploadable,
+        ))
+
+    @beta.api_route("/upload/{project_id}", methods=["GET", "HEAD"])
+    async def upload_page(project_id: str, request: Request) -> Response:
+        """#4001: the upload page for one project. pdf.js reads a PDF's text layer in the
+        browser and sends it beside the file to ``POST /api/projects/{id}/files``.
+
+        404 while ``UPLOADS_ENABLED`` is not true (the route it posts to answers 404 too),
+        and for an id outside ``UPLOAD_PAGE_ID_RE``, both before any cookie is read. Signed
+        out, the browser goes to FamilySearch sign-in with ``next=upload/<id>`` and comes back
+        here (``auth.SAFE_NEXT_RE``); with FamilySearch off, to ``/``. A missing project and
+        someone else's get the same 404 page."""
+        if app.state.uploads is not True or not UPLOAD_PAGE_ID_RE.fullmatch(project_id):
+            return HTMLResponse(pages.not_found_page(), status_code=404)
+        try:
+            user = await current_user(request)
+        except SessionRefused as exc:
+            return _refused_page(exc, up="../")
+        except HTTPException as exc:
+            if exc.status_code != 401:
+                raise
+            base = app.state.base_path
+            if auth.familysearch_configured():
+                return RedirectResponse(f"{base}/auth/familysearch/login?next=upload/{project_id}", status_code=303)
+            return RedirectResponse(f"{base}/", status_code=303)
+        # One project's owner, then its research.json for the label: missing, foreign and
+        # NULL-owner ids miss alike, without listing every project the user has.
+        store = _store(request)
+        if await store.project_owner(project_id) != user.id:
+            return HTMLResponse(pages.not_found_page(), status_code=404)
+        research = (await store.documents(project_id, ("research.json",))).get("research.json", (0, None))[1]
+        return HTMLResponse(pages.upload_page(project_id=project_id, label=project_label(research)))
+
+    @beta.api_route("/pdfjs/{name}", methods=["GET", "HEAD"])
+    async def pdfjs_file(name: str) -> Response:
+        """#4001: the vendored pdf.js, from the tier and never a CDN; chat off only, like the
+        page that loads it. Only the two names in PDFJS_FILES; anything else is a 404.
+
+        Not under ``/static/``: Beanstalk's Python platform has its nginx answer ``/static/``
+        from the bundle's own ``static/`` folder, so the request would never reach the tier
+        (eb-web/README.md)."""
+        return _serve_allowlisted(PDFJS_DIR, PDFJS_FILES, name, "text/javascript")
+
+    @beta.api_route("/pdfjs/cmaps/{name}", methods=["GET", "HEAD"])
+    async def pdfjs_cmap_file(name: str) -> Response:
+        """#4448: the vendored pdf.js character maps textLayer() resolves through cMapUrl.
+        Only names in PDFJS_CMAP_FILES (the *.bcmap files on disk); anything else, including
+        LICENSE, is a 404."""
+        return _serve_allowlisted(PDFJS_CMAPS_DIR, PDFJS_CMAP_FILES, name, "application/octet-stream")
+
     @beta.get("/privacy")
     async def privacy_page() -> HTMLResponse:
         return HTMLResponse(policies.PRIVACY_HTML)
@@ -3024,6 +3444,13 @@ def create_app(
         every page load. ProjectCacheHeaders adds ``private, no-store`` and ``Vary: Cookie``
         to every response here, refusals included."""
         return {"accountId": user.id, "deletionCode": auth.deletion_code(user.id)}
+
+    if oauth_issuer is not None:
+        # Imported here, never at the top: a tier without OAUTH_ISSUER loads none of the mcp SDK.
+        from web import connector_auth
+
+        connector_auth.register(app, oauth_issuer)
+        app.state.connector = connector_auth
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
     spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)

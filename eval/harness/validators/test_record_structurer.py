@@ -227,3 +227,60 @@ def test_a_batch_is_written_in_one_call(before_state, after_state, tool_calls, t
     assert not missing, f"sources delegated but not written: {missing}"
     calls = [c for c in (tool_calls or []) if _bare_tool_name(str(c.get("tool") or "")) == "extraction_append"]
     assert len(calls) <= 2, f"{len(calls)} extraction_append calls for one batch; expected one (two with a resend)"
+
+
+def _sources(state):
+    return ((state or {}).get("research_json") or {}).get("sources") or []
+
+
+def _assert_page_kept_on(before_state, after_state, source_id):
+    """The page lands on its held record's source, and no new source is written."""
+    assert len(_sources(after_state)) == len(_sources(before_state)), (
+        f"a new source was written: {len(_sources(before_state))} -> {len(_sources(after_state))}"
+    )
+    held = [s for s in _sources(after_state) if s.get("id") == source_id]
+    assert held and (held[0].get("transcription") or "").strip(), f"the page was not kept on {source_id}"
+
+
+def _assert_not_sent(new, names):
+    sent = [a.get("value") for a in new if any(n in str(a.get("value") or "").lower() for n in names)]
+    assert not sent, f"a person the index does not hold was written: {sent}"
+
+
+def test_a_confirming_page_is_kept_with_no_dispute(before_state, after_state, test):
+    """A page that agrees with its index is kept, and disputes nothing.
+
+    Gated on `confirming-page` (scenario flynn-read-page-waiting). src_003's
+    page agrees with a_008/a_009 on Patrick: the page is kept on src_003, no new
+    source, no reading disputes an index assertion, and Michael, whom the index
+    does not hold, is not written.
+    """
+    if not _tagged(test, "confirming-page"):
+        pytest.skip("not a confirming-page test")
+    _assert_page_kept_on(before_state, after_state, "src_003")
+    new = _new_assertions(before_state, after_state)
+    disputes = [(a.get("disputes_assertion_id"), a.get("value")) for a in new if a.get("disputes_assertion_id")]
+    assert not disputes, f"a page that agrees with its index was reported as disputing it: {disputes}"
+    _assert_not_sent(new, ("michael",))
+
+
+def test_a_disputed_reading_names_the_index_assertion(before_state, after_state, test):
+    """A page that reads a name differently disputes exactly that index assertion.
+
+    Gated on `disputed-reading` (scenario flynn-read-page-disputes). The page
+    reads "Patrick Flinn" where a_008 reads "Patrick Flynn": one new assertion
+    disputes a_008 with the page's name, nothing else is disputed, the age the
+    page agrees on is not sent, and Michael is not written.
+    """
+    if not _tagged(test, "disputed-reading"):
+        pytest.skip("not a disputed-reading test")
+    _assert_page_kept_on(before_state, after_state, "src_003")
+    new = _new_assertions(before_state, after_state)
+    disputes = [a for a in new if a.get("disputes_assertion_id")]
+    assert [a.get("disputes_assertion_id") for a in disputes] == ["a_008"], (
+        f"expected one reading disputing a_008, got {[(a.get('disputes_assertion_id'), a.get('value')) for a in disputes]}"
+    )
+    read = re.sub(r"\s*\[\?\]\s*$", "", str(disputes[0].get("value") or "")).strip().lower()
+    assert read == "patrick flinn", f"the dispute does not carry the page's reading: {disputes[0].get('value')!r}"
+    assert not [a for a in new if a.get("fact_type") == "birth"], "the age, which the page agrees on, was sent"
+    _assert_not_sent(new, ("michael",))

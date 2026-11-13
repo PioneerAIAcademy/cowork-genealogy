@@ -63,9 +63,19 @@ export interface RankedMatch {
   /** Candidate birth year minus subject birth year, in years (negative: the
    *  candidate is older). Present exactly when `birthYearConflict` is. */
   birthYearGap?: number;
+  /** True when the candidate's surname is not a spelling of any surname the
+   *  project gives the subject — their own tree names, linked `name`
+   *  assertions, and the names of tree spouses, parents and children. A hit
+   *  under a recalled, unproven married name is the case (#2213 d33). Advisory:
+   *  the score is untouched. Absent when neither the subject nor their tree
+   *  family has a surname, and when any name on the candidate's persona matches. */
+  surnameNotOnSubject?: true;
+  /** The candidate's preferred surname. Present exactly when `surnameNotOnSubject` is. */
+  candidateSurname?: string;
   /** 0-1 match score; null when scoring failed (never dropped). */
   matchScore: number | null;
-  /** Only set when `checkAttachments` and the batch call succeeded. */
+  /** Only set when `checkAttachments`, the subject has a FamilySearch id (its
+   *  `ark`, or a tree id shaped like one), and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
   /** Carried verbatim from the staged row. The ranker neither computes nor
@@ -125,14 +135,19 @@ export interface RankSearchMatchesResult {
    * and would shift every ranking in the eval corpus.
    */
   relativeTermNote?: string;
+  /** Present when at least one returned row carries `surnameNotOnSubject`: how
+   *  to report those rows (`SURNAME_NOT_ON_SUBJECT_NOTE`). */
+  surnameNote?: string;
   /**
    * Present and `true` when the subject has no date narrower than a year (a bare
    * or qualified year such as "1829" or "Abt 1829" does not count) AND no named
    * spouse, parent or child in the tree or the subject's linked evidence —
    * i.e. nothing that separates this person from any same-named individual.
-   * For the search-records namesake gate (#2213 PR3, not yet built).
+   * Advisory: nothing refuses a thin subject's records.
    * Omitted when the subject is not too thin; never `false`.
    */
   subjectTooThin?: true;
+  /** Present with `subjectTooThin`: what the agent reading the rows must do. */
+  subjectTooThinNote?: string;
   matches: RankedMatch[];
 }

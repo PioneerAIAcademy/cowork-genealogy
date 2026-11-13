@@ -191,6 +191,21 @@ describe("research_log_append", () => {
       expect((await validateProject(dir)).valid).toBe(true);
     });
 
+    // A place expansion with a named subject stages the whole merged pool for
+    // ranking and shows one page; what was examined is the page (issue #4067).
+    it("fills resultsExamined from the staged `returned`, not the pool's row count", async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Byrne" }, totalMatches: 412, returned: 1, results: [{ recordId: "A" }, { recordId: "B" }, { recordId: "C" }] },
+      });
+      const result = await researchLogAppend({ projectPath: dir, planItemId: "pli_001", stagedResultsRef: handle!.resultsRef } as any);
+
+      expect(result.ok).toBe(true);
+      expect((await readJson("research.json")).log[0].results_examined).toBe(1);
+    });
+
     it("fills them per op in a batch", async () => {
       await writeProject(baseResearch());
       const handle = await stage();
@@ -2071,6 +2086,74 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(r.escalationDue).toContain("census plan item pli_002");
   });
 
+  describe("planRationale, on the first nil for a plan item", () => {
+    const RATIONALE = "The 1850 census places Patrick in a household.";
+
+    it("quotes the plan item's rationale and says to search what it names first", async () => {
+      await write(project([]));
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.planRationale).toContain("first search for plan item pli_001 to find nothing");
+      expect(r.planRationale).toContain(`"${RATIONALE}"`);
+      expect(r.planRationale).toContain("search that next, before any other retry");
+      expect(r.planRationale).toContain("does not end the search");
+      expect(r.escalationDue).toBeUndefined();
+    });
+
+    it("quotes a rationale holding replacement patterns as written", async () => {
+      const research: any = project([]);
+      const odd = "Paid $& and $' and $` and $$ and $1 for the bounty land.";
+      research.plans[0].items[0].rationale = odd;
+      await write(research);
+      expect(((await logNil()) as any).planRationale).toContain(`"${odd}"`);
+    });
+
+    it("fires for any record type, not only a census", async () => {
+      await write(project([], { recordType: "probate" }));
+      expect(((await logNil()) as any).planRationale).toContain(RATIONALE);
+    });
+
+    it("fires once for a batch whose nils are the item's first", async () => {
+      await write(project([]));
+      const r: any = await researchLogAppend({ projectPath: dir, ops: [nilOp("Flynn"), nilOp("Flinn")] });
+      expect(r.ok).toBe(true);
+      expect(r.planRationale.match(/first search for plan item/g)).toHaveLength(1);
+    });
+
+    it("stays silent once the plan item already has a nil", async () => {
+      await write(project([nil(1)]));
+      expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("stays silent when the plan item has already found something", async () => {
+      await write(project([nil(1, { outcome: "positive", results_examined: 1 })]));
+      expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("stays silent for a search that had results it left unexamined", async () => {
+      await write(project([]));
+      const r: any = await researchLogAppend({ projectPath: dir, ...nilOp(), resultsAvailable: 450 });
+      expect(r.ok).toBe(true);
+      expect(r.planRationale).toBeUndefined();
+    });
+
+    it("stays silent when the rationale is blank", async () => {
+      const research: any = project([]);
+      research.plans[0].items[0].rationale = "   ";
+      await write(research);
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.planRationale).toBeUndefined();
+    });
+
+    it("stays silent when the search serves no plan item", async () => {
+      await write(project([]));
+      const adhoc: any = await researchLogAppend({ projectPath: dir, ...nilOp(), planItemId: null });
+      expect(adhoc.ok).toBe(true);
+      expect(adhoc.planRationale).toBeUndefined();
+    });
+  });
+
   it("stays silent at the second nil", async () => {
     await write(project([nil(1)]));
     const r: any = await logNil();
@@ -2833,4 +2916,273 @@ describe("research_log_append — filtered zero-hit fulltext names its unfiltere
     expect(r.ok).toBe(true);
     expect((await readJson("research.json")).log).toHaveLength(1);
   });
+});
+
+describe("research_log_append — pinned zero-hit record_search names its unpinned retry (issue #3854)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-pnr-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const writeProject = async (research: any) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  };
+  const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
+  const PINNED = { surname: "Heydöcker", givenName: "Simon", recordType: "death", collectionId: "1394580" };
+  const UNPINNED = { surname: "Heydöcker", givenName: "Simon", recordType: "death" };
+  const nil = (query: any) => ({
+    tool: "record_search",
+    outcome: "negative",
+    resultsExamined: 0,
+    resultsAvailable: 0,
+    query,
+    planItemId: null,
+  });
+  const logEntry = (id: string, query: any) => ({
+    id,
+    plan_item_id: null,
+    performed: "2026-01-01T00:00:00.000Z",
+    tool: "record_search",
+    query,
+    outcome: "negative",
+    results_examined: 0,
+    external_site: null,
+    results_ref: null,
+  });
+
+  it("refuses a pinned nil with no unpinned sibling, naming the exact retry", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({ projectPath: dir, ...nil(PINNED) } as any);
+    expect(r.ok).toBe(false);
+    const msg = (r as any).errors.join(" ");
+    expect(msg).toMatch(/0 results pinned to `collectionId: "1394580"`/);
+    expect(msg).toContain(`record_search(${JSON.stringify(UNPINNED)})`);
+    expect(msg).toContain("one research_log_append batch");
+    expect((await readJson("research.json")).log).toHaveLength(0);
+  });
+
+  it("names a retry carrying only real record_search inputs, not keys the agent invented", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...nil({ ...PINNED, note: "also tried Heidecker", variants_also_tried: ["Heyd*"] }),
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (r as any).errors.join(" ");
+    expect(msg).toContain(`record_search(${JSON.stringify(UNPINNED)})`);
+    expect(msg).not.toMatch(/note|variants_also_tried/);
+  });
+
+  it("allows it when the unpinned retry is in the same batch, listed AFTER the pinned op", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({ projectPath: dir, ops: [nil(PINNED), nil(UNPINNED)] } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(2);
+  });
+
+  it("allows it when the unpinned retry is already in log[]", async () => {
+    await writeProject(baseResearch([logEntry("log_001", UNPINNED)]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil(PINNED) } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(2);
+  });
+
+  it("allows an unpinned retry that also widened other filters (names are the terms)", async () => {
+    await writeProject(baseResearch());
+    const widened = { surname: " Heydöcker ", givenName: "Simon", recordCountry: "Austria" };
+    const r = await researchLogAppend({ projectPath: dir, ops: [nil(PINNED), nil(widened)] } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows a pinned search that had hits (keyed on hits, not outcome)", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: PINNED, results: [{ recordId: "A" }, { recordId: "B" }] },
+    });
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      outcome: "negative",
+      resultsExamined: 2,
+      stagedResultsRef: handle!.resultsRef,
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it('does not treat an errored search (outcome "error") as a pinned nil', async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({ projectPath: dir, ...nil(PINNED), outcome: "error" } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(1);
+  });
+
+  it("refuses when the only unpinned sibling is a different surname variant", async () => {
+    await writeProject(baseResearch());
+    const variant = { ...UNPINNED, surname: "Heidecker" };
+    const r = await researchLogAppend({ projectPath: dir, ops: [nil(PINNED), nil(variant)] } as any);
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/^ops\[0\]: record_search returned 0 results pinned/);
+    expect((await readJson("research.json")).log).toHaveLength(0);
+  });
+
+  it("refuses when the only sibling is pinned to another collection", async () => {
+    await writeProject(baseResearch([logEntry("log_001", { ...UNPINNED, collectionId: "1520587" })]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil(PINNED) } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses when the only unpinned sibling is a wildcard (Heyd*)", async () => {
+    await writeProject(baseResearch([logEntry("log_001", { ...UNPINNED, surname: "Heyd*" })]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil(PINNED) } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses a pinned nil whose staged payload recomputes to a zero count (defensive branch)", async () => {
+    await writeProject(baseResearch());
+    const ref = `${STAGING_SUBDIR}/zero-hit-record.json`;
+    await backingStore().writeJson(dir, ref, {
+      tool: "record_search",
+      retrieved: "2026-01-01T00:00:00.000Z",
+      returned_count: 0,
+      payload: { query: PINNED, results: [] },
+    });
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      outcome: "negative",
+      resultsExamined: 0,
+      stagedResultsRef: ref,
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/pinned to `collectionId: "1394580"`/);
+  });
+
+  it("treats alternate names as names, compared after auto-pairing", async () => {
+    await writeProject(baseResearch());
+    // Pinned op written already paired; its sibling's echo is the raw input.
+    const pinnedPaired = { ...PINNED, surnameAlt: "Heidegger", givenNameAlt: "Simon" };
+    const rawSibling = { ...UNPINNED, surnameAlt: "Heidegger" };
+    const ok = await researchLogAppend({ projectPath: dir, ops: [nil(pinnedPaired), nil(rawSibling)] } as any);
+    expect(ok.ok).toBe(true);
+  });
+
+  it("refuses when the only unpinned sibling has a different alternate surname", async () => {
+    await writeProject(baseResearch());
+    const differs = { ...UNPINNED, surnameAlt: "Heydecker" };
+    const bad = await researchLogAppend({
+      projectPath: dir,
+      ops: [nil({ ...PINNED, surnameAlt: "Heidegger" }), nil(differs)],
+    } as any);
+    expect(bad.ok).toBe(false);
+  });
+
+  it("exempts a pinned query that names no one", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...nil({ recordCountry: "Austria", collectionId: "1394580" }),
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("leaves an unpinned nil alone", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({ projectPath: dir, ...nil(UNPINNED) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows an unpinned retry whose names differ only in case (the search ignores case)", async () => {
+    await writeProject(baseResearch([logEntry("log_001", { surname: "heydöcker", givenName: "SIMON" })]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil(PINNED) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses when the only unpinned sibling in log[] was logged error (it never ran)", async () => {
+    await writeProject(baseResearch([{ ...logEntry("log_001", UNPINNED), outcome: "error" }]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil(PINNED) } as any);
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toContain(`record_search(${JSON.stringify(UNPINNED)})`);
+    expect((await readJson("research.json")).log).toHaveLength(1);
+  });
+
+  it("names a retry without the pinned search's paging (offset, count)", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...nil({ ...PINNED, offset: 40, count: 20 }),
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (r as any).errors.join(" ");
+    expect(msg).toContain(`record_search(${JSON.stringify(UNPINNED)})`);
+    expect(msg).not.toMatch(/"offset"|"count"/);
+  });
+
+  it("allows an unpinned retry whose names differ only in Unicode form (NFC vs NFD)", async () => {
+    const nfc = "Heydöcker";
+    const nfd = "Heydöcker";
+    expect(nfc).not.toBe(nfd);
+    await writeProject(baseResearch([logEntry("log_001", { ...UNPINNED, surname: nfd })]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil({ ...PINNED, surname: nfc }) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("still refuses when the Unicode-normalized names differ", async () => {
+    await writeProject(baseResearch([logEntry("log_001", { ...UNPINNED, surname: "Heydökker" })]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil({ ...PINNED, surname: "Heydöcker" }) } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  /** The file store, counting every readText of one ref. */
+  function readCountingStore(ref: string) {
+    const inner = backingStore();
+    let reads = 0;
+    const store = new Proxy(inner, {
+      get(target, prop, receiver) {
+        if (prop === "readText") {
+          return async (projectPath: string, r: string) => {
+            if (r === ref) reads++;
+            return target.readText(projectPath, r);
+          };
+        }
+        const v = Reflect.get(target, prop, receiver);
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    }) as unknown as ProjectStore;
+    return { store, reads: () => reads };
+  }
+
+  for (const form of ["single", "batch"] as const) {
+    it(`(${form}) the nil-retry check reuses the staged read the staged-ref check made`, async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: UNPINNED, results: [{ recordId: "A" }] },
+      });
+      const ref = handle!.resultsRef;
+      const op = { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: ref, planItemId: null };
+      const { store, reads } = readCountingStore(ref);
+      setProjectStore(store);
+      let r;
+      try {
+        r = await researchLogAppend(
+          (form === "single" ? { projectPath: dir, ...op } : { projectPath: dir, ops: [op] }) as any,
+        );
+      } finally {
+        setProjectStore(null);
+      }
+      expect(r.ok).toBe(true);
+      // preflightStagedRef, preflightCensusHedge's row read, and the write that
+      // finalizes it: three. The nil-retry check reuses the first (4 before #3854's
+      // review fix).
+      expect(reads()).toBe(3);
+    });
+  }
 });

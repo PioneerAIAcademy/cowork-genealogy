@@ -58,7 +58,11 @@ import {
   type StoredCollectionUrls,
 } from "../utils/external-collections-store.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
-import { HEAD_ONLY_US_CENSUS_YEARS } from "../data/census-table.js";
+import {
+  BRITISH_RELATIONSHIP_COLUMN_FROM,
+  HEAD_ONLY_US_CENSUS_YEARS,
+  US_RELATIONSHIP_COLUMN_FROM,
+} from "../data/census-table.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -219,6 +223,52 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
   return notes.length > 0 ? notes.join("\n") : null;
 }
 
+/**
+ * Returned as `planRationale` when this call logs the first FamilySearch index
+ * search to find nothing for a plan item: the item's own rationale, with the
+ * instruction to search what it names before any other retry.
+ *
+ * A plan item's rationale carries what research-plan knew about the search:
+ * another surname the person may be under, how a collection is indexed, a
+ * second jurisdiction. Measured 2026-11-12 on Haiku 5.5 at low effort,
+ * `ut_search_records_d33` never searched the married surname its rationale
+ * names in 2 to 3 of 10 runs, and a body rule at either of two places did not
+ * move that. The note puts the rationale on the call the agent makes at the
+ * moment it matters.
+ */
+export const PLAN_RATIONALE_NOTE =
+  "This is the first search for plan item {planItemId} to find nothing. The plan " +
+  'item\'s rationale: "{rationale}" If it gives a name, place or source you have ' +
+  "not yet searched, search that next, before any other retry. Then carry on with " +
+  "the other retries: this note does not end the search.";
+
+/**
+ * The `planRationale` note for the plan items whose first nil this call logged,
+ * one line per item, or null. Reads only research.json (ADR-0011). Silent for a
+ * plan item that already had a nil, has found something, or has no rationale.
+ */
+function planRationaleNote(research: any, newEntries: any[]): string | null {
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const plans: any[] = Array.isArray(research.plans) ? research.plans : [];
+  const newNils = newEntries.filter(isNilFsSearch);
+  const touched = [...new Set(newNils.map((e) => e.plan_item_id))].filter(
+    (id): id is string => typeof id === "string",
+  );
+  const notes: string[] = [];
+  for (const pli of touched) {
+    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const nils = entries.filter(isNilFsSearch).length;
+    if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
+    if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
+    const item = plans.flatMap((p) => (Array.isArray(p?.items) ? p.items : [])).find((i: any) => i?.id === pli);
+    const rationale = typeof item?.rationale === "string" ? item.rationale.trim() : "";
+    if (rationale === "") continue;
+    // Function replacers: a string replacement would expand `$&` and `$'` in the rationale.
+    notes.push(PLAN_RATIONALE_NOTE.replaceAll("{planItemId}", () => pli).replaceAll("{rationale}", () => rationale));
+  }
+  return notes.length > 0 ? notes.join("\n") : null;
+}
+
 export interface ResearchLogAppendExternalSite {
   site: string;
   urlGenerated: string;
@@ -269,6 +319,8 @@ export type ResearchLogAppendResult =
       validation: { valid: true; warnings: string[] };
       /** `NIL_ESCALATION_NOTE`, present only when it fired. */
       escalationDue?: string;
+      /** `PLAN_RATIONALE_NOTE`, present only when it fired. */
+      planRationale?: string;
       /** `REPORT_REPLY_NEXT`, present only when a report tool was logged. */
       next?: string;
     } & ResearchLogAppendOpResult)
@@ -279,6 +331,7 @@ export type ResearchLogAppendResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
       escalationDue?: string;
+      planRationale?: string;
       next?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
@@ -487,12 +540,12 @@ const CENSUS_AFTER = new RegExp(
 function relationshipColumnFrom(qualifier: string): number | null {
   const q = qualifier.toLowerCase();
   if (/\b(?:england|english|wales|welsh|scotland|scottish|britain|british|uk|united\s+kingdom)\b/.test(q)) {
-    return 1851;
+    return BRITISH_RELATIONSHIP_COLUMN_FROM;
   }
   if (/\b(?:ireland|irish|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian)\b/.test(q)) {
     return Number.NaN; // named, non-US, undocumented here -> skip
   }
-  return 1880; // unqualified or explicitly US/federal
+  return US_RELATIONSHIP_COLUMN_FROM; // unqualified or explicitly US/federal
 }
 
 /** An explicitly US mention: never re-jurisdictioned by a staged payload. */
@@ -1711,9 +1764,119 @@ export function filteredNilRetryInvariants(
 }
 
 /**
- * Resolve each op's sent query and zero-hit state (I/O), then refuse the first
- * filtered zero-hit fulltext op with no unfiltered sibling
- * (`filteredNilRetryInvariants`). Batch-aware: an in-batch unfiltered sibling
+ * A `record_search` name field: `givenName`, `surname`, their `Alt` union halves,
+ * or a relative's name (`fatherGivenName`, `spouseSurname`, ...). The `*Exact`
+ * booleans end in `Exact`, so they never match.
+ */
+const isRecordSearchNameKey = (k: string): boolean =>
+  k === "givenName" ||
+  k === "surname" ||
+  k === "givenNameAlt" ||
+  k === "surnameAlt" ||
+  k.endsWith("GivenName") ||
+  k.endsWith("Surname");
+
+/**
+ * A name value normalized for sibling comparison: Unicode NFC (so a precomposed
+ * `ö` and `o` + combining diaeresis are one name), trimmed and lower-cased (the
+ * search ignores case), absent/empty → "".
+ */
+const nameTerm = (v: unknown): string =>
+  hasFilterValue(v) ? String(v).normalize("NFC").trim().toLowerCase() : "";
+
+/**
+ * A `record_search` query's name fields after the alternate-name auto-pairing the
+ * tool applies on the wire (`applyAltNameAutoPair`), so a staged echo (raw input)
+ * and an agent-written `query` (often already paired) compare equal. Empty map
+ * when the query is not an object or names no one.
+ */
+function recordSearchNameFields(query: unknown): Map<string, string> {
+  const out = new Map<string, string>();
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return out;
+  const paired = applyAltNameAutoPair(query as never) as Record<string, unknown>;
+  for (const [k, v] of Object.entries(paired)) {
+    if (!isRecordSearchNameKey(k)) continue;
+    const term = nameTerm(v);
+    if (term !== "") out.set(k, term);
+  }
+  return out;
+}
+
+const sameNameFields = (a: Map<string, string>, b: Map<string, string>): boolean =>
+  a.size === b.size && [...a].every(([k, v]) => b.get(k) === v);
+
+/** Keys the suggested unpinned retry leaves out: the pin itself, and paging. */
+const RETRY_DROPPED_KEYS: ReadonlySet<string> = new Set(["collectionId", "offset", "count"]);
+
+/**
+ * Refuse a zero-hit `record_search` log op pinned to one `collectionId` that has
+ * no unpinned retry: no sibling `record_search` WITHOUT `collectionId` whose name
+ * fields equal this op's (after Unicode NFC normalization, trimming, ignoring
+ * case, and alternate-name auto-pairing), in the same batch or already in `log[]`; a sibling logged `error`
+ * never ran and does not count. A pinned nil does not rule the record out —
+ * it may be indexed in another collection (issue #3854; research-log-editor-spec.md
+ * §8.5). The names are the search terms, so each name variant needs its own
+ * unpinned retry; other filters (places, years, `recordType`) may differ, and a
+ * wildcard sibling (`Heyd*`) does not clear an exact variant.
+ *
+ * Pure and replayable, like `filteredNilRetryInvariants`: it reads the entry's
+ * `tool`, `query` and `zeroHit`, and each sibling's `tool`, `query` and `outcome`.
+ * Exempt: a query with no name field. The entry is keyed on zero HITS, never on
+ * its `outcome`. The suggested retry drops `collectionId` and paging (`offset`,
+ * `count`).
+ */
+export function pinnedNilRetryInvariants(
+  entry: { tool?: string; query?: unknown; zeroHit?: boolean },
+  research: { log?: unknown[]; ops?: unknown[] },
+): string[] {
+  if (entry?.tool !== "record_search" || entry.zeroHit !== true) return [];
+  const query = entry.query;
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const q = query as Record<string, unknown>;
+  if (!hasFilterValue(q.collectionId)) return [];
+  const names = recordSearchNameFields(q);
+  if (names.size === 0) return [];
+
+  const candidates: any[] = [
+    ...(Array.isArray(research?.ops) ? research.ops : []).filter((o) => o !== entry),
+    ...(Array.isArray(research?.log) ? research.log : []),
+  ];
+  const hasUnpinnedRetry = candidates.some((c) => {
+    if (c?.tool !== "record_search") return false;
+    // An errored search never ran, so it is no retry. In-batch errored ops already
+    // resolve without a query; this drops errored entries already in log[].
+    if (c.outcome === "error") return false;
+    const cq = c.query;
+    if (cq === null || typeof cq !== "object" || Array.isArray(cq)) return false;
+    if (hasFilterValue(cq.collectionId)) return false;
+    return sameNameFields(names, recordSearchNameFields(cq));
+  });
+  if (hasUnpinnedRetry) return [];
+
+  // Only real record_search inputs: a logged query can carry keys the agent
+  // invented (`note`, `variants_also_tried`), which the retry must not repeat.
+  // Paging is dropped too: a retry at the pinned search's `offset` would skip the
+  // first unpinned results.
+  const inputs = ECHOING_PRODUCER_INPUTS.get("record_search")!;
+  const retry = Object.fromEntries(
+    Object.entries(stripQueryPlumbing(q) ?? {}).filter(
+      ([k]) => !RETRY_DROPPED_KEYS.has(k) && inputs.has(k),
+    ),
+  );
+  return [
+    `record_search returned 0 results pinned to \`collectionId: ${JSON.stringify(q.collectionId)}\`. ` +
+      `A zero-hit pinned search does not rule the record out — it may be indexed in another ` +
+      `collection. Re-run the same names without the collection: record_search(${JSON.stringify(retry)}), ` +
+      `then log this pinned search and that unpinned retry together in one research_log_append batch. ` +
+      `If the unpinned retry is already logged, include it in this batch or confirm it is in log[].`,
+  ];
+}
+
+/**
+ * Resolve each op's sent query and zero-hit state (I/O), then refuse a filtered
+ * zero-hit fulltext op with no unfiltered sibling (`filteredNilRetryInvariants`)
+ * and a pinned zero-hit record_search op with no unpinned sibling
+ * (`pinnedNilRetryInvariants`, §8.5). Batch-aware: an in-batch unfiltered sibling
  * clears the op, so it judges every op against the whole resolved batch plus the
  * committed `log[]`. Returns `{ i, message }` for EVERY firing op (empty when
  * none), so a batch's refusal names each failing `ops[i]` (§8.4), not just the
@@ -1727,16 +1890,20 @@ export function filteredNilRetryInvariants(
  * present (ground truth, §8.3), else the op's own `query`. Fully tolerant: any
  * resolution failure (bad ref, unparseable query) leaves the op unjudged here —
  * `preflightStagedRef`/`applyLogAppendOp` report those.
+ *
+ * `checked` holds the staged reads `preflightStagedRef` already made, by op
+ * index; an op found there is not read again.
  */
 async function preflightFilteredNilRetry(
   ops: ResearchLogAppendOp[],
   research: any,
   projectPath: string,
+  checked: ReadonlyMap<number, StagedCheck> = new Map(),
 ): Promise<Array<{ i: number; message: string }>> {
   const resolved = await Promise.all(
-    ops.map(async (op) => {
+    ops.map(async (op, i) => {
       try {
-        if (op?.tool !== "fulltext_search") return { tool: op?.tool };
+        if (op?.tool !== "fulltext_search" && op?.tool !== "record_search") return { tool: op?.tool };
         // An errored search (fixture_not_found, upstream error) that examined 0
         // is not a filtered nil — the filter never ran, so there is nothing to
         // retry unfiltered. #3592 (this dropped _014, a fixture_not_found error,
@@ -1746,11 +1913,13 @@ async function preflightFilteredNilRetry(
         let query: unknown = coerceObjectArg(op.query, "query");
         let zeroHit: boolean;
         if (typeof ref === "string") {
-          const { envelope, returnedCount } = await checkStagedResults({
-            projectPath,
-            stagedResultsRef: ref,
-            expectedTool: "fulltext_search",
-          });
+          const { envelope, returnedCount } =
+            checked.get(i) ??
+            (await checkStagedResults({
+              projectPath,
+              stagedResultsRef: ref,
+              expectedTool: op.tool,
+            }));
           zeroHit = returnedCount === 0;
           const staged = stripQueryPlumbing((envelope.payload as any)?.query);
           if (staged !== undefined) query = staged;
@@ -1768,7 +1937,8 @@ async function preflightFilteredNilRetry(
   );
   const firing: Array<{ i: number; message: string }> = [];
   for (let i = 0; i < resolved.length; i++) {
-    const errors = filteredNilRetryInvariants(resolved[i], { log: research.log, ops: resolved });
+    const ctx = { log: research.log, ops: resolved };
+    const errors = [...filteredNilRetryInvariants(resolved[i], ctx), ...pinnedNilRetryInvariants(resolved[i], ctx)];
     if (errors.length > 0) firing.push({ i, message: errors[0] });
   }
   return firing;
@@ -1915,11 +2085,14 @@ async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: str
  * results/.staging/ and its tool matches — so a bad ref in op[1] is refused
  * before op[0] writes anything. Finalize re-checks under the same lock.
  */
-async function preflightStagedRef(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+type StagedCheck = Awaited<ReturnType<typeof checkStagedResults>>;
+
+/** Returns the staged read it made, so the nil-retry preflight can reuse it. */
+async function preflightStagedRef(op: ResearchLogAppendOp, projectPath: string): Promise<StagedCheck | undefined> {
   const ref = asNull(op.stagedResultsRef);
-  if (typeof ref !== "string") return;
+  if (typeof ref !== "string") return undefined;
   try {
-    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: op.tool });
+    return await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: op.tool });
   } catch (e) {
     throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
@@ -2367,10 +2540,12 @@ export async function researchLogAppend(
     const priorLogLength = Array.isArray(beforeResearch.log) ? beforeResearch.log.length : 0;
     // The nil-escalation note, computed on the committed document. Advisory, so
     // a failure computing it drops the note rather than the successful write.
-    const escalation = (): { escalationDue?: string } => {
+    const escalation = (): { escalationDue?: string; planRationale?: string } => {
       try {
-        const note = nilEscalationNote(research, research.log.slice(priorLogLength));
-        return note ? { escalationDue: note } : {};
+        const added = research.log.slice(priorLogLength);
+        const note = nilEscalationNote(research, added);
+        const rationale = planRationaleNote(research, added);
+        return { ...(note ? { escalationDue: note } : {}), ...(rationale ? { planRationale: rationale } : {}) };
       } catch {
         return {};
       }
@@ -2466,6 +2641,7 @@ export async function researchLogAppend(
       // Every op is checked before any refusal, so one retry can fix them all;
       // the batch still writes all or nothing.
       const logged = new Map<number, Awaited<ReturnType<typeof findLoggedStagedRef>>>();
+      const stagedChecks = new Map<number, StagedCheck>();
       const preflightErrors: string[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
@@ -2475,7 +2651,8 @@ export async function researchLogAppend(
             continue;
           }
           await preflightRequiredFields(input.ops[i], projectPath);
-          await preflightStagedRef(input.ops[i], projectPath);
+          const staged = await preflightStagedRef(input.ops[i], projectPath);
+          if (staged) stagedChecks.set(i, staged);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
           await checkCollection(input.ops[i]);
@@ -2499,7 +2676,7 @@ export async function researchLogAppend(
       // Needs the whole resolved batch (an in-batch unfiltered sibling clears an
       // op), so it runs once over every op after the per-op preflights. Runs only
       // once there is a new op to write (idempotent re-logs short-circuit above).
-      const nilRetryErrors = await preflightFilteredNilRetry(input.ops, research, projectPath);
+      const nilRetryErrors = await preflightFilteredNilRetry(input.ops, research, projectPath, stagedChecks);
       if (nilRetryErrors.length > 0) {
         return { ok: false, errors: nilRetryErrors.map(({ i, message }) => `ops[${i}]: ${message}`) };
       }
@@ -2568,10 +2745,15 @@ export async function researchLogAppend(
       return { ok: true, ...prior, filesWritten: [], validation: { valid: true, warnings: opWarnings } };
     }
     await preflightRequiredFields(singleOp, projectPath);
-    await preflightStagedRef(singleOp, projectPath);
+    const singleStaged = await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
-    const singleNilRetry = await preflightFilteredNilRetry([singleOp], research, projectPath);
+    const singleNilRetry = await preflightFilteredNilRetry(
+      [singleOp],
+      research,
+      projectPath,
+      singleStaged ? new Map([[0, singleStaged]]) : new Map(),
+    );
     if (singleNilRetry.length > 0) throw new LogAppendError(singleNilRetry[0].message);
     await checkCollection(singleOp);
     let result;

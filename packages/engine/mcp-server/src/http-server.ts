@@ -23,7 +23,19 @@
 // `/proj_<16 hex>`; its id is that path minus the slash and the store's anchor
 // is the path itself. `projectOwner` refuses a project owned by anyone else —
 // an absent row is free, and a NULL owner is refused with the rest. A call
-// naming no project runs store-less under the user's principal.
+// naming no project runs under the user's principal on a store that refuses
+// every project tool and answers `project_list` with `ownedProjects` plus one
+// fresh path. A `tools/call` refused for someone else's project, or because a
+// lookup failed, is answered 200 with an `isError` result, so its message
+// reaches the model (`refuseConnectorCall`); any other request refused for
+// those reasons keeps its 403 or 503. A 401 is always HTTP.
+//
+// A connector caller's `tools/call` runs holding one of that user's
+// `USER_CALL_CAP` slots (self-hosted beta E4, per user; `utils/user-limits.ts`).
+// A call over the cap waits in FIFO order and is never refused; one whose client
+// hangs up while waiting leaves the queue without running, and one that waited
+// has its token looked up again before it runs. `initialize`, `tools/list` and
+// notifications never wait, and the worker path is not capped.
 //
 // The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
 // JSON-RPC batch has to be refused before any tool runs; the parsed value is
@@ -37,17 +49,19 @@
 // touches no store, so a load balancer whose check gates a deploy (Blueprint's
 // `elb_options.health_check`) can pass before the database exists.
 import http, { type IncomingHttpHeaders, type RequestListener } from "node:http";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { bearerPrincipal, connectorPrincipal, type Principal } from "./auth/principal.js";
 import type { AppConfig } from "./types/auth.js";
 import { allToolSchemas } from "./tool-schemas.js";
 import { createServer } from "./server.js";
 import { PROJECT_ID_RE } from "./store/project-id.js";
+import { runWithUserCallSlot } from "./utils/user-limits.js";
 import {
+  ownedProjectsStore,
   runWithProjectStore,
-  unboundProjectStore,
   type ClaimFence,
+  type OwnedProjectIds,
   type ProjectStore,
 } from "./store/project-store.js";
 
@@ -57,6 +71,11 @@ export const LIVEZ_PATH = "/livez";
 /** RFC 9728's protected-resource metadata for `/mcp`. Answered BEFORE the token
  *  check — it is what an unauthenticated client reads to learn where to go. */
 export const PRM_PATH = `/.well-known/oauth-protected-resource${MCP_PATH}`;
+/** The one scope the web tier's authorization server grants
+ *  (`SCOPE`, apps/server/proto/web/connector_auth.py). The door does not check
+ *  it: a connector token is admitted by its row. It is named in the metadata
+ *  and the 401 because that is where a client learns what to ask for. */
+export const CONNECTOR_SCOPE = "genealogy";
 
 /** How long `/healthz` waits on `checkReady` before answering 503 itself: the
  *  backend's own 1.5 s probe deadline (READY_TIMEOUT_MS) plus 500 ms, so a
@@ -194,6 +213,13 @@ function sendJson(res: http.ServerResponse, status: number, body: unknown): void
   res.end(JSON.stringify(body));
 }
 
+/** A short label for a lookup that threw: its `code`, else its `name`, never
+ *  its message, which may carry a connection string or a token. */
+function errorLabel(error: unknown): string {
+  const err = error as { code?: unknown; name?: unknown };
+  return typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
+}
+
 /** What a project request presents to `authorize`: the project it names, its
  *  claim fence when it sent one, and its bearer token (`""` when absent). */
 export interface AuthorizeRequest {
@@ -272,6 +298,23 @@ const NOT_YOUR_PROJECT = {
   id: null,
 };
 
+/**
+ * What the model is told when the door refuses a connector `tools/call` for a
+ * project that is not the caller's, or because a lookup failed. These go out as
+ * tool errors, not as HTTP 403 and 503: Claude replaces a 403's body with
+ * "blocked by a firewall or security service" and drops a 503's, so neither
+ * message reached the researcher or the card (issue #3529, item 13, measured
+ * at claude.ai and in Desktop Chat). Each says the call did not run and what to
+ * do next, since a model shown only "forbidden" guessed at a sign-in problem.
+ */
+export const NOT_YOUR_PROJECT_MESSAGE =
+  "This project is not yours, so this call did not run. " +
+  "Use a projectPath that project_list returns.";
+export const AUTHORIZATION_UNAVAILABLE_MESSAGE =
+  "The server could not check this call just now, so it did not run. " +
+  "This is a temporary problem on the server, not a missing project and not a sign-in problem. " +
+  "Wait a moment and send the same call again.";
+
 /** What a connector call naming no project is told when it reaches the store.
  *  The dispatcher turns the thrown Error into an `isError` result, so this
  *  reaches the model as an instruction; it names the argument, not a header. */
@@ -337,6 +380,13 @@ export interface ToolServerOptions {
    * has its own `authorize`.
    */
   projectOwner: (projectId: string) => Promise<ProjectOwnerReport>;
+  /**
+   * The project ids a connector caller owns, bounded, and whether more exist.
+   * Called only when `project_list` reads the store; a rejection reaches the
+   * model as `isError`, never as an empty list, which would read as "No project
+   * yet".
+   */
+  ownedProjects: (userId: string) => Promise<OwnedProjectIds>;
   /**
    * The web tier's OAuth issuer, byte for byte. The protected-resource metadata
    * and the `WWW-Authenticate: resource_metadata=` URL are built from it, NEVER
@@ -463,13 +513,50 @@ export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller):
     openRouterModel: baseConfig.openRouterModel,
     webPublicUrl: baseConfig.webPublicUrl,
     uploadsEnabled: baseConfig.uploadsEnabled,
-    transcriptionEnabled: baseConfig.transcriptionEnabled,
     matcher: baseConfig.matcher,
     matcherUrl: baseConfig.matcherUrl,
     matcherApiKey: baseConfig.matcherApiKey,
     // Per-person. Absent unless THIS caller linked one; never the operator's.
     ...(caller.openRouterApiKey ? { openRouterApiKey: caller.openRouterApiKey } : {}),
   };
+}
+
+/** True for a `tools/call` REQUEST that names a tool: the only body that
+ *  takes a user's slot. A notification (no `id`) is never answered and a call
+ *  with no tool name runs no tool, so neither waits behind the user's calls. */
+function isToolsCall(body: unknown): boolean {
+  if (typeof body !== "object" || body === null) return false;
+  const msg = body as { method?: unknown; id?: unknown; params?: unknown };
+  if (msg.method !== "tools/call" || msg.id === undefined || msg.id === null) return false;
+  return typeof (msg.params as { name?: unknown } | null | undefined)?.name === "string";
+}
+
+/**
+ * Refuse a CONNECTOR request for a reason that is not the caller's sign-in.
+ *
+ * A `tools/call` is answered 200 with an `isError` result carrying `message`,
+ * so the text reaches the model and the card as any tool's error does. Anything
+ * else (`initialize`, `tools/list`, a notification) has no tool result to carry
+ * a message, so it keeps the HTTP status and body. Never used for a 401, which
+ * must stay HTTP: that status is what makes Claude offer Reconnect. Never used
+ * on the worker path, whose statuses the worker reads.
+ */
+function refuseConnectorCall(
+  res: http.ServerResponse,
+  body: unknown,
+  status: number,
+  httpBody: unknown,
+  message: string,
+): void {
+  if (!isToolsCall(body)) {
+    sendJson(res, status, httpBody);
+    return;
+  }
+  sendJson(res, 200, {
+    jsonrpc: "2.0",
+    id: (body as { id: string | number }).id,
+    result: { content: [{ type: "text", text: message }], isError: true },
+  });
 }
 
 /**
@@ -522,10 +609,23 @@ function resourceMetadataUrl(issuer: string): string {
 }
 
 /** 401 with `WWW-Authenticate`. With no issuer configured the challenge is a
- *  bare `Bearer`, since there is no metadata document to point at. */
-function sendUnauthorized(res: http.ServerResponse, options: ToolServerOptions): void {
+ *  bare `Bearer`, since there is no metadata document to point at.
+ *
+ *  With one, it is the challenge Claude was measured against (the connector
+ *  probe, issue #3529): `resource_metadata` and `scope` always, and
+ *  `error="invalid_token"` only when a token was sent and refused (RFC 6750
+ *  3.1: a request with no token gets no error code). That last part is what
+ *  tells a client its token is dead, so it signs in again instead of treating
+ *  the server as unreachable. `resource_metadata` stays first on the no-token
+ *  form: `malachi.sh`'s check matches it there. */
+function sendUnauthorized(
+  res: http.ServerResponse,
+  options: ToolServerOptions,
+  tokenRefused: boolean,
+): void {
   const challenge = options.issuer
-    ? `Bearer resource_metadata="${resourceMetadataUrl(options.issuer)}"`
+    ? `Bearer ${tokenRefused ? 'error="invalid_token", ' : ""}` +
+      `resource_metadata="${resourceMetadataUrl(options.issuer)}", scope="${CONNECTOR_SCOPE}"`
     : "Bearer";
   res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": challenge });
   res.end(JSON.stringify(UNAUTHORIZED));
@@ -537,8 +637,8 @@ async function handleMcpPost(
   options: ToolServerOptions,
 ): Promise<void> {
   // The store is decided before any transport exists: a malformed id never
-  // reaches a tool, and a missing one binds a store whose every call answers
-  // with the instruction rather than falling through to the process store.
+  // reaches a tool, and a missing one takes the connector path, which binds its
+  // own store rather than falling through to the process store.
   const projectId = projectIdFromHeaders(req.headers);
   if (projectId.kind === "malformed") {
     sendJson(res, 400, INVALID_PROJECT_ID);
@@ -579,9 +679,7 @@ async function handleMcpPost(
     try {
       verdict = await options.authorize({ projectId: projectId.id, fence, bearer: bearerFromHeaders(req.headers) });
     } catch (error) {
-      const err = error as { code?: unknown; name?: unknown };
-      const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-      process.stderr.write(`ev=tool_authorize_failed error=${label} project_id=${projectId.id}\n`);
+      process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} project_id=${projectId.id}\n`);
       sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
       return;
     }
@@ -605,7 +703,14 @@ async function handleMcpPost(
   let principal: Principal;
   let store: ProjectStore;
   let logUserId = "-";
+  /** The connector caller whose slot a `tools/call` takes, and the sha256 its
+   *  token is looked up by again if the call waits; unset on the worker path. */
+  let capUserId: string | undefined;
+  let capTokenSha256 = "";
   let familySearchStatus: number | null = null;
+  const recordFamilySearchStatus = (status: number): void => {
+    familySearchStatus = keptFamilySearchStatus(familySearchStatus, status);
+  };
 
   if (isWorkerPath) {
     principal = principalFromHeaders(req.headers, options.baseConfig);
@@ -621,11 +726,10 @@ async function handleMcpPost(
       try {
         caller = await options.lookupConnector(sha256Hex(bearer));
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-        // Never an admission, exactly as an `authorize` that throws is not.
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
-        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        // Never an admission, exactly as an `authorize` that throws is not. The
+        // token was not checked, so the answer carries nothing but the outage.
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
+        refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
         return;
       }
     }
@@ -633,10 +737,12 @@ async function handleMcpPost(
       // One body for every reason: no token, expired, ended grant, blocked
       // user, no FamilySearch token, or one that will not decrypt.
       process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
-      sendUnauthorized(res, options);
+      sendUnauthorized(res, options, bearer !== "");
       return;
     }
     logUserId = caller.userId;
+    capUserId = caller.userId;
+    capTokenSha256 = sha256Hex(bearer);
 
     const named = connectorProjectPath(body.value);
     if (named.kind === "not_a_string") {
@@ -646,12 +752,28 @@ async function handleMcpPost(
     const projectPath = named.kind === "named" ? named.projectPath : null;
     if (projectPath === null) {
       // `initialize`, `tools/list`, notifications, and any call that sent no
-      // projectPath: store-less, but still only for an admitted token.
+      // projectPath: store-less, but still only for an admitted token. The one
+      // exception is `project_list`, and the store is lazy, so nothing else
+      // queries or binds anything.
       // NOT the worker's message: it says to send X-Genealogy-Project-Id, a
       // header a connector cannot send — and if it did, the request would
       // route to the worker door and be refused 403. Name the remedy that
       // exists on THIS door.
-      store = unboundProjectStore(NO_CONNECTOR_PROJECT_MESSAGE);
+      const userId = caller.userId;
+      store = ownedProjectsStore(NO_CONNECTOR_PROJECT_MESSAGE, {
+        // The door refuses any other shape, so naming one would offer a dead path.
+        listOwned: async () => {
+          const owned = await options.ownedProjects(userId);
+          return {
+            projectPaths: owned.ids.map((id) => `/${id}`).filter((path) => CONNECTOR_PROJECT_RE.test(path)),
+            truncated: owned.truncated,
+          };
+        },
+        freshPath: `/proj_${randomBytes(8).toString("hex")}`,
+        storeFor: (path) =>
+          options.bindStore(path.slice(1), disconnected.signal, undefined, { anchorPath: path, ownerId: userId }),
+        signal: disconnected.signal,
+      });
     } else {
       if (!CONNECTOR_PROJECT_RE.test(projectPath)) {
         sendJson(res, 400, INVALID_CONNECTOR_PROJECT);
@@ -664,10 +786,8 @@ async function handleMcpPost(
       try {
         owner = await options.projectOwner(connectorProjectId);
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
-        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
+        refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
         return;
       }
       // A NULL owner is refused with the rest: a connector never claims an
@@ -677,7 +797,7 @@ async function handleMcpPost(
         process.stderr.write(
           `ev=tool_refused reason=not_owner surface=connector user_id=${caller.userId}\n`,
         );
-        sendJson(res, 403, NOT_YOUR_PROJECT);
+        refuseConnectorCall(res, body.value, 403, NOT_YOUR_PROJECT, NOT_YOUR_PROJECT_MESSAGE);
         return;
       }
       store = options.bindStore(connectorProjectId, disconnected.signal, undefined, {
@@ -690,37 +810,93 @@ async function handleMcpPost(
       accessToken: caller.familySearchToken,
       userId: caller.userId,
       config: connectorConfig(options.baseConfig, caller),
-      recordFamilySearchStatus: (status) => {
-        familySearchStatus = keptFamilySearchStatus(familySearchStatus, status);
-      },
+      recordFamilySearchStatus,
     });
   }
 
-  const server = createServer(principal);
-  // Stateless: the SDK refuses to reuse a transport across requests, and one
-  // Server per POST is what binds the principal to exactly this request.
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-    enableJsonResponse: true,
-  });
-  try {
-    // Every store call in the handler's async continuation — the SDK's
-    // onmessage → Promise.then(handler) chain included — resolves to `store`.
-    await runWithProjectStore(store, async () => {
-      await server.connect(transport);
-      // The pre-read body, since the stream is already consumed.
-      await transport.handleRequest(req, res, body.value);
+  const run = async (): Promise<void> => {
+    const server = createServer(principal);
+    // Stateless: the SDK refuses to reuse a transport across requests, and one
+    // Server per POST is what binds the principal to exactly this request.
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
     });
-  } finally {
-    await server.close();
-    // One line per call (E1): the user, the tool, and any FamilySearch status.
-    // Never the token or its hash.
-    const toolName = toolNameOf(body.value);
-    process.stderr.write(
-      `ev=tool_call surface=${isWorkerPath ? "worker" : "connector"} user_id=${logUserId} ` +
-        `tool=${toolName} fs_status=${familySearchStatus ?? "-"}\n`,
-    );
+    try {
+      // Every store call in the handler's async continuation — the SDK's
+      // onmessage → Promise.then(handler) chain included — resolves to `store`.
+      await runWithProjectStore(store, async () => {
+        await server.connect(transport);
+        // The pre-read body, since the stream is already consumed.
+        await transport.handleRequest(req, res, body.value);
+      });
+    } finally {
+      await server.close();
+      // One line per call (E1): the user, the tool, and any FamilySearch status.
+      // Never the token or its hash.
+      const toolName = toolNameOf(body.value);
+      process.stderr.write(
+        `ev=tool_call surface=${isWorkerPath ? "worker" : "connector"} user_id=${logUserId} ` +
+          `tool=${toolName} fs_status=${familySearchStatus ?? "-"}\n`,
+      );
+    }
+  };
+
+  /**
+   * A call that waited for its slot was admitted before it queued, so look its
+   * token up again before it runs. A user blocked, or a grant ended, while it
+   * waited is refused exactly as at the door: S2's delete script blocks first and
+   * relies on the next call being refused. The FamilySearch token and config
+   * come from the fresh lookup, since the web tier may have replaced the token
+   * meanwhile. False when the call was answered here.
+   */
+  const stillAdmitted = async (userId: string): Promise<boolean> => {
+    let again: ConnectorCaller | null;
+    try {
+      again = await options.lookupConnector(capTokenSha256);
+    } catch (error) {
+      process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
+      refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
+      return false;
+    }
+    if (!again || again.userId !== userId) {
+      process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
+      // Always a token that was admitted and is now refused.
+      sendUnauthorized(res, options, true);
+      return false;
+    }
+    principal = connectorPrincipal({
+      accessToken: again.familySearchToken,
+      userId: again.userId,
+      config: connectorConfig(options.baseConfig, again),
+      recordFamilySearchStatus,
+    });
+    return true;
+  };
+
+  // E4, per user: the slot is released however `run` ends, a throw included.
+  if (capUserId !== undefined && isToolsCall(body.value)) {
+    const userId = capUserId;
+    let hungUp = false;
+    const ran = await runWithUserCallSlot(userId, disconnected.signal, async (waited) => {
+      if (waited && !(await stillAdmitted(userId))) return;
+      // The client may have hung up during that second lookup.
+      if (disconnected.signal.aborted) {
+        hungUp = true;
+        return;
+      }
+      await run();
+    });
+    if (!ran || hungUp) {
+      // The client hung up while the call waited, so there is no one to answer
+      // and nothing ran. One line, so the call is not missing from the log.
+      process.stderr.write(
+        `ev=tool_abandoned surface=connector user_id=${userId} tool=${toolNameOf(body.value)}\n`,
+      );
+    }
+    return;
   }
+  await run();
 }
 
 async function route(
@@ -743,7 +919,12 @@ async function route(
       return;
     }
     const issuer = options.issuer.replace(/\/$/, "");
-    sendJson(res, 200, { resource: `${issuer}${MCP_PATH}`, authorization_servers: [issuer] });
+    sendJson(res, 200, {
+      resource: `${issuer}${MCP_PATH}`,
+      authorization_servers: [issuer],
+      scopes_supported: [CONNECTOR_SCOPE],
+      bearer_methods_supported: ["header"],
+    });
     return;
   }
   if (pathname === LIVEZ_PATH && req.method === "GET") {
@@ -794,6 +975,7 @@ export function startHttpServer(options: StartHttpServerOptions): Promise<http.S
         authorize: options.authorize,
         lookupConnector: options.lookupConnector,
         projectOwner: options.projectOwner,
+        ownedProjects: options.ownedProjects,
         issuer: options.issuer,
         checkReady: options.checkReady,
       }),

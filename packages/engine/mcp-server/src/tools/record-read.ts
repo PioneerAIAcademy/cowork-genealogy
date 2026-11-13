@@ -11,15 +11,19 @@ import {
 } from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
+import { birthRangesFor } from "../utils/record-extract.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
+import { findRequestedPersona } from "../utils/requested-persona.js";
 import type { GedcomX, SimplifiedFact, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import type {
+  CompactRecordReadAnswer,
   RecordReadInput,
   RecordReadResult,
   StagedRecordReadElement,
 } from "../types/record-read.js";
+import { compactRecordReadAnswer } from "../utils/staged-compaction.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 
 const RECAPI_BASE =
@@ -41,6 +45,24 @@ export const recordReadSchema = {
     "`imageArk` field (a 3:1:/3:2: document-image ARK) for use with " +
     "image_read or image_transcribe — do not construct an image ARK from " +
     "the record ARK. " +
+    "A top-level `birthRanges` maps a persona id to the birth years its " +
+    "stated age implies (\"Bet 1838 and 1839\"): the record's event year less " +
+    "the age, less one, to the event year less the age. FamilySearch's bare " +
+    "birth year is usually the age restated, so state the birth from the " +
+    "range. A persona has an entry only when the age is a whole number of " +
+    "years and the record has no full or month-and-year birth date; a bare " +
+    "year outside the range is kept and gets no entry. Absent when no " +
+    "persona has one. " +
+    "One read returns every persona on the record, so reading another persona " +
+    "of the same record adds nothing. The answer is compacted: no `sources`, " +
+    "`places` or name/fact/relationship ids; `citation` and `recordUrl` (plus " +
+    "`collectionTitle` when the citation lacks it) describe the source. A " +
+    "large household keeps its first 40 personas whole (the one asked for, its " +
+    "relatives and the principal first), then names-only stubs, and counts the " +
+    "rest in `personsOmitted`. With `projectPath` the full record is staged " +
+    "(`staged.resultsRef`) for research_log_append and extraction_append; no " +
+    "read returns it uncompacted. Pass the answer as merge_warnings' " +
+    "`candidateGedcomx` as it is. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -84,6 +106,22 @@ export const recordReadSchema = {
 } as const;
 
 // ─── Entry point ──────────────────────────────────────────────────────────
+
+/**
+ * The `record_read` tool call: `recordReadTool`, then `compactRecordReadAnswer`
+ * (record-read-tool-spec.md §6). extraction_append and same_person call
+ * `recordReadTool` directly and keep the full document; the compaction lives
+ * here so it cannot reach them. The return type admits the full shape too: the
+ * compactor is idempotent, and the eval fixtures carry the full shape, which the
+ * harness compacts as it serves them.
+ */
+export async function recordReadMcpTool(
+  input: RecordReadInput,
+  principal: Principal,
+): Promise<CompactRecordReadAnswer | RecordReadResult> {
+  return compactRecordReadAnswer(await recordReadTool(input, principal), input.recordId);
+}
+
 
 export async function recordReadTool(
   input: RecordReadInput,
@@ -160,10 +198,14 @@ export async function recordReadTool(
   const viewerUrl = imageArk
     ? imageViewerUrl({ ark: imageArk }, extractImageContextQuery)
     : undefined;
+  // Off the RAW body's index fields, which carry the age `toSimplified` drops.
+  const indexFields = recordIndexFields(body);
+  const birthRanges = birthRangesFor(simplified, indexFields);
   const withImageArk: RecordReadResult = {
     ...simplified,
     ...(imageArk ? { imageArk } : {}),
     ...(viewerUrl ? { viewerUrl } : {}),
+    ...(birthRanges ? { birthRanges } : {}),
   };
 
   // Stage the fetched record when the caller named the project (issue #2048 /
@@ -172,10 +214,6 @@ export async function recordReadTool(
   // `{ recordId, gedcomx }` shape record_search stages, so `readFromSidecar`
   // above reads it back unchanged and `research_log_append` finalizes it with
   // `tool: "record_read"`. Best-effort: a staging failure never fails the read.
-  // Off the RAW body, not `simplified` — `toSimplified` has already dropped
-  // `fields[]` by this point.
-  const indexFields = recordIndexFields(body);
-
   if (typeof projectPath === "string" && projectPath.trim() !== "") {
     let staged: RecordReadResult["staged"];
     let stagingError: string | undefined;
@@ -264,12 +302,7 @@ export function extractImageArk(
   };
 
   if (personId) {
-    const wanted = arkToBareId(personId);
-    const person = doc.persons?.find(
-      (pp) =>
-        pp.id === wanted ||
-        (typeof pp.ark === "string" && arkToBareId(pp.ark) === wanted),
-    );
+    const person = findRequestedPersona(doc, personId);
     for (const ref of person?.sources ?? []) {
       if (!ref.ref) continue;
       const sd = sources.find((cand) => cand.id === ref.ref);
@@ -352,10 +385,12 @@ async function readFromSidecar(
   const viewerUrl = imageArk
     ? imageViewerUrl({ ark: imageArk }, extractImageContextQuery)
     : undefined;
+  const birthRanges = birthRangesFor(staged, match.indexFields);
   return {
     ...staged,
     ...(imageArk ? { imageArk } : {}),
     ...(viewerUrl ? { viewerUrl } : {}),
+    ...(birthRanges ? { birthRanges } : {}),
   };
 }
 

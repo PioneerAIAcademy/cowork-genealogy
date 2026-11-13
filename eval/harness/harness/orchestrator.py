@@ -21,6 +21,7 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
+    load_skill_frontmatter,
     load_suite_frontmatter,
 )
 from harness.auth import AuthConfig
@@ -423,7 +424,7 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
 def _step_mode(spec: TestSpec) -> str | None:
     """`execution.step_mode`: the mode this test's turn runs under (decision 25).
 
-    None -- the default, and every test in the corpus today -- means NO boundary, so
+    None -- the default, and nearly every test in the corpus -- means NO boundary, so
     the test measures what it always measured. A test opts in by naming `step`, `job`
     or `wrapup`. Enforcing by default would change what every existing test measures,
     and the only place that would show is a paid run.
@@ -446,13 +447,15 @@ def _stop_at_stub(spec: TestSpec) -> bool:
     return spec.type == "positive" and bool((spec.execution or {}).get("stop_at_stub"))
 
 
-def _stopped_at_a_handoff(spec: TestSpec, result: SkillRunResult) -> bool:
-    """Whether the `stop_at_stub` stop ended this run on a stubbed hand-off.
+def _handed_off_to_a_stub(spec: TestSpec, result: SkillRunResult) -> bool:
+    """Whether a positive test's run made a hand-off the test stubbed.
 
-    Such a run never reaches the skill's own summary, so the hand-off is its
-    activation evidence (`derive_activated`, unit-test-spec.md §6).
+    A stub does no work, so the skill has little to report and its reply can be
+    one short line naming the callee. The hand-off is then its activation
+    evidence (`derive_activated`, unit-test-spec.md §6). A negative test never
+    qualifies: its verdict is whether the skill did anything at all.
     """
-    if not _stop_at_stub(spec):
+    if spec.type != "positive":
         return False
     stubbed = parse_stub_skills(spec.execution)
     handed = handoffs(result.skills_invoked, result.builtin_tool_calls)
@@ -692,7 +695,7 @@ async def _execute_single_run(
         text_response=result.text_response,
         other_skill_names=other_skill_names,
         agents_spawned=agents_spawned if spec.is_direct else None,
-        handed_off=_stopped_at_a_handoff(spec, result),
+        handed_off=_handed_off_to_a_stub(spec, result),
     )
 
     # --- Extract usage early — validators may need num_turns / output_tokens
@@ -976,6 +979,8 @@ async def _execute_single_run(
                     harness_observations=_harness_observation_pairs,
                     scenario_brief=scenario_brief,
                     pg_faults=getattr(result, "pg_store_faults", None),
+                    oversize_tool_results=getattr(result, "oversize_tool_results", None),
+                    test_id=spec.id,
                 ))
                 else {}
             ),
@@ -1035,6 +1040,39 @@ def _is_zero_progress_timeout(result) -> bool:
 _UNIT_SUBAGENT_DROP = ("turns", "transcript")
 
 
+#: Claude Code's built-in agent types, which have no staged file and all hold Read.
+_BUILTIN_AGENTS_WITH_READ = frozenset({"general-purpose", "Explore", "Plan"})
+
+
+def _agent_holds_read(agent: str, workspace: Path) -> bool | None:
+    """Whether `agent` can `Read` the file an oversize notice points at.
+
+    The main thread always can. A subagent can when the `tools:` list of its
+    staged agent file names `Read`, or when the file has no `tools:` key (it
+    then inherits every tool). A Claude Code built-in agent with no staged file
+    holds Read. None when its file cannot be read. Never raises.
+    """
+    from e2e.subagent_capture import MAIN_THREAD_AGENT
+
+    if agent == MAIN_THREAD_AGENT:
+        return True
+    try:
+        path = workspace / ".claude" / "agents" / f"{agent}.md"
+        if not path.is_file():
+            return True if agent in _BUILTIN_AGENTS_WITH_READ else None
+        frontmatter = load_skill_frontmatter(path)
+        if not frontmatter:
+            return None
+        tools = frontmatter.get("tools")
+        if tools is None:
+            return True
+        if isinstance(tools, str):
+            tools = [t.strip() for t in tools.split(",")]
+        return isinstance(tools, list) and "Read" in tools
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return None
+
+
 def _capture_context_meters(result, workspace: Path) -> None:
     """Attach the busiest-moment capture to `result`. Never raises.
 
@@ -1057,6 +1095,17 @@ def _capture_context_meters(result, workspace: Path) -> None:
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         result.subagents = []
         result.subagent_capture_status = "error"
+    # Its own guard, so a failure above cannot silently skip it: an empty list
+    # here reads as "no answer was lost".
+    try:
+        from e2e.subagent_capture import collect_oversize_tool_results
+
+        result.oversize_tool_results = [
+            {**hit, "can_read": _agent_holds_read(hit["agent"], workspace)}
+            for hit in collect_oversize_tool_results(workspace)
+        ]
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        result.oversize_tool_results = []
 
 
 def _is_retryable_abort(result) -> bool:
@@ -1267,6 +1316,8 @@ def _build_warnings(
     harness_observations: list[tuple[str, str]] | None = None,
     scenario_brief: ScenarioBrief | None = None,
     pg_faults: list[dict[str, str]] | None = None,
+    oversize_tool_results: list[dict[str, Any]] | None = None,
+    test_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -1467,6 +1518,32 @@ def _build_warnings(
                 "recovery as a skill error."
             ),
             "faults": pg_faults[:20],
+        })
+
+    # An MCP result over Claude Code's token cap reaches the model as a notice
+    # with no data, so the agent never saw that answer (#4380).
+    for hit in oversize_tool_results or []:
+        tool = str(hit.get("tool") or "").split("__")[-1]
+        agent, size, can_read = hit.get("agent"), hit.get("size"), hit.get("can_read")
+        if can_read is False:
+            recovery = (f"{agent} holds no Read tool, so it never saw that tool's "
+                        "answer; a grade on this run does not show the skill handled it.")
+        elif can_read is True:
+            recovery = (f"{agent} holds Read, so it could open the saved file; check "
+                        "the transcript for whether it did.")
+        else:
+            recovery = f"Could not tell whether {agent} holds Read."
+        warnings.append({
+            "kind": "oversize_tool_result",
+            "advisory": (
+                f"{test_id or 'this test'}: the {tool} answer reached {agent} as "
+                f"Claude Code's 'too large, saved to file' notice ({size}). {recovery}"
+            ),
+            "test_id": test_id,
+            "tool": tool,
+            "agent": agent,
+            "size": size,
+            "can_read": can_read,
         })
 
     # Single chokepoint: every output.warnings entry — this function's own, the
@@ -1879,7 +1956,9 @@ def _resolved_delegation(spec: TestSpec, workspace: Path | None) -> str:
     A production caller always sends a real absolute path. Left literal, the
     placeholder reads to the agent as "no project", and a Haiku agent hands back
     naming init-project instead of surveying (#3935). Forward slashes, as the
-    mock writes `projectPath`, so a Windows dispatcher relays no backslashes.
+    mock writes `projectPath`. A Windows dispatcher has been measured rewriting
+    some of them to `\\` anyway; the verbatim validator tolerates that inside the
+    `projectPath:` value only.
     """
     delegation = spec.delegation or ""
     if workspace is None:

@@ -119,6 +119,60 @@ def test_creates_no_project_when_none_exists(before_state, after_state, test):
     )
 
 
+_NEW_PROJECT_CALLEES = ("init-project", "tree-survey")
+
+
+def test_no_init_project_on_existing_project(before_state, skills_invoked, builtin_tool_calls):
+    """Ungated: with a research.json already present, no hand-off may go to a
+    new-project callee (``init-project`` or ``tree-survey``).
+
+    SKILL.md's routing row for "No research.json at all" says "With one present,
+    do NOT invoke it". Checked over every hand-off rather than the first, and
+    regardless of whether ``project_context`` was called: in research v32 the
+    router spawned ``init-project`` on ``mid-research-flynn`` and only then read
+    the project (issue #3766), so a "did it read the project?" check passes that
+    run.
+    """
+    from harness.skill_runner import handoffs
+
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json before the run")
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    wrong = [s for s in handed if s in _NEW_PROJECT_CALLEES]
+    assert not wrong, (
+        f"research.json existed before the run, but the router handed off to {wrong}, "
+        f"which start a new project. handoffs={handed}"
+    )
+
+
+def test_reads_project_state_before_routing(before_state, tool_calls, test):
+    """Tag-gated (``reads-project-first``): with a research.json present, the run
+    calls ``project_context``.
+
+    Catches a router that decides without reading the project at all — research
+    v32's ut_research_004 asked for a FamilySearch person ID and stopped, with no
+    hand-off for ``test_no_init_project_on_existing_project`` to see (issue #3766).
+
+    Presence, not order: ``tool_calls`` carries no caller and is a separate list
+    from the spawns in ``builtin_tool_calls``, so the two cannot be ordered. Tag
+    only a test with no ``run_agents``: every spawn is then denied and any
+    ``project_context`` call is the router's. Not ungated, because a bounded
+    request legitimately skips the read (SKILL.md, "Bounded request or job").
+    """
+    if "reads-project-first" not in test.get("tags", []):
+        pytest.skip("not a reads-project-first test")
+    assert before_state.get("research_json") is not None, (
+        "a reads-project-first test needs a scenario with a research.json; this one "
+        "had none. Scenario drift — fix the fixture rather than the skill."
+    )
+    called = [c for c in tool_calls or [] if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
+    assert called, (
+        "research.json existed before the run, but the router never called "
+        "project_context, so it routed or asked without reading the project. "
+        f"tools called: {[bare_tool_name(str(c.get('tool') or '')) for c in tool_calls or []]}"
+    )
+
+
 def _paired_names() -> set[str]:
     """Plugin agents the research router spawns by ``@plugin:<name>``.
 
@@ -431,6 +485,47 @@ def test_no_gate_stop(before_state, after_state, test):
         pytest.skip("missing research.json for diff")
     bad = check_no_gate_stop(before_state, after_state)
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
+
+# ---------------------------------------------------------------------------
+# `keeps-waiting-page` tag
+# ---------------------------------------------------------------------------
+
+
+def test_keeps_waiting_page(before_state, after_state, tool_calls, builtin_tool_calls, test):
+    """Tag-gated: a read page of a held record goes to record-structurer in one
+    spawn, which keeps it. The router does not keep it itself, and writes no
+    source and no assertion for it."""
+    if "keeps-waiting-page" not in test.get("tags", []):
+        pytest.skip("not a keeps-waiting-page test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    waiting = [s["id"] for s in before.get("sources", []) if s.get("image_ark") and not s.get("transcription")]
+    assert waiting, "The scenario has no source waiting for its page."
+
+    spawns = [
+        c for c in (builtin_tool_calls or [])
+        if isinstance(c, dict) and (c.get("args") or {}).get("subagent_type") == "record-structurer"
+    ]
+    assert len(spawns) == 1, (
+        f"Expected one record-structurer spawn for the waiting page; got {len(spawns)}."
+    )
+    kept_here = [
+        c for c in (tool_calls or [])
+        if isinstance(c, dict)
+        and bare_tool_name(c.get("tool") or "") == "extraction_append"
+        and (c.get("args") or {}).get("attachWaitingPages") is True
+    ]
+    assert not kept_here, "The router kept the page itself; record-structurer keeps it."
+    assert len(after.get("sources", [])) == len(before.get("sources", [])), (
+        "The router wrote a new source for the waiting page."
+    )
+    assert len(after.get("assertions", [])) == len(before.get("assertions", [])), (
+        "The router wrote an assertion for the waiting page."
+    )
+
 
 # ---------------------------------------------------------------------------
 # `negative-status-question` tag (issue #3112)
@@ -1011,6 +1106,57 @@ def test_bounded_transcription_is_delivered_in_place(
     )
 
 
+def test_bounded_first_message_runs_its_deliverable_after_init_project(
+    skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
+):
+    """Tag-gated (``bounded-after-init``). A bounded record ask with a PID and no
+    project creates the project and runs the search in the same turn (plan section
+    H, issue #2813): the hand-offs are init-project then search-records, repeats
+    allowed and nothing else; init-project made the project; the search is handed
+    the subject's tree id, not the FamilySearch ID; no step denial cut it short; the
+    reply drops init-project's next-step sentence; and it ends on an offer. Which
+    step it offers is the router's call: 2 of 6 scratch runs offered "setting up
+    the project" when the router was told to, so a fixed label is not pinned.
+
+    A gate denial and a stub's reply both come back as the spawn's result, so a
+    denial is told apart by its text, which carries the gate's own reason."""
+    from harness.skill_runner import handoffs, load_step_boundary
+
+    if "bounded-after-init" not in test.get("tags", []):
+        pytest.skip("not a bounded-first-message test")
+    skill_under_test = test.get("skill")
+    taken: list[str] = []
+    for name in handoffs(skills_invoked, builtin_tool_calls):
+        if name != skill_under_test and name not in taken:
+            taken.append(name)
+    assert taken == ["init-project", "search-records"], (
+        f"a bounded record ask with no project hands off to init-project, then "
+        f"search-records, and nothing else; got {taken}"
+    )
+    research = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx") or {}
+    assert research is not None, "init-project made no project, yet the turn went on to search"
+    problems = [
+        p for p in (_handed_subject(prompt, tree, research)[1]
+                    for prompt in _spawn_prompts(builtin_tool_calls, "search-records")) if p
+    ]
+    assert not problems, "; ".join(problems)
+    boundary = load_step_boundary()
+    denial = boundary._DENY_REASON.split("{", 1)[0].strip()
+    denied = [
+        r.get("subagent_type") for r in (agent_returns or [])
+        if denial in (r.get("text") or "")
+    ]
+    assert not denied, f"the step boundary denied {denied} in the turn that created the project"
+    assert "first research question" not in (text_response or ""), (
+        "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
+    )
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    assert boundary.offered_step(text_response) is not None, (
+        f"the reply does not end on a \"Continue with …?\" offer: {lines[-1:]}"
+    )
+
+
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
 
 
@@ -1159,6 +1305,66 @@ def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
     tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
     problems = [p for p in (_handed_subject(prompt, tree, research)[1] for prompt in prompts) if p]
     assert not problems, "; ".join(problems)
+
+
+_SETUP_ORDER_TAG = "attached-records-setup"
+
+
+def test_attached_records_setup_order(tool_calls, test, before_state):
+    """Tag-gated (``attached-records-setup``): the router runs the attached-
+    records step for a subject — ``extraction_append({ personId })``, then
+    ``timeline_build`` after it — on a job's "Objective but no questions" row and
+    on the bounded "a timeline for a person" ask (issue #3516 PR D).
+
+    Checked per subject: each person extracted is built after it, for the same
+    subject. ``timeline_build``'s own contract accepts "a tree person id or the
+    FamilySearch id a tree person links to" (timeline-build.ts), so the router
+    is free to spell the two calls' ``personId`` differently for the same
+    person (e.g. the FamilySearch id on the extract, the tree id on the build,
+    once the earlier call's result surfaces it) — canonicalize both to the
+    person's bare FamilySearch id via the scenario's tree before comparing,
+    rather than requiring an identical literal string. Orders only the two MCP
+    calls. ``tool_calls`` (the mock's MCP log) and ``builtin_tool_calls`` (the
+    hook's) share no ordering, so "both before the first question-selection" is
+    not checked here: on a job test it rests on ``execution.stop_at_stub`` and
+    ``routes-to:question-selection``.
+    """
+    if _SETUP_ORDER_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not an {_SETUP_ORDER_TAG} test")
+
+    tree = before_state.get("tree_gedcomx_json") or {}
+    by_tree_id = {
+        p.get("id"): bare_ark_id(p["ark"])
+        for p in tree.get("persons") or []
+        if isinstance(p, dict) and isinstance(p.get("ark"), str) and p["ark"].strip()
+    }
+
+    def person(c):
+        pid = (c.get("args") or {}).get("personId")
+        pid = pid.strip() if isinstance(pid, str) else ""
+        if not pid:
+            return ""
+        return by_tree_id.get(pid, bare_ark_id(pid))
+
+    first_extract: dict[str, int] = {}
+    builds: dict[str, list[int]] = {}
+    for i, c in enumerate(tool_calls or []):
+        name = bare_tool_name(str(c.get("tool", "")))
+        pid = person(c)
+        if name == "extraction_append" and pid:
+            first_extract.setdefault(pid, i)
+        elif name == "timeline_build" and pid:
+            builds.setdefault(pid, []).append(i)
+    assert first_extract, (
+        "the attached-records step must call extraction_append with personId; it never did. "
+        f"extraction_append calls: {[c.get('args') for c in tool_calls or [] if bare_tool_name(str(c.get('tool', ''))) == 'extraction_append']}"
+    )
+    unbuilt = {pid: at for pid, at in first_extract.items() if not any(b > at for b in builds.get(pid, []))}
+    assert not unbuilt, (
+        "each subject's timeline_build must follow its extraction_append({ personId }) for the same personId; "
+        f"no later timeline_build for {sorted(unbuilt)}. extraction_append(personId) at {first_extract}, "
+        f"timeline_build at {builds}"
+    )
 
 
 _HINTS_HANDOFF_TAG = "asserts-hints-handoff"
@@ -1357,6 +1563,32 @@ def test_search_hit_review_yes_extracts_the_matches(test, builtin_tool_calls):
     want_ids = sorted({bare_ark_id(ref.partition("#")[2]) for ref in wanted})
     assert record_ids == want_ids, f"the sources' recordIds {record_ids} are not the Matches' hit ids {want_ids}"
     assert results_refs == sorted(wanted), f"the sources' resultsRefs {results_refs} are not the hitRefs {sorted(wanted)}"
+
+
+_HANDBACK_SPAWNS_PREFIX = "handback-spawns:"
+_HANDBACK_NO_SPAWN_PREFIX = "handback-no-spawn:"
+
+
+def test_handback_routing_follows_the_step_group(test, builtin_tool_calls):
+    """Tag-gated (``handback-spawns:<agent>`` / ``handback-no-spawn:<agent>``).
+    research/SKILL.md's search step routes an agent return's ``Hand-back: <owner>``
+    line by step group (issue #4358): an owner in the returning agent's group is
+    spawned in the same turn; any other owner is named in the report and not
+    spawned. Read from the hook records, which the judge cannot see."""
+    from harness.skill_runner import spawn_prompts
+
+    spawns = _data_tag_values(test, _HANDBACK_SPAWNS_PREFIX)
+    refused = _data_tag_values(test, _HANDBACK_NO_SPAWN_PREFIX)
+    if not spawns and not refused:
+        pytest.skip("not a hand-back routing test")
+    problems = []
+    for agent in spawns:
+        if not spawn_prompts(builtin_tool_calls, agent):
+            problems.append(f"the Hand-back to {agent} was not spawned")
+    for agent in refused:
+        if spawn_prompts(builtin_tool_calls, agent):
+            problems.append(f"{agent} is in another step group and was spawned mid-turn")
+    assert not problems, "; ".join(problems)
 
 
 def _marked_unconfirmed(reply: str, title: str) -> bool:

@@ -747,6 +747,10 @@ const PROSE_MENTIONS = new Map<string, string>([
   // timeline)" and "(timeline)" -- left when issue #3036 did the same -- all
   // four are agent files now, outside this arm's skillFiles scan.)
   ["forget-and-rederive -> timeline", ""],
+  // research names a timeline as a bounded deliverable it builds itself with
+  // `extraction_append` and `timeline_build` (issue #3516 PR D) -- no hand-off
+  // to the agent, so a timeline.md edit stales only the timeline suite.
+  ["research -> timeline", "A timeline for a person you build yourself"],
   // research-exhaustiveness entered agentOnly when issue #2738 deleted its
   // skill directory. No entries remain: research-plan's went with that skill
   // when issue #2116 deleted it, search-external-sites' when issue #2802

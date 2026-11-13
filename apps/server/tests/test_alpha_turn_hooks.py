@@ -234,6 +234,13 @@ def test_the_alpha_system_prompt_is_true_before_a_project_exists(tmp_path):
     assert opts.env[real_agent.HOSTED_PLANE_ENV] == "1"
 
 
+def test_the_alpha_system_prompt_tells_the_agent_what_the_researcher_can_see(tmp_path):
+    """Issue #4241: the agent told a researcher to open a report at a sandbox path they
+    can't reach, and didn't know a written proof conclusion is shown under Findings."""
+    opts = real_agent.build_options(tmp_path)
+    assert real_agent.RESEARCHER_VIEW_NOTE in opts.system_prompt["append"]
+
+
 def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
     """The server and the plugin hook each define `GENEALOGY_HOSTED_PLANE`. A rename on one
     side alone leaves every server test green while the hook speaks on both hosted planes,
@@ -288,9 +295,9 @@ def _session(tmp_path, monkeypatch):
     return agent, _counting_hook(hooks)
 
 
-def test_the_providers_pass_auto_continue_and_not_the_deleted_cap():
-    """The Stop veto is gone (step mode phase 2), so no provider hands the sandbox
-    AUTONOMOUS_MAX_NUDGES; `auto_continue` still reaches it, for the runner's chain."""
+def test_the_providers_pass_neither_deleted_cap():
+    """The Stop veto is gone (step mode phase 2) and so is the runner's auto-continue
+    chain, so no provider hands the sandbox AUTONOMOUS_MAX_NUDGES or AUTO_CONTINUE."""
     import inspect
 
     from app.sandbox import e2b, local
@@ -298,7 +305,7 @@ def test_the_providers_pass_auto_continue_and_not_the_deleted_cap():
     for source in (inspect.getsource(e2b.E2BProvider._agent_env),
                    inspect.getsource(local.LocalProvider)):
         assert "AUTONOMOUS_MAX_NUDGES" not in source
-        assert '"AUTO_CONTINUE"' in source
+        assert "AUTO_CONTINUE" not in source
 
 
 def test_build_hooks_publishes_the_counter_to_the_turn_boundary(tmp_path, monkeypatch):

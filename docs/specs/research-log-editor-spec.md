@@ -98,7 +98,7 @@ research_log_append({
     site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web"
           | "chronicling_america" | "digital_newspaper_archive" | "archives_gov" | "archive_org"
           | "billiongraves" | "digitalarkivet" | "antenati" | "library_archives_canada"
-          | "american_ancestors" | "italian_genealogy" | "archion" | "matricula" | "openarch",
+          | "american_ancestors" | "italian_genealogy" | "archion" | "matricula" | "openarch" | "blm_glo",
     urlGenerated: string,
     captureReceived: boolean,
     captureFilename?: string | null,
@@ -126,8 +126,9 @@ so a corrected re-send finds every one. Several checks run over every op before 
 op is applied: the staged ref itself (it exists under `results/.staging/` and its
 `tool` matches), a staged ref named by two ops (`ops[j]: stagedResultsRef '…' is also
 ops[i]'s` — with removal deferred, both would finalize it), the §8.2 census check,
-the §8.3 query check, and the §8.4 filtered-nil-retry check (batch-aware — an
-unfiltered sibling in the same batch clears it). So a bad ref in op[1] is refused
+the §8.3 query check, the §8.4 filtered-nil-retry check and the §8.5
+pinned-nil-retry check (both batch-aware — an unfiltered or unpinned sibling in
+the same batch clears it). So a bad ref in op[1] is refused
 before op[0] writes a sidecar. These checks run over **every** op before the call
 refuses, and the refusal lists each failing op's `ops[i]: <msg>`, so one corrected
 re-send can fix them all; the batch still writes all or nothing.
@@ -148,6 +149,7 @@ In a batch, every other op is logged as usual. A ref no log entry names keeps th
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
 `{ ok: true, results: [...], filesWritten, validation }` for a batch. Either may
 carry `escalationDue: string`, present only when §8.1's nil-escalation note fires,
+`planRationale: string`, present only when §8.1's plan-rationale note fires,
 and `next: string`, present only when the call logged a report-only agent's own
 entry (`source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
 `validate_schema`): it tells the agent to return the report it just logged, in
@@ -429,6 +431,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 | a `fulltext_search` entry returned zero hits with a post-search filter set (`place`, `recordPlace0`–`3`, `recordType`, `yearFrom`/`yearTo`) and no unfiltered retry — a sibling `fulltext_search` with the same `keywords`/`nlQuery` whose filter-key set is a strict subset of this op's, in the same batch or already in `log[]` | input error; write nothing, and in a batch no op's staged file is consumed. The message names the filter keys and the exact unfiltered `fulltext_search` call to make, then says to log both in one batch. Exempt: a `name`-field query and a query with no `keywords`/`nlQuery` term. Keyed on zero hits, not `outcome`. See §8.4 |
+| a `record_search` entry returned zero hits pinned to a `collectionId` and no unpinned retry — a sibling `record_search` with no `collectionId` whose name fields (`givenName`, `surname`, `givenNameAlt`, `surnameAlt`, and any key ending in `GivenName`/`Surname`) equal this op's after Unicode NFC normalization, trimming, ignoring case, and alternate-name auto-pairing, in the same batch or already in `log[]` (a sibling logged `error` does not count) | input error; write nothing, and in a batch no op's staged file is consumed. The message names the pinned `collectionId` and the exact unpinned `record_search` call to make (without paging), then says to log both in one batch. Exempt: a query with no name field. Keyed on zero hits, not `outcome`. See §8.5 |
 | an `external_site` op's `urlGenerated` names a collection whose key is not in `external-collections.json`, and either the url is not in the log or the op opens a new hand-off (`partial`, `captureReceived: false`) | input error, raised in the preflight pass so a batch names every refused op; write nothing. The message names the fix: a site-wide search, a stored url from `research_query`, or — with nothing stored or the file unreadable — `external_links_search` first |
 | `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
@@ -483,6 +486,20 @@ A third advisory rides a top-level `escalationDue` string rather than
   reads is, which is why this is a tool note and not prose — a prose version of
   the same trigger was measured and made a correct search give up early. A
   call that brings several plan items to the threshold gets one line per item.
+- **Plan rationale:** when a call logs the **first** nil `record_search` /
+  `fulltext_search` entry for a plan item (the same nil test as above),
+  `planRationale` quotes the plan item's `rationale` and says to search next, before
+  any other retry, any name, place or source it gives that is not yet searched,
+  then to carry on with the other retries. The rationale is where
+  research-plan puts what it knew about the search: another surname the person
+  may be under, how a collection is indexed, a second jurisdiction. It fires for
+  any record type. It stays silent when the plan item already had a nil, when any
+  entry for it is `positive` or `partial`, when the rationale is blank, and for a
+  search that serves no plan item. A batch whose nils are the item's first gets
+  one line for it. Measured 2026-11-12 on Haiku 5.5 at low effort:
+  `ut_search_records_d33` never searched the married surname its rationale names
+  in 2 to 3 of 10 runs, with or without a body rule; with the note it searched it
+  in 10 of 10.
 
 ### 8.2 A precondition that blocks: undocumented census structure
 
@@ -1011,6 +1028,44 @@ count and the command that measured it are in
 `guardrail-enforcement-spec.md`'s write-boundary invariants table, which is where
 measured figures for these preconditions live.
 
+### 8.5 A precondition that blocks: a pinned zero-hit record_search with no unpinned retry
+
+A `record_search` log op that returned zero hits while pinned to one
+`collectionId` is refused unless the same names were also searched without the
+collection. A pinned nil does not rule the record out: the record
+may be indexed in another collection. In simon-heydocker-death the agent pinned
+every death search to collection 1394580, logged each nil as "not indexed", and
+never dropped the pin; the unpinned search returns 29 hits, the answer among them.
+
+The **unpinned retry** that clears the op is a sibling `record_search` with **no**
+`collectionId` whose name fields equal this op's, in the same batch or already in
+`log[]`. The names are the search terms, as `keywords` are in §8.4: a name field is
+`givenName`, `surname`, `givenNameAlt`, `surnameAlt`, or any key ending in
+`GivenName` or `Surname` (a relative's name). Names compare after Unicode NFC normalization, trimming and
+ignoring case (the search ignores case), with absent and empty treated the same,
+and after the alternate-name auto-pairing
+`record_search` applies on the wire (`applyAltNameAutoPair`), so a staged echo
+(the raw input) and an agent-written `query` (often already paired) compare
+equal. Other filters — places, years, `recordType` — may differ, so a retry that
+also widened the years still clears it. Each name variant needs its own retry.
+Three alternatives were rejected: matching on surname alone, which lets one
+unpinned `Heydöcker` clear a pinned `Heidecker`; demanding the identical query
+minus `collectionId`, which refuses a retry that widened anything else; and
+accepting a wildcard sibling, since an unpinned `Heyd*` is not a retry of the
+exact `Heydöcker`. A sibling pinned to another collection is not a retry either,
+and nor is one logged `error`: it never ran.
+
+Zero hits, not `outcome`, judged as in §8.4: a staged ref whose recomputed count
+is zero (defensive — a zero-hit `record_search` stages nothing too), or no staged
+ref with `resultsExamined` zero and `resultsAvailable` zero or absent. An op
+logged `error` is not a nil. A pinned query with no name field is exempt: it has
+no terms to retry. The refusal names the pinned `collectionId` and the exact
+unpinned `record_search` call — the logged query minus `collectionId` and the
+paging keys `offset` and `count`, keeping only real `record_search` inputs —
+then says to log both in one batch. Both this and §8.4 run in one preflight over
+the whole resolved batch. The fire count and
+the command that measured it are in `guardrail-enforcement-spec.md`.
+
 ---
 
 ## 9. Test plan (vitest)
@@ -1042,6 +1097,10 @@ measured figures for these preconditions live.
   once ≥3 positive searches are logged with zero sources and zero assertions,
   stays silent below the threshold, stays silent once any source or assertion
   exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
+- **Plan rationale (§8.1)** — `planRationale` appears on the first nil against a
+  plan item, single or batched, for any record type; stays absent on a later nil,
+  once the plan item has a positive or partial entry, with a blank rationale, and
+  with no plan item.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or
@@ -1076,6 +1135,20 @@ measured figures for these preconditions live.
   `resultsAvailable` is above zero. The refuse cases are also replayed by the
   guard-case file `filtered-nil-no-unfiltered-retry.json` through
   `filteredNilRetryInvariants`, and fail with the rule removed.
+- **Pinned zero-hit retry check (§8.5)** — refused, with nothing written: a
+  pinned `record_search` nil with no unpinned sibling, one whose staged payload
+  recomputes to a zero count, one whose only unpinned sibling is a different
+  surname variant, a wildcard, or a different alternate surname, and one whose
+  only sibling is pinned to another collection or is an errored search in
+  `log[]`; the refusal's retry carries only real `record_search` inputs and no
+  paging. Allowed: an unpinned retry later in the same batch,
+  one already in `log[]`, one that widened other filters, alternate names equal
+  after auto-pairing, names that differ only in case, a pinned search with hits, an errored search, a pinned query
+  naming no one, and an unpinned nil. Replayed by
+  `pinned-nil-no-unpinned-retry.json` through `pinnedNilRetryInvariants`, and fail
+  with the rule removed, with pinned siblings counted, with surname-only matching,
+  with pairing removed, with case folding removed, with errored siblings counted,
+  or with paging kept.
 - **JSON-escaped notes (§8)** — decoded and stored with real newlines, single
   and batched: `\n`, `\"`, `\t` and `\uXXXX` escapes, a whole household table, a
   table escaped twice, one with a single real leading or trailing newline, an

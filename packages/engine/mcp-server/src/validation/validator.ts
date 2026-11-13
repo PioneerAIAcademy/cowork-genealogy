@@ -60,6 +60,8 @@ const CLOSED_ENUMS = {
   proof_tier: new Set(["proved", "probable", "possible", "not_proved", "disproved"]),
   proof_vehicle: new Set(["statement", "summary", "argument"]),
   proof_shortfall: new Set(["ceiling", "gap", "conflict", "none"]),
+  claim_polarity: new Set(["affirmed", "denied"]),
+  finding_type: new Set(["absence", "completeness", "record_content", "rejected_candidate"]),
   stopped_because: new Set([
     "question_answered", "record_exhausted", "nothing_further_reachable",
     "resources_spent", "blocked_by_conflict",
@@ -113,11 +115,10 @@ const CLOSED_ENUMS = {
 };
 
 // Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
-// enforce (#1711 review follow-up) that a proof_summary's scalar `tier` is
-// never anything but the strongest of its `claims[].proof_tier` values — the
-// spec states this as a rule, but nothing checked it, and a scalar that
-// silently disagrees with its own claims is exactly the failure mode #1711
-// was raised to close.
+// enforce that a proof_summary's scalar `tier` does not exceed the strongest of
+// its `claims[].proof_tier` values (research-schema-spec.md §7): a scalar that
+// claims more than any claim behind it is the failure mode #1711 was raised to
+// close.
 // A Map, not a plain object: `PROOF_TIER_RANK["constructor"]` on an object
 // literal returns Object.prototype.constructor — a function, not undefined — so
 // a model-supplied `proof_tier: "constructor"` passed the `!== undefined` guard,
@@ -148,35 +149,112 @@ function clipJson(value: unknown, max: number): string {
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
-// What a refused claim is told. `claims[]` holds ParentChild relationship claims
-// only, so a claim that cannot carry one (a fact claim in practice) is refused,
-// and the reported failure was the agent answering that refusal by dropping
-// `claims` altogether: a scalar-only summary has nothing to check `tier`
-// against. So the refusal says why, says what to keep, and states the rule that
-// is already enforced below (`tier` equals the strongest claim's tier, never
-// the weakest), which keeping the relationship claims keeps in force.
-const CLAIM_NOT_A_RELATIONSHIP =
-  "claims[] holds ParentChild relationship claims only. Fact claims are not supported yet " +
-  "(issues #3213 and #3032 own them): leave a claim of any other kind out and keep the ParentChild " +
-  "claims in claims[]. tier must equal the strongest proof_tier among the claims that remain, " +
-  "so it cannot rise above them.";
+// The objects a claim may conclude, one per claim (research-schema-spec.md,
+// the `claims` table).
+export const CLAIM_KINDS = ["relationship", "fact", "identity", "name", "finding"] as const;
 
-// A parentage claim that left its relationship off is not a fact claim, and told
-// to "leave a claim of any other kind out" the agent dropped a not_proved
-// maternity claim in 2 of 4 tries of ut_proof_conclusion_022 (2026-10-25). So a
-// claim whose label names a parent relationship is told to add it instead.
+// A parentage claim that names no object is told to add its relationship, not
+// to drop it: told only "name an object", the agent dropped a not_proved
+// maternity claim in 2 of 4 tries of ut_proof_conclusion_022 (2026-10-25).
 const PARENTAGE_CLAIM_LABEL = /patern|matern|parent|father|mother/i;
 
-function claimRelationshipMissing(claim: any): string {
-  if (typeof claim?.claim !== "string" || !PARENTAGE_CLAIM_LABEL.test(claim.claim)) {
-    return CLAIM_NOT_A_RELATIONSHIP;
-  }
+function claimNamesNoObject(claim: any): string {
+  const base =
+    `a claim names exactly one object: one of ${CLAIM_KINDS.join(", ")}. This one names none`;
+  if (typeof claim?.claim !== "string" || !PARENTAGE_CLAIM_LABEL.test(claim.claim)) return base;
   return (
-    `claim '${claim.claim}' is a parentage claim, so it is a ParentChild relationship claim: add ` +
-    `relationship: { type: "ParentChild", parent: "<the parent's tree person id>", child: ` +
-    `"<the child's tree person id>" } and keep it in claims[] at its own proof_tier, not_proved ` +
-    `included. Do not drop it.`
+    `${base}: claim '${claim.claim}' is a parentage claim, so it is a ParentChild relationship ` +
+    `claim: add relationship: { type: "ParentChild", parent: "<the parent's tree person id>", ` +
+    `child: "<the child's tree person id>" } and keep it in claims[] at its own proof_tier, ` +
+    `not_proved included. Do not drop it.`
   );
+}
+
+/** Tiers a `denied` claim may stand at: a denial is grounded but below the proof bar. */
+const DENIAL_TIERS = new Set(["probable", "possible"]);
+
+/** One claim object, by kind: closed keys, required fields, and the shape
+ *  rules the JSON Schema's oneOf branches state. */
+function validateClaimObject(kind: string, obj: any, path: string, ids: ResearchIds, report: ValidationReport): void {
+  if (!isObjectEntry(obj, path, report)) return;
+  const str = (field: string) => {
+    if (field in obj && typeof obj[field] !== "string") addError(report, path, `'${field}' must be a string`);
+  };
+  switch (kind) {
+    case "relationship": {
+      checkRequired(obj, ["type"], path, report, NULLABLE_FIELDS);
+      checkAllowedKeys(obj, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", path, report);
+      for (const f of ["parent", "child", "subtype", "person1", "person2"]) str(f);
+      if (obj.type === "ParentChild") {
+        checkRequired(obj, ["parent", "child"], path, report, NULLABLE_FIELDS);
+        for (const f of ["person1", "person2"]) {
+          if (f in obj) addError(report, path, `a ParentChild relationship names parent and child, not '${f}'`);
+        }
+      } else if (obj.type === "Couple") {
+        checkRequired(obj, ["person1", "person2"], path, report, NULLABLE_FIELDS);
+        for (const f of ["parent", "child", "subtype"]) {
+          if (f in obj) addError(report, path, `a Couple relationship names person1 and person2, not '${f}'`);
+        }
+      } else if ("type" in obj) {
+        addError(report, path, `relationship.type must be 'ParentChild' or 'Couple', got '${obj.type}'`);
+      }
+      return;
+    }
+    case "fact": {
+      checkRequired(obj, ["subject", "fact_type"], path, report, NULLABLE_FIELDS);
+      checkAllowedKeys(obj, RESEARCH_SHAPES.proof_claim_fact, "proof_claim fact", path, report);
+      for (const f of ["fact_type", "date", "place", "value"]) str(f);
+      const subject = obj.subject;
+      if (subject !== undefined && typeof subject !== "string") {
+        const sp = `${path}/subject`;
+        if (isObjectEntry(subject, sp, report)) {
+          checkRequired(subject, ["person1", "person2"], sp, report, NULLABLE_FIELDS);
+          checkAllowedKeys(subject, RESEARCH_SHAPES.proof_claim_pair, "proof_claim fact subject", sp, report);
+          for (const f of ["person1", "person2"]) {
+            if (f in subject && typeof subject[f] !== "string") addError(report, sp, `'${f}' must be a string`);
+          }
+        }
+      }
+      return;
+    }
+    case "identity": {
+      checkRequired(obj, ["person"], path, report, NULLABLE_FIELDS);
+      checkAllowedKeys(obj, RESEARCH_SHAPES.proof_claim_identity, "proof_claim identity", path, report);
+      for (const f of ["record_id", "party", "person", "same_as"]) str(f);
+      const toRecord = "record_id" in obj || "party" in obj;
+      if (toRecord && "same_as" in obj) {
+        addError(report, path, "an identity claim links a record party to a person (record_id, party, person) or two persons (person, same_as), not both");
+      } else if (toRecord) {
+        checkRequired(obj, ["record_id", "party"], path, report, NULLABLE_FIELDS);
+      } else if (!("same_as" in obj)) {
+        addError(report, path, "an identity claim names record_id and party, or same_as, beside person");
+      }
+      return;
+    }
+    case "name": {
+      checkRequired(obj, ["person"], path, report, NULLABLE_FIELDS);
+      checkAllowedKeys(obj, RESEARCH_SHAPES.proof_claim_name, "proof_claim name", path, report);
+      for (const f of ["person", "given", "surname"]) str(f);
+      return;
+    }
+    case "finding": {
+      checkRequired(obj, ["finding_type", "statement"], path, report, NULLABLE_FIELDS);
+      checkAllowedKeys(obj, RESEARCH_SHAPES.proof_claim_finding, "proof_claim finding", path, report);
+      if ("finding_type" in obj) checkEnum(obj.finding_type, "finding_type", path, report);
+      str("statement");
+      if ("log_entry_ids" in obj) {
+        if (!Array.isArray(obj.log_entry_ids)) {
+          addError(report, path, "'log_entry_ids' must be an array");
+        } else {
+          for (const l of obj.log_entry_ids) {
+            if (typeof l !== "string") addError(report, path, "log_entry_ids entries must be strings");
+            else checkRefExists(l, ids.log, "log entry", path, report);
+          }
+        }
+      }
+      return;
+    }
+  }
 }
 
 const SELECTION_BASIS_VALUES = new Set([
@@ -213,6 +291,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // Open Archieven (issue #3185): the Dutch archives aggregator, searchable
   // by name.
   "openarch",
+  // BLM General Land Office (issue #4402): federal land patents for the
+  // public-land states.
+  "blm_glo",
 ]);
 
 /**
@@ -545,7 +626,8 @@ export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
  *  Use it wherever a gate asks "is this conflict settled?" — comparing `status`
  *  inline is how `disputedSourceIds` came to treat a `moot` conflict as still
  *  disputing its sources. Not every status read asks that question:
- *  `resolvedAgainstIds` deliberately exonerates on `resolved` alone, and
+ *  `resolvedAgainstIds` reads the two apart, exonerating on `resolved` and on a
+ *  `moot` only when it also carries both analyses, and
  *  `utils/question-state.ts` tests `status !== "unresolved"`, which agrees with
  *  this on any document the validator accepts. The harness keeps a Python copy,
  *  `is_settled_conflict` in `eval/harness/harness/skill_invocation.py`;
@@ -728,7 +810,7 @@ export const RESEARCH_SHAPES = {
     "id", "gedcomx_source_description_id", "citation", "citation_detail",
     "source_classification", "repository", "access_date", "url",
     "url_archived", "notes", "transcription", "transcription_truncated",
-    "image_filename", "log_entry_id",
+    "image_filename", "image_ark", "log_entry_id",
   ]),
   citation_detail: new Set([
     "who", "what", "when_created", "when_accessed", "where", "where_within",
@@ -739,6 +821,7 @@ export const RESEARCH_SHAPES = {
     "place", "standard_place", "information_quality", "informant",
     "informant_proximity", "informant_bias_notes", "record_basis",
     "log_entry_id", "extracted_for_question_ids", "superseded_by", "superseded_reason",
+    "disputes_assertion_id",
   ]),
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
@@ -778,11 +861,26 @@ export const RESEARCH_SHAPES = {
     "narrative_markdown", "updated", "claims",
   ]),
   proof_claim: new Set([
-    "claim", "proof_tier", "shortfall", "supporting_assertion_ids",
-    "relationship",
+    "claim", "proof_tier", "shortfall", "polarity", "supporting_assertion_ids",
+    "relationship", "fact", "identity", "name", "finding",
   ]),
   proof_claim_relationship: new Set([
-    "type", "parent", "child",
+    "type", "parent", "child", "subtype", "person1", "person2",
+  ]),
+  proof_claim_fact: new Set([
+    "subject", "fact_type", "date", "place", "value",
+  ]),
+  proof_claim_pair: new Set([
+    "person1", "person2",
+  ]),
+  proof_claim_identity: new Set([
+    "record_id", "party", "person", "same_as",
+  ]),
+  proof_claim_name: new Set([
+    "person", "given", "surname",
+  ]),
+  proof_claim_finding: new Set([
+    "finding_type", "statement", "log_entry_ids",
   ]),
   evaluation_entry: new Set([
     "id", "focus", "target_id", "target_type", "verdict", "file_path",
@@ -798,7 +896,7 @@ export const RESEARCH_SHAPES = {
   ]),
   namesake: new Set([
     "id", "person_id", "name", "place", "time_period", "record_ids",
-    "log_entry_ids", "record_persona_ids", "notes", "created",
+    "log_entry_ids", "record_persona_ids", "birth_year", "notes", "created",
   ]),
   hit_verdict_entry: new Set([
     "id", "log_id", "hit_id", "person_id", "verdict", "new_vital_info",
@@ -859,6 +957,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const projPath = `${path}/project`;
   checkRequired(p, ["id", "objective", "status", "created", "updated"], projPath, report, NULLABLE_FIELDS);
   checkAllowedKeys(p, RESEARCH_SHAPES.project, "project objects", projPath, report);
+  if ("title" in p && typeof p.title !== "string") {
+    addError(report, projPath, "'title' must be a string — omit it if there is none");
+  }
   if ("id" in p) {
     checkIdPrefix(p.id, ID_PREFIXES.project, projPath, report);
   }
@@ -870,7 +971,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
   // Researcher profile (optional)
   const rp = data.researcher_profile;
-  if (rp !== null && rp !== undefined) {
+  if (rp !== undefined) {
     const rpPath = `${path}/researcher_profile`;
     // `typeof rp !== "object"` catches a string or a number and MISSES `[]`,
     // which is the array arm `checkObjectField` exists to add — the class this
@@ -879,17 +980,19 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(
         report,
         rpPath,
-        `researcher_profile must be an object — got ${Array.isArray(rp) ? "array" : typeof rp}`,
+        rp === null
+          ? "researcher_profile must be an object — omit it if there is none"
+          : `researcher_profile must be an object — got ${Array.isArray(rp) ? "array" : typeof rp}`,
       );
     } else {
       checkAllowedKeys(rp, RESEARCH_SHAPES.researcher_profile, "researcher_profile objects", rpPath, report);
-      if ("experience_level" in rp && rp.experience_level !== null) {
+      if ("experience_level" in rp) {
         checkEnum(rp.experience_level, "experience_level", rpPath, report);
       }
       const subs = rp.subscriptions;
-      if (subs !== null && subs !== undefined) {
+      if (subs !== undefined) {
         if (!Array.isArray(subs)) {
-          addError(report, rpPath, "subscriptions must be an array");
+          addError(report, rpPath, "'subscriptions' must be an array — omit it if empty");
         } else {
           for (const s of subs) {
             if (!CLOSED_ENUMS.subscription.has(s)) {
@@ -1155,6 +1258,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           addError(report, ip, "collection_url must be a non-empty string (a url from external-collections.json), or omitted");
         }
       }
+      if ("skip_reason" in item && typeof item.skip_reason !== "string") {
+        addError(report, ip, "'skip_reason' must be a string — omit it if there is none");
+      }
     }
   }
 
@@ -1271,6 +1377,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // flag rather than the tool deriving it, and the tool never emits it (a
     // zero-content capped read throws instead of returning `truncated: true`,
     // image-transcribe.ts) — so the persisted writer rejects it too.
+    if ("image_ark" in src && typeof src.image_ark !== "string") {
+      addError(report, sp, "image_ark must be a string: the ARK of the page the record sits on.");
+    }
     if ("transcription_truncated" in src) {
       const flag = src.transcription_truncated;
       if (flag !== true) {
@@ -1454,12 +1563,45 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkRefExists(by, ids.assertions, "assertion", ap, report);
     }
   }
+  // A page reading names the index assertion it disputes (#4286). Existence, not
+  // liveness: a re-extracted target is retired, and the dispute follows its
+  // `superseded_by` to the successor. Same source only: a page disputes its own
+  // record's index, never another record's.
+  const sourceOfAssertion = new Map<string, unknown>();
+  for (const a of assertions) {
+    if (a && typeof a === "object" && typeof a.id === "string") sourceOfAssertion.set(a.id, a.source_id);
+  }
+  for (let i = 0; i < assertions.length; i++) {
+    const a = assertions[i];
+    if (!a || typeof a !== "object" || !("disputes_assertion_id" in a)) continue;
+    const ap = `${path}/assertions[${i}]`;
+    const target = a.disputes_assertion_id;
+    if (typeof target !== "string") {
+      addError(report, ap, `disputes_assertion_id must be a string, got ${target === null ? "null" : typeof target}`);
+    } else if (!target.startsWith(ID_PREFIXES.assertions)) {
+      addError(report, ap, `disputes_assertion_id '${target}' must be an '${ID_PREFIXES.assertions}' id`);
+    } else if (target === a.id) {
+      addError(report, ap, `disputes_assertion_id '${target}' names the assertion itself`);
+    } else if (!sourceOfAssertion.has(target)) {
+      checkRefExists(target, ids.assertions, "assertion", ap, report);
+    } else if (sourceOfAssertion.get(target) !== a.source_id) {
+      addError(
+        report,
+        ap,
+        `disputes_assertion_id '${target}' is on source '${String(sourceOfAssertion.get(target))}', ` +
+          `not this assertion's source '${String(a.source_id)}': a page disputes only its own record's index`,
+      );
+    }
+  }
 
   // Rejected links. RESEARCH_SHAPES.rejected_link_entry existed and was referenced
   // NOWHERE, so the section had no shape check at all: a scratch write of
   // `{assertion_id: 42, reason: "", bogus: 1}` persisted clean. The rule it carries --
   // a rejection is kept so a later step cannot silently re-link the same pair -- is
   // only as good as the rows it is read back from.
+  if (data.rejected_links !== undefined && !Array.isArray(data.rejected_links)) {
+    addError(report, `${path}/rejected_links`, "rejected_links must be an array — omit it if empty");
+  }
   const rejectedLinks = Array.isArray(data.rejected_links) ? data.rejected_links : [];
   const rejectedIds = new Set<any>();
   for (let i = 0; i < rejectedLinks.length; i++) {
@@ -1800,13 +1942,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     //
     // It also breaks a downstream reader: `ProofSummariesSection.tsx` guards on
     // `.length > 0` and then calls `.map`, and a bare string has truthy length
-    // while `.map` throws. The sibling `claims` field is guarded the
-    // same way further down this same block (85 lines by `addError`), so this
-    // was a deviation from a local convention rather than a new idea. Two
-    // earlier versions of this sentence said 38 and then 1347 — the first
-    // matched no anchor, the second came from a shell variable that silently
-    // evaluated to empty. A line count is a poor thing to cite in a file this
-    // merge-prone; the field name is the durable half.
+    // while `.map` throws. The sibling `claims` field is type-checked further
+    // down this block too. It differs in one way: `claims` is optional, so
+    // checkRequired never sees it and it refuses null itself, where this
+    // required field leaves null to checkRequired (#4366).
     if (
       "resolved_conflict_ids" in ps &&
       ps.resolved_conflict_ids !== null &&
@@ -1880,7 +2019,16 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // nested object inside proof_summary before this: without this loop an
     // arbitrary string in claims[].proof_tier would pass validation and the
     // tree-encoding gate would then read it.
-    if (ps.claims !== undefined && ps.claims !== null) {
+    // Optional, so null is refused here: checkRequired never sees this field.
+    // An update writes each field onto the stored entry and cannot delete one,
+    // so clearing claims on an update is `claims: []`, not omission.
+    if (ps.claims === null) {
+      addError(
+        report,
+        psp,
+        "'claims' is null — omit the field for a single-conclusion proof; on an update to a summary that holds claims, send claims: [] to clear them",
+      );
+    } else if (ps.claims !== undefined) {
       const claims = Array.isArray(ps.claims) ? ps.claims : [];
       if (!Array.isArray(ps.claims)) {
         addError(report, psp, "'claims' must be an array");
@@ -1898,50 +2046,52 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         checkRequired(claim, [
           "claim", "proof_tier", "supporting_assertion_ids",
         ], clp, report, NULLABLE_FIELDS);
-        // Required like the three above, worded for what a missing one means.
-        if (!("relationship" in claim)) {
-          addError(report, clp, `missing required field 'relationship' — ${claimRelationshipMissing(claim)}`);
-        } else if (claim.relationship === null) {
-          addError(report, clp, `required field 'relationship' is null — ${claimRelationshipMissing(claim)}`);
-        }
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
+        // A present key counts, null included, as the JSON Schema's oneOf counts it.
+        // Keys that are all null name nothing, and say so with the parentage hint.
+        const named = CLAIM_KINDS.filter((k) => k in claim);
+        if (named.every((k) => claim[k] === null)) {
+          addError(report, clp, claimNamesNoObject(claim));
+        } else if (named.length > 1) {
+          addError(report, clp, `a claim names exactly one object, and this one names ${named.length}: ${named.join(", ")}. Split it into one claim per object.`);
+        }
+        for (const kind of named) {
+          if (claim[kind] !== null || named.length > 1) validateClaimObject(kind, claim[kind], `${clp}/${kind}`, ids, report);
+        }
         // Optional here (unlike the scalar above) but still closed: an
         // out-of-enum value is rejected wherever it is written.
-        if (claim && typeof claim === "object" && "shortfall" in claim) {
-          checkEnum(claim.shortfall, "proof_shortfall", clp, report);
-        }
-        if (claim && typeof claim === "object" && "claim" in claim && typeof claim.claim === "string") {
+        if ("shortfall" in claim) checkEnum(claim.shortfall, "proof_shortfall", clp, report);
+        if (typeof claim.claim === "string") {
           if (seenClaimLabels.has(claim.claim)) {
             addError(report, clp, `duplicate claim label '${claim.claim}' — claims[] entries must be uniquely named (the eval validator and viewer both look one up by this label)`);
           }
           seenClaimLabels.add(claim.claim);
         }
-        if (claim && typeof claim === "object" && "proof_tier" in claim) {
+        if ("proof_tier" in claim) {
           checkEnum(claim.proof_tier, "proof_tier", clp, report);
           const rank = PROOF_TIER_RANK.get(claim.proof_tier);
           if (rank !== undefined) maxClaimRank = Math.max(maxClaimRank, rank);
         }
-        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship !== null) {
-          const rel = claim.relationship;
-          const relp = `${clp}/relationship`;
-          if (!isObjectEntry(rel, relp, report)) continue;
-          checkRequired(rel, ["type", "parent", "child"], relp, report, NULLABLE_FIELDS);
-          checkAllowedKeys(rel, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", relp, report);
-          if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
-            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}' — ${CLAIM_NOT_A_RELATIONSHIP}`);
+        checkAssertionIdArray(claim.supporting_assertion_ids, "supporting_assertion_ids", ids.assertions, clp, report);
+        if ("polarity" in claim) {
+          checkEnum(claim.polarity, "claim_polarity", clp, report);
+          if (claim.proof_tier === "disproved") {
+            addError(report, clp, "a disproved claim carries no polarity: disproved already says the object is ruled out. Remove polarity.");
+          } else if (claim.polarity === "denied" && typeof claim.proof_tier === "string" && !DENIAL_TIERS.has(claim.proof_tier)) {
+            addError(report, clp, `a denied claim stands only at probable or possible, got '${claim.proof_tier}'. A denial at the proof bar is a disproved claim with no polarity.`);
           }
         }
       }
-      // The scalar must carry the STRONGER of the per-claim tiers (spec §7) —
-      // never the weaker, and never anything the claims themselves don't
-      // support. Checked only once every claim's own tier is a recognized
-      // enum value, so one bad claim doesn't cascade into a confusing second
-      // error here on top of the one already reported above.
+      // The scalar answers the question as a whole and may not exceed the
+      // strongest claim (research-schema-spec.md §7). Only a scalar at possible or better is
+      // bound: not_proved and disproved claim nothing a claim must back.
+      // Checked only once some claim's tier is a recognized enum value, so one
+      // bad claim does not cascade into a second error here.
       if (maxClaimRank >= 0 && typeof ps.tier === "string") {
         const scalarRank = PROOF_TIER_RANK.get(ps.tier);
-        if (scalarRank !== undefined && scalarRank !== maxClaimRank) {
+        if (scalarRank !== undefined && scalarRank >= PROOF_TIER_RANK.get("possible")! && scalarRank > maxClaimRank) {
           const strongest = [...PROOF_TIER_RANK].find(([, r]) => r === maxClaimRank)?.[0];
-          addError(report, psp, `tier '${ps.tier}' does not match the stronger of claims[].proof_tier ('${strongest}') — the scalar must carry the strongest per-claim tier`);
+          addError(report, psp, `tier '${ps.tier}' exceeds the strongest of claims[].proof_tier ('${strongest}') — the scalar answers the question as a whole and may not be stronger than any claim it rests on`);
         }
       }
     }
@@ -2093,6 +2243,9 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
         }
       }
     }
+    if ("birth_year" in ns && !Number.isInteger(ns.birth_year)) {
+      addError(report, np, "birth_year must be an integer");
+    }
     checkIsoDate(ns, "created", np, report);
   }
 }
@@ -2206,6 +2359,9 @@ function validateLocalities(
   // jurisdictions / collections / pages_read items are closed in the schema but
   // their required and stray keys are not deep-checked here (same precedent as
   // structured_value).
+  if (data.localities !== undefined && !Array.isArray(data.localities)) {
+    addError(report, `${path}/localities`, "localities must be an array — omit it if empty");
+  }
   const localities = Array.isArray(data.localities) ? data.localities : [];
   const localityIds = new Set<any>();
   for (let i = 0; i < localities.length; i++) {
@@ -2225,7 +2381,23 @@ function validateLocalities(
       addUniqueId(localityIds, loc.id, "locality", lp, report);
     }
     if ("created" in loc) checkIsoDate(loc, "created", lp, report);
-    if ("updated" in loc && loc.updated != null) checkIsoDate(loc, "updated", lp, report);
+    // checkIsoDate passes null (some of its fields are nullable); this one is not.
+    if (loc.updated === null) {
+      addError(report, lp, "'updated' must be an ISO date (YYYY-MM-DD) — omit it if unknown");
+    } else if ("updated" in loc) {
+      checkIsoDate(loc, "updated", lp, report);
+    }
+    for (const field of ["jurisdictions", "collections", "quirks", "registration_start"]) {
+      if (field in loc && !Array.isArray(loc[field])) {
+        addError(report, lp, `'${field}' must be an array — omit it if empty`);
+      }
+    }
+    if (Array.isArray(loc.quirks) && loc.quirks.some((q: unknown) => typeof q !== "string")) {
+      addError(report, lp, "'quirks' must be an array of strings");
+    }
+    if ("volume_summary" in loc && (!isObject(loc.volume_summary) || Array.isArray(loc.volume_summary))) {
+      addError(report, lp, "'volume_summary' must be an object — omit it if unknown");
+    }
     const pages = Array.isArray(loc.pages_read) ? loc.pages_read : [];
     for (let j = 0; j < pages.length; j++) {
       const pr = pages[j];
@@ -2270,6 +2442,9 @@ function validateLocalities(
     }
   }
 
+  if (data.warning_justifications !== undefined && !Array.isArray(data.warning_justifications)) {
+    addError(report, `${path}/warning_justifications`, "warning_justifications must be an array — omit it if empty");
+  }
   const wjs = Array.isArray(data.warning_justifications) ? data.warning_justifications : [];
   for (let i = 0; i < wjs.length; i++) {
     const wj = wjs[i];
@@ -2674,7 +2849,7 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, proof_summaries[].claims[].relationship,
+  // timelines, every person a proof_summaries claim names,
   // namesakes). The
   // set of fields walked here is shared with the merge_tree_persons remap via
   // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this

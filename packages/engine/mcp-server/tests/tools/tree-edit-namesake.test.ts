@@ -161,9 +161,29 @@ describe("tree_edit and tree_correct under a recorded namesake (#3363 PR 1e)", (
       /^ops\[0\]: 'KWCB-111' has a recorded namesake \('ns_001'\), so a record goes onto 'KWCB-111''s facts and names only when something in it ties it to 'KWCB-111'\. The fact '.*' \(Occupation\) this op adds cites S2 \(research source 'src_002'\), and its link 'pe_3' to 'KWCB-111' is not tied: /,
     );
     expect(errors[0]).toContain(
-      "Nothing was written. Cite only records that tie to 'KWCB-111', or hand the link to the person-evidence agent, which owns person_evidence, to tie it first",
+      "Nothing was written. Cite only records that tie to 'KWCB-111', or return `Hand-back: person-evidence` so the person-evidence agent, which owns person_evidence, ties it first",
     );
     expect(errors[0]).not.toMatch(/\.\.\s/);
+  });
+
+  it("T1b names only the rows that still cap the cited record's link, and writes once the age exemption lifts them all", async () => {
+    const r = research();
+    r.sources.push(source("src_003", "S3"));
+    r.assertions.push(
+      assertion("a_020", "src_003", "REC-HEAD", "head", "name", "John Smith"),
+      assertion("a_021", "src_003", "REC-HEAD", "head", "census", "1880", { date: "1880" }),
+    );
+    r.person_evidence.push(link("pe_4", "a_020", P));
+    const lifted = { ...row(P), birth_year: 1873 };
+    const capping = { ...row(P), id: "ns_002", time_period: "born 1800", birth_year: 1800 };
+    const t = tree();
+    t.sources.push({ id: "S3", title: "1880 census, another district" });
+    const addFact = () => treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S3") }] } as any);
+    await setup({ ...r, namesakes: [lifted, capping] }, t);
+    const errors = await refused(addFact);
+    expect(errors[0]).toMatch(/^ops\[0\]: 'KWCB-111' has a recorded namesake \('ns_002'\), so a record goes onto/);
+    await setup({ ...r, namesakes: [lifted] }, t);
+    await written(addFact);
   });
 
   it("T2 writes a fact citing a record its wife's link ties", async () => {

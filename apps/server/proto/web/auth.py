@@ -16,7 +16,7 @@ Fernet derivation both tiers decrypt with lives in ``grants.py``, which both ima
 
 Settings are read from the environment at call time, so a test can set them per case:
 
-  PUBLIC_URL                 the tier's public origin; /callback hangs off it. Its scheme
+  PUBLIC_URL                 the tier's public origin; the default callback hangs off it. Its scheme
                              is the production discriminant: https turns on secure
                              cookies, turns off dev-login and arms ``preflight``
                              (as FAMILYSEARCH_WEB_ENABLED does, at any scheme). Its path
@@ -40,6 +40,26 @@ Settings are read from the environment at call time, so a test can set them per 
   OPENROUTER_LINKING_ENABLED true: serve the /openrouter routes (#3988) and say so in
                              /auth/config; unset or false: every /openrouter route is a 404.
                              Anything else refuses to start
+  FS_REDIRECT_URI            the FamilySearch redirect URI (#3992); the callback is served at
+                             its path, less PUBLIC_URL's prefix. Unset: PUBLIC_URL + /callback.
+                             Refuses to start unless it is an absolute http(s) URL whose path is
+                             unreserved segments (no '.' or '..'), with no user info, query or
+                             fragment, and, on PUBLIC_URL's host, PUBLIC_URL's scheme and a path
+                             under its prefix (``callback_path``)
+  GENEALOGY_SIGNIN_CALLS_PER_MINUTE  the sign-in budget (#3992): the code exchange and the
+                             identity read share this many calls per sliding minute, two per
+                             sign-in. Unset: no budget. Anything but a whole number of at least
+                             2 refuses to start
+  OAUTH_ISSUER               the connector's authorization server (#3997, web/connector_auth.py).
+                             Unset: none of its routes exist. Set: it must equal PUBLIC_URL, which
+                             must have no path, with FamilySearch sign-in on and the chat off;
+                             anything else refuses to start. The tools tier takes the same value
+
+With the chat off (#3992) the session cookie lasts 24 hours rather than 30 days, sign-in asks
+for no ``offline_access``, and each sign-in consumes a single-use state record
+(``signin_states``) before it calls FamilySearch. A plain sign-in there creates no user
+(#3997): only the connector's consent does, so a chat-off tier with no ``OAUTH_ISSUER``
+admits existing users only.
 
 OpenRouter linking (#3988) is the second PKCE round-trip here: the patron's own OpenRouter
 key, stored under the same Fernet key as the FamilySearch grant (``encrypt``), which the
@@ -100,7 +120,9 @@ DEV_FS_TOKEN_ENC_KEY = grants.DEV_FS_TOKEN_ENC_KEY
 DEFAULT_PUBLIC_URL = "http://127.0.0.1:8085"
 
 COOKIE_NAME = "wb_session"
-COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+# #3992: the session's life, in the cookie and in the signature check that actually ends it.
+SESSION_MAX_AGE_CHAT_S = 60 * 60 * 24 * 30  # 30 days, the handoff's
+SESSION_MAX_AGE_NO_CHAT_S = 60 * 60 * 24  # a beta user signs in every sitting
 FS_OAUTH_COOKIE = "fs_oauth"
 FS_OAUTH_MAX_AGE = 600
 DEV_LOGIN_EMAIL = "dev@localhost"
@@ -137,9 +159,16 @@ BROWSER_USER_AGENT = (
 # engine's FS_ACCESS_TOKEN_LIFETIME_S.
 FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60
 
-# Where the callback may send the browser afterwards: only a hash route of our own SPA.
-# The value rides a cookie the browser controls, so anything else is an open redirect.
-SAFE_NEXT_RE = re.compile(r"^#/[A-Za-z0-9/_-]{0,120}$")
+# Where the callback may send the browser afterwards: a hash route of our own SPA, or
+# exactly one chat-off upload page, ``upload/proj_<16 hex>`` (#4001), the one shape both the
+# web tier and the connector mint. ``redirect_target`` appends it to ``<origin>/``. The
+# value rides a cookie the browser controls, so anything else is an open redirect: no
+# leading ``/``, no ``\``, ``.``, ``?`` or scheme can match. ``\Z``, not ``$``, which also
+# matches before a trailing newline.
+# The project id both minters use (the web tier and the connector); the upload page's route
+# takes only this shape too (web/app.py UPLOAD_PAGE_ID_RE), so a sign-in can return to it.
+PROJECT_ID_PATTERN = r"proj_[0-9a-f]{16}"
+SAFE_NEXT_RE = re.compile(rf"^(?:#/[A-Za-z0-9/_-]{{0,120}}|upload/{PROJECT_ID_PATTERN})\Z")
 # PUBLIC_URL's path: unreserved segments only, since it is written into a cookie Path and
 # the SPA's HTML.
 BASE_PATH_RE = re.compile(r"^(/[A-Za-z0-9._~-]+)*$")
@@ -161,12 +190,19 @@ def base_path() -> str:
     outside ``BASE_PATH_RE`` or any query or fragment, at any scheme."""
     parts = urlsplit(public_url())
     path = parts.path.rstrip("/")
-    if parts.query or parts.fragment or "?" in public_url() or "#" in public_url() or not BASE_PATH_RE.match(path):
+    if (parts.query or parts.fragment or "?" in public_url() or "#" in public_url() or not BASE_PATH_RE.match(path)
+            or _has_dot_segment(path)):
         raise RuntimeError(
             f"Refusing to start: PUBLIC_URL {public_url()!r} must be an origin plus an optional path of "
             "unreserved segments (A-Z a-z 0-9 . _ ~ -), with no query or fragment"
         )
     return path
+
+
+def _has_dot_segment(path: str) -> bool:
+    """``.`` or ``..`` as a whole segment: ``BASE_PATH_RE`` admits them, and a browser
+    normalizes them away, so the path it sends is not the one written."""
+    return any(seg in (".", "..") for seg in path.split("/"))
 
 
 def cookie_path() -> str:
@@ -190,7 +226,8 @@ def deletion_code(user_id: str) -> str:
 
     Rotating ``SESSION_SECRET`` changes every code. That is harmless: rotation also signs
     everyone out, and the account menu shows the new code. Never log it, put it in a
-    feedback bundle, or return it from any route but ``GET /api/account``.
+    feedback bundle, or return it from any route but ``GET /api/account`` and the chat-off
+    signed-in page at ``GET /`` (#4001), both ``private, no-store``.
     """
     return hmac.new(session_secret().encode(), b"deletion-code:" + user_id.encode(), hashlib.sha256).hexdigest()[:20]
 
@@ -246,6 +283,50 @@ def positive_int_env(name: str) -> int | None:
 def max_users() -> int | None:
     """``GENEALOGY_MAX_USERS``: the user cap, or None (unset or empty) for the allowlist."""
     return positive_int_env("GENEALOGY_MAX_USERS")
+
+
+def signin_calls_per_minute() -> int | None:
+    """``GENEALOGY_SIGNIN_CALLS_PER_MINUTE`` (#3992): the sign-in budget, or None (unset) for
+    none. At least 2: a sign-in takes two calls at once, so 1 would refuse every sign-in."""
+    value = positive_int_env("GENEALOGY_SIGNIN_CALLS_PER_MINUTE")
+    if value == 1:
+        raise RuntimeError(
+            "GENEALOGY_SIGNIN_CALLS_PER_MINUTE is '1': a sign-in takes two calls, so set it to 2 or more, "
+            "or leave it unset"
+        )
+    return value
+
+
+def oauth_issuer() -> str | None:
+    """``OAUTH_ISSUER`` (#3997): the connector's authorization server, or None (unset) for
+    none. The issuer is this tier's own origin, printed byte for byte as the tools tier
+    prints it, so it must equal ``public_url()`` (which never ends in a slash) and
+    PUBLIC_URL can carry no path: ``/.well-known/oauth-authorization-server`` cannot sit
+    under a prefix the edge strips. The flow signs users in with FamilySearch and relies on
+    the chat-off tier's single-use sign-in state and policy pages, so both are required."""
+    issuer = _env("OAUTH_ISSUER")
+    if not issuer:
+        return None
+    problems = []
+    if issuer != public_url():
+        problems.append(f"it must equal PUBLIC_URL ({public_url()}), with no trailing slash")
+    if base_path():
+        problems.append("PUBLIC_URL must have no path")
+    if not familysearch_enabled():
+        problems.append("FAMILYSEARCH_WEB_ENABLED must be on")
+    if chat_enabled():
+        problems.append("GENEALOGY_CHAT must be false")
+    if problems:
+        raise RuntimeError(f"Refusing to start: OAUTH_ISSUER is {issuer!r}, but " + "; ".join(problems))
+    return issuer
+
+
+def session_max_age(*, chat: bool | None = None) -> int:
+    """The session's life in seconds (#3992): 24 hours with the chat off, 30 days with it on.
+    The tier passes ``app.state.chat``, the value its routes were built with; ``None`` reads
+    ``GENEALOGY_CHAT`` (a script with no app)."""
+    on = chat_enabled() if chat is None else chat
+    return SESSION_MAX_AGE_CHAT_S if on else SESSION_MAX_AGE_NO_CHAT_S
 
 
 def familysearch_enabled() -> bool:
@@ -307,13 +388,20 @@ def preflight() -> None:
       OAuth state; a default or empty FS_TOKEN_ENC_KEY encrypts every grant and key under a
       public string. Only http with both off (compose's dev-login tier) may start on the
       defaults.
-    - ``GENEALOGY_CHAT`` or ``OPENROUTER_LINKING_ENABLED`` other than true/false, or
-      ``GENEALOGY_MAX_USERS`` other than a positive integer, at any scheme.
+    - ``GENEALOGY_CHAT`` or ``OPENROUTER_LINKING_ENABLED`` other than true/false,
+      ``GENEALOGY_MAX_USERS`` other than a positive integer,
+      ``GENEALOGY_SIGNIN_CALLS_PER_MINUTE`` other than a whole number of at least 2, or an
+      ``FS_REDIRECT_URI`` that is not an absolute http(s) URL with a path, at any scheme.
+    - An ``OAUTH_ISSUER`` that is not PUBLIC_URL, or one set with a PUBLIC_URL path,
+      FamilySearch sign-in off or the chat on (``oauth_issuer``).
     """
     base_path()
     chat_enabled()
     or_on = openrouter_linking_enabled()
     max_users()
+    signin_calls_per_minute()
+    callback_path()
+    oauth_issuer()
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()
@@ -344,7 +432,7 @@ OR_OAUTH_SALT = "or-oauth"
 
 
 def _state_cookie(salt: str, payload: dict[str, Any], next_route: str | None) -> str:
-    """A flow's signed state cookie; ``next`` kept only when it is a safe SPA route."""
+    """A flow's signed state cookie; ``next`` kept only when ``SAFE_NEXT_RE`` admits it."""
     if next_route and SAFE_NEXT_RE.match(next_route):
         payload = {**payload, "next": next_route}
     return URLSafeTimedSerializer(session_secret(), salt=salt).dumps(payload)
@@ -369,12 +457,13 @@ def session_cookie_value(user_id: str, *, iat: float | None = None) -> str:
     return _session_serializer().dumps({"uid": user_id, "iat": time.time() if iat is None else iat})
 
 
-def read_session_cookie(token: str | None) -> dict[str, Any] | None:
-    """``{uid, iat}``, or None for a missing, forged or expired cookie."""
+def read_session_cookie(token: str | None, *, chat: bool | None = None) -> dict[str, Any] | None:
+    """``{uid, iat}``, or None for a missing, forged or expired cookie. ``chat`` as for
+    ``session_max_age``: the signature check is what ends the session."""
     if not token:
         return None
     try:
-        data = _session_serializer().loads(token, max_age=COOKIE_MAX_AGE)
+        data = _session_serializer().loads(token, max_age=session_max_age(chat=chat))
     except BadSignature:
         return None
     return data if isinstance(data, dict) and isinstance(data.get("uid"), str) else None
@@ -386,6 +475,16 @@ def cookie_kwargs() -> dict[str, Any]:
 
 def oauth_state_cookie(verifier: str, state: str, next_route: str | None) -> str:
     return _state_cookie(FS_OAUTH_SALT, {"verifier": verifier, "state": state}, next_route)
+
+
+def connector_state_cookie(verifier: str, state: str, connector: dict[str, Any]) -> str:
+    """The FamilySearch state cookie of a sign-in the connector's consent page started
+    (#3997): the plain flow's, plus the pending authorization request and the terms
+    acceptance the consent click gave. The same cookie and salt, so the one callback reads
+    either; only the consent POST writes this shape, after checking the request it signed."""
+    return _state_cookie(
+        FS_OAUTH_SALT, {"verifier": verifier, "state": state, "connector": connector, "terms": True}, None,
+    )
 
 
 def read_oauth_state_cookie(token: str | None) -> dict[str, Any] | None:
@@ -449,17 +548,67 @@ def pkce() -> tuple[str, str]:
 
 
 def redirect_uri() -> str:
-    """The registered redirect is a TOP-LEVEL /callback on the public URL. The dev key's
-    only registration is http://127.0.0.1:1837/callback, which is why the compose
+    """``FS_REDIRECT_URI`` (#3992), else a TOP-LEVEL /callback on the public URL. The dev
+    key's only registration is http://127.0.0.1:1837/callback, which is why the compose
     override publishes this tier on 1837. Under a prefix PUBLIC_URL carries it, so the
-    registration is ``<prefix>/callback``."""
-    return f"{public_url()}/callback"
+    default registration is ``<prefix>/callback``. ``authorize_url`` and ``exchange_code``
+    both send this value, as FamilySearch requires."""
+    return _env("FS_REDIRECT_URI", f"{public_url()}/callback")
 
 
-def authorize_url(challenge: str, state: str) -> str:
+def callback_path() -> str:
+    """The path the callback route is served at: ``redirect_uri()``'s, less PUBLIC_URL's
+    prefix when it sits under it on a segment boundary (the edge strips the prefix before
+    the request reaches the tier). The path is taken exactly as FamilySearch will send the
+    browser back to it, so it must be unreserved segments (``BASE_PATH_RE``: no trailing
+    slash, no percent-encoding, which the route would match differently). Raises on a
+    redirect that is not an absolute http(s) URL, carries a query or fragment, or whose path
+    is empty, ``/`` or the prefix itself (each of those is the SPA's root), and on one on
+    PUBLIC_URL's host outside its prefix, where the cookies are scoped. Another host stays
+    allowed: P0.4's loopback bounce forwards to this one."""
+    prefix = base_path()  # first, so a bad PUBLIC_URL is reported as itself
+    uri = redirect_uri()
+    parts = urlsplit(uri)
+    path = parts.path
+    if (parts.scheme not in ("http", "https") or not parts.hostname or "@" in parts.netloc
+            or parts.query or parts.fragment or "?" in uri or "#" in uri or not path
+            or not BASE_PATH_RE.match(path) or _has_dot_segment(path) or path == prefix):
+        raise RuntimeError(
+            f"Refusing to start: FS_REDIRECT_URI {uri!r} must be an absolute http(s) URL with no user "
+            "info, whose path is one or more unreserved segments (A-Z a-z 0-9 . _ ~ -, no '.' or '..' "
+            "segment) other than PUBLIC_URL's own path, with no trailing slash, query or fragment"
+        )
+    public = urlsplit(public_url())
+    # Cookies are scoped to a host, whatever its port or spelling.
+    same_host = parts.hostname.rstrip(".") == (public.hostname or "").rstrip(".")
+    if same_host and parts.scheme != public.scheme:
+        raise RuntimeError(
+            f"Refusing to start: FS_REDIRECT_URI {uri!r} is on PUBLIC_URL's host under another scheme, "
+            "where the sign-in cookies are not sent"
+        )
+    if prefix and same_host and not path.startswith(prefix + "/"):
+        raise RuntimeError(
+            f"Refusing to start: FS_REDIRECT_URI {uri!r} is on PUBLIC_URL's host but outside its path "
+            f"{prefix!r}, where the sign-in cookies are not sent"
+        )
+    if prefix and path.startswith(prefix + "/"):
+        path = path[len(prefix):]
+    return path
+
+
+def state_sha256(state: str) -> str:
+    """The single-use state record's key (017_connector_auth.sql): lowercase hex sha256 of
+    the UTF-8 state."""
+    return hashlib.sha256(state.encode("utf-8")).hexdigest()
+
+
+def authorize_url(challenge: str, state: str, *, chat: bool | None = None) -> str:
+    """With the chat off (#3992) no ``scope`` at all: the beta refreshes nothing, so it asks
+    for no ``offline_access``. With it on, exactly the handoff's request. ``chat`` as for
+    ``session_max_age``."""
     from urllib.parse import urlencode
 
-    return FS_AUTHORIZE_URL + "?" + urlencode({
+    params = {
         "response_type": "code",
         "client_id": client_id(),
         "redirect_uri": redirect_uri(),
@@ -467,7 +616,41 @@ def authorize_url(challenge: str, state: str) -> str:
         "state": state,
         "code_challenge": challenge,
         "code_challenge_method": "S256",
-    })
+    }
+    if not (chat_enabled() if chat is None else chat):
+        del params["scope"]
+    return FS_AUTHORIZE_URL + "?" + urlencode(params)
+
+
+class SigninBudget:
+    """The web tier's own FamilySearch sign-in budget (#3992, ``GENEALOGY_SIGNIN_CALLS_PER_MINUTE``):
+    at most ``limit`` calls in any sliding 60 s, held in process memory. ``try_take`` checks
+    and takes in one synchronous step, so no other coroutine runs between the two, and takes
+    all ``n`` units or none. ``clock`` is for tests."""
+
+    WINDOW_S = 60.0
+
+    def __init__(self, limit: int, clock: Any = time.monotonic) -> None:
+        from collections import deque
+
+        self.limit = limit
+        self._clock = clock
+        self._taken: deque[float] = deque()
+
+    def try_take(self, n: int) -> bool:
+        now = self._clock()
+        while self._taken and now - self._taken[0] >= self.WINDOW_S:
+            self._taken.popleft()
+        if len(self._taken) + n > self.limit:
+            return False
+        self._taken.extend([now] * n)
+        return True
+
+    def give_back(self, n: int) -> None:
+        """Return the ``n`` most recent units: a sign-in that took them and then made no
+        FamilySearch call (it lost the state's consume) spent nothing."""
+        for _ in range(min(n, len(self._taken))):
+            self._taken.pop()
 
 
 async def exchange_code(code: str, verifier: str) -> dict[str, Any] | None:

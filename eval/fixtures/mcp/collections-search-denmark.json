@@ -5,9 +5,7 @@
     "standardPlace": "~"
   },
   "response": {
-    "query": {
-      "standardPlace": "Stagstrup, Thisted, Denmark"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Denmark",
     "totalForPlace": 4,
     "results": [
@@ -15,41 +13,25 @@
         "id": "2078555",
         "title": "Denmark, Church Books, 1484-1941",
         "dateRange": "1484-1941",
-        "recordCount": 18234567,
-        "personCount": 15102938,
-        "imageCount": 5231120,
-        "url": "https://www.familysearch.org/search/collection/2078555",
-        "notes": "Parish registers (kirkebøger): baptisms, confirmations, marriages, burials. Indexing coverage varies sharply by parish and period; many rural volumes are browse-only."
+        "personCount": 15102938
       },
       {
         "id": "2513529",
         "title": "Denmark, Military Levying Rolls (Lægdsruller), 1789-1861",
         "dateRange": "1789-1861",
-        "recordCount": 200408,
-        "personCount": 200408,
-        "imageCount": 1148210,
-        "url": "https://www.familysearch.org/search/collection/2513529",
-        "notes": "Conscription registers listing males from birth or early childhood under the father's name, tracked across annual/triennial sessions by levying district (lægd)."
+        "personCount": 200408
       },
       {
         "id": "1401625",
         "title": "Denmark Census, 1787-1930",
         "dateRange": "1787-1930",
-        "recordCount": 21033401,
-        "personCount": 21033401,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/1401625",
-        "notes": "National censuses beginning 1787 and 1801 — household composition with ages and relationships."
+        "personCount": 21033401
       },
       {
         "id": "2015318",
         "title": "Denmark, Probate Indexes, 1674-1851",
         "dateRange": "1674-1851",
-        "recordCount": 1310442,
-        "personCount": 1310442,
-        "imageCount": 1310442,
-        "url": "https://www.familysearch.org/search/collection/2015318",
-        "notes": "Skifteprotokoller (estate/probate) indexes by district, name-searchable; coverage of the period is uneven, and index entries are mostly not linked to the estate volumes, which are browse-only images."
+        "personCount": 1310442
       }
     ]
   }

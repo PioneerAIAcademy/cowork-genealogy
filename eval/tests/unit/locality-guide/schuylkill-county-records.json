@@ -36,7 +36,10 @@
     "wiki-read-any",
     "external-links-search-any",
     "place-population-any",
-    "place-search-all-any"
+    "place-search-all-any",
+    "catalog-search-empty",
+    "wiki-search-any",
+    "wikipedia-search-any"
   ],
   "judge_context": [
     "Should identify specific record classes available in the 1840s-1860s: federal census (1850, 1860), church records (Catholic parishes for Irish immigrants; Lutheran for Germans), land records and tax assessments (county courthouse), early naturalization records",

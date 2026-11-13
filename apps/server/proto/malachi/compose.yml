@@ -1,0 +1,212 @@
+# The remote MCP server's stack on malachi: the web tier with the chat off, the tool server,
+# Postgres, MinIO and an nginx edge. Standalone on purpose: an overlay on ../docker-compose.yml
+# cannot drop that file's publishes (`ports: []` keeps them) and `!reset` crashes
+# test_proto_config. `make malachi-*` drives it (README.md); tests/test_malachi_stack.py pins it.
+#
+# Only the edge publishes, and only on 127.0.0.1:8006, which Funnel serves at the public root,
+# so whatever binds that port is public at once. It waits for web and tools to be healthy.
+#
+# Secrets reach a service through ${VAR:?} from the env file alone. No env_file: a service
+# sees only what is named here, so MinIO's root password stays out of the edge and the rest.
+name: genealogy-beta
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 2g
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_DB: genealogy
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in the env file}
+    volumes:
+      - ${DATA_DIR:?set in the env file}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      # TCP: the image's first-run init server answers on the socket alone.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d genealogy"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # pgsty/minio's CMD is bare `minio`, which prints usage and exits 0, so the command is
+  # required. Nothing publishes the console, so it stays off.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 1g
+    command: ["server", "/data"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in the env file}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in the env file}
+      MINIO_BROWSER: "off"
+    volumes:
+      - ${DATA_DIR:?set in the env file}/minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # One-shot: creates the bucket, then exits 0. Credentials by environment, never argv.
+  # malachi.sh also runs `mc` from this service for backups and restores.
+  minio-init:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: "no"
+    logging: *logging
+    entrypoint: ["mc"]
+    command: ["mb", "--ignore-existing", "beta/projects"]
+    environment:
+      MC_HOST_beta: http://${MINIO_ROOT_USER:?set in the env file}:${MINIO_ROOT_PASSWORD:?set in the env file}@minio:9000
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  # One-shot: the schema, then the services' DML-only role. The only service with the owner
+  # DSN. Web's build rather than `image:`, which would make a partial `up` pull it.
+  migrate:
+    build:
+      context: ../../../..
+      dockerfile: apps/server/proto/web/Dockerfile
+    restart: "no"
+    logging: *logging
+    labels:
+      genealogy.git-sha: ${GIT_SHA:-unknown}
+    command: ["sh", "-c", "python migrate.py && python /opt/malachi/dml_role.py"]
+    environment:
+      MIGRATE_PG_DSN: postgresql://postgres:${POSTGRES_PASSWORD:?set in the env file}@postgres:5432/genealogy
+      DML_PASSWORD: ${DML_PASSWORD:?set in the env file}
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
+    volumes:
+      - ./dml_role.py:/opt/malachi/dml_role.py:ro
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # --no-access-log: uvicorn's access log prints the query string, sign-in codes included.
+  # WEB_DIST_DIR: the image bakes web-dist, so only an explicit blank serves no SPA.
+  # OPENSSL_armcap: the cryptography wheel needs it in a VM on Apple silicon; x86 ignores it.
+  # OPENROUTER_LINKING_ENABLED: a linked key reaches image_transcribe, so here only
+  # `make malachi-openrouter` puts one on a user's row.
+  web:
+    build:
+      context: ../../../..
+      dockerfile: apps/server/proto/web/Dockerfile
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 1g
+    command: ["uvicorn", "web.app:app", "--host", "0.0.0.0", "--port", "8085", "--no-access-log"]
+    labels:
+      genealogy.git-sha: ${GIT_SHA:-unknown}
+    environment:
+      GENEALOGY_CHAT: "false"
+      FAMILYSEARCH_WEB_ENABLED: "true"
+      UPLOADS_ENABLED: ${UPLOADS_ENABLED:-false}
+      OPENROUTER_LINKING_ENABLED: "false"
+      FS_REDIRECT_URI: ${FS_REDIRECT_URI:-}
+      GENEALOGY_SIGNIN_CALLS_PER_MINUTE: ${GENEALOGY_SIGNIN_CALLS_PER_MINUTE:-}
+      WEB_DIST_DIR: ""
+      PUBLIC_URL: ${PUBLIC_URL:?set in the env file}
+      # Claude's authorization server (#3997). The same value as the tools tier's below:
+      # both print it, and a client compares them byte for byte.
+      OAUTH_ISSUER: ${PUBLIC_URL:?set in the env file}
+      SESSION_SECRET: ${SESSION_SECRET:?set in the env file}
+      FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:?set in the env file}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
+      PG_DSN: postgresql://genealogy_dml:${DML_PASSWORD:?set in the env file}@postgres:5432/genealogy
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: ${MINIO_ROOT_USER:?set in the env file}
+      GENEALOGY_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set in the env file}
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+
+  # OAUTH_ISSUER alone marks this a deployment, so the default FS_TOKEN_ENC_KEY refuses start.
+  # dns: the host's resolver answers the public name with the tailnet address, and Tailscale's
+  # listener there is bound to tailscale0, so a container gets ECONNREFUSED. Public DNS gives
+  # the Funnel relay, the way every install reaches /wiki and /pop-stats. Docker still resolves
+  # the service names.
+  tools:
+    build:
+      context: ../../../..
+      dockerfile: apps/server/proto/tools/Dockerfile
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 2g
+    read_only: true
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    tmpfs:
+      - /tmp
+    labels:
+      genealogy.git-sha: ${GIT_SHA:-unknown}
+    environment:
+      OAUTH_ISSUER: ${PUBLIC_URL:?set in the env file}
+      WEB_PUBLIC_URL: ${PUBLIC_URL:?set in the env file}
+      UPLOADS_ENABLED: ${UPLOADS_ENABLED:-false}
+      GENEALOGY_SHARED_COLLECTIONS_CACHE: "true"
+      GENEALOGY_FS_CALLS_PER_MINUTE: ${GENEALOGY_FS_CALLS_PER_MINUTE:-}
+      GENEALOGY_MAX_TRANSCRIPTIONS: ${GENEALOGY_MAX_TRANSCRIPTIONS:-}
+      FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:?set in the env file}
+      WIKI_API_URL: ${WIKI_API_URL:-}
+      POP_STATS_URL: ${POP_STATS_URL:-}
+      GENEALOGY_PG_DSN: postgresql://genealogy_dml:${DML_PASSWORD:?set in the env file}@postgres:5432/genealogy
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: ${MINIO_ROOT_USER:?set in the env file}
+      GENEALOGY_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set in the env file}
+      GENEALOGY_ANCHOR_PATH: /project
+    volumes:
+      # {"hosted": true}: auth errors point at the web app, not the login tool.
+      - ../tools/config.json:/root/.familysearch-mcp/config.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  # genealogy.edge-conf: a bind's new content never changes compose's config hash, so this
+  # label, set from the file's git hash, is what recreates the edge when nginx.conf changes.
+  edge:
+    image: nginx:1.30.6-alpine
+    restart: unless-stopped
+    logging: *logging
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    labels:
+      genealogy.edge-conf: ${EDGE_CONF_SHA:-unknown}
+    ports:
+      - "127.0.0.1:${EDGE_PORT:-8006}:8006"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8006/livez"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      web:
+        condition: service_healthy
+      tools:
+        condition: service_healthy

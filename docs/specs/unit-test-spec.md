@@ -139,6 +139,14 @@ and a regrade prints the same count. Removing the fallback is the last step of
 the brief sweep. A scenario name must match its directory exactly; a mis-cased
 name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
+An `oversize_tool_result` entry in `output.warnings` (a harness advisory) means
+an MCP tool's answer was over Claude Code's token cap and reached the agent named
+in the entry only as a "too large, saved to file" notice. Its `can_read` says
+whether that agent holds `Read` (from its agent file's `tools:`; the main thread
+always does): `false` means the agent never saw that tool's answer, `true` means it
+could have opened the saved file. It is read from the run's transcripts, not the
+fixture's size, and is not shown to the judge.
+
 **How scenarios reach Claude:** The harness creates a temp directory per test, copies scenario files into it, and sets it as the `cwd` for the Claude Agent SDK session. Skills read `research.json` and `tree.gedcomx.json` with the `Read` tool exactly as they do in Cowork — no mocking of file I/O. See Section 15 for full details.
 
 The README.md describes the scenario in terms genealogists understand:
@@ -631,7 +639,7 @@ skill never fired still fails.
 | `user_message` | string | one of two | The exact user input fed to the test harness. For positive tests, this should trigger the skill. For negative tests, this should look like it might trigger the skill but shouldn't. **Known limitation:** this assumes single-turn interaction. Multi-turn skills (e.g., `search-external-sites`, which generates a URL then waits for a user to paste back a capture) are not supported in v1 |
 | `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (translation, historical-context, locality-guide, convert-dates) |
 | `scenario_notes` | string or null | no | Documentation only — the harness ignores this field. Describes how the test's required state differs from the selected scenario. The scenario must already contain the exact required state for the test to be runnable. When a junior can't find an exact scenario, they pick the closest one and describe the gap here, then either create a new scenario that matches or wait for one to be created. If the same notes appear in 3+ tests, promote to a new named scenario |
-| `delegation` | string | one of two | **Direct-agent arm.** The exact text the orchestrator hands the pair's agent, in place of a user turn. A test carries `user_message` **or** `delegation`, never both and never neither (`input.oneOf` in the schema). On a direct test the harness sends the main thread its own dispatcher prompt wrapping this string, and `test_direct_delegation_relayed_verbatim` fails the run unless the recorded `Agent` spawn contains it as an exact substring — see §5.2.1 |
+| `delegation` | string | one of two | **Direct-agent arm.** The exact text the orchestrator hands the pair's agent, in place of a user turn. A test carries `user_message` **or** `delegation`, never both and never neither (`input.oneOf` in the schema). On a direct test the harness sends the main thread its own dispatcher prompt wrapping this string, and `test_direct_delegation_relayed_verbatim` fails the run unless the recorded `Agent` spawn contains it as an exact substring, except that `/` and `\` are interchangeable inside the `projectPath:` value — see §5.2.1 |
 
 #### 5.2.1 The direct-agent arm
 
@@ -877,7 +885,9 @@ one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
 the like), plus whatever framing the twin is testing the agent's resistance to.
 Write a path argument as `<workspace>`. The harness replaces it with the run's
 folder in both the prompt the dispatcher relays and the delegation the verbatim
-assertion compares against; the judge still reads the raw text. Left literal, the
+assertion compares against — with `/` and `\` interchangeable inside the
+`projectPath:` value, since a Windows dispatcher has been measured rewriting
+them; the judge still reads the raw text. Left literal, the
 placeholder read to a Haiku agent as "no project".
 
 **Read a twin against its routed original over several runs, never one, and
@@ -974,7 +984,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 | `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
-| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `job` / `wrapup`; decision 25, `docs/plan/research-step-mode.md`). Omitted means no boundary, which is what every committed test runs under |
+| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `job` / `wrapup`; decision 25, `docs/specs/research-step-mode-spec.md`). Omitted means no boundary, which is what every committed test runs under except the few `test_step_mode_wiring.DECLARING_TESTS` lists |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
@@ -1376,7 +1386,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; the test-only `extraction-append` skill wrote to `assertions` or `sources` through `extraction_append`.
 2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (e.g., an agent writing a markdown file in the user's working folder).
 3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
-4. **A hand-off the run was stopped at.** On a test that sets `execution.stop_at_stub` (§5.7) the harness ends the run at the skill's first stubbed hand-off, before it can write or summarize, so the narration it leaves can be one short line naming the next row, which rule 3 reads as routing away. There the recorded hand-off is the skill's work (`derive_activated`'s `handed_off`). Only that stop sets it, so a skill that merely names another one is still not activated.
+4. **A stubbed hand-off.** On a positive test, a hand-off to a name in `execution.stub_skills` is the skill's work (`derive_activated`'s `handed_off`). A stub does no work, so the skill has little to report: its reply can be one short line naming the callee, which rule 3 reads as routing away, and a `stop_at_stub` run (§5.7) ends before it can summarize at all. Only a recorded hand-off sets it, so a skill that merely names another one is still not activated.
 
 **Why `skills_invoked` is required:** Activation derivation has access to file changes, tool calls, and text responses, but no per-side-effect attribution to a specific skill. `skills_invoked` is the harness's authoritative per-skill signal. Tool-call evidence is intentionally NOT used as a corroboration channel: shared tools (notably `validate_research_schema`, present in 14 of 23 skill allowlists) appear in many skills' `allowed-tools`; treating them as corroboration would mis-attribute a correctly-routed sibling skill's tool calls and file writes to the skill under test on negative tests. Prior versions of this spec included a fourth rule ("characteristic tool call activates") and a corroboration variant ("char tool unlocks file-change attribution"); both were removed because they produced false positives on negative tests where the routed-to skill calls a shared tool and writes to `research.json`.
 

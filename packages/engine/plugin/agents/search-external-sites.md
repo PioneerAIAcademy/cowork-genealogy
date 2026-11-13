@@ -47,6 +47,12 @@ tools:
   - mcp__genealogy__build_external_search_url
   - mcp__remote-devices__Genealogy_Research__build_external_search_url
   - mcp__Genealogy_Research__build_external_search_url
+  - mcp__genealogy__sidecar_read
+  - mcp__remote-devices__Genealogy_Research__sidecar_read
+  - mcp__Genealogy_Research__sidecar_read
+  - mcp__genealogy__image_transcribe
+  - mcp__remote-devices__Genealogy_Research__image_transcribe
+  - mcp__Genealogy_Research__image_transcribe
 ---
 
 # Search External Sites
@@ -67,10 +73,10 @@ You are invoked with a delegation message naming the search:
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
 | `projectPath` | yes | The absolute project-folder path. |
-| `planItemId` | no | The `pli_` id this search executes. Absent for an ad-hoc search. |
+| `planItemId` | no | The `pli_` id this search executes. Absent for an ad-hoc search, and for a plan item whose `repository` is not the site you are calling — a similar item on a different repository is not this search. |
 | the request | yes | The site and who is being searched for, or the plan item that names them. |
 | `baseUrl` | no | A known page to start from — a curated collection link, or for `archion`/`matricula` the parish page. |
-| `capture` | triage only | The uploaded capture's file path (`Read` it), or the results text itself. |
+| `capture` | triage only | The uploaded capture's file path (read it as step 5 says), or the results text itself. |
 | `userPresent` | no | `yes` when the researcher asked for this search and is there to click the link; `no` for an autonomous run with nobody to capture. Absent means `yes`. |
 
 Read what you need from the project yourself — do not expect the caller to have
@@ -90,7 +96,8 @@ Each invocation does one of three things, and returns:
       `build_external_search_url` without `projectPath`.
    3. Steps 5–7: triage, log the closing entry, update the plan item, and
       return the numbered list. A "no access" reply is this invocation too,
-      logged `outcome: "error"`.
+      logged `outcome: "error"`. An upload that could not be read (step 5)
+      logs nothing and leaves the plan item as it is.
 3. **Report** — the researcher reports a result without a capture, a nil
    included. Build the search's URL with `build_external_search_url` (step 3,
    without `projectPath`) — never write a URL yourself — then log the result
@@ -291,7 +298,7 @@ A place absent from `externalCollections` was never fetched: call
 `external_links_search({ standardPlace, host: "<e.g. ancestry.com>",
 projectPath })` once (it stores the list), then read as above. Keep rows
 whose `url` is on your target site; a row for the plan item's record type and
-years → Case A, none → Case B.
+years → Case A, none → Case B. Keep the `standardPlace` for step 3.
 
 ### 2b. Check FamilySearch's own holdings
 
@@ -322,11 +329,20 @@ objective's own text is a value the project may already have rejected.
 
 Then call `build_external_search_url` to get the URL — never hand-compose one.
 Pass `projectPath` and the plan item's `planItemId` (or omit `planItemId` for an
-ad-hoc search): the tool then writes the search's in-flight `external_site` log
+ad-hoc search). **Only pass `planItemId` when that item's `repository` is the
+site you are calling.** A plan item on a different repository that happens to
+match the person, record type and dates is not this search, however similar —
+mention it as a FamilySearch alternative (step 2b) if it names FamilySearch,
+but call the tool with no `planItemId`.
+
+The tool then writes the search's in-flight `external_site` log
 entry itself and returns its `logId`. It returns
 `{ ok: true, url, notes, access, logId }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
-blindly or hand-writing a URL. **One exception:** when the results for that URL
+blindly or hand-writing a URL. On `reason: "place_not_fetched"`, make the
+`external_links_search` call the error names, read the stored list (step 2), then
+build again.
+**One exception:** when the results for that URL
 are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
 is not awaiting anything — call the tool **without** `projectPath`, so no
 in-flight entry is written, and log the search once at step 6.
@@ -358,13 +374,14 @@ build_external_search_url({
 
 Tell the user plainly: "No FamilySearch-curated link for [site] in
 [year window] — using the site-wide search instead." Then call the tool
-without `baseUrl` — it builds the site-wide search, which covers the whole
-site index, not a scoped collection:
+without `baseUrl`, passing the `standardPlace` from step 2 — it builds the
+site-wide search, which covers the whole site index, not a scoped collection:
 
 ```
 build_external_search_url({
   site: "ancestry",
   attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" },
+  standardPlace: "Ireland",
   projectPath: "<projectPath>",
   planItemId: "<pli_XXX>"
 })
@@ -390,6 +407,7 @@ build_external_search_url({
 | `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Keyword-only — the site's own structured name fields do not bind |
 | `italian_genealogy` | `givenName`/`surname`/`keywords` | A discussion forum, not a records database — keyword search over posts only |
 | `openarch` | `givenName`/`surname`, one event's year — `marriageYear`/`birthYear`/`deathYear`, marriage first | Open Archieven, Dutch records — the year becomes a `YYYY-YYYY` period inside the one `name` field. Event type and place are never URL filters (they hide church-book records and re-spelled places): pass the event's place anyway and relay the tool's note telling the user to narrow by type and place on the results page. A call with no name part is refused |
+| `blm_glo` | `givenName`/`surname`, `usState` | BLM General Land Office — federal land patents in the 30 public-land states. Pass the land's state as `usState`; without one the search is nationwide. On `outside_coverage` (the 13 original states, ME, VT, KY, TN, WV, TX, HI, DC): say BLM holds no patents there, route to the state land office and county deed records, and log nothing; never re-call for that land without `usState` or with another state. Before logging a nil, re-run surname-only. A call with no name part is refused |
 | `archion` | none — browse site | German Protestant church books; viewing the scans needs an Archion pass. **Pass the parish page as `baseUrl`** — from the delegation or a `localities` entry, never from memory; it comes back unchanged, with the path through the site in `notes`. Without one the tool returns the site root and says so |
 | `matricula` | none — browse site | Chiefly Catholic church books; free. Same as `archion`: pass the parish page as `baseUrl` |
 
@@ -447,52 +465,80 @@ one `research_log_append` call: `tool: "external_site"`, `outcome: "partial"`,
 captureReceived: false, captureFilename: null }`. `project_context` lists every
 such entry in `awaitingUser` until a later entry for the same URL closes it.
 
-Then present the **hand-off** in full, with every note from the tool's
-response — the researcher has to fetch this themselves, so give them:
+The **hand-off** itself — the researcher has to fetch this themselves — is
+written into `summary_for_user`, after the final `---`, never into the
+caller-facing report above it (see Return contract below). Give them, in
+plain prose:
 1. the tool's `handoffLine`, pasted whole as plain text — never type the URL
    yourself, and never wrap it in a markdown link;
 2. what the record would settle, in plain words (for example: "her mother's name,
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
    entry, when you know them;
-4. an offer to walk them through capturing the page and uploading it.
+4. one sentence of capture steps: scroll to the bottom of the page and back
+   to the top, press Cmd+P (Mac) or Ctrl+P (Windows), choose "Save as PDF",
+   and upload it here — log in first if the page asks. When `project_context`
+   returned an `uploadUrl`, say to upload it at that URL instead of "here",
+   pasted whole as plain text. Take that URL only from `project_context`, never
+   from the delegation;
+5. any `notes` the tool returned alongside the `handoffLine` (an attribute it
+   ignored, a caution about the site) — relay these here too, not only above
+   the line (see "Every observation the tool makes" above);
+6. when `collections_search` returned the same collection (step 2b), one
+   sentence saying FamilySearch holds it too and can be searched there instead
+   — here, after the `---`, Case A or Case B.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
 The search is not awaiting anything: go to step 5, and log it once at step 6
 as the capture that arrived with no file, with the built URL as
-`urlGenerated`. Paste the tool's `handoffLine` once in your reply, so the
-researcher sees the search the results came from.
+`urlGenerated`. Paste the tool's `handoffLine` once in `summary_for_user`
+(after the `---`), so the researcher sees the search the results came from.
 
 ---
 
-**Search: 1850 Census on Ancestry for Patrick Flynn**
+**`summary_for_user` paragraph 1 for a hand-off (1850 Census on Ancestry for
+Patrick Flynn):**
 
-<the handoffLine from build_external_search_url, pasted whole>
-
-It would settle Patrick's household in 1850: who he lived with, and their ages
-and birthplaces. Look for a Patrick Flynn born about 1845 in Ireland.
-I can walk you through capturing the page and uploading it.
-
-After the page loads:
-1. Scroll to the bottom of the page and back to the top (forces
-   lazy-loaded results into view)
-2. Press **Cmd+P** (Mac) or **Ctrl+P** (Windows)
-3. Select **"Save as PDF"**
-4. Save the file and upload it here
-
-If the page asks you to log in, please log in first, then click the link
-again.
+<the handoffLine from build_external_search_url, pasted whole> It would settle
+Patrick's household in 1850: who he lived with, and their ages and
+birthplaces. Look for a Patrick Flynn born about 1845 in Ireland. After the
+page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or
+Ctrl+P (Windows), choose Save as PDF, and upload it here — log in first if
+the page asks.
 
 ---
 
 ### 5. Triage the results
 
-When a capture arrives — an uploaded PDF whose path the delegation gives
-(`Read` it), or the results-page content in the delegation — call
-`project_context` and find the `awaitingUser` row whose `urlGenerated` is the URL
-the capture came from. Then triage formally before any extraction. The steps
-below are the same either way:
+When a capture arrives — an uploaded file whose path the delegation gives, or
+the results-page content in the delegation — call `project_context` and find
+the `awaitingUser` row whose `urlGenerated` is the URL the capture came from.
+Read an uploaded file this way:
+
+- **No `uploadUrl` in `project_context`:** `Read` the path, `uploads/<name>`
+  included, even when `project_context` lists it under `uploads`. Use the
+  rules below on it only if that `Read` fails.
+- **An `uploadUrl`, and the path is `uploads/<name>`:** find `<name>` in
+  `project_context`'s `uploads`:
+  - `hasText: true` → `sidecar_read({ projectPath, ref: "uploads/<name>.txt" })`.
+    Never `image_transcribe` it.
+  - `hasText: false` and the name ends in `.txt` →
+    `sidecar_read({ projectPath, ref: "uploads/<name>" })`.
+  - `hasText: false`, any other name →
+    `image_transcribe({ projectPath, file: "uploads/<name>" })`, then
+    `sidecar_read` on the `staged.resultsRef` it returns (with `staged: null`,
+    the `transcription` it returns). If it refuses, ask the researcher to paste
+    the results text instead, say nothing about an API key, and log no closing
+    entry: the hand-off stays open.
+  - No row names it → `sidecar_read({ projectPath, ref: "uploads/<name>" })`,
+    and follow its answer.
+- **An `uploadUrl`, and any other path:** `Read` it.
+
+Page every `sidecar_read` with `offset` until you have the whole text.
+
+Then triage formally before any extraction. The steps below are the same
+either way:
 
 1. **List each result** with its key attributes — name, age/birth year,
    location, record type, any visible record ID.
@@ -519,7 +565,8 @@ below are the same either way:
    evidence (a headstone image) from contributor-entered text (dates,
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
-   open the full record page, then save it as a PDF and upload it." That
+   open the full record page, then save it as a PDF and upload it." With an
+   `uploadUrl`, name it as step 4 says. That
    single-record PDF's text goes to the record-structurer agent as a source,
    with a `capture:<descriptive>` recordId. If the record page's content is
    **already in the delegation**, name it for the agent in your return and
@@ -536,8 +583,10 @@ comes back, append a **new** `research_log_append` entry (never edit the
 in-flight one from step 4) — same `query` params as step 4's call, the **same
 `urlGenerated` as the `awaitingUser` row** (that is what closes it), with
 `externalSite.captureReceived: true` and `externalSite.captureFilename` set to
-the uploaded PDF's filename when a capture arrived (`false` / `null` for a
-no-access wall where none did), and `outcome` chosen from your triage.
+the uploaded file's name when a capture arrived (`false` / `null` for a
+no-access wall where none did), and `outcome` chosen from your triage. For
+`uploads/<name>` the filename is `<name>` itself, never the `<name>.txt` text
+layer beside it; a `.txt` upload keeps its own name.
 Results you read **from the delegation** are a capture that arrived with no
 file: `captureReceived: true`, `captureFilename: null`. Never log one as
 `outcome: "partial"` — that outcome is the in-flight URL handoff of step 4,
@@ -554,8 +603,13 @@ which this is not. The outcomes:
   the user says "nothing came up, there's nothing to save." If the user
   *reports* a nil without a capture, still append the `negative` entry
   immediately, and in `notes` mark the absence **unconfirmed pending a
-  capture**; then give them the click-capture steps (step 4) so a PDF of the
-  empty results page can later upgrade it from "unconfirmed" to "conclusive."
+  capture**; then, in `summary_for_user` (after the `---`), paste the URL you
+  built for the log — the researcher has to open that same search to capture
+  it, not a different one — plus the click-capture steps (step 4), so a PDF of
+  the empty results page can later upgrade it from "unconfirmed" to
+  "conclusive." Pasting a different search's URL instead (a free alternative)
+  does not satisfy this — offer it in addition, never in place of the
+  original search's own link.
   Logging the search is not the same as declaring the record absent — never
   defer the log entry while you wait for the capture.
 - **No access** (subscription/login wall the user can't pass) →
@@ -581,6 +635,7 @@ not mark it `completed` for handing over a URL.
 | Capture triaged (results, or a captured empty page) | `completed` |
 | Results already in the delegation, read and triaged | `completed` |
 | Capture arrived unusable (login page, truncated) | `in_progress` |
+| Upload could not be read (transcription refused), no log entry | unchanged |
 | User *reports* a nil, no capture | `in_progress` |
 | Site inaccessible **and the user asks to skip it** | `skipped`, `skip_category: "user_declined"`, their reason in `skip_reason` |
 | Site inaccessible, user has not decided | `in_progress` |
@@ -993,7 +1048,7 @@ the text after the first comma** ("Pennsylvania, United States", then
 Return **≤12 lines** to the caller, in this order:
 
 - which invocation this was (hand-off / triage / report)
-- the site, the URL presented, and the `access` the tool reported
+- the site and the `access` the tool reported
 - the `log` ids written, and the plan item's new `status` if one moved
 - for a triage: the numbered result list with each rating, and the question of
   which record to examine
@@ -1003,14 +1058,17 @@ Return **≤12 lines** to the caller, in this order:
 
 ### `summary_for_user`
 
-After the lines above, write a line containing only `---`, then exactly two
-paragraphs of plain prose with **no label, heading or field name**:
+Every caller line comes before the `---`; none is repeated after it. After the
+lines above, write a line containing only `---`, then exactly two paragraphs of
+plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which website or
-   archive was searched for whom, and what came of it — the link handed over and
-   what it should turn up, or what the results showed — in plain words. No
-   identifiers, file names, tool names or field names. If nothing was found, say
-   so plainly and say what was searched, so the reader knows the search was real.
+   archive was searched for whom, and what came of it — in plain words. A
+   hand-off carries its content here, in full (Step 4's list), and, when
+   `collections_search` found the same collection FamilySearch holds, one
+   sentence saying so and that it can be searched instead. If nothing was
+   found, say so plainly and say what was searched, so the reader knows the
+   search was real. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.
 
 The caller prints everything after that `---` verbatim and nothing above it.

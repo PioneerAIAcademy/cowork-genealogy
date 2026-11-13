@@ -15,7 +15,7 @@ from harness.orchestrator import (
     _negative_judge_context,
     _other_suite_names,
     _stop_at_stub,
-    _stopped_at_a_handoff,
+    _handed_off_to_a_stub,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
@@ -2441,18 +2441,26 @@ _ENTRY = {"tool": "Skill", "args": {"skill": "research"}}
 _SPAWN = {"tool": "Agent", "args": {"subagent_type": "question-selection"}}
 
 
-def test_stopped_at_a_handoff_needs_the_opt_in_and_a_stubbed_hand_off():
+def test_handed_off_to_a_stub_needs_a_stubbed_hand_off():
     stopping = _positive_spec_with(_STOPPING)
-    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, _SPAWN)) is True
-    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY)) is False, (
+    assert _handed_off_to_a_stub(stopping, _run_with(_ENTRY, _SPAWN)) is True
+    assert _handed_off_to_a_stub(stopping, _run_with(_ENTRY)) is False, (
         "the skill's own entry is not a stubbed hand-off"
     )
     unstubbed = {"tool": "Agent", "args": {"subagent_type": "gps-mentor"}}
-    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, unstubbed)) is False, (
-        "a hand-off to an unstubbed name is not what the stop ends at"
+    assert _handed_off_to_a_stub(stopping, _run_with(_ENTRY, unstubbed)) is False, (
+        "a hand-off to an unstubbed name is not a stubbed one"
     )
+
+
+def test_a_stubbed_hand_off_counts_on_a_test_that_keeps_going():
     plain = _positive_spec_with({"stub_skills": ["question-selection"]})
-    assert _stopped_at_a_handoff(plain, _run_with(_ENTRY, _SPAWN)) is False
+    assert _handed_off_to_a_stub(plain, _run_with(_ENTRY, _SPAWN)) is True
+
+
+def test_a_stubbed_hand_off_never_counts_on_a_negative_test():
+    negative = SimpleNamespace(type="negative", execution={"stub_skills": ["question-selection"]})
+    assert _handed_off_to_a_stub(negative, _run_with(_ENTRY, _SPAWN)) is False
 
 
 def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monkeypatch):
@@ -3166,3 +3174,45 @@ def test_a_covered_run_with_no_refusals_raises_neither_warning():
     kinds = [w["kind"] for w in out]
     assert "unknown_args_refused" not in kinds
     assert "uncovered_tool_call" not in kinds
+
+
+def test_oversize_hits_reach_the_run_entrys_warnings(tmp_path, monkeypatch):
+    """The hop from `result.oversize_tool_results` to `output.warnings` (#4380).
+
+    The capture and `_build_warnings` are each tested alone; this drives the
+    real `_execute_single_run` call between them. Deleting
+    `oversize_tool_results=...` or `test_id=spec.id` at that call reds this.
+    """
+    import asyncio
+
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        return SkillRunResult(text_response="done", skills_invoked=[], tool_calls=[],
+                              duration_ms=1.0, usage={"num_turns": 1})
+
+    def fake_capture(result, workspace):
+        result.oversize_tool_results = [{
+            "tool": "mcp__genealogy__person_read", "tool_use_id": "tu1",
+            "size": "168,770 characters across 1 line", "agent": "source-evaluation",
+            "can_read": False,
+        }]
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_capture_context_meters", fake_capture)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-11-10_10-00-00",
+    ))
+
+    hits = [w for w in entry["runs"][0]["output"].get("warnings", [])
+            if w["kind"] == "oversize_tool_result"]
+    assert [(w["test_id"], w["tool"], w["can_read"]) for w in hits] == [
+        (spec.id, "person_read", False)
+    ]

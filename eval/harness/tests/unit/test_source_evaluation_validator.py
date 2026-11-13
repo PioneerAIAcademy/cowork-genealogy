@@ -1805,3 +1805,579 @@ def test_a_memory_item_headed_unverifiable_needs_no_link():
         "### 2. Hole Family Photograph and Funeral Card (uploaded memory) — Unverifiable\n"
         "   Contributor upload; nothing to read.\n"
     )
+
+
+# --- an age's birth range is not a conflict (issue #4127) ----------------------
+#
+# The bad reply is the live one, verbatim: the table header and birth-date row,
+# and the opening of Finding 1, from the `source-evaluation` agent's final
+# message in feedback bundle feedback-2026-11-01T23-11-03-252755Z. The good
+# reply is the same report with the age-consistent cells reported as consistent.
+
+_AGE_TEST = json.loads(
+    (_REPO / "eval/tests/unit/source-evaluation/age-derived-birth-not-a-conflict.json").read_text(encoding="utf-8")
+)["test"]
+_age_guard = _VALIDATOR.test_age_derived_birth_is_not_a_conflict
+
+_TALLMAN_HEADER = (
+    "| Conclusion (profile value) | Cen-1850 | Cen-1865 | Cen-1870 | Cen-1875 | Cen-1880 | Cen-1910 "
+    "| DeathCert (4 indexings) | FaG / Stone |\n|---|---|---|---|---|---|---|---|---|\n"
+)
+_BAD_BIRTH_ROW = (
+    "| **Birth date:** 30 November 1838 | ~1839 (age 11) [CONF-B] | ~1839 (age 26) [CONF-B] | ~1841 (age 29) (cd) "
+    "| — | ~1840 (age 40) (cd) | ~1839 (age 71) [CONF-B] | 1839 (VT VR 1760-1954) [CONF-B]; — (3 others) "
+    "| 31 Jan 1839 (Find a Grave) [CONF-B]; age 74 yrs 6 mos 16 dys → ~31 Jan 1839 [CONF-B] |\n"
+)
+_GOOD_BIRTH_ROW = (
+    "| **Birth date:** 30 November 1838 | 1838–1839 (age 11) ✓ | 1838–1839 (age 26) ✓ | ~1841 (age 29) (cd) "
+    "| — | ~1840 (age 40) (cd) | 1838–1839 (age 71) ✓ | 1838–1839 (age 74 at death) ✓; — (3 others) "
+    "| 31 Jan 1839 (Find a Grave) [CONF-B]; age 74 yrs 6 mos 16 dys → ~31 Jan 1839 [CONF-B] |\n"
+)
+_BAD_FINDING = (
+    "**Finding 1 — Birth date: profile records 30 November 1838; every primary source points to 1839 "
+    "and the tombstone implies 31 January 1839 [CONF-B]**\n\n"
+    "The profile's birth date of 30 November 1838 is not corroborated by any attached source. Every source "
+    "that records a year gives 1839: the Vermont death record index (VT Vital Records 1760-1954, SMQJ-41H), "
+    "the 1850 census, the 1865 census, and the 1910 census all yield a derived birth year of 1839. The "
+    "tombstone reads \"74 yrs. 6 mos. 16 dys.\", which places the birth on 31 January 1839, not November 1838.\n"
+)
+_GOOD_FINDING = (
+    "**Finding 1 — Birth date: the tombstone and Find a Grave give 31 January 1839 against the profile's "
+    "30 November 1838 [CONF-B]**\n\n"
+    "The tombstone reads \"74 yrs. 6 mos. 16 dys.\" before 16 August 1913, which places the birth on 31 January "
+    "1839. The 1850, 1865 and 1910 censuses and the Vermont death index give ages whose window, 1838–1839, is "
+    "consistent with the profile's date; they are not findings.\n"
+)
+
+
+def _age_check(reply, test=_AGE_TEST):
+    _age_guard(reply, test, agent_returns=None)
+
+
+def test_the_live_report_is_caught():
+    """The reply the tester reported, verbatim: three censuses and a death index
+    marked [CONFLICT] on the birth date."""
+    with pytest.raises(AssertionError, match="age-derived"):
+        _age_check(_TALLMAN_HEADER + _BAD_BIRTH_ROW + "\n" + _BAD_FINDING)
+
+
+@pytest.mark.parametrize(
+    "cell, name",
+    [
+        ("| **Birth date:** 30 November 1838 | ~1839 (age 11) [CONF-B] | ✓ | — | — | — | ✓ | ✓ | — |", "1850 census"),
+        ("| **Birth date:** 30 November 1838 | ✓ | ~1839 (age 26) [CONF-B] | — | — | — | ✓ | ✓ | — |", "1865 census"),
+        ("| **Birth date:** 30 November 1838 | ✓ | ✓ | — | — | — | ~1839 (age 71) [CONF-B] | ✓ | — |", "1910 census"),
+        ("| **Birth date:** 30 November 1838 | ✓ | ✓ | — | — | — | ✓ | 1839 (VT VR 1760-1954) [CONFLICT] | — |", "Vermont, Vital Records"),
+    ],
+)
+def test_each_age_derived_source_is_caught_on_its_own(cell, name):
+    with pytest.raises(AssertionError, match=name):
+        _age_check(_TALLMAN_HEADER + cell + "\n\n31 Jan 1839 tombstone conflict with 30 November 1838.\n")
+
+
+def test_a_sentence_flag_is_caught():
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The 1850 census birth year of 1839 conflicts with the profile's 1838.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+def test_the_corrected_report_passes():
+    _age_check(_TALLMAN_HEADER + _GOOD_BIRTH_ROW + "\n" + _GOOD_FINDING)
+
+
+def test_dropping_the_exact_date_conflict_fails():
+    """The other direction: a range must not hide the tombstone's exact date."""
+    with pytest.raises(AssertionError, match="exact-date conflict"):
+        _age_check(_TALLMAN_HEADER + _GOOD_BIRTH_ROW.replace("[CONF-B]", "").replace("31 Jan 1839", "1839") + "\nNo findings.\n")
+
+
+def test_the_one_death_index_name_conflict_is_not_a_birth_flag():
+    """A death index flagged for the father's name is a different conflict."""
+    row = "| **Father:** Joseph Tallman | — | — | — | — | — | — | \"Jas Tallman\" (VT VR 1760-1954) [CONFLICT-D] | — |\n"
+    _age_check(_TALLMAN_HEADER + row + _GOOD_BIRTH_ROW + "\n" + _GOOD_FINDING)
+
+
+def test_the_guard_is_skipped_without_its_tag():
+    with pytest.raises(pytest.skip.Exception):
+        _age_guard(_TALLMAN_HEADER + _BAD_BIRTH_ROW, {**_AGE_TEST, "tags": []}, agent_returns=None)
+
+
+# The agent's own return pads a plain-text table: no leading pipe, `-+-` rules.
+# The first version read only leading-pipe tables, so the live baseline run that
+# flagged the 1850, 1865 and 1910 censuses passed this guard.
+_PADDED_TABLE = "\n".join(
+    [
+        "Conclusion         | Profile value      | Cen-1850        | Cen-1865        | Cen-1870",
+        "-------------------+--------------------+-----------------+-----------------+----------",
+        "Birth year         | 1838 (30 Nov 1838) | 1839 [CONFLICT] | 1839 [CONFLICT] | 1841 [cen. var]",
+        "Birth month/day    | 30 November        | -               | -               | -",
+    ]
+)
+
+
+def test_a_padded_table_without_leading_pipes_is_read():
+    flagged = _VALIDATOR._age_derived_flags(_PADDED_TABLE, _VALIDATOR._AGE_DERIVED_SOURCES)
+    assert "1850 census" in flagged and "1865 census" in flagged
+
+
+def test_a_padded_table_that_says_cen_var_is_not_flagged():
+    clean = _PADDED_TABLE.replace("[CONFLICT]", "[cen. var]")
+    assert _VALIDATOR._age_derived_flags(clean, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+_FOOTNOTED_BLOCK = """\
+Birth date - the most significant conflict on this profile
+
+- Every source that provides a birth year gives 1839, not 1838: the Vermont death records (SMQJ-41H, SMQJ-46L), the 1865 New York State Census and the 1910 US Census.
+- Find a Grave indexes a full birth date of 31 January 1839 (31 Jan).
+"""
+
+
+def test_a_bullet_block_under_a_birth_conflict_heading_is_read():
+    flagged = _VALIDATOR._age_derived_flags(_FOOTNOTED_BLOCK, _VALIDATOR._AGE_DERIVED_SOURCES)
+    assert "1865 census" in flagged and "1910 census" in flagged
+    assert "Vermont, Vital Records 1760-1954 death index" in flagged
+
+
+def test_a_parenthetical_denial_clears_only_its_own_source():
+    text = (
+        "Birth date - the most significant conflict on this profile\n\n"
+        "- The 1850 US Census (which puts it at 1839, within ordinary census variance of either year).\n"
+    )
+    assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+def test_an_unnamed_every_source_claim_is_flagged():
+    text = "The profile's date is inconsistent with every source in the audit list that speaks to birth year (all give 1839)."
+    flagged = _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES)
+    assert flagged and flagged[0].startswith("unnamed")
+
+
+def test_the_exact_date_sources_alone_are_not_flagged():
+    text = (
+        "Birth date - the core conflict\n\n"
+        "The tombstone reads Aet. 74 yrs 6 mos 16 dys, giving 31 January 1839. "
+        "Find a Grave independently lists 31 January 1839. The profile's 30 November 1838 disagrees.\n"
+    )
+    assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+def test_a_sentence_reporting_the_ranges_is_not_a_flag():
+    text = (
+        "Birth date - conflicts\n\n"
+        "- The 1850, 1865, and 1910 censuses all produce birthRanges of 1838-1839 from the recorded age.\n"
+    )
+    assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+def test_a_sentence_about_full_date_sources_is_not_an_unnamed_flag():
+    """Replay of a live run: "every attached source ... all sources that give a specific
+    full date give 31 January 1839" is about the tombstone, not the age-derived sources."""
+    _age_check(
+        _TALLMAN_HEADER + _GOOD_BIRTH_ROW + "\n"
+        "The specific date of 30 November 1838 is absent from every attached source; all sources "
+        "that give a specific full date instead give 31 January 1839.\n\n" + _GOOD_FINDING
+    )
+
+
+def test_an_unnamed_claim_about_every_birth_year_source_still_fails():
+    """The other direction: the same words about year-only sources are still a flag."""
+    with pytest.raises(AssertionError, match="unnamed"):
+        _age_check(
+            _TALLMAN_HEADER + _GOOD_BIRTH_ROW + "\n"
+            "All sources give 1839 as the birth year, which conflicts with the profile's 1838 birth.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+def test_a_consistent_verdict_after_a_citation_list_is_not_a_flag():
+    """Replay of a live run: a parenthetical id list between the source and "consistent with"."""
+    _age_check(
+        "The Vermont death records (VT-D/1954, VT-DB) record birth year 1839, which is consistent with "
+        "either November 1838 or January 1839, so they do not resolve the conflict.\n\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_a_long_parenthetical_does_not_hide_a_flag():
+    """The other direction: a long aside is not a citation list, so a later 'consistent' elsewhere
+    does not clear a source that was flagged first."""
+    with pytest.raises(AssertionError, match="Vermont"):
+        _age_check(
+            "The Vermont, Vital Records 1760-1954 death index birth year of 1839 conflicts with the profile "
+            "(a long aside about the cemetery and the funeral home that went on for a while) "
+            "consistent with nothing.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+_KEY_TABLE = (
+    "Label       | Source Title                    | Collection                          | FamilySearch URL\n"
+    "------------+---------------------------------+-------------------------------------+-----------------\n"
+    "VT Death-A  | Vermont death record            | Vermont, Vital Records, 1760-1954   | ark:/61903/1:1:2V7M-JMY\n"
+    "VT D&B      | Edward Mollman                  | Vermont, Deaths and Burials, 1871-1965 | ark:/61903/1:1:F8R4-RYM\n"
+    "Tombstone   | Whallon's Bay Cemetery          | Artifact                            | art:7349489\n\n"
+)
+_ALIAS_HEADER = "Fact        | Profile Value | VT Death-A | VT D&B | Tombstone\n" "------------+---------------+------------+--------+----------\n"
+
+
+def test_a_column_named_by_a_key_table_label_is_resolved_to_its_source():
+    """Replay of a live run: the agent labelled the Vermont indexes `VT Death-A` and `VT D&B`."""
+    row = "Birth date  | 30 Nov 1838   | Indexed yr: 1839 [CONFLICT] | Indexed yr: 1839 [CONFLICT] | 31 Jan 1839 [CONFLICT]\n"
+    with pytest.raises(AssertionError, match="Vermont"):
+        _age_check(_KEY_TABLE + _ALIAS_HEADER + row + "\nThe tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n")
+
+
+def test_a_key_table_label_with_a_clean_cell_is_not_a_flag():
+    """The other direction: the same labels with the range stated and no conflict pass."""
+    row = "Birth date  | 30 Nov 1838   | birthRange 1838-1839 | birthRange 1838-1839 | 31 Jan 1839 [CONFLICT]\n"
+    _age_check(_KEY_TABLE + _ALIAS_HEADER + row + "\nThe tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n")
+
+
+def test_a_bold_heading_ending_in_a_full_stop_closes_the_birth_block():
+    """Replay of a live run: a mother's-name finding after a birth finding is not a birth flag."""
+    _age_check(
+        "The profile records 30 November 1838 as Edward's birth date. Three independent sources directly conflict with this:\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n\n"
+        "**Mother's given name — partial conflict with 1850 census.**\n\n"
+        "The 1850 census names the wife of Joseph Tollman as Hannah Tollman.\n"
+    )
+
+
+def test_the_same_paragraph_without_a_heading_still_flags_the_census():
+    """The other direction: an age-derived census named inside the birth block is still a flag."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The profile records 30 November 1838 as Edward's birth date. Three independent sources directly conflict with this:\n"
+            "The 1850 census gives 1839.\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+def test_a_sentence_about_another_record_in_the_same_collection_is_not_a_flag():
+    """Replay of a live run: an unread record from the same Vermont collection is named by its
+    own id, and the collection title must not pull the Vermont death index into the sentence."""
+    _age_check(
+        'The one source that could not be retrieved, XF2X-BYV, "Edward M Tollman, Vermont Vital Records, '
+        '1760-1954", is the only remaining candidate that could be a birth registration carrying '
+        '"30 November 1838", so the profile birth date has a conflict with no support.\n\n'
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_the_same_collection_title_with_the_death_indexs_own_id_is_still_a_flag():
+    """The other direction: naming the death index by its id keeps the flag."""
+    with pytest.raises(AssertionError, match="Vermont, Vital Records"):
+        _age_check(
+            "The Vermont Vital Records, 1760-1954 death index (2V7M-JMY) birth year of 1839 conflicts with "
+            "the profile's birth date.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+def test_a_conflict_about_the_birth_mother_is_not_a_birth_date_flag():
+    """Replay of a live run: "birth mother" in a mother's-name conflict with the 1850 census."""
+    _age_check(
+        'The 1850 census (F) records "Joseph Tollman" with his wife listed as "Hannah Tollman." This creates '
+        "a genuine conflict with Jane Patterson, the 1913 informant's answer, unless Hannah was a stepmother "
+        "after the death of Edward's birth mother.\n\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_a_census_named_by_a_foreign_id_with_a_year_token_is_still_a_flag():
+    """The other direction: a bare-year token is exempt from the foreign-id rule, so a census cited
+    by some other id still counts when the sentence is about the birth date."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The 1850 census (ST8Y-Z2C) birth year of 1839 conflicts with the profile's birth date.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+def test_a_weakness_list_does_not_join_the_birth_item_to_the_mother_item():
+    """Replay of two live runs: "the birth date specifics are unresolved; the mother's name has a
+    genuine conflict (... Hannah in the 1850 census)" is two items, and only one is about birth."""
+    _age_check(
+        "The principal weaknesses are: the birth date specifics are unresolved and the year is in "
+        "question; the mother's name has a genuine conflict (Jane Patterson in death records vs Hannah "
+        "in the 1850 census); and three of the death records have indexing errors.\n\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_a_census_flagged_in_its_own_birth_item_after_a_semicolon_is_still_a_flag():
+    """The other direction: the semicolon only separates items, so the census named inside the
+    birth item itself is still caught."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The weaknesses are: the marriages are unsourced; the 1850 census birth year of 1839 conflicts "
+            "with the profile's birth date; and the residences are unsourced.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+_TAIL_CONFLICT = "\nThe tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+
+
+def test_a_consistent_cluster_sentence_outside_a_finding_is_not_an_unnamed_flag():
+    """Replay of a live run: "all specific death-record evidence clusters around 1839 as the birth
+    year" reports no conflict, and "death-record" must not read as the word "records"."""
+    _age_check(
+        "The year 1838 is at the edge of most source ranges, and all specific death-record evidence "
+        "clusters around 1839 as the birth year." + _TAIL_CONFLICT
+    )
+
+
+def test_the_same_claim_inside_a_birth_finding_is_still_an_unnamed_flag():
+    """The other direction: inside a birth finding block the claim is a flag."""
+    with pytest.raises(AssertionError, match="unnamed"):
+        _age_check(
+            "**Finding 1 — Birth date conflict with the profile**\n\n"
+            "Every source that records a year gives 1839 as the birth year." + _TAIL_CONFLICT
+        )
+
+
+def test_the_profile_year_alone_in_a_birth_finding_is_not_a_flag():
+    """Replay of a live run: the Vermont death record is named only to say it does not reflect
+    the profile's 30 November 1838, which counts it toward no other year."""
+    _age_check(
+        "**Finding 1 — Birth date conflict with the profile**\n\n"
+        'The source of the profile\'s "30 November 1838" is not reflected in any indexed record retrieved, '
+        "including the Vermont death record attached to the birth conclusion.\n"
+        + _TAIL_CONFLICT
+    )
+
+
+def test_a_census_counted_toward_a_different_year_in_a_birth_finding_is_still_a_flag():
+    """The other direction: a year other than the profile's, in a birth finding, still counts."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "**Finding 1 — Birth date conflict with the profile**\n\n"
+            "The 1850 census gives 1839 as the birth year.\n" + _TAIL_CONFLICT
+        )
+
+
+def test_a_year_range_in_a_research_suggestion_does_not_name_a_census():
+    """Replay of a live run: "a marriage ... circa 1865–1875" is not the 1865 census."""
+    _age_check(
+        "The highest-priority actions are: resolve the birth date conflict (re-read the death "
+        "certificate), locate a marriage record for Clarissa Wade (a marriage in Essex County, "
+        "circa 1865–1875), and investigate the mother." + _TAIL_CONFLICT
+    )
+
+
+def test_a_lone_census_year_still_names_the_census():
+    """The other direction: the bare year on its own, not in a range, still names the census."""
+    with pytest.raises(AssertionError, match="1865 census"):
+        _age_check(
+            "The 1865 census birth year of 1839 conflicts with the profile's birth date." + _TAIL_CONFLICT
+        )
+
+
+def test_a_lettered_weakness_list_does_not_join_the_birth_item_to_the_mother_item():
+    """Replay of a live run: "(a) the specific birth date ..., (b) both marriages (only the 1865 census
+    as evidence), (c) the mother's name (a genuine conflict between the 1850 census ...)" is three items."""
+    _age_check(
+        "The weakest areas are: (a) the specific birth date (30 November 1838, no source here supports it), "
+        "(b) both marriages (year-only dates, and the first marriage has only the 1865 census as evidence), "
+        "(c) the mother's name (a genuine conflict between the 1850 census and the death records), and "
+        "(d) the two surname misreadings." + _TAIL_CONFLICT
+    )
+
+
+def test_a_census_flagged_inside_its_own_lettered_birth_item_is_still_a_flag():
+    """The other direction: the markers only separate items, so the census named inside the birth
+    item itself is still caught."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The weakest areas are: (a) both marriages are unsourced, (b) the 1850 census birth year of 1839 "
+            "conflicts with the profile's birth date, (c) the residences are unsourced." + _TAIL_CONFLICT
+        )
+
+
+_TAG_HEADER = "Fact        | Profile Value | Cen-1850 | Cen-1865\n" "------------+---------------+----------+---------\n"
+
+
+def test_a_conflict_tag_on_a_birth_cell_counts_whatever_else_the_cell_says():
+    """The lead's shape: "1839 [CONFLICT] agrees with tombstone" carries a denial phrase and a tag."""
+    row = "Birth date  | 30 Nov 1838   | Indexed 1839 [CONFLICT] agrees with tombstone | Indexed 1839; range Bet 1838-1839\n"
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_denial_phrase_without_a_conflict_tag_is_still_not_a_flag():
+    """The other direction: the same wording with no tag is a denial, as before."""
+    row = "Birth date  | 30 Nov 1838   | Indexed 1839, consistent with the profile | Indexed 1839; range Bet 1838-1839\n"
+    _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+
+def test_not_recorded_as_conflicts_is_a_denial():
+    """The live Tallman run the agent wrote right ("Not recorded as conflicts (census
+    variance)") and the guard flagged: the denial allowed one word, not three."""
+    cell = "Agrees: [1850], [1865], [1910] each give 1838-1839. Not recorded as conflicts (census variance): [1870] 1840-1841."
+    row = "Birth date  | 30 Nov 1838   | " + cell + " | Indexed 1839; range Bet 1838-1839\n"
+    _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+    _age_check("The 1850 census birth year was never flagged as a disagreement with the profile's birth date." + _TAIL_CONFLICT)
+
+
+def test_recorded_as_a_conflict_is_still_a_flag():
+    """The other direction: the same verbs with no negation, or a tag, still flag."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year is recorded as a conflict with the profile's birth date." + _TAIL_CONFLICT)
+    row = "Birth date  | 30 Nov 1838   | Not recorded as conflicts: 1839 [CONFLICT] | Indexed 1839; range Bet 1838-1839\n"
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_denial_does_not_clear_a_real_conflict_tag_in_the_same_clause():
+    """Review finding on PR 4465: a clause that disclaims one thing and flags another was
+    cleared whole, because the denial itself carries the conflict word."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year is not recorded as conflicts but [CONFLICT] with 1838." + _TAIL_CONFLICT)
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year was never treated as findings: [CONFLICT]." + _TAIL_CONFLICT)
+    # The other direction: the denial alone, and a tag that comes before it, are unchanged.
+    _age_check("The 1850 census birth year is not recorded as conflicts (census variance)." + _TAIL_CONFLICT)
+
+
+_THREE_COLUMN_HEADER = "| Conclusion | What the sources say | Status |\n|---|---|---|\n"
+
+
+def test_a_conflict_tag_flags_the_sentence_that_carries_it_not_the_whole_cell():
+    """Live Tallman run: "Exact-date sources: FG [CONFLICT]. Age-derived ranges, all agree:
+    1850 census 1838-1839" flagged the 1850 census because one cell held both."""
+    cell = (
+        "Exact-date sources: Find a Grave gives 31 Jan 1839 [CONFLICT]. "
+        "Age-derived ranges, all agree: 1850 census 1838-1839; 1865 NY census 1838-1839."
+    )
+    row = f"| Birth date: 30 Nov 1838 | {cell} | Conflicts with exact-date sources |\n"
+    _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_conflict_tag_on_an_age_derived_sentence_still_flags_even_beside_another():
+    """The other direction: the tag on the census's own sentence, or the same sentence, flags."""
+    own = "Find a Grave gives 31 Jan 1839 [CONFLICT]. The 1850 census gives 1840 [CONFLICT]."
+    same = "Find a Grave gives 31 Jan 1839 [CONFLICT]. The 1850 census 1838-1839 [CONFLICT]."
+    for cell in (own, same):
+        row = f"| Birth date: 30 Nov 1838 | {cell} | Conflict |\n"
+        with pytest.raises(AssertionError, match="1850 census"):
+            _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_conflict_tag_after_its_sentence_does_not_reach_the_next_one():
+    """Live Tallman run: "...(my arithmetic). [CONFLICT] Age-based: 1910 census 1838-1839, agrees."
+    The tag follows the tombstone sentence it marks; the census sentence after it is clean."""
+    cell = (
+        "Exact-date sources: Find a Grave gives 31 Jan 1839. The tombstone age works out to about "
+        "31 Jan 1839 (my arithmetic). [CONFLICT] Age-based: 1910 census 1838-1839, agrees. "
+        "1865 NY census 1838-1839, agrees."
+    )
+    row = f"| Birth date: 30 Nov 1838 | {cell} | Exact date conflicts |\n"
+    _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_trailing_conflict_tag_on_an_age_derived_sentence_still_flags():
+    """The other direction: a tag that follows the census's own sentence flags it, and so does a
+    tag that opens the next sentence when the census is what the sentence before it names."""
+    for cell in (
+        "Find a Grave gives 31 Jan 1839. The 1850 census gives 1840. [CONFLICT] Both differ.",
+        "Find a Grave gives 31 Jan 1839 [CONFLICT]. The 1850 census gives 1840 [CONFLICT].",
+    ):
+        row = f"| Birth date: 30 Nov 1838 | {cell} | Conflict |\n"
+        with pytest.raises(AssertionError, match="1850 census"):
+            _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_finding_about_the_fathers_name_is_not_a_birth_finding():
+    """Live Tallman run: the finding's paragraph said "same birth range" and "disagreement", so the
+    validator read the 1850 household in it as a birth flag. The topic is the heading."""
+    reply = (
+        "**Finding 2: Father's first name in the 1913 death records (source against source).** "
+        "Three index entries describe one death, with the same birth range and mother. They name the "
+        "father differently. The profile says Joseph Tallman, which matches the 1850 census household. "
+        "The disagreement is between these records."
+    )
+    _age_check(reply + _TAIL_CONFLICT)
+
+
+def test_a_finding_headed_as_a_birth_conflict_still_flags_a_census_year():
+    """The other direction: a bold lead-in about the birth conflict still scopes its paragraph."""
+    reply = (
+        "**Finding 1: Birth date disagreement.** The 1850 census gives 1840 for his birth year, "
+        "which differs from the profile."
+    )
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(reply + _TAIL_CONFLICT)
+
+
+def test_an_italic_lead_in_scopes_the_finding_like_a_bold_one():
+    """Live Tallman run 3 of 3: the agent wrote the father's-name finding as `*Finding 2: Father's
+    given name.* ...` and the paragraph said "the birth range ... agree" beside "The 1850 census
+    household also lists a son named James". Only a bold lead-in was read as the topic, so the
+    italic one read as a birth finding and flagged the 1850 census."""
+    reply = (
+        "*Finding 2: Father's given name.* The Vermont vital record gives the father as \"Jas\" Tallman. "
+        "The profile says Joseph Tallman. The mother, the birth range and the death date agree. "
+        "The 1850 census household also lists a son named James. That is a lead, not proof."
+    )
+    _age_check(reply + _TAIL_CONFLICT)
+
+
+def test_an_italic_lead_in_about_the_birth_conflict_still_flags_a_census_year():
+    """The other direction: an italic lead-in about the birth still scopes its paragraph."""
+    reply = (
+        "*Finding 1: Birth date disagreement.* The 1850 census gives 1840 for his birth year, "
+        "which differs from the profile."
+    )
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(reply + _TAIL_CONFLICT)
+
+
+def test_contradicts_and_inconsistent_are_conflict_words():
+    """Self-review finding: "contradicts the profile" carried no conflict word."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year contradicts the profile's birth date." + _TAIL_CONFLICT)
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year is inconsistent with the profile's birth date." + _TAIL_CONFLICT)
+
+
+def test_a_negated_contradiction_is_still_a_denial():
+    """The other direction: "does not contradict" and "no contradiction" are not flags."""
+    _age_check("The 1850 census birth year does not contradict the profile's birth date." + _TAIL_CONFLICT)
+    _age_check("The 1850 census birth year shows no contradiction with the profile's birth date." + _TAIL_CONFLICT)
+    _age_check("The 1850 census birth year is not inconsistent with the profile's birth date." + _TAIL_CONFLICT)
+
+
+def test_a_born_row_is_a_birth_row():
+    """Self-review finding: a row labelled "Born" was not read as a birth row."""
+    row = "Born        | 30 Nov 1838   | Indexed 1839 [CONFLICT] | Indexed 1839; range Bet 1838-1839\n"
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_birth_place_row_is_still_not_a_birth_date_row():
+    """The other direction: a birth-place row with a conflict tag is a different fact."""
+    row = "Birth place | Clinton, NY    | Peru, NY [CONFLICT] | Peru, NY [CONFLICT]\n"
+    _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_denial_after_the_conflict_word_does_not_clear_it():
+    """Self-review finding: "conflicts with the profile, which is consistent with the stone" denies
+    something other than the conflict."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The 1850 census birth year conflicts with the profile's birth date, which is consistent "
+            "with the stone." + _TAIL_CONFLICT
+        )
+
+
+def test_a_denial_before_the_conflict_word_still_clears_it():
+    """The other direction: "consistent with the profile, no conflict" is a denial."""
+    _age_check(
+        "The 1850 census birth year is consistent with the profile's birth date, so there is no conflict."
+        + _TAIL_CONFLICT
+    )

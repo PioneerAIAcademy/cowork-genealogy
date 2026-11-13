@@ -1,0 +1,604 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 29), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40). The one collection-level title was reconciled to the corpus spelling 'United States Census, 1870' (no comma), as the other mock-world census fixtures carry it, so the collection-attribute join holds; the per-person titles and citations keep the bundle's own spelling.",
+  "args": {
+    "recordId": "~M8N9-JJL"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_280302826",
+        "ark": "ark:/61903/1:1:M8N9-JJN",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "d03902cf-4bbe-4549-8ad7-41efb1fea983",
+            "type": "BirthName",
+            "surname": "Stevens",
+            "given": "Horace"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "0c4029d6-db25-49e2-b581-4869ebc61b31",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          },
+          {
+            "id": "bb697b1b-f892-49b4-977a-efa4f26231f7",
+            "type": "Birth",
+            "date": "1834",
+            "standard_date": "1834",
+            "place": "New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_280302827",
+        "ark": "ark:/61903/1:1:M8N9-JJJ",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "20c96d1d-e9ff-4435-a2eb-a37a94959d03",
+            "type": "BirthName",
+            "surname": "Stevens",
+            "given": "Phebe"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "26e74409-52e5-458b-a8d9-bf63ae9f9a17",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          },
+          {
+            "id": "e5fcb1f6-019e-4bc4-954b-458368687731",
+            "type": "Birth",
+            "date": "1840",
+            "standard_date": "1840",
+            "place": "New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_280302828",
+        "ark": "ark:/61903/1:1:M8N9-JJV",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "895ee467-4430-4244-82ec-68b001022168",
+            "type": "BirthName",
+            "surname": "Stevens",
+            "given": "Ellen"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "57ac5ff5-f96e-4ab6-9d25-6ebfebd08be6",
+            "type": "Birth",
+            "date": "1857",
+            "standard_date": "1857",
+            "place": "New York"
+          },
+          {
+            "id": "7e861f58-916e-47f6-8f4a-82e8cea48e40",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_280302829",
+        "ark": "ark:/61903/1:1:M8N9-JJK",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "37bf5630-be45-4c8d-9685-82ab37a8bdce",
+            "type": "BirthName",
+            "surname": "Stevens",
+            "given": "Libbie"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "d3ddde47-6e9f-42e3-b84e-d884382e356d",
+            "type": "Birth",
+            "date": "1862",
+            "standard_date": "1862",
+            "place": "New York"
+          },
+          {
+            "id": "fa7cc18c-a992-4b21-829c-d510a36e45dc",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_280302830",
+        "ark": "ark:/61903/1:1:M8N9-JJ2",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "fb2629d0-ac52-45c0-9678-0a4691987560",
+            "type": "BirthName",
+            "surname": "Stevens",
+            "given": "Lillian"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "484e8757-18c3-4cb3-98ee-99a880b4e33d",
+            "type": "Birth",
+            "date": "1869",
+            "standard_date": "1869",
+            "place": "New York"
+          },
+          {
+            "id": "cdf5e9c0-5e67-45c7-8958-fa3bc511a933",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      },
+      {
+        "id": "p_280302831",
+        "ark": "ark:/61903/1:1:M8N9-JJL",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "65f79eb0-e989-4a53-8583-977b581d48b0",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Edward"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "88dc7100-0fb1-4774-8341-15b86ea0df75",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          },
+          {
+            "id": "fab0f07c-f610-479a-8572-2e1f0dd079d5",
+            "type": "Birth",
+            "date": "1841",
+            "standard_date": "1841",
+            "place": "New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      },
+      {
+        "id": "p_280302832",
+        "ark": "ark:/61903/1:1:M8N9-JJG",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "27c15bfe-18d7-4811-86bb-8dfef1635964",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Clarissa"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "121e57c4-702b-4629-81d2-bfb71deaad75",
+            "type": "Birth",
+            "date": "1851",
+            "standard_date": "1851",
+            "place": "New York"
+          },
+          {
+            "id": "a1d1199b-e80d-43fc-8d81-db7ff19b9c22",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      },
+      {
+        "id": "p_280302833",
+        "ark": "ark:/61903/1:1:M8N9-JJP",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "a380ca5e-f4ca-4bfa-8c4b-4c7ac100e55e",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Francis"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "e5038cb4-7bc0-4e32-853e-8441b535646d",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          },
+          {
+            "id": "8b49617f-d232-426a-bd10-2ebad2e41977",
+            "type": "Birth",
+            "date": "1866",
+            "standard_date": "1866",
+            "place": "New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      },
+      {
+        "id": "p_280302834",
+        "ark": "ark:/61903/1:1:M8N9-JJ5",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "05bc7991-58b0-45cb-bf4d-3a0d39554198",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Nellie"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "87435213-5fb6-46b9-8f7e-74a388f76eb9",
+            "type": "Birth",
+            "date": "1868",
+            "standard_date": "1868",
+            "place": "New York"
+          },
+          {
+            "id": "3fc4e462-a81b-473f-8c9d-67e5e3896d8e",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      },
+      {
+        "id": "p_280302835",
+        "ark": "ark:/61903/1:1:M8N9-JJR",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "07f0df94-c528-4faf-846b-1bc31b778b0d",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Phebe"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "4d5e3d68-0ab1-49ac-b8b0-2ef8ea7e32d2",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          },
+          {
+            "id": "ce54132c-4a21-40db-8c67-edcc90504117",
+            "type": "Birth",
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      },
+      {
+        "id": "p_280302836",
+        "ark": "ark:/61903/1:1:M8N9-JJT",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "9efba1f9-44eb-4b06-8b95-90838e8476ee",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Abram"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "id": "113ed92d-9c6a-429a-bb7e-608f375ba134",
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, Essex, New York, United States"
+          },
+          {
+            "id": "81042301-1bd5-4dc0-b634-c61fd2cf7131",
+            "type": "Birth",
+            "date": "1851",
+            "standard_date": "1851",
+            "place": "New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_191863553",
+        "resource_type": "Record",
+        "title": "Household of Horace Stevens, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJN : Thu Jan 09 23:06:33 UTC 2025), Entry for Horace Stevens and Phebe Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:M4TT-9LP",
+        "coverage": {
+          "place_rep_id": "4653713",
+          "date_range": "1870",
+          "record_type": "Census",
+          "standard_place": "Essex, Essex, Essex, New York, United States"
+        }
+      },
+      {
+        "id": "sd_c_1438024",
+        "resource_type": "Collection",
+        "title": "United States Census, 1870",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "1870/1870",
+          "record_type": "Census",
+          "standard_place": "United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6783-KSM",
+        "coverage": {
+          "place_rep_id": "393125",
+          "date_range": "1870",
+          "record_type": "Census",
+          "standard_place": "Essex, New York, United States"
+        }
+      },
+      {
+        "id": "sd_da2",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6783-J1M"
+      },
+      {
+        "id": "sd_p_280302828",
+        "resource_type": "Person",
+        "title": "Ellen Stevens, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJV : Thu Jan 09 23:06:33 UTC 2025), Ellen Stevens in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJV"
+      },
+      {
+        "id": "sd_p_280302832",
+        "resource_type": "Person",
+        "title": "Clarissa Tallman, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJG : Thu Jan 09 23:06:33 UTC 2025), Clarissa Tallman in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJG"
+      },
+      {
+        "id": "sd_p_280302826",
+        "resource_type": "Person",
+        "title": "Horace Stevens, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJN : Thu Jan 09 23:06:33 UTC 2025), Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJN"
+      },
+      {
+        "id": "sd_p_280302827",
+        "resource_type": "Person",
+        "title": "Phebe Stevens, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJJ : Thu Jan 09 23:06:33 UTC 2025), Phebe Stevens in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJJ"
+      },
+      {
+        "id": "sd_p_280302829",
+        "resource_type": "Person",
+        "title": "Libbie Stevens, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJK : Thu Jan 09 23:06:33 UTC 2025), Libbie Stevens in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJK"
+      },
+      {
+        "id": "sd_p_280302834",
+        "resource_type": "Person",
+        "title": "Nellie Tallman, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJ5 : Thu Jan 09 23:06:33 UTC 2025), Nellie Tallman in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJ5"
+      },
+      {
+        "id": "sd_p_280302830",
+        "resource_type": "Person",
+        "title": "Lillian Stevens, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJ2 : Thu Jan 09 23:06:33 UTC 2025), Lillian Stevens in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJ2"
+      },
+      {
+        "id": "sd_p_280302835",
+        "resource_type": "Person",
+        "title": "Phebe Tallman, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJR : Thu Jan 09 23:06:33 UTC 2025), Phebe Tallman in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJR"
+      },
+      {
+        "id": "sd_p_280302836",
+        "resource_type": "Person",
+        "title": "Abram Tallman, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJT : Thu Jan 09 23:06:33 UTC 2025), Abram Tallman in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJT"
+      },
+      {
+        "id": "sd_p_280302831",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJL : Thu Jan 09 23:06:33 UTC 2025), Edward Tallman in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJL"
+      },
+      {
+        "id": "sd_p_280302833",
+        "resource_type": "Person",
+        "title": "Francis Tallman, \"United States, Census, 1870\"",
+        "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8N9-JJP : Thu Jan 09 23:06:33 UTC 2025), Francis Tallman in entry for Horace Stevens, 1870.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M8N9-JJP"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1793 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_4653713"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HT-6783-J1M",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6783-J1M",
+    "indexFields": {
+      "p_280302831": {
+        "age": "29"
+      }
+    }
+  }
+}

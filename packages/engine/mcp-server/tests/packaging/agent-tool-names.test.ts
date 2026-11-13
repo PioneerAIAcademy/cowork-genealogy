@@ -479,8 +479,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // Reads text and writes it through extraction_append's `documents` input,
   // which classifies in code and refuses any classification field (spec §11.7).
   // No research_log_append: extraction_append writes the log entry itself.
+  // project_context (#4286): the waiting pages and each one's index, so the page
+  // pass names the assertion a reading disputes without a research_query grant.
   "record-structurer.md": {
-    tools: ["extraction_append", "sidecar_read"],
+    tools: ["extraction_append", "project_context", "sidecar_read"],
     denies: [],
   },
   // The only caller permitted to set `search_stop.stopped_because` to a stop-gate value;
@@ -590,7 +592,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // declared, plus `Read` for research.json and `research_query`, which Step 1
   // reads assertions and person_evidence with. `research_append` is the conflict
   // write, and the plugin hook routes a conflict's analytical product (a
-  // resolve, or any analysis field) to this agent alone. The research-side place
+  // resolve or a moot, or any analysis field) to this agent alone. The research-side place
   // tools its folded places guidance lists (collections, volumes, external
   // links, population, wiki place pages) are deliberately absent: it resolves
   // place names and does not search.
@@ -670,15 +672,19 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // geographic-feasibility check that is this agent's own (check-warnings
   // does not do geography), `wiki_read` fetches each residence country's
   // census schedule, and `research_append` persists the one `timelines`
-  // entry the hook lane allows it.
+  // entry the hook lane allows it. Issue #3516 PR D: a person timeline is
+  // `timeline_build`'s, built in code, and with nothing linked the agent runs
+  // `extraction_append({ personId })` once before building again (lead, 2026-10-20).
   "timeline.md": {
     tools: [
+      "extraction_append",
       "place_distance",
       "place_search",
       "place_search_all",
       "project_context",
       "research_append",
       "research_query",
+      "timeline_build",
       "wiki_read",
     ],
     denies: [],
@@ -804,17 +810,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "catalog_search",
       "extraction_append",
       "project_context",
-      "rank_search_matches",
       "record_read",
       "record_search",
       "research_append",
       "research_log_append",
       "research_query",
-      "same_person",
-      "source_attachments",
       "tree_query",
-      "wiki_read",
-      "wiki_search",
     ],
     denies: [],
   },
@@ -835,10 +836,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   // Cost- and context-motivated conversion (issue #2120), not a hook route.
   // The grant is derived from what the folded body actually calls: step 1 reads
-  // research.json directly via Read (not project_context, which returns neither
-  // plans nor log); the narration line reads researcher_profile.narration_guidance
-  // the same way; step 5 reads staged.resultsRef via Read; and wiki_search /
-  // wiki_read are called in the pre-work block of step 3.
+  // plans and log with research_query; step 6 reads one hit's transcript with
+  // sidecar_read (#4311 — a `Read` of the staged file finds nothing on a
+  // connector); and wiki_search / wiki_read are called in the pre-work block of
+  // step 3. `Read` stays for folder mode.
   "search-full-text.md": {
     tools: [
       "Read",
@@ -848,6 +849,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_append",
       "research_log_append",
       "research_query",
+      "sidecar_read",
       "source_attachments",
       "wiki_read",
       "wiki_search",
@@ -878,19 +880,23 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // The folded search-external-sites skill (issue #2802): its seven tools plus
   // `project_context`, which is how a triage invocation finds the open hand-off
-  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
-  // parish page arrives in the delegation as `baseUrl`.
+  // in `awaitingUser`. `Read` opens a capture in folder mode; with an
+  // `uploadUrl`, `sidecar_read` reads an upload's text and `image_transcribe` an
+  // upload with none (issue #3990). No wiki tools: the parish page arrives in the
+  // delegation as `baseUrl`.
   "search-external-sites.md": {
     tools: [
       "Read",
       "build_external_search_url",
       "collections_search",
       "external_links_search",
+      "image_transcribe",
       "place_search",
       "project_context",
       "research_append",
       "research_log_append",
       "research_query",
+      "sidecar_read",
     ],
     denies: [],
   },
@@ -992,14 +998,18 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // translation holds `Read` for an image file and the Narration line, and
+  // translation holds `Read` for an image path outside the project and
   // `research_log_append` (#3524): inside a project it logs its translation as
-  // one `translation` entry. No other MCP tool.
+  // one `translation` entry. `image_transcribe` and `sidecar_read` read a
+  // project upload or staged transcription (#4311), which `Read` cannot reach on
+  // a connector.
   "translation.md": {
     tools: [
       "Read",
+      "image_transcribe",
       "project_context",
       "research_log_append",
+      "sidecar_read",
     ],
     denies: [],
   },

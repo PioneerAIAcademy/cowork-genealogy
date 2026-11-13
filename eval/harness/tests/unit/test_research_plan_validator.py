@@ -30,6 +30,8 @@ sys.path.insert(0, str(_HARNESS / "validators"))  # validators_lib, the module
 
 from test_research_plan import (  # noqa: E402
     test_research_plan_availability_claim_matches_counts as check_v5,
+    test_research_plan_reuses_counted_locality_collections as check_reuse,
+    _collections_scope,
     test_research_plan_fallback_for_in_same_plan as check_v3,
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
@@ -318,6 +320,213 @@ def test_v5_passes_when_claims_match_counts():
         _item("pli_011", rationale="Collection 1921317 is fully indexed."),
     ])
     check_v5(before, after, _SERVED)
+
+
+def _with_locality(state, counts=(0, 1048378)):
+    """`state` with a Schuylkill/Pennsylvania localities entry carrying the
+    two _SERVED collections at `counts` (None = uncounted)."""
+    research = dict(state["research_json"])
+    research["localities"] = [{
+        "id": "loc_001",
+        "place": "Pennsylvania, United States",
+        "for_place": "Schuylkill County, Pennsylvania",
+        "time_period": "1840-1880",
+        "collections": [
+            {"id": "1999196", "title": "Pennsylvania, Probate Records", "person_count": counts[0]},
+            {"id": "1921317", "title": "Pennsylvania, County Marriages", "person_count": counts[1]},
+        ],
+    }]
+    return {"research_json": research}
+
+
+def _no_skip(check, *args):
+    """Run `check`, failing (not skipping) if it skips: these cases exist to
+    prove the entry's counts are graded."""
+    try:
+        check(*args)
+    except pytest.skip.Exception as exc:
+        pytest.fail(f"skipped instead of grading: {exc}")
+
+
+def test_v5_grades_an_entry_count_with_no_collections_search():
+    # #3545: a plan written from the localities entry, with no call, is graded
+    # against the entry's person_count instead of skipping.
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        _no_skip(check_v5, _with_locality(before), after, [])
+
+
+def test_v5_passes_an_entry_count_claim_that_matches():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only (personCount 0).")])
+    _no_skip(check_v5, _with_locality(before), after, [])
+
+
+def test_v5_served_count_wins_over_the_entry_count():
+    # The entry stores 1999196 at 0, the run's own response serves it at 893214:
+    # a browse-only claim must fail on the served count, not pass on the stored one.
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only (personCount 0).")])
+    served = [_call("collections_search", {"results": [{"id": "1999196", "personCount": 893214}]},
+                    {"standardPlace": "Pennsylvania, United States"})]
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(_with_locality(before), after, served)
+
+
+def test_v5_still_skips_with_no_entry_and_no_call():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(pytest.skip.Exception):
+        check_v5(before, after, [])
+
+
+def test_v5_ignores_uncounted_entry_collections():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(pytest.skip.Exception):
+        check_v5(_with_locality(before, counts=(None, None)), after, [])
+
+
+# --- reuses-counted-locality (#3545 lead 3) ------------------------------
+
+_REUSE_TEST = {"tags": ["reuses-counted-locality"]}
+_REUSE_BEFORE = _with_locality({"research_json": {}})
+_PA_RESPONSE = {"query": {}, "scope": "Pennsylvania", "totalForPlace": 0, "results": []}
+
+
+@pytest.mark.parametrize("place", [
+    "Schuylkill, Pennsylvania, United States",
+    "Pennsylvania, United States",
+    "Schuylkill County, Pennsylvania, United States",
+    "Pottsville, Schuylkill, Pennsylvania, United States",
+])
+def test_reuse_fires_on_a_repeat_at_the_entry_scope(place):
+    with pytest.raises(AssertionError, match=r"loc_001") as exc:
+        check_reuse(_REUSE_BEFORE, [_call("collections_search", _PA_RESPONSE, {"standardPlace": place})], _REUSE_TEST)
+    assert place in str(exc.value)
+
+
+def test_reuse_fires_with_years_on_the_call():
+    call = _call("collections_search", _PA_RESPONSE,
+                 {"standardPlace": "Pennsylvania, United States", "startYear": 1850, "endYear": 1880})
+    with pytest.raises(AssertionError, match="loc_001"):
+        check_reuse(_REUSE_BEFORE, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("years", [(1820, 1845), (1870, 1900), (1700, 1750)])
+def test_reuse_passes_a_call_for_another_period(years):
+    # clark-parents surveyed Berks for 1750-1850; a later question outside it needs the call.
+    call = _call("collections_search", None, {"standardPlace": "Pennsylvania, United States",
+                                              "startYear": years[0], "endYear": years[1]})
+    _no_skip(check_reuse, _REUSE_BEFORE, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("period", [None, "", "nineteenth century", "1840s"])
+def test_reuse_fails_loudly_when_the_entry_has_no_period(period):
+    before = _with_locality({"research_json": {}})
+    before["research_json"]["localities"][0]["time_period"] = period
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(before, [], _REUSE_TEST)
+
+
+def test_reuse_reads_a_single_year_and_an_en_dash():
+    for period, inside in (("1901", (1901, 1901)), ("1840–1880", (1845, 1870))):
+        before = _with_locality({"research_json": {}})
+        before["research_json"]["localities"][0]["time_period"] = period
+        call = _call("collections_search", None, {"standardPlace": "Pennsylvania, United States",
+                                                  "startYear": inside[0], "endYear": inside[1]})
+        with pytest.raises(AssertionError, match="loc_001"):
+            check_reuse(before, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("response", [
+    None, "{\"scope\": \"Pennsylvania\"}", {"error": "upstream 503"},
+    {"query": {}, "scope": "", "results": []},
+])
+def test_reuse_verdict_ignores_the_response_shape(response):
+    call = _call("collections_search", response, {"standardPlace": "Schuylkill, Pennsylvania, United States"})
+    with pytest.raises(AssertionError, match="loc_001"):
+        check_reuse(_REUSE_BEFORE, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("place", [
+    "United States",
+    "Ohio, United States",
+    "Schuylkill County Pennsylvania",  # comma-less: the tool passes it through as-is
+    "Ireland",
+])
+def test_reuse_passes_other_scopes(place):
+    check_reuse(_REUSE_BEFORE, [_call("collections_search", None, {"standardPlace": place})], _REUSE_TEST)
+
+
+def test_reuse_exempts_the_national_call_even_for_a_national_entry():
+    # hale-* scenarios carry a localities entry placed at "United States".
+    before = _with_locality({"research_json": {}})
+    before["research_json"]["localities"].append({
+        "id": "loc_002", "place": "United States", "time_period": "1880",
+        "collections": [{"id": "1325221", "title": "United States Census, 1880", "person_count": 50000000}],
+    })
+    _no_skip(check_reuse, before, [_call("collections_search", None, {"standardPlace": "United States"})], _REUSE_TEST)
+
+
+_NO_BEFORE = {"research_json": {"localities": [{
+    "id": "loc_001", "place": "Hordaland, Norway", "time_period": "1800-1900",
+    "collections": [{"id": "4237104", "title": "Norway, Church Books", "person_count": 0}],
+}]}}
+
+
+@pytest.mark.parametrize("place", ["Norway", "Kongsberg, Buskerud, Norway"])
+def test_reuse_fires_on_a_country_repeat_outside_north_america(place):
+    # anders-monsen-ancestry 2026-11-01: entry for Hordaland, then a call on "Norway".
+    with pytest.raises(AssertionError, match="loc_001"):
+        check_reuse(_NO_BEFORE, [_call("collections_search", None, {"standardPlace": place})], _REUSE_TEST)
+
+
+def test_reuse_passes_another_country_outside_north_america():
+    check_reuse(_NO_BEFORE, [_call("collections_search", None, {"standardPlace": "Sweden"})], _REUSE_TEST)
+
+
+def test_reuse_passes_other_tools_and_bad_args():
+    calls = [
+        _call("volume_search", None, {"standardPlace": "Schuylkill, Pennsylvania, United States"}),
+        _call("collections_search", None, {"standardPlace": None}),
+        _call("collections_search", None, {}),
+    ]
+    check_reuse(_REUSE_BEFORE, calls, _REUSE_TEST)
+
+
+def test_reuse_fails_loudly_when_the_entry_is_uncounted():
+    # A fixture whose entry has no counted collection cannot exercise the check.
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(_with_locality({"research_json": {}}, counts=(None, None)), [], _REUSE_TEST)
+
+
+def test_reuse_fails_loudly_when_the_entry_is_partly_counted():
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(_with_locality({"research_json": {}}, counts=(0, None)), [], _REUSE_TEST)
+
+
+def test_reuse_does_not_scope_for_place():
+    # for_place is free text with no country; only the standard `place` is scoped.
+    before = _with_locality({"research_json": {}})
+    del before["research_json"]["localities"][0]["place"]
+    before["research_json"]["localities"][0]["for_place"] = "Toronto, Ontario"
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(before, [], _REUSE_TEST)
+
+
+def test_reuse_skips_an_untagged_test():
+    call = _call("collections_search", None, {"standardPlace": "Pennsylvania, United States"})
+    with pytest.raises(pytest.skip.Exception):
+        check_reuse(_REUSE_BEFORE, [call], {"tags": ["planning"]})
+
+
+@pytest.mark.parametrize("place,scope", [
+    ("Schuylkill, Pennsylvania, United States", "Pennsylvania"),
+    ("Schuylkill County, Pennsylvania", "Pennsylvania"),  # no country tail: last part
+    ("United States", "United States"),
+    ("Toronto, Ontario, Canada", "Canada, Ontario"),
+    ("Cork, Cork, Ireland", "Ireland"),
+    (" ", ""),
+])
+def test_collections_scope_matches_the_engine(place, scope):
+    assert _collections_scope(place) == scope
 
 
 def test_v5_skips_multi_collection_sentence():
@@ -1312,6 +1521,7 @@ def test_v1_grounds_ark_served_by_person_read():
 
 from test_research_plan import (  # noqa: E402
     test_pre_register_birth_plans_death_route as check_death_route,
+    test_research_plan_plans_parents_marriage as check_parents_marriage,
     test_wiki_prework_fetches_triggered_pages as check_prework,
 )
 
@@ -1510,6 +1720,34 @@ def test_death_route_passes_legitimate_variants(rationale, date_range):
     check_death_route(b, a, DTH)
 
 
+@pytest.mark.parametrize("rationale", [
+    "Her own death/burial entry, since a baptism may not exist (register start 1688 in Västra "
+    "Karaby). Son Asmund was christened at Barsebäck in 1718 and died there in 1768. Burial "
+    "entries usually state age, and sometimes birthplace or parentage.",
+    "Baptism may not exist, so this is the subject's own death/burial entry. Son Asmund died "
+    "there 4 Feb 1768; a burial entry often states age and birthplace.",
+    "Subject's own death or burial entry. Burial entries commonly give age and sometimes "
+    "birthplace or parents.",
+])
+def test_death_route_passes_when_the_item_calls_her_the_subject(rationale):
+    """Sonnet 5.5 low runs, 2026-11-11: her burial item names her as "her own" or
+    "the subject's own" and never by given name."""
+    b, a = _plan_states([BAPTISM, _pli(2, "church", "1718-1780", rationale), _pli(3, "tax", "1700-1712", "mantalslängder")])
+    check_death_route(b, a, DTH)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Her own son's burial entry in Barsebäck names his mother.",
+    "Her mother's burial entry may name the farm.",
+    "Her husband died in Barsebäck; his burial entry dates the widowhood.",
+    "The subject's husband was buried in Barsebäck.",
+])
+def test_death_route_fires_when_an_unnamed_burial_is_someone_elses(rationale):
+    b, a = _plan_states([BAPTISM, _pli(2, "church", "1718-1780", rationale), _pli(3, "tax", "1700-1712", "mantalslängder")])
+    with pytest.raises(AssertionError, match="no item targets Elena's own death"):
+        check_death_route(b, a, DTH)
+
+
 def test_death_route_skips_an_untagged_test():
     b, a = _plan_states([BAPTISM])
     with pytest.raises(pytest.skip.Exception):
@@ -1674,3 +1912,134 @@ def test_both_sheahan_tests_carry_the_purchase_tag():
 def test_purchase_check_skips_an_untagged_test():
     with pytest.raises(pytest.skip.Exception):
         _purchase("nothing", test={"tags": [], "skill": "research-plan"})
+
+
+# --- Parentage: the parents' marriage is a dedicated item (issue #4022) ------
+
+PM = {"id": "ut_research_plan_014", "tags": ["planning", "parents-marriage-item"]}
+
+# The verbatim v14_2026-10-29 pli_009 rationale (ut_research_plan_014): pli_009,
+# record_type church. Five sentences — the marriage sentence folds in sibling
+# baptisms (semicolon), and the LAST sentence searches "Thomas's marriage and
+# ... children bearing the Flynn surname". T-FEH (PR #4447) showed the earlier
+# one-sentence strawman let this real shape pass through that last sentence,
+# because "children" was not an anti-word. With `child\w*` added it fires.
+FOLDED = _pli(
+    9, "church", "1840-1850",
+    "The loc_001 locality entry notes that Roman Catholic parishes in "
+    "Schuylkill County were under the Diocese of Philadelphia (Archdiocese "
+    "from 1875); sacramental registers are held at the parish and diocese. "
+    "The Pennsylvania, Schuylkill County Church Records collection (id "
+    "SYNTH-PA-CHURCH) is name-searchable (personCount 982415), covering "
+    "1708-1985. A marriage record for Thomas Flynn and his wife in Schuylkill "
+    "County would supply her maiden name; baptismal records for Patrick's "
+    "siblings would independently corroborate Thomas and his wife as parents. "
+    "Image group 007936751 covers church records 1842-1895 and is browse-only "
+    "(personCount 0) for films not yet indexed — worth browsing if the name "
+    "search yields nothing. Search under Flynn and variant Flinn for Thomas's "
+    "marriage and for children bearing the Flynn surname in the anthracite "
+    "coal region parishes.",
+    jurisdiction="Schuylkill County, Pennsylvania",
+)
+CENSUS = _pli(5, "census", "1850-1880", "Track Patrick with his household.",
+              jurisdiction="Schuylkill County, Pennsylvania")
+
+
+def test_parents_marriage_fires_on_the_v14_folded_shape():
+    b, a = _plan_states([CENSUS, FOLDED])
+    with pytest.raises(AssertionError, match="dedicated to the candidate parents' marriage"):
+        check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_fires_when_only_the_subjects_own_marriage_is_planned():
+    own = _pli(3, "vital_record", "1865-1880",
+               "Patrick Flynn's own marriage record would state his age and birthplace.",
+               jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, own])
+    with pytest.raises(AssertionError, match="dedicated to the candidate parents' marriage"):
+        check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_fires_when_no_plan_was_written():
+    b, a = _plan_states([])
+    a["research_json"]["plans"] = []
+    with pytest.raises(AssertionError, match="no new plan items"):
+        check_parents_marriage(b, a, PM)
+
+
+@pytest.mark.parametrize("record_type,rationale", [
+    ("church", "The church marriage register for Thomas Flynn and his wife, "
+               "the hypothesized parents; it would supply her maiden name."),
+    ("vital_record", "The marriage of Thomas Flynn and his wife bears on "
+                     "paternity by its date relative to Patrick's ~1845 birth."),
+    ("vital_record", "Thomas and his wife's marriage; the county bond or "
+                     "license names her."),
+    ("vital_record", "Thomas Flynn wedded before 1845; the county register "
+                     "would name the bride."),
+])
+def test_parents_marriage_passes_a_dedicated_item(record_type, rationale):
+    item = _pli(3, record_type, "1835-1846", rationale,
+                jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, item])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_passes_a_dedicated_item_noting_the_registers_other_yields():
+    """The 2026-11-03 targeted-run shape: the item IS the dedicated marriage
+    search, and a later sentence notes what else the same parish registers may
+    hold. Sentence-scoping exists for exactly this item — a whole-rationale
+    anti-word scan false-failed it."""
+    item = _pli(8, "church", "1835-1846",
+                "Dedicated search for Thomas Flynn's marriage to Patrick's "
+                "mother. The county church records collection is "
+                "name-searchable and covers 1708-1985. A Catholic parish may "
+                "hold a sibling's baptism naming both parents, a burial "
+                "naming the spouse, or a sacramental entry supplying the "
+                "mother's maiden name.",
+                jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, item])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_known_limit_another_item_naming_the_marriage_passes():
+    """Accepted limit (predicate is the issue's own): a FAN item pairing the
+    father's name with a marriage word satisfies the check even while the
+    marriage itself stays folded elsewhere."""
+    fan = _pli(4, "court", "1840-1860",
+               "Thomas's marriage bondsman may appear in county court records.",
+               jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, FOLDED, fan])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_known_limit_a_two_sentence_fold_passes():
+    """Accepted limit of sentence-scoping: a fold whose marriage sentence names
+    neither a baptism, christening, sibling nor child passes, because that
+    sentence is clean. The real v14 shape (the FOLDED fixture) does NOT have
+    such a sentence — its marriage sentence folds in sibling baptisms and its
+    search sentence names children — so it fires; this contrived two-sentence
+    variant is the boundary the sentence-scoping concedes."""
+    two = _pli(9, "church", "1840-1850",
+               "A marriage record for Thomas Flynn and his wife would supply "
+               "her maiden name. Baptismal records corroborate parentage.",
+               jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, two])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_skips_an_untagged_test():
+    b, a = _plan_states([CENSUS])
+    with pytest.raises(pytest.skip.Exception):
+        check_parents_marriage(b, a, {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_parents_marriage_map_entry_without_its_tag_fails_before_the_skip():
+    b, a = _plan_states([CENSUS])
+    with pytest.raises(AssertionError, match="no 'parents-marriage-item'"):
+        check_parents_marriage(b, a, {"id": "ut_research_plan_014", "tags": ["planning"]})
+
+
+def test_parents_marriage_tag_without_a_map_entry_fails():
+    b, a = _plan_states([CENSUS])
+    with pytest.raises(AssertionError, match="no entry"):
+        check_parents_marriage(b, a, {"id": "ut_research_plan_zzz", "tags": ["parents-marriage-item"]})

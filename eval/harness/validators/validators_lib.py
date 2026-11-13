@@ -486,6 +486,26 @@ def assert_capture_pending_item_not_terminal(
         )
 
 
+def response_strings(value: Any, _depth: int = 0) -> list[str]:
+    """Every string leaf of a tool response. A string that holds JSON is parsed and
+    walked, so a response logged as serialized JSON is read the same as an object.
+    Depth-capped so a pathological response cannot recurse without end.
+    """
+    if _depth > 12 or value is None:
+        return []
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            return [value]
+        return [parsed] if isinstance(parsed, str) else response_strings(parsed, _depth + 1)
+    if isinstance(value, dict):
+        return [s for v in value.values() for s in response_strings(v, _depth + 1)]
+    if isinstance(value, list):
+        return [s for v in value for s in response_strings(v, _depth + 1)]
+    return [str(value)]
+
+
 def as_mapping(value: Any) -> dict:
     """A tool argument a model may have serialized as a JSON string.
 
@@ -585,6 +605,7 @@ def assert_topical_fixture_used(
     tag: str = "topical-fixture-required",
     map_name: str = "the topical-fixture map",
     prefix_match: bool = False,
+    builtin_tool_calls: list[dict] | None = None,
 ) -> str | None:
     """Assert a tagged test actually consumed its subject-matter fixture.
 
@@ -601,6 +622,12 @@ def assert_topical_fixture_used(
     caller whose fixture family shares a prefix. Returns the expected stem so
     the caller can make further assertions (ordering, for instance), or None
     when the test is not in scope.
+
+    `builtin_tool_calls` is opt-in: pass it and a run whose `test["skill"]` agent
+    was spawned but served no fixture FAILS (it answered from memory). Omit it
+    and that run skips, as before. search-records does not opt in: none of its
+    275 committed topical runs lacked a fixture, so opting in would block its
+    run log for no instance (#4253).
     """
     import pytest  # local: keep the module importable outside a pytest run
 
@@ -622,7 +649,19 @@ def assert_topical_fixture_used(
     # this helper existed; dropping it turned a skip into a FAILURE for a
     # historical-context run that never activates, which is a behaviour change
     # inside what was described as a pure refactor.
+    # A caller that passes `builtin_tool_calls` narrows "never activated" to
+    # "its agent was never spawned". A spawned agent with no fixture-backed
+    # call answered from memory: since #4218 a no-project historical-context
+    # run makes no other call, so the skip let that pass (#4253).
     if not hit:
+        if builtin_tool_calls is not None:
+            from harness.skill_runner import spawned_agents
+
+            assert test.get("skill") not in spawned_agents(builtin_tool_calls), (
+                f"{test_id}: {test.get('skill')} was spawned but made no "
+                f"fixture-backed tool call - it answered without reading "
+                f"'{expected}'"
+            )
         pytest.skip("no fixture-backed tool calls - non-activation is reported elsewhere")
 
     def matches(stem: object) -> bool:
@@ -896,3 +935,54 @@ def assert_namesake_warning_handed_back(
     )
     missing = sorted(p for p in warned if not re.search(rf"\b{re.escape(p)}\b", reply))
     assert not missing, f"the reply names person-evidence but omits warned links {missing}: {reply[:600]!r}"
+
+
+def sidecar_read_refs(tool_calls) -> list[str]:
+    """Every ref this run's `sidecar_read` calls named, from `ref` or `refs`."""
+    return [ref for ref, _ in sidecar_reads(tool_calls)]
+
+
+def sidecar_reads(tool_calls) -> list[tuple[str, bool]]:
+    """`(ref, served)` for every ref this run's `sidecar_read` calls named.
+
+    `served` is True when the tool answered that ref with `ok: true` and some
+    `content` — a single `ref` call's response, or that ref's entry in a `refs`
+    call's `results`. A refused read (`invalid_ref`, `not_found`) is not served.
+    """
+    out: list[tuple[str, bool]] = []
+    for c in tool_calls or []:
+        if bare_tool_name(c.get("tool", "")) != "sidecar_read":
+            continue
+        args = as_mapping(c.get("args"))
+        response = as_mapping(c.get("response"))
+        if isinstance(args.get("ref"), str):
+            out.append((args["ref"], _served(response)))
+            continue
+        refs = args.get("refs")
+        if isinstance(refs, str):
+            try:
+                refs = json.loads(refs)
+            except ValueError:
+                refs = [refs]
+        results = [as_mapping(r) for r in response.get("results") or []] if isinstance(response.get("results"), list) else []
+        for ref in refs or []:
+            if isinstance(ref, str):
+                out.append((ref, any(r.get("ref") == ref and _served(r) for r in results)))
+    return out
+
+
+def _served(response: dict) -> bool:
+    return response.get("ok") is True and bool(response.get("content"))
+
+
+def agent_read_paths(builtin_tool_calls) -> list[str]:
+    """The `file_path` of every built-in `Read` the agent under test made.
+
+    A record carries `agent_id` only when the call ran inside a subagent, which
+    is where the agent under test runs on the direct arm.
+    """
+    return [
+        str(as_mapping(c.get("args")).get("file_path") or "").replace("\\", "/")
+        for c in builtin_tool_calls or []
+        if c.get("tool") == "Read" and "agent_id" in c
+    ]

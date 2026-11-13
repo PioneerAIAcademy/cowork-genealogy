@@ -6,6 +6,8 @@ import type { RankSearchMatchesResult } from "./rank-search-matches.js";
 import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
 import type { SurnameVariantHints } from "../utils/surname-variant-hints.js";
+import type { CensusNote } from "../utils/census-note.js";
+import type { ChildrenSearchNote, PatronymicSearchNote } from "../utils/search-advice.js";
 
 export interface FSDisplay {
   name?: string;
@@ -127,13 +129,13 @@ export type RecordType =
 
 export interface RecordSearchInput {
   // When set, the tool stages its verbatim response to results/.staging/ and
-  // returns a `staged` handle (search-result-staging-spec.md). Purely additive:
-  // omitting it leaves behavior identical to before.
-  // When set, results are staged host-side AND the inline per-result `gedcomx`
-  // is dropped (unconditionally) so a broad search can't overflow the model's
-  // context — the staged file (read by rank_search_matches / research_log_append)
-  // carries the full gedcomx; the inline stubs keep the flat fields. An
-  // un-staged (no projectPath) search returns full gedcomx inline as before.
+  // returns a `staged` handle (search-result-staging-spec.md). Omitting it
+  // stages nothing.
+  // When set, results are staged host-side: the staged file (read by
+  // rank_search_matches / research_log_append) carries the full gedcomx. The
+  // inline per-result `gedcomx` is dropped either way, so a broad search can't
+  // overflow the model's context; the inline stubs keep the flat fields. An
+  // un-staged (no projectPath) search keeps it nowhere (issue #4386).
   projectPath?: string;
   // A `persons[].id` in the project's tree.gedcomx.json. When supplied together
   // with `projectPath`, the tool ranks the staged candidates against that
@@ -247,6 +249,8 @@ export interface RecordSearchResult {
   // the record-match tools' `id`, or source_attachments' `uris`.
   recordId: string;
   personName?: string;
+  // FamilySearch's search relevance. In the staged file only: the answer's
+  // compactor drops both (staged-compaction.ts).
   score?: number;
   confidence?: number;
   sex?: string;
@@ -285,6 +289,11 @@ export interface RecordSearchResult {
   birthYearConflict?: true;
   /** Candidate birth year minus subject birth year; present with the flag. */
   birthYearGap?: number;
+  /** True when the candidate's surname is not one the project gives the
+   *  subject; see `RankedMatch.surnameNotOnSubject`. */
+  surnameNotOnSubject?: true;
+  /** The candidate's surname; present with `surnameNotOnSubject`. */
+  candidateSurname?: string;
   /** Only set when attachment-checking ran and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
@@ -292,6 +301,9 @@ export interface RecordSearchResult {
   collectionId?: string;
   collectionTitle?: string;
   collectionUrl?: string;
+  // In the staged file in full. The answer drops it when it is exactly
+  // `Entry for <personName>, "<collection title>"`, else keeps it without the
+  // trailing `, "<collection title>"`.
   recordTitle?: string;
   // The source record/image ARK (the 1:2: entry), e.g.
   // "ark:/61903/1:2:HSJG-CLNF". Canonical ARK form.
@@ -303,15 +315,16 @@ export interface RecordSearchResult {
   recordArk?: string;
   treeMatches: TreeMatch[];
   // Simplified-GedcomX document for this entry, derived from the raw
-  // GedcomX FamilySearch returned. Pass it straight to `same_person`
-  // as gedcomx1/gedcomx2 — no hand-reconstruction needed.
+  // GedcomX FamilySearch returned. Only in the staged file: the answer drops
+  // it, staged or not (compactStagedRecordSearch). `record_read` on `recordId`
+  // returns the record's document.
   gedcomx?: SimplifiedGedcomX;
-  // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
-  // `same_person` as primaryId1/primaryId2.
+  // The `id` of the focus person inside `gedcomx.persons[]`. In the staged
+  // file only, beside `gedcomx`: rank_search_matches reads it there.
   primaryId?: string;
   // Whether the relative(s) the caller anchored the search on are actually
   // named on this record. Present only when a relative NAME was supplied.
-  // Survives the staged slim block that strips `gedcomx`, which is the point:
+  // Survives the slim block that strips `gedcomx`, which is the point:
   // without it a father-anchored hit that names no father is indistinguishable
   // from one that confirms him (#1324).
   relativeTerms?: RelativeTerms;
@@ -321,7 +334,7 @@ export interface RecordSearchResult {
   // executable on none until this field existed (#1592).
   //
   // Flat and top-level rather than left inside `gedcomx`, for the same reason as
-  // `relativeTerms` above: the staged slim block strips `gedcomx`, and a batch
+  // `relativeTerms` above: the slim block strips `gedcomx`, and a batch
   // number the model cannot see in the staged (i.e. normal) case is the one case
   // that matters.
   //
@@ -331,7 +344,7 @@ export interface RecordSearchResult {
   batchNumber?: string;
   // FamilySearch's own label for the represented persona's role on this record
   // ("Principal", "Father", "Mother", "Spouse", "Other"). Flat and top-level
-  // for the same reason as relativeTerms and batchNumber: the staged slim block
+  // for the same reason as relativeTerms and batchNumber: the slim block
   // strips gedcomx, and a role the model cannot see in the staged case is the
   // one case that matters. This is FamilySearch's vocabulary, not a
   // research.json record_role value — an absent role means unknown, never
@@ -340,10 +353,44 @@ export interface RecordSearchResult {
   role?: string;
 }
 
-export interface RecordSearchToolResponse {
-  query: Partial<RecordSearchInput>;
+/** The input fields a place expansion searches under other names. */
+export type PlaceField = "birthPlace" | "deathPlace" | "marriagePlace" | "residencePlace" | "anyPlace";
+
+/** One search of a place expansion: the place field(s) it used and what it found. */
+export interface PlaceExpansionSearch {
+  places: Partial<Record<PlaceField, string>>;
   totalMatches: number;
-  paginationCappedAt: number;
+  /** Rows read from this search (offset 0 to `offset + count`). */
+  returned: number;
+  /** Set when this further name was not searched or its search failed; the
+   *  merge went on without it. */
+  error?: string;
+}
+
+/**
+ * Present when a place field expanded to more than one name (issue #4067):
+ * every name the typed place has had was searched and the records merged.
+ * Serialized before `results` (spec § Key order).
+ */
+export interface PlaceExpansion {
+  searches: PlaceExpansionSearch[];
+  /** Unique records in the merged list read for this page. */
+  mergedCount: number;
+  /** Some names were left out to stay within the search cap. */
+  truncated?: true;
+  /** The merged list was longer than the ranked pool, so only its first rows
+   *  (every name's best, in interleave order) were staged and ranked. */
+  rankedPoolCapped?: true;
+  note: string;
+}
+
+export interface RecordSearchToolResponse {
+  // The answer drops it when it staged; the staged file keeps it, and
+  // research_log_append reads it from there.
+  query?: Partial<RecordSearchInput>;
+  totalMatches: number;
+  // Always 4999. In the staged file only; the answer drops it.
+  paginationCappedAt?: number;
   returned: number;
   offset: number;
   hasMore: boolean;
@@ -355,9 +402,10 @@ export interface RecordSearchToolResponse {
   // shapes in step, and both are gone with it.
   results: RecordSearchResult[];
   // collectionId → collectionTitle for every collection in `results`, present
-  // only on a STAGED response. The per-result `collectionTitle` repeats one of a
-  // handful of strings on every row (9.4% of inline row bytes, measured); hoisting
-  // it here says the same thing once. The staged sidecar keeps the per-row copy.
+  // whenever a row carries a title. The per-result `collectionTitle` repeats one
+  // of a handful of strings on every row (9.4% of inline row bytes, measured);
+  // hoisting it here says the same thing once. The staged sidecar keeps the
+  // per-row copy.
   collections?: Record<string, string>;
   // Present only when `subjectId` was supplied and ranking succeeded. Carries
   // METADATA ONLY — `scoredCount`, `returnedCount`, the subject and the
@@ -396,6 +444,7 @@ export interface RecordSearchToolResponse {
   // emptied by a page that fails mapping while matches exist. A nil search stages
   // no file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
+  placeExpansion?: PlaceExpansion;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
   // staging failed (see `stagingError`).
@@ -424,4 +473,15 @@ export interface RecordSearchToolResponse {
   // Halsteinsdr), one entry per qualifying field. Advisory only; serialized
   // BEFORE `results` and never staged. See `utils/surname-variant-hints.ts`.
   surnameVariantHints?: SurnameVariantHints;
+  // What the census table in code holds for the year and place a census search
+  // names. Advisory only; serialized BEFORE `results` and never staged. See
+  // `utils/census-note.ts`.
+  census?: CensusNote;
+  // On a search that names a parent and no child and is held to one collection,
+  // batch or place: the note to repeat it unheld. Advisory; before `results`,
+  // never staged. See `utils/search-advice.ts`.
+  childrenSearch?: ChildrenSearchNote;
+  // On a surname search that found nobody in a country whose records index
+  // people under patronymics: the search to send next. Same placement.
+  patronymicSearch?: PatronymicSearchNote;
 }

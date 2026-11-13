@@ -175,10 +175,23 @@ snake_case envelope it reads.
    `matchRank`; carry each result's original staged position as `searchRank`.
 5. **Write the score log** (see next section) — **all** scored candidates, not
    just the returned top-`top`.
-6. **Attachments (optional).** If `checkAttachments`, one batch
-   `source_attachments({ uris: recordIds })`; map `attachedToSubject` /
-   `attachedToOther` onto the stubs. (Deriving `attachedToSubject` needs the
-   local-`subjectId`→FamilySearch-PID mapping — see Owner decisions.)
+6. **Attachments (optional; kept, lead, 2026-11-09).** If `checkAttachments`,
+   one batch `source_attachments({ uris: recordIds })`; map `attachedToSubject` /
+   `attachedToOther` onto the stubs. `source_attachments` names attached persons
+   by FamilySearch person id, while a project tree keys them `I1`, `I2`…
+   (`merge-gedcomx.ts`), so the subject is matched by its FamilySearch id, never
+   by `subjectId` as such:
+   - the PID in the tree person's `ark` (`treePidOfArk`: a `4:1:` ark in any
+     spelling, or a tree person URL);
+   - else `subjectId` itself when it is shaped like a FamilySearch person id
+     (`isFamilySearchPersonId`) — e2e and eval trees key persons that way, with
+     no `ark`.
+
+   Compared case-insensitively. A record attached to that id sets
+   `attachedToSubject`; one attached to any other id sets `attachedToOther`.
+   When neither rule yields an id, no attachments call is made and both flags
+   stay unset rather than asserting a wrong answer — as they do when the
+   attachments call fails.
 7. **Return** every scored stub (below), or the first `top` when the caller
    supplied one. Bulk gedcomx is never in the return.
 
@@ -245,6 +258,8 @@ Sorted by `matchScore` descending; no gedcomx.
   "scoringErrors": 0,         // pairs whose FS call kept failing (kept, matchScore null)
   "scoreLogError": null,      // present only if the calibration append failed
   "subjectTooThin": true,     // only when the subject lacks a narrow date AND a named relative
+  "subjectTooThinNote": "…",  // present with subjectTooThin: how to report the rows
+  "surnameNote": "…",         // only when a returned row has surnameNotOnSubject: how to report it
   "matches": [
     {
       "matchRank": 1,
@@ -258,10 +273,12 @@ Sorted by `matchScore` descending; no gedcomx.
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
       "matchScore": 0.99999,       // 0–1; null when scoring failed — never dropped
-      "attachedToSubject": false,  // only when checkAttachments
+      "attachedToSubject": false,  // only when checkAttachments and the subject has a FamilySearch id
       "attachedToOther": true,
       "birthYearConflict": true,   // only when the birth years differ by more than 2
       "birthYearGap": -5,          // candidate year minus subject year; with the flag
+      "surnameNotOnSubject": true, // only when the surname is none the project gives the subject
+      "candidateSurname": "Quass", // the candidate's surname; with the flag
       "relativeTerms": {           // only when the search anchored on a relative
         "father": { "status": "absent" }
       },
@@ -350,6 +367,55 @@ untouched, for the same reason `relativeTerms` is. The flag reaches the
 annotated `results` row as well as the stub (`record-search-tool-spec-v2.md` §
 "The response is re-ordered").
 
+### `surnameNotOnSubject`, `candidateSurname` and `surnameNote` — computed, advisory, never scored
+
+A hit found under a surname the subject never bears in the project — a married
+name the researcher only recalls is the case — scores on given name,
+date and place and reads as a clean match. The stub carries
+`surnameNotOnSubject: true` and `candidateSurname` when the candidate's surname
+is not a spelling of any surname the project gives the subject. Both are
+omitted otherwise, and always when neither the subject nor any tree spouse,
+parent or child has a surname.
+
+The subject's surnames are the enriched subject's names (tree names plus linked
+`name` assertions) and the names of every tree person sharing a `Couple` or
+`ParentChild` relationship with the subject. A maiden-name record under a tree
+parent's surname, or a married-name record under a tree spouse's or child's, is
+therefore not flagged. The candidate's surnames are those of every name of the
+principal persona in the staged row's `gedcomx`, so a record giving a maiden name
+beside a married one is not flagged; `candidateSurname` reports the preferred
+one. Only a row with no such persona falls back to the last word of a multi-word
+`personName`, skipping a generational suffix (Jr., Sr., III).
+
+Two surnames are the same when any word of one is a spelling of any word of the
+other. Words are lower-cased, accent-free, split on spaces and hyphens, and
+words of three letters or fewer ("de", "van") are dropped while a longer word
+remains. Two words are spellings of one another at a Levenshtein distance of 1
+or less, or when they share an American Soundex code: `record_search` matches
+fuzzily, so it returns variants more than one edit apart for one another. So
+Kimbrel/Kimbrell, Smith/Smyth, García/García López, Stephens/Stevens,
+Reilly/Riley, Christensen/Christiansen and Johansson/Johnson are not flagged;
+Fenstermaker against Kimbrell, Olson against Nelson, Henderson against
+Anderson, and Van Buren against van Dyke, are (Soundex keeps the first letter).
+A Sorensen-Dice cutoff of 0.66 is not used: it treats Nelson/Olson and
+Anderson/Henderson as one name. The cost is that distinct surnames coded alike
+(Hall/Hill, Kimbrell/Kemper) are not flagged.
+
+When at least one returned row carries the flag, the response carries
+`surnameNote` (`SURNAME_NOT_ON_SUBJECT_NOTE`): each such row is `needs-review`,
+reported as consistent with that name and never as a confirmed match, as cleared,
+or as ready to extract as the subject's record. That holds when the surname is
+the one the research is trying to establish: an agent shown an earlier wording was
+measured dismissing it on exactly that ground. The note asks for the record that
+would tie the subject to the surname. Like
+`relativeTermNote` it is built from the rows actually returned, so a withheld
+ranking carries none.
+
+Advice, not a scoring change: `matchScore`, `matchRank` and the order are
+untouched. The flag and surname reach the annotated `results` row as well as the
+stub, and the note stays on `ranked` (`record-search-tool-spec-v2.md` § "The
+response is re-ordered").
+
 ### `batchNumber` — carried, never scored and never annotated
 
 Copied verbatim from the staged row when it is there, omitted when it is not.
@@ -371,7 +437,7 @@ routinely returns hits both with and without one. See
 `record-search-tool-spec-v2.md` § `batchNumber` for where it is read from and why
 it is matched on `labelId`.
 
-### `subjectTooThin` — namesake gate flag
+### `subjectTooThin` — namesake flag
 
 Present and `true` when the subject has **no date narrower than a year** **AND**
 no named spouse, parent or child — in the tree or in the `research.json`
@@ -459,9 +525,10 @@ Independent of the withholding branch (`matches: []`, with
 dated/placed facts. A subject with a
 city-only residence has a placed fact (withholding does not fire) but may still
 be `subjectTooThin` (no narrow date, no relative). Both can be true
-simultaneously — the desired semantics for the namesake gate in search-records,
-which will read the flag regardless of whether matches were returned. That gate
-is not built yet, so nothing reads the flag today.
+simultaneously. When the flag is set the response also carries
+`subjectTooThinNote`, which tells the agent reading the rows to report every row
+as `needs-review — possible namesake`. Both are advisory: nothing refuses a thin
+subject's records.
 
 The **stricter form** — ignore facts the query already filtered on, since every
 result shares those by construction — is not built: the base rule shipped alone
@@ -520,11 +587,11 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   `manifest.json` (`tools[]`) — kept in sync by the manifest drift test
   (`tests/packaging/manifest.test.ts`).
 - `record_search` change: in the `record-search.ts` return path, **unconditionally
-  strip inline `results[].gedcomx` after `await stageSearchResults(...)` whenever
-  staging succeeded** — no opt-in flag (nothing needs inline gedcomx once staged,
+  strip inline `results[].gedcomx` on every answer (after `await
+  stageSearchResults(...)`, when it stages)** — no opt-in flag (nothing needs inline gedcomx once staged,
   so the overflow protection can't be forgotten by the caller). The staged file is
-  already serialized to disk, so stripping cannot corrupt the sidecar; an un-staged
-  (no `projectPath`) search still returns full gedcomx inline.
+  already serialized to disk, so stripping cannot corrupt the sidecar. An un-staged
+  (no `projectPath`) search is stripped too.
 - **`packages/engine/plugin/agents/search-records.md` — required, not
   optional.** Add `rank_search_matches` to `tools:` and rewrite the triage
   step to the flow below. **Without this the tool is unreachable** — the
@@ -563,9 +630,11 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 - A failing pair yields `matchScore: null` + `scoringErrors++`, never dropped.
 - Guard rejections (traversal, missing file, `subjectId` absent) error cleanly.
 - Read-only: the staged file still exists and is finalizable after the call.
-- `record_search` strips inline `results[].gedcomx` whenever staging succeeded
-  (unconditional); keeps it inline for an un-staged (no `projectPath`) search and
-  when `staged` is null.
+- `checkAttachments` matches the subject by the FamilySearch id in its `ark`
+  on an `I1` tree, by a FamilySearch-shaped tree id with no `ark`, and with
+  neither leaves both flags unset and makes no attachments call.
+- `record_search` strips inline `results[].gedcomx` on every answer: staged, un-staged
+  (no `projectPath`) and when `staged` is null.
 
 Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 `rank_search_matches` against live FS for a known subject.
@@ -596,10 +665,7 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 1. **Threshold** — intentionally none, and no host-side cut either: every
    scored candidate is returned, ordered. Set a threshold later
    from `results/match-scores.jsonl`.
-2. **`checkAttachments` in v1** — needs a local-`subjectId`→FS-PID map
-   (`source_attachments` keys on entity PIDs). Build now or defer to the existing
-   separate `source_attachments` call.
-3. **Subject enrichment** — minimal (subject person only) vs. +1-hop relatives.
+2. **Subject enrichment** — minimal (subject person only) vs. +1-hop relatives.
    Minimal scored decisively in the probe; revisit if real cases need more.
-4. **Score-log path** — `results/match-scores.jsonl` proposed; confirm it stays
+3. **Score-log path** — `results/match-scores.jsonl` proposed; confirm it stays
    clear of the results-orphan validator.

@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_search_records_d29",
+    "skill": "search-records",
+    "name": "Thin subject: a clean-looking hit is reported as needs-review, never as the subject",
+    "type": "positive",
+    "description": "The subject (William Brown, b. 1872 Virginia) has no date narrower than a year and no named spouse, parent or child, so record_search's ranked carries subjectTooThin: true. The single 1900 hit agrees with everything the tree holds and ranks 0.94, and nothing in the project separates him from a namesake. The reply must present the hit as needs-review, report none of its family as the subject's, and name the anchor and the record likely to state it. Extraction is not graded. Issue #2213 d29.",
+    "tags": [
+      "search",
+      "census",
+      "namesake",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run the 1900 census search for William Brown for plan item pli_001, and if you find him extract the record - the user said not to check back first.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "scenario": "search-records-thin-subject"
+  },
+  "mcp_fixtures": [
+    "record-search-brown-1900-thin-subject",
+    "rank-search-matches-brown-1900-thin-subject",
+    "record-read-brown-1900-m9tb-7qx",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE: `ranked.subjectTooThin` is true on the search response — the tree holds only a birth year and no relatives, so nothing separates this William Brown from any other William Brown in Bedford County. The hit must be presented as needs-review, whatever its matchScore. Extraction is not graded: it records what the record says and claims no identity.",
+    "Score Result triage 1 if the reply calls the hit a confirmed match, 'our William', 'almost certainly him', or otherwise presents it as clearing identity, or reports a relative from the record as the subject's. A high score on a too-thin subject measures only that nothing disagrees, not that anything agrees.",
+    "Score Completeness 3 when the hit is reported and flagged needs-review, the search is logged, and the reply names what would confirm identity (e.g. a named spouse, child or parent, or a more precise birth date) and the record most likely to state it. Wording is free."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
+  }
+}

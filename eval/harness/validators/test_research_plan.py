@@ -178,7 +178,7 @@ def test_dispose_named_items(before_state, after_state, test):
             if was == now:
                 continue
             # `in_progress` counts too, since section B of
-            # docs/plan/research-step-mode.md: a search that ran without closing
+            # docs/specs/research-step-mode-spec.md: a search that ran without closing
             # its item leaves it `in_progress`, and the router's dispose row now
             # names those as well. Leaving them out is what let a searched item
             # sit undisposed while the declaration stayed refused for good.
@@ -198,7 +198,7 @@ def test_dispose_named_items(before_state, after_state, test):
                 if not now.get("skip_category"):
                     errors.append(f"{iid}: skipped with no skip_category")
                 # A search that RAN is never `skipped`: `research_append` refuses it
-                # (decision 9 of docs/plan/attached-records-baseline.md), because a
+                # (research-append-tool-spec.md §8, the searched-item skip row), because a
                 # skip says nothing was searched and research-exhaustiveness reads a
                 # disposed item as settled.
                 if iid in logged:
@@ -324,7 +324,9 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     by the search-* skills via log entries — never by research-plan.
     The one exception is `_enumerative_skip`; on a targeted or unlabelled
     question a `skipped` item at creation still fails, which is what stops
-    the enumerative obligation over-firing."""
+    the enumerative obligation over-firing. The tag means the test writes a
+    plan, so a run that adds no new item (to a new plan or an existing one)
+    fails rather than passing with nothing checked (#4477)."""
     if "new-plan-items-planned-status" not in test.get("tags", []):
         pytest.skip("not a new-plan-items-planned-status scenario")
     before = before_state.get("research_json")
@@ -342,17 +344,23 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     questions = {q.get("id"): q for q in after.get("questions", []) or []}
 
     errors: list[str] = []
+    new_items = 0
     for plan in after.get("plans", []) or []:
         question = questions.get(plan.get("question_id"))
         for item in plan.get("items", []) or []:
             if item.get("id") in before_item_ids:
                 continue  # pre-existing item, not our responsibility
+            new_items += 1
             status = item.get("status")
             if status != "planned" and not _enumerative_skip(item, question):
                 errors.append(
                     f"new plan item {item.get('id')} has status='{status}'; "
                     f"expected 'planned'"
                 )
+    assert new_items, (
+        "new-plan-items-planned-status test wrote no new plan items: the tag "
+        "means this test writes a plan, so there is nothing to check"
+    )
     assert not errors, "New plan items with non-planned status:\n  - " + "\n  - ".join(errors)
 
 
@@ -1228,12 +1236,15 @@ _PERCENT_INDEXED_RE = re.compile(
 )
 
 
-def _collection_person_counts(tool_calls) -> dict[str, set[int]]:
+def _collection_person_counts(tool_calls, research=None) -> dict[str, set[int]]:
     """id -> set of personCounts across every collections_search response
-    this run received. An id can be served with different counts in
-    different responses (1999196 was once 0 in schuylkill and 893214 in
-    pennsylvania, reconciled 2026-09-24 under issue #2685), so key on the
-    response, not the id."""
+    this run received, plus, for an id no response served, its count in the
+    before-state `localities` entries (research-plan plans from those without
+    a call). A served count always wins over a stored one. An id can be
+    served with different counts in different
+    responses (1999196 was once 0 in schuylkill and 893214 in pennsylvania,
+    reconciled 2026-09-24 under issue #2685), so key on the response, not
+    the id."""
     counts: dict[str, set[int]] = {}
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) != "collections_search":
@@ -1244,6 +1255,13 @@ def _collection_person_counts(tool_calls) -> dict[str, set[int]]:
             if cid is None or pc is None:
                 continue
             counts.setdefault(str(cid), set()).add(int(pc))
+    served = set(counts)
+    for entry in (research or {}).get("localities") or []:
+        for col in entry.get("collections") or []:
+            cid, pc = col.get("id"), col.get("person_count")
+            if cid is None or not isinstance(pc, int) or str(cid) in served:
+                continue
+            counts.setdefault(str(cid), set()).add(pc)
     return counts
 
 
@@ -1271,9 +1289,9 @@ def test_research_plan_availability_claim_matches_counts(
     if not new_plans:
         pytest.skip("run added no new plan")
 
-    counts = _collection_person_counts(tool_calls)
+    counts = _collection_person_counts(tool_calls, before)
     if not counts:
-        pytest.skip("no collections_search response to check against")
+        pytest.skip("no collections_search response or counted locality collection to check against")
 
     errors: list[str] = []
     for plan in new_plans:
@@ -1298,17 +1316,108 @@ def test_research_plan_availability_claim_matches_counts(
                 if claims_indexed and not any(pc > 0 for pc in pcs):
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
-                        f"collection {cid} \"indexed\" but every response this "
-                        f"run received returned personCount 0"
+                        f"collection {cid} \"indexed\" but its personCount "
+                        f"(from this run's collections_search responses, else "
+                        f"the localities entry) is 0"
                     )
                 elif claims_browse and not any(pc == 0 for pc in pcs):
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
-                        f"collection {cid} browse/image-only but the served "
-                        f"response returned personCount {sorted(pcs)}"
+                        f"collection {cid} browse/image-only but its "
+                        f"personCount (from this run's collections_search "
+                        f"responses, else the localities entry) is {sorted(pcs)}"
                     )
     assert not errors, (
         "availability claim contradicts returned personCount:\n  - "
+        + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: plan from a counted localities entry, not a repeat survey ---
+
+
+def _collections_scope(place: str) -> str:
+    """Python port of `standardPlaceToCollectionsQuery`
+    (packages/engine/mcp-server/src/tools/collections-search.ts): the scope a
+    `collections_search` call on `place` is answered at."""
+    parts = [p.strip() for p in place.split(",") if p.strip()]
+    if not parts:
+        return place.strip()
+    country = parts[-1]
+    state = parts[-2] if len(parts) >= 2 else None
+    if country == "United States":
+        return state or country
+    if country in ("Canada", "Mexico"):
+        return f"{country}, {state}" if state else country
+    return country
+
+
+def _year_span(text) -> tuple[int, int] | None:
+    """`time_period` text such as "1840-1880" or "1901" as a year span, or
+    None when it is missing or not that shape."""
+    if not isinstance(text, str):
+        return None
+    m = re.fullmatch(r"\s*(\d{4})(?:\s*[-–]\s*(\d{4}))?\s*", text)
+    if not m:
+        return None
+    start = int(m.group(1))
+    return start, int(m.group(2) or start)
+
+
+def test_research_plan_reuses_counted_locality_collections(
+    before_state, tool_calls, test
+):
+    """Tag-gated (`reuses-counted-locality`): when a before-state `localities`
+    entry carries a `person_count` on every collection, research-plan plans
+    from it and makes no `collections_search` call answered at the same
+    scope as the entry's `place` (a standard place; `for_place` is free text
+    with no country and is not scoped). A call whose `startYear`-`endYear`
+    reach outside the entry's `time_period` is a new period, not a repeat; an
+    entry with no parseable `time_period` covers nothing. The national
+    `United States` call is exempt. Issue #3545 lead 3: in 6 of 10 e2e runs
+    research-plan repeated locality-guide's call on a place or country it had
+    just surveyed. Matching is on the call's args, never its response."""
+    if "reuses-counted-locality" not in test.get("tags", []):
+        pytest.skip("not a reuses-counted-locality scenario")
+    before = before_state.get("research_json")
+    if before is None:
+        pytest.skip("missing before-state research.json")
+
+    covered: dict[str, list[tuple[str, tuple[int, int]]]] = {}
+    for entry in before.get("localities") or []:
+        cols = entry.get("collections") or []
+        if not cols or not all(isinstance(c.get("person_count"), int) for c in cols):
+            continue
+        span = _year_span(entry.get("time_period"))
+        place = entry.get("place")
+        if span and isinstance(place, str) and place.strip():
+            scope = _collections_scope(place).casefold()
+            if scope != "united states":
+                covered.setdefault(scope, []).append((entry.get("id") or "?", span))
+    assert covered, (
+        "reuses-counted-locality test has no localities entry with a counted "
+        "collection and a time_period; the fixture cannot exercise this check"
+    )
+
+    errors: list[str] = []
+    for c in tool_calls or []:
+        if _bare(c.get("tool", "")) != "collections_search":
+            continue
+        args = c.get("args") or {}
+        place = args.get("standardPlace")
+        if not isinstance(place, str):
+            continue
+        start, end = args.get("startYear"), args.get("endYear")
+        for entry_id, (lo, hi) in covered.get(_collections_scope(place).casefold(), []):
+            if (isinstance(start, int) and start < lo) or (isinstance(end, int) and end > hi):
+                continue
+            errors.append(
+                f"collections_search({place!r}) repeats the survey of "
+                f"{entry_id}, whose counted collections cover that scope and period"
+            )
+            break
+    assert not errors, (
+        "research-plan re-ran a counted locality survey:\n  - "
         + "\n  - ".join(errors)
     )
 
@@ -1675,13 +1784,20 @@ _RELATIVE = r"(?:(?:grand|step)?(?:son|daughter|child|children|father|mother|par
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖ])")
 
 
+_SUBJECT_OWN_DEATH_RE = re.compile(
+    rf"\b(?:subject['’]s|her)\s+own\s+{_DEATH_WORD}", re.IGNORECASE
+)
+
+
 def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
     """(own, relative): `own` ties the entry to the subject ("Elena's burial",
-    "burials index for Elena", "her age at death", "Elena's entry");
-    `relative` names a relative of hers ("Elena's son", "her husband")."""
+    "burials index for Elena", "her age at death", "Elena's entry", "the
+    subject's own burial"); `relative` names a relative of hers ("Elena's
+    son", "her husband")."""
     g = re.escape(given)
     own = re.compile(
-        rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
+        _SUBJECT_OWN_DEATH_RE.pattern
+        + rf"|\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
         rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b(?!['’]s)"
         rf"|(?<!\bof\s)\b{g}(?:\s+\w+)?,?\s+(?:was\s+)?(?:buried|died)\b"
         rf"|\bher\s+(?:own\s+)?(?:age\s+at\s+)?{_DEATH_WORD}",
@@ -1706,6 +1822,7 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
     her birthplace. Both defects are asserted here.
 
     An item counts only when its rationale or jurisdiction names the subject
+    (by given name, or as "her own" / "the subject's own" death or burial)
     and a death/burial word, and its `date_range` starts after the subject's
     birth window. When every sentence carrying a death word also names a
     relative of hers ("Elena's son", "her husband"), the item counts only if
@@ -1738,7 +1855,8 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
 
     def _qualifies(item: dict) -> bool:
         text = f"{item.get('rationale') or ''} {item.get('jurisdiction') or ''}"
-        if given.lower() not in text.lower() or not re.search(_DEATH_WORD, text, re.IGNORECASE):
+        named = given.lower() in text.lower() or _SUBJECT_OWN_DEATH_RE.search(text)
+        if not named or not re.search(_DEATH_WORD, text, re.IGNORECASE):
             return False
         death_sentences = [
             s for s in _SENTENCE_SPLIT_RE.split(text)
@@ -1822,4 +1940,87 @@ def test_research_plan_hints_review_first(before_state, after_state, test):
     assert any(pid in (i.get("rationale") or "").upper() for i in leads for pid in pids), (
         f"{leads[0].get('id')}'s rationale names none of {sorted(pids)}: "
         f"{leads[0].get('rationale')!r}"
+    )
+
+
+# --- Parentage: the parents' marriage is a dedicated item (issue #4022) -------
+
+# test id -> the candidate father's given name a dedicated parents'-marriage
+# item must pair with a marriage word. Thomas: the hypothesized father of
+# Patrick Flynn from 1850 co-residence (flynn-first-plan-surveyed).
+_PARENTS_MARRIAGE_BY_TEST_ID = {
+    "ut_research_plan_014": "Thomas",
+}
+
+# wed(?:s|ded|ding|lock)?\b rather than wed\w* so "Wednesday" cannot match.
+_MARRIAGE_WORD = r"(?:marri\w*|wed(?:s|ded|ding|lock)?\b|bond\w*|licen[cs]\w*)"
+_FOLDED_WORD = r"(?:baptis\w*|christen\w*|sibling\w*|child\w*)"
+
+
+def test_research_plan_plans_parents_marriage(before_state, after_state, test):
+    """Tag-gated (``parents-marriage-item``): a parentage plan carries a
+    dedicated item for the candidate parents' marriage to each other.
+
+    The body already forbids folding it into a generic church item, and the
+    v14_2026-10-29 run did exactly that on ut_research_plan_014: pli_009
+    (church) carried "A marriage record for Thomas Flynn and his wife ...
+    would supply her maiden name" alongside sibling baptisms. An item counts
+    only when its rationale names the candidate father together with a
+    marriage word and does not also target a baptism, christening, sibling or
+    child in that same sentence. The anti-words are sentence-scoped (the
+    death-route validator's precedent): a 2026-11-03 run wrote "Dedicated
+    search for Thomas Flynn's marriage to Patrick's mother." and then noted the
+    same parish registers may also hold a sibling's baptism — a dedicated item
+    a whole-rationale scan false-failed. The real v14 pli_009 rationale is five
+    sentences; its marriage sentence folds in sibling baptisms (one semicolon
+    sentence), and its last sentence searches "Thomas's marriage and ...
+    children bearing the Flynn surname" — so `child*` is in the anti-words
+    too, or that last sentence would slip the fold through (T-FEH, PR #4447).
+    ``record_type`` is deliberately not tested: the body names a church
+    marriage register as a valid dedicated item (review-ready, 2026-10-30).
+    Known limits, accepted with that decision: any new item pairing the
+    father's name with a marriage word in a clean sentence qualifies (e.g. a
+    FAN item on the marriage bondsman, or a folded item restated across two
+    sentences), so the folded shape is caught only in its measured
+    one-sentence form.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _PARENTS_MARRIAGE_BY_TEST_ID or "parents-marriage-item" in tags, (
+        f"{test_id} has a _PARENTS_MARRIAGE_BY_TEST_ID entry but no "
+        "'parents-marriage-item' tag - restore the tag or delete the entry"
+    )
+    if "parents-marriage-item" not in tags:
+        pytest.skip("not a parents-marriage-item test")
+    father = _PARENTS_MARRIAGE_BY_TEST_ID.get(test_id)
+    assert father, (
+        f"{test_id} carries 'parents-marriage-item' but has no entry in "
+        "_PARENTS_MARRIAGE_BY_TEST_ID"
+    )
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    def _dedicated(item: dict) -> bool:
+        text = item.get("rationale") or ""
+        return any(
+            re.search(rf"\b{re.escape(father)}\b", s, re.IGNORECASE) is not None
+            and re.search(rf"\b{_MARRIAGE_WORD}", s, re.IGNORECASE) is not None
+            and re.search(rf"\b{_FOLDED_WORD}", s, re.IGNORECASE) is None
+            for s in _SENTENCE_SPLIT_RE.split(text)
+        )
+
+    assert any(_dedicated(i) for i in items), (
+        f"no new plan item is dedicated to the candidate parents' marriage: "
+        f"no rationale sentence names {father} with a marriage word "
+        "(marri*/wed*/bond*/licen*) and no baptism, christening, sibling or "
+        "child target in that sentence (items: "
+        + "; ".join(
+            f"{i.get('id')} {i.get('record_type')}: {(i.get('rationale') or '')[:90]}"
+            for i in items
+        )
+        + ")"
     )

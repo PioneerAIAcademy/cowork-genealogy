@@ -27,12 +27,18 @@
 // call it" — is about seeding for standalone work, where the callers are many.
 // Here there is one.
 //
-// WHY IT TAKES THE TREE RATHER THAN CREATING AN EMPTY ONE. `subject_person_ids`
+// WHY IT WRITES THE TREE RATHER THAN CREATING AN EMPTY ONE. `subject_person_ids`
 // naming a person absent from `tree.gedcomx.json` is a hard validator error, so
 // a header-only create followed by separate tree writes has an ordering
-// constraint that has to be got right every time. Taking both together makes
+// constraint that has to be got right every time. Writing both together makes
 // the pair atomic and validates them against each other in one pass — there is
 // no window in which the project is inconsistent, and no order to remember.
+//
+// WHY ONLY FROM A FAMILYSEARCH PERSON (lead, 2026-11-02). A project always
+// starts from a person ID, and the rule is enforced here, not only in
+// init-project's prose: a hand-built `tree` let two sessions create a project
+// with no person in it, once through init-project and once through a
+// general-purpose agent. `personId` is required and `tree` is refused by name.
 //
 // WHY IT READS THE PERSON ITSELF (issues #2944, #3384). Re-typing a
 // `person_read` into `tree` cost the model about 51 KB of output on a 15-person
@@ -51,7 +57,6 @@ import {
   formatIssues,
 } from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
-import { listStagedEnvelopes, type StagingEnvelope } from "../utils/results-staging.js";
 import { sourceImageCapState } from "../utils/image-store.js";
 import {
   OCR_PHASE_BUDGET_MS,
@@ -65,22 +70,19 @@ import {
   TreeBuildError,
   accessDate,
   buildFromStagedRead,
-  buildTreeEvidence,
   displayName,
+  divisionMismatchesOf,
   factsOf,
-  normalizeHandBuilt,
-  retryUnresolvedPlaces,
   unresolvedPlacesOf,
+  type BuiltTree,
   type DroppedLoopEdge,
   type IdMap,
-  type FilledPlace,
-  type StagedPersonRead,
-  type TreeEvidence,
 } from "../utils/person-read-tree.js";
-import { treePidOfArk } from "../utils/ark.js";
-import type { SimplifiedFact } from "../types/gedcomx.js";
-import { PERSON_READ_REF_REMOVED } from "../utils/tool-hint-messages.js";
-import { projectLinks } from "../utils/project-links.js";
+import {
+  PERSON_ID_REQUIRED,
+  PERSON_READ_REF_REMOVED,
+  PROJECT_TREE_REMOVED,
+} from "../utils/tool-hint-messages.js";
 
 /** The sections a new project starts with, all empty (`sources` aside, which
  *  holds the subject's transcribed memories when the person is read here). */
@@ -137,18 +139,16 @@ export interface ProjectCreateInput {
   objective: string;
   title?: string;
   subjectPersonIds?: string[];
-  /** A FamilySearch person ID. When set, this tool reads the person and builds
-   *  the starting tree from the read; `tree` is refused beside it. */
-  personId?: string;
+  /** The subject's FamilySearch person ID. Required: a project always starts
+   *  from one (lead, 2026-11-02). This tool reads the person and builds the
+   *  starting tree from the read. */
+  personId: string;
   /** Removed (issue #3384): refused by name, so a caller built against the old
-   *  contract is told to pass `personId` rather than falling into the
-   *  hand-built path. */
+   *  contract is told to pass `personId`. */
   personReadRef?: unknown;
-  tree?: {
-    persons?: unknown[];
-    relationships?: unknown[];
-    sources?: unknown[];
-  };
+  /** Removed 2026-11-02 with the hand-built tree: refused by name, so no
+   *  project comes into being without a FamilySearch person. */
+  tree?: unknown;
 }
 
 /** One person in the summary: tree id, display name, and how they relate to
@@ -174,8 +174,6 @@ const NEVER_TRIMMED: ReadonlySet<SummaryPerson["relationship"]> = new Set([
 export interface ProjectCreateSummary {
   ok: true;
   projectId: string;
-  /** The project's viewer page, when the server knows its public URL. */
-  projectUrl?: string;
   filesWritten: string[];
   subject: { id: string; familySearchId: string; name: string; birth?: string; death?: string };
   /** The objective and title as stored, after `nameForId`. */
@@ -192,27 +190,7 @@ export interface ProjectCreateSummary {
   validation: { valid: true; warnings: string[] };
 }
 
-export type ProjectCreateResult =
-  | ProjectCreateSummary
-  | {
-      ok: true;
-      projectId: string;
-      /** The project's viewer page, when the server knows its public URL. */
-      projectUrl?: string;
-      filesWritten: string[];
-      counts: { persons: number; relationships: number; sources: number };
-      /** Which tree ids the create assigned: FamilySearch PIDs and source ids
-       *  to `I`/`S` ids, and addition labels to their `I` ids. */
-      idMap: IdMap;
-      /** Places the read left without a `standard_place` that this create
-       *  resolved; absent when there were none. */
-      placesFilled?: FilledPlace[];
-      /** Places still without a `standard_place` once this create tried them,
-       *  each once; absent when there were none. */
-      unresolvedPlaces?: string[];
-      validation: { valid: true; warnings: string[] };
-    }
-  | { ok: false; errors: string[] };
+export type ProjectCreateResult = ProjectCreateSummary | { ok: false; errors: string[] };
 
 class ProjectCreateError extends Error {}
 
@@ -258,6 +236,9 @@ export async function runProjectCreate(
     if (input.personReadRef !== undefined) {
       throw new ProjectCreateError(PERSON_READ_REF_REMOVED);
     }
+    if (input.tree !== undefined) {
+      throw new ProjectCreateError(PROJECT_TREE_REMOVED);
+    }
 
     const objective = typeof input.objective === "string" ? input.objective.trim() : "";
     if (!objective) {
@@ -267,14 +248,23 @@ export async function runProjectCreate(
           "what they want to find out before creating anything.",
       );
     }
+    if (typeof input.personId !== "string" || input.personId.trim() === "") {
+      throw new ProjectCreateError(
+        input.personId == null || typeof input.personId === "string"
+          ? PERSON_ID_REQUIRED
+          : `personId must be a FamilySearch person ID such as "KWCJ-RN4"; got ${JSON.stringify(input.personId)}. ` +
+              PERSON_ID_REQUIRED.slice(PERSON_ID_REQUIRED.indexOf("Ask the researcher")),
+      );
+    }
+    const pid = input.personId.trim();
 
     // The opening tree, copied write-once alongside the two live documents. The
     // tree-encoding completion gate (issue #1490) diffs the final tree against
     // this baseline to tell a conclusion this session encoded from a fact that
     // was already seeded. research_append loads only the CURRENT tree, so without
     // a persisted baseline it cannot make that distinction. Written from the same
-    // final tree (built from the read, or the hand-built one), in the same atomic
-    // write, so the baseline is the opening tree exactly and never diverges.
+    // final tree, in the same atomic write, so the baseline is the opening tree
+    // exactly and never diverges.
 
     // Create, not upsert. Overwriting an existing project would destroy an
     // audit trail that cannot be reconstructed, and the caller that wants to
@@ -327,151 +317,38 @@ export async function runProjectCreate(
       );
     }
 
-    // A collection that is present but not an array is refused, never read as
-    // empty: dropping it would write a tree missing what the caller sent. `null`
-    // means none, as an absent key does.
-    if (input.tree != null && (typeof input.tree !== "object" || Array.isArray(input.tree))) {
-      throw new ProjectCreateError(
-        `tree must be an object with persons, relationships and sources; got ${JSON.stringify(input.tree)}.`,
-      );
-    }
-    for (const key of ["persons", "relationships", "sources"] as const) {
-      const v = (input.tree as Record<string, unknown> | undefined)?.[key];
-      if (v != null && !Array.isArray(v)) {
-        throw new ProjectCreateError(`tree.${key} must be an array of objects; got ${JSON.stringify(v)}.`);
-      }
-    }
-    const given = {
-      persons: input.tree?.persons ?? [],
-      relationships: input.tree?.relationships ?? [],
-      sources: input.tree?.sources ?? [],
-    };
-    let pid: string | undefined;
-    if (input.personId !== undefined) {
-      if (typeof input.personId !== "string" || input.personId.trim() === "") {
-        throw new ProjectCreateError(
-          `personId must be a FamilySearch person ID such as "KWCJ-RN4"; got ${JSON.stringify(input.personId)}.`,
-        );
-      }
-      pid = input.personId.trim();
-      if (given.persons.length + given.relationships.length + given.sources.length > 0) {
-        throw new ProjectCreateError(
-          "tree cannot be passed with personId: the starting tree is built from the read. Create " +
-            "the project with personId alone; this call returns each relative with their tree id, " +
-            "and a person the researcher named who is not among them is added afterwards with " +
-            "tree-edit.",
-        );
-      }
-    }
     const now = new Date();
-    let tree: { persons: unknown[]; relationships: unknown[]; sources: unknown[] };
-    let idMap: IdMap;
-    let subjectPersonIds: unknown = input.subjectPersonIds;
-    let fillPlaces: (extra?: SimplifiedFact[], budgetMs?: number) => Promise<FilledPlace[]> = (
-      extra = [],
-      budgetMs,
-    ) => retryUnresolvedPlaces(extra, budgetMs);
-    let handFacts: Record<string, unknown>[];
-    const refWarnings: string[] = [];
-    let loopNotes: string[] = [];
-    let treeCited = { facts: 0, relationships: 0 };
-    // The staged person_reads, listed once and only when something needs them:
-    // the PID fallback, or a hand-entered person carrying a FamilySearch ark,
-    // whose unsourced facts and relationships are cited by what the reads hold
-    // (issue #3384). With no such person nothing hand-entered can match a read
-    // except a new edge between two staged persons, and that stays the
-    // researcher's statement: an under-claim, never an over-claim.
-    let listed: Promise<StagedPersonReadFile[]> | undefined;
-    const stagedReads = () => (listed ??= listStagedPersonReads(projectPath));
-    const evidence = async (): Promise<TreeEvidence> =>
-      buildTreeEvidence((await stagedReads()).map((f) => f.read));
-    let outcome: PersonReadOutcome | undefined;
+    let built: BuiltTree;
+    let outcome: PersonReadOutcome;
     try {
-      if (pid !== undefined) {
-        // Every refusal that needs no network has passed, so the read is only
-        // ever spent on a create that can happen.
-        outcome = await deps.readPerson(
-          pid,
-          { projectPath, deadline: start + OCR_PHASE_BUDGET_MS },
-          principal,
-        );
-        const built = await buildFromStagedRead({
-          staged: { personId: outcome.resolvedId, requestedId: pid, gedcomx: outcome.result as never },
-          subjectPersonIds: input.subjectPersonIds,
-          now,
-        });
-        tree = built.tree;
-        idMap = built.idMap;
-        subjectPersonIds = built.subjectPersonIds;
-        fillPlaces = built.fillPlaces;
-        loopNotes = built.droppedLoopEdges.map(loopNote);
-        refWarnings.push(...loopNotes);
-        // A read's facts are FamilySearch's; nothing in it was entered by hand.
-        handFacts = [];
-      } else {
-        ({ tree, idMap, treeCited } = normalizeHandBuilt(
-          given,
-          now,
-          input.subjectPersonIds,
-          given.persons.some(hasTreeArk) ? await evidence() : undefined,
-        ));
-        handFacts = factsOf(tree);
-      }
+      // Every refusal that needs no network has passed, so the read is only
+      // ever spent on a create that can happen.
+      outcome = await deps.readPerson(
+        pid,
+        { projectPath, deadline: start + OCR_PHASE_BUDGET_MS },
+        principal,
+      );
+      built = await buildFromStagedRead({
+        staged: { personId: outcome.resolvedId, requestedId: pid, gedcomx: outcome.result as never },
+        subjectPersonIds: input.subjectPersonIds,
+        now,
+      });
     } catch (e) {
       if (e instanceof TreeBuildError) throw new ProjectCreateError(e.message);
       throw e;
     }
-    if (treeCited.facts + treeCited.relationships > 0) {
-      refWarnings.push(
-        `${treeCited.facts} fact(s) and ${treeCited.relationships} relationship(s) with no source were ` +
-          `cited to ${idMap.familySearchTreeSource}, the FamilySearch Family Tree: a staged person_read holds each of them exactly.`,
-      );
-    }
-
-    // A hand-entered place is standardized here, by the resolver person_read
-    // and tree_edit use, never taken from the caller: a value no place
-    // authority returned is a claim FamilySearch did not make, and a model
-    // told to call place_search first skipped it often enough to invent one.
-    // Cleared on every hand-entered fact, not only those with a place: one with
-    // no place has nothing to resolve, so a value there could only be invented.
-    const hasPlace = (f: Record<string, unknown>) => typeof f.place === "string" && f.place.trim() !== "";
-    const placed = handFacts.filter(hasPlace) as unknown as SimplifiedFact[];
-    const supplied = new Map<Record<string, unknown>, unknown>();
-    for (const f of handFacts) {
-      if (f.standard_place != null) supplied.set(f, f.standard_place);
-      delete f.standard_place;
-    }
-    const fillAll = async () => {
-      // What the call budget has left, so the read and the retry together stay
-      // under the bridge's abort.
-      const budget = Math.min(PLACE_RETRY_BUDGET_MS, start + CALL_BUDGET_MS - Date.now());
-      const filled = await fillPlaces(placed, Math.max(0, budget));
-      for (const [f, was] of supplied) {
-        const resolved = f.standard_place;
-        if (resolved === was) continue;
-        refWarnings.push(
-          !hasPlace(f)
-            ? `standard_place ${JSON.stringify(was)} on a ${String(f.type ?? "")} fact with no place was ` +
-                "not kept: project_create standardizes a hand-entered place itself, from the fact's place"
-            : resolved === undefined
-              ? `standard_place ${JSON.stringify(was)} for '${f.place}' was not kept: project_create ` +
-                  "standardizes hand-entered places itself, and could not standardize this one"
-              : `standard_place ${JSON.stringify(was)} for '${f.place}' was replaced by '${resolved}': ` +
-                  "project_create standardizes hand-entered places itself",
-        );
-      }
-      return filled;
-    };
+    const { tree, idMap, subjectPersonIds } = built;
+    const loopNotes = built.droppedLoopEdges.map(loopNote);
+    const refWarnings: string[] = [...loopNotes];
 
     // `assertion_id` is stamped by `materialize_facts`, never supplied. This
-    // tool writes the caller's facts as given (staged or added), and the document validator type-
-    // checks the field but cannot know it was forged — so without this it is the
-    // one unguarded fact write path, and a forged backlink would persist into
-    // BOTH tree.gedcomx.json and the write-once starting-tree baseline, after
-    // which an assertion correction rewrites a hand-entered fact from an
-    // assertion it never came from. `tree_edit` refuses the same thing on its
-    // four paths; a seeding tree (a FamilySearch snapshot, a hand-built stub)
-    // has no assertions to point at, so nothing legitimate carries one.
+    // tool copies the read's facts as given, and the document validator type-
+    // checks the field but cannot know it was forged — so without this a
+    // backlink in a read would persist into BOTH tree.gedcomx.json and the
+    // write-once starting-tree baseline, after which an assertion correction
+    // rewrites a fact from an assertion it never came from. `tree_edit` refuses
+    // the same thing on its four paths; a seeding tree has no assertions to
+    // point at, so nothing legitimate carries one.
     // A relationship is described by its type and endpoints.
     const describe = (holder: Record<string, unknown>) => {
       const id = String(holder.id ?? "(unnamed)");
@@ -501,14 +378,10 @@ export async function runProjectCreate(
 
     // An objective written before the read can name the subject only by the
     // ID it was given; the read supplies the name.
-    let storedObjective = objective;
-    let storedTitle = input.title;
-    if (outcome) {
-      const subject = (tree.persons as Record<string, any>[]).find((p) => p?.id === idMap.persons[outcome!.resolvedId]);
-      const ids = [...new Set([pid as string, outcome.resolvedId])];
-      storedObjective = nameForId(objective, ids, displayName(subject));
-      if (storedTitle) storedTitle = nameForId(storedTitle, ids, displayName(subject));
-    }
+    const subject = tree.persons.find((p) => p?.id === idMap.persons[outcome.resolvedId]);
+    const ids = [...new Set([pid, outcome.resolvedId])];
+    const storedObjective = nameForId(objective, ids, displayName(subject));
+    const storedTitle = input.title ? nameForId(input.title, ids, displayName(subject)) : input.title;
 
     const stamp = today();
     const research: Record<string, unknown> = {
@@ -516,7 +389,7 @@ export async function runProjectCreate(
         id: "rp_001",
         objective: storedObjective,
         ...(storedTitle ? { title: storedTitle } : {}),
-        subject_person_ids: Array.isArray(subjectPersonIds) ? subjectPersonIds : [],
+        subject_person_ids: subjectPersonIds,
         status: "active",
         created: stamp,
         updated: stamp,
@@ -524,7 +397,7 @@ export async function runProjectCreate(
     };
     for (const section of EMPTY_SECTIONS) research[section] = [];
     research.researcher_profile = { ...HOUSE_RESEARCHER_PROFILE };
-    const memorySources = outcome ? memorySourcesFor(outcome, idMap, tree, now, projectPath) : [];
+    const memorySources = memorySourcesFor(outcome, idMap, tree, now, projectPath);
     research.sources = memorySources;
 
     // Validate the PAIR. This is what makes taking the tree here worthwhile:
@@ -539,10 +412,18 @@ export async function runProjectCreate(
     // Last, so no refusal above ever waits on it. It only adds a
     // `standard_place` string to a fact that had none, which validation
     // already admits.
-    const placesFilled = await fillAll();
+    // What the call budget has left, so the read and the retry together stay
+    // under the bridge's abort.
+    await built.fillPlaces(Math.max(0, Math.min(PLACE_RETRY_BUDGET_MS, start + CALL_BUDGET_MS - Date.now())));
     const unresolvedPlaces = unresolvedPlacesOf(factsOf(tree));
     if (unresolvedPlaces.length > 0) {
       refWarnings.push(`Places kept as written, with no standard place found: ${unresolvedPlaces.join("; ")}.`);
+    }
+    for (const m of divisionMismatchesOf(factsOf(tree))) {
+      refWarnings.push(
+        `Place '${m.place}' names one state or province but its standard place '${m.standardPlace}' lies in another ` +
+          "(FamilySearch's own value when it came with the tree read): check it before relying on it for a place search.",
+      );
     }
     // The fill can take seconds, so check again that no other create landed
     // while it ran: create never overwrites.
@@ -563,69 +444,20 @@ export async function runProjectCreate(
     ]);
 
     const warnings = [...refWarnings, ...formatIssues(validation.warnings)];
-    const { projectUrl } = await projectLinks(principal);
-    if (outcome) {
-      return summarize({
-        outcome,
-        ...(projectUrl ? { projectUrl } : {}),
-        tree: tree as { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] },
-        subjectId: idMap.persons[outcome.resolvedId],
-        objective: storedObjective,
-        ...(storedTitle ? { title: storedTitle } : {}),
-        memorySourceCount: memorySources.length,
-        loopNotes,
-        warnings,
-      });
-    }
-    return {
-      ok: true,
-      projectId: "rp_001",
-      ...(projectUrl ? { projectUrl } : {}),
-      filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
-      counts: {
-        persons: tree.persons.length,
-        relationships: tree.relationships.length,
-        sources: tree.sources.length,
-      },
-      idMap,
-      ...(placesFilled.length ? { placesFilled } : {}),
-      ...(unresolvedPlaces.length ? { unresolvedPlaces } : {}),
-      validation: { valid: true, warnings },
-    };
+    return summarize({
+      outcome,
+      tree,
+      subjectId: idMap.persons[outcome.resolvedId],
+      objective: storedObjective,
+      ...(storedTitle ? { title: storedTitle } : {}),
+      memorySourceCount: memorySources.length,
+      loopNotes,
+      warnings,
+    });
   } catch (e) {
     if (e instanceof ProjectCreateError) return { ok: false, errors: [e.message] };
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
-}
-
-/** The one person_read a staged envelope holds, or undefined when it holds none. */
-function personReadOf(envelope: StagingEnvelope): StagedPersonRead | undefined {
-  const payload = envelope.payload as {
-    query?: { personId?: unknown };
-    results?: Array<{ personId?: unknown; gedcomx?: unknown }>;
-  };
-  const element = payload.results?.[0];
-  if (!element || typeof element.personId !== "string" || !element.gedcomx) return undefined;
-  return {
-    personId: element.personId,
-    requestedId: typeof payload.query?.personId === "string" ? payload.query.personId : element.personId,
-    gedcomx: element.gedcomx as never,
-  };
-}
-
-interface StagedPersonReadFile {
-  ref: string;
-  read: StagedPersonRead;
-}
-
-/** Every staged person_read in the project still inside the TTL, newest first. */
-async function listStagedPersonReads(projectPath: string): Promise<StagedPersonReadFile[]> {
-  const out: StagedPersonReadFile[] = [];
-  for (const { ref, envelope } of await listStagedEnvelopes(projectPath, "person_read")) {
-    const read = personReadOf(envelope);
-    if (read) out.push({ ref, read });
-  }
-  return out;
 }
 
 /**
@@ -751,7 +583,6 @@ function factLine(person: Record<string, any> | undefined, type: string): string
  */
 function summarize(args: {
   outcome: PersonReadOutcome;
-  projectUrl?: string;
   tree: { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] };
   subjectId: string;
   objective: string;
@@ -777,7 +608,6 @@ function summarize(args: {
   const build = (): ProjectCreateSummary => ({
     ok: true,
     projectId: "rp_001",
-    ...(args.projectUrl ? { projectUrl: args.projectUrl } : {}),
     filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
     subject: {
       id: subjectId,
@@ -841,11 +671,6 @@ export function loopNote(edge: DroppedLoopEdge): string {
   return `FamilySearch records ${parent} as ${child}'s parent, but also records ${child} as ${parent}'s ancestor; that link was left out of the tree, ${tail}`;
 }
 
-/** A person whose `ark` names a FamilySearch tree person. */
-function hasTreeArk(person: unknown): boolean {
-  return !!person && typeof person === "object" && !!treePidOfArk((person as { ark?: unknown }).ark);
-}
-
 export const projectCreateSchema = {
   name: "project_create",
   description:
@@ -855,34 +680,22 @@ export const projectCreateSchema = {
     "project into being — the other writer tools all require the files to already exist, " +
     "and writing them directly is blocked.\n" +
     "\n" +
-    "From a FamilySearch person: pass `personId` and nothing else about the tree. This tool " +
+    "A project always starts from a FamilySearch person: pass `personId` and nothing else " +
+    "about the tree. This tool " +
     "reads the person, their relatives and sources, and their transcribed memories itself; " +
     "do not call person_read first. It writes the starting tree, the house researcher " +
     "profile, and one research.json source per transcribed memory, and returns a summary: " +
     "the subject, the objective and title as stored, each relative with their tree id and " +
-    "relationship, and which memories were and were not transcribed. `tree` is refused beside `personId`: add a person the " +
+    "relationship, and which memories were and were not transcribed. Add a person the " +
     "researcher named who is not among the relatives afterwards. `subjectPersonIds` takes " +
-    "FamilySearch IDs, and defaults to the person read.\n" +
-    "\n" +
-    "With no FamilySearch person, pass the whole starting tree in the SIMPLIFIED GedcomX " +
-    "shape (local `I` ids for persons); missing name/fact/relationship ids are assigned, and " +
-    "anything without a source is cited to the researcher's statement, or to the FamilySearch " +
-    "Family Tree when a person_read staged in this project holds that exact fact or relationship " +
-    "(persons matched by `ark`). `subjectPersonIds` " +
-    "names persons in that tree.\n" +
-    "\n" +
-    "Places: enter every hand-entered place (the whole tree here, or an addition) as the " +
-    "researcher stated it and never write `standard_place`; this tool standardizes them " +
-    "itself, and replaces or drops any value supplied. `placesFilled` lists each place it " +
-    "standardized; tell the researcher about those.\n" +
+    "FamilySearch IDs, and defaults to the person read. With no person ID, create no " +
+    "project: ask the researcher for one. A surname survey needs no project.\n" +
     "\n" +
     "Refuses if either file already exists; it never overwrites a project. It writes the " +
     "fixed house `researcher_profile`; it does NOT write subscriptions — add those " +
     "afterwards with research_append, only from what the researcher actually told you.\n" +
     "\n" +
-    "Tell the user the project was created and where, naming the folder. A success also " +
-    "returns projectUrl, the project's page in the web app, when the server knows it; give " +
-    "it to the user.",
+    "Tell the user the project was created and where, naming the folder.",
   inputSchema: {
     type: "object",
     properties: {
@@ -897,41 +710,29 @@ export const projectCreateSchema = {
         description:
           "What this project sets out to find out, in the researcher's terms. Required " +
           "and non-empty. Written once and never rewritten — every later step plans " +
-          "against it. With personId, name the subject by that ID if you do not know their " +
-          "name: each mention is stored as the name the read gives.",
+          "against it. Name the subject by their ID if you do not know their name: each " +
+          "mention is stored as the name the read gives.",
       },
       title: {
         type: "string",
         description:
           "Concise 3-6 word session name (e.g. \"KWCJ-RN4's parents\", stored as \"Patrick " +
-          "Flynn's parents\"). With personId, a mention of the subject by ID is named as the " +
-          "objective's is.",
+          "Flynn's parents\"). A mention of the subject by ID is named as the objective's is.",
       },
       subjectPersonIds: {
         type: "array",
         items: { type: "string" },
         description:
-          "The research subject(s). With personId: FamilySearch IDs (defaults to the person " +
-          "read). Without: local tree ids (e.g. [\"I1\"]) that exist in `tree`.",
+          "The research subject(s), as FamilySearch IDs from the read. Defaults to the person read.",
       },
       personId: {
         type: "string",
         description:
-          "The subject's FamilySearch person ID (e.g. \"KWCJ-RN4\"). This tool reads the " +
-          "person and builds the starting tree from the read. Requires a FamilySearch login.",
-      },
-      tree: {
-        type: "object",
-        description:
-          "Only with no personId: the whole starting tree, simplified GedcomX. Refused " +
-          "beside personId. Omit for no tree data.",
-        properties: {
-          persons: { type: "array", items: { type: "object" } },
-          relationships: { type: "array", items: { type: "object" } },
-          sources: { type: "array", items: { type: "object" } },
-        },
+          "Required. The subject's FamilySearch person ID (e.g. \"KWCJ-RN4\"). This tool " +
+          "reads the person and builds the starting tree from the read. Requires a " +
+          "FamilySearch login.",
       },
     },
-    required: ["projectPath", "objective"],
+    required: ["projectPath", "objective", "personId"],
   },
 };
