@@ -1,9 +1,9 @@
 /** Where each of today's viewer sections lives in the new case file. M3-4 retires
  *  `ViewerBody` only when no row is pending. */
 export const SECTION_HOMES: Record<string, string> = {
-  project_overview: 'pending (M3-2): The case, its question switch and So far',
-  questions: 'pending (M3-2): The case, the question switch',
-  plans: 'pending (M3-2): The case, What was searched',
+  project_overview: 'The case: the objective and subjects at its top, then So far or the conclusion',
+  questions: 'The case: the question switch, each question with its rationale and stop criteria',
+  plans: 'The case: What was searched, each item with its rationale and what it found',
   localities: 'Sources, Background',
   external_collections: 'Sources, Background',
   log: 'Log, each search opening its results in the pane',
@@ -12,9 +12,9 @@ export const SECTION_HOMES: Record<string, string> = {
   person_evidence: 'the source chips and the person pane, with link strength',
   rejected_links: 'pending (M3-3): People, a person page',
   namesakes: 'pending (M3-3): People, a person page',
-  conflicts: 'pending (M3-2): The case, conflicts and competing identities',
-  hypotheses: 'pending (M3-2): The case, conflicts and competing identities',
+  conflicts: 'The case: conflicts and competing identities',
+  hypotheses: 'The case: conflicts and competing identities',
   timelines: 'pending (M3-3): People, a person page in time order',
-  proof_summaries: 'pending (M3-2): The case, the conclusion',
-  evaluations: 'pending (M3-2): The case, the reviewer'
+  proof_summaries: 'The case: the conclusion, its claims and The whole argument',
+  evaluations: 'The case: the reviewer, verdict and notes'
 }

@@ -174,6 +174,49 @@ describe("read_project_view", () => {
     expect(absent.structuredContent).toEqual({ found: false });
   });
 
+  describe("recordSearch: the record search whose kept results hold a record", () => {
+    const rowsOf = (...ids: string[]) => ({ tool: "record_search", payload: { results: ids.map((recordId) => ({ recordId })) } });
+    const seed = async () => {
+      await writeDocument("research.json", {
+        ...RESEARCH,
+        log: [
+          { id: "log_001", tool: "fulltext_search", results_ref: "results/log_001.json" },
+          { id: "log_002", tool: "record_search", results_ref: "results/log_002.json" },
+          { id: "log_003", tool: "record_search", results_ref: "results/log_003.json" },
+          { id: "log_004", tool: "record_search", results_ref: "results/log_004.json" },
+        ],
+      });
+      await mkdir(join(project, "results"));
+      await writeFile(join(project, "results", "log_001.json"), JSON.stringify(rowsOf("ark:/61903/1:1:AAAA-BBB")), "utf8");
+      await writeFile(join(project, "results", "log_002.json"), "{ not json", "utf8");
+      await writeFile(join(project, "results", "log_003.json"), JSON.stringify(rowsOf("ark:/61903/1:1:QPRC-WPBZ")), "utf8");
+      await writeFile(join(project, "results", "log_004.json"), JSON.stringify(rowsOf("ark:/61903/1:1:QPRC-WPBZ")), "utf8");
+    };
+    const find = (id: string) => callProjectView(context, READ_PROJECT_VIEW, { part: "recordSearch", id, projectPath: project });
+
+    it.each(["ark:/61903/1:1:QPRC-WPBZ", "QPRC-WPBZ", "https://www.familysearch.org/ark:/61903/1:1:QPRC-WPBZ?lang=en"])(
+      "finds the first record search holding %s, skipping a file it cannot read",
+      async (id) => {
+        await seed();
+        expect((await find(id)).structuredContent).toEqual({ found: true, logId: "log_003" });
+      },
+    );
+
+    it("a record no record search holds is an answer, not an error; a full-text hit does not count", async () => {
+      await seed();
+      for (const id of ["ark:/61903/1:1:ZZZZ-ZZZ", "AAAA-BBB"]) {
+        const result = await find(id);
+        expect(result.isError).toBeUndefined();
+        expect(result.structuredContent).toEqual({ found: false });
+      }
+    });
+
+    it.each(["", "log_001", "../research.json", "lowercase-id"])("refuses the id %j", async (id) => {
+      await seed();
+      await expect(find(id)).rejects.toThrow("With part recordSearch, id must be a record id");
+    });
+  });
+
   it.each(["../.tree-before-forget.gedcomx", ".staging/x", "log_", "log_a/b", "research", "log_1\n", ""])(
     "results: refuses the id %j",
     async (id) => {
@@ -240,7 +283,7 @@ describe("read_project_view", () => {
 
   it.each([
     ["no part", {}, /part must be one of/],
-    ["a bad part", { part: "recordSearch", id: "x" }, /part must be one of/],
+    ["a bad part", { part: "people", id: "x" }, /part must be one of/],
     ["an unknown argument", { part: "document", section: "x" }, /no argument section/],
   ])("refuses %s", async (_name, args, message) => {
     await writeDocument("research.json", RESEARCH);

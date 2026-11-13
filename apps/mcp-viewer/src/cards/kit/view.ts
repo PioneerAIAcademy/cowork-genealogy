@@ -18,6 +18,11 @@ export function list<T>(value: T[] | undefined | null): T[] {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'object' && item !== null) : []
 }
 
+/** A list of ids or words, whatever an older or half-written document holds there. */
+export function strings(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
 export function isLive(row: { superseded_by?: unknown }): boolean {
   return row.superseded_by === undefined || row.superseded_by === null
 }

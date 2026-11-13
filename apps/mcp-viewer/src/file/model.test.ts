@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import type { ResearchDocument } from '../contract'
 import { leftoverIds } from '../rules/id-check'
 import { COMPOUND, MCANDREW, compound, mcandrew } from '../rules/test-data'
-import { labelWords, pagesWithContent, queryWords, resultsView, searchFile, sourcePeople, toolWords } from './model'
+import { besideValue, labelWords, pagesWithContent, queryWords, resultsView, searchFile, sourcePeople, toolWords } from './model'
 
 const research = (docs: { research: unknown }) => docs.research as ResearchDocument
 const REPO = resolve(process.cwd(), '../..')
@@ -88,7 +88,7 @@ describe("a search's results, by the tool that wrote them", () => {
 
 describe('the file', () => {
   it('shows a page only when it has content', () => {
-    expect(pagesWithContent(research(COMPOUND), null)).toEqual(['sources', 'log'])
+    expect(pagesWithContent(research(COMPOUND), null)).toEqual(['case', 'sources', 'log'])
     expect(pagesWithContent({}, null)).toEqual([])
     expect(pagesWithContent({}, { places: { Ohio: { rows: [] } } })).toEqual(['sources'])
   })
@@ -99,5 +99,12 @@ describe('the file', () => {
     const census = searchFile(research(COMPOUND), compound, 'Jasper')
     expect(census.some((h) => h.target.kind === 'record')).toBe(true)
     expect(searchFile(research(COMPOUND), compound, 'x')).toEqual([])
+  })
+})
+
+describe('a finding, said once', () => {
+  it('adds a date or place only when the value does not already say it', () => {
+    expect(besideValue('Elizabeth Barker, born 1823, Alabama', '1823', 'Alabama')).toBe('')
+    expect(besideValue('Elizabeth Barker', '1823', 'Alabama')).toBe(', 1823, Alabama')
   })
 })

@@ -80,6 +80,7 @@ checks their types and echoes them, and selects nothing by them.
 |---|---|
 | `document` | Ignored. |
 | `results` | A log id, matching `^log_[a-zA-Z0-9_-]+$`. |
+| `recordSearch` | A record id: an ARK, the same on `https://www.familysearch.org/`, or its bare id, ending in capitals and digits in two or more hyphenated parts. |
 | `image` | An image ref, matching `^images/[A-Za-z0-9._-]+\.jpg$` (`IMAGE_REF_PATTERN`). |
 
 ### `projectPath`
@@ -188,6 +189,7 @@ arrived at 999,947 bytes and did not at 1,299,948 (`docs/mcp-app-host-probe.md`)
 |---|---|
 | `document` | `{ research, tree, startingTree, collections, derived }`, as `show_project` reads them. No `echo`, and no size rule. |
 | `results` | `{ found: true, results }`, the parsed `results/<id>.json`, or `{ found: false }` when that file is absent. `found: false` is an answer, not an error. A results file the store holds but cannot read is a refusal, never `found: false`. |
+| `recordSearch` | `{ found: true, logId }`: the first `record_search` log entry, in log order, whose kept results hold a row whose `recordId` has the same bare id; else `{ found: false }`. A results file that cannot be read is skipped, so finding a record's search costs one call. |
 | `image` | `{ url, expiresAt }`: a signed link and its expiry in epoch milliseconds. See "Images". |
 
 ---

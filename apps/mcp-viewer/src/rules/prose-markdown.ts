@@ -243,6 +243,8 @@ export function proseMarkdown(text: string, index: RuleIndex): string {
   let out = text
     .replace(/`([^`\n]+)`/g, '$1')
     .replace(/\b([a-z]{1,3})\\_(\d+)\b/g, '$1_$2')
+    // A field named as a list ("a hypotheses[] entry"): the brackets say nothing to a reader.
+    .replace(/(\w)\[\]/g, '$1')
     .replace(MD_LINK_RE, (m) => hold(m))
   out = out.replace(URL_RE, (raw) => {
     const [url, trailing] = splitTrailingPunctuation(raw)

@@ -1,7 +1,7 @@
 import type { Assertion, LogEntry, PersonEvidence, Source } from '@genealogy/schema'
 import { statusLabel } from '@genealogy/viewer-ui'
 import type { ResearchDocument } from '../contract'
-import { isLive, list } from '../cards/kit/view'
+import { isLive, list, strings } from '../cards/kit/view'
 import { recordTitle } from '../rules/prose-markdown'
 import type { RuleIndex } from '../rules/rule-index'
 
@@ -141,6 +141,15 @@ export function queryWords(query: unknown, index: RuleIndex): QueryWords {
   return { plain, prose }
 }
 
+/** A finding's date and place, each only when its value does not already say it. */
+export function besideValue(value: unknown, ...parts: unknown[]): string {
+  const said = String(value ?? '').toLowerCase()
+  return parts
+    .filter((p): p is string => typeof p === 'string' && p.trim() !== '' && !said.includes(p.trim().toLowerCase()))
+    .map((p) => `, ${p.trim()}`)
+    .join('')
+}
+
 export function dateOnly(value: unknown): string {
   return typeof value === 'string' ? value.slice(0, 10) : ''
 }
@@ -225,19 +234,27 @@ export function resultsView(file: unknown): ResultsView {
   }
 }
 
-export type PageKey = 'sources' | 'log'
+export type PageKey = 'case' | 'sources' | 'log'
 
 export function pagesWithContent(research: ResearchDocument, collections: unknown): PageKey[] {
   const pages: PageKey[] = []
+  const questions = list(research.questions)
+  if (questions.length > 0 || research.project?.objective) pages.push('case')
+  const leads = questions.some((q) => list(q.search_stop?.not_reached).length > 0)
   const places = (collections as { places?: Record<string, unknown> } | null | undefined)?.places
-  if (list(research.sources).length > 0 || list(research.localities).length > 0 || (places && Object.keys(places).length > 0)) {
+  if (list(research.sources).length > 0 || leads || list(research.localities).length > 0 || (places && Object.keys(places).length > 0)) {
     pages.push('sources')
   }
   if (list(research.log).length > 0) pages.push('log')
   return pages
 }
 
-export type PaneTarget = { kind: 'record'; id: string } | { kind: 'search'; id: string } | { kind: 'person'; id: string }
+export type PaneTarget =
+  | { kind: 'record'; id: string }
+  | { kind: 'search'; id: string }
+  | { kind: 'person'; id: string }
+  /** A place on The case: a question, and an element to scroll to. Not a pane. */
+  | { kind: 'place'; questionId: string; anchor: string }
 
 export interface SearchHit {
   target: PaneTarget
@@ -261,6 +278,33 @@ export function searchFile(research: ResearchDocument, index: RuleIndex, query: 
     const words = queryWords(entry.query, index)
     if (has(entry.notes, ...words.plain)) {
       hits.push({ target: { kind: 'search', id: entry.id }, label: `${toolWords(entry)}: ${words.plain.join(', ') || dateOnly(entry.performed)}` })
+    }
+  }
+  for (const question of list(research.questions)) {
+    if (has(question.question, question.rationale)) {
+      hits.push({ target: { kind: 'place', questionId: question.id, anchor: 'case-question' }, label: question.question })
+    }
+    for (const item of list(research.plans).filter((p) => p.question_id === question.id).flatMap((p) => list(p.items as unknown as Array<Record<string, unknown>>))) {
+      if (has(item.rationale, item.jurisdiction, item.repository, item.record_type)) {
+        hits.push({ target: { kind: 'place', questionId: question.id, anchor: `case-${item.id}` }, label: `Planned: ${[item.record_type, item.jurisdiction].filter(Boolean).join(', ')}` })
+      }
+    }
+    list(question.search_stop?.not_reached).forEach((lead, i) => {
+      if (has(lead.description, lead.wiki_title)) {
+        hits.push({ target: { kind: 'place', questionId: question.id, anchor: `case-lead-${question.id}-${i}` }, label: `Lead: ${lead.description.slice(0, 80)}` })
+      }
+    })
+  }
+  for (const conflict of list(research.conflicts)) {
+    const questionId = strings(conflict.blocks_question_ids)[0]
+    if (questionId && has(conflict.description, conflict.identity_question)) {
+      hits.push({ target: { kind: 'place', questionId, anchor: `case-${conflict.id}` }, label: `Conflict: ${conflict.description.slice(0, 80)}` })
+    }
+  }
+  for (const hypothesis of list(research.hypotheses)) {
+    const questionId = strings(hypothesis.related_question_ids)[0]
+    if (questionId && has(hypothesis.claim)) {
+      hits.push({ target: { kind: 'place', questionId, anchor: `case-${hypothesis.id}` }, label: `Hypothesis: ${hypothesis.claim.slice(0, 80)}` })
     }
   }
   return hits.slice(0, 20)

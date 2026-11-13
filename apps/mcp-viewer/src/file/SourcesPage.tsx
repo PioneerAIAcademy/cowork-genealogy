@@ -1,7 +1,9 @@
 import type { Locality } from '@genealogy/schema'
 import { statusLabel } from '@genealogy/viewer-ui'
-import { list } from '../cards/kit/view'
-import { Prose } from '../rules/Prose'
+import { list, strings } from '../cards/kit/view'
+import { plainProse, Prose } from '../rules/Prose'
+import { overturnRisk } from './case-model'
+import { LeadsList } from './CasePage'
 import { useFile } from './FileContext'
 import { sourcePeople, sourcesNewestFirst, sourceTitle } from './model'
 import { Open } from './Open'
@@ -74,7 +76,7 @@ function LocalityItem({ locality }: { locality: Locality }) {
       {list(locality.collections).length > 0 && (
         <p>Collections: {list(locality.collections).map((c) => [c.title, c.date_range].filter(Boolean).join(' ')).join('; ')}</p>
       )}
-      {list(locality.quirks).map((quirk, i) => (
+      {strings(locality.quirks).map((quirk, i) => (
         <Prose key={i} text={quirk} index={index} />
       ))}
       {locality.guide_markdown && <Prose text={locality.guide_markdown} index={index} />}
@@ -99,7 +101,7 @@ function Background() {
           <li key={`c${i}`} className="file-item">
             {row.url && /^https:\/\//.test(row.url) ? <a href={row.url}>{row.link_text ?? 'A collection'}</a> : row.link_text}
             <p>
-              {[row.place, list(row.record_types as unknown as object[]).length ? (row.record_types ?? []).join(', ') : '', [row.start_year, row.end_year].filter(Boolean).join('–')]
+              {[row.place, strings(row.record_types).join(', '), [row.start_year, row.end_year].filter(Boolean).join('–')]
                 .filter(Boolean)
                 .join(' · ')}
             </p>
@@ -110,11 +112,31 @@ function Background() {
   )
 }
 
+function Leads() {
+  const { research, index } = useFile()
+  const questions = list(research.questions).filter(
+    (q) => list(q.search_stop?.not_reached).length > 0 || overturnRisk(q.search_stop?.justification)
+  )
+  if (questions.length === 0) return null
+  return (
+    <section>
+      <h3>Leads</h3>
+      {questions.map((question) => (
+        <div key={question.id}>
+          {questions.length > 1 && <p className="file-meta">{plainProse(question.question, index)}</p>}
+          <LeadsList question={question} />
+        </div>
+      ))}
+    </section>
+  )
+}
+
 export function SourcesPage() {
   return (
     <div className="file-page">
       <h2>Sources</h2>
       <DirectMentions />
+      <Leads />
       <Background />
     </div>
   )

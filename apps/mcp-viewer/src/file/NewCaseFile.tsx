@@ -4,14 +4,15 @@ import type { ProjectDocument, ToolInput } from '../contract'
 import { buildRuleIndex } from '../rules/rule-index'
 import type { Session } from '../session'
 import { projectLabel } from '../transport/McpAppResearchTransport'
-import { FileContext, useFile, type FileView } from './FileContext'
+import { FileContext, useFile, type CaseFocus, type FileView } from './FileContext'
+import { CasePage } from './CasePage'
 import { LogPage } from './LogPage'
 import { pagesWithContent, searchFile, sourceTitle, toolWords, type PageKey, type PaneTarget } from './model'
 import { Pane } from './Panes'
 import { SourcesPage } from './SourcesPage'
 
-const PAGE_TITLES: Record<PageKey, string> = { sources: 'Sources', log: 'Log' }
-const PAGES: Record<PageKey, () => React.JSX.Element> = { sources: SourcesPage, log: LogPage }
+const PAGE_TITLES: Record<PageKey, string> = { case: 'The case', sources: 'Sources', log: 'Log' }
+const PAGES: Record<PageKey, () => React.JSX.Element> = { case: CasePage, sources: SourcesPage, log: LogPage }
 
 /** What `show_project` asked the file to open first. */
 function initialPane(input: ToolInput): PaneTarget | null {
@@ -24,6 +25,7 @@ function initialPane(input: ToolInput): PaneTarget | null {
 /** The pane's item in words, for the model. */
 function paneWords(target: PaneTarget, view: Pick<FileView, 'research' | 'index'>): string {
   if (target.kind === 'person') return view.index.persons.get(target.id)?.name ?? 'a person'
+  if (target.kind === 'place') return 'a part of the case'
   if (target.kind === 'record') {
     const source = list(view.research.sources).find((s) => s.id === target.id)
     return source ? `the record "${sourceTitle(source, view.index)}"` : 'a record'
@@ -82,10 +84,21 @@ export function NewCaseFile({ session, input }: { session: Session; input: ToolI
   const wanted = typeof input.page === 'string' && pages.includes(input.page as PageKey) ? (input.page as PageKey) : null
   const [page, setPage] = useState<PageKey | null>(wanted)
   const [pane, setPane] = useState<PaneTarget | null>(() => initialPane(input))
+  const [focus, setFocus] = useState<CaseFocus | null>(() => {
+    const questionId = typeof input.questionId === 'string' ? input.questionId : undefined
+    const planItemId = typeof input.planItemId === 'string' ? input.planItemId : undefined
+    if (!questionId && !planItemId) return null
+    return { questionId, planItemId, anchor: planItemId ? `case-${planItemId}` : undefined }
+  })
   const shown = page && pages.includes(page) ? page : (pages[0] ?? null)
 
   const open = useCallback(
     (target: PaneTarget) => {
+      if (target.kind === 'place') {
+        setPage('case')
+        setFocus({ questionId: target.questionId, anchor: target.anchor })
+        return
+      }
       setPane(target)
       session.tellModel(`In the case file, the researcher is looking at ${paneWords(target, { research, index })}.`)
     },
@@ -102,6 +115,7 @@ export function NewCaseFile({ session, input }: { session: Session; input: ToolI
     index,
     transport: session.transport,
     pane,
+    focus,
     open,
     close
   }

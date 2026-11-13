@@ -5,16 +5,42 @@ import { outcomeWords } from '../cards/kit/searches'
 import { list } from '../cards/kit/view'
 import { resolveFieldId } from '../rules/field-id'
 import { Prose } from '../rules/Prose'
-import { personHref } from '../rules/rule-index'
+import { isPageImageArk, personHref } from '../rules/rule-index'
 import { useFile } from './FileContext'
 import { LogLine } from './LogPage'
-import { assertionPerson, CONFIDENCE_RANK, labelWords, liveAssertions, resultsView, sourcePeople, sourceTitle, type ResultsView } from './model'
+import { dateWords } from './case-model'
+import { assertionPerson, besideValue, CONFIDENCE_RANK, labelWords, liveAssertions, resultsView, sourcePeople, sourceTitle, type ResultsView } from './model'
 import { Open } from './Open'
+
+const FOUND_BY_TOOLS = new Set(['record_search', 'fulltext_search'])
+
+/** The search that found a record: its own log entry when that was a search, else the record search holding it. */
+function useFoundBy(source: Source | undefined): string | null {
+  const { research, transport } = useFile()
+  const entry = source ? list(research.log).find((e) => e.id === source.log_entry_id) : undefined
+  const own = entry && FOUND_BY_TOOLS.has(entry.tool) ? entry.id : null
+  const ark = source && typeof source.url === 'string' ? /ark:\/61903\/\d:\d:[A-Z0-9-]+/.exec(source.url)?.[0] : undefined
+  const [found, setFound] = useState<string | null>(null)
+  useEffect(() => {
+    setFound(null)
+    if (own || !ark || isPageImageArk(ark)) return
+    let alive = true
+    transport
+      .recordSearch(ark)
+      .then((logId) => alive && setFound(logId))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [own, ark, transport])
+  return own ?? found
+}
 
 function RecordPane({ id }: { id: string }) {
   const { research, index, transport } = useFile()
   const source = list(research.sources).find((s) => s.id === id)
   const [image, setImage] = useState<string | null>(null)
+  const foundBy = useFoundBy(source)
 
   useEffect(() => {
     setImage(null)
@@ -42,6 +68,11 @@ function RecordPane({ id }: { id: string }) {
         </p>
       )}
       <Prose text={source.citation} index={index} />
+      {foundBy && (
+        <p>
+          Found by: <Open target={{ kind: 'search', id: foundBy }}>the search that found it</Open>
+        </p>
+      )}
       <p className="file-meta">
         {[source.source_classification ? statusLabel(String(source.source_classification)) : '', source.repository, source.access_date ? `read ${source.access_date}` : '']
           .filter(Boolean)
@@ -70,7 +101,7 @@ function RecordPane({ id }: { id: string }) {
                   <dt>{labelWords(a.fact_type)}</dt>
                   <dd>
                     <Prose text={a.value} index={index} inline />
-                    {[a.date, a.place].filter(Boolean).map((v) => `, ${v}`).join('')}
+                    {besideValue(a.value, dateWords(a.date), a.place)}
                     {name && link && (
                       <span className="file-meta">
                         {' '}

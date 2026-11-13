@@ -49,7 +49,9 @@ export const MAX_META_BYTES = 1_000_000;
 const LOG_ID_PATTERN = /^log_[a-zA-Z0-9_-]+$/;
 const SHOW_VALUES = ["setup", "plan", "search", "link", "conflict", "hypothesis", "assess", "conclusion", "latest", "file"];
 const PAGE_VALUES = ["case", "compare", "people", "sources", "log"];
-const PART_VALUES = ["document", "results", "image"];
+const PART_VALUES = ["document", "results", "recordSearch", "image"];
+/** A FamilySearch record id inside whatever form a record id takes. */
+const RECORD_ID_PATTERN = /(?:^|[:/])([A-Z0-9]+(?:-[A-Z0-9]+)+)$/;
 const ID_ARGS = ["questionId", "logId", "personId", "planItemId", "sourceId"];
 
 function showProjectSchema(projectRule: string) {
@@ -88,14 +90,19 @@ function readProjectViewSchema(projectRule: string) {
     title: "Read project view",
     description:
       "For the viewer page, not the model. Returns one part of the project: `document` (research, tree, starting " +
-      "tree, collections), `results` (one results file, by log id) or `image` (a signed link to one page image, " +
-      `by image ref). Project rule for projectPath: ${projectRule}`,
+      "tree, collections), `results` (one results file, by log id), `recordSearch` (the record search whose results " +
+      "hold a record, by record id) or `image` (a signed link to one page image, by image ref). " +
+      `Project rule for projectPath: ${projectRule}`,
     inputSchema: {
       type: "object" as const,
       properties: {
         projectPath: { type: "string", description: projectRule },
         part: { type: "string", enum: PART_VALUES, description: "The part to read." },
-        id: { type: "string", description: "`results`: a log id. `image`: an image ref (images/<name>.jpg)." },
+        id: {
+          type: "string",
+          description:
+            "`results`: a log id. `recordSearch`: a record id (an ARK or its bare id). `image`: an image ref (images/<name>.jpg).",
+        },
       },
       required: ["part"],
       additionalProperties: false,
@@ -250,12 +257,40 @@ async function readResults(projectPath: string, id: string) {
   return { found: true, results: await readProjectJson(projectPath, ref) };
 }
 
+/** The bare id of a record id in any of its forms, or null. */
+function bareRecordId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const match = RECORD_ID_PATTERN.exec(value.trim().replace(/[?#].*$/, ""));
+  return match ? match[1] : null;
+}
+
+/** The first `record_search` entry, in log order, whose kept results hold the record. */
+async function findRecordSearch(projectPath: string, research: any, recordId: string) {
+  const log = Array.isArray(research?.log) ? research.log : [];
+  for (const entry of log) {
+    if (entry?.tool !== "record_search" || typeof entry.results_ref !== "string") continue;
+    if (typeof entry.id !== "string" || !LOG_ID_PATTERN.test(entry.id)) continue;
+    let file: any;
+    try {
+      file = await readProjectJson(projectPath, `results/${entry.id}.json`);
+    } catch {
+      continue;
+    }
+    const rows = Array.isArray(file?.payload?.results) ? file.payload.results : [];
+    if (rows.some((row: any) => bareRecordId(row?.recordId) === recordId)) return { found: true, logId: entry.id };
+  }
+  return { found: false };
+}
+
 async function readProjectView(context: ProjectViewContext, args: Args): Promise<CallToolResult> {
   refuseUnknownArgs(READ_SHAPE, READ_PROJECT_VIEW, args);
   requireOneOf("part", args.part, PART_VALUES);
   const { id, part } = args;
   if (part === "results" && !(typeof id === "string" && LOG_ID_PATTERN.test(id))) {
     throw new Error("With part results, id must be a log id such as log_001.");
+  }
+  if (part === "recordSearch" && bareRecordId(id) === null) {
+    throw new Error("With part recordSearch, id must be a record id such as ark:/61903/1:1:QPRC-WPBZ.");
   }
   // Before any signing: the store's readBytes can read documents, so this check
   // is what keeps a token to images.
@@ -271,7 +306,9 @@ async function readProjectView(context: ProjectViewContext, args: Args): Promise
       ? await readDocument(projectPath)
       : part === "results"
         ? await readResults(projectPath, id as string)
-        : context.signImage!(projectPath, id as string);
+        : part === "recordSearch"
+          ? await findRecordSearch(projectPath, await readProjectJson(projectPath, "research.json"), bareRecordId(id)!)
+          : context.signImage!(projectPath, id as string);
   return { content: [{ type: "text", text: "ok" }], structuredContent };
 }
 

@@ -78,6 +78,12 @@ export class McpAppResearchTransport implements ResearchTransport {
     return { raw: JSON.stringify(answer.results), mtime: 0 }
   }
 
+  /** The record search whose kept results hold this record, or null. */
+  async recordSearch(recordId: string): Promise<string | null> {
+    const answer = (await this.deps.read({ part: 'recordSearch', id: recordId })) as { found?: unknown; logId?: unknown } | null
+    return answer?.found === true && typeof answer.logId === 'string' ? answer.logId : null
+  }
+
   getSourceImage = async (filename: string): Promise<string | null> => {
     const link = (await this.deps.read({ part: 'image', id: filename })) as { url?: unknown } | null
     return typeof link?.url === 'string' ? link.url : null

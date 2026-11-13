@@ -15,6 +15,7 @@ import { LogPage } from '../src/file/LogPage'
 import type { PaneTarget } from '../src/file/model'
 import { Pane } from '../src/file/Panes'
 import { SourcesPage } from '../src/file/SourcesPage'
+import { CasePage } from '../src/file/CasePage'
 import { buildRuleIndex } from '../src/rules/rule-index'
 import type { RuleIndex } from '../src/rules/rule-index'
 
@@ -151,12 +152,28 @@ it('the new case file draws its pages and every pane with no id left, for every 
       index: buildRuleIndex({ research, tree: doc.tree }),
       transport,
       pane: null,
+      focus: null,
       open: () => {},
       close: () => {}
     }
     draw(`${name} sources`, base, <SourcesPage />)
+    for (const question of research.questions ?? []) {
+      draw(`${name} case ${question.id}`, { ...base, focus: { questionId: question.id } }, <CasePage />)
+    }
+    if ((research.questions ?? []).length === 0) draw(`${name} case`, base, <CasePage />)
+    const caseText = (questionId: string | undefined) => {
+      host.innerHTML = renderToStaticMarkup(
+        <FileContext.Provider value={{ ...base, focus: questionId ? { questionId } : null }}>
+          <CasePage />
+        </FileContext.Provider>
+      )
+      return host.textContent ?? ''
+    }
+    if (REVIEWED.includes(name) && !/Verdict: looks solid/.test(caseText(undefined))) problems.push(`${name}: The case shows no reviewer`)
+    if (REVIEWED.includes(name) && !(host.querySelector('#case-reviewer .prose'))) problems.push(`${name}: The case shows no reviewer notes`)
+    if (name === CRAFT_ONLY && /Verdict:/.test(caseText('q_001'))) problems.push(`${name}: The case shows a craft read as the verdict`)
     draw(`${name} log`, base, <LogPage />)
-    const targets: PaneTarget[] = [
+    const targets: Array<Extract<PaneTarget, { id: string }>> = [
       ...(research.sources ?? []).map((s) => ({ kind: 'record' as const, id: s.id })),
       ...(research.log ?? []).map((e) => ({ kind: 'search' as const, id: e.id })),
       ...[...base.index.persons.keys()].map((id) => ({ kind: 'person' as const, id }))

@@ -207,7 +207,7 @@ describe("read_project_view", () => {
 
   it.each([
     ["no part", {}, /part must be one of/],
-    ["a bad part", { part: "recordSearch", id: "x" }, /part must be one of/],
+    ["a bad part", { part: "people", id: "x" }, /part must be one of/],
     ["an unknown argument", { part: "document", section: "x" }, /no argument section/],
   ])("refuses %s", async (_name, args, message) => {
     writeProject(root());

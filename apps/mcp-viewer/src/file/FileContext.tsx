@@ -4,6 +4,13 @@ import type { RuleIndex } from '../rules/rule-index'
 import type { McpAppResearchTransport } from '../transport/McpAppResearchTransport'
 import type { PaneTarget } from './model'
 
+/** Where The case should look: a question, and an element to scroll to. */
+export interface CaseFocus {
+  questionId?: string
+  planItemId?: string
+  anchor?: string
+}
+
 /** Everything a page of the file reads, set once per document. */
 export interface FileView {
   research: ResearchDocument
@@ -14,6 +21,7 @@ export interface FileView {
   index: RuleIndex
   transport: McpAppResearchTransport
   pane: PaneTarget | null
+  focus: CaseFocus | null
   open(target: PaneTarget): void
   close(): void
 }

@@ -33,7 +33,8 @@ describe('internal ids in prose', () => {
     ['Read a_012-a_014 -> I4 today.', 'Read Michigan, County Births, 1867-1917, entry for John V Mogan -> John Vincent Mogan today.'],
     ['### Conflict resolved (c\\_001)', 'Conflict resolved'],
     ['The record `ark:/61903/1:1:NQ8J-TVV` holds it.', 'The record Michigan, Births, 1867-1902 holds it.'],
-    ['Her name is Anne [?] in the index.', 'Her name is Anne [?] in the index.']
+    ['Her name is Anne [?] in the index.', 'Her name is Anne [?] in the index.'],
+    ['It needs a formal hypotheses[] entry.', 'It needs a formal hypotheses entry.']
   ])('%j renders as %j', (input, expected) => {
     const out = shown(input)
     expect(out.text).toBe(expected)

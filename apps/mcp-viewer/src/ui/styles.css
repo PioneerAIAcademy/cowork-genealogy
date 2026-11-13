@@ -279,3 +279,60 @@ ul.file-list {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.grid-scroll {
+  overflow-x: auto;
+}
+
+.evidence-grid {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.evidence-grid th,
+.evidence-grid td {
+  padding: 6px 8px;
+  border: 1px solid var(--color-border-primary, var(--fallback-line));
+  vertical-align: top;
+  text-align: left;
+  min-width: 140px;
+}
+
+.evidence-grid thead th .file-meta {
+  display: block;
+  font-weight: normal;
+}
+
+.evidence-grid td.tinted {
+  background: var(--color-background-warning, rgba(214, 160, 40, 0.18));
+}
+
+.side-by-side {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.file-card {
+  flex: 1 1 280px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-primary, var(--fallback-line));
+  border-radius: 6px;
+}
+
+.checklist .marked {
+  outline: 2px solid var(--color-border-info, currentColor);
+  outline-offset: 4px;
+}
+
+.found {
+  margin: 4px 0 0 12px;
+}
+
+details {
+  margin: 8px 0 12px;
+}
+
+summary {
+  cursor: pointer;
+}
