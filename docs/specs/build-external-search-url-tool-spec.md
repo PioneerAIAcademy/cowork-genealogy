@@ -499,6 +499,16 @@ sites**:
   parish list ("choose the Diocese of Münster … Find Ochtrup in the parish
   list"). The tester could not follow it, and found the Ochtrup register at
   once with Matricula's place search.
+- The search-external-sites agent calls `catalog_search` itself for archion and
+  matricula (its step 2b, beside `collections_search`), and names a filmed copy
+  of the register by film number: center-only when `availableOnline: false`,
+  offered for reading only when `true`, and with no claim about where it can be
+  viewed when the field is absent. Decided by Richard on 2026-11-12, reversing
+  the 2026-10-09 call to hand the Catalog search back to search-records. A
+  hand-back cannot tell the researcher that a film is center-only. The agent's
+  only Catalog line fired after online searches had failed, so it never fired on
+  a named-site ask. The same alpha-feedback report showed the cost: the tester
+  was never told FamilySearch had filmed the Ochtrup register.
 - A standing note carries the browse path, so the caller relays exactly what
   to open rather than bare directions — the shape two alpha-feedback reports
   of 2026-09-22 and 2026-09-23 showed (the agent named "Archion → Baiersbronn → Familienbücher →
