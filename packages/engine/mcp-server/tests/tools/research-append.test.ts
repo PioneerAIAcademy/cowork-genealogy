@@ -84,9 +84,23 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
+// Pass-through stub for the one network call the #4431 searchability pre-read
+// makes. Inert unless a test sets `impl`, so every other test in this file still
+// reaches the real `fsFetch`. It exists so the dispatch test below can exercise
+// `server.ts`'s loader wiring offline — nothing else can see that wire.
+const mockFsFetch = vi.hoisted(() => ({ impl: null as null | ((...a: any[]) => any) }));
+vi.mock("../../src/utils/fs-fetch.js", async (importOriginal) => {
+  const real: any = await importOriginal();
+  return {
+    ...real,
+    fsFetch: (...a: any[]) => (mockFsFetch.impl ? mockFsFetch.impl(...a) : real.fsFetch(...a)),
+  };
+});
+
 import {
   researchAppend,
   researchAppendFromCaller,
+  planItemVoidSearchInvariants,
   countryConsistency,
   mintedFromThisRecord,
   personaReachable,
@@ -127,6 +141,7 @@ import {
 import { callTool } from "../helpers/call-tool.js";
 import { questionStatus } from "../../src/utils/question-state.js";
 import { writeProjectFile } from "../helpers/project-files.js";
+import { markFsRefusal } from "../../src/utils/fs-budget.js";
 
 /** Claude Code saves a tool result over this many characters to a file the agent may not be able to
  *  read back, so a refused answer has to stay well under it. */
@@ -150,7 +165,7 @@ const validSource = (id: string) => ({
   gedcomx_source_description_id: "SD-001",
   citation: "1850 U.S. Census, Schuylkill County, PA",
   citation_detail: citationDetail,
-  source_classification: "original",
+  source_classification: "derivative",
   repository: "NARA",
   access_date: "2026-01-01",
 });
@@ -7874,6 +7889,11 @@ describe("research_append (project singleton section)", () => {
       expect(after.person_evidence.map((pe: any) => pe.id)).toEqual(["pe_001"]);
       expect(after.questions[0].status).toBe("resolved");
       expect(r.validation.warnings.join("\n")).toMatch(/2 person\(s\): I3 Josef Smith, I4 Marie Smith; 1 relationship\(s\); 2 person_evidence link\(s\)/);
+      // The eval validators excuse this removal by these opening words
+      // (`_UNANCHORED_REMOVAL_PREFIX`, eval/harness/validators/test_universal.py).
+      const removal = r.validation.warnings.filter((w: string) => w.includes("person(s): I3"));
+      expect(removal).toHaveLength(1);
+      expect(removal[0].startsWith("the last open question is resolved, so the minted persons ")).toBe(true);
     });
 
     it("anchors on a FamilySearch id with no starting tree", async () => {
@@ -12418,6 +12438,161 @@ describe("research_append (composite persist + enforcement)", () => {
     if (!r.ok || !("results" in r)) return;
     expect(r.sourceReuse?.action).toBe("updated_existing");
     expect(r.sourceReuse?.srcId).toBe("src_001");
+  });
+
+  // ── #2475 row #1824: reuse keeps the first acquisition's log id ──
+
+  it("updated_existing keeps the source's first log_entry_id, and a source with none gains one", async () => {
+    const twoLogs = () => {
+      const research = baseResearch();
+      research.log = [searchLogEntry(null), { ...searchLogEntry(null), id: "log_002" }] as any;
+      return research;
+    };
+    const withFirst = twoLogs();
+    (withFirst.sources[0] as any).log_entry_id = "log_001";
+    await writeProject(withFirst);
+    const reuse = () =>
+      researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: reuseSourceOp("NARA", { log_entry_id: "log_002" }) },
+          { section: "assertions", op: "append", entry: reuseAssertionOp("rec1", "death") },
+        ],
+      });
+    let r = await reuse();
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (r.ok && "results" in r) expect(r.sourceReuse?.action).toBe("updated_existing");
+    expect((await readResearch()).sources[0].log_entry_id).toBe("log_001");
+
+    await writeProject(twoLogs());
+    r = await reuse();
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await readResearch()).sources[0].log_entry_id).toBe("log_002");
+  });
+
+  // ── #2475 row #1824: `original` needs stored evidence (lead, 2026-09-02) ──
+
+  describe("original needs stored evidence (#2475 row #1824)", () => {
+    const INDEX_URL = "https://www.familysearch.org/ark:/61903/1:1:MDEF-123";
+    const originalSource = (extra: Record<string, unknown> = {}) => ({
+      ...sourceOpNoRef(),
+      gedcomx_source_description_id: "SD-001",
+      source_classification: "original",
+      url: INDEX_URL,
+      ...extra,
+    });
+    const callerAppend = (entry: Record<string, unknown>) =>
+      researchAppendFromCaller({ projectPath: dir, section: "sources", op: "append", entry } as any, null);
+    const callerUpdate = (entryId: string, fields: Record<string, unknown>) =>
+      researchAppendFromCaller({ projectPath: dir, section: "sources", op: "update", entryId, fields } as any, null);
+
+    it("refuses a caller's original source on a 1:1 index ARK, and writes nothing", async () => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await callerAppend(originalSource());
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/1:1 ARK is an index entry/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("refuses a lone original source with no url and no assertions in the call", async () => {
+      await writeProject();
+      const { url: _u, ...noUrl } = originalSource();
+      const r = await callerAppend(noUrl);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    it("accepts original with a transcription, a stored image, or a 3:1/3:2 image ARK in url", async () => {
+      for (const extra of [
+        { transcription: "Patrick Flynn, died 12 March 1908" },
+        { image_filename: "images/004022578_00190.jpg" },
+        { url: "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSHN-9L9X" },
+        { url: "https://www.familysearch.org/ark:/61903/3:2:77TF-QRP9" },
+      ]) {
+        await writeProject();
+        const r = await callerAppend(originalSource(extra));
+        expect(r.ok, `${JSON.stringify(extra)}: ${JSON.stringify(r)}`).toBe(true);
+      }
+    });
+
+    it("does not count image_ark as evidence: the extractor stamps it on every index read", async () => {
+      await writeProject();
+      const r = await callerAppend(originalSource({ image_ark: "ark:/61903/3:1:3Q9M-CSHN-9L9X" }));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    it("refuses upgrading a derivative to original without evidence, and accepts it when the same update adds a transcription", async () => {
+      await writeProject();
+      let r = await callerUpdate("src_001", { source_classification: "original" });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/source 'src_001' is classified original/);
+      r = await callerUpdate("src_001", { source_classification: "original", transcription: "the page, read" });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readResearch()).sources[0].source_classification).toBe("original");
+    });
+
+    it("leaves a legacy original with no evidence writable", async () => {
+      const research = baseResearch();
+      (research.sources[0] as any).source_classification = "original";
+      await writeProject(research);
+      const r = await callerUpdate("src_001", { notes: "re-checked" });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+
+    it("refuses an update that strips the only evidence from an original", async () => {
+      const research = baseResearch();
+      Object.assign(research.sources[0] as any, {
+        source_classification: "original",
+        url: "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSHN-9L9X",
+      });
+      await writeProject(research);
+      const r = await callerUpdate("src_001", { url: INDEX_URL });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
+
+    const absentAssertion = (role = "absent") => ({
+      ...noId(validAssertion("x")),
+      source_id: undefined,
+      record_id: "1850-census-schuylkill",
+      record_role: role,
+      informant_proximity: "researcher",
+      record_basis: "absent",
+      log_entry_id: "log_001",
+    });
+
+    it("exempts the absence browse: a batch whose assertions are all absent may write original with no image", async () => {
+      await writeProject(sidecarResearch());
+      const { url: _u, ...noUrl } = originalSource();
+      const { source_id: _s, ...absent } = absentAssertion();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: noUrl },
+          { section: "assertions", op: "append", entry: absent },
+        ],
+      });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+
+    it("does not exempt a batch with a non-absent assertion", async () => {
+      await writeProject(sidecarResearch());
+      const { url: _u, ...noUrl } = originalSource();
+      const { source_id: _s, ...absent } = absentAssertion();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: noUrl },
+          { section: "assertions", op: "append", entry: absent },
+          { section: "assertions", op: "append", entry: reuseAssertionOp("rec-new") },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/classified original but stores no evidence/);
+    });
   });
 
   it("new_source_reused_s: same record_id, different repository → new src_ citing the existing S; no S created", async () => {
@@ -17564,6 +17739,203 @@ describe("research_append — one score per record persona covers its facts (#35
     const r = await write({ section: "assertions", op: "append", entry: birthplace }, link("a_051"));
     expect(errorsOf(r) ?? []).toEqual([]);
   });
+
+  it("shares a persona's score onto its two-party fact when a one-party fact goes to the same person", async () => {
+    await writeProject();
+    await score({});
+    expect(errorsOf(await write(link("a_011"), link("a_050"))) ?? []).toEqual([]);
+  });
+
+  it("shares it when the one-party link was written earlier", async () => {
+    await writeProject();
+    await score({});
+    expect(errorsOf(await write(link("a_011"))) ?? []).toEqual([]);
+    expect(errorsOf(await write(link("a_050"))) ?? []).toEqual([]);
+  });
+
+  it("does not share it onto a two-party fact whose person holds another party's facts", async () => {
+    // I2 holds the father's name, so a_050's link to I2 is about the father, and
+    // a score comparing P1 with I2 is the wrong comparison for it.
+    await writeProject();
+    await score({ tree_person_id: "I2" });
+    await score({ assertion_id: "a_020", record_persona_id: "F1", record_role: "father", tree_person_id: "I2" });
+    const r = await write(link("a_020", "I2"), link("a_050", "I2"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not share it when the same person also holds another party's one-party fact", async () => {
+    // I2 holds both P1's birth and F1's name, so which party a_050's link is
+    // about is open again, and P1's score cannot answer for it.
+    await writeProject();
+    await score({ tree_person_id: "I2" });
+    await score({ assertion_id: "a_020", record_persona_id: "F1", record_role: "father", tree_person_id: "I2" });
+    const r = await write(link("a_011", "I2"), link("a_020", "I2"), link("a_050", "I2"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not share it when the same person also holds another party's fact with no persona id", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.push(fact("a_021", null, "father", "birth"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score({});
+    await score({ assertion_id: "a_021", record_persona_id: null, record_role: "father" });
+    const r = await write(link("a_010"), link("a_021"), link("a_050"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+
+  it("does not read a retired fact's link as tying the two-party fact to its party", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.push({ ...fact("a_012", "P1", "principal", "residence"), superseded_by: "retracted" });
+    r0.person_evidence = [{
+      id: "pe_900", ...link("a_012").entry,
+    }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score({});
+    const r = await write(link("a_050"));
+    expect(failure(r).errors?.join(" ")).toMatch(/assertion 'a_050'.*no same_person score behind it/);
+  });
+});
+
+describe("research_append — one score per party of a record with no persona ids (#3552)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-capture-score-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // A researcher's capture of a death certificate: no assertion carries a persona
+  // id. a_110-a_112 are the deceased's, a_113 the father's, a_114 the deceased's
+  // relationship to the father.
+  const REC = "capture:george-burns-death-cert-1914";
+  const fact = (id: string, role: string, fact_type = "name") => ({
+    ...validAssertion(id, "src_010"),
+    record_id: REC,
+    record_persona_id: null,
+    record_role: role,
+    fact_type,
+    value: `${id} value`,
+  });
+  async function writeProject() {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      fact("a_110", "principal"),
+      fact("a_111", "principal", "death"),
+      fact("a_112", "principal", "burial"),
+      fact("a_113", "father"),
+      fact("a_114", "principal", "relationship"),
+    ] as any;
+    r.sources = [...r.sources, { id: "src_010", gedcomx_source_description_id: "S1" }] as any;
+    const tree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Burns" }] }],
+    };
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  async function score(over: Record<string, unknown> = {}) {
+    await recordMatchScore(dir, {
+      record_id: REC,
+      record_persona_id: null,
+      record_role: "principal",
+      tree_person_id: "I1",
+      score: 0.98,
+      scorer: "familysearch",
+      model: null,
+      assertion_id: "a_110",
+      record_source: "projection",
+      computed: "2026-11-11T00:00:00Z",
+      party_resolved: true,
+      ...(over as any),
+    });
+  }
+  const link = (assertionId: string, personId = "I1") => ({
+    section: "person_evidence" as const,
+    op: "append" as const,
+    entry: {
+      assertion_id: assertionId,
+      person_id: personId,
+      confidence: "probable",
+      rationale: "Names match.",
+      match_score: 0.98,
+      created: "2026-11-11",
+      superseded_by: null,
+    },
+  });
+  const write = (...ops: any[]) => researchAppend({ projectPath: dir, ops } as any);
+
+  it("accepts every fact of the scored role with one score", async () => {
+    await writeProject();
+    await score();
+    expect(errorsOf(await write(link("a_110"), link("a_111"), link("a_112"))) ?? []).toEqual([]);
+  });
+
+  it("still needs its own score for another role of the record", async () => {
+    await writeProject();
+    await score();
+    expect((await write(link("a_113"))).ok).toBe(false);
+  });
+
+  it("does not share the score with another tree person", async () => {
+    await writeProject();
+    await score();
+    expect((await write(link("a_111", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share a fetched score, whose party the assertions do not name", async () => {
+    await writeProject();
+    await score({ record_source: "record_read" });
+    expect((await write(link("a_111"))).ok).toBe(false);
+  });
+
+  it("does not share across roles once one fact of the record carries a persona id", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.assertions.find((a: any) => a.id === "a_113").record_persona_id = "F1";
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score();
+    expect((await write(link("a_111"))).ok).toBe(false);
+  });
+
+  it("shares the score onto the role's two-party fact when a one-party fact goes to the same person", async () => {
+    await writeProject();
+    await score();
+    expect(errorsOf(await write(link("a_111"), link("a_114"))) ?? []).toEqual([]);
+    expect((await write(link("a_114", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share the role's score onto its two-party fact linked alone", async () => {
+    await writeProject();
+    await score();
+    expect(failure(await write(link("a_114"))).errors?.join(" ")).toMatch(/assertion 'a_114'.*no same_person score behind it/);
+  });
+
+  it("names the role in the refusal, so one call is made per party", async () => {
+    await writeProject();
+    const r = await write(link("a_111"));
+    expect(failure(r).errors?.join(" ")).toMatch(/One score covers every fact of the 'principal' party/);
+  });
+
+  it("neither shares a role's score nor promises one onto a fact that reads as fetched", async () => {
+    // same_person files a fetched persona's own id for a_111 here, so the
+    // projected score of a_110 cannot answer for it.
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.log = [{
+      id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_read", query: {},
+      outcome: "positive", results_examined: 1, external_site: null, results_ref: null,
+    }];
+    r0.assertions.find((a: any) => a.id === "a_111").log_entry_id = "log_001";
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await score();
+    const errors = failure(await write(link("a_111"))).errors?.join(" ") ?? "";
+    expect(errors).toMatch(/assertion 'a_111'.*no same_person score behind it/);
+    expect(errors).not.toMatch(/One score covers/);
+  });
 });
 
 describe("research_append — a resolve names how it was settled (resolution_kind, #1852)", () => {
@@ -18999,5 +19371,262 @@ describe("research_append — person_evidence to a ref-less added person", () =>
     await write(research(), withStartingTree as boolean);
     const r = await researchAppend(link(personId as string, assertionId as string, confidence as string));
     expect(errorsOf(r)).not.toMatch(REFUSAL);
+  });
+});
+
+// #4431 — the void-search completion guard, END TO END through the PRODUCTION
+// entry point.
+//
+// `researchAppendFromCaller` is the only path production takes, and it is where
+// the searchability set is resolved: it decides from the OPS whether to do the
+// pre-read at all. Calling `researchAppend` with a hand-made `options` skips
+// that decision — which is how a shipped deadlock passed a green suite. The
+// skip cases are the ones that proved it: a skip op completes nothing, so under
+// a `completed`-only gate it never got a set, Exemption 3 saw UNKNOWN, and the
+// item was refused BOTH ways. These therefore go through the caller, with a
+// loader, so the gate is part of what is under test.
+//
+// The parameter is also `applyOne`'s 18th positional argument, and every
+// parameter after its second is optional — so dropping it at the call site
+// compiles clean, typechecks clean, and leaves the guard permanently UNKNOWN.
+// Only an end-to-end test sees that.
+describe("research_append — a plan item completed on guaranteed-nil full-text searches (#4431)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-void-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** `record_type: "other"` sits outside RECORD_TYPE_TERMS on purpose, so the
+   *  completion record-type check stays silent and these tests read only this
+   *  guard. An entry attributed to the item also satisfies the structural
+   *  attribution gate. */
+  const voidEntry = (id: string, gid: string, ra: number | null = 0) => ({
+    id,
+    plan_item_id: "pli_001",
+    performed: "2026-11-12T00:00:00Z",
+    tool: "fulltext_search",
+    query: { imageGroupNumber: gid },
+    outcome: "negative",
+    results_examined: 0,
+    results_available: ra,
+    external_site: null,
+  });
+
+  function research(itemStatus = "in_progress", log = [voidEntry("log_001", "5219332")]) {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [
+      validPlan("pl_001", "q_001", "active", [
+        { ...seededPlanItem("pli_001"), record_type: "other", status: itemStatus },
+      ]),
+    ];
+    r.log = log as any;
+    return r;
+  }
+  const write = async (r: any) => {
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  };
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const status = async () => (await readResearch()).plans[0].items[0].status;
+
+  /** The production path. `searchable` is what FamilySearch reports; `null` is a
+   *  loader that cannot answer. `asked` is derived inside the tool, as in
+   *  production — a test cannot hand it an answer for an id nothing asked about. */
+  const viaCaller = (fields: Record<string, unknown>, searchable: string[] | null, section: "plan_items" | "plans" = "plan_items") =>
+    researchAppendFromCaller(
+      section === "plan_items"
+        ? { projectPath: dir, section, op: "update", planId: "pl_001", entryId: "pli_001", fields }
+        : { projectPath: dir, section, op: "update", entryId: "pl_001", fields },
+      null,
+      async () => (searchable === null ? null : new Set(searchable)),
+    );
+  const NONE: string[] = [];
+  const inlineItem = (extra: Record<string, unknown>) => ({
+    items: [{ ...seededPlanItem("pli_001"), record_type: "other", ...extra }],
+  });
+
+  it("MUST FIRE — plan_items arm: refuses the completion and writes nothing", async () => {
+    await write(research());
+    const r = await viaCaller({ status: "completed" }, NONE);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/does not report as full-text searchable/);
+    expect(r.errors.join(" ")).toMatch(/5219332/);
+    expect(await status()).toBe("in_progress");
+  });
+
+  it("MUST FIRE — plans inline-items arm: the same refusal through the other door", async () => {
+    await write(research());
+    const r = await viaCaller(inlineItem({ status: "completed" }), NONE, "plans");
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/does not report as full-text searchable/);
+    expect(await status()).toBe("in_progress");
+  });
+
+  it("MUST FIRE — several bare-digit groups, none searchable, names them all", async () => {
+    await write(research("in_progress", [voidEntry("log_001", "4102848"), voidEntry("log_002", "4102858"), voidEntry("log_003", "4102865")]));
+    const r = await viaCaller({ status: "completed" }, NONE);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/4102848, 4102858, 4102865/);
+  });
+
+  // The tests above hand `researchAppendFromCaller` a loader directly, so they
+  // cannot see whether `server.ts` passes one. Drop
+  // `fulltextSearchableLoader(principal)` from the research_append arm there and
+  // typecheck passes, the engine suite passes, and the guard is permanently
+  // UNKNOWN in production. This one goes through `createServer`, as a connected
+  // client does, and is the only test that fails on that deletion.
+  it("MUST FIRE — through the MCP dispatch, so server.ts's loader is under test", async () => {
+    await write(research());
+    // The searchability endpoint, answering: none of the asked ids are searchable.
+    mockFsFetch.impl = async () => ({ ok: true, json: async () => ({ ids: [] }) });
+    try {
+      const r = await callTool("research_append", {
+        projectPath: dir,
+        section: "plan_items",
+        op: "update",
+        planId: "pl_001",
+        entryId: "pli_001",
+        fields: { status: "completed" },
+      });
+      expect(r.isError).toBe(true);
+      expect(r.text).toMatch(/does not report as full-text searchable/);
+      expect(await status()).toBe("in_progress");
+    } finally {
+      mockFsFetch.impl = null;
+    }
+  });
+
+  // THE REGRESSION THIS BLOCK EXISTS FOR. Under a `completed`-only pre-read gate
+  // a skip op resolved no set, so Exemption 3 saw UNKNOWN and the searched-skip
+  // rule refused the skip as well: the item was refused BOTH ways and stuck at
+  // `in_progress` for good. Both arms, because one arm can be wired and the
+  // other not.
+  it("MUST NOT FIRE (9b) — plan_items arm: the refusal's own advice is accepted", async () => {
+    await write(research());
+    expect((await viaCaller({ status: "completed" }, NONE)).ok).toBe(false);
+    const r = await viaCaller({ status: "skipped", skip_category: "user_declined" }, NONE);
+    expect(r.ok, `the refusal tells the agent to skip user_declined; ${JSON.stringify(r)}`).toBe(true);
+    expect(await status()).toBe("skipped");
+  });
+
+  it("MUST NOT FIRE (9a) — plans inline-items arm: the refusal's own advice is accepted", async () => {
+    await write(research());
+    const r = await viaCaller(inlineItem({ status: "skipped", skip_category: "user_declined" }), NONE, "plans");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("skipped");
+  });
+
+  it("MUST NOT FIRE — the group is searchable, so the nil is about the person", async () => {
+    await write(research());
+    const r = await viaCaller({ status: "completed" }, ["5219332"]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("MUST NOT FIRE — a loader that cannot answer is UNKNOWN", async () => {
+    await write(research());
+    const r = await viaCaller({ status: "completed" }, null);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("MUST NOT FIRE — no loader at all: the default path is inert", async () => {
+    await write(research());
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+      null,
+    );
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  // An id the pre-read never asked about is absent from the reply for the same
+  // reason a known-unsearchable one is. Without the `asked` set, a document that
+  // grew between the unlocked pre-read and the lock would read as evidence and
+  // produce a FALSE DENY on a search that genuinely ran.
+  it("MUST NOT FIRE — an id nothing asked about is UNKNOWN, not 'unsearchable'", async () => {
+    await write(research());
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+      null,
+      async () => new Set<string>(),      // answers, but about nothing we hold
+    );
+    // The loader is asked about 5219332 and reports it unsearchable -> refused.
+    expect(r.ok).toBe(false);
+    // Now the same answer with the id absent from `asked`: judged directly.
+    const doc = await readResearch();
+    const item = doc.plans[0].items[0];
+    expect(
+      planItemVoidSearchInvariants({ ...item, status: "completed" }, doc, {
+        asked: new Set(["9999999"]),
+        searchable: new Set<string>(),
+      }),
+      "an id outside `asked` must not be read as unsearchable",
+    ).toEqual([]);
+  });
+
+  it("MUST NOT FIRE — a pre-existing 'completed' merely re-stated is untouched", async () => {
+    await write(research("completed"));
+    const r = await viaCaller({ status: "completed" }, NONE);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("MUST NOT FIRE — an absent results_available is not void", async () => {
+    const absent: any = voidEntry("log_002", "4102848");
+    delete absent.results_available;
+    await write(research("in_progress", [voidEntry("log_001", "5219332"), absent]));
+    expect((await viaCaller({ status: "completed" }, NONE)).ok).toBe(true);
+  });
+
+  it("MUST NOT FIRE — an explicit null results_available is not void", async () => {
+    await write(research("in_progress", [voidEntry("log_001", "5219332"), voidEntry("log_002", "4102848", null)]));
+    expect((await viaCaller({ status: "completed" }, NONE)).ok).toBe(true);
+  });
+
+  // `readCatalog` RETHROWS a spent budget because its read stamps VALUES, so a
+  // half-answer corrupts the document. This read only ever REFUSES, and a spent
+  // budget is not evidence a volume is unsearchable.
+  it("MUST NOT FIRE — a spent FamilySearch budget is UNKNOWN, not 'unsearchable'", async () => {
+    await write(research());
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+      null,
+      () => Promise.reject(markFsRefusal(new Error("FamilySearch budget exhausted"))),
+    );
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await status()).toBe("completed");
+  });
+
+  it("asks FamilySearch only when an op moves a plan item to a terminal status", async () => {
+    await write(research());
+    const asked: string[][] = [];
+    const loader = async (ids: string[]) => {
+      asked.push(ids);
+      return new Set<string>();
+    };
+    const call = (fields: Record<string, unknown>) =>
+      researchAppendFromCaller(
+        { projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields },
+        null,
+        loader,
+      );
+
+    expect((await call({ rationale: "Reworded, no status change" })).ok).toBe(true);
+    expect(asked, "an op that moves no item to a terminal status must not pay a request").toEqual([]);
+
+    expect((await call({ status: "completed" })).ok).toBe(false);
+    expect(asked).toEqual([["5219332"]]);
+
+    // A skip is terminal too, and must resolve a set or Exemption 3 is inert.
+    expect((await call({ status: "skipped", skip_category: "user_declined" })).ok).toBe(true);
+    expect(asked, "a skip op must also resolve a set").toEqual([["5219332"], ["5219332"]]);
   });
 });

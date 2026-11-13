@@ -14,7 +14,7 @@
       "rank-search-matches",
       "needs-review",
       "pre-1880-census-household",
-      "topical-fixture-required",
+      "census-search",
       "direct-arm"
     ]
   },
@@ -23,7 +23,6 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-near-match-age-off-flynn",
     "rank-search-matches-flynn-near-match",
     "record-read-patrick-flyn-vrnt-7m3",
@@ -38,8 +37,7 @@
     "Log quality: do NOT require the skill to print the raw log entry JSON in its text response. Grade the fields the skill authored from its account of what it wrote: `notes` usefulness, any `outcome` override, and a lower `results_examined` if it triaged fewer rows than returned. `query` and the counts of a staged search are filled by `research_log_append`, not the skill.",
     "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test",
     "Nil escalation: score null (N/A) for this test. The scenario returned one result and the skill triaged it. This test grades near-match triage behavior only — it is NOT a nil search. Do not penalize for not attempting additional variant searches.",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
   "judge_reads_files": true
 }

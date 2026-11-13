@@ -58,7 +58,11 @@ import {
   type StoredCollectionUrls,
 } from "../utils/external-collections-store.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
-import { HEAD_ONLY_US_CENSUS_YEARS } from "../data/census-table.js";
+import {
+  BRITISH_RELATIONSHIP_COLUMN_FROM,
+  HEAD_ONLY_US_CENSUS_YEARS,
+  US_RELATIONSHIP_COLUMN_FROM,
+} from "../data/census-table.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -219,6 +223,52 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
   return notes.length > 0 ? notes.join("\n") : null;
 }
 
+/**
+ * Returned as `planRationale` when this call logs the first FamilySearch index
+ * search to find nothing for a plan item: the item's own rationale, with the
+ * instruction to search what it names before any other retry.
+ *
+ * A plan item's rationale carries what research-plan knew about the search:
+ * another surname the person may be under, how a collection is indexed, a
+ * second jurisdiction. Measured 2026-11-12 on Haiku 5.5 at low effort,
+ * `ut_search_records_d33` never searched the married surname its rationale
+ * names in 2 to 3 of 10 runs, and a body rule at either of two places did not
+ * move that. The note puts the rationale on the call the agent makes at the
+ * moment it matters.
+ */
+export const PLAN_RATIONALE_NOTE =
+  "This is the first search for plan item {planItemId} to find nothing. The plan " +
+  'item\'s rationale: "{rationale}" If it gives a name, place or source you have ' +
+  "not yet searched, search that next, before any other retry. Then carry on with " +
+  "the other retries: this note does not end the search.";
+
+/**
+ * The `planRationale` note for the plan items whose first nil this call logged,
+ * one line per item, or null. Reads only research.json (ADR-0011). Silent for a
+ * plan item that already had a nil, has found something, or has no rationale.
+ */
+function planRationaleNote(research: any, newEntries: any[]): string | null {
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const plans: any[] = Array.isArray(research.plans) ? research.plans : [];
+  const newNils = newEntries.filter(isNilFsSearch);
+  const touched = [...new Set(newNils.map((e) => e.plan_item_id))].filter(
+    (id): id is string => typeof id === "string",
+  );
+  const notes: string[] = [];
+  for (const pli of touched) {
+    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const nils = entries.filter(isNilFsSearch).length;
+    if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
+    if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
+    const item = plans.flatMap((p) => (Array.isArray(p?.items) ? p.items : [])).find((i: any) => i?.id === pli);
+    const rationale = typeof item?.rationale === "string" ? item.rationale.trim() : "";
+    if (rationale === "") continue;
+    // Function replacers: a string replacement would expand `$&` and `$'` in the rationale.
+    notes.push(PLAN_RATIONALE_NOTE.replaceAll("{planItemId}", () => pli).replaceAll("{rationale}", () => rationale));
+  }
+  return notes.length > 0 ? notes.join("\n") : null;
+}
+
 export interface ResearchLogAppendExternalSite {
   site: string;
   urlGenerated: string;
@@ -269,6 +319,8 @@ export type ResearchLogAppendResult =
       validation: { valid: true; warnings: string[] };
       /** `NIL_ESCALATION_NOTE`, present only when it fired. */
       escalationDue?: string;
+      /** `PLAN_RATIONALE_NOTE`, present only when it fired. */
+      planRationale?: string;
       /** `REPORT_REPLY_NEXT`, present only when a report tool was logged. */
       next?: string;
     } & ResearchLogAppendOpResult)
@@ -279,6 +331,7 @@ export type ResearchLogAppendResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
       escalationDue?: string;
+      planRationale?: string;
       next?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
@@ -487,12 +540,12 @@ const CENSUS_AFTER = new RegExp(
 function relationshipColumnFrom(qualifier: string): number | null {
   const q = qualifier.toLowerCase();
   if (/\b(?:england|english|wales|welsh|scotland|scottish|britain|british|uk|united\s+kingdom)\b/.test(q)) {
-    return 1851;
+    return BRITISH_RELATIONSHIP_COLUMN_FROM;
   }
   if (/\b(?:ireland|irish|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian)\b/.test(q)) {
     return Number.NaN; // named, non-US, undocumented here -> skip
   }
-  return 1880; // unqualified or explicitly US/federal
+  return US_RELATIONSHIP_COLUMN_FROM; // unqualified or explicitly US/federal
 }
 
 /** An explicitly US mention: never re-jurisdictioned by a staged payload. */
@@ -2487,10 +2540,12 @@ export async function researchLogAppend(
     const priorLogLength = Array.isArray(beforeResearch.log) ? beforeResearch.log.length : 0;
     // The nil-escalation note, computed on the committed document. Advisory, so
     // a failure computing it drops the note rather than the successful write.
-    const escalation = (): { escalationDue?: string } => {
+    const escalation = (): { escalationDue?: string; planRationale?: string } => {
       try {
-        const note = nilEscalationNote(research, research.log.slice(priorLogLength));
-        return note ? { escalationDue: note } : {};
+        const added = research.log.slice(priorLogLength);
+        const note = nilEscalationNote(research, added);
+        const rationale = planRationaleNote(research, added);
+        return { ...(note ? { escalationDue: note } : {}), ...(rationale ? { planRationale: rationale } : {}) };
       } catch {
         return {};
       }

@@ -22,6 +22,7 @@
   "mcp_fixtures": [
     "record-search-silva-birth-with-place",
     "record-search-silva-children-no-place",
+    "record-search-silva-children-no-place-by-parent-given-names",
     "rank-search-matches-zulema-chile",
     "record-read-zulema-q2s2-pcbw",
     "catalog-search-empty",

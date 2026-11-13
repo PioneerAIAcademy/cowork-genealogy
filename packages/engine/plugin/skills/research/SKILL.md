@@ -421,7 +421,13 @@ message.
    comparison with no backing `hypotheses`/`conflicts` entry is incomplete,
    whatever tier it claims. This binds your summary after a hand-off too: list
    each candidate neutrally, never which one the evidence favours, and report
-   only what the callee's return states it wrote.
+   only what the callee's return states it wrote. **This contract governs the
+   job routing table only.** A bounded same-person ask or a researcher's hedge
+   about a record (§"Bounded request or job") is not the inline comparison
+   this contract forbids — it is `@plugin:person-evidence`'s deliverable, and
+   it goes straight there, never to `conflict-resolution` or
+   `hypothesis-tracking`, whatever hypotheses or conflicts the project already
+   holds.
 
    **Exhaustiveness/proof-conclusion contract — a `proof_summaries` entry, a non-null `search_stop.stopped_because` or a `person_evidence` link is refused unless it comes from `@plugin:proof-conclusion`, `@plugin:research-exhaustiveness` or `@plugin:person-evidence` respectively, or is one of the attachment links `extraction_append({ personId })` writes.**
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are

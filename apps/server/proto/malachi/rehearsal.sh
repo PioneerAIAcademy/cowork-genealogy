@@ -144,9 +144,11 @@ must_pass "malachi-up" malachi-up
 must_pass "malachi-check" malachi-check
 
 say "4. what the tiers came up as"
-[ "$(code_of "$BASE/")" = 404 ] || fail "/ does not answer 404"
+[ "$(code_of "$BASE/")" = 200 ] || fail "/ does not answer 200"
 [ "$(code_of "$BASE/index.html")" = 404 ] || fail "/index.html does not answer 404"
-pass "web serves no SPA: / and /index.html answer 404"
+pass "web serves its own landing and no SPA: / answers 200 and /index.html 404"
+[ "$(code_of "$BASE/connect")" = 400 ] || fail "/connect with no request does not answer 400"
+pass "Claude's sign-in is served: the consent page refuses a visit with no request"
 rcompose exec -T web python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8085/api/health').read().decode())" >"$WORK/health.json"
 grep -q '"queue":null' "$WORK/health.json" || fail "the queue is not null: $(cat "$WORK/health.json")"
 grep -q '"ok":true' "$WORK/health.json" || fail "/api/health is not ok: $(cat "$WORK/health.json")"
