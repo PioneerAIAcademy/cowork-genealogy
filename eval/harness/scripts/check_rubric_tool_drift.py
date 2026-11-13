@@ -180,21 +180,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "packages/engine/plugin/agents/search-external-sites.md",
-        "tool": "catalog_search",
-        "quotes": [
-            "A `catalog_search` of the place \u2014 hand it to search-records",
-        ],
-        "reason": (
-            "cross-owner - the agent names the tool only to hand the check "
-            "BACK to search-records, which holds catalog_search in its "
-            "allowed-tools. Granting it here was considered and rejected "
-            "(issue #3185): the agent's ROUTING gate already sends catalog "
-            "work to search-records, so a second site deciding when to "
-            "search the Catalog would contradict the gate."
-        ),
-    },
-    {
         "file": "eval/tests/unit/research-plan/negative-record-extraction-request.json",
         "tool": "extraction_append",
         "quotes": [

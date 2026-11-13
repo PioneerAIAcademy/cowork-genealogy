@@ -32,6 +32,9 @@ tools:
   - mcp__genealogy__place_search
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_search
+  - mcp__genealogy__catalog_search
+  - mcp__remote-devices__Genealogy_Research__catalog_search
+  - mcp__Genealogy_Research__catalog_search
   - mcp__genealogy__collections_search
   - mcp__remote-devices__Genealogy_Research__collections_search
   - mcp__Genealogy_Research__collections_search
@@ -317,6 +320,24 @@ FamilySearch copy via search-records. **Never present a competitor as the source
 for a collection FamilySearch holds.** Ground any statement about which collections
 or census years exist in this `collections_search` result, never in memory.
 
+**For `archion` and `matricula`, also call `catalog_search`** for the parish's place:
+
+```
+catalog_search({ standardPlace: "<standardPlace>" })
+```
+
+Keep a hit whose title, creator or `filmNotes` name that parish's church books and
+cover the register type and year. For a kept hit, step 4 gets one sentence naming
+its title and the `filmNumber` of the film note covering the year:
+- `availableOnline: false` → viewable only at a FamilySearch Center or an affiliate
+  library. Never offer to read it.
+- `availableOnline: true` → offer to read it, and put the film note's
+  `imageGroupNumber` in the caller lines as the handoff to search-images.
+- `availableOnline` absent → name the film and say nothing about where it can be
+  viewed.
+
+Still build the archion/matricula URL. No kept hit → say nothing about the Catalog.
+
 ### 3. Build the URL
 
 **First, call `research_query` with `section: "conflicts"` and no `status`
@@ -411,6 +432,8 @@ build_external_search_url({
 | `archion` | none — browse site | German Protestant church books; viewing the scans needs an Archion pass. **Pass the parish page as `baseUrl`** — from the delegation or a `localities` entry, never from memory; it comes back unchanged, with the path through the site in `notes`. Without one the tool returns the site root and says so |
 | `matricula` | none — browse site | Chiefly Catholic church books; free. Same as `archion`: pass the parish page as `baseUrl` |
 
+For either browse site, the route to the parish is the one in the tool's `notes`, relayed whole. Never give a route through the site from memory.
+
 Every observation the tool makes — an attribute the site doesn't read, a
 value it rejected, a site's standing caution — comes back in the response's
 `notes`. Relay each note to the user alongside the URL.
@@ -486,7 +509,9 @@ plain prose:
    the line (see "Every observation the tool makes" above);
 6. when `collections_search` returned the same collection (step 2b), one
    sentence saying FamilySearch holds it too and can be searched there instead
-   — here, after the `---`, Case A or Case B.
+   — here, after the `---`, Case A or Case B;
+7. when `catalog_search` kept a filmed copy of the register (step 2b), its
+   sentence from step 2b.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
@@ -761,9 +786,10 @@ the record might still be findable through other methods.
 
 After online searches across multiple sites return negative
 results, note the possibility of undigitized records and suggest:
-- A `catalog_search` of the place — hand it to search-records; the
-  Catalog lists registers filmed or imaged but never indexed, which
-  `collections_search` does not reach
+- The FamilySearch Catalog for the place, which lists registers filmed or
+  imaged but never indexed, which `collections_search` does not reach: for
+  archion/matricula, report step 2b's `catalog_search` hit; for any other site,
+  hand a Catalog search to search-records
 - Contacting the relevant county courthouse or church archive
 - Consulting finding aids for archival collections at state or
   national archives
@@ -1066,7 +1092,8 @@ plain prose with **no label, heading or field name**:
    archive was searched for whom, and what came of it — in plain words. A
    hand-off carries its content here, in full (Step 4's list), and, when
    `collections_search` found the same collection FamilySearch holds, one
-   sentence saying so and that it can be searched instead. If nothing was
+   sentence saying so and that it can be searched instead, and step 2b's
+   `catalog_search` sentence when it kept a filmed copy. If nothing was
    found, say so plainly and say what was searched, so the reader knows the
    search was real. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.

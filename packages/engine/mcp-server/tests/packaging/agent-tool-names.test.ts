@@ -883,11 +883,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // in `awaitingUser`. `Read` opens a capture in folder mode; with an
   // `uploadUrl`, `sidecar_read` reads an upload's text and `image_transcribe` an
   // upload with none (issue #3990). No wiki tools: the parish page arrives in the
-  // delegation as `baseUrl`.
+  // delegation as `baseUrl`. `catalog_search` (issue #4428) is step 2b's
+  // cross-check for archion/matricula: whether FamilySearch filmed the same
+  // church register, and whether that film is online.
   "search-external-sites.md": {
     tools: [
       "Read",
       "build_external_search_url",
+      "catalog_search",
       "collections_search",
       "external_links_search",
       "image_transcribe",

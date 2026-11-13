@@ -1,0 +1,446 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for Ochtrup at the country scope collections_search derives for Germany, window 1836. No collection is for the Diocese of Münster or Ochtrup; the nearest are the Paderborn Catholic records and the country-wide Marriages, 1558-1929 index, which does not say it covers Ochtrup. Measured live 2026-11-13 with collectionsSearchTool({ standardPlace: 'Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany', startYear: 1836, endYear: 1836 }).",
+  "args": {
+    "standardPlace": "~Ochtrup"
+  },
+  "response": {
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
+    "scope": "Germany",
+    "totalForPlace": 89,
+    "results": [
+      {
+        "id": "2040151",
+        "title": "Germany, Anhalt, Köthen, Miscellaneous City Records, 1630-1921",
+        "dateRange": "1630-1921",
+        "personCount": 0
+      },
+      {
+        "id": "2790181",
+        "title": "Germany, Baden, Archdiocese of Freiburg im Breisgau, Catholic Church Records, 1463-1931",
+        "dateRange": "1463-1931",
+        "personCount": 31235937
+      },
+      {
+        "id": "1395660",
+        "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "dateRange": "1804-1877",
+        "personCount": 2268602
+      },
+      {
+        "id": "2422968",
+        "title": "Germany, Baden, Stebbach, Church Book Extracts, 1675-1951",
+        "dateRange": "1675-1951",
+        "personCount": 10048
+      },
+      {
+        "id": "3398459",
+        "title": "Germany, Bavaria, Catholic Church Records, 1650-1875",
+        "dateRange": "1650-1875",
+        "personCount": 2573503
+      },
+      {
+        "id": "4234521",
+        "title": "Germany, Bavaria, Catholic and Lutheran Church Records, 1591-1963",
+        "dateRange": "1591-1963",
+        "personCount": 3979088
+      },
+      {
+        "id": "1976115",
+        "title": "Germany, Bavaria, Deggendorf, Miscellaneous City Records, 1600-1900",
+        "dateRange": "1600-1900",
+        "personCount": 0
+      },
+      {
+        "id": "1475971",
+        "title": "Germany, Bavaria, Dinkelsbühl Miscellaneous City Records, 1804-1946",
+        "dateRange": "1804-1946",
+        "personCount": 0
+      },
+      {
+        "id": "2780016",
+        "title": "Germany, Bavaria, Diocese of Augsburg, Catholic Church Records, 1569-1940",
+        "dateRange": "1569-1940",
+        "personCount": 23113204
+      },
+      {
+        "id": "1976142",
+        "title": "Germany, Bavaria, Fürth, Emigration and City Directories, 1805-1913",
+        "dateRange": "1805-1913",
+        "personCount": 0
+      },
+      {
+        "id": "3227343",
+        "title": "Germany, Bavaria, Middle Franconia, Brenner Collection of Genealogical Records, 1550-1900",
+        "dateRange": "1550-1900",
+        "personCount": 747273
+      },
+      {
+        "id": "1941345",
+        "title": "Germany, Bavaria, Mindelheim, Miscellaneous City Records, 1407-1950",
+        "dateRange": "1407-1950",
+        "personCount": 0
+      },
+      {
+        "id": "1941341",
+        "title": "Germany, Bavaria, Neuburg an der Donau, Miscellaneous City Records, 1808-1949",
+        "dateRange": "1808-1949",
+        "personCount": 0
+      },
+      {
+        "id": "1941342",
+        "title": "Germany, Bavaria, Neumarkt, Miscellaneous City Records, 1453-1973",
+        "dateRange": "1453-1973",
+        "personCount": 0
+      },
+      {
+        "id": "2660214",
+        "title": "Germany, Bavaria, Nuremberg, Civil Registration, 1803-1886",
+        "dateRange": "1803-1886",
+        "personCount": 1440680
+      },
+      {
+        "id": "1941333",
+        "title": "Germany, Bavaria, Nördlingen, Miscellaneous City Records, 1385-1943",
+        "dateRange": "1385-1943",
+        "personCount": 0
+      },
+      {
+        "id": "2015585",
+        "title": "Germany, Bavaria, Passau, Miscellaneous City Records, 1700-1940",
+        "dateRange": "1700-1940",
+        "personCount": 125975
+      },
+      {
+        "id": "2018409",
+        "title": "Germany, Bavaria, Straubing, Miscellaneous City Records, 1765-1917",
+        "dateRange": "1765-1917",
+        "personCount": 0
+      },
+      {
+        "id": "2016234",
+        "title": "Germany, Bavaria, Traunstein, Family Group Sheets, 1830-1900",
+        "dateRange": "1830-1900",
+        "personCount": 0
+      },
+      {
+        "id": "2016265",
+        "title": "Germany, Bavaria, Traunstein, Military Records, 1830-1918",
+        "dateRange": "1830-1918",
+        "personCount": 0
+      },
+      {
+        "id": "1473000",
+        "title": "Germany, Births and Baptisms, 1558-1898",
+        "dateRange": "1557-1898",
+        "personCount": 29671418
+      },
+      {
+        "id": "2101574",
+        "title": "Germany, Brandenburg, Berlin, Probate Records, 1796-1853",
+        "dateRange": "1796-1853",
+        "personCount": 0
+      },
+      {
+        "id": "2060204",
+        "title": "Germany, Brandenburg, Bernau bei Berlin, Jewish Records, 1688-1872",
+        "dateRange": "1688-1872",
+        "personCount": 0
+      },
+      {
+        "id": "4234519",
+        "title": "Germany, Bremen, Catholic and Lutheran Church Records, 1746-1970",
+        "dateRange": "1746-1970",
+        "personCount": 960307
+      },
+      {
+        "id": "1494474",
+        "title": "Germany, Deaths and Burials, 1582-1958",
+        "dateRange": "1581-1958",
+        "personCount": 8192780
+      },
+      {
+        "id": "2204568",
+        "title": "Germany, Hesse, Frankfurt, Civil Registration, 1811-1814, 1833-1978",
+        "dateRange": "1811-1978",
+        "personCount": 296780
+      },
+      {
+        "id": "1768560",
+        "title": "Germany, Hesse-Nassau, Civil Registers and Church Books, 1701-1930",
+        "dateRange": "1701-1930",
+        "personCount": 1256768
+      },
+      {
+        "id": "1423571",
+        "title": "Germany, Hessen, Darmstadt City Records, 1627-1940",
+        "dateRange": "1627-1940",
+        "personCount": 0
+      },
+      {
+        "id": "3479701",
+        "title": "Germany, Hessen-Nassau, Diocese of Limburg, Catholic Church Records, 1601-1919",
+        "dateRange": "1601-1919",
+        "personCount": 4780375
+      },
+      {
+        "id": "3015626",
+        "title": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "dateRange": "1499-1971",
+        "personCount": 212026468
+      },
+      {
+        "id": "4232849",
+        "title": "Germany, Lübeck, Catholic and Lutheran Church Records, 1797-1961",
+        "dateRange": "1797-1961",
+        "personCount": 221862
+      },
+      {
+        "id": "1473009",
+        "title": "Germany, Marriages, 1558-1929",
+        "dateRange": "1557-1929",
+        "personCount": 5319967
+      },
+      {
+        "id": "4234522",
+        "title": "Germany, Mecklenburg-Schwerin, Catholic and Lutheran Church Records, 1639-1943",
+        "dateRange": "1639-1943",
+        "personCount": 1586167
+      },
+      {
+        "id": "4132032",
+        "title": "Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937",
+        "dateRange": "1664-1937",
+        "personCount": 440965
+      },
+      {
+        "id": "3219562",
+        "title": "Germany, North Rhine-Westphalia, Paderborn, Catholic Church Records, 1612-1909",
+        "dateRange": "1612-1909",
+        "personCount": 5961223
+      },
+      {
+        "id": "5000010",
+        "title": "Germany, North Rhine-Westphalia, Wuppertal, Civil Registration, 1810-1930",
+        "dateRange": "1810-1930",
+        "personCount": 810431
+      },
+      {
+        "id": "4131226",
+        "title": "Germany, Oldenburg, Catholic and Lutheran Church Records, 1764-1959",
+        "dateRange": "1764-1959",
+        "personCount": 4755
+      },
+      {
+        "id": "1491272",
+        "title": "Germany, Prussia, Brandenburg and Posen, Church Book Duplicates, 1700-1875",
+        "dateRange": "1700-1875",
+        "personCount": 4553839
+      },
+      {
+        "id": "1952881",
+        "title": "Germany, Prussia, Brandenburg, Angermünde, Miscellaneous City Records 1706-1922",
+        "dateRange": "1706-1922",
+        "personCount": 0
+      },
+      {
+        "id": "1974179",
+        "title": "Germany, Prussia, Brandenburg, Cottbus, Miscellaneous City Records, 1672-1919",
+        "dateRange": "1672-1919",
+        "personCount": 0
+      },
+      {
+        "id": "2072743",
+        "title": "Germany, Prussia, Brandenburg, Landkreis Ostprignitz-Ruppin, Miscellaneous Records, 1559-1945",
+        "dateRange": "1559-1945",
+        "personCount": 0
+      },
+      {
+        "id": "4155762",
+        "title": "Germany, Prussia, Catholic and Lutheran Church Records, 1580-1974",
+        "dateRange": "1580-1974",
+        "personCount": 1982159
+      },
+      {
+        "id": "1998528",
+        "title": "Germany, Prussia, East Prussia, Königsberg, Index to Funeral Sermons and Memorials, 1700-1900",
+        "dateRange": "1700-1900",
+        "personCount": 0
+      },
+      {
+        "id": "1874205",
+        "title": "Germany, Prussia, Pomerania Church Records, 1544-1945",
+        "dateRange": "1543-1945",
+        "personCount": 623059
+      },
+      {
+        "id": "3665083",
+        "title": "Germany, Prussia, Pomerania, Catholic and Lutheran Church Records, 1544-1966",
+        "dateRange": "1543-1966",
+        "personCount": 5441423
+      },
+      {
+        "id": "1475887",
+        "title": "Germany, Prussia, Pomerania, Stralsund, Church Book Indexes, 1600-1900",
+        "dateRange": "1600-1900",
+        "personCount": 0
+      },
+      {
+        "id": "4116415",
+        "title": "Germany, Prussia, Posen, Catholic and Lutheran Church Records, 1430-1998",
+        "dateRange": "1430-1998",
+        "personCount": 14509790
+      },
+      {
+        "id": "2780641",
+        "title": "Germany, Prussia, Saxony, Census Lists, 1585-1935",
+        "dateRange": "1585-1935",
+        "personCount": 1063009
+      },
+      {
+        "id": "2058582",
+        "title": "Germany, Prussia, Saxony, Halle, Miscellaneous City Records, 1401-1926",
+        "dateRange": "1401-1926",
+        "personCount": 0
+      },
+      {
+        "id": "2043435",
+        "title": "Germany, Prussia, Saxony, Nordhausen, City Directories, 1824-1919",
+        "dateRange": "1824-1919",
+        "personCount": 0
+      },
+      {
+        "id": "2068323",
+        "title": "Germany, Prussia, Saxony, Various Protestant Church Records, 1594-1951",
+        "dateRange": "1594-1951",
+        "personCount": 0
+      },
+      {
+        "id": "4110912",
+        "title": "Germany, Prussia, Silesia, Catholic and Lutheran Church Records, 1551-1992",
+        "dateRange": "1550-1992",
+        "personCount": 14435445
+      },
+      {
+        "id": "4111605",
+        "title": "Germany, Prussia, West Prussia, Catholic and Lutheran Church Records, 1537-1981",
+        "dateRange": "1536-1981",
+        "personCount": 25641120
+      },
+      {
+        "id": "1646446",
+        "title": "Germany, Prussia, Westphalia, Minden, Miscellaneous Collections from the Municipal Archives, 1574-1912",
+        "dateRange": "1573-1912",
+        "personCount": 127916
+      },
+      {
+        "id": "2790268",
+        "title": "Germany, Rhineland, Diocese of Trier, Catholic Church Records, 1543-1958",
+        "dateRange": "1543-1958",
+        "personCount": 8529067
+      },
+      {
+        "id": "1475962",
+        "title": "Germany, Rhineland-Palatinate Church Record Extractions and Family Registers, 1600-1925",
+        "dateRange": "1600-1925",
+        "personCount": 0
+      },
+      {
+        "id": "4127803",
+        "title": "Germany, Rhineland-Palatinate, Diocese of Mainz, Catholic Church Records, 1540-1968",
+        "dateRange": "1539-1968",
+        "personCount": 6084859
+      },
+      {
+        "id": "2060205",
+        "title": "Germany, Sachsen-Weimar-Eisenach, Jena, City Directories, 1810-1935",
+        "dateRange": "1810-1935",
+        "personCount": 0
+      },
+      {
+        "id": "1952867",
+        "title": "Germany, Saxony, Bautzen, Church Records, 1699-1915",
+        "dateRange": "1699-1915",
+        "personCount": 0
+      },
+      {
+        "id": "1967764",
+        "title": "Germany, Saxony, Bautzen, Citizen Rolls, 1496-1923",
+        "dateRange": "1496-1923",
+        "personCount": 0
+      },
+      {
+        "id": "2399108",
+        "title": "Germany, Saxony, Church Book Indexes, 1500-1900",
+        "dateRange": "1499-1900",
+        "personCount": 698900
+      },
+      {
+        "id": "4127804",
+        "title": "Germany, Saxony, Diocese of Dresden-Meissen, Catholic Church Records, 1621-1976",
+        "dateRange": "1621-1976",
+        "personCount": 634553
+      },
+      {
+        "id": "1951790",
+        "title": "Germany, Saxony, Dresden, Citizens' Documents and Business Licenses, 1820-1962",
+        "dateRange": "1820-1962",
+        "personCount": 0
+      },
+      {
+        "id": "2040001",
+        "title": "Germany, Saxony, Leipzig, Miscellaneous City Records, 1701-1922",
+        "dateRange": "1701-1922",
+        "personCount": 0
+      },
+      {
+        "id": "1968529",
+        "title": "Germany, Saxony, Meissen, Miscellaneous City Records, 1724-1889",
+        "dateRange": "1724-1889",
+        "personCount": 0
+      },
+      {
+        "id": "4130003",
+        "title": "Germany, Saxony-Anhalt, Diocese of Magdeburg, Catholic Church Records, 1608-1945",
+        "dateRange": "1608-1945",
+        "personCount": 775786
+      },
+      {
+        "id": "2455254",
+        "title": "Germany, Saxony-Anhalt, Halberstadt Kreisarchiv, Ahnenpäße (Ancestor Passports)",
+        "dateRange": "1834-1898",
+        "personCount": 0
+      },
+      {
+        "id": "2455253",
+        "title": "Germany, Saxony-Anhalt, Halberstadt Kreisarchiv, City Directories, Citizen Rolls, Residence Lists, and School Directories, 1700-1933",
+        "dateRange": "1700-1933",
+        "personCount": 0
+      },
+      {
+        "id": "1952883",
+        "title": "Germany, Württemberg, Albstadt, Miscellaneous City Records, 1705-1850",
+        "dateRange": "1705-1850",
+        "personCount": 0
+      },
+      {
+        "id": "4132030",
+        "title": "Germany, Württemberg, Catholic and Lutheran Church Records, 1818-1915",
+        "dateRange": "1818-1915",
+        "personCount": 64917
+      },
+      {
+        "id": "3499252",
+        "title": "Germany, Württemberg, Diocese of Rottenburg-Stuttgart, Catholic Church Records, 1520-1975",
+        "dateRange": "1519-1975",
+        "personCount": 20627115
+      },
+      {
+        "id": "1475994",
+        "title": "Germany, Württemberg, Schwäbisch Hall, Probate Records, 1803-1929",
+        "dateRange": "1803-1929",
+        "personCount": 0
+      }
+    ]
+  }
+}

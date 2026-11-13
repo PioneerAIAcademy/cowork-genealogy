@@ -224,7 +224,8 @@ so the line is built here rather than in the agent.
   `archion` and `matricula` (the path through the site — parish → register
   type → volume → image — and, for Archion, that viewing needs a pass; §3.11).
 - **A browse site called without `baseUrl`** returns the site root with a note
-  asking for the parish page (§3.11).
+  leading through the site's own place search to the parish, or asking for the
+  parish page (§3.11).
 
 `access` classifies the target site's own barrier to entry — `"free"` (no
 barrier), `"free_bot_protected"` (free, but bot protection blocks an
@@ -481,8 +482,23 @@ sites**:
   of the form `/de/browse/?path=…`; the tool does not pattern-match any one
   of them.
 - Without `baseUrl`, the site root (`https://www.archion.de/de/`,
-  `https://data.matricula-online.eu/de/`) and a note asking for the parish
-  page.
+  `https://data.matricula-online.eu/de/`) and a note that starts from the
+  site's own place search, then confirms the jurisdiction, or else asks for
+  the parish page. Matricula: Suchen → Ortssuche (`/de/suchen/`), the town as
+  *Ort*, then confirm the diocese, which each parish result carries in its
+  path. Archion: the home page's *Ortsname eingeben…* box, then confirm the
+  parish from the archive / Dekanat / parish path under each register. Both
+  were measured live 2026-11-13, with no login: Matricula's search for
+  Ochtrup listed `muenster/ochtrup-st-lambertus`, and Archion's for
+  Baiersbronn listed 37 registers under *Dekanat Freudenstadt / Baiersbronn*.
+  The place-search step goes in this note and not in the standing browse-path
+  note, because the standing note rides every call. Put there, it would send a
+  researcher who already holds the parish page to search for it. The cause was an
+  alpha-feedback report of 2026-11-07. With only the old "open the parish page" note,
+  the agent filled the gap from memory with a diocese-first route through the
+  parish list ("choose the Diocese of Münster … Find Ochtrup in the parish
+  list"). The tester could not follow it, and found the Ochtrup register at
+  once with Matricula's place search.
 - A standing note carries the browse path, so the caller relays exactly what
   to open rather than bare directions — the shape two alpha-feedback reports
   of 2026-09-22 and 2026-09-23 showed (the agent named "Archion → Baiersbronn → Familienbücher →
@@ -676,7 +692,7 @@ nil.
 | A supplied attribute the target site doesn't read (e.g. `keywords` on `ancestry`) | succeeds; `notes` flags the attribute as unused |
 | Any relative-name field given with only given-name or only surname (e.g. `fatherGivenName` but no `fatherSurname`) | the joined value uses whichever half is present — not an error |
 | `archion`/`matricula` with `attributes: {}` | succeeds — a browse site appends nothing, so it is exempt from `no_attributes` (§3.11) |
-| `archion`/`matricula` with no `baseUrl` | succeeds with the site root; `notes` asks for the parish page |
+| `archion`/`matricula` with no `baseUrl` | succeeds with the site root; `notes` leads through the site's place search to the parish, or asks for the parish page |
 | MCP tool, `projectPath` is a project, and `baseUrl` names a collection (an Ancestry collection id, a MyHeritage collection page) that `external-collections.json` does not hold, compared by collection key (`ancestry:<id>`) | `{ ok: false, reason: "invalid_base_url" }`, and nothing is logged. The message offers both ways forward: omit `baseUrl` for a site-wide search, or use a stored url from `research_query({section: "external_collections"})`; with nothing stored, it names `external_links_search` first. A `baseUrl` that names no collection is not checked (§9.1) |
 | MCP tool, `projectPath` is a project, no `baseUrl` (or a blank one), and `standardPlace` missing, blank or not a string | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message says `standardPlace` is required and names `external_links_search` (§3.12) |
 | MCP tool, `projectPath` is a project, no `baseUrl`, and `external-collections.json` has no entry for `standardPlace` or a place containing it (or no file at all) | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message names `external_links_search({standardPlace, projectPath})` as the next call. A stored `rows: []` entry counts as looked up (§3.12) |
@@ -757,8 +773,9 @@ nil.
 - **Browse sites** — the Baiersbronn Archion parish page and a Baiersbronn
   viewer URL (`cHash` kept) come back unchanged with `access: "subscription"`
   and the browse-path note; a Matricula Catholic parish page comes back
-  unchanged with `access: "free"`; no `baseUrl` gives the site root and the
-  no-parish note; supplied attributes are noted unused; a `baseUrl` on the
+  unchanged with `access: "free"`; no `baseUrl` gives the site root and a
+  no-parish note naming the site's place search, which a parish `baseUrl`
+  never carries; supplied attributes are noted unused; a `baseUrl` on the
   other site's host (or ancestry.com) is `invalid_base_url`; a search site
   with `attributes: {}` is still `no_attributes`.
 - **The hand-off write** — with `projectPath`, exactly one `partial`

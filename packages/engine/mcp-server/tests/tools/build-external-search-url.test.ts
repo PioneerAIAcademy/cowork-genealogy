@@ -1969,16 +1969,31 @@ describe("build_external_search_url", () => {
       expect(r.notes.join(" ")).toMatch(/browse, not search/);
     });
 
-    it("with no baseUrl: the site root and a note asking for the parish page", () => {
-      for (const [site, root] of [
-        ["archion", "https://www.archion.de/de/"],
-        ["matricula", "https://data.matricula-online.eu/de/"],
+    it("with no baseUrl: the site root and a note leading through the site's place search", () => {
+      for (const [site, root, placeSearch] of [
+        ["archion", "https://www.archion.de/de/", /Ortsname eingeben/],
+        ["matricula", "https://data.matricula-online.eu/de/", /data\.matricula-online\.eu\/de\/suchen\/.*confirm the diocese/],
       ] as const) {
         const r = buildExternalSearchUrl({ site, attributes: {} });
         expect(r.ok, site).toBe(true);
         if (!r.ok) return;
         expect(r.url).toBe(root);
-        expect(r.notes.join(" ")).toMatch(/no parish URL supplied/);
+        const note = r.notes.find((n) => n.startsWith("no parish URL supplied"));
+        expect(note, site).toMatch(placeSearch);
+        expect(note, site).toMatch(/as baseUrl/);
+        expect(note, site).not.toMatch(/undefined/);
+      }
+    });
+
+    it("with a baseUrl: no place-search step, which would send the researcher to find a parish already in hand", () => {
+      for (const [site, baseUrl] of [
+        ["archion", BAIERSBRONN],
+        ["matricula", AICHA_VORM_WALD],
+      ] as const) {
+        const r = buildExternalSearchUrl({ site, baseUrl, attributes: {} });
+        expect(r.ok, site).toBe(true);
+        if (!r.ok) return;
+        expect(r.notes.join(" "), site).not.toMatch(/place search|no parish URL supplied/);
       }
     });
 
