@@ -305,8 +305,12 @@ export function candAsFact(cand: FactCandidate): SimplifiedFact {
 }
 
 /** Surname particles kept with the surname they precede (`St. Clair`, `Van Buren`),
- *  matched case-insensitively with any trailing period dropped. */
-const SURNAME_PARTICLES = new Set(["st", "ste", "saint", "mc", "mac", "van", "von", "de", "du", "le", "la", "fitz", "ten", "ter"]);
+ *  matched case-insensitively with any trailing period dropped. Each is a surname
+ *  part more often than a first name in book-to-tree's books (#4378, 2026-11-13). */
+const SURNAME_PARTICLES = new Set([
+  "st", "ste", "saint", "mc", "mac", "van", "von", "de", "du", "le", "la", "fitz", "ten", "ter",
+  "di", "op", "des", "del", "vander", "vande", "vanden", "ap", "ver", "zum", "dem", "san", "santa", "verch",
+]);
 
 /** Given/surname from a name assertion — its structured_value when present, else
  *  parsed from `value`: the surname is the last token plus every particle token

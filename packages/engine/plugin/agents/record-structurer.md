@@ -124,11 +124,13 @@ classifications are not yours to send.
     `also_known_as` name. A short form of the person's own given name
     (`Edward (Ted) Adams`) is a `nickname` name.
   - In a man's name a bracket is never a maiden name. Outside an obituary
-    survivor list it is a `nickname` name (`William (Bud) Nunn`).
+    survivor list a given name in it is a `nickname` name (`William (Bud) Nunn`).
   - `(Mrs)`, `(widow)`, `(adopted)` go in that name's `note`, never in the name.
   - A particle stays with the surname: `St`, `Ste`, `Saint`, `Mc`, `Mac`, `Van`,
-    `Von`, `De`, `Du`, `Le`, `La`, `Fitz`, `ten`, `ter` (`Robert St. Clair`:
-    surname `St. Clair`).
+    `Von`, `De`, `Di`, `Del`, `Des`, `Du`, `Le`, `La`, `Fitz`, `ten`, `ter`, `Op`,
+    `Vander`, `Vande`, `Vanden`, `Ver`, `Zum`, `dem`, `San`, `Santa`, `ap`,
+    `verch` (`Robert St. Clair`: surname `St. Clair`; `Hans von dem Busch`:
+    surname `von dem Busch`). `Ben`, `Al`, `Della`, `Don` are given names.
   - A bare `O` before a surname is a middle initial (`John O Hare`); `O'Hare` is
     a surname.
 - **`statedRelation` is the person's relation to the principal**, in the

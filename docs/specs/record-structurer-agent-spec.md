@@ -130,13 +130,21 @@ is §11.7's code.
   - A bracketed spelling of the word before it is an `also_known_as` name, a
     short form of the person's own given name a `nickname`. In a man's name a
     bracket is never a maiden name: in an obituary survivor list a woman's given
-    name there is his wife, and elsewhere it is a nickname.
+    name there is his wife, and elsewhere a given name in it is a nickname.
   - `(Mrs)`, `(widow)`, `(adopted)` are notes, never name parts; they were the
     commonest non-surname in an end bracket in book-to-tree's books.
-  - Surname particles (`St`, `Ste`, `Saint`, `Mc`, `Mac`, `Van`, `Von`, `De`,
-    `Du`, `Le`, `La`, `Fitz`, `ten`, `ter`) stay with the surname. Where a name
-    assertion has no structured value, `nameParts` applies the same rule to its
-    last-token split.
+  - Surname particles stay with the surname: `St`, `Ste`, `Saint`, `Mc`, `Mac`,
+    `Van`, `Von`, `De`, `Di`, `Del`, `Des`, `Du`, `Le`, `La`, `Fitz`, `ten`,
+    `ter`, `Op`, `Vander`, `Vande`, `Vanden`, `Ver`, `Zum`, `dem`, `San`,
+    `Santa`, `ap`, `verch`. book-to-tree's 2026-11-13 measurement on 120 books
+    keeps a word only when its books use it more often in a surname than as a
+    first name: `Vander` and `Vande` 25 of 25 sampled uses, `ap` 15 of 15, `Von` and
+    `Mac` 14 of 15, `Del` 10 of 15, the others measured in every sampled use;
+    `Ste`, `Saint` and `ter` were not measured. `Ben`, `Al`, `Della`, `Delle`, `Les`,
+    `El`, `Don`, `Mack`, `Dell` and `Delos` stay off (`Ben` 1 of 15, `Al` 0 of 9),
+    and no single letter is a particle. Where a name assertion has no structured
+    value, or one with both parts empty, `nameParts` applies the same rule to
+    its last-token split.
   - A bare `O` before a surname is a middle initial unless written `O'`: 64 of
     book-to-tree's 89 such names read as an initial and 6 as `O'`.
 - **Stated relationships only.** The agent emits a relationship only where the
