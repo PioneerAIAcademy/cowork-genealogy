@@ -28,6 +28,8 @@ import { CLAIM_KINDS } from "../validation/validator.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
 import { waitingPages, type WaitingPage } from "../utils/waiting-pages.js";
 import { projectLinks } from "../utils/project-links.js";
+import { connectorSignInUrl } from "../auth/config.js";
+import { connectorSession } from "../utils/session-check.js";
 import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
 
@@ -261,6 +263,9 @@ export type ProjectContextResult =
       uploads?: ProjectContextUpload[];
       /** The project's upload page, when uploads are on. */
       uploadUrl?: string;
+      /** The web tier's FamilySearch sign-in page, only for a connector caller
+       *  whose FamilySearch session has ended. */
+      signInUrl?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -441,6 +446,14 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   const exhausted = (await exhaustedGroupsWithPlanItems(input.projectPath, research)).map((row) => omitEmpty(row));
   const uploads = await projectUploads(input.projectPath);
   const links = await projectLinks(principal);
+  // A connector caller whose FamilySearch session has ended gets the link here
+  // too, so the next turn shows it even if an agent's summary dropped the tool
+  // error that first carried it (E3). Unknown is not ended: no link. With no
+  // link to give (no public URL, or any caller but a connector) FamilySearch is
+  // not asked at all.
+  const signInLink = connectorSignInUrl(principal);
+  const signInUrl =
+    signInLink !== undefined && (await connectorSession(principal)) === "ended" ? signInLink : undefined;
 
   // sectionCounts' null values (a section research_query would refuse) sit one
   // level down, so this leaves them alone.
@@ -474,6 +487,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     unregisteredDisagreementCount,
     uploads,
     ...links,
+    ...(signInUrl ? { signInUrl } : {}),
   }) as Extract<ProjectContextResult, { ok: true }>;
 }
 
@@ -602,7 +616,8 @@ export const projectContextSchema = {
     "a problem. uploads [{name, uploaded, hasText}] lists the files the " +
     "user uploaded, newest first; hasText says a text layer exists. uploadUrl, when present, " +
     "is the page where the user uploads a file; give it to the user when they want to add a " +
-    "document. Writes nothing.",
+    "document. signInUrl, when present, means the user's FamilySearch session has ended: " +
+    "give them that link to sign in again, then continue. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {

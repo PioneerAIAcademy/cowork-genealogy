@@ -82,19 +82,24 @@ export const OPENROUTER_API_KEY_MISSING_MESSAGE =
 // desktop's `login` tool exists for them: they sign in again on the web tier's
 // own page, and the connector itself stays connected.
 
-/** True for a request that came through the connector door. */
-export function isConnector(
-  principal: Principal,
-): principal is Extract<Principal, { kind: "bearer" }> {
+/** True for a request that came through the connector door. Not a type guard:
+ *  a worker's bearer is a bearer too, and must not be narrowed away by a false. */
+export function isConnector(principal: Principal): boolean {
   return principal.kind === "bearer" && principal.surface === "connector";
 }
 
+/** The web tier's public origin for a connector caller, without a trailing
+ *  slash, or undefined: for any other caller, and when the server was given
+ *  none (`WEB_PUBLIC_URL`, checked at start-up to be a plain http(s) URL). */
+function connectorWebOrigin(principal: Principal): string | undefined {
+  if (principal.kind !== "bearer" || principal.surface !== "connector") return undefined;
+  return principal.config.webPublicUrl?.trim().replace(/\/+$/, "") || undefined;
+}
+
 /** The web tier's FamilySearch sign-in page for a connector caller, or
- *  undefined: for any other caller, and when the server was given no public
- *  URL (`WEB_PUBLIC_URL`, checked at start-up to be a plain http(s) URL). */
+ *  undefined (`connectorWebOrigin`). */
 export function connectorSignInUrl(principal: Principal): string | undefined {
-  if (!isConnector(principal)) return undefined;
-  const base = principal.config.webPublicUrl?.trim().replace(/\/+$/, "");
+  const base = connectorWebOrigin(principal);
   return base ? `${base}/auth/familysearch/login` : undefined;
 }
 
@@ -133,9 +138,8 @@ export function connectorLoginMessage(principal: Principal): string {
 /** What `logout` answers a connector caller: signing out happens on the web
  *  tier, and it also ends this connector's connection. */
 export function connectorLogoutMessage(principal: Principal): string {
-  const base = isConnector(principal) ? principal.config.webPublicUrl?.trim().replace(/\/+$/, "") : undefined;
   return (
-    `Signing out happens at ${base ?? "the Genealogy Research site"}: tell the user to sign out there. ` +
+    `Signing out happens at ${connectorWebOrigin(principal) ?? "the Genealogy Research site"}: tell the user to sign out there. ` +
     "That also disconnects Claude from Genealogy Research until they reconnect."
   );
 }

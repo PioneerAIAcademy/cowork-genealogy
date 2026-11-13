@@ -1,5 +1,5 @@
 import { CLAIM_KINDS } from "../../src/validation/validator.js";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -14,7 +14,9 @@ import {
 import { readBuildInfo } from "../../src/utils/build-info.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
 import { getProjectStore, runWithProjectStore } from "../../src/store/project-store.js";
-import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
+import { LOCAL, bearerPrincipal, connectorPrincipal, type Principal } from "../../src/auth/principal.js";
+import { __resetSessionChecksForTests } from "../../src/utils/session-check.js";
+import { __resetUserLimitsForTests } from "../../src/utils/user-limits.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 describe("project_context", () => {
@@ -934,13 +936,17 @@ describe("project_context and project_create links", () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  async function contextUnder(store: ScopedFsStore | null, config: Record<string, unknown>) {
+  async function contextUnder(
+    store: ScopedFsStore | null,
+    config: Record<string, unknown>,
+    principal: Principal = bearerPrincipal("tok", config),
+  ) {
     const run = async () => {
       const s = getProjectStore();
       const path = store ? SCOPED_ANCHOR : root;
       await s.writeJson(path, "research.json", EMPTY_RESEARCH);
       await s.writeJson(path, "tree.gedcomx.json", EMPTY_TREE);
-      const r = await projectContext({ projectPath: path }, bearerPrincipal("tok", config));
+      const r = await projectContext({ projectPath: path }, principal);
       if (!r.ok) throw new Error(r.errors.join("; "));
       return r;
     };
@@ -976,5 +982,48 @@ describe("project_context and project_create links", () => {
     const r = await contextUnder(null, { webPublicUrl: "https://beta.example", uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);
     expect("uploadUrl" in r).toBe(false);
+  });
+
+  // Self-hosted beta E3: the next turn's first read shows the sign-in link even
+  // when an agent's summary dropped the tool error that first carried it.
+  describe("signInUrl, for a connector caller whose FamilySearch session has ended", () => {
+    const familySearch = vi.fn();
+    const LINK = "https://beta.example/auth/familysearch/login";
+    const connector = (config: Record<string, unknown> = { webPublicUrl: "https://beta.example/" }) =>
+      connectorPrincipal({ accessToken: "fs-token", userId: "u_1", config });
+    const read = (principal: Principal) => contextUnder(new ScopedFsStore(root, "p-42"), {}, principal);
+
+    beforeEach(() => {
+      familySearch.mockReset();
+      vi.stubGlobal("fetch", familySearch);
+      __resetSessionChecksForTests();
+      __resetUserLimitsForTests();
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("carries the link once FamilySearch answers 401", async () => {
+      familySearch.mockResolvedValue(new Response("{}", { status: 401 }));
+      expect((await read(connector())).signInUrl).toBe(LINK);
+    });
+
+    it("carries none while the session is accepted, or when the check learns nothing", async () => {
+      familySearch.mockResolvedValue(new Response("{}", { status: 200 }));
+      expect("signInUrl" in (await read(connector()))).toBe(false);
+      __resetSessionChecksForTests();
+      familySearch.mockResolvedValue(new Response("{}", { status: 503 }));
+      expect("signInUrl" in (await read(connector()))).toBe(false);
+      __resetSessionChecksForTests();
+      familySearch.mockRejectedValue(new Error("socket hang up"));
+      expect("signInUrl" in (await read(connector()))).toBe(false);
+    });
+
+    it("asks FamilySearch nothing when there is no link to give: the worker, or no public URL", async () => {
+      familySearch.mockResolvedValue(new Response("{}", { status: 401 }));
+      expect("signInUrl" in (await read(bearerPrincipal("worker-token", { webPublicUrl: "https://beta.example" })))).toBe(false);
+      expect("signInUrl" in (await read(connector({})))).toBe(false);
+      expect(familySearch).not.toHaveBeenCalled();
+    });
   });
 });

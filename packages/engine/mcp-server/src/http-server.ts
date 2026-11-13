@@ -593,8 +593,8 @@ export function toolNameOf(body: unknown): string {
  * transcribes memories five at a time -- so last-write-wins would let any
  * later 200 erase a 401 from partway through, and because those requests run
  * concurrently, which status survived would be a race rather than a fact.
- * `tests/utils/fs-fetch.test.ts` records that E3's session-end rule keys on
- * this value, so the refusal is the part worth keeping.
+ * This line is how an operator sees that a user's FamilySearch session has
+ * ended, so the refusal is the part worth keeping.
  */
 export function keptFamilySearchStatus(current: number | null, next: number): number {
   if (current === null) return next;

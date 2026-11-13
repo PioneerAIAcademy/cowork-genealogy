@@ -676,6 +676,23 @@ describe("tool server over Streamable HTTP", () => {
       const login = await client.callTool({ name: "login", arguments: {} });
       expect(textOf(login)).toContain("https://beta.example/auth/familysearch/login");
       expect(textOf(login)).not.toContain("Reconnect button");
+
+      // The next turn's first read carries the link too, so it survives an
+      // agent's summary that dropped the tool error.
+      const id = "proj_0a0b0c0d0e0f0a0b";
+      await seedProject(new ScopedFsStore(root, id, `/${id}`), `/${id}`, "Lapsed");
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: TEST_USER_ID });
+      const context = JSON.parse(
+        textOf(await client.callTool({ name: "project_context", arguments: { projectPath: `/${id}` } })),
+      );
+      expect(context.ok).toBe(true);
+      expect(context.signInUrl).toBe("https://beta.example/auth/familysearch/login");
+      const status = JSON.parse(textOf(await client.callTool({ name: "auth_status", arguments: {} })));
+      expect(status).toMatchObject({
+        loggedIn: false,
+        accountId: TEST_USER_ID,
+        signInUrl: "https://beta.example/auth/familysearch/login",
+      });
     } finally {
       linked.closeAllConnections();
       await new Promise<void>((resolve) => linked.close(() => resolve()));
@@ -1078,8 +1095,8 @@ describe("tool server over Streamable HTTP", () => {
 
     it("the audit line keeps the FIRST failing FamilySearch status, not the last", () => {
       // A tool makes many FamilySearch requests, concurrently, so last-write
-      // -wins makes the recorded status a race. E3's session-end rule keys on
-      // this value.
+      // -wins makes the recorded status a race. An operator reads this value to
+      // see that a session has ended.
       expect(keptFamilySearchStatus(null, 200)).toBe(200);
       expect(keptFamilySearchStatus(null, 401)).toBe(401);
       // The 401 survives every later success — this is the case that regressed.

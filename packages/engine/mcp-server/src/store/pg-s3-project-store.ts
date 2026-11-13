@@ -197,7 +197,8 @@ export async function authorizeAttempt(
  * same.
  *
  * `familysearch_tokens.expires_at` is DELIBERATELY not checked: the beta has no
- * refresh, so FamilySearch's own 401 is what ends a session (E3's hook), and an
+ * refresh, so FamilySearch's own 401 is what tells the user to sign in again (E3:
+ * a tool error carrying the link, and nothing ends the connector token), and an
  * expired token is a sign-in prompt either way. Checking it here would refuse at
  * the door with a different message for the same user-visible state.
  *
