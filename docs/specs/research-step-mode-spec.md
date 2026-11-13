@@ -86,7 +86,11 @@ entry says so.
     `eval/harness/e2e/orchestrator.py`), and that flag gives search-external-sites and
     search-hints `userPresent: no` in e2e. The orchestrator writes no delegation, so it
     cannot pass `userPresent: no` itself, and production routing is measured by the
-    single-ask panel (`make e2e-single-ask`), not e2e.
+    single-ask panel (`make e2e-single-ask`), not e2e. The ruling also rests on the routing
+    failures recorded from alpha feedback: all but one began from a single ask, not an
+    e2e-shaped question. The two other options lost: renaming the flag keeps it under
+    another name, and opening e2e on production routing would mix routing misses into
+    e2e's research-quality score and break comparisons across the corpus.
 23. **The `AskUserQuestion` decision carrier is kept.** Taken as "drop the carrier", then
     REVERSED by the lead on 2026-10-19: phase 0 measured that a `PreToolUse` deny does not
     end a turn on the alpha, and that `AskUserQuestion` waits in Cowork but does not end
@@ -505,6 +509,19 @@ router sentence: plan at most one extra round, then wrap up.
   awaiting verdicts is not "next" in `project_context`. The router dispatches it after the
   step's first search-group spawn, because a turn that search-hints opens admits no
   search.
+- **An agent's `Hand-back:` line is routed by step group** (lead-accepted
+  2026-11-09). Measured on the 7 step-mode e2e logs: of 12 same-group hand-backs from
+  `search-records`, 3 were spawned in the step, 3 only in a later step and 6 never; none was
+  offered in the reply.
+  - Same group as the returning agent (`search-external-sites`, `record-structurer`,
+    `search-full-text`, `search-images` after `search-records`): `step_boundary.GROUPS` admits
+    it, so it joins the step's fan-out in the same turn.
+  - Another group (`research-plan`, `research-exhaustiveness`, `person-evidence`):
+    `step_allowed` refuses the spawn mid-turn, so the report says what it asks for and leaves the next step to the
+    `project_context` ladder. Offering every hand-back as the next step
+    was rejected: it adds a turn the group rule does not require.
+  - Not a spawnable agent (`image-reader`, `extraction_append`, `image_transcribe`,
+    "to caller", "none"): ignored.
 
 ### E. One question per run
 

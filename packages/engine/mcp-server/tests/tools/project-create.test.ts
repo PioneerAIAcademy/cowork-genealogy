@@ -778,6 +778,18 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(asked).toEqual(["OLDX-001"]);
   });
 
+  it("asks readPerson for the whole read: relatives' sources are not switched off (#4384)", async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    const result: any = await runProjectCreate(
+      { projectPath: dir, objective: "x", personId: "OLDX-001" },
+      { readPerson: async (id, opts, principal) => { seen.push({ ...opts }); return reader(id, opts, principal); } },
+      LOCAL,
+    );
+    expect(result.ok).toBe(true);
+    expect(seen).toHaveLength(1);
+    expect(seen[0].relativeSources).not.toBe(false);
+  });
+
   it("refuses a subjectPersonIds entry that names neither a staged PID nor an addition", async () => {
     const ref = await stageFamily();
     const result: any = await create({ projectPath: dir, objective: "x", personId: ref, subjectPersonIds: ["I2"] });

@@ -1293,6 +1293,131 @@ response it serves, inside the node process it already runs, so a unit test sees
 exactly what production would send for the arguments the model actually used. No
 fixture carries a hand-written copy.
 
+### `census` — what the census table holds for a census search
+
+A census search is answered with a `census` block: each census of the year and
+place searched, its collection, and what its schedule recorded about household
+members. The search-records agent states what a schedule collected only from
+this block.
+
+**Measured basis.** The agent was told to read the jurisdiction's census wiki
+page before a census search (ADR-0012). On Haiku 5.5 at low effort it skipped the
+read in 8 of 117 unit runs, and in 4 to 13 of 39 across four prose variants;
+raising the effort and cutting the body did not stop it (2026-11-12). A fetch the
+model can skip is not a fetch, so the tool supplies the facts on the call the
+agent already makes. The same change removed the wiki page from the agent's
+prompt.
+
+Computed by `censusNote(input)` in `utils/census-note.ts` from the call's own
+arguments and `data/census-table.ts`. It reads no search result and is never
+staged.
+
+Fires when one of:
+
+- `collectionId` is a census collection in the table: that census, whatever else
+  the call carries.
+- `recordType` is `"census"`, with a year range (`residenceYearFrom`/`To`, else
+  `anyYearFrom`/`To`) and a place (`residencePlace`, else `anyPlace`, else
+  `recordSubdivision` + `recordCountry`).
+- No `recordType`, a single residence year, and a place: only when a census of
+  that year covers the place.
+
+The place is resolved before any census is matched (`resolveCensusPlace`):
+
+1. The most specific part the one-word list resolves, the engine's own place
+   standard, whose standard place agrees with every part written after it. A
+   later part agrees when it ends the words of one of that place's parents.
+   "Tbilisi, Georgia" is Tbilisi, Republic of Georgia; "Essex, New York" skips
+   Essex, which the list puts in England, and is New York, United States; bare
+   "Georgia" is the US state (lead ruling, 2026-10-26).
+2. Else a jurisdiction of the census table written without its country, for the
+   states the list leaves out or lists only for US records ("Androscoggin,
+   Maine", "Hill, Texas").
+3. Else the text as written. A bare town such as "Birmingham" resolves to nothing.
+
+The search's `recordCountry` is part of the place when the text does not name it,
+so "Kent" with `recordCountry: "United States"` is not Kent, England. A census
+matches when its area and the resolved place overlap, either inside the other:
+the whole-US 1900 census covers "Milwaukee, Wisconsin", and a search of "United
+States" in 1885 lists the state censuses taken that year.
+
+Replayed 2026-11-12 over every census-shaped search in the e2e runs, unit runs and
+tester sessions then on hand, the resolver added a block where there was none (US
+places written without the country after 1880, English and Welsh counties without
+the country) and changed no other answer.
+
+```json
+"census": {
+  "schedules": [
+    { "year": 1850, "census": "United States", "collectionId": "1401638",
+      "recorded": "names every person but has no relationship-to-head column: ..." }
+  ],
+  "note": "From this tool's census table, not from the search results: ..."
+}
+```
+
+- `schedules` — at most 8, earliest first. `recorded` is present only where the
+  table knows it: a heads-only schedule; the relationship-to-head column from
+  1880 for the US federal census and from 1851 for England and Wales and
+  Scotland (`US_RELATIONSHIP_COLUMN_FROM`, `BRITISH_RELATIONSHIP_COLUMN_FROM`,
+  which `research_log_append`'s pre-1880 gate also reads). Rows for other
+  jurisdictions carry no `recorded` yet.
+- `fragmentYears` — years searched whose census of the place survives only as
+  fragments.
+- With `recordType: "census"` and no census of the years searched, `schedules`
+  is empty and `indexedYears` lists the census years the table does hold for the
+  place. The table leaves out a census FamilySearch indexes only in part, so the
+  note says to run the search once before reporting the years as not on
+  FamilySearch. A place the table covers in no year gets no block.
+
+### `patronymicSearch` — a surname search that finds nobody where surnames are patronymic
+
+In Norway and Sweden the surname in a record is a patronymic that changes each
+generation, or a farm or emigrant name taken later. A person searched under the
+surname a tree holds can be indexed under one the caller cannot guess. On such a
+search that found nobody, the tool says to send it next with no `surname`: the
+same search keeping the given name, the place and the years, with the parents'
+given names added and `recordCountry` as the anchor.
+
+**Measured basis.** The agent body states the rule. On Haiku 5.5 at low effort
+`ut_search_records_021` failed 7 of 10 runs: the agent tried the parents' names
+but kept the farm surname on every search. With the note it passed 10 of 10
+(2026-11-12, `--runs-per-test 10`). The body keeps the paragraph (lead,
+2026-11-12: patronymic naming is general, not a country-and-collection rule).
+
+Computed by `patronymicSearchNote(input, out)` in `utils/search-advice.ts`.
+Fires when **all** of:
+
+- the search found nobody (`searchFoundNobody`);
+- `surname` was sent;
+- `recordCountry`, or the last segment of a place argument, is Norway or Sweden
+  (`PATRONYMIC_COUNTRIES`);
+- the surname is not a *-datter* / *-dotter* patronymic, which
+  `surnameVariantHints` answers with the forms to try in the same field, nor one
+  of those abbreviated forms ("Halsteinsdr", "Halsteinsd").
+
+```json
+"patronymicSearch": { "searched": "Moen", "note": "This search carried a surname and found nobody. ..." }
+```
+
+### `childrenSearch` — a parent search held to one collection or place
+
+A search that names a parent and no child, and carries a `collectionId`, a
+`batchNumber` or a place, is answered with a note to repeat it with none of
+those, anchored on `recordCountry`. A couple's children are indexed across
+collections and places, and the ones a held search does not return are the ones
+filed elsewhere. It fires whatever the search returned.
+
+Computed by `childrenSearchNote(input)` in `utils/search-advice.ts`.
+
+```json
+"childrenSearch": { "heldBy": ["collectionId"], "note": "This search names a parent and no child, ..." }
+```
+
+All three are advisory, serialized before `surnameVariantHints` and `results`,
+and never staged. The eval mock runs the compiled `searchAdvice`, so a unit run
+sees what production sends for the arguments the agent used.
+
 ### `relativeTerms` — whether the relative you anchored on is actually there
 
 A relative-name term is sent with `m.queryRequireDefault=on`, which FamilySearch
@@ -2073,6 +2198,19 @@ either and importing from the other would make the two mutually importing.
 - `searchFoundNobody(out)` — the did-not-identify-the-subject test, shared with
   `jurisdictionHints` in `record-search.ts`.
 - `SURNAME_FIELDS`, `PATRONYMIC_ABBREVIATIONS`, `SURNAME_VARIANT_HINTS_NOTE`.
+
+### `packages/engine/mcp-server/src/utils/search-advice.ts`
+
+- `searchAdvice(input, out)` — everything `record_search` adds to say how to
+  search next, keyed `patronymicSearch`, `childrenSearch`, `census`
+  (`SEARCH_ADVICE_KEYS`, the serialization order). The eval mock runs it out of
+  the compiled build.
+- `patronymicSearchNote(input, out)`, `childrenSearchNote(input)`.
+
+### `packages/engine/mcp-server/src/utils/census-note.ts`
+
+- `censusNote(input)` — the `census` block, from the arguments and
+  `data/census-table.ts`.
 
 ### `packages/engine/mcp-server/src/index.ts`
 

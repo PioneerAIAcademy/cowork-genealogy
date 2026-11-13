@@ -1,5 +1,6 @@
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { formatYearRange } from "../utils/search-helpers.js";
@@ -153,6 +154,11 @@ export async function fetchAllCollections(
     COLLECTIONS_TIMEOUT_MS,
   );
 
+  // A rejected token is a sign-in problem, and says so in the caller's own
+  // words (the desktop's login tool, the worker's button, the connector's link).
+  if (response.status === 401) {
+    throw new Error(await rejectedTokenMessage(principal));
+  }
   if (!response.ok) {
     throw new Error(
       `FamilySearch collections API error: ${response.status} ${response.statusText}`

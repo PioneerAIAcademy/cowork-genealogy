@@ -26,6 +26,8 @@ from test_research import (  # noqa: E402
 
 KEEP_GOING = {"tags": ["routing", "delegates-user-present-no"]}
 WRAP_UP = {"tags": ["routing", "delegates-wrap-up"]}
+EXTERNAL = {"tags": ["routing", "delegates-user-present-no-external"]}
+HINTS = {"tags": ["routing", "delegates-user-present-no-hints"]}
 
 
 def _spawn(callee: str, prompt: str) -> dict:
@@ -122,3 +124,22 @@ def test_an_untagged_test_is_skipped():
     with pytest.raises(BaseException) as excinfo:
         validator({"tags": ["routing"]}, [])
     assert excinfo.typename == "Skipped"
+
+
+# --- autonomous runs: search-external-sites and search-hints get `userPresent: no`
+
+@pytest.mark.parametrize("test,callee", [(EXTERNAL, "search-external-sites"), (HINTS, "search-hints")])
+def test_autonomous_user_present_no_passes(test, callee):
+    validator(test, [_spawn(callee, "planItemId: pli_001\nplanId: pl_001\nuserPresent: no")])
+
+
+@pytest.mark.parametrize("test,callee", [(EXTERNAL, "search-external-sites"), (HINTS, "search-hints")])
+@pytest.mark.parametrize("line", ["", "userPresent: yes"])
+def test_autonomous_user_present_missing_or_yes_fails(test, callee, line):
+    msg = _expect_fail(test, [_spawn(callee, f"planItemId: pli_001\nplanId: pl_001\n{line}")])
+    assert f"'{callee}' spawn lacks userPresent" in msg
+
+
+@pytest.mark.parametrize("test", [EXTERNAL, HINTS])
+def test_autonomous_user_present_without_the_spawn_fails(test):
+    assert "no spawn" in _expect_fail(test, [_spawn("search-records", "userPresent: no")])

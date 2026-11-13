@@ -442,6 +442,32 @@ def test_ending_fails_completed_when_skipped_is_forced():
         check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "completed"), _ends("skipped"))
 
 
+def test_ending_passes_a_sign_in_message_leaving_the_item_untouched():
+    check_ending(_item_state([], "planned"), _item_state([], "planned"), _ends("untouched"))
+
+
+def test_ending_fails_a_sign_in_message_recorded_as_inaccessible():
+    after = _item_state([], "skipped", skip_category="inaccessible", skip_reason="not logged in")
+    with pytest.raises(AssertionError, match="leaves the hints item pli_007 as it was"):
+        check_ending(_item_state([], "planned"), after, _ends("untouched"))
+
+
+def test_ending_fails_a_sign_in_message_that_adds_a_field_but_keeps_the_status():
+    after = _item_state([], "planned", skip_reason="not logged in")
+    with pytest.raises(AssertionError, match="leaves the hints item pli_007 as it was"):
+        check_ending(_item_state([], "planned"), after, _ends("untouched"))
+
+
+def test_ending_fails_a_sign_in_message_logged_against_the_item():
+    with pytest.raises(AssertionError, match="logs nothing against the hints item"):
+        check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "planned"), _ends("untouched"))
+
+
+def test_ending_fails_untouched_with_no_starting_item_to_compare():
+    with pytest.raises(AssertionError, match="not in the starting plans"):
+        check_ending(_state([]), _item_state([], "planned"), _ends("untouched"))
+
+
 def test_ending_fails_a_test_with_no_plan_item_handed_over():
     with pytest.raises(AssertionError, match="must hand over a planItemId"):
         check_ending(_item_state([], "planned"), _item_state([], "in_progress"), {**_ends("in_progress"), "delegation": "x"})

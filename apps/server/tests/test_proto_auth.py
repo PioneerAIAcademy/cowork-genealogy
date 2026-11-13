@@ -686,7 +686,7 @@ def _imports_app_package(source: str) -> list[str]:
     return hits
 
 
-@pytest.mark.parametrize("name", ["auth.py", "app.py", "spa.py"])
+@pytest.mark.parametrize("name", ["auth.py", "app.py", "spa.py", "connector_auth.py"])
 def test_web_tier_does_not_import_app_package(name):
     """The web image does not carry apps/server/app, so an import passes every test (the
     suite has the whole tree on the path) and fails only in the container."""

@@ -70,15 +70,41 @@
 // entry's role must also be one the record gives that persona, which refuses an
 // entry whose persona and role disagree. The caller passes no persona for an id
 // the record gives to several roles, since such an id names no single party,
-// nor for an assertion that names a second person, whose link may be about that
-// other party.
+// nor for an assertion that names a second person, unless the record's one-party
+// facts linked to the same tree person all belong to that persona, which says the
+// link is about the persona rather than the other party it names.
+//
+// A record whose assertions carry no persona id at all (a researcher's capture)
+// has nothing to fetch, so `same_person` scores the projection, which groups such
+// a record's parties by `record_role` and files `record_persona_id: null`. There
+// the party is the role: a projected, persona-less score answers for every fact
+// of that role. The caller offers that party only for an assertion that reads as
+// projected (`readsAsFetched`), since a fetched score files the record's own
+// persona id, which no persona-less key can match.
 //
 // Spec: docs/specs/same-person-tool-spec.md ("The recorded score").
 
 import { createHash } from "node:crypto";
 import { getProjectStore } from "../store/project-store.js";
 import { toArk } from "./ark.js";
+import { PERSONA_BEARING_PRODUCERS } from "./results-staging.js";
 import type { MatcherBackend } from "../types/matcher.js";
+
+/** Whether `same_person` would read `assertion`'s record side from a fetch
+ *  (`record_source: "record_read"`) rather than project it from the documents:
+ *  it carries a persona id, or its log entry is a `record_read`, a
+ *  `person_record_matches`, or a persona-bearing search with a retained sidecar.
+ *  On the production path the fetch's outcome overrides this. */
+export function readsAsFetched(assertion: any, log: unknown): boolean {
+  const entries: any[] = Array.isArray(log) ? log : [];
+  const logEntry = entries.find((l) => l?.id === assertion?.log_entry_id);
+  return (
+    Boolean(assertion?.record_persona_id) ||
+    logEntry?.tool === "record_read" ||
+    logEntry?.tool === "person_record_matches" ||
+    (logEntry !== undefined && PERSONA_BEARING_PRODUCERS.has(logEntry.tool) && Boolean(logEntry.results_ref))
+  );
+}
 
 /** The dot-directory attestations live in, relative to the project root. */
 export const SCORES_SUBDIR = "results/.scores";
@@ -112,9 +138,10 @@ export interface RecordedMatchScore {
   party_resolved?: true;
 }
 
-/** The persona an assertion is about, and the roles its record gives it. */
+/** The party an assertion is about, and the roles its record gives it. A null
+ *  `personaId` is the party of `roles` on a record that names no persona. */
 export interface ScoredPersona {
-  personaId: string;
+  personaId: string | null;
   roles: ReadonlySet<string>;
 }
 
@@ -190,7 +217,8 @@ export async function readMatchScores(
 /**
  * The recorded score for one pairing: an exact lookup on
  * `(assertion_id, tree_person_id)`, then, when `persona` is given, a score that
- * compared that persona with that tree person (THE PERSONA ARM, header).
+ * compared that persona with that tree person (THE PERSONA ARM, header). A null
+ * persona id matches only a projected score that filed none, for the same role.
  *
  * The persona-id/role arms this used to carry could not see a score written by
  * the fetched route, and the tree-person-only arm that covered for them
@@ -215,7 +243,8 @@ export function findRecordedScore(
   for (const s of Object.values(file.scores)) {
     if (
       s?.party_resolved === true &&
-      s.record_persona_id === persona.personaId &&
+      (s.record_persona_id ?? null) === persona.personaId &&
+      (persona.personaId !== null || s.record_source === "projection") &&
       s.tree_person_id === treePersonId &&
       typeof s.record_role === "string" &&
       persona.roles.has(s.record_role)

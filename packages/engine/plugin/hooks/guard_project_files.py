@@ -191,9 +191,8 @@ AGENT_ONLY_TOOLS = {
         "tree-edit",
     ),
     "project_create": ("init-project",),
-    "rank_search_matches": ("search-records",),
     "record_search": ("search-records", "survey-surname"),
-    "same_person": ("person-evidence", "search-records"),
+    "same_person": ("person-evidence",),
     "tree_correct": ("proof-conclusion", "tree-edit"),
     "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
     "tree_gaps": ("tree-survey",),
@@ -209,7 +208,6 @@ AGENT_ONLY_TOOLS = {
         "research-exhaustiveness",
         "research-plan",
         "search-full-text",
-        "search-records",
         "timeline",
     ),
     "wiki_search": (
@@ -218,7 +216,6 @@ AGENT_ONLY_TOOLS = {
         "locality-guide",
         "search-familysearch-wiki",
         "search-full-text",
-        "search-records",
     ),
     "wikipedia_search": ("historical-context", "locality-guide", "search-wikipedia"),
 }

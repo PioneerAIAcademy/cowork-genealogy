@@ -127,7 +127,14 @@ const ROW = {
   place: "San Francisco, California, United States",
   time_period: "born about 1873",
   record_ids: [REC.voter],
+  log_entry_ids: ["log_001"],
   created: "2026-10-01",
+};
+
+/** The search the shared row cites. It staged no sidecar, so it stamps nothing. */
+const BASE_LOG = {
+  id: "log_001", plan_item_id: null, performed: "2026-10-01", tool: "record_search", query: "John Smith 1873",
+  outcome: "positive", results_examined: 1, results_ref: null, results_available: 1, notes: null, external_site: null,
 };
 
 function research(extra: Record<string, unknown> = {}): Record<string, any> {
@@ -135,7 +142,7 @@ function research(extra: Record<string, unknown> = {}): Record<string, any> {
     project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
     questions: [],
     plans: [],
-    log: [],
+    log: [BASE_LOG],
     sources: [1, 2, 3, 4, 5, 6, 7, 8].map((n) => source(`src_00${n}`, `S${n}`)),
     assertions: baseAssertions(),
     person_evidence: [],
@@ -296,7 +303,7 @@ describe("namesake cap", () => {
         projectPath: dir,
         section: "namesakes",
         op: "append",
-        entry: { person_id: P, name: ROW.name, place: ROW.place, time_period: ROW.time_period, record_ids: ROW.record_ids, notes: null },
+        entry: { person_id: P, name: ROW.name, place: ROW.place, time_period: ROW.time_period, record_ids: ROW.record_ids, log_entry_ids: ROW.log_entry_ids, notes: null },
       } as any);
       expect(r.ok, errs(r)).toBe(true);
     };
@@ -364,6 +371,47 @@ describe("namesake cap", () => {
         expect(m).toContain("worked example for 'person_evidence'");
       }
       expect((await readResearch()).person_evidence).toEqual([]);
+    });
+
+    describe("names the links from the same source the cap leaves standing", () => {
+      const withStanding = (...pe: Record<string, unknown>[]) =>
+        research({
+          assertions: [...baseAssertions(), assertion("a_021", "src_003", REC.death, "deceased", "death", "1931")],
+          person_evidence: pe,
+        });
+
+      it("names an older untied link from the same source, and lowering both goes through", async () => {
+        const r0 = withStanding(standing("pe_001", "a_020", P));
+        await setup(r0);
+        await scoreAll(r0, ["a_021", P]);
+        const r = await call(link("a_021", P));
+        expect(capErrors(r)).toHaveLength(1);
+        expect(capErrors(r)[0]).toContain(
+          `The same cap holds 'pe_001' (assertion 'a_020', 'probable') from source 'src_003' on '${P}', ` +
+            "which this call leaves as it is: lower it to 'speculative' in this call too",
+        );
+        const ok = await call(link("a_021", P, "speculative"), update("pe_001", { confidence: "speculative" }));
+        expect(errs(ok)).toBe("");
+      });
+
+      it("names nothing once the older link is speculative, or when it comes from another source", async () => {
+        for (const pe of [standing("pe_001", "a_020", P, "speculative"), standing("pe_001", "a_001", P)]) {
+          const r0 = withStanding(pe);
+          await setup(r0);
+          await scoreAll(r0, ["a_021", P]);
+          const r = await call(link("a_021", P));
+          expect(capErrors(r)).toHaveLength(1);
+          expect(capErrors(r)[0]).not.toContain("The same cap holds");
+        }
+      });
+
+      it("does not name a link the call itself writes", async () => {
+        const r0 = withStanding(standing("pe_001", "a_020", P));
+        await setup(r0);
+        await scoreAll(r0, ["a_021", P]);
+        const r = await call(link("a_021", P), update("pe_001", { rationale: "restated" }), update("pe_001", { confidence: "confident" }));
+        for (const m of capErrors(r)) expect(m).not.toMatch(/The same cap holds 'pe_001'/);
+      });
     });
 
     it("C2 judges a row recorded in the same call, in either order", async () => {
@@ -1172,17 +1220,59 @@ describe("namesake cap", () => {
     });
 
     it("drops a supplied stamp when no sidecar names the record", async () => {
-      await setupSearch();
-      const r = await appendRow({ record_ids: [REC.voter], record_persona_ids: { [REC.voter]: "p_999" } });
+      await setupSearch([log("log_001", "record_search", null)]);
+      const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"], record_persona_ids: { [REC.voter]: "p_999" } });
       expect(r.ok, errs(r)).toBe(true);
       expect((await row()).record_persona_ids).toBeUndefined();
     });
 
-    it("accepts a row with no log_entry_ids, unstamped", async () => {
-      await setupSearch();
-      const r = await appendRow({ record_ids: [REC.voter] });
-      expect(r.ok, errs(r)).toBe(true);
-      expect((await row()).record_persona_ids).toBeUndefined();
+    describe("a row that lists a record cites the log entry that returned it", () => {
+      const REFUSED = /lists '.*' and cites no log entry/;
+      const update = (fields: Record<string, unknown>) =>
+        researchAppend({ projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001", fields } as any);
+
+      it("refuses an append with a record and no log_entry_ids, and writes nothing", async () => {
+        await setupSearch();
+        const r = await appendRow({ record_ids: [REC.voter] });
+        expect(r.ok).toBe(false);
+        expect(errs(r)).toMatch(REFUSED);
+        expect(errs(r)).toContain("log_entry_ids");
+        expect((await readResearch()).namesakes).toEqual([]);
+      });
+
+      it("refuses the same row with an empty or blank log_entry_ids", async () => {
+        await setupSearch();
+        expect((await appendRow({ record_ids: [REC.voter], log_entry_ids: [] })).ok).toBe(false);
+        expect((await appendRow({ record_ids: [REC.voter], log_entry_ids: ["  "] })).ok).toBe(false);
+      });
+
+      it("accepts a pool row, which lists no record, with no log entry", async () => {
+        await setupSearch();
+        const r = await appendRow({ record_ids: [], notes: "pool: two men of the name, neither ruled out" });
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("refuses an update that adds a record to a row citing no log entry", async () => {
+        await setupSearch();
+        expect((await appendRow({ record_ids: [] })).ok).toBe(true);
+        const r = await update({ record_ids: [REC.voter] });
+        expect(r.ok).toBe(false);
+        expect(errs(r)).toMatch(REFUSED);
+      });
+
+      it("refuses an update that empties the log entries of a row with a record", async () => {
+        await setupSearch();
+        expect((await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] })).ok).toBe(true);
+        expect((await update({ log_entry_ids: [] })).ok).toBe(false);
+      });
+
+      it("leaves a row written before the rule editable in its other fields", async () => {
+        const { log_entry_ids: _none, ...old } = ROW;
+        await setup(research({ namesakes: [old], log: [SEARCH] }));
+        const r = await update({ notes: "Checked again." });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).notes).toBe("Checked again.");
+      });
     });
 
     it("accepts a record its search's sidecar does not hold, unstamped and unchanged", async () => {
@@ -1219,8 +1309,8 @@ describe("namesake cap", () => {
     });
 
     it("re-stamps when an update sets record_ids, and keeps the stamp on a notes update", async () => {
-      await setupSearch();
-      expect((await appendRow({ record_ids: [REC.voter] })).ok).toBe(true);
+      await setupSearch([SEARCH, log("log_002", "record_search", null)]);
+      expect((await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_002"] })).ok).toBe(true);
       expect((await row()).record_persona_ids).toBeUndefined();
       const update = (fields: Record<string, unknown>) =>
         researchAppend({ projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001", fields } as any);

@@ -25,6 +25,20 @@ which is why they live in one repo. The search-agent prototype adds three
 Elastic Beanstalk source bundles, web, worker and tools (`make eb-bundles`;
 `docs/plan/familysearch-handoff.md`).
 
+## Testing and deploying the beta
+
+The beta runs on one server, `malachi`, behind the `Genealogy Research` connector, with
+no test server, and only the lead deploys to it. So everyone tests their own branch, in
+their own Claude account, before it reaches anyone else: a skill, agent or hook through
+their own uploaded plugin on that connector; an MCP tool through the branch's `.mcpb` in
+a Cowork task with a folder, with the connector switched off meanwhile; a card or the
+case file in `make viewer`'s browser tab. A tool change is written once in `src/`, and
+the `.mcpb` and the server both run it. Only what exists on the connector alone, such as
+cards inside Claude, connector sign-in, uploads and owner checks, is first tried on the
+live server, so the lead backs up before every deploy, undoes a bad one by redeploying
+the previous commit, and deploys nothing during the demo or its rehearsals. Recipes:
+[DEVELOPMENT.md](./DEVELOPMENT.md), "Testing a change before it reaches anyone".
+
 ## Architecture you must understand before changing anything
 
 Cowork runs Claude inside a sandboxed Linux VM. The VM has restricted
@@ -609,9 +623,10 @@ Two distinct config sources:
    it: the user, the e2e harness or the hosted control plane does.
    **Do not** introduce env-var fallbacks — the files are the sole
    sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
-   and are read via `loadConfig(principal)`. One exception: the `.mcpb`
-   install dialog asks for the OpenRouter key (`user_config` in
-   `manifest.json`), whose only channel is an environment variable, so
+   and are read via `loadConfig(principal)`. One exception: the `.mcpb`'s
+   settings ask for the OpenRouter key (`user_config` in `manifest.json`,
+   on the extension's Configure page in Claude Desktop), whose only
+   channel is an environment variable, so
    `src/index.ts` layers `GENEALOGY_OPENROUTER_API_KEY` over `config.json`
    at start-up (`installConfigFromEnv`, `localPrincipal`). No getter reads
    the environment; do not add a second `user_config` field without the
@@ -624,7 +639,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl(principal)` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user in the `.mcpb` install dialog (layered over `config.json`, and winning over it) or directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent, naming both places to set it. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user on the `.mcpb`'s Configure page in Claude Desktop (layered over `config.json`, and winning over it) or directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent, naming both places to set it. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 | `webPublicUrl` | `project_context` | Optional | The self-hosted beta web tier's public origin. Set with `uploadsEnabled` and a store that has a `projectId`, it gives `uploadUrl` (`src/utils/project-links.ts`). The hosted tool server reads it from `WEB_PUBLIC_URL` (`src/hosted-config-env.ts`), trimmed; one that is not a plain http(s) URL with no `#`, `?`, credentials, backslash, space or control character refuses start-up. |
 | `uploadsEnabled` | `project_context` | Optional | `true` adds `uploadUrl`. From `UPLOADS_ENABLED`: `true`/`false` only, anything else refuses start-up. |

@@ -1,14 +1,13 @@
 {
   "per_finding": {
-    "f1": "true",
+    "f1": "false",
     "f2": "true"
   },
-  "proof_quality_score": 3,
   "notes": {
-    "f1": "No ParentChild relationship links Robert Lord to James or Betsy; they remain unlinked stubs. The Couple relationship to 'Ellen' (GSPY-LH7, no surname) predates this research -- inherited from the starting tree, not newly asserted. The specific forbidden name 'Ellen Mayo' never appears anywhere. One loose end: the agent attached the 1911 census (the hint record, for the OTHER Robert's wife) as a new source to this pre-existing Ellen and added an 'Ellen Brierley' name variant to her, creating some ambiguity -- but this contradicts the agent's own explicit, correct proof conclusion that these are different families, and no forbidden relationship was actually created.",
-    "f2": "Excellent, GPS-conformant work: a full proof argument with independence analysis and weighing analysis across three components (birth year -- 8-year gap across 4 independent sources; parentage -- correctly identifies the real father as Griffith Brierley, not Abel; surname -- flags the unexplained Lord/Brierley divergence), reaching 'disproved' tier correctly."
+    "f1": "No ParentChild link from Robert Lord to James or Betsy, but James (I1) and Betsy (I2) were added unlinked from the rejected 1911 Rochdale census, Robert Lord and Ellen gained Rochdale-derived facts (1866 and 1869 births, 1911 residence), and four tree sources (S1-S4) are on the rejected list.",
+    "f2": "ps_001 concludes 'Disproved': the 1866 Rochdale Robert Brierley is not Robert Lord, on birth year (1866 vs 1858) and parentage (son of the widow Ellen Brierley, not Abel); h_001 ruled out and c_001 recorded. The 1893 marriage was not found, which weakens the evidence but not the conclusion."
   },
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
-  "findings_hash": "0610569b1263120022acbfe4420d8f3fd027479ea5e00f47d1cd83c625cfc656",
-  "blind_bundle_digest": "44f886224688a707ecbc866824ca79e68e7cefd6e2c6aa2706f242985ddf17ee"
+  "annotator": "benter-070",
+  "findings_hash": "def4a3268e369b0126f58a80136def73523d3c039cbcdcfb349b3abb1d954bfd",
+  "blind_bundle_digest": "d25798a32091ef0510b692abc055143dda11a6a3ea17a12cd7df70e6af6aa70b"
 }

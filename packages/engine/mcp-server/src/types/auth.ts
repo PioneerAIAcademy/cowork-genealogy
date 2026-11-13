@@ -16,6 +16,10 @@ export interface AuthStatusResult {
   expiresAt?: string;
   expiresInMinutes?: number;
   hasRefreshToken?: boolean;
+  /** A connector caller's account id on the web tier (self-hosted beta E3). */
+  accountId?: string;
+  /** For a connector caller whose FamilySearch session has ended: where they sign in again. */
+  signInUrl?: string;
 }
 
 export interface FSTokenResponse {
