@@ -1,8 +1,7 @@
 # MCP App viewer: research cards and a case file inside Claude
 
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
-an answer (2026-11-08). The fold's skeleton is built and tested on the connector path, but
-no card has drawn through the door yet, so the fold is not done (see "The fold"). The
+an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). The
 demo scope is not built.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
@@ -744,9 +743,13 @@ The two tools and the page move onto the tool server, behind the door.
 
 **Built so far:** the skeleton this section describes, with `derived` holding only
 `folderName`. It passes the engine's tests on both store backends.
-**Not yet:** no card has drawn through the door. That still needs a seeded test project
-and sign-in (issue #3997). The rename to `Genealogy Research`, `derived` beyond
-`folderName` and the `recordSearch` part are not built.
+**Done when, met 2026-11-13** on the self-hosted server at this branch: a card drew in
+claude.ai chat and in Desktop Chat, signed in through `Genealogy Research` with FamilySearch,
+on a project created from a real person id; and a page `image_transcribe` saved loaded on
+the card through `/img?t=` from MinIO. Image reading needs a per-account key on the beta
+(`make malachi-openrouter`). `Genealogy Viewer` can retire.
+**Not yet:** the rename to `Genealogy Research`, `derived` beyond `folderName` and the
+`recordSearch` part are not built (M1 builds them on the next branch).
 
 - **Where:** `src/tools/project-view.ts` holds the tools, the page's resource and the
   connector's context. `src/` cannot import `viewer/`, so `viewer/` keeps its entry and
