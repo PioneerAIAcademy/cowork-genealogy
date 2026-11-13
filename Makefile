@@ -1778,8 +1778,8 @@ plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
 
 .PHONY: plugin-connector
-plugin-connector: ## Build the plugin's connector release into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name>
-	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)'
+plugin-connector: ## Build the one-install connector plugin (its .mcp.json names the tool server) into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp
+	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)' --server-url '$(SERVER_URL)'
 
 .PHONY: cowork-install
 cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)

@@ -245,7 +245,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 
 **G5 Capture wording (issue #3990).** Shipped in PR #4387. `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
 
-**G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, the no-`Agent` line the Surface decision sets, and connector wording for an empty or unavailable connector that does not point at a desktop extension (in sitting 1 a chat told the user to "update its desktop extension"). Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds, which must then write the `.mcp.json` naming `Genealogy Research` at the public `/mcp` URL (the one-install decision); `make plugin` and the harnesses get none.
+**G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, the no-`Agent` line the Surface decision sets, and connector wording for an empty or unavailable connector that does not point at a desktop extension (in sitting 1 a chat told the user to "update its desktop extension"). Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector VERSION= MARKETPLACE= SERVER_URL=https://<host>/mcp` builds. It writes the plugin's `.mcp.json`, naming `Genealogy Research` at that URL (the one-install decision); `make plugin` and the harnesses get none.
 
 **Issue #3836**, agents reading project files directly, is closed: the tools, the agents' reads and the hook's deny have shipped. Issue #4311 moved the last two reads to tools.
 
@@ -265,7 +265,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 
 **Done when:** stopping `tools` emails the lead, and yesterday's `ev=tool_call` lines survive a redeploy.
 
-**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before warming approvals, because a change to a tool's metadata means removing and re-adding the connector. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name>` builds `releases/genealogy-plugin-connector.zip`.
+**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before warming approvals, because a change to a tool's metadata means removing and re-adding the connector. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp` builds `releases/genealogy-plugin-connector.zip`.
 
 **D4 Onboarding page.**
 1. Install the plugin once from the Plugins page. It follows the Claude account.
