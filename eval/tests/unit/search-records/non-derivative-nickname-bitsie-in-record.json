@@ -13,7 +13,7 @@
       "informant-driven",
       "clorinda-review",
       "nickname-fallback",
-      "topical-fixture-required",
+      "census-search",
       "direct-arm"
     ]
   },
@@ -22,7 +22,6 @@
     "scenario": "mid-research-jackson-nickname"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-jackson-1900-mary-no-results",
     "record-search-jackson-1900-bitsie-record",
     "rank-search-matches-jackson-bitsie",
@@ -39,8 +38,7 @@
     "Should explicitly link the recovered record back to I1 in the response (via the inline ranking's match to subjectId I1), even though the record's `personName` differs from I1's preferred BirthName",
     "Tool Arguments: score 3 if both record_search queries (Mary → nil, Bitsie → hit) and the Bitsie search carried subjectId I1 so its pool was ranked inline. A validate_research_schema call with a project path after writing is acceptable if made — do not penalize it, and do not reward it. Only score 2 if the Bitsie record_search retry was skipped, had clearly wrong arguments, or omitted subjectId",
     "FOCUS GRADING NOTE for the judge: this test verifies the NICKNAME-FALLBACK behavior when the record-side carries the nickname. The general search-records hygiene dimension (Log quality) is covered by the existing positive tests and should NOT drag this test below pass purely on description-vs-actual-write or shape concerns — score those dimensions `pass` if the skill correctly executed the two queries, recovered the record via the nickname retry, and triaged it through the inline ranking. The differentiator for THIS test is the retry-on-empty-formal-search behavior driven by the tree's Nickname alias",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
   "judge_reads_files": true,
   "execution": {
