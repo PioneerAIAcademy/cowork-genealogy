@@ -1,6 +1,6 @@
 # flynn-research-complete-no-proof
 
-Patrick Flynn parentage research — all planned searches completed, exhaustive declaration in place, but no proof_summary has been written yet. Used by proof-conclusion tests that need the skill to write a new `proved`-tier proof from scratch.
+Patrick Flynn parentage research — all planned searches completed, exhaustive declaration in place, but no proof_summary has been written yet. Used by `ut_proof_conclusion_002`, which needs the skill to write a new `proved`-tier proof from scratch.
 
 Differs from `flynn-resolved` in these ways:
 
@@ -14,7 +14,7 @@ It also differs from `flynn-resolved` in these ways:
 - **The objective and `q_001` say Ireland, not Pennsylvania:** `project.objective` reads "born ca. 1845 in Ireland", and `q_001` reads "(b. ~1845, Ireland, d. 1908, Schuylkill County, PA)", consistent with the resolved birthplace conflict `c_001`. `q_001`'s rationale also names the father as the objective and the mother as a separate downstream question.
 - **The Bible's provenance:** `log_008` and `src_006` (both added here) state that the Bible descended from Patrick Flynn (d. 1908, Schuylkill County) to his daughter, Mrs James Brown (the wife of the death certificate's informant), and down her line to its present holder.
 - **`a_015` is `approximate`:** the Bible gives the birth year only.
-- **The plan and `h_001`:** `pl_002` gains item `pli_007` (the family Bible), and `h_001`'s `supporting_assertion_ids` add `a_014` and `a_015`.
+- **The plan and `h_001`:** `pl_002` gains item `pli_007` (the family Bible), and `h_001`'s `supporting_assertion_ids` add `a_014` and `a_015`, with its notes rewritten for the five-source, two-primary picture.
 
 These match `flynn-resolved`: `project.status` and every other `project` field except the objective; `q_001.search_stop`'s shape (the same five keys); log entries 1–6, including the negative probate `log_006`; conflict `c_001`; and the other questions, timelines and evaluations. The search_stop text references five sources, two of them with primary information on the relationship.
 
@@ -39,10 +39,10 @@ These match `flynn-resolved`: `project.status` and every other `project` field e
 
 ## Note on the probate negative result
 
-The negative probate (`log_006`) doesn't contradict the parentage conclusion. It does affect what "reasonably exhaustive" looks like: with no estate proceedings to consult, the conclusion rests on four other independent sources. The `search_stop.stop_criteria` reflects this explicitly.
+The negative probate (`log_006`) doesn't contradict the parentage conclusion. It does affect what "reasonably exhaustive" looks like: with no estate proceedings to consult, the conclusion rests on five other independent sources. The `search_stop.stop_criteria` reflects this explicitly.
 
 ## Note on the `proved` bar (resolved here)
 
-This scenario originally carried only **one** primary-information source on the relationship (the baptism), which a strict reading of the skill's own `proved = 2+ independent original sources with primary information` rule correctly tier-downs to `probable` — making the `proved` test flaky run-to-run. The **family Bible (`src_006`/`a_015`)** was added as the second independent primary-information source so the scenario genuinely meets the `proved` bar and the test is deterministic.
+This scenario originally carried only **one** primary-information source on the relationship (the baptism), which a strict reading of the skill's own `proved = 2+ independent original sources with primary information` rule correctly tier-downs to `probable`. The **family Bible (`src_006`/`a_015`)** is the second independent primary-information source. Its provenance — descended from Patrick Flynn (d. 1908, Schuylkill County) to his daughter, Mrs James Brown, and down her line — is what ties it to the Schuylkill County Patrick, and Mary Brennan, named as his mother in both, links it to the 1845 baptism. With the Bible alone and no stated provenance, the agent held the proof at `probable` in 2 of 3 runs. With the provenance, 002 was measured `proved` on its branch: 3 of 3 scratch runs, 1 further scratch run, and the full suite runs. That is a measured result, not a guarantee.
 
-**Still open for senior review:** `flynn-resolved` (the base scenario this was forked from) carries the same single-primary-source shape but is described as `proved`. If other tests depend on `flynn-resolved` being `proved`-eligible, they may need the same second-primary-source treatment.
+**Still open for senior review:** `flynn-resolved` (the base scenario this was forked from) has no primary-information source on the relationship at all (both census co-residence assertions are indeterminate, and the death certificate's is secondary) but is described as `proved`. If other tests depend on `flynn-resolved` being `proved`-eligible, they may need the same second-primary-source treatment.
