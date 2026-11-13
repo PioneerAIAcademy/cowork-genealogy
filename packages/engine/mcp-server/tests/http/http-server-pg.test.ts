@@ -857,7 +857,13 @@ if (!DSN || !ENDPOINT) {
           tree: null,
           startingTree: null,
           collections: null,
-          derived: { folderName: projectPath.slice(1) },
+          derived: {
+            folderName: projectPath.slice(1),
+            questions: [],
+            awaitingUser: [],
+            treeChanges: null,
+            evaluations: {},
+          },
           echo: args,
         });
         const read = await connCall(a.token, "read_project_view", { part: "document", projectPath });

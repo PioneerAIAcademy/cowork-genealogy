@@ -11,7 +11,7 @@ import {
   type HostKind
 } from './hosts/host'
 import { createCardLoader, INITIAL_LOAD, type LoadState } from './load'
-import { imageProbeRef, isImageLink, LINK_PROBE_URL, type ImageProbe, type LinkProbe, type SizeProbe } from './probes'
+import { McpAppResearchTransport } from './transport/McpAppResearchTransport'
 
 export const HOST_CONNECT_TIMEOUT_MS = 10_000
 
@@ -42,9 +42,12 @@ export interface SessionState {
   display: DisplayModeState
   contextChanges: ContextChange[]
   modeRequests: ModeRequest[]
-  sizeProbes: SizeProbe[]
-  imageProbe: ImageProbe | null
-  linkProbe: LinkProbe | null
+  /** The host's `containerDimensions` height limit: a fixed height, a maximum, or none. */
+  heightLimit: number | null
+  /** The search whose results the case file opens in its side panel. */
+  fileLogId: string | null
+  /** The newest document the case file has: the card's snapshot, then what opening the file read. */
+  fileDocument: ProjectDocument | null
 }
 
 export interface SessionDeps {
@@ -59,10 +62,12 @@ export interface Session {
   subscribe(listener: () => void): () => void
   start(): Promise<void>
   requestMode(mode: DisplayMode): Promise<void>
-  runSizeProbe(chars: number): Promise<void>
-  runImageProbe(): Promise<void>
-  runLinkProbe(): Promise<void>
-  imageSettled(outcome: { ok: boolean; width?: number; height?: number }): void
+  /** Opens the case file on today's documents, with `logId`'s results in its side panel. */
+  openFile(logId?: string): Promise<void>
+  /** The case file's data, one per mount. */
+  readonly transport: McpAppResearchTransport
+  /** Tells the model, in words, what the researcher has open. Posts nothing; silent where the host cannot. */
+  tellModel(text: string): void
 }
 
 /** Everything the page knows and does, with no React in it. */
@@ -82,11 +87,10 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     display: INITIAL_DISPLAY,
     contextChanges: [],
     modeRequests: [],
-    sizeProbes: [],
-    imageProbe: null,
-    linkProbe: null
+    heightLimit: null,
+    fileLogId: null,
+    fileDocument: null
   }
-  let nextProbeId = 1
   let fileOpenTried = false
 
   function update(patch: Partial<SessionState>): void {
@@ -108,16 +112,31 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     return document as ProjectDocument
   }
 
+  const transport = new McpAppResearchTransport({
+    read: (args) => host.call(READ_PROJECT_VIEW, { ...projectArgs(), ...args })
+  })
+
   const loader = createCardLoader({
     read: (projectPath) => readDocument(projectPath ? { projectPath } : {}),
     now,
-    onChange: (load) => update({ load })
+    onChange: (load) => {
+      const fresh = load.snapshot !== null && load.snapshot !== state.load.snapshot
+      update(fresh ? { load, fileDocument: load.snapshot } : { load })
+    }
   })
 
   const display = createDisplayMode({
     request: (mode) => host.requestDisplayMode(mode),
     onChange: (next) => update({ display: next })
   })
+
+  // A context change without `containerDimensions` leaves the limit as it was.
+  function applyHeightLimit(context: HostContext): void {
+    const dims = context.containerDimensions as { height?: number; maxHeight?: number } | undefined
+    if (!dims) return
+    const limit = typeof dims.height === 'number' ? dims.height : typeof dims.maxHeight === 'number' ? dims.maxHeight : null
+    update({ heightLimit: limit })
+  }
 
   async function askForMode(mode: DisplayMode, trigger: ModeRequest['trigger']): Promise<void> {
     const at = now()
@@ -130,20 +149,18 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     update({ modeRequests: [...state.modeRequests, { at, mode, trigger, outcome }] })
   }
 
-  // M0 asks whether a card opened by a typed request can go straight to the file.
+  // A card opened by a typed `show: file` goes straight to the file, on the loader's own read.
   function openFileIfAsked(): void {
     if (fileOpenTried || state.connection !== 'connected' || state.load.input?.show !== 'file') return
     fileOpenTried = true
+    const logId = state.load.input?.logId
+    update({ fileLogId: typeof logId === 'string' ? logId : null })
     if (fullscreenOffered(state.display)) {
       void askForMode('fullscreen', 'show: file')
     } else {
       const request: ModeRequest = { at: now(), mode: 'fullscreen', trigger: 'show: file', outcome: 'not offered' }
       update({ modeRequests: [...state.modeRequests, request] })
     }
-  }
-
-  function updateSizeProbe(id: number, patch: Partial<SizeProbe>): void {
-    update({ sizeProbes: state.sizeProbes.map((probe) => (probe.id === id ? { ...probe, ...patch } : probe)) })
   }
 
   return {
@@ -179,6 +196,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
               keys: Object.keys(change)
             }
             update({ contextChanges: [...state.contextChanges, entry] })
+            applyHeightLimit(change)
             display.apply(change)
             applyTheme(change)
           }
@@ -199,6 +217,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
         hostVersion: connection.version ?? null,
         capabilities: connection.capabilities ?? null
       })
+      applyHeightLimit(connection.context)
       display.apply(connection.context)
       applyTheme(connection.context)
       if (host.input) loader.load(host.input)
@@ -207,46 +226,22 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
 
     requestMode: (mode) => askForMode(mode, 'button'),
 
-    async runSizeProbe(chars) {
-      const id = nextProbeId++
-      update({ sizeProbes: [...state.sizeProbes, { id, chars, status: 'running' }] })
-      const startedAt = now()
+    async openFile(logId) {
+      update({ fileLogId: logId ?? null })
+      void askForMode('fullscreen', 'button')
       try {
-        const document = await readDocument({ ...projectArgs(), pad: chars })
-        const received = typeof document.pad === 'string' ? document.pad.length : 0
-        updateSizeProbe(id, { status: 'ok', ms: now() - startedAt, received })
-      } catch (err) {
-        const { message, code } = toToolCallError(err)
-        updateSizeProbe(id, { status: 'failed', ms: now() - startedAt, message, code })
+        const document = await readDocument(projectArgs())
+        update({ fileDocument: document })
+      } catch {
+        // The snapshot stays: an older file beats no file.
       }
     },
 
-    async runImageProbe() {
-      const ref = imageProbeRef(state.load.snapshot)
-      update({ imageProbe: { ref, status: 'asking' } })
-      try {
-        const link = await host.call(READ_PROJECT_VIEW, { ...projectArgs(), part: 'image', id: ref })
-        if (!isImageLink(link)) throw new ToolCallError('read_project_view returned no image link.', 'bad_response')
-        update({ imageProbe: { ref, status: 'showing', url: link.url, expiresAt: link.expiresAt } })
-      } catch (err) {
-        update({ imageProbe: { ref, status: 'refused', message: toToolCallError(err).message } })
-      }
-    },
+    transport,
 
-    async runLinkProbe() {
-      update({ linkProbe: { status: 'asking' } })
-      const startedAt = now()
-      try {
-        await host.openLink(LINK_PROBE_URL)
-        update({ linkProbe: { status: 'answered', ms: now() - startedAt } })
-      } catch (err) {
-        update({ linkProbe: { status: 'refused', ms: now() - startedAt, message: toToolCallError(err).message } })
-      }
-    },
-
-    imageSettled({ ok, width, height }) {
-      if (!state.imageProbe) return
-      update({ imageProbe: { ...state.imageProbe, status: ok ? 'loaded' : 'failed', width, height } })
+    tellModel(text) {
+      if (!host.tellModel || !state.capabilities?.updateModelContext) return
+      void host.tellModel(text).catch(() => {})
     }
   }
 }

@@ -6,7 +6,13 @@ import {
   callProjectView,
   connectorProjectView,
   connectorProjectViewSchemas,
+  deriveProject,
   MAX_META_BYTES,
+  PAGE_URI,
+  pageResourceRead,
+  pageUri,
+  pointAtPage,
+  requirePageUri,
   PROJECT_META_KEY,
   READ_PROJECT_VIEW,
   SHOW_PROJECT,
@@ -38,6 +44,12 @@ afterEach(async () => {
   await rm(base, { recursive: true, force: true });
 });
 
+/** `derived` for documents with no questions, log or evaluations; its content is
+ *  tested in derived.test.ts. */
+const bareDerived = (folderName: string, startingTree: unknown = null, tree: unknown = null) =>
+  deriveProject({ folderName, research: RESEARCH, tree, startingTree, evaluationBodies: {} });
+const wholeDerived = (folderName: string) => bareDerived(folderName, STARTING_TREE, TREE);
+
 const writeDocument = (name: string, doc: unknown) => writeFile(join(project, name), JSON.stringify(doc), "utf8");
 
 async function writeWholeProject(): Promise<void> {
@@ -62,7 +74,7 @@ describe("show_project", () => {
       tree: TREE,
       startingTree: STARTING_TREE,
       collections: COLLECTIONS,
-      derived: { folderName: FOLDER },
+      derived: wholeDerived(FOLDER),
       echo: args,
     });
   });
@@ -86,7 +98,7 @@ describe("show_project", () => {
         tree: null,
         startingTree: null,
         collections: null,
-        derived: { folderName: FOLDER },
+        derived: bareDerived(FOLDER),
         echo: args(),
       };
       const room = bytes - Buffer.byteLength(JSON.stringify(meta), "utf8");
@@ -104,7 +116,7 @@ describe("show_project", () => {
     it("carries only derived and echo one byte past it", async () => {
       await writeDocument("research.json", { note: noteOfMetaSize(MAX_META_BYTES + 1) });
       const result = await callProjectView(context, SHOW_PROJECT, args());
-      expect(metaOf(result)).toEqual({ derived: { folderName: FOLDER }, echo: args() });
+      expect(metaOf(result)).toEqual({ derived: bareDerived(FOLDER), echo: args() });
       expect(result.isError).toBeUndefined();
       expect(result.content).toHaveLength(1);
     });
@@ -146,7 +158,7 @@ describe("read_project_view", () => {
       tree: TREE,
       startingTree: STARTING_TREE,
       collections: COLLECTIONS,
-      derived: { folderName: FOLDER },
+      derived: wholeDerived(FOLDER),
     });
   });
 
@@ -160,6 +172,49 @@ describe("read_project_view", () => {
     const absent = await callProjectView(context, READ_PROJECT_VIEW, { ...args, id: "log_404" });
     expect(absent.isError).toBeUndefined();
     expect(absent.structuredContent).toEqual({ found: false });
+  });
+
+  describe("recordSearch: the record search whose kept results hold a record", () => {
+    const rowsOf = (...ids: string[]) => ({ tool: "record_search", payload: { results: ids.map((recordId) => ({ recordId })) } });
+    const seed = async () => {
+      await writeDocument("research.json", {
+        ...RESEARCH,
+        log: [
+          { id: "log_001", tool: "fulltext_search", results_ref: "results/log_001.json" },
+          { id: "log_002", tool: "record_search", results_ref: "results/log_002.json" },
+          { id: "log_003", tool: "record_search", results_ref: "results/log_003.json" },
+          { id: "log_004", tool: "record_search", results_ref: "results/log_004.json" },
+        ],
+      });
+      await mkdir(join(project, "results"));
+      await writeFile(join(project, "results", "log_001.json"), JSON.stringify(rowsOf("ark:/61903/1:1:AAAA-BBB")), "utf8");
+      await writeFile(join(project, "results", "log_002.json"), "{ not json", "utf8");
+      await writeFile(join(project, "results", "log_003.json"), JSON.stringify(rowsOf("ark:/61903/1:1:QPRC-WPBZ")), "utf8");
+      await writeFile(join(project, "results", "log_004.json"), JSON.stringify(rowsOf("ark:/61903/1:1:QPRC-WPBZ")), "utf8");
+    };
+    const find = (id: string) => callProjectView(context, READ_PROJECT_VIEW, { part: "recordSearch", id, projectPath: project });
+
+    it.each(["ark:/61903/1:1:QPRC-WPBZ", "QPRC-WPBZ", "https://www.familysearch.org/ark:/61903/1:1:QPRC-WPBZ?lang=en"])(
+      "finds the first record search holding %s, skipping a file it cannot read",
+      async (id) => {
+        await seed();
+        expect((await find(id)).structuredContent).toEqual({ found: true, logId: "log_003" });
+      },
+    );
+
+    it("a record no record search holds is an answer, not an error; a full-text hit does not count", async () => {
+      await seed();
+      for (const id of ["ark:/61903/1:1:ZZZZ-ZZZ", "AAAA-BBB"]) {
+        const result = await find(id);
+        expect(result.isError).toBeUndefined();
+        expect(result.structuredContent).toEqual({ found: false });
+      }
+    });
+
+    it.each(["", "log_001", "../research.json", "lowercase-id"])("refuses the id %j", async (id) => {
+      await seed();
+      await expect(find(id)).rejects.toThrow("With part recordSearch, id must be a record id");
+    });
   });
 
   it.each(["../.tree-before-forget.gedcomx", ".staging/x", "log_", "log_a/b", "research", "log_1\n", ""])(
@@ -228,7 +283,7 @@ describe("read_project_view", () => {
 
   it.each([
     ["no part", {}, /part must be one of/],
-    ["a bad part", { part: "recordSearch", id: "x" }, /part must be one of/],
+    ["a bad part", { part: "people", id: "x" }, /part must be one of/],
     ["an unknown argument", { part: "document", section: "x" }, /no argument section/],
   ])("refuses %s", async (_name, args, message) => {
     await writeDocument("research.json", RESEARCH);
@@ -283,5 +338,30 @@ describe("the probes stay on the thin server", () => {
     expect(JSON.stringify([shown, read])).not.toMatch(/canary/i);
     expect(metaOf(shown)).not.toHaveProperty("pad");
     expect(read.structuredContent).not.toHaveProperty("pad");
+  });
+});
+
+describe("the page's URI carries the page", () => {
+  it("is the plain URI with no page, and a hash of the page otherwise, changing with it", () => {
+    expect(pageUri(null)).toBe(PAGE_URI);
+    expect(pageUri("<p>one</p>")).toMatch(/^ui:\/\/genealogy\/viewer-[0-9a-f]{12}\.html$/);
+    expect(pageUri("<p>one</p>")).toBe(pageUri("<p>one</p>"));
+    expect(pageUri("<p>two</p>")).not.toBe(pageUri("<p>one</p>"));
+  });
+
+  it("points show_project at it and leaves read_project_view alone", () => {
+    const uri = pageUri("<p>one</p>");
+    const [show, read] = pointAtPage(connectorProjectViewSchemas, uri);
+    expect(show._meta).toEqual({ ui: { resourceUri: uri }, "ui/resourceUri": uri });
+    expect(read).toBe(connectorProjectViewSchemas[1]);
+  });
+
+  it("reads any version, so a card that cached an older one gets today's page, and nothing else", () => {
+    expect(() => requirePageUri(PAGE_URI)).not.toThrow();
+    expect(() => requirePageUri(pageUri("<p>old</p>"))).not.toThrow();
+    for (const uri of ["ui://genealogy/viewer-XYZ.html", "ui://genealogy/other.html", "ui://genealogy/viewer-0123456789ab.htm"]) {
+      expect(() => requirePageUri(uri)).toThrow("Unknown resource.");
+    }
+    expect(pageResourceRead(PAGE_URI, "<p>now</p>").contents[0]).toMatchObject({ uri: PAGE_URI, text: "<p>now</p>" });
   });
 });

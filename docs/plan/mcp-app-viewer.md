@@ -266,14 +266,14 @@ from it, and an unannotated tool defaults to "not read-only".
   Read-only, because the plugin hook almost certainly never sees a card's calls.
   If M0 shows an artifact cannot reach an app-only tool, its visibility becomes
   `["model", "app"]` with a description telling the model not to call it.
-- **The page resource:** `ui://genealogy/viewer.html`, MIME
+- **The page resource:** `ui://genealogy/viewer-<hash>.html`, MIME
   `text/html;profile=mcp-app`, listed by `resources/list` and served by
   `resources/read`. `_meta.ui.csp.resourceDomains` (the `--public-url` origin, plus
   `https://assets.claude.ai` if the page uses the host's fonts) goes on the
   `resources/read` content item, where the spec and Claude's quickstart read it.
-  Claude caches the page per connector and app (the record's **Card renders**), so M1
-  puts the build in the URI: a deploy, or a rollback, then reaches cards that already
-  read the page.
+  Claude caches the page per connector and app (the record's **Card renders**), so the
+  URI carries a hash of the page itself (the tools image writes no build stamp): a deploy,
+  or a rollback, then reaches cards that already read the page.
 - **Images:** on the thin server, `/img/<token>`, outside the secret, reads the signed
   `image_filename` ref through the store. The token is an HMAC, with a per-process
   key, over the project's path relative to `--root`, that ref and a 10-minute
@@ -365,9 +365,13 @@ from it, and an unannotated tool defaults to "not read-only".
       only repeats the name goes.
     - Inside brackets a run is a citation, so it goes. So does a run with no name.
     - A run that goes takes the space before it and any label directly before that
-      (`see`, `see also`, `assertion(s)`, `source(s)`, `tree person(s)`, `for`, `as`).
-      A separator left at a bracket's edge goes, and so does a bracket left with no
-      letter or digit. The words beside an id stay, because agents put evidence there.
+      (`see`, `see also`, `assertion(s)`, `source(s)`, `tree source(s)`,
+      `tree person(s)`, `for`, `as`, `ARK`), and a joiner (`and`, `or`, `vs`, `&`) that
+      would be left hanging. A separator left at a bracket's edge goes, and so does a
+      bracket left with no letter or digit. The words beside an id stay, because agents
+      put evidence there.
+    - An inline code span is shown as plain text, `c\_001` reads as `c_001`, and a
+      record's title loses any id inside it before it names a link.
     - A prototype over the 7,910 proof narratives and link rationales that hold ids
       left no id behind, with about 38 orphaned `'s` and 138 stranded prepositions,
       against 530 and 1,268 if every id is removed.
@@ -662,7 +666,8 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   `(src_001/S26, child_1 role, assertions a_034–a_039)` renders as `(child_1 role)`,
   `born 1887 (S28).` renders as `born 1887.`, `born to I1 and I2` and `I4's birth fact`
   render the names, `I4 (John Vincent Mogan)` shows the name once, and the id check
-  also fails on `src_003/` and on a rendered bracket holding no letter or digit;
+  also fails on `src_003/` and on a rendered bracket holding only separators (a
+  researcher's `[?]` is text, not debris);
 - `(KWJ6-RPH)` in the compound proof links to the person page, `1:2:30` renders as
   text, `https://evil.example/ark:/61903/1:1:QPRC-WPBZ` stays whole with no "on
   FamilySearch" label, a tree source with an Ancestry url leaves its id removed with no
@@ -699,6 +704,11 @@ shows the others on a project that holds them, and "write this up" on the demo
 project produces a file that carries the rating and the reviewer's verdict.
 
 ### M3: The new case file and the demo script (before the demo)
+
+**Built so far:** the shell, pane and search box, The case, Sources and Log. The new file
+replaced `ViewerBody` early (lead, 2026-11-13), to keep the page near the size M0 tested:
+`ViewerBody` had taken it to 1.11 MB, and the swap brings it to 904 KB. People and Compare
+are not built, so timelines, namesakes and rejected links are unreachable until they land.
 
 The new file replaces `ViewerBody`: its shell, right-hand pane and search box; The
 case with So far, the evidence grid and Leads; Compare with FamilySearch; People,
@@ -741,15 +751,14 @@ this same server.
 The two tools and the page move onto the tool server, behind the door.
 `docs/specs/project-view-tools-spec.md` is the contract.
 
-**Built so far:** the skeleton this section describes, with `derived` holding only
-`folderName`. It passes the engine's tests on both store backends.
-**Done when, met 2026-11-13** on the self-hosted server at this branch: a card drew in
+**Built so far:** the skeleton this section describes, `derived` whole and the
+`recordSearch` part. It passes the engine's tests on both store backends.
+**Done when, met 2026-11-13** on the self-hosted server at the fold branch: a card drew in
 claude.ai chat and in Desktop Chat, signed in through `Genealogy Research` with FamilySearch,
 on a project created from a real person id; and a page `image_transcribe` saved loaded on
 the card through `/img?t=` from MinIO. Image reading needs a per-account key on the beta
 (`make malachi-openrouter`). `Genealogy Viewer` can retire.
-**Not yet:** the rename to `Genealogy Research`, `derived` beyond `folderName` and the
-`recordSearch` part are not built (M1 builds them on the next branch).
+**Not yet:** the rename to `Genealogy Research` is not built.
 
 - **Where:** `src/tools/project-view.ts` holds the tools, the page's resource and the
   connector's context. `src/` cannot import `viewer/`, so `viewer/` keeps its entry and

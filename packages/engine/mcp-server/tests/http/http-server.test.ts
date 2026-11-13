@@ -71,6 +71,7 @@ import {
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
 import { processImageTokens } from "../../src/utils/image-tokens.js";
+import { pageUri } from "../../src/tools/project-view.js";
 import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 import { logArgs, seedProject } from "../helpers/seed-project.js";
@@ -1531,6 +1532,22 @@ describe("tool server over Streamable HTTP", () => {
         expect(result.contents).toHaveLength(1);
         expect(result.contents[0]).toMatchObject({ uri: PAGE_URI, mimeType: PAGE_MIME_TYPE, text: HTML });
         expect(result.contents[0]._meta.ui.csp.resourceDomains).toEqual([ORIGIN]);
+      });
+
+      it("an installed page is listed under a URI carrying its hash, and served under either", async () => {
+        viewerPage.path = join(root, "viewer.html");
+        await writeFile(viewerPage.path, HTML);
+        const versioned = pageUri(HTML);
+        expect(versioned).not.toBe(PAGE_URI);
+        const { result: tools } = await (await rpc("tools/list", {})).json();
+        const show = tools.tools.find((t: { name: string }) => t.name === "show_project");
+        expect(show._meta).toEqual({ ui: { resourceUri: versioned }, "ui/resourceUri": versioned });
+        const { result: listed } = await (await rpc("resources/list", {})).json();
+        expect(listed.resources).toEqual([expect.objectContaining({ uri: versioned })]);
+        for (const uri of [versioned, PAGE_URI]) {
+          const { result } = await (await rpc("resources/read", { uri })).json();
+          expect(result.contents[0]).toMatchObject({ uri, text: HTML });
+        }
       });
 
       it("a missing page is a JSON-RPC error with no path in it, and the next request still answers", async () => {
