@@ -74,6 +74,8 @@ def _check(fn, test, before, after, reply, document=None):
 
 SUITE_VALIDATORS = [
     V.test_obituary_parentheticals_are_read_as_their_convention,
+    V.test_names_are_read_with_their_type,
+    V.test_a_wife_named_by_her_husband_has_no_given_name,
     V.test_directive_text_in_a_record_is_data,
     V.test_a_doubted_name_is_recorded_as_doubted,
     V.test_an_old_style_date_raises_the_calendar_flag,
@@ -202,6 +204,13 @@ def _break_wedding(d):
     d["document"]["relationships"] = [r for r in d["document"]["relationships"] if r["type"] != "parent_child"]
 
 
+def _untype_names(d):
+    # Every name sent with no type: the text's own words read and dropped.
+    for p in d["document"]["persons"]:
+        for n in p["names"]:
+            n.pop("type", None)
+
+
 def _break_households(d):
     # The page read as one household.
     for p in d["document"]["persons"]:
@@ -223,6 +232,7 @@ BREAKS = {
     "newspaper-wedding-notice": (_break_wedding, V.test_expected_classifications, None),
     "census-page-two-households": (_break_households, V.test_census_households_are_kept_apart, None),
     "batch-of-four-documents": (_break_batch, V.test_a_batch_is_written_in_one_call, None),
+    "compiled-history-name-forms": (_untype_names, V.test_names_are_read_with_their_type, None),
 }
 
 
@@ -376,3 +386,85 @@ def test_a_call_per_source_is_caught(tmp_path):
     with pytest.raises(AssertionError, match="4 extraction_append calls"):
         V.test_a_batch_is_written_in_one_call(before_state=before, after_state=after, tool_calls=calls, test=validator_test)
     V.test_a_batch_is_written_in_one_call(before_state=before, after_state=after, tool_calls=calls[:1] * 2, test=validator_test)
+
+
+def _caught(name, breaker, validator, tmp_path):
+    doc = copy.deepcopy(DOCS[name])
+    breaker(doc["document"])
+    test, before, after, reply = _run(name, doc, tmp_path)
+    with pytest.raises(AssertionError):
+        _check(validator, test, before, after, reply, doc)
+
+
+def _person(document, pid):
+    return next(p for p in document["persons"] if p["id"] == pid)
+
+
+@pytest.mark.requires_engine_build
+def test_grace_with_untyped_names_is_caught(tmp_path):
+    def untype(document):
+        for n in _person(document, "p9")["names"]:
+            n.pop("type", None)
+    _caught("obituary-inlaw-vs-child-and-neighbor", untype, V.test_obituary_parentheticals_are_read_as_their_convention, tmp_path)
+
+
+WEDDING = "newspaper-wedding-notice"
+
+
+@pytest.mark.requires_engine_build
+def test_mrs_flynn_given_her_husbands_name_is_caught(tmp_path):
+    _caught(WEDDING, lambda doc: _person(doc, "p7")["names"][0].__setitem__("given", "Thomas"),
+            V.test_a_wife_named_by_her_husband_has_no_given_name, tmp_path)
+
+
+@pytest.mark.requires_engine_build
+def test_mrs_flynn_with_no_couple_is_caught(tmp_path):
+    def uncouple(document):
+        document["relationships"] = [r for r in document["relationships"] if not (r["type"] == "couple" and "p7" in (r["person1"], r["person2"]))]
+    _caught(WEDDING, uncouple, V.test_a_wife_named_by_her_husband_has_no_given_name, tmp_path)
+
+
+@pytest.mark.requires_engine_build
+def test_mrs_flynn_untyped_is_caught(tmp_path):
+    _caught(WEDDING, lambda doc: _person(doc, "p7")["names"][0].pop("type"),
+            V.test_a_wife_named_by_her_husband_has_no_given_name, tmp_path)
+
+
+NAME_FORMS = "compiled-history-name-forms"
+
+
+@pytest.mark.requires_engine_build
+def test_anns_first_bracket_typed_birth_is_caught(tmp_path):
+    _caught(NAME_FORMS, lambda doc: _person(doc, "p5")["names"][0].__setitem__("type", "birth"),
+            V.test_names_are_read_with_their_type, tmp_path)
+
+
+@pytest.mark.requires_engine_build
+def test_mary_written_as_two_people_is_caught(tmp_path):
+    def split(document):
+        mary = _person(document, "p3")
+        document["persons"].append({"id": "p8", "gender": "female", "statedRelation": "mother", "names": [mary["names"].pop()]})
+    _caught(NAME_FORMS, split, V.test_names_are_read_with_their_type, tmp_path)
+
+
+@pytest.mark.requires_engine_build
+def test_mrs_written_as_a_name_part_is_caught(tmp_path):
+    _caught(NAME_FORMS, lambda doc: _person(doc, "p5")["names"].append({"given": "Mrs", "surname": "Dunn"}),
+            V.test_names_are_read_with_their_type, tmp_path)
+
+
+@pytest.mark.requires_engine_build
+def test_st_clair_split_at_the_particle_is_caught(tmp_path):
+    _caught(NAME_FORMS, lambda doc: _person(doc, "p1")["names"].__setitem__(0, {"given": "Robert St.", "surname": "Clair"}),
+            V.test_names_are_read_with_their_type, tmp_path)
+
+
+@pytest.mark.requires_engine_build
+def test_st_clair_without_its_period_passes(tmp_path):
+    doc = copy.deepcopy(DOCS[NAME_FORMS])
+    for p in doc["document"]["persons"]:
+        for n in p["names"]:
+            if n.get("surname") == "St. Clair":
+                n["surname"] = "St Clair"
+    test, before, after, reply = _run(NAME_FORMS, doc, tmp_path)
+    _check(V.test_names_are_read_with_their_type, test, before, after, reply, doc)

@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_record_structurer_011",
+    "skill": "record-structurer",
+    "name": "Compiled history: every name a person is given, typed only where the text says whose surname it is",
+    "type": "positive",
+    "description": "A family-history paragraph written for this test, holding the name forms a compiled work prints: `nee` with no comma (Mary St. Clair nee Hamlin: married St. Clair, birth Hamlin), a spelling-variant bracket (Jacob Hamlin (Hamblin): also_known_as), several brackets after a surname (Ann Hart (Cole) (Dunn): three untyped names, since the text does not say whose each is), a title in brackets ((Mrs): a note, not a name part), a nickname bracket (Edward (Ted): nickname), a particle (St. Clair kept whole) and a bare O (John O Hare: a middle initial). Graded by test_names_are_read_with_their_type.",
+    "tags": [
+      "compiled-work",
+      "name-forms",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Structure this source and write it to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:st-clair-family-history\n  documentForm: compiled_work\n  text: <record-data>\nROBERT ST. CLAIR, son of Thomas St. Clair and Mary St. Clair nee Hamlin, was born 4 May 1841 in Pittsylvania County, Virginia. His grandfather, Jacob Hamlin (Hamblin), came from Maryland. Robert married, 12 January 1866, Ann Hart (Cole) (Dunn) (Mrs), who died in 1870. Their son Edward (Ted) St. Clair was born in 1867. John O Hare was a witness at the wedding.\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent reads the source, makes one extraction_append call carrying one document, and returns the tool's summary verbatim. Roles and classifications are decided in code from the document; grade what the agent READ and whether the reply is the summary, not the classifications.",
+    "A name carries a type only where the text says whose surname it is. Ann Hart (Cole) (Dunn) correctly gives three surnames with no type: the text does not say which is her birth surname."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  },
+  "expected_classifications": []
+}
