@@ -267,14 +267,14 @@ from it, and an unannotated tool defaults to "not read-only".
   Read-only, because the plugin hook almost certainly never sees a card's calls.
   If M0 shows an artifact cannot reach an app-only tool, its visibility becomes
   `["model", "app"]` with a description telling the model not to call it.
-- **The page resource:** `ui://genealogy/viewer.html`, MIME
+- **The page resource:** `ui://genealogy/viewer-<hash>.html`, MIME
   `text/html;profile=mcp-app`, listed by `resources/list` and served by
   `resources/read`. `_meta.ui.csp.resourceDomains` (the `--public-url` origin, plus
   `https://assets.claude.ai` if the page uses the host's fonts) goes on the
   `resources/read` content item, where the spec and Claude's quickstart read it.
-  Claude caches the page per connector and app (the record's **Card renders**), so M1
-  puts the build in the URI: a deploy, or a rollback, then reaches cards that already
-  read the page.
+  Claude caches the page per connector and app (the record's **Card renders**), so the
+  URI carries a hash of the page itself (the tools image writes no build stamp): a deploy,
+  or a rollback, then reaches cards that already read the page.
 - **Images:** on the thin server, `/img/<token>`, outside the secret, reads the signed
   `image_filename` ref through the store. The token is an HMAC, with a per-process
   key, over the project's path relative to `--root`, that ref and a 10-minute

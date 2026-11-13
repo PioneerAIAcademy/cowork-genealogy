@@ -102,7 +102,7 @@ rule: `A project's /proj_<16 hex> projectPath, from project_list. A call that na
 
 | Tool | `title` | `_meta` |
 |---|---|---|
-| `show_project` | `Show project` | `{ "ui": { "resourceUri": "ui://genealogy/viewer.html" }, "ui/resourceUri": "ui://genealogy/viewer.html" }` |
+| `show_project` | `Show project` | `{ "ui": { "resourceUri": <the page URI> }, "ui/resourceUri": <the page URI> }`, the URI under "The page resource" |
 | `read_project_view` | `Read project view` | `{ "ui": { "visibility": ["app"] } }` |
 
 `show_project` carries both keys because a host may read either.
@@ -196,7 +196,7 @@ arrived at 999,947 bytes and did not at 1,299,948 (`docs/mcp-app-host-probe.md`)
 
 | | |
 |---|---|
-| URI | `ui://genealogy/viewer.html` |
+| URI | `ui://genealogy/viewer-<12 hex>.html`, the first 12 hex of the page's sha256 (`pageUri`); `ui://genealogy/viewer.html` when no page is installed |
 | MIME type | `text/html;profile=mcp-app` |
 | `resources/list` | `{ resources: [{ uri, name: "Genealogy Viewer", mimeType }] }` |
 | `resources/read` | `{ contents: [{ uri, mimeType, text, _meta: { ui: { csp: { resourceDomains } } } }] }` |
@@ -209,6 +209,12 @@ The text comes from `viewerPagePath()` in `src/utils/bundled-data.ts`, which res
 read on `resources/read` and never at start-up. The tools image carries the page, from
 the `page` stage of `apps/server/proto/tools/Dockerfile`. The `.mcpb` and `eb-tools.zip`
 do not.
+
+Claude caches a page per URI, so the URI carries a hash of the page: a deploy or a
+rollback that changes the page lists a new URI, and `show_project`'s `_meta` (`pointAtPage`)
+and `resources/list` name it on every request. `resources/read` accepts the plain URI and
+any `viewer-<12 hex>` version, serves today's page under the URI it was asked for, and
+refuses any other URI.
 
 A server with no page keeps running and answers `resources/read` with the error below.
 The next request answers normally.

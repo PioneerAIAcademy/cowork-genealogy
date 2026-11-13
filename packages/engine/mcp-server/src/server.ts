@@ -131,11 +131,13 @@ import {
   callProjectView,
   connectorPageRead,
   connectorProjectView,
+  connectorPageUri,
   connectorProjectViewSchemas,
   connectorViewFailure,
   isProjectViewTool,
   PAGE_MIME_TYPE,
   pageResourceList,
+  pointAtPage,
   UI_EXTENSION,
 } from "./tools/project-view.js";
 import { sidecarRead, type SidecarReadInput } from "./tools/sidecar-read.js";
@@ -166,13 +168,13 @@ export function createServer(principal: Principal): Server {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: connector ? [...allToolSchemas, ...connectorProjectViewSchemas] : allToolSchemas,
+    tools: connector ? [...allToolSchemas, ...pointAtPage(connectorProjectViewSchemas, connectorPageUri())] : allToolSchemas,
   }));
 
   // Only here: the SDK throws on a resources handler with no resources capability.
   if (connector) {
     const { config } = principal;
-    server.setRequestHandler(ListResourcesRequestSchema, async () => pageResourceList());
+    server.setRequestHandler(ListResourcesRequestSchema, async () => pageResourceList(connectorPageUri()));
     server.setRequestHandler(ReadResourceRequestSchema, async (request) =>
       connectorPageRead(request.params.uri, config),
     );

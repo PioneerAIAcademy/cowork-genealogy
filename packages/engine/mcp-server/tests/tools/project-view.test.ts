@@ -8,6 +8,11 @@ import {
   connectorProjectViewSchemas,
   deriveProject,
   MAX_META_BYTES,
+  PAGE_URI,
+  pageResourceRead,
+  pageUri,
+  pointAtPage,
+  requirePageUri,
   PROJECT_META_KEY,
   READ_PROJECT_VIEW,
   SHOW_PROJECT,
@@ -290,5 +295,30 @@ describe("the probes stay on the thin server", () => {
     expect(JSON.stringify([shown, read])).not.toMatch(/canary/i);
     expect(metaOf(shown)).not.toHaveProperty("pad");
     expect(read.structuredContent).not.toHaveProperty("pad");
+  });
+});
+
+describe("the page's URI carries the page", () => {
+  it("is the plain URI with no page, and a hash of the page otherwise, changing with it", () => {
+    expect(pageUri(null)).toBe(PAGE_URI);
+    expect(pageUri("<p>one</p>")).toMatch(/^ui:\/\/genealogy\/viewer-[0-9a-f]{12}\.html$/);
+    expect(pageUri("<p>one</p>")).toBe(pageUri("<p>one</p>"));
+    expect(pageUri("<p>two</p>")).not.toBe(pageUri("<p>one</p>"));
+  });
+
+  it("points show_project at it and leaves read_project_view alone", () => {
+    const uri = pageUri("<p>one</p>");
+    const [show, read] = pointAtPage(connectorProjectViewSchemas, uri);
+    expect(show._meta).toEqual({ ui: { resourceUri: uri }, "ui/resourceUri": uri });
+    expect(read).toBe(connectorProjectViewSchemas[1]);
+  });
+
+  it("reads any version, so a card that cached an older one gets today's page, and nothing else", () => {
+    expect(() => requirePageUri(PAGE_URI)).not.toThrow();
+    expect(() => requirePageUri(pageUri("<p>old</p>"))).not.toThrow();
+    for (const uri of ["ui://genealogy/viewer-XYZ.html", "ui://genealogy/other.html", "ui://genealogy/viewer-0123456789ab.htm"]) {
+      expect(() => requirePageUri(uri)).toThrow("Unknown resource.");
+    }
+    expect(pageResourceRead(PAGE_URI, "<p>now</p>").contents[0]).toMatchObject({ uri: PAGE_URI, text: "<p>now</p>" });
   });
 });

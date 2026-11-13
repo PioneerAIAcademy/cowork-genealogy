@@ -3,6 +3,7 @@
 // the `.mcpb`, the manifest and the hook maps must not know about them, so
 // `createServer` adds them for a connector caller and every other surface gets
 // `Unknown tool`.
+import { createHash } from "node:crypto";
 import { basename } from "node:path";
 import { ErrorCode, McpError, type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { AppConfig } from "../types/auth.js";
@@ -18,7 +19,24 @@ import { treeDiff, type TreeDiffResult } from "./tree-diff.js";
 
 export const SHOW_PROJECT = "show_project";
 export const READ_PROJECT_VIEW = "read_project_view";
+/** The page's URI with no version: what a server with no page lists. */
 export const PAGE_URI = "ui://genealogy/viewer.html";
+/** Any version of the page: a card that cached an older one still reads today's page. */
+const PAGE_URI_PATTERN = /^ui:\/\/genealogy\/viewer(?:-[0-9a-f]{12})?\.html$/;
+
+/** The page's URI, carrying a hash of the page itself. Claude caches a page per URI,
+ *  so a deploy or a rollback that changes the page reaches cards that read the old one. */
+export function pageUri(html: string | null): string {
+  if (html === null) return PAGE_URI;
+  return `ui://genealogy/viewer-${createHash("sha256").update(html).digest("hex").slice(0, 12)}.html`;
+}
+
+/** The tool list with `show_project` pointing at the page as it is now. */
+export function pointAtPage<T extends { name: string }>(schemas: readonly T[], uri: string): T[] {
+  return schemas.map((schema) =>
+    schema.name === SHOW_PROJECT ? { ...schema, _meta: { ui: { resourceUri: uri }, "ui/resourceUri": uri } } : schema,
+  );
+}
 export const PAGE_MIME_TYPE = "text/html;profile=mcp-app";
 export const PROJECT_META_KEY = "genealogy/project";
 export const UI_EXTENSION = "io.modelcontextprotocol/ui";
@@ -265,19 +283,20 @@ export async function callProjectView(context: ProjectViewContext, name: string,
   throw new Error(`Unknown tool: ${name}`);
 }
 
-export function pageResourceList() {
-  return { resources: [{ uri: PAGE_URI, name: DISPLAY_NAME, mimeType: PAGE_MIME_TYPE }] };
+export function pageResourceList(uri: string) {
+  return { resources: [{ uri, name: DISPLAY_NAME, mimeType: PAGE_MIME_TYPE }] };
 }
 
 export function requirePageUri(uri: string): void {
-  if (uri !== PAGE_URI) throw new McpError(ErrorCode.InvalidParams, "Unknown resource.");
+  if (!PAGE_URI_PATTERN.test(uri)) throw new McpError(ErrorCode.InvalidParams, "Unknown resource.");
 }
 
-export function pageResourceRead(html: string, publicOrigin?: string) {
+/** The page, under the URI it was asked for. */
+export function pageResourceRead(uri: string, html: string, publicOrigin?: string) {
   return {
     contents: [
       {
-        uri: PAGE_URI,
+        uri,
         mimeType: PAGE_MIME_TYPE,
         text: html,
         _meta: { ui: { csp: { resourceDomains: publicOrigin ? [publicOrigin] : [] } } },
@@ -337,11 +356,21 @@ export function connectorProjectView(config: AppConfig): ProjectViewContext {
  *  the Beanstalk bundle carry no page, and that must cost a request, not the server. */
 export function connectorPageRead(uri: string, config: AppConfig) {
   requirePageUri(uri);
-  let html: string;
+  const html = connectorPage();
+  if (html === null) throw new McpError(ErrorCode.InternalError, "The viewer page is not installed on this server.");
+  return pageResourceRead(uri, html, webPublicBase(config));
+}
+
+/** The installed page, or null where none ships (the `.mcpb`, the Beanstalk bundle). */
+function connectorPage(): string | null {
   try {
-    html = readBundledText(viewerPagePath());
+    return readBundledText(viewerPagePath());
   } catch {
-    throw new McpError(ErrorCode.InternalError, "The viewer page is not installed on this server.");
+    return null;
   }
-  return pageResourceRead(html, webPublicBase(config));
+}
+
+/** The page's URI on the connector, read per request so a deploy shows at once. */
+export function connectorPageUri(): string {
+  return pageUri(connectorPage());
 }
