@@ -234,7 +234,8 @@ Instead, for each capture-required external-site plan item:
    owns item structure; an executing skill may only update the `status` of an
    item that already exists, and inventing one to close puts a search in the
    plan that was never planned.
-5. **Return to the caller** — do not wait.
+5. **Return to the caller** — do not wait. The built URL goes after the `---`,
+   pasted whole, so the researcher can run it later.
 
 ## Before you search
 
