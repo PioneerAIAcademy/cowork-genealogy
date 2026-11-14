@@ -26,9 +26,9 @@
   ],
   "judge_context": [
     "Must explain that West Virginia separated from Virginia in 1863 during the Civil War — the ancestor almost certainly did not move",
-    "Should clarify that county boundaries also changed frequently, not just state boundaries, and research should focus on the county level",
+    "Optional: credit a reply that says county boundaries also changed, and research should focus on the county level; never mark down any dimension when it does not.",
     "Must mention that records (land, probate, court, tax lists) remain in the original county jurisdiction regardless of which state that county later fell into",
-    "Should direct the researcher to consult historical boundary maps (e.g. Historical Map Works or the FamilySearch locality guide) to identify the correct county before searching any record repository",
+    "Optional: credit a reply that directs the researcher to consult historical boundary maps (e.g. Historical Map Works or the FamilySearch locality guide) to identify the correct county before searching any record repository; never mark down any dimension when it does not.",
     "Should mention specific record types held at county level: land and property records, tax lists, probate and court records"
   ]
 }
