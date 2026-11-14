@@ -1,8 +1,10 @@
 # MCP App viewer: research cards and a case file inside Claude
 
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
-an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). The
-demo scope is not built.
+an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). M1's
+cards and M3's case file are built and on main. Still to do: their first live run on the
+deployed server; M2's five step cards, the link card first (issue #4573); M3's demo
+script and recording; and the router lines (issue #4297).
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 
