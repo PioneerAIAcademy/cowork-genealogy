@@ -53,7 +53,7 @@ under [Connector only](#connector-only).
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
+| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server; returns references (page, section, URL) by default, section text with `includeText` | None |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
 | `wiki_place_page` | A FamilySearch Research Wiki page for a place — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`. `home` resolves the place's own page at any level the wiki has one (country, state or province, county, parish, independent city); the other three exist only for a country or a state/province | None |
 
@@ -132,10 +132,10 @@ ask for a login when a search fails on authentication.
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`
 tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
-sidecar APIs (Pop Stats and `wiki-query-api`) that have no public
-deployment yet: the compiled-in defaults point at one developer's machine.
-`wikiApiUrl` and `popStatsUrl` in `~/.familysearch-mcp/config.json` override
-them (CLAUDE.md, "External service dependencies").
+sidecar APIs (Pop Stats and `wiki-query-api`); the compiled-in defaults point at
+a developer's host, publicly reachable through Tailscale Funnel, so every install
+reaches it. `wikiApiUrl` and `popStatsUrl` in `~/.familysearch-mcp/config.json`
+override them (CLAUDE.md, "External service dependencies").
 
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an

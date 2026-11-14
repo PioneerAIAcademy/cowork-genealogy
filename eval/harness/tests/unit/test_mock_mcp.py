@@ -833,6 +833,63 @@ def test_volume_search_omit_searchable_does_not_mutate_the_shared_fixture(tmp_pa
     assert "searchableOmitted" not in body
 
 
+# --- wiki_search serves references unless the call sends includeText (#4417) ---
+# Production returns `{page_title, section_heading, source_url}` per result and
+# adds `chunk_text` only for `includeText: true`. Every wiki-search fixture
+# carries the server's answer (rank, relevance_score, chunk_text).
+
+_WIKI_FIXTURE = "wiki-search-italian-birth-records"
+_WIKI_ARGS = {"query": "How do I find Italian birth records?"}
+
+
+def _wiki_fixture_response() -> dict:
+    return json.loads((FIXTURES_DIR / f"{_WIKI_FIXTURE}.json").read_text(encoding="utf-8"))["response"]
+
+
+@pytest.mark.requires_engine_build
+def test_wiki_search_serves_references_without_include_text(tmp_path):
+    server, call_log, tools_by_name = create_mock_server([_WIKI_FIXTURE], FIXTURES_DIR, workspace=tmp_path)
+    body = _extract_response_dict(_invoke(tools_by_name, "wiki_search", dict(_WIKI_ARGS)))
+    assert "error" not in body, body
+    assert body["results"], body
+    for r in body["results"]:
+        assert set(r) == {"page_title", "section_heading", "source_url"}, r
+    assert call_log[-1]["response"] == body
+
+
+@pytest.mark.requires_engine_build
+def test_wiki_search_serves_text_with_include_text(tmp_path):
+    server, call_log, tools_by_name = create_mock_server([_WIKI_FIXTURE], FIXTURES_DIR, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "wiki_search", {**_WIKI_ARGS, "includeText": True})
+    )
+    assert call_log[-1]["matched"]["kind"] == "predicate", call_log[-1]
+    fixture = _wiki_fixture_response()["results"]
+    assert [r["chunk_text"] for r in body["results"]] == [r["chunk_text"] for r in fixture]
+    assert all("rank" not in r and "relevance_score" not in r for r in body["results"])
+
+
+@pytest.mark.requires_engine_build
+def test_wiki_search_include_text_does_not_mutate_the_shared_fixture(tmp_path):
+    server, call_log, tools_by_name = create_mock_server([_WIKI_FIXTURE], FIXTURES_DIR, workspace=tmp_path)
+    _invoke(tools_by_name, "wiki_search", {**_WIKI_ARGS, "includeText": True})
+    plain = _extract_response_dict(_invoke(tools_by_name, "wiki_search", dict(_WIKI_ARGS)))
+    assert all("chunk_text" not in r for r in plain["results"])
+    text = _extract_response_dict(
+        _invoke(tools_by_name, "wiki_search", {**_WIKI_ARGS, "includeText": True})
+    )
+    assert all("chunk_text" in r for r in text["results"])
+
+
+def test_wiki_search_fails_open_without_the_build(tmp_path, monkeypatch):
+    """No build: the fixture is served as recorded, and the warning says so."""
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", tmp_path / "no-build")
+    response = _wiki_fixture_response()
+    with pytest.warns(UserWarning, match="wiki_search fixtures are served unchanged"):
+        out = mock_mcp._compact_wiki_search(response, True)
+    assert out == response
+
+
 def test_facets_gate_has_not_drifted_from_the_typescript_source():
     """The mock's gate restates the tool's condition: it selects the response
     rather than transforming a staged one, and the tool exports no function for
