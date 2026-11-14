@@ -156,6 +156,15 @@ function dateSig(d: ReadDate | null): string {
   return d ? `${d.from}-${d.to}/${d.month ?? ''}/${d.day ?? ''}` : ''
 }
 
+/** An assertion's date and place as Compare reads them: a birthdate's or birthplace's value is its date or place. */
+function dateAndPlace(a: Assertion): { date: ReadDate | null; place: string[] } {
+  const type = String(a.fact_type ?? '').toLowerCase().replace(/[\s_]+/g, '')
+  return {
+    date: readDate(type === 'birthdate' ? a.value : a.date, a.date_certainty),
+    place: placeParts(type === 'birthplace' ? a.value : (a.standard_place ?? a.place))
+  }
+}
+
 /** How one finding reads against the starting tree's facts of its key. */
 function readFinding(key: string, a: Assertion, facts: StartingFact[]): Reading3 & { pool: StartingFact[] } {
   if (key === 'name') {
@@ -168,9 +177,7 @@ function readFinding(key: string, a: Assertion, facts: StartingFact[]): Reading3
     const mine = sexOf(a.value)
     return { tag: facts.some((f) => sexOf(f.value) === mine) ? 'already' : 'new', changes: [], pool: facts }
   }
-  const type = String(a.fact_type ?? '').toLowerCase().replace(/[\s_]+/g, '')
-  const date = readDate(type === 'birthdate' ? a.value : a.date, a.date_certainty)
-  const place = placeParts(type === 'birthplace' ? a.value : (a.standard_place ?? a.place))
+  const { date, place } = dateAndPlace(a)
   const pool = RECURRING.has(key)
     ? facts.filter((f) => {
         const fd = readDate(f.standardDate ?? f.date)
@@ -289,8 +296,8 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
         const who = key === 'marriage' ? linked.filter((l) => !isAdded(l.personId)).map((l) => l.personId).sort().join('+') : link.personId
         for (const change of reading.changes) counted.add(`${who}|${key}|${change}`)
       }
-      const date = readDate(a.date, a.date_certainty)
-      const sig = key === 'name' ? nameWords(a.value).sort().join(' ') : `${dateSig(date)}|${placeParts(a.standard_place ?? a.place).join(',')}|${VALUE_KEYS.has(key) || key === 'sex' ? String(a.value ?? '').toLowerCase() : ''}`
+      const { date, place } = dateAndPlace(a)
+      const sig = key === 'name' ? nameWords(a.value).sort().join(' ') : `${dateSig(date)}|${place.join(',')}|${VALUE_KEYS.has(key) || key === 'sex' ? String(a.value ?? '').toLowerCase() : ''}`
       addRow(
         link.personId,
         {

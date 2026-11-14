@@ -64,6 +64,23 @@ describe('Compare with FamilySearch', () => {
     expect(texts.some((t) => t.includes('1 Jan 1849'))).toBe(false)
   })
 
+  it('a different exact birth date on a likely link is Differs, and counts', () => {
+    const birth = rows('I2', 'birth')[0]
+    expect(birth?.tag).toBe('differs')
+    expect(birth?.counted).toBe(true)
+  })
+
+  it('two birthplaces that differ are two rows, not one', () => {
+    expect(rows('I3', 'birth').map((f) => f.text).sort()).toEqual(['Iowa, United States', 'Ohio, United States'])
+  })
+
+  it("a starting edge a record now supports reads Already in tree", () => {
+    const husband = rows('I1', 'relationship').find((f) => f.text === 'John Kelly')
+    expect(husband?.tag).toBe('already')
+    expect(husband?.label).toBe('Husband')
+    expect(husband?.records[0]?.sourceId).toBe('src_002')
+  })
+
   it('a marriage shows under both spouses', () => {
     expect(rows('I1', 'marriage')[0]?.tag).toBe('improved')
     expect(rows('I3', 'marriage')[0]?.tag).toBe('improved')
@@ -93,7 +110,12 @@ describe('Compare with FamilySearch', () => {
     const kate = rows('I1', 'relationship').find((f) => f.text === 'Kate Kelly')
     expect(kate?.label).toBe('Daughter')
     expect(kate?.counted).toBe(false)
-    expect(rows('I4', 'relationship').map((f) => f.label).sort()).toEqual(['Father', 'Mother'])
+    expect(rows('I4', 'relationship').map((f) => f.label).sort()).toEqual(['Father', 'Husband', 'Mother'])
+  })
+
+  it('an edge between two added people shows under both, and is not counted', () => {
+    expect(rows('I4', 'relationship').find((f) => f.text === 'Thomas Flynn')).toMatchObject({ label: 'Husband', tag: 'new', counted: false })
+    expect(rows('I5', 'relationship').find((f) => f.text === 'Kate Kelly')).toMatchObject({ label: 'Wife', tag: 'new', counted: false })
   })
 
   it('lists added people with their strength, and speculative ones as possible relatives', () => {
@@ -105,7 +127,8 @@ describe('Compare with FamilySearch', () => {
   it('counts an added person once, and each person, fact and change once', () => {
     // Mary: a new name piece (ann), another (kelly), a different residence place, a more
     // specific birth date and place (the birthplace assertion repeats the place: once), the
-    // marriage's date and place (once for the couple), and the added mother edge.
-    expect(view.counts).toEqual({ relatives: 1, facts: 8, peopleWithNew: 3, possibleRelatives: 1 })
+    // marriage's date and place (once for the couple), and the added mother edge; Patrick: a
+    // different birth date. John's two birthplaces are speculative: shown, not counted.
+    expect(view.counts).toEqual({ relatives: 1, facts: 9, peopleWithNew: 4, possibleRelatives: 1 })
   })
 })

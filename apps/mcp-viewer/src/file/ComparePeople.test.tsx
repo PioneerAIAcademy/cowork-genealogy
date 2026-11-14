@@ -36,7 +36,7 @@ describe('Compare with FamilySearch', () => {
     const nav = screen.getByRole('navigation', { name: 'Pages' })
     expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['The case', 'Compare with FamilySearch', 'People', 'Sources'])
     expect(text(main())).toContain('Against FamilySearch as it stood on 1 November 2026.')
-    expect(text(main())).toContain('1 new relative, 3 people with new findings, 1 possible relative.')
+    expect(text(main())).toContain('1 new relative, 4 people with new findings, 1 possible relative.')
     expect(text(main())).toContain('Added by this research, confident')
     expect(text(main())).toContain('Not on FamilySearch')
     expect(text(main())).toContain('FamilySearch: 1850, Illinois, United States')
@@ -75,7 +75,10 @@ describe('the person page', () => {
     const page = text(pane())
     expect(page).toContain('The subject of this research')
     expect(page).toContain('Their life in time order')
-    expect(page).toMatch(/Birth: 1850, Illinois, United States · Marriage record, confident/)
+    // The birth names its assertion (the census), the residence names its source (the marriage
+    // record); matching by key and year would have given the other record for each.
+    expect(page).toMatch(/Birth: 1850, Illinois, United States · 1880 census, confident/)
+    expect(page).toMatch(/Residence: 1880, St Paul, Ramsey, Minnesota, United States · Marriage record, confident/)
     expect(page).toContain('From the records')
     expect(page).toContain('1851 to 1879: no census')
     expect(page).toContain('No census found for 1860 or 1870.')
@@ -111,7 +114,7 @@ const SEARCHING = (): ProjectDocument => {
   return d
 }
 
-const LINE = "This research found 1 new relative and 8 new facts that aren't on FamilySearch yet"
+const LINE = "This research found 1 new relative and 9 new facts that aren't on FamilySearch yet"
 
 describe("the card's Compare line", () => {
   it('shows under the conclusion card and opens the file on Compare', async () => {

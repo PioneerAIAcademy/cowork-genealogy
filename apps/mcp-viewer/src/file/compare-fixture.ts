@@ -28,15 +28,22 @@ export const STARTING_TREE = {
   ]
 }
 
+/** Today's Mary: her birth names the census assertion behind it, her residence names the marriage record. */
+const MARY_TODAY = person('I1', 'Mary', 'Flynn', 'Female', [
+  { type: 'Birth', date: '1850', place: 'Illinois, United States', assertion_id: 'a_002' },
+  { type: 'Residence', date: '1880', place: 'St Paul, Ramsey, Minnesota, United States', sources: [{ ref: '#S2' }] }
+])
+
 export const TODAY_TREE = {
-  persons: [MARY, PATRICK, JOHN, BRIDGET, person('I4', 'Kate', 'Kelly', 'Female'), person('I5', 'Thomas', 'Flynn', 'Male')],
+  persons: [MARY_TODAY, PATRICK, JOHN, BRIDGET, person('I4', 'Kate', 'Kelly', 'Female'), person('I5', 'Thomas', 'Flynn', 'Male')],
   relationships: [
     ...STARTING_TREE.relationships,
     { type: 'ParentChild', parent: 'I2', child: 'I1', subtype: 'BiologicalParent' },
     { type: 'ParentChild', parent: 'I6', child: 'I1', sources: [{ ref: '#S2' }] },
     { type: 'ParentChild', parent: 'I1', child: 'I4' },
     { type: 'ParentChild', parent: 'I3', child: 'I4' },
-    { type: 'ParentChild', parent: 'I2', child: 'I5' }
+    { type: 'ParentChild', parent: 'I2', child: 'I5' },
+    { type: 'Couple', person1: 'I4', person2: 'I5' }
   ]
 }
 
@@ -86,7 +93,10 @@ export const COMPARE_RESEARCH = {
     assertion('a_011', 'src_001', CENSUS, 'birth', 'born', { date: '1 Jan 1849' }),
     assertion('a_012', 'src_003', BIRTH, 'relationship', 'daughter of Mary'),
     assertion('a_013', 'src_001', CENSUS, 'birthplace', CHICAGO),
-    assertion('a_014', 'src_002', MARRIAGE, 'name', 'Bridget Flynn')
+    assertion('a_014', 'src_002', MARRIAGE, 'name', 'Bridget Flynn'),
+    assertion('a_015', 'src_002', MARRIAGE, 'birth', 'born', { date: '4 Mar 1820', place: 'Cork, Ireland' }),
+    assertion('a_016', 'src_001', CENSUS, 'birthplace', 'Ohio, United States'),
+    assertion('a_017', 'src_002', MARRIAGE, 'birthplace', 'Iowa, United States')
   ],
   person_evidence: [
     link('pe_001', 'a_001', 'I1', 'confident'),
@@ -105,7 +115,10 @@ export const COMPARE_RESEARCH = {
     link('pe_014', 'a_012', 'I1', 'confident'),
     link('pe_015', 'a_012', 'I4', 'confident'),
     link('pe_016', 'a_013', 'I1', 'confident'),
-    link('pe_017', 'a_014', 'I6', 'probable')
+    link('pe_017', 'a_014', 'I6', 'probable'),
+    link('pe_018', 'a_015', 'I2', 'probable'),
+    link('pe_019', 'a_016', 'I3', 'speculative'),
+    link('pe_020', 'a_017', 'I3', 'speculative')
   ],
   timelines: [
     {
