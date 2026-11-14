@@ -55,20 +55,10 @@ DORMANT: dict[str, str] = {
         "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4460 "
         "restores it"
     ),
-    "naturalization-exception": (
-        "its only test, ut_person_evidence_r8t, was deleted when person-evidence moved "
-        "to Sonnet 5 medium: it counts the interval from a return-trip arrival; "
-        "issue #4478 restores it"
-    ),
-    "naturalization-shortfall": (
-        "its only test, ut_person_evidence_n5r, was deleted when person-evidence moved "
-        "to Sonnet 5 medium: it leaves a real arrival-to-naturalization shortfall unstated; "
-        "issue #4478 restores it"
-    ),
     "score-variant": (
-        "its only test, ut_person_evidence_013, was deleted when person-evidence moved "
-        "to Sonnet 5 medium: it treats a low same_person score as a veto in 3 of 5 runs; "
-        "issue #4478 restores it"
+        "its only test, ut_person_evidence_013, was deleted again by PR #4556: it "
+        "still treats a low same_person score as a veto in 5 of 6 runs on Sonnet 5 "
+        "medium after the body clause was narrowed; issue #4478 restores it"
     ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "
