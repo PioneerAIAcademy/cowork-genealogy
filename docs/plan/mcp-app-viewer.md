@@ -442,9 +442,8 @@ from it, and an unannotated tool defaults to "not read-only".
 - **Theme:** the host's CSS variables, so light and dark follow Claude. Fonts
   inlined or the host's own.
 - **viewer-ui edits, all additive:** exports, such as `statusLabel(value)` from
-  `StatusBadge.tsx` and any leaf the case file reuses, and an optional `ViewerBody`
-  prop that hides the header's Export GEDCOM, Print and Send Feedback buttons. Electron
-  and the web app are unchanged.
+  `StatusBadge.tsx` and any leaf the case file reuses. Electron and the web app are
+  unchanged.
 - **Build:** `make mcp-viewer-build` builds the page and copies it to
   `packages/engine/mcp-server/viewer/page/viewer.html` (gitignored).
 
@@ -627,9 +626,15 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 
 - The **setup, search and conclusion cards**, plus `latest`; until M2, planned
   shows setup and evidence-gathered shows search. The conclusion card's action is
-  "Open the case file". It gains "Compare with FamilySearch" in M3, as one line
-  counting the findings tagged New or Improved ("This research found 4 things that
-  aren't on FamilySearch yet") that opens that page, and `latest` shows the same line.
+  "Open the case file". It gains "Compare with FamilySearch" in M3, as one line that
+  opens that page, and `latest` shows the same line under whatever card it draws: "This
+  research found 2 new relatives and 3 new facts that aren't on FamilySearch yet", each
+  half dropped at zero (lead, 2026-11-14). Only findings with a probable or confident link
+  count (lead, 2026-11-13). A person the research added counts once, as a relative. A
+  fact, on a person already in the tree, is a new event, a more specific or a different
+  date, a more specific or a different place, or a new piece of a name, and a link between
+  two people already in the tree. Name variants and dates that agree (`about 1850`, `~1850`,
+  `1850`, or an approximate year within two) do not count (lead, 2026-11-14).
 - **The case file:** `ViewerBody` in fullscreen, fed by `McpAppResearchTransport`. A
   search's results open in its side panel, and Sources shows a record's page image
   and transcription.
@@ -705,10 +710,13 @@ project produces a file that carries the rating and the reviewer's verdict.
 
 ### M3: The new case file and the demo script (before the demo)
 
-**Built so far:** the shell, pane and search box, The case, Sources and Log. The new file
+**Built so far:** the shell, pane and search box, The case, Compare with FamilySearch,
+People with the person page, Sources and Log, and the card's Compare line. The new file
 replaced `ViewerBody` early (lead, 2026-11-13), to keep the page near the size M0 tested:
-`ViewerBody` had taken it to 1.11 MB, and the swap brings it to 904 KB. People and Compare
-are not built, so timelines, namesakes and rejected links are unreachable until they land.
+`ViewerBody` had taken it to 1.11 MB, the swap brought it to 904 KB, and People and Compare
+to 928 KB. Every one of today's 15 sections has a home. Two towns of one name read as one
+place on Compare wherever they are, so such a birthplace reads Already in tree (lead,
+2026-11-14: an edge case).
 
 The new file replaces `ViewerBody`: its shell, right-hand pane and search box; The
 case with So far, the evidence grid and Leads; Compare with FamilySearch; People,
