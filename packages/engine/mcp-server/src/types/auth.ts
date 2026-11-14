@@ -16,6 +16,10 @@ export interface AuthStatusResult {
   expiresAt?: string;
   expiresInMinutes?: number;
   hasRefreshToken?: boolean;
+  /** A connector caller's account id on the web tier (self-hosted beta E3). */
+  accountId?: string;
+  /** For a connector caller whose FamilySearch session has ended: where they sign in again. */
+  signInUrl?: string;
 }
 
 export interface FSTokenResponse {
@@ -41,14 +45,13 @@ export interface AppConfig {
   openRouterApiKey?: string;
   openRouterModel?: string;
   /** The web tier's public origin. Set with `uploadsEnabled`, `project_context`
-   *  returns `uploadUrl` (`<origin>/#/p/<id>/upload`) for a store that knows its
-   *  project id (src/utils/project-links.ts). */
+   *  returns `uploadUrl` (`<origin>/upload/<id>`) for a store that knows its
+   *  project id (src/utils/project-links.ts). It is also the origin of the connector's
+   *  page image links and the page's `resourceDomains` (src/tools/project-view.ts);
+   *  unset, the connector signs no image link. */
   webPublicUrl?: string;
   /** On, with `webPublicUrl`, `project_context` returns `uploadUrl`. */
   uploadsEnabled?: boolean;
-  /** The beta's transcription switch. Unset means run as today. Its reader is
-   *  issue #3996. */
-  transcriptionEnabled?: boolean;
   /** Which matcher scores `same_person` and ranking: `"familysearch"` (the default) or `"service"`. */
   matcher?: "familysearch" | "service";
   /** The matcher service's base URL; required when `matcher` is `"service"`. */

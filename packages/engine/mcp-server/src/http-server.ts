@@ -16,7 +16,7 @@
 // message whatever the reason, and one `ev=tool_refused` stderr line that never
 // carries the bearer; an `authorize` that throws is a 503, never an admission.
 //
-// CONNECTOR path — every other request. The bearer is looked up by its sha256
+// CONNECTOR path — every other `/mcp` request. The bearer is looked up by its sha256
 // through `lookupConnector`, and a refusal is a 401 with `WWW-Authenticate`,
 // one body for every reason so a caller cannot learn which check failed. The
 // project comes from the call's OWN `arguments.projectPath`, which must be
@@ -25,7 +25,10 @@
 // an absent row is free, and a NULL owner is refused with the rest. A call
 // naming no project runs under the user's principal on a store that refuses
 // every project tool and answers `project_list` with `ownedProjects` plus one
-// fresh path.
+// fresh path. A `tools/call` refused for someone else's project, or because a
+// lookup failed, is answered 200 with an `isError` result, so its message
+// reaches the model (`refuseConnectorCall`); any other request refused for
+// those reasons keeps its 403 or 503. A 401 is always HTTP.
 //
 // A connector caller's `tools/call` runs holding one of that user's
 // `USER_CALL_CAP` slots (self-hosted beta E4, per user; `utils/user-limits.ts`).
@@ -33,6 +36,12 @@
 // hangs up while waiting leaves the queue without running, and one that waited
 // has its token looked up again before it runs. `initialize`, `tools/list` and
 // notifications never wait, and the worker path is not capped.
+//
+// IMAGE route: `GET /img?t=<token>` serves one page image on the token alone,
+// with no bearer. The connector's `read_project_view` signs it and this door
+// verifies it with the same process key (utils/image-tokens.ts), then reads
+// through a store bound from the token's project id. A token that fails answers
+// the door's ordinary 404, and the door never logs a token.
 //
 // The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
 // JSON-RPC batch has to be refused before any tool runs; the parsed value is
@@ -52,6 +61,7 @@ import { bearerPrincipal, connectorPrincipal, type Principal } from "./auth/prin
 import type { AppConfig } from "./types/auth.js";
 import { allToolSchemas } from "./tool-schemas.js";
 import { createServer } from "./server.js";
+import { processImageTokens } from "./utils/image-tokens.js";
 import { PROJECT_ID_RE } from "./store/project-id.js";
 import { runWithUserCallSlot } from "./utils/user-limits.js";
 import {
@@ -65,9 +75,15 @@ import {
 export const MCP_PATH = "/mcp";
 export const HEALTHZ_PATH = "/healthz";
 export const LIVEZ_PATH = "/livez";
+export const IMG_PATH = "/img";
 /** RFC 9728's protected-resource metadata for `/mcp`. Answered BEFORE the token
  *  check — it is what an unauthenticated client reads to learn where to go. */
 export const PRM_PATH = `/.well-known/oauth-protected-resource${MCP_PATH}`;
+/** The one scope the web tier's authorization server grants
+ *  (`SCOPE`, apps/server/proto/web/connector_auth.py). The door does not check
+ *  it: a connector token is admitted by its row. It is named in the metadata
+ *  and the 401 because that is where a client learns what to ask for. */
+export const CONNECTOR_SCOPE = "genealogy";
 
 /** How long `/healthz` waits on `checkReady` before answering 503 itself: the
  *  backend's own 1.5 s probe deadline (READY_TIMEOUT_MS) plus 500 ms, so a
@@ -200,6 +216,16 @@ const AUTHORIZATION_UNAVAILABLE = {
   id: null,
 };
 
+/** An unknown path, and every image link that does not serve an image. */
+const NOT_FOUND = { error: "Not found" };
+
+/** The store failed, so an outage does not read as a missing image. */
+const IMAGE_UNAVAILABLE = {
+  jsonrpc: "2.0",
+  error: { code: -32603, message: "The page image is unavailable." },
+  id: null,
+};
+
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
@@ -289,6 +315,23 @@ const NOT_YOUR_PROJECT = {
   error: { code: -32600, message: "This project is not yours." },
   id: null,
 };
+
+/**
+ * What the model is told when the door refuses a connector `tools/call` for a
+ * project that is not the caller's, or because a lookup failed. These go out as
+ * tool errors, not as HTTP 403 and 503: Claude replaces a 403's body with
+ * "blocked by a firewall or security service" and drops a 503's, so neither
+ * message reached the researcher or the card (issue #3529, item 13, measured
+ * at claude.ai and in Desktop Chat). Each says the call did not run and what to
+ * do next, since a model shown only "forbidden" guessed at a sign-in problem.
+ */
+export const NOT_YOUR_PROJECT_MESSAGE =
+  "This project is not yours, so this call did not run. " +
+  "Use a projectPath that project_list returns.";
+export const AUTHORIZATION_UNAVAILABLE_MESSAGE =
+  "The server could not check this call just now, so it did not run. " +
+  "This is a temporary problem on the server, not a missing project and not a sign-in problem. " +
+  "Wait a moment and send the same call again.";
 
 /** What a connector call naming no project is told when it reaches the store.
  *  The dispatcher turns the thrown Error into an `isError` result, so this
@@ -488,7 +531,6 @@ export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller):
     openRouterModel: baseConfig.openRouterModel,
     webPublicUrl: baseConfig.webPublicUrl,
     uploadsEnabled: baseConfig.uploadsEnabled,
-    transcriptionEnabled: baseConfig.transcriptionEnabled,
     matcher: baseConfig.matcher,
     matcherUrl: baseConfig.matcherUrl,
     matcherApiKey: baseConfig.matcherApiKey,
@@ -505,6 +547,34 @@ function isToolsCall(body: unknown): boolean {
   const msg = body as { method?: unknown; id?: unknown; params?: unknown };
   if (msg.method !== "tools/call" || msg.id === undefined || msg.id === null) return false;
   return typeof (msg.params as { name?: unknown } | null | undefined)?.name === "string";
+}
+
+/**
+ * Refuse a CONNECTOR request for a reason that is not the caller's sign-in.
+ *
+ * A `tools/call` is answered 200 with an `isError` result carrying `message`,
+ * so the text reaches the model and the card as any tool's error does. Anything
+ * else (`initialize`, `tools/list`, a notification) has no tool result to carry
+ * a message, so it keeps the HTTP status and body. Never used for a 401, which
+ * must stay HTTP: that status is what makes Claude offer Reconnect. Never used
+ * on the worker path, whose statuses the worker reads.
+ */
+function refuseConnectorCall(
+  res: http.ServerResponse,
+  body: unknown,
+  status: number,
+  httpBody: unknown,
+  message: string,
+): void {
+  if (!isToolsCall(body)) {
+    sendJson(res, status, httpBody);
+    return;
+  }
+  sendJson(res, 200, {
+    jsonrpc: "2.0",
+    id: (body as { id: string | number }).id,
+    result: { content: [{ type: "text", text: message }], isError: true },
+  });
 }
 
 /**
@@ -541,8 +611,8 @@ export function toolNameOf(body: unknown): string {
  * transcribes memories five at a time -- so last-write-wins would let any
  * later 200 erase a 401 from partway through, and because those requests run
  * concurrently, which status survived would be a race rather than a fact.
- * `tests/utils/fs-fetch.test.ts` records that E3's session-end rule keys on
- * this value, so the refusal is the part worth keeping.
+ * This line is how an operator sees that a user's FamilySearch session has
+ * ended, so the refusal is the part worth keeping.
  */
 export function keptFamilySearchStatus(current: number | null, next: number): number {
   if (current === null) return next;
@@ -557,10 +627,23 @@ function resourceMetadataUrl(issuer: string): string {
 }
 
 /** 401 with `WWW-Authenticate`. With no issuer configured the challenge is a
- *  bare `Bearer`, since there is no metadata document to point at. */
-function sendUnauthorized(res: http.ServerResponse, options: ToolServerOptions): void {
+ *  bare `Bearer`, since there is no metadata document to point at.
+ *
+ *  With one, it is the challenge Claude was measured against (the connector
+ *  probe, issue #3529): `resource_metadata` and `scope` always, and
+ *  `error="invalid_token"` only when a token was sent and refused (RFC 6750
+ *  3.1: a request with no token gets no error code). That last part is what
+ *  tells a client its token is dead, so it signs in again instead of treating
+ *  the server as unreachable. `resource_metadata` stays first on the no-token
+ *  form: `malachi.sh`'s check matches it there. */
+function sendUnauthorized(
+  res: http.ServerResponse,
+  options: ToolServerOptions,
+  tokenRefused: boolean,
+): void {
   const challenge = options.issuer
-    ? `Bearer resource_metadata="${resourceMetadataUrl(options.issuer)}"`
+    ? `Bearer ${tokenRefused ? 'error="invalid_token", ' : ""}` +
+      `resource_metadata="${resourceMetadataUrl(options.issuer)}", scope="${CONNECTOR_SCOPE}"`
     : "Bearer";
   res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": challenge });
   res.end(JSON.stringify(UNAUTHORIZED));
@@ -661,9 +744,10 @@ async function handleMcpPost(
       try {
         caller = await options.lookupConnector(sha256Hex(bearer));
       } catch (error) {
-        // Never an admission, exactly as an `authorize` that throws is not.
+        // Never an admission, exactly as an `authorize` that throws is not. The
+        // token was not checked, so the answer carries nothing but the outage.
         process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
-        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
         return;
       }
     }
@@ -671,7 +755,7 @@ async function handleMcpPost(
       // One body for every reason: no token, expired, ended grant, blocked
       // user, no FamilySearch token, or one that will not decrypt.
       process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
-      sendUnauthorized(res, options);
+      sendUnauthorized(res, options, bearer !== "");
       return;
     }
     logUserId = caller.userId;
@@ -721,7 +805,7 @@ async function handleMcpPost(
         owner = await options.projectOwner(connectorProjectId);
       } catch (error) {
         process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
-        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
         return;
       }
       // A NULL owner is refused with the rest: a connector never claims an
@@ -731,7 +815,7 @@ async function handleMcpPost(
         process.stderr.write(
           `ev=tool_refused reason=not_owner surface=connector user_id=${caller.userId}\n`,
         );
-        sendJson(res, 403, NOT_YOUR_PROJECT);
+        refuseConnectorCall(res, body.value, 403, NOT_YOUR_PROJECT, NOT_YOUR_PROJECT_MESSAGE);
         return;
       }
       store = options.bindStore(connectorProjectId, disconnected.signal, undefined, {
@@ -790,12 +874,13 @@ async function handleMcpPost(
       again = await options.lookupConnector(capTokenSha256);
     } catch (error) {
       process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
-      sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+      refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
       return false;
     }
     if (!again || again.userId !== userId) {
       process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
-      sendUnauthorized(res, options);
+      // Always a token that was admitted and is now refused.
+      sendUnauthorized(res, options, true);
       return false;
     }
     principal = connectorPrincipal({
@@ -832,12 +917,55 @@ async function handleMcpPost(
   await run();
 }
 
+/**
+ * One page image, on the token alone. The store gets no `ownerId`: this route
+ * writes nothing, and `readBytes` never consults one.
+ */
+async function handleImage(
+  res: http.ServerResponse,
+  token: string | null,
+  options: ToolServerOptions,
+): Promise<void> {
+  const claim = token === null ? null : processImageTokens.verify(token);
+  if (!claim) {
+    sendJson(res, 404, NOT_FOUND);
+    return;
+  }
+  const disconnected = new AbortController();
+  res.on("close", () => {
+    if (!res.writableEnded) disconnected.abort();
+  });
+  const anchorPath = `/${claim.project}`;
+  const store = options.bindStore(claim.project, disconnected.signal, undefined, { anchorPath });
+  let bytes: Uint8Array;
+  try {
+    bytes = await store.readBytes(anchorPath, claim.ref);
+  } catch (error) {
+    const { code } = error as { code?: unknown };
+    if (code === "ENOENT" || code === "ENOTDIR") {
+      sendJson(res, 404, NOT_FOUND);
+      return;
+    }
+    process.stderr.write(`ev=image_failed error=${errorLabel(error)}\n`);
+    sendJson(res, 503, IMAGE_UNAVAILABLE);
+    return;
+  }
+  res.writeHead(200, {
+    "Content-Type": "image/jpeg",
+    "X-Content-Type-Options": "nosniff",
+    // The card's frame is another origin.
+    "Cross-Origin-Resource-Policy": "cross-origin",
+    "Cache-Control": `private, max-age=${Math.floor((claim.expiresAt - Date.now()) / 1000)}`,
+  });
+  res.end(bytes);
+}
+
 async function route(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   options: ToolServerOptions,
 ): Promise<void> {
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
+  const { pathname, searchParams } = new URL(req.url ?? "/", "http://localhost");
   if (pathname === HEALTHZ_PATH && req.method === "GET") {
     await handleHealthz(res, options);
     return;
@@ -848,19 +976,28 @@ async function route(
     // attacker's authorization server. Unset, there is no document to serve
     // and the 401 carries a bare `Bearer` to match.
     if (!options.issuer) {
-      sendJson(res, 404, { error: "Not found" });
+      sendJson(res, 404, NOT_FOUND);
       return;
     }
     const issuer = options.issuer.replace(/\/$/, "");
-    sendJson(res, 200, { resource: `${issuer}${MCP_PATH}`, authorization_servers: [issuer] });
+    sendJson(res, 200, {
+      resource: `${issuer}${MCP_PATH}`,
+      authorization_servers: [issuer],
+      scopes_supported: [CONNECTOR_SCOPE],
+      bearer_methods_supported: ["header"],
+    });
     return;
   }
   if (pathname === LIVEZ_PATH && req.method === "GET") {
     sendJson(res, 200, { ok: true, tools: allToolSchemas.length });
     return;
   }
+  if (pathname === IMG_PATH && req.method === "GET") {
+    await handleImage(res, searchParams.get("t"), options);
+    return;
+  }
   if (pathname !== MCP_PATH) {
-    sendJson(res, 404, { error: "Not found" });
+    sendJson(res, 404, NOT_FOUND);
     return;
   }
   if (req.method !== "POST") {
@@ -874,7 +1011,7 @@ async function route(
   await handleMcpPost(req, res, options);
 }
 
-/** The node:http request listener: `/healthz`, `/livez`, `/mcp` (POST only), 404 elsewhere. */
+/** The node:http request listener: `/healthz`, `/livez`, `/img` (GET only), `/mcp` (POST only), 404 elsewhere. */
 export function createToolServer(options: ToolServerOptions): RequestListener {
   return (req, res) => {
     route(req, res, options).catch((error: unknown) => {

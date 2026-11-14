@@ -11,14 +11,12 @@ contract for tool results.
 ## Live tools
 
 Some MCP tools are deterministic functions of local workspace state — their
-return value depends on what the skill just wrote. `project_create` resolves
-places (every place the caller enters, and any place a staged read left without
-a `standard_place`) through the anonymous Places API; the mock gives the
-compiled resolver a table built from the test's own `place_search` fixtures for
-the places in the call's `tree` (`_place_table`), so it stays offline. A place
-not in the table resolves to null, which includes a staged read's unresolved
-place. Canning their response as a fixture would be dishonest: a fixture
-can't reflect the actual file content the skill produced.
+return value depends on what the skill just wrote. `project_create` retries,
+through the anonymous Places API, any place its read left without a
+`standard_place`; the mock gives the compiled resolver an empty table, so it
+stays offline and every such place resolves to null. Canning their response as
+a fixture would be dishonest: a fixture can't reflect the actual file content
+the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
 registered unconditionally (not gated on fixture presence) and its handler
@@ -426,9 +424,8 @@ def echo_query(args: dict[str, Any]) -> dict[str, Any]:
 # so grep RANKING_SKIPPED_NOTE to find both copies when editing either.
 RANKING_SKIPPED_NOTE = (
     "No `subjectId`, so match-score ranking and marriage jurisdiction hints did "
-    "not run. Pass the tree person this search is about as `subjectId` to enable "
-    "both. Omit it only when the search is not about a specific tree person — a "
-    "broad survey, or a person not yet in the tree."
+    "not run. Pass the searched tree person as `subjectId`. Omit it only for a "
+    "broad survey or a person not yet in the tree."
 )
 
 # Verbatim copies of UNLOGGED_SEARCHES_NOTE and NIL_SEARCH_NEEDS_LOG_NOTE in
@@ -439,12 +436,9 @@ RANKING_SKIPPED_NOTE = (
 # restatement of the pairing rule is a second implementation the drift test
 # cannot see.
 UNLOGGED_SEARCHES_NOTE = (
-    "{n} earlier staged search response(s) in this project have no research.json log "
-    "entry: {refs}. Call `research_log_append` for each, passing that ref as "
-    "`stagedResultsRef` — the staged file holds the search's own query, so the entry "
-    "is filled in host-side and needs no reconstruction from memory. Log each as you "
-    "go rather than batching them at the end. A search with no log entry is a search "
-    "that did not happen, and the staged response is deleted 24h after it was made."
+    "{n} earlier staged search(es) have no log entry: {refs}. Log each now: "
+    "`research_log_append` with that ref as `stagedResultsRef`. An unlogged staged "
+    "search is deleted 24h after it ran."
 )
 
 #: Verbatim copy of NO_PROJECT_MESSAGE_READ in
@@ -518,7 +512,15 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 
+# What record_search adds to an answer to say how to search next:
+# `patronymicSearch`, `childrenSearch` and `census`. Computed by the compiled
+# `searchAdvice` from the call's own arguments and the answer's counts, so no
+# fixture carries a copy.
+_SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
+
+_VOLUME_SEARCH_JS = _MCP_BUILD / "tools" / "volume-search.js"
 
 
 #: Compiled modules already warned about, so a missing build says so once per
@@ -568,6 +570,15 @@ def _unknown_args_module_present() -> bool:
     return _compiled_module_present(
         _UNKNOWN_ARGS_JS,
         "mock tool calls will NOT be checked for non-parameter arguments",
+    )
+
+
+def _volume_search_module_present() -> bool:
+    """A build predating #4414 serves every volume_search fixture unfiltered,
+    which reads as `omitSearchable` being silently ignored."""
+    return _compiled_module_present(
+        _VOLUME_SEARCH_JS,
+        "volume_search responses will NOT have omitSearchable applied",
     )
 
 
@@ -693,6 +704,75 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
         return None
 
 
+def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Production's `searchAdvice` for a `record_search` call, as (key, value)
+    pairs in the order production serializes them before `results`. Empty when
+    nothing applies, the build predates it, or node fails (with a warning: a
+    harness fault must not look like the model ignoring the advice)."""
+    if not _compiled_module_present(_SEARCH_ADVICE_JS, "record_search responses will carry no search advice"):
+        return []
+    script = (
+        f"import {{ searchAdvice, SEARCH_ADVICE_KEYS }} from '{_node_module_url(_SEARCH_ADVICE_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const advice = searchAdvice(input.args, input.counts);"
+        " process.stdout.write(JSON.stringify("
+        " SEARCH_ADVICE_KEYS.filter((k) => advice[k]).map((k) => [k, advice[k]])));"
+    )
+    try:
+        counts = {"totalMatches": response.get("totalMatches"), "ranked": response.get("ranked")}
+        proc = _run_node_eval(
+            script, json.dumps({"args": args, "counts": counts}), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return [(k, v) for k, v in json.loads(proc.stdout.strip())]
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock record_search could not compute its search advice ({exc})", stacklevel=2)
+        return []
+
+
+def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
+    """Production's `omitSearchable` post-processing (#4414), applied to a
+    canned `volume_search` fixture exactly as `volumeSearchTool` applies it to
+    its own computed page — before `fitToBudget`.
+
+    Calls the COMPILED `filterSearchableVolumes` (`build/tools/volume-search.js`),
+    never a Python restatement: the omission rule (two searchability signals, a
+    labelling tie-break, the concept-id fallback) is tool behaviour, and a
+    second copy is a second thing to drift (CLAUDE.md, "Code reuse"). A node
+    failure serves the fixture unfiltered, with a warning — a harness fault
+    must not read as the flag having been exercised.
+    """
+    if not _volume_search_module_present():
+        return response
+    script = (
+        f"import {{ filterSearchableVolumes }} from '{_node_module_url(_VOLUME_SEARCH_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(filterSearchableVolumes(input)));"
+    )
+    try:
+        # DEFAULT, not LONG, and store=False: `filterSearchableVolumes` is a
+        # pure function over the response object -- no network, no file I/O,
+        # no store, same reasoning as `_reject_unknown_args`.
+        proc = _run_node_eval(
+            script,
+            json.dumps(response),
+            timeout=NODE_EVAL_TIMEOUT_DEFAULT,
+            store=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return json.loads(proc.stdout)
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
+        warnings.warn(
+            f"mock volume_search could not apply omitSearchable ({e}); the fixture was served unfiltered.",
+            stacklevel=2,
+        )
+        return response
+
+
 def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     """`response` with `key` moved immediately before `results` — where the real
     record_search serializes `surnameVariantHints`, after the pre-`results` notes."""
@@ -708,8 +788,9 @@ def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     return reordered
 
 
-# Compaction the real search tool applies to its INLINE results once they are
-# staged, per tool. Both are exported from the compiled build so this harness
+# Compaction the real search tool applies to its INLINE results, per tool: on
+# every answer for a tool in COMPACTS_UNSTAGED, otherwise only once its results
+# are staged. Both are exported from the compiled build so this harness
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
 # against a shape production never sends (#1826, #2009 — both now covered by
@@ -718,6 +799,42 @@ _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
     "fulltext_search": "compactStagedFulltextSearch",
 }
+
+#: Search tools whose compactor production runs on every answer, staged or not
+#: (record-search.ts, fulltext-search.ts), so an answer with no `projectPath` is
+#: compacted too.
+COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search", "fulltext_search"})
+
+
+def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
+    """Run the tool's compiled compactor on an answer that staged nothing.
+
+    Returns the response untouched, with a warning, when the build is absent or
+    node fails: the agent then sees the full fixture, which is a harness fault,
+    not a failed call.
+    """
+    compactor = _STAGED_COMPACTORS[tool_name]
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock {tool_name} compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {compactor} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const response = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" {compactor}(response);"
+        " process.stdout.write(JSON.stringify(response));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock {tool_name} compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock {tool_name} compaction failed in node ({exc})", stacklevel=2)
+        return response
 
 
 def _record_match_score(
@@ -895,8 +1012,7 @@ def _stage_and_compact_search_results(
 
     Returns `(staged_handle, response, unlogged_count)`. `staged_handle` is None on
     a nil search or a staging failure, and in that case `response` comes back
-    untouched — compaction is only ever correct once the sidecar holds the full
-    payload. The compaction functions are idempotent, so a fixture already written
+    untouched. The compaction functions are idempotent, so a fixture already written
     in the compacted shape passes through unchanged. The third element is the staged
     backlog read before this call staged anything — handles, not a count, because
     the note names the refs (empty when unavailable).
@@ -930,7 +1046,9 @@ def _stage_and_compact_search_results(
     compactor = _STAGED_COMPACTORS.get(tool_name)
     if compactor and compactor_js.exists():
         compact_import = f"import {{ {compactor} }} from '{_url(compactor_js)}';"
-        compact_call = f" if (r) {compactor}(input.response);"
+        # `staged` is attached by the caller after this returns, so the compactor
+        # is told the answer staged: record_search then drops its query echo.
+        compact_call = f" if (r) {compactor}(input.response, {{ staged: true }});"
     else:
         compact_import = ""
         compact_call = ""
@@ -982,7 +1100,7 @@ def _stage_and_compact_search_results(
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
         # Counted BEFORE staging, exactly as the real tools order it: a count taken
         # after would include the call being answered and fire on every first search.
-        " const unlogged = await unloggedStagedSearches(input.projectPath);"
+        " const unlogged = await unloggedStagedSearches(input.projectPath, input.tool);"
         " const r = await stageSearchResults(input);"
         f"{compact_call}"
         # Production's own annotation, run on a throwaway copy carrying the
@@ -1025,6 +1143,79 @@ def _stage_and_compact_search_results(
         return None, response, [], ranked
 
 
+BIRTH_RANGES_KEY = "birthRanges"
+
+_RECORD_EXTRACT_JS = _MCP_BUILD / "utils" / "record-extract.js"
+
+
+def _record_birth_ranges(response: dict[str, Any]) -> dict[str, str] | None:
+    """`birthRanges` for a canned record_read: persona id -> the birth range its
+    indexed age implies, from the compiled `birthRangesFor` (#4127) so the mock
+    cannot drift from production. None when no persona has one, the fixture
+    carries no `indexFields`, or node fails (with a warning)."""
+    index_fields = response.get("indexFields")
+    if not (isinstance(index_fields, dict) and index_fields) or not _RECORD_EXTRACT_JS.exists():
+        return None
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk", BIRTH_RANGES_KEY)}
+    script = (
+        f"import {{ birthRangesFor }} from '{_node_module_url(_RECORD_EXTRACT_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify({ r: birthRangesFor(input.gedcomx, input.indexFields) ?? null }));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"gedcomx": gedcomx, "indexFields": index_fields}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+        )
+        return json.loads(proc.stdout.strip()).get("r")
+    except Exception as exc:  # noqa: BLE001 — a harness fault must not look like the model ignoring it
+        warnings.warn(f"mock record_read could not compute birthRanges ({exc})", stacklevel=2)
+        return None
+
+
+#: The compiled function production's server applies to every `record_read`
+#: answer at the MCP boundary (#4415).
+_RECORD_READ_COMPACTOR = "compactRecordReadAnswer"
+
+
+def _compact_record_read(response: dict[str, Any], record_id: str) -> dict[str, Any]:
+    """Run the compiled `compactRecordReadAnswer` on a served `record_read`.
+
+    `record_id` is the agent's call `recordId`, never the fixture's
+    `args.recordId`, which carries the `~` predicate prefix. Applied after
+    staging, so the staged sidecar keeps the full document, as production's
+    does. Returns the response untouched, with a warning, when the build is
+    absent or node fails.
+    """
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock record_read compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {_RECORD_READ_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" process.stdout.write(JSON.stringify({_RECORD_READ_COMPACTOR}(input.response, input.recordId)));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"response": response, "recordId": record_id}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+            store=False,
+        )
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock record_read compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock record_read compaction failed in node ({exc})", stacklevel=2)
+        return response
+
+
 def _stage_record_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1040,7 +1231,7 @@ def _stage_record_read(
     and a `stagingError`, matching production's best-effort staging.
     """
     record_id = str(args.get("recordId") or "").strip()
-    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk")}
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk", BIRTH_RANGES_KEY)}
     element: dict[str, Any] = {"recordId": record_id, "gedcomx": gedcomx}
     index_fields = response.get("indexFields")
     if isinstance(index_fields, dict) and index_fields:
@@ -1055,11 +1246,15 @@ def _stage_record_read(
     return {**inline, "staged": staged}
 
 
-#: The compiled function that drops `image_transcribe`'s inline text once the
-#: page is staged. Not in `_STAGED_COMPACTORS`: it takes the whole response,
-#: where those take the `{results}` payload `_stage_and_compact_search_results`
-#: hands them.
-_IMAGE_TRANSCRIBE_COMPACTOR = "compactStagedImageTranscribe"
+#: The compiled functions that shape `image_transcribe`'s answer: the lossless
+#: layout cleanup production runs on the OCR text, the digest, and the compactor
+#: every leg goes through (the staged text dropped, an inline one bounded,
+#: `metadata` and `nameExpansion` dropped). Not in `_STAGED_COMPACTORS`: the
+#: compactor takes the whole response, where those take the `{results}` payload
+#: `_stage_and_compact_search_results` hands them.
+_IMAGE_TRANSCRIBE_COMPACTOR = "compactImageTranscribeAnswer"
+_IMAGE_TRANSCRIBE_NORMALIZER = "normalizeTranscription"
+_IMAGE_TRANSCRIBE_DIGEST = "transcriptionDigest"
 
 #: The `image_transcribe` arguments production stages as the element's `source`.
 _IMAGE_TRANSCRIBE_SOURCE_KEYS = ("imageId", "ark", "memoryArtifactUrl", "file")
@@ -1074,11 +1269,12 @@ def _stage_image_transcribe(
 
     The payload is production's one-element `{ query, results }` under tool
     `image_transcribe`; the element's `id` is the `capture:<basename>` of a
-    `file`, else the image the caller named. Staging, the digest excerpt and the
-    strip all run in ONE node process, through the compiled `stageSearchResults`
-    and `compactStagedImageTranscribe`, so the strip has one definition. A
-    staging throw keeps the text inline with `staged: null` and `stagingError`,
-    as production does; a node failure returns the same shape, with a warning.
+    `file`, else the image the caller named. The layout cleanup, staging, the
+    digest and the strip all run in ONE node process, through the compiled
+    `normalizeTranscription`, `stageSearchResults`, `transcriptionDigest` and
+    `compactImageTranscribeAnswer`, so each has one definition. A staging throw
+    keeps the text inline with `staged: null` and `stagingError`, as production
+    does; a node failure returns the same shape, with a warning.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
@@ -1121,20 +1317,19 @@ def _stage_image_transcribe(
 
     script = (
         f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
-        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER},"
+        f" {_IMAGE_TRANSCRIBE_DIGEST} }} from '{_node_module_url(compactor_js)}';"
         " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-        " const el = input.element;"
+        " const el = { ...input.element,"
+        f" transcription: {_IMAGE_TRANSCRIBE_NORMALIZER}(input.element.transcription) }};"
         " let staged; let stagingError;"
         " try { staged = await stageSearchResults({ projectPath: input.projectPath,"
         " tool: 'image_transcribe', response: { query: input.query, results: [el] } }); }"
         " catch (e) { staged = null; stagingError = String(e?.message ?? e); }"
-        " const digest = { id: el.id, chars: el.transcription.length,"
-        " excerpt: el.transcription.slice(0, 300),"
-        " ...(el.found ? { found: el.found } : {}), ...(el.truncated ? { truncated: true } : {}) };"
-        " const { metadata, ...rest } = input.response;"
-        " const out = { ...rest, staged, ...(stagingError !== undefined ? { stagingError } : {}),"
-        " digest, ...(metadata !== undefined ? { metadata } : {}) };"
+        " const out = { ...input.response, transcription: el.transcription, staged,"
+        " ...(stagingError !== undefined ? { stagingError } : {}),"
+        f" digest: {_IMAGE_TRANSCRIBE_DIGEST}(el.id, el.transcription) }};"
         f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
         " process.stdout.write(JSON.stringify(out));"
     )
@@ -1157,8 +1352,46 @@ def _stage_image_transcribe(
         return _unstaged(f"{type(exc).__name__}: {exc}")
 
 
+def _inline_image_transcribe(response: dict[str, Any]) -> dict[str, Any]:
+    """A canned `image_transcribe` page as production answers with no project
+    (#4136): nothing staged or saved, the text cleaned and bounded, and
+    `metadata` and `nameExpansion` dropped, through the compiled
+    `normalizeTranscription` and `compactImageTranscribeAnswer`. A node failure
+    returns the page with only the project keys removed, with a warning.
+    """
+    inline = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+
+    def _fallback(why: str) -> dict[str, Any]:
+        warnings.warn(f"mock image_transcribe could not be compacted ({why})", stacklevel=3)
+        return inline
+
+    if not compactor_js.exists():
+        return _fallback(f"no engine build at {_MCP_BUILD}")
+    script = (
+        f"import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER} }}"
+        f" from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const out = JSON.parse(readFileSync(0, 'utf-8'));"
+        " if (typeof out.transcription === 'string')"
+        f" out.transcription = {_IMAGE_TRANSCRIBE_NORMALIZER}(out.transcription);"
+        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " process.stdout.write(JSON.stringify(out));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(inline), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return _fallback(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+        parsed = json.loads(out)
+        return parsed if isinstance(parsed, dict) else _fallback("the node script returned no object")
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        return _fallback(f"{type(exc).__name__}: {exc}")
+
+
 def _unlogged_staged_handles(
     workspace: Path,
+    tool_name: str,
     *,
     args: dict[str, Any] | None = None,
     response: dict[str, Any] | None = None,
@@ -1187,7 +1420,7 @@ def _unlogged_staged_handles(
         + " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
         " process.stdout.write(JSON.stringify({"
-        " unlogged: await unloggedStagedSearches(input.projectPath),"
+        " unlogged: await unloggedStagedSearches(input.projectPath, input.tool),"
         + (
             " surnameHint: surnameVariantHints(input.args, input.response) ?? null"
             if with_hint
@@ -1200,6 +1433,7 @@ def _unlogged_staged_handles(
             script,
             json.dumps({
                 "projectPath": str(workspace).replace("\\", "/"),
+                "tool": tool_name,
                 "args": args,
                 "response": response or {},
             }),
@@ -1280,6 +1514,50 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     if not isinstance(out, dict) or out.get("ok") is not False:
         return None
     return str(out.get("message") or f"{field} could not be read")
+
+
+def _trim_person_read(response: dict[str, Any]) -> dict[str, Any]:
+    """Trim a canned full `person_read` to the model-facing answer (#4384).
+
+    Runs the COMPILED `trimPersonReadForModel`, so every fixture is cut exactly
+    as production cuts its answer. Returns the response untrimmed, with a
+    warning, when node or the build is unavailable: a harness fault, never a
+    production shape.
+    """
+    person_read_js = _MCP_BUILD / "tools" / "person-read.js"
+    if not person_read_js.exists():
+        _warn_untrimmed(f"no engine build at {person_read_js}")
+        return response
+    url = _node_module_url(person_read_js)
+    script = (
+        f"import {{ trimPersonReadForModel }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const r = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(trimPersonReadForModel(r)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            _warn_untrimmed(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+            return response
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("persons"), list):
+            _warn_untrimmed("the trim returned no `persons`")
+            return response
+        return parsed
+    except Exception as e:
+        _warn_untrimmed(f"{type(e).__name__}: {e}")
+        return response
+
+
+def _warn_untrimmed(why: str) -> None:
+    warnings.warn(
+        f"mock person_read could not be trimmed ({why}); the response goes back in the "
+        "full shape production no longer returns, so results for this call are not "
+        "comparable to production",
+        stacklevel=2,
+    )
 
 
 def _stage_person_read(
@@ -1554,6 +1832,16 @@ def create_mock_server(
                     _workspace, args, response, _stored_rows.get(source_name)
                 )
 
+            # Production's person_read answers, and stages, the model-facing trim
+            # of the full read (#4384). A fixture holds the full read, which
+            # project_create's stand-in keeps reading from the manifest.
+            if (
+                _name == "person_read"
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _trim_person_read(response)
+
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.
             if (
@@ -1579,6 +1867,19 @@ def create_mock_server(
             ):
                 response = {k: v for k, v in response.items() if k != "facets"}
 
+            # Production's volume_search applies `omitSearchable` to its own
+            # computed page before fitToBudget (#4414); call the same compiled
+            # filter on a canned fixture, keyed on the call's OWN args, never
+            # the fixture's recorded predicate -- the fixture itself stays
+            # unfiltered for a call that doesn't ask.
+            if (
+                _name == "volume_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("omitSearchable")
+            ):
+                response = _filter_searchable_volumes(response)
+
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
             # fixture carries whatever query it was recorded with, and a
@@ -1595,10 +1896,11 @@ def create_mock_server(
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
             # tool returning staged.resultsRef), then apply the compaction the
-            # real tool applies to its inline results once staged — both by
-            # calling the compiled build, so the agent is graded on the shape
-            # production actually sends. Only when projectPath was passed and
-            # results came back; nil searches retain nothing and compact nothing.
+            # real tool applies to its inline results — both by calling the
+            # compiled build, so the agent is graded on the shape production
+            # actually sends. Staging needs projectPath and results; nil searches
+            # retain nothing. A tool in COMPACTS_UNSTAGED compacts every answer
+            # with results, staged or not; the others only once staged.
             # Resolved BEFORE staging so the single node process below can run
             # production's own `annotateResultsWithRanking` over the staged rows
             # in the same process. Only the match depends on `args`, so moving it
@@ -1628,6 +1930,8 @@ def create_mock_server(
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
+                elif _name in COMPACTS_UNSTAGED:
+                    response = _compact_unstaged_search(_name, response)
             elif (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -1639,6 +1943,7 @@ def create_mock_server(
                 # The same process computes record_search's surnameVariantHints.
                 _unlogged_staged, _surname_hint = _unlogged_staged_handles(
                     _workspace,
+                    _name,
                     args=dict(args) if _name == "record_search" else None,
                     response=response,
                 )
@@ -1646,6 +1951,14 @@ def create_mock_server(
                     response = {**response, SURNAME_VARIANT_HINTS_KEY: _surname_hint}
             else:
                 _unlogged_staged = []
+                if (
+                    _name in COMPACTS_UNSTAGED
+                    and isinstance(response, dict)
+                    and "error" not in response
+                    and isinstance(response.get("results"), list)
+                    and response.get("results")
+                ):
+                    response = _compact_unstaged_search(_name, response)
                 # A nil record_search with no projectPath spawns no process
                 # otherwise; it gets one only when there is a nil to hint on.
                 if (
@@ -1665,6 +1978,15 @@ def create_mock_server(
             # record in the unit suite fell back to record-extractor, so no
             # committed run could exercise the code path. A read WITH `resultsRef`
             # is a sidecar read and stages nothing, exactly as production.
+            # Production returns `birthRanges` on every record_read (#4127). Computed
+            # by the compiled helper from the fixture's `indexFields`, never written
+            # into a fixture, and added before staging so the staged gedcomx stays
+            # without it.
+            if _name == "record_read" and "error" not in response and isinstance(response.get("persons"), list):
+                _ranges = _record_birth_ranges(response)
+                if _ranges:
+                    response = {**response, BIRTH_RANGES_KEY: _ranges}
+
             if (
                 _name == "record_read"
                 and _workspace is not None
@@ -1674,6 +1996,24 @@ def create_mock_server(
                 and isinstance(response.get("persons"), list)
             ):
                 response = _stage_record_read(_workspace, args, response)
+
+            # Production never returns `indexFields` inline: they ride only on the
+            # staged element. Stripped LAST, after `_record_birth_ranges` and
+            # `_stage_record_read`, which both read them (#4127).
+            if _name == "record_read" and isinstance(response, dict) and "indexFields" in response:
+                response = {k: v for k, v in response.items() if k != "indexFields"}
+
+            # Production's server compacts every record_read answer at the MCP
+            # boundary (#4415): after staging, so the sidecar stays full, and with
+            # the agent's own `recordId`. The extraction_append records map below
+            # is in-process in production and stays full.
+            if (
+                _name == "record_read"
+                and isinstance(response, dict)
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _compact_record_read(response, str(args.get("recordId") or ""))
 
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
@@ -1689,7 +2029,7 @@ def create_mock_server(
             if _no_project_read and args.get("file") is not None:
                 response = {"ok": False, "reason": "no_project", "errors": [NO_PROJECT_MESSAGE_READ]}
             elif _no_project_read and "error" not in response:
-                response = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
+                response = _inline_image_transcribe(response)
             elif (
                 _name == "image_transcribe"
                 and _workspace is not None
@@ -1785,9 +2125,14 @@ def create_mock_server(
                         reordered.setdefault(_key, _value)
                     response = reordered
 
+            # The search advice, as production adds it: each key before `results`.
+            if _name == "record_search" and isinstance(response, dict) and "error" not in response:
+                for _advice_key, _advice in _search_advice(dict(args), response):
+                    response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
+
             # Production serializes surnameVariantHints immediately before
-            # `results`, after the pre-`results` notes above — placed last so
-            # the order matches.
+            # `results`, after the pre-`results` notes and the advice above —
+            # placed last so the order matches.
             if isinstance(response, dict) and SURNAME_VARIANT_HINTS_KEY in response:
                 response = _place_before_results(response, SURNAME_VARIANT_HINTS_KEY)
 
@@ -1936,7 +2281,7 @@ def _make_live_handler(
     if tool_name == "extraction_append":
         return _make_extraction_append_handler(workspace, call_log, manifest or {})
     if tool_name == "project_create":
-        return _make_project_create_handler(workspace, call_log, manifest or {}, place_predicated or [])
+        return _make_project_create_handler(workspace, call_log, manifest or {})
     if tool_name == "validate_research_schema":
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
@@ -1956,56 +2301,32 @@ def _make_live_handler(
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
-def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
-    """The paths a hosted store answers for, each with its `projectUrl`, when the test
-    serves a hosted `project_list` answer; None for every other test.
+def _hosted_store(manifest: dict[str, Any]) -> dict[str, dict[str, str | None]] | None:
+    """The paths a hosted store answers for, each with its `projectUrl` and `uploadUrl`
+    (either may be None), when the test serves a hosted `project_list` answer; None for
+    every other test.
 
     A hosted store has no folder: it is bound to the projects it lists, refuses any
     other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
-    `project_context` carries the bound project's link (`utils/project-links.ts`). The
-    file store this harness runs does neither, so a hosted test emulates both.
+    `project_context` carries the bound project's `uploadUrl` (`utils/project-links.ts`).
+    The file store this harness runs does neither, so a hosted test emulates both,
+    taking each link from the listed project. `projectUrl` is the harness's own:
+    production's `project_context` no longer returns one, and it is kept for the
+    research suite's hosted tests.
     """
-    paths: dict[str, str | None] = {}
+    paths: dict[str, dict[str, str | None]] = {}
     for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
         if not isinstance(listing, dict) or listing.get("mode") != "hosted":
             continue
         for project in listing.get("projects") or []:
             if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
-                paths[project["projectPath"]] = project.get("projectUrl")
+                paths[project["projectPath"]] = {
+                    "projectUrl": project.get("projectUrl"),
+                    "uploadUrl": project.get("uploadUrl"),
+                }
         if isinstance(listing.get("newProjectPath"), str):
-            paths.setdefault(listing["newProjectPath"], None)
+            paths.setdefault(listing["newProjectPath"], {"projectUrl": None, "uploadUrl": None})
     return paths or None
-
-
-def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str | None]:
-    """The place resolver's answers for one `project_create` call, from the test's
-    own `place_search` fixtures.
-
-    `project_create` standardizes every place the caller enters, and retries a
-    read's unresolved ones, through the anonymous Places API. The harness stays
-    offline, so the compiled resolver is given this table instead
-    (`__usePlaceTableForTests`): each place in the call's `tree` argument (a
-    staged read's places are not in it, so an unresolved one stays null), matched against
-    the fixtures with the same `matches` a `place_search` call is, answered with
-    the first result's `standardPlace`. A place no fixture matches resolves to
-    null, as an unknown place does in production.
-    """
-    tree = args.get("tree") if isinstance(args.get("tree"), dict) else {}
-    places: list[str] = []
-    for holder in [*(tree.get("persons") or []), *(tree.get("relationships") or [])]:
-        for fact in (holder.get("facts") if isinstance(holder, dict) else None) or []:
-            if isinstance(fact, dict) and isinstance(fact.get("place"), str) and fact["place"].strip():
-                places.append(fact["place"])
-    table: dict[str, str | None] = {}
-    for place in places:
-        hit = next(
-            (resp for (pred, resp, _src) in place_predicated if matches(pred, {"placeName": place})),
-            None,
-        )
-        results = (hit or {}).get("results") or []
-        first = results[0] if results and isinstance(results[0], dict) else {}
-        table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
-    return table
 
 
 def _timeline_place_tables(
@@ -2014,8 +2335,7 @@ def _timeline_place_tables(
     """`timeline_build`'s Places answers, from the test's own `place_search`
     fixtures: each assertion `place` matched as a `placeName` (the first
     result's `standardPlace`), and coordinates for every standard place a
-    fixture result names. `_place_table` cannot serve this — it reads places
-    from the call's `tree` argument, and this tool takes only a person id."""
+    fixture result names."""
     research_path = workspace / "research.json"
     try:
         research = json.loads(research_path.read_text(encoding="utf-8"))
@@ -2238,6 +2558,7 @@ def _make_live_append_handler(
     tool: str,
     module_file: str,
     export: str,
+    call_args: str = "input",
 ):
     """Build a live handler that runs a compiled research-writer tool.
 
@@ -2269,7 +2590,7 @@ def _make_live_append_handler(
                 f"import {{ {export} as run }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await run(input);"
+                f" const r = await run({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -2302,11 +2623,18 @@ def _make_live_append_handler(
     return handler
 
 
+#: `researchAppendFromCaller(input, loadCatalog)` with a null catalog loader, so
+#: the locality collection-count stamp (#4385) never contacts FamilySearch here —
+#: the `person_warnings` precedent (#1962).
+RESEARCH_APPEND_CALL_ARGS = "input, null"
+
+
 def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
     """The live handler for research_append."""
     return _make_live_append_handler(
         workspace, call_log,
         tool="research_append", module_file="research-append.js", export="researchAppendFromCaller",
+        call_args=RESEARCH_APPEND_CALL_ARGS,
     )
 
 
@@ -2419,7 +2747,7 @@ def _make_compiled_tool_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     place_table=None,
-    hosted: dict[str, str | None] | None = None,
+    hosted: dict[str, dict[str, str | None]] | None = None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -2516,9 +2844,14 @@ def _make_compiled_tool_handler(
                     "ok": False,
                     "errors": [f"{tool_name}: {e}"],
                 }
-            link = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
-            if tool_name == "project_context" and link and isinstance(response, dict) and response.get("objective"):
-                response = {**response, "projectUrl": link}
+            links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+            if tool_name == "project_context" and links and isinstance(response, dict):
+                if links["projectUrl"] and response.get("objective"):
+                    response = {**response, "projectUrl": links["projectUrl"]}
+                # Production spreads `uploadUrl` onto every answer that read the project,
+                # and returns an `ok: false` one before it.
+                if links["uploadUrl"] and response.get("ok") is True:
+                    response = {**response, "uploadUrl": links["uploadUrl"]}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",
@@ -2611,6 +2944,11 @@ def _make_extraction_append_handler(
                 # personId mode reads the person's attached records itself, as
                 # `ark:/61903/1:1:<id>`. Stage the fixtures for exactly those ids.
                 wanted += [f"ark:/61903/1:1:{b}" for b in _attached_record_ids(_ws, input_obj["personId"])]
+            if input_obj.get("attachWaitingPages") is True and input_obj.get("pageReadings") is not None:
+                # A page pass (#4286) re-reads a held record whose log entry keeps
+                # no index, to classify what its page says. Stage the records the
+                # readings name, by the id their assertions carry.
+                wanted += _page_reading_record_ids(_ws, input_obj["pageReadings"])
             for rid in wanted:
                 key = rid.strip()
                 bare = key.rsplit("1:1:", 1)[-1].rsplit("/", 1)[-1]
@@ -2671,6 +3009,30 @@ def _make_extraction_append_handler(
     return handler
 
 
+def _page_reading_record_ids(workspace: Path, page_readings: Any) -> list[str]:
+    """The record ids of the assertions a `pageReadings` call names, read from the
+    workspace's research.json. Unreadable input stages nothing: the tool refuses
+    it on its own terms."""
+    try:
+        research = json.loads((Path(workspace) / "research.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    record_of = {
+        a.get("id"): a.get("record_id")
+        for a in research.get("assertions") or []
+        if isinstance(a, dict) and isinstance(a.get("record_id"), str)
+    }
+    ids: list[str] = []
+    for entry in page_readings if isinstance(page_readings, list) else []:
+        for r in (entry or {}).get("readings") or [] if isinstance(entry, dict) else []:
+            if not isinstance(r, dict):
+                continue
+            rid = record_of.get(r.get("disputesAssertionId") or r.get("personAssertionId"))
+            if rid and rid not in ids:
+                ids.append(rid)
+    return ids
+
+
 def _mock_memory_kinds(read: dict[str, Any]) -> dict[str, str]:
     """Which of a canned read's sources are memories, and what kind, for
     `project_create`'s memory sources (#3384).
@@ -2696,7 +3058,6 @@ def _make_project_create_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     manifest: dict[str, Any],
-    place_predicated: list,
 ):
     """The live `project_create`, reading the person from the test's
     `person_read` fixtures instead of FamilySearch (#3384).
@@ -2707,7 +3068,7 @@ def _make_project_create_handler(
     subject, as `readPerson` guarantees), with `_mock_memory_kinds`. Every other
     step (the refusals, the build, the profile, the memory sources, the summary)
     is the compiled production code. An id with no fixture is a failed read,
-    never a request. The test's place table is installed, so no place lookup
+    never a request. An empty place table is installed, so no place lookup
     reaches the network. The call-log entry records the canned read as
     `served_read`, so a validator can grade what reached the project against
     what the read held. Principal is `LOCAL`: the harness is one user per process.
@@ -2735,7 +3096,7 @@ def _make_project_create_handler(
                     served = {"fixture": hit[1], "response": hit[0]}
             payload = {
                 "input": input_obj,
-                "placeTable": _place_table(place_predicated, args),
+                "placeTable": {},
                 "read": read,
                 "kinds": _mock_memory_kinds(read) if isinstance(read, dict) else {},
             }

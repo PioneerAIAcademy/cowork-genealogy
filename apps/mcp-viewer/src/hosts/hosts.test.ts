@@ -7,7 +7,7 @@ import { createArtifactHost, type ClaudeLike, type McpLike } from './artifact-ho
 import { chooseHost, readBootFacts } from './choose-host'
 import { ToolCallError } from './host'
 import { createTabHost, type TabHostDeps } from './tab-host'
-import { headline } from '../report'
+import { headline } from '../ui/status'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -126,6 +126,19 @@ describe('the tab host', () => {
     const reply = async () => jsonResponse({})
     expect(tabHost(reply).host.input).toEqual({ show: 'latest' })
     expect(tabHost(reply, '?show=nonsense').host.input).toEqual({ show: 'latest' })
+  })
+
+  it('the tab carries the case file page and the item to open', () => {
+    const reply = async () => jsonResponse({})
+    const search = '?show=file&projectPath=mogan&page=log&logId=log_002&sourceId=src_001&personId=I1&other=x'
+    expect(tabHost(reply, search).host.input).toEqual({
+      show: 'file',
+      projectPath: 'mogan',
+      page: 'log',
+      logId: 'log_002',
+      sourceId: 'src_001',
+      personId: 'I1'
+    })
   })
 
   it('offers both modes as a local toggle and opens links with window.open', async () => {

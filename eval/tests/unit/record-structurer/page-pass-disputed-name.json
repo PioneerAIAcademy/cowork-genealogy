@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_record_structurer_010",
+    "skill": "record-structurer",
+    "name": "Page pass: a page that reads a name differently disputes that index assertion",
+    "type": "positive",
+    "description": "The waiting 1860 census page reads Patrick's surname as Flinn, where the index (a_008) reads Patrick Flynn. The agent sends one reading that disputes a_008 with the page's name, sends nothing for the age the page agrees on, and does not add Michael, whom the index does not hold.",
+    "tags": [
+      "page-pass",
+      "census",
+      "disputed-reading"
+    ]
+  },
+  "input": {
+    "delegation": "Run the page pass for the pages waiting in this project.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-read-page-disputes"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-hint-1860-census-mabc"
+  ],
+  "judge_context": [
+    "The agent calls project_context, reads the waiting page with sidecar_read, and makes one extraction_append call with attachWaitingPages: true and pageReadings for src_003.",
+    "Exactly one reading disputes a_008, with type name and the page's reading 'Patrick Flinn'. The agent may omit the [?]; code adds it. It sends no role and no classification.",
+    "The age agrees with the index and is not sent. Michael Flynn is not in the index and is not sent: both are correct, not missed facts.",
+    "The reply is the tool's summary verbatim, which names the index reading and the page's."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  }
+}

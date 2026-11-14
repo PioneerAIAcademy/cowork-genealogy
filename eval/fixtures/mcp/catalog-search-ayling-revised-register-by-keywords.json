@@ -1,0 +1,966 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search by keywords naming Ayling (captured as keywords \"Ayling revised register\"): three hits, the Ayling item second, behind olib:1880942 'New Hampshire, Civil War records, 1861-1866', a state-archives image collection whose film notes carry the same register again as image groups 5834045 (introduction to p. 433), 5834046 (p. 434-881), 5834047 (p. 882-1248) and 5834048 (index, p. 1249-1347); its other film notes are other Civil War records. Captured live 2026-11-09 with catalog_search (issue #4135). Item koha:186990 is Augustus D. Ayling's 1895 register, which covers the War of the Rebellion, 1861-1866, not the Revolution; its three film notes carry imageGroupNumbers 7561840, 8650414 and 7499145. Order it before catalog-search-empty-keywords, catalog-search-empty-title and catalog-search-empty: the first matching fixture wins.",
+  "args": {
+    "keywords": "~ayling"
+  },
+  "response": {
+    "totalHits": 3,
+    "returned": 3,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "olib:1880942",
+        "title": "New Hampshire, Civil War records, 1861-1866",
+        "repositoryCalls": [
+          "Online",
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Digital images of originals housed at the Division of Archives and Records Management, Concord, New Hampshire."
+        ],
+        "subjects": [
+          "United States, New Hampshire - Military history - Civil War, 1861-1865"
+        ],
+        "filmNotes": [
+          {
+            "imageGroupNumber": "5833203",
+            "text": "Military records civil war, recruiting station records Alton-Nashua, 1861"
+          },
+          {
+            "imageGroupNumber": "5833204",
+            "text": "Military records civil war, recruiting station records Nashua-Rollinsford, 1861-1862"
+          },
+          {
+            "imageGroupNumber": "5833205",
+            "text": "Military records civil war, recruiting station records Rummey-misc. undated, 1861-1862"
+          },
+          {
+            "imageGroupNumber": "5833243",
+            "text": "Military records civil war, State bounty to volunteers v. 1, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833244",
+            "text": "Military records civil war, State bounty to volunteers v. 2, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833245",
+            "text": "Military records civil war, State bounty to volunteers v. 3, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833246",
+            "text": "Military records civil war, State bounty to volunteers v. 4, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833247",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 1], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833248",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 2], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833249",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 3], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833250",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 4], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833251",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 5], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833252",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 6], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833253",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 7], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833254",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 8], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833395",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 9], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833396",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 10], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833397",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 11], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833398",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 12], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833399",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 13], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833400",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 14], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833401",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 15], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833402",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 16], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833547",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 17], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833548",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 18], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833549",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 19], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833550",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 20], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833551",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 21], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833552",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 22], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833553",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 23], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833554",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 24], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833555",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 25], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833666",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 26], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833667",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 27], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833668",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 28], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833669",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 29], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833670",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 30], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833671",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 31], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833672",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 32], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833673",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 33], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833674",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 34], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833675",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 35], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833676",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 36], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833919",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 37], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833920",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 38], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833921",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 39], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833922",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 40], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833923",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 41], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833924",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 42], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833925",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 43], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833926",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 44], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833927",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 45], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833928",
+            "text": "Military records civil war, muster in/out/descriptive rolls [no. 46], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833929",
+            "text": "Military records civil war, casualties and returns [no. 1], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833930",
+            "text": "Military records civil war, casualties and returns [no. 2], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834037",
+            "text": "Military records civil war, casualties and returns [no. 3], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834038",
+            "text": "Military records civil war, casualties and returns [no. 4], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834039",
+            "text": "Military records civil war, casualties and returns [no. 5], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834040",
+            "text": "Military records civil war, casualties and returns [no. 6], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834041",
+            "text": "Military records civil war, casualties and returns [no. 7], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834042",
+            "text": "Military records civil war, casualties and returns [no. 8], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834043",
+            "text": "Military records civil war, casualties and returns [no. 9], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834044",
+            "text": "Military records civil war, casualties and returns [no. 10], 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834045",
+            "text": "Military records civil war, Ayling, A D revised register soldiers/sailors introduction to p. 433, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834046",
+            "text": "Military records civil war, Ayling, A D revised register soldiers/sailors p. 434-881, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834047",
+            "text": "Military records civil war, Ayling, A D revised register soldiers/sailors p. 882-1248, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834048",
+            "text": "Military records civil war, Ayling, A D revised register soldiers/sailors index of names p. 1249-1347, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834143",
+            "text": "Military records civil war, enlistment papers Adjutant Generals index, A-Y, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834144",
+            "text": "Military records civil war, enlistment papers 1st regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834145",
+            "text": "Military records civil war, enlistment papers 2nd regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834146",
+            "text": "Military records civil war, enlistment papers 2nd regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834147",
+            "text": "Military records civil war, enlistment papers 2nd-3rd regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834148",
+            "text": "Military records civil war, enlistment papers 3rd regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834149",
+            "text": "Military records civil war, enlistment papers 3rd regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834150",
+            "text": "Military records civil war, enlistment papers 3rd regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834151",
+            "text": "Military records civil war, enlistment papers 3rd-4th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834152",
+            "text": "Military records civil war, enlistment papers 4th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834153",
+            "text": "Military records civil war, enlistment papers 4th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834154",
+            "text": "Military records civil war, enlistment papers 4th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834155",
+            "text": "Military records civil war, enlistment papers 4th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834156",
+            "text": "Military records civil war, enlistment papers 4th-5th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834157",
+            "text": "Military records civil war, enlistment papers 5th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834158",
+            "text": "Military records civil war, enlistment papers 5th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834159",
+            "text": "Military records civil war, enlistment papers 5th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834303",
+            "text": "Military records civil war, enlistment papers 5th-6th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834304",
+            "text": "Military records civil war, enlistment papers 6th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834305",
+            "text": "Military records civil war, enlistment papers 6th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834306",
+            "text": "Military records civil war, enlistment papers 6th-7th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834307",
+            "text": "Military records civil war, enlistment papers 8th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834308",
+            "text": "Military records civil war, enlistment papers 8th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834309",
+            "text": "Military records civil war, enlistment papers 8th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834310",
+            "text": "Military records civil war, enlistment papers 8th-9th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834311",
+            "text": "Military records civil war, enlistment papers 9th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834312",
+            "text": "Military records civil war, enlistment papers 9th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834313",
+            "text": "Military records civil war, enlistment papers 9th-10th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834314",
+            "text": "Military records civil war, enlistment papers 10th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834315",
+            "text": "Military records civil war, enlistment papers 10th-11th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834316",
+            "text": "Military records civil war, enlistment papers 11th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834317",
+            "text": "Military records civil war, enlistment papers 11th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834318",
+            "text": "Military records civil war, enlistment papers 11th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834319",
+            "text": "Military records civil war, enlistment papers 11th-12th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834320",
+            "text": "Military records civil war, enlistment papers 12th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834463",
+            "text": "Military records civil war, enlistment papers 12th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834464",
+            "text": "Military records civil war, enlistment papers 12th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834465",
+            "text": "Military records civil war, enlistment papers 12th-13th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834466",
+            "text": "Military records civil war, enlistment papers 13th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834467",
+            "text": "Military records civil war, enlistment papers 13th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834468",
+            "text": "Military records civil war, enlistment papers 13th-14th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834469",
+            "text": "Military records civil war, enlistment papers 14th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834470",
+            "text": "Military records civil war, enlistment papers 14th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834471",
+            "text": "Military records civil war, enlistment papers 14th-15th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834472",
+            "text": "Military records civil war, enlistment papers 15th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834473",
+            "text": "Military records civil war, enlistment papers 15th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834474",
+            "text": "Military records civil war, enlistment papers 15th-16th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834475",
+            "text": "Military records civil war, enlistment papers 16th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834476",
+            "text": "Military records civil war, enlistment papers 16th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834477",
+            "text": "Military records civil war, enlistment papers 16th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834478",
+            "text": "Military records civil war, enlistment papers 16th-17th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834748",
+            "text": "Military records civil war, enlistment papers US sharpshooters & 1st light battery, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834749",
+            "text": "Military records civil war, enlistment papers US sharpshooters & 1st light battery, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834750",
+            "text": "Military records civil war, enlistment papers heavy artillery, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834751",
+            "text": "Military records civil war, enlistment papers heavy artillery & New England cavalry, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834752",
+            "text": "Military records civil war, enlistment papers NE cavalry & 1st cavalry & misc. 3 yrs, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834753",
+            "text": "Military records civil war, enlistment papers misc. 3 yrs, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834754",
+            "text": "Military records civil war, enlistment papers misc. 3 yrs & misc. 3 months, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834755",
+            "text": "Military records civil war, enlistment papers misc. 3 months, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834756",
+            "text": "Military records civil war, enlistment papers misc. 3 months, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834757",
+            "text": "Military records civil war, enlistment papers misc. 3 months, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834758",
+            "text": "Military records civil war, enlistment papers misc. 3 months, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834759",
+            "text": "Military records civil war, enlistment papers misc. 3 months, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834760",
+            "text": "Military records civil war, enlistment papers misc. 3 months, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834761",
+            "text": "Military records civil war, enlistment papers misc. 3 months-3 years, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834762",
+            "text": "Military records civil war, enlistment papers misc. 3 months-3 years, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834763",
+            "text": "Military records civil war, volunteer enlistment papers A-Y, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834764",
+            "text": "Military records civil war, oaths of officers, surgeons, drafting commisioners, 1st, 2nd, 3rd, 4th infantry regiments, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834822",
+            "text": "Military records civil war, officers oaths 4th, 5th, 6th, 7th, 8th infantry regiments, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834823",
+            "text": "Military records civil war, officers oaths 8th, 9th, 10th, 11th infantry regiment, Light. battery 12th, 13th infantry regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834824",
+            "text": "Military records civil war, officers oaths 13th, 14th, 18th, 1st heavy artillery, 1st cavalry sharpshooters, NH militia adjutant generals department, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834825",
+            "text": "Military records civil war, officers oaths, NH military adjutant generals department, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834826",
+            "text": "Military records civil war, muster in by town, A-L, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834827",
+            "text": "Military records civil war, muster in by town, L-W, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834828",
+            "text": "Military records civil war, volunteers muster descriptive rolls district 1-2, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834829",
+            "text": "Military records civil war, volunteers muster descriptive rolls district 2, 3, re-enlistments, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834830",
+            "text": "Military records civil war, muster out, sharpshooters, 11th regiment, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834831",
+            "text": "Military records civil war, deaths and officers discharges, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834871",
+            "text": "Military records civil war, transfers and discharges, 1863-1866"
+          },
+          {
+            "imageGroupNumber": "5834872",
+            "text": "Military records civil war, court martials, 1863-1866"
+          },
+          {
+            "imageGroupNumber": "5834873",
+            "text": "Military records civil war, deaths & discharges, amended rolls, 1863-1866"
+          },
+          {
+            "imageGroupNumber": "5834874",
+            "text": "Military records civil war, muster out rolls, regiments 1st-6th, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834875",
+            "text": "Military records civil war, muster out rolls, regiments 7th-12th, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834876",
+            "text": "Military records civil war, muster out rolls, regiments 13th-18th cavalry, artillery, misc, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834885",
+            "text": "Military records civil war, regimental histories, regiments 1st-6th, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834886",
+            "text": "Military records civil war, regimental histories, regiments 7th-15th, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834887",
+            "text": "Military records civil war, regimental histories, 16th-18th, cavalry, artillery, US sharpshooters, misc. small units, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834888",
+            "text": "Military records civil war, list of persons receiving state aid (pensions), Acworth to Gilmanton, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834889",
+            "text": "Military records civil war, list of persons receiving state aid (pensions), Upper Gilmanton to New London, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834956",
+            "text": "Military records civil war, list of persons receiving state aid (pensions), Newington to Wilmot, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834957",
+            "text": "Military records civil war, list of persons receiving state aid (pensions), Winchester to Towns Unknown, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833031",
+            "text": "Miltary, civil war, service cards, Abanton, Ben-Anderson, Charles, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833032",
+            "text": "Miltary, civil war, service cards, Anderson, Charles-Baker, Amos D, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833033",
+            "text": "Miltary, civil war, service cards, Baker, Augustus-Beal, Andrew J, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833034",
+            "text": "Miltary, civil war, service cards, Beal, Freeman G-Blackey, Elisha G, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833035",
+            "text": "Miltary, civil war, service cards, Blackford, Samuel-Boynton, Royal, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833206",
+            "text": "Miltary civil war service cards, Boyse, John-Brown, George L, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833207",
+            "text": "Miltary civil war service cards, Brown, George M-Burke, Peter, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833208",
+            "text": "Miltary civil war service cards, Burke, Theodore-Campbell, Charles, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833209",
+            "text": "Miltary civil war service cards, Campbell, Charles K (aka Ellis, George A)-Caverly, James R, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833210",
+            "text": "Miltary civil war service cards, Caverly, Mason-Clark, Edward C, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833211",
+            "text": "Miltary civil war service cards, Clark, Edward H-Colburn, Edward, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833212",
+            "text": "Miltary civil war service cards, Colburn, Edward S-Coombs, George P, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833213",
+            "text": "Miltary civil war service cards, Coombs, George P-Cudworth, Edward J, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833214",
+            "text": "Miltary civil war service cards, Cudworth, Eugene-Davis, Franklin F, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833334",
+            "text": "Miltary civil war service cards, Davis, Frederick-Dickey, John, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833335",
+            "text": "Miltary civil war service cards, Dickey, John F-Doyle, John, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833336",
+            "text": "Miltary civil war service cards, Doyle, John-Eastman, Samuel, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833337",
+            "text": "Miltary civil war service cards, Eastman, Samuel C-Estey, Edgar W, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833338",
+            "text": "Miltary civil war service cards, Estey, Henry H-Fisher, James H, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833339",
+            "text": "Miltary civil war service cards, Fisher, James H-Foster, James, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833340",
+            "text": "Miltary civil war service cards, Foster, James F-Gardner, Charles S, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833341",
+            "text": "Miltary civil war service cards, Gardner, Charles N-Glover, Ivory H, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833342",
+            "text": "Miltary civil war service cards, Glover, John-Gray, Nathaniel M, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833343",
+            "text": "Miltary civil war service cards, Gray, Nathaniel W-Haley, Patrick, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833344",
+            "text": "Miltary civil war service cards, Haley, Thomas-Harpell, John, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833613",
+            "text": "Miltary civil war service cards, Harper, George H-Heath, George E, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833614",
+            "text": "Miltary civil war service cards, Heath, George F-Huff, Waldemar, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833615",
+            "text": "Miltary civil war service cards, Hoffman, Beletson-Hoyt, Levi, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833616",
+            "text": "Miltary civil war service cards, Hoyt, Levi F-Janvrin, Joshua, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833617",
+            "text": "Miltary civil war service cards, Janvrin, William T-Jones, Samuel J, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833618",
+            "text": "Miltary civil war service cards, Jones, Solomon-Kent, Alonzo W, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833619",
+            "text": "Miltary civil war service cards, Kent, Alonzo W-Laird, Wm L, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833677",
+            "text": "Miltary civil war service cards, Lake, Benjamin J-Legg, Lucian B Jr, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833678",
+            "text": "Miltary civil war service cards, Leggacy, Tenans-Lovejoy, Charles W, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833679",
+            "text": "Miltary civil war service cards, Lovejoy, Charles W-Marsh, Charles E, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833680",
+            "text": "Miltary civil war service cards, Marsh, Charles E-McCormick, James, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833681",
+            "text": "Miltary civil war service cards, McCormick, James-MeIendy, James A, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833762",
+            "text": "Miltary civil war service cards, MeIendy, John B-Mooney, James, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833763",
+            "text": "Miltary civil war service cards, Mooney, James-Mudgett, George W, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833764",
+            "text": "Miltary civil war service cards, Mudgett, Isaac N-Nickson, George W, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833765",
+            "text": "Miltary civil war service cards, Nickson, Henry H-Owens, Patrick, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833952",
+            "text": "Miltary civil war service cards, Owens, Patrick-Percival, Jeremiah B, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833953",
+            "text": "Miltary civil war service cards, Percival, William H-Plastridge, Charles B, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833954",
+            "text": "Miltary civil war service cards, Platt, James H-Quinn, Samuel S, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833955",
+            "text": "Miltary civil war service cards, Quinn, Samuel S-Richardson, George F, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833956",
+            "text": "Miltary civil war service cards, Richardson, George H-Rogers, Daniel A, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833957",
+            "text": "Miltary civil war service cards, Rogers, Dennis-Sanborn, George O, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833958",
+            "text": "Miltary civil war service cards, Sanborn, George W-Seward, Joel D, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833959",
+            "text": "Miltary civil war service cards, Seward, Orrin G-Small, James R, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5833960",
+            "text": "Miltary civil war service cards, Small, John-Smith, Newton C, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834049",
+            "text": "Miltary civil war service cards, Smith, Noah-Stephenson, Charles E, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834050",
+            "text": "Miltary civil war service cards, Stephenson, John H-Sullivan, Peter, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834051",
+            "text": "Miltary civil war service cards, Sullivan, Peter-Thompson, Chas, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834052",
+            "text": "Miltary civil war service cards, Thompson, Chas H-Trimble, Joseph, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834053",
+            "text": "Miltary civil war service cards, Trimble, Robert-Walker, David, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834054",
+            "text": "Miltary civil war service cards, Walker, Edward-Webster, Jeremiah B, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834081",
+            "text": "Miltary civil war service cards, Webster, John-White, C A, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834082",
+            "text": "Miltary civil war service cards, White, Charles A-Williams, George, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834083",
+            "text": "Miltary civil war service cards, Williams, George-Witham, John W, 1861-1866"
+          },
+          {
+            "imageGroupNumber": "5834084",
+            "text": "Miltary civil war service cards, Witham, Joseph-Van Ness, Ira W, 1861-1866"
+          }
+        ]
+      },
+      {
+        "id": "koha:186990",
+        "title": "Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866/ prepared and published by authority of the Legislature, by Augustus D. Ayling, Adjutant General",
+        "creator": "Ayling, Augustus D., 1840-1918",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Granite Mountain Record Vault",
+          "HSB (Headquarters Storage Building)",
+          "Online"
+        ],
+        "hydrated": true,
+        "digitalLibraryUrl": "http://www.familysearch.org/library/books/idurl/1/283203",
+        "notes": [
+          "Also available on microfilm and digital images.",
+          "Includes index of names."
+        ],
+        "subjects": [
+          "United States, New Hampshire - Military records - Civil War, 1861-1865"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1697872",
+            "imageGroupNumber": "7561840",
+            "text": "Also on microfilm. Salt Lake City : Filmed by the Genealogical Society of Utah, 1993. on 1 microfilm reel ; 35 mm."
+          },
+          {
+            "filmNumber": "2317643",
+            "imageGroupNumber": "8650414",
+            "text": "Another filming, 2002"
+          },
+          {
+            "filmNumber": "2319539",
+            "imageGroupNumber": "7499145",
+            "text": "Another filming (cont.), 2002"
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:1216109",
+        "title": "New Hampshire military records, 1623-1866",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Title from title screen.",
+          "This CD-ROM \"contains materials from several previously published but difficult-to-find books: The Military History of The State of New Hampshire, From Its Settlement in 1623, to the Rebellion, in 1861 by C.E. Potter ; Rolls and Documents Relating to the Revolutionary War, Volumes 1-4, by Isaac W. Hammond, A.M. (volumes 14-17 of the New Hampshire State Papers series); and Revised Register of the Soldiers and Sailors of New Hampshire in the War of the Rebellion 1861-1866 by Augustus D. Ayling, Adjutant General of New Hampshire. These nineteenth-century works have much detailed information on the militia and other military service of individuals who served from the colonial wars through the Civil War.\"--User's Guide.",
+          "System requirements: Pentium I or higher processor: Windows 95, 98, NT 4.0 or 2000 operating system; 28 mb hard disk space minimum (32MB recommended); 32MB RAM minimum; VGA or higher resolution video adapter for monitor (SVGA monitor 256 color or higher recommended.",
+          "If you are using a computer in the Family History Library in Salt Lake City, you may use this database by clicking here. (run:C:/Locks/2527.bat)"
+        ],
+        "subjects": [
+          "United States, New Hampshire - Military records - Revolution, 1775-1783",
+          "United States, New Hampshire - Military records",
+          "United States, New Hampshire - Military records - Colonial period, ca. 1600-1775",
+          "United States, New Hampshire - Military records - Civil War, 1861-1865"
+        ],
+        "filmNotes": [],
+        "availableOnline": true
+      }
+    ]
+  }
+}

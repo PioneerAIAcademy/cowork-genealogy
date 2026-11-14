@@ -47,6 +47,24 @@
         "file": "packages/engine/mcp-server/src/tools/research-log-append.ts",
         "function": "filteredNilRetryInvariants"
       }
+    },
+    {
+      "name": "pinned-nil-no-unpinned-retry",
+      "status": "enforcing",
+      "case_file": "pinned-nil-no-unpinned-retry.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-log-append.ts",
+        "function": "pinnedNilRetryInvariants"
+      }
+    },
+    {
+      "name": "plan-item-void-search",
+      "status": "enforcing",
+      "case_file": "plan-item-void-search.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "planItemVoidSearchInvariants"
+      }
     }
   ],
   "owes_case_file": [

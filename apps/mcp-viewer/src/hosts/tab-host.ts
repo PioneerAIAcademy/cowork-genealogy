@@ -10,11 +10,12 @@ export interface TabHostDeps {
 function inputFromQuery(search: string): ToolInput {
   const query = new URLSearchParams(search)
   const show = query.get('show')
-  const projectPath = query.get('projectPath')
-  return {
-    show: SHOW_VALUES.includes(show as Show) ? show : 'latest',
-    ...(projectPath ? { projectPath } : {})
+  const input: ToolInput = { show: SHOW_VALUES.includes(show as Show) ? show : 'latest' }
+  for (const key of ['projectPath', 'page', 'questionId', 'logId', 'sourceId', 'personId', 'planItemId']) {
+    const value = query.get(key)
+    if (value) input[key] = value
   }
+  return input
 }
 
 interface RpcReply {

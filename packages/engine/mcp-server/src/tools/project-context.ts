@@ -4,8 +4,9 @@
 // tree_edit): where those removed "re-serialize large JSON to write," this
 // removes "re-read large JSON to think." One call returns the judgment-
 // relevant projection of research.json + tree.gedcomx.json — open questions,
-// tree persons with their cited S ids, sources with their record ids — so a
-// fresh-context agent (the record-extractor) never opens either file.
+// tree persons with their one-hop family, sources with their record ids — so a
+// fresh-context agent never opens either file. A key whose value would be null,
+// "" or [] is left out (`omitEmpty`).
 // Spec: docs/specs/project-context-tool-spec.md.
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
@@ -15,19 +16,20 @@ import {
   EXTERNAL_COLLECTIONS_SECTION,
   disagreementsInScope,
 } from "./research-query.js";
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson, NoProjectError, NO_PROJECT_MESSAGE_CONTEXT } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
-import { collectSourceRefs } from "../utils/tree-person.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
 import { CLAIM_KINDS } from "../validation/validator.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
 import { waitingPages, type WaitingPage } from "../utils/waiting-pages.js";
 import { projectLinks } from "../utils/project-links.js";
+import { connectorSignInUrl } from "../auth/config.js";
+import { connectorSession } from "../utils/session-check.js";
 import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
 
@@ -37,59 +39,80 @@ export interface ProjectContextInput {
   projectPath: string;
 }
 
+/** `row` without the keys whose value is null, "" or []: in this answer an
+ *  absent key means null or empty. `keep` names a key that stays even then. */
+function omitEmpty<T extends object>(row: T, keep: readonly string[] = []): T {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    const empty = value === null || value === "" || (Array.isArray(value) && value.length === 0);
+    if (!empty || keep.includes(key)) out[key] = value;
+  }
+  return out as T;
+}
+
 export interface ProjectContextQuestion {
   id: string;
-  question: string;
+  question?: string;
 }
 
 export interface ProjectContextPerson {
   id: string;
-  name: string | null;
-  gender: string | null;
-  sourceRefs: string[];
-  spouseIds: string[];
-  parentIds: string[];
-  childIds: string[];
-  diedByYear: number | null;
+  name?: string;
+  gender?: string;
+  spouseIds?: string[];
+  parentIds?: string[];
+  childIds?: string[];
+  diedByYear?: number;
 }
 
 export interface ProjectContextSource {
   id: string;
-  repository: string | null;
-  gedcomxSourceDescriptionId: string | null;
-  recordIds: string[];
+  repository?: string;
+  gedcomxSourceDescriptionId?: string;
+  recordIds?: string[];
   assertionCount: number;
 }
 
 export interface ProjectContextLocality {
   id: string;
-  place: string;
-  forPlace: string | null;
-  timePeriod: string | null;
-  jurisdictions: { name: string; dateRange: string | null }[];
-  /** personCount/recordCount: the counts locality-guide copied from collections_search (null when absent). */
-  collections: {
+  place?: string;
+  forPlace?: string;
+  timePeriod?: string;
+  jurisdictions?: { name: string; dateRange?: string }[];
+  /** personCount/recordCount: FamilySearch's catalog counts, which research_append stamps on a caller's write (null when unknown). */
+  collections?: {
     id: string;
-    title: string;
-    dateRange: string | null;
-    personCount: number | null;
-    recordCount: number | null;
+    title?: string;
+    dateRange?: string;
+    personCount?: number;
+    recordCount?: number;
   }[];
-  quirks: string[];
-  /** Wiki sections actually fetched (pages_read with found:true) — read-coverage. */
-  pagesRead: string[];
+  quirks?: string[];
 }
 
 /** An external-site URL handed to the user and not yet answered (spec §2.3). */
-export type ProjectContextAwaitingUser = AwaitingHandOff;
+export type ProjectContextAwaitingUser = Omit<AwaitingHandOff, "planItemId" | "performed"> & {
+  planItemId?: string;
+  performed?: string;
+};
 
 /** A film whose 20-image browse cap is spent in this project (image-transcribe spec §5.8). */
 export interface ProjectContextExhaustedImageGroup {
   imageGroup: string;
   imagesRead: number;
   /** Open plan items with an `image_search` log entry on this film. */
-  planItemIds: string[];
+  planItemIds?: string[];
 }
+
+/** One `questionStatuses` row. `nextStep` stays when null: null there means
+ *  nothing is outstanding. */
+export type ProjectContextQuestionStatus = Pick<QuestionStatus, "id" | "state" | "nextStep"> & {
+  question?: string;
+  openConflictIds?: string[];
+  storedStatus?: string;
+  unregisteredDisagreements?: QuestionStatus["unregisteredDisagreements"];
+  competingParentSets?: QuestionStatus["competingParentSets"];
+};
 
 /** Each exhausted film with the open plan items whose `image_search` log
  *  entries browsed it. Only `image_search` entries: that is what search-images
@@ -151,10 +174,11 @@ async function projectUploads(projectPath: string): Promise<ProjectContextUpload
     .map((e) => ({ name: e.name, uploaded: new Date(e.mtimeMs).toISOString(), hasText: names.has(`${e.name}.txt`) }));
 }
 
-export interface ProjectContextCollectionCounts {
-  total: number;
-  byRecordType: Record<string, number>;
-}
+/** A place's stored counts, or `{ tooLarge: true }` for a place external_links_search
+ *  refused as too large to list: looked up, but its collections are unknown, never 0. */
+export type ProjectContextCollectionCounts =
+  | { total: number; byRecordType: Record<string, number> }
+  | { tooLarge: true };
 
 /** Counts from the stored lists; `undefined` when there is nothing to report. Never
  *  throws: a missing or unreadable file must not fail the whole projection. */
@@ -170,6 +194,10 @@ async function externalCollectionCounts(
   if (!doc) return undefined;
   const out: Record<string, ProjectContextCollectionCounts> = {};
   for (const place of Object.keys(doc.places).sort()) {
+    if (doc.places[place]?.too_large === true) {
+      out[place] = { tooLarge: true };
+      continue;
+    }
     const rows = Array.isArray(doc.places[place]?.rows) ? doc.places[place].rows : [];
     const byRecordType: Record<string, number> = {};
     for (const row of rows) {
@@ -189,29 +217,29 @@ export type ProjectContextResult =
       ok: true;
       /** The engine build (`<base>+<date>.<sha>[.dirty]` or `<base>+dev`) — on every branch, #2126. */
       buildId: string;
-      projectStatus: string | null;
-      /** research.project.objective verbatim; null when absent. No other tool returns it (#3026). */
-      objective: string | null;
-      /** research.project.subject_person_ids verbatim (strings only); [] when absent. The
+      projectStatus?: string;
+      /** research.project.objective verbatim. No other tool returns it (#3026). */
+      objective?: string;
+      /** research.project.subject_person_ids verbatim (strings only). The
        *  router has no other way to see who the research is about. */
-      subjectPersonIds: string[];
-      /** research.researcher_profile.narration_guidance verbatim; null when absent. Every
+      subjectPersonIds?: string[];
+      /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
-      narrationGuidance: string | null;
-      /** research.researcher_profile.subscriptions, strings only; [] when absent. */
-      subscriptions: string[];
-      openQuestions: ProjectContextQuestion[];
+      narrationGuidance?: string;
+      /** research.researcher_profile.subscriptions, strings only. */
+      subscriptions?: string[];
+      openQuestions?: ProjectContextQuestion[];
       /** Advisory per-question state and next step, resolved questions included,
        *  each with its text truncated as in openQuestions. Nothing gates on it. */
-      questionStatuses: (QuestionStatus & { question: string })[];
-      persons: ProjectContextPerson[];
-      sources: ProjectContextSource[];
-      localities: ProjectContextLocality[];
+      questionStatuses?: ProjectContextQuestionStatus[];
+      persons?: ProjectContextPerson[];
+      sources?: ProjectContextSource[];
+      localities?: ProjectContextLocality[];
       /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
-      awaitingUser: ProjectContextAwaitingUser[];
+      awaitingUser?: ProjectContextAwaitingUser[];
       /** Films whose browse cap is spent in this project; nothing resets it. */
-      exhaustedImageGroups: ProjectContextExhaustedImageGroup[];
-      /** Read pages of held records not yet on their source. Absent when none. */
+      exhaustedImageGroups?: ProjectContextExhaustedImageGroup[];
+      /** Read pages of held records not yet on their source. */
       waitingPages?: WaitingPage[];
       /** The proof_summaries claim kinds this engine accepts. A body that writes a
        *  kind checks it is listed, so a newer body on an older engine keeps
@@ -219,8 +247,8 @@ export type ProjectContextResult =
       claimKinds: string[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
-       *  rows with research_query({section: "external_collections"}). Absent when no
-       *  list is stored or the file cannot be read. */
+       *  rows with research_query({section: "external_collections"}). Absent also when
+       *  the file cannot be read. */
       externalCollections?: Record<string, ProjectContextCollectionCounts>;
       /** Entries per research.json section research_query serves, matching that
        *  query's unfiltered `count`: 0 for an absent optional section, null for a
@@ -231,10 +259,13 @@ export type ProjectContextResult =
        *  `conflicts` section reports beside its items — so `conflicts: 0` alone
        *  does not mean that query would come back empty. */
       unregisteredDisagreementCount: number;
-      /** The files the user uploaded through the web tier. Absent when there are none. */
+      /** The files the user uploaded through the web tier. */
       uploads?: ProjectContextUpload[];
       /** The project's upload page, when uploads are on. */
       uploadUrl?: string;
+      /** The web tier's FamilySearch sign-in page, only for a connector caller
+       *  whose FamilySearch session has ended. */
+      signInUrl?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -270,7 +301,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     // The other READ issue #1695 calls out: a skill that looks at project state
     // before answering must not surface a path error to a user who simply is
     // not in a project.
-    if (e instanceof NoProjectError) return { ...noProjectResult("read"), buildId };
+    if (e instanceof NoProjectError) {
+      return { ok: false, reason: "no_project" as const, errors: [NO_PROJECT_MESSAGE_CONTEXT], buildId };
+    }
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)], buildId };
   }
 
@@ -281,7 +314,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   for (const q of Array.isArray(research?.questions) ? research.questions : []) {
     if (!q || typeof q !== "object" || typeof q.id !== "string") continue;
     if (q.status === "resolved" || q.status === "superseded") continue;
-    openQuestions.push({ id: q.id, question: truncateQuestion(typeof q.question === "string" ? q.question : "") });
+    openQuestions.push(omitEmpty({ id: q.id, question: truncateQuestion(typeof q.question === "string" ? q.question : "") }));
   }
 
   const family = familyIndex(tree);
@@ -289,16 +322,17 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
     if (!p || typeof p !== "object" || typeof p.id !== "string") continue;
     const f = family.get(p.id);
-    persons.push({
-      id: p.id,
-      name: preferredDisplayName(p),
-      gender: typeof p.gender === "string" ? p.gender : null,
-      sourceRefs: collectSourceRefs(p),
-      spouseIds: f ? [...f.spouseIds] : [],
-      parentIds: f ? [...f.parentIds] : [],
-      childIds: f ? [...f.childIds] : [],
-      diedByYear: diedByYear(p),
-    });
+    persons.push(
+      omitEmpty({
+        id: p.id,
+        name: preferredDisplayName(p),
+        gender: typeof p.gender === "string" ? p.gender : null,
+        spouseIds: f ? [...f.spouseIds] : [],
+        parentIds: f ? [...f.parentIds] : [],
+        childIds: f ? [...f.childIds] : [],
+        diedByYear: diedByYear(p),
+      }) as ProjectContextPerson,
+    );
   }
 
   // Per-source assertion rollup: distinct record_id values (verbatim,
@@ -320,50 +354,52 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   for (const s of Array.isArray(research?.sources) ? research.sources : []) {
     if (!s || typeof s !== "object" || typeof s.id !== "string") continue;
     const bucket = bySource.get(s.id);
-    sources.push({
-      id: s.id,
-      repository: typeof s.repository === "string" ? s.repository : null,
-      gedcomxSourceDescriptionId:
-        typeof s.gedcomx_source_description_id === "string" ? s.gedcomx_source_description_id : null,
-      recordIds: bucket ? bucket.recordIds : [],
-      assertionCount: bucket ? bucket.count : 0,
-    });
+    sources.push(
+      omitEmpty({
+        id: s.id,
+        repository: typeof s.repository === "string" ? s.repository : null,
+        gedcomxSourceDescriptionId:
+          typeof s.gedcomx_source_description_id === "string" ? s.gedcomx_source_description_id : null,
+        recordIds: bucket ? bucket.recordIds : [],
+        assertionCount: bucket ? bucket.count : 0,
+      }) as ProjectContextSource,
+    );
   }
 
   // Localities: compact place/locale projection for research-plan — the
-  // actionable bits (jurisdictions, collections, quirks) + read-coverage.
-  // guide_markdown is omitted (large prose); read research.json for the full text.
+  // actionable bits (jurisdictions, collections, quirks). guide_markdown and
+  // pages_read are left out; research_query serves the whole entry.
   const localities: ProjectContextLocality[] = [];
   for (const l of Array.isArray(research?.localities) ? research.localities : []) {
     if (!l || typeof l !== "object" || typeof l.id !== "string") continue;
     const jurisdictions = (Array.isArray(l.jurisdictions) ? l.jurisdictions : [])
       .filter((j: any) => j && typeof j === "object" && typeof j.name === "string")
-      .map((j: any) => ({ name: j.name, dateRange: typeof j.date_range === "string" ? j.date_range : null }));
+      .map((j: any) => omitEmpty({ name: j.name, dateRange: typeof j.date_range === "string" ? j.date_range : null }));
     const collections = (Array.isArray(l.collections) ? l.collections : [])
       .filter((c: any) => c && typeof c === "object" && typeof c.id === "string")
-      .map((c: any) => ({
-        id: c.id,
-        title: typeof c.title === "string" ? c.title : "",
-        dateRange: typeof c.date_range === "string" ? c.date_range : null,
-        personCount: Number.isInteger(c.person_count) ? c.person_count : null,
-        recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
-      }));
+      .map((c: any) =>
+        omitEmpty({
+          id: c.id,
+          title: typeof c.title === "string" ? c.title : "",
+          dateRange: typeof c.date_range === "string" ? c.date_range : null,
+          personCount: Number.isInteger(c.person_count) ? c.person_count : null,
+          recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
+        }),
+      );
     const quirks = (Array.isArray(l.quirks) ? l.quirks : []).filter(
       (q: any): q is string => typeof q === "string",
     );
-    const pagesRead = (Array.isArray(l.pages_read) ? l.pages_read : [])
-      .filter((p: any) => p && typeof p === "object" && p.found === true && typeof p.section === "string")
-      .map((p: any) => p.section as string);
-    localities.push({
-      id: l.id,
-      place: typeof l.place === "string" ? l.place : "",
-      forPlace: typeof l.for_place === "string" ? l.for_place : null,
-      timePeriod: typeof l.time_period === "string" ? l.time_period : null,
-      jurisdictions,
-      collections,
-      quirks,
-      pagesRead,
-    });
+    localities.push(
+      omitEmpty({
+        id: l.id,
+        place: typeof l.place === "string" ? l.place : "",
+        forPlace: typeof l.for_place === "string" ? l.for_place : null,
+        timePeriod: typeof l.time_period === "string" ? l.time_period : null,
+        jurisdictions,
+        collections,
+        quirks,
+      }) as ProjectContextLocality,
+    );
   }
 
   const projectStatus =
@@ -385,13 +421,12 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       questionText.set(q.id, truncateQuestion(typeof q.question === "string" ? q.question : ""));
     }
   }
-  const questionStatuses = questionStates(research, tree).map(({ id, ...rest }) => ({
-    id,
-    question: questionText.get(id) ?? "",
-    ...rest,
-  }));
+  const questionStatuses = questionStates(research, tree).map(
+    ({ id, ...rest }) =>
+      omitEmpty({ id, question: questionText.get(id) ?? "", ...rest }, ["nextStep"]) as ProjectContextQuestionStatus,
+  );
 
-  const awaitingUser = awaitingUserHandOffs(research?.log);
+  const awaitingUser = awaitingUserHandOffs(research?.log).map((row) => omitEmpty(row) as ProjectContextAwaitingUser);
   const waiting = await waitingPages(input.projectPath, research);
 
   const sectionCounts: Record<string, number | null> = {};
@@ -410,12 +445,22 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     undefined,
   ).length;
   const externalCollections = await externalCollectionCounts(input.projectPath);
-  const exhausted = await exhaustedGroupsWithPlanItems(input.projectPath, research);
+  const exhausted = (await exhaustedGroupsWithPlanItems(input.projectPath, research)).map((row) => omitEmpty(row));
   const uploads = await projectUploads(input.projectPath);
   const links = await projectLinks(principal);
+  // A connector caller whose FamilySearch session has ended gets the link here
+  // too, so the next turn shows it even if an agent's summary dropped the tool
+  // error that first carried it (E3). Unknown is not ended: no link. With no
+  // link to give (no public URL, or any caller but a connector) FamilySearch is
+  // not asked at all.
+  const signInLink = connectorSignInUrl(principal);
+  const signInUrl =
+    signInLink !== undefined && (await connectorSession(principal)) === "ended" ? signInLink : undefined;
 
-  return {
-    ok: true,
+  // sectionCounts' null values (a section research_query would refuse) sit one
+  // level down, so this leaves them alone.
+  return omitEmpty({
+    ok: true as const,
     buildId,
     projectStatus,
     objective,
@@ -437,14 +482,15 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     localities,
     awaitingUser,
     exhaustedImageGroups: exhausted,
-    ...(waiting.length > 0 ? { waitingPages: waiting } : {}),
+    waitingPages: waiting,
     claimKinds: [...CLAIM_KINDS],
     ...(externalCollections ? { externalCollections } : {}),
     sectionCounts,
     unregisteredDisagreementCount,
-    ...(uploads.length > 0 ? { uploads } : {}),
+    uploads,
     ...links,
-  };
+    ...(signInUrl ? { signInUrl } : {}),
+  }) as Extract<ProjectContextResult, { ok: true }>;
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -512,18 +558,20 @@ export const projectContextSchema = {
     "nextStep values name ids and agents; restate them in plain words. " +
     "Do not read the project files and do not delegate. " +
     "Read-only compact projection of the project state — call this INSTEAD of " +
-    "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
+    "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
+    "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
+    "values are ever null. Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, sourceRefs, spouseIds, parentIds, childIds, diedByYear}] — every " +
-    "tree person with the distinct S ids it already cites, its one-hop family from " +
+    "[{id, name, gender, spouseIds, parentIds, childIds, diedByYear}] — every " +
+    "tree person with its one-hop family from " +
     "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
-    "by from its dated Death or Burial facts (null if none); and sources [{id, repository, " +
+    "by from its dated Death or Burial facts; and sources [{id, repository, " +
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
-    "recordCount}], quirks, pagesRead}] — the " +
+    "recordCount}], quirks}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
     "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
@@ -531,7 +579,7 @@ export const projectContextSchema = {
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
     "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
     "what it is waiting on, and storedStatus, the question's own questions[].status " +
-    "verbatim (null when absent or not a string). state is DERIVED from the documents " +
+    "verbatim when it is a string. state is DERIVED from the documents " +
     "and storedStatus " +
     "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
     "proof summary while its storedStatus is still 'in_progress'; that is not a " +
@@ -541,16 +589,19 @@ export const projectContextSchema = {
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
-    "entry with the same urlGenerated. waitingPages [{sourceId, ref}], absent when " +
-    "none, lists read pages of held records; keep them with one " +
-    "extraction_append({ projectPath, attachWaitingPages: true }). " +
+    "entry with the same urlGenerated. waitingPages [{sourceId, ref, index}], absent when " +
+    "none, lists read pages of held records, each with its record's index " +
+    "[{assertionId, role, factType, value}]; hand them to record-structurer in one spawn, " +
+    "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
+    "pageReadings }). " +
     "subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
-    "researcher_profile.narration_guidance verbatim (null when absent): the narration " +
-    "style every skill applies; subscriptions is researcher_profile.subscriptions ([] " +
-    "when absent). For tree facts, dates, places, marriages and arks call tree_query. " +
+    "researcher_profile.narration_guidance verbatim: the narration " +
+    "style every skill applies; subscriptions is researcher_profile.subscriptions. " +
+    "For tree facts, dates, places, marriages, cited S ids and arks call tree_query. " +
     "externalCollections counts stored curated " +
-    "collections per place by record type (rows: research_query external_collections). " +
+    "collections per place by record type (rows: research_query external_collections); " +
+    "a place too large to list shows {tooLarge: true}, meaning looked up but its collections unknown, not none. " +
     "sectionCounts gives the entry count of every research.json section research_query " +
     "serves (null when research_query would refuse the section), and unregisteredDisagreementCount the project-wide count of " +
     "unregistered disagreements research_query's conflicts section reports — a section " +
@@ -564,10 +615,11 @@ export const projectContextSchema = {
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
-    "a problem. uploads [{name, uploaded, hasText}] (absent when none) lists the files the " +
+    "a problem. uploads [{name, uploaded, hasText}] lists the files the " +
     "user uploaded, newest first; hasText says a text layer exists. uploadUrl, when present, " +
     "is the page where the user uploads a file; give it to the user when they want to add a " +
-    "document. Writes nothing.",
+    "document. signInUrl, when present, means the user's FamilySearch session has ended: " +
+    "give them that link to sign in again, then continue. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {

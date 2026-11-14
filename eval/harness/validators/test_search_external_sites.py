@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import json
 import re
+from urllib.parse import urlsplit
 
 import pytest
-from harness.skill_runner import subject_reply_text, tail_after_final_rule
+from harness.skill_runner import BUILTIN_ARG_TRUNCATE, subject_reply_text, tail_after_final_rule
 
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import (
@@ -42,9 +43,19 @@ from validators_lib import tool_input_keys as _tool_input_keys
 def test_positive_appends_external_site_log_entry(before_state, after_state, test):
     """Positive search-external-sites tests must append a `tool: external_site`
     log entry. The skill's whole purpose is to record the URL-generation step
-    in the research log so later turns can pick up the capture."""
+    in the research log so later turns can pick up the capture.
+
+    Not under `transcribe-refused-stays-open`: a refused transcription logs
+    nothing, which `test_refused_transcription_leaves_the_handoff_open` asserts,
+    so this would fail the correct run there (#3990). Nor under
+    `blm-outside-coverage`: a refused build has no URL to log, which
+    `test_blm_outside_coverage_refusal_is_the_answer` asserts (#4402)."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
+    if "transcribe-refused-stays-open" in test.get("tags", []):
+        pytest.skip("a refused transcription logs no entry")
+    if "blm-outside-coverage" in test.get("tags", []):
+        pytest.skip("a refused build logs no entry")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -581,6 +592,51 @@ def test_archion_browse_handoff(tool_calls, test):
     assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
 
 
+def test_blm_outside_coverage_refusal_is_the_answer(before_state, after_state, tool_calls, test):
+    """Tag-gated (blm-outside-coverage, #4402). A `blm_glo` build for a
+    state-land state is refused `outside_coverage`, and that refusal is the
+    answer: the agent does not re-call for that land without a state, or with
+    the refused state, to get a URL, and logs no blm_glo search. A build for
+    another state, or a log entry for another site, is a separate search and
+    not judged here."""
+    if "blm-outside-coverage" not in test.get("tags", []):
+        pytest.skip("not a blm-outside-coverage scenario")
+    blm = [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "build_external_search_url"
+        and _as_mapping(c.get("args")).get("site") == "blm_glo"
+    ]
+    responses = [_as_mapping(c.get("response")) for c in blm]
+
+    def state(call):
+        return str(_as_mapping(_as_mapping(call.get("args")).get("attributes")).get("usState") or "").strip().lower()
+
+    refused_at = [
+        i for i, r in enumerate(responses) if r.get("ok") is False and r.get("reason") == "outside_coverage"
+    ]
+    errors = []
+    if not refused_at:
+        errors.append(
+            f"no blm_glo build was refused outside_coverage; blm_glo calls: {[_as_mapping(c.get('args')) for c in blm]}"
+        )
+    else:
+        refused_states = {state(blm[i]) for i in refused_at}
+        dodged = [
+            _as_mapping(blm[i].get("args")) for i in range(refused_at[0] + 1, len(blm))
+            if responses[i].get("ok") is True and state(blm[i]) in refused_states | {""}
+        ]
+        if dodged:
+            errors.append(f"a blm_glo build went through after the refusal, for the same land: {dodged}")
+    if before_state.get("research_json") is not None:
+        logged = [
+            e.get("id") for e in _new_external_entries(before_state, after_state, "external_site")
+            if (e.get("external_site") or {}).get("site") == "blm_glo"
+        ]
+        if logged:
+            errors.append(f"log {logged} record a blm_glo search, though no URL was built")
+    assert not errors, "the outside_coverage refusal was not taken as the answer:\n  - " + "\n  - ".join(errors)
+
+
 def test_fs_holdings_note_reaches_the_researcher(text_response, test, agent_returns=None):
     """Tag-gated (fs-holdings): when `collections_search` shows FamilySearch
     holds the same collection an external result duplicates, that note must
@@ -1044,6 +1100,370 @@ def test_the_log_is_append_only(before_state, after_state, test):
         before_state.get("research_json") or {},
         after_state.get("research_json") or {},
     )
+
+
+# --- #3990: the upload page, and an upload read with the tools ---------
+#
+# `project_context` returns `uploadUrl` only on a hosted store with uploads on,
+# and `uploads [{name, uploaded, hasText}]` whenever `uploads/` holds a file
+# (`projectUploads`: `X.txt` beside `X` is X's text layer, a lone `X.txt` is an
+# upload). Every check here reads `uploadUrl` from this run's own
+# `project_context` answers, never from the delegation, as the agent is told to.
+# None is tag-gated except the refusal check: each judges whatever shape of
+# capture or hand-off the run's documents hold.
+
+_UPLOADS = "uploads/"
+_URL = re.compile(r"https?://[^\s<>()\[\]{}\"'`]+")
+#: An `uploads/<name>` ref in the delegation, not one inside a longer path.
+_UPLOAD_REF = re.compile(r"(?<![\w./-])uploads/([^\s`'\"<>()\[\]{},;]+)")
+#: The delegation's `capture:` field line, its key in whatever markup the router
+#: wrote it; group 1 is the rest of the line.
+_CAPTURE_FIELD = re.compile(
+    r"^[ \t]*(?:[-*+>][ \t]+)?[`*_\"']*capture[`*_\"']*[ \t]*[:=][`*_]*(.*)$", re.IGNORECASE | re.MULTILINE
+)
+#: `userPresent: no` in whatever markup the router wrote it (test_research.py's
+#: `_SPAWN_FIELD_TAGS` matcher, for the one field).
+_USER_ABSENT = re.compile(
+    r"(?<![A-Za-z])userPresent[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*no\b", re.IGNORECASE
+)
+
+
+def _project_context_answers(tool_calls):
+    """Every object `project_context` answered this run."""
+    return [
+        c.get("response") for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "project_context" and isinstance(c.get("response"), dict)
+    ]
+
+
+def _served_upload_urls(tool_calls):
+    """Every `uploadUrl` a `project_context` answer carried this run."""
+    return {
+        r["uploadUrl"].strip() for r in _project_context_answers(tool_calls)
+        if isinstance(r.get("uploadUrl"), str) and r["uploadUrl"].strip()
+    }
+
+
+def _listed_uploads(before_state, tool_calls):
+    """Upload name -> whether its text layer exists.
+
+    `project_context`'s rows, plus the same rule applied to the scenario's own
+    `uploads/` files, so a run that never called `project_context` is judged
+    against the uploads it was handed all the same."""
+    names = set()
+    for rel in ((before_state or {}).get("files") or {}):
+        name = rel[len(_UPLOADS):] if isinstance(rel, str) and rel.startswith(_UPLOADS) else ""
+        if name and "/" not in name and not name.startswith("."):
+            names.add(name)
+    listed = {
+        n: f"{n}.txt" in names for n in names
+        if not (n.endswith(".txt") and n[: -len(".txt")] in names)
+    }
+    for answer in _project_context_answers(tool_calls):
+        rows = answer.get("uploads")
+        for row in rows if isinstance(rows, list) else []:
+            if isinstance(row, dict) and isinstance(row.get("name"), str):
+                listed[row["name"]] = listed.get(row["name"], False) or row.get("hasText") is True
+    return listed
+
+
+def _upload_ref(path):
+    """`path` from its last `uploads/` segment on, or None: `./uploads/x`,
+    `/proj_…/uploads/x`, `proj_…/uploads/x` and a Windows path all name
+    `uploads/x`. An upload's name holds no `/`, so the last segment is its own."""
+    if not isinstance(path, str):
+        return None
+    path = path.replace("\\", "/")
+    at = path.rfind("/" + _UPLOADS)
+    if at >= 0:
+        return path[at + 1:]
+    return path if path.startswith(_UPLOADS) else None
+
+
+def _capture_upload(delegation):
+    """The upload name the delegation's capture names, or None.
+
+    The `capture:` field's value when there is one — the rest of its line, with
+    any wrapping backticks, quotes or `*`/`_` emphasis taken off, from its
+    `uploads/` segment on — so a name with spaces in it is read whole. With no
+    such field, the first `uploads/<name>` token. Only the capture counts: an
+    upload named in the prose around it is not the one to read."""
+    text = str(delegation or "")
+    field = _CAPTURE_FIELD.search(text)
+    if field is None:
+        token = _UPLOAD_REF.search(text)
+        return (token.group(1).rstrip("*_.,;:!?") or None) if token else None
+    value = field.group(1).strip().rstrip(".,;:").strip().replace("\\", "/")
+    while len(value) > 1 and value[0] == value[-1] and value[0] in "`'\"*_":
+        value = value[1:-1].strip()
+    starts = [m.end() for m in re.finditer(r"(?<![\w.-])uploads/", value)]
+    if not starts:
+        return None
+    name = re.split(r"[`*\"]", value[starts[-1]:], maxsplit=1)[0]
+    return name.rstrip().rstrip(".,;:'").rstrip() or None
+
+
+def _upload_file(call):
+    """The `uploads/` ref an `image_transcribe` call's `file` names, or None —
+    by any path, since the mock transcribes `./uploads/x` as readily as
+    `uploads/x` and production refuses only the first."""
+    if _bare_tool_name(call.get("tool")) != "image_transcribe":
+        return None
+    return _upload_ref(_as_mapping(call.get("args")).get("file"))
+
+
+def _sidecar_refs(tool_calls):
+    """Every ref a `sidecar_read` call asked for, through `ref` or `refs`,
+    verbatim: the compiled tool refuses `./uploads/x` or an absolute path, as
+    production does, so only the exact ref is a read."""
+    refs = set()
+    for c in tool_calls or []:
+        if _bare_tool_name(c.get("tool")) != "sidecar_read":
+            continue
+        args = _as_mapping(c.get("args"))
+        many = args.get("refs")
+        if isinstance(many, str):
+            try:
+                many = json.loads(many)
+            except ValueError:
+                many = None
+        for ref in [args.get("ref"), *(many if isinstance(many, list) else [])]:
+            if isinstance(ref, str) and ref:
+                refs.add(ref)
+    return refs
+
+
+def _urls(text):
+    """The URLs in `text`, without the sentence or markdown punctuation after them."""
+    return [u.rstrip(".,;:!?*_") for u in _URL.findall(text or "")]
+
+
+def _is_upload_page(url):
+    """A link to an upload page: a path or `#` route with an `upload` segment —
+    the engine's `/#/p/<id>/upload` and the plain page's `/upload/<id>`. A query
+    string is not looked at, so an external search for the word cannot match."""
+    parts = urlsplit(url)
+    segments = parts.path.split("/") + parts.fragment.split("?", 1)[0].split("/")
+    return any(s.lower() == "upload" for s in segments)
+
+
+def _handoff_entries(before_state, after_state):
+    """The run's new hand-offs and nil reports: `external_site` entries with
+    `capture_received: false` and outcome `partial` or `negative`."""
+    if (before_state or {}).get("research_json") is None:
+        return []
+    return [
+        e for e in _new_external_entries(before_state, after_state, "external_site")
+        if (e.get("external_site") or {}).get("capture_received") is False
+        and e.get("outcome") in ("partial", "negative")
+    ]
+
+
+def test_capture_steps_name_the_upload_page_only_when_served(
+    before_state, after_state, tool_calls, text_response, test, agent_returns=None
+):
+    """#3990 V1. The capture steps say where to upload, and only
+    `project_context` decides where. Read off the text after the final `---`:
+
+    - every reply: no upload-page link the run was not served, which is the
+      folder-mode guard the issue asks for, a link copied from the delegation,
+      and a step-5 record request naming the wrong page.
+    - a run that appends a hand-off or a nil report, with `uploadUrl` served:
+      the tail gives it verbatim.
+    - the same with none served (folder mode, and every store with uploads
+      off): the tail says "upload", as the steps did before #3990.
+
+    `userPresent: no` lifts only the last two: the autonomous deferral gives
+    no capture steps at all. Skipped on a reply with no final `---`, which has
+    no researcher text to read: `test_the_url_logged_is_the_url_presented`
+    fails a hand-off that lacks one."""
+    reply = subject_reply_text(agent_returns, text_response, "search-external-sites", test)
+    tail = tail_after_final_rule(reply)
+    if reply.strip() and not tail:
+        pytest.skip("the reply has no text after a final '---' to read")
+    handoffs = _handoff_entries(before_state, after_state)
+    if not tail and not handoffs:
+        pytest.skip("no reply and no hand-off or nil report this run")
+
+    served = _served_upload_urls(tool_calls)
+    asks = bool(handoffs) and not _USER_ABSENT.search(str(test.get("delegation") or ""))
+    errors = []
+    known = {u.rstrip("/") for u in served}
+    foreign = sorted({u for u in _urls(tail) if _is_upload_page(u) and u.rstrip("/") not in known})
+    if foreign:
+        errors.append(
+            f"the text after the final '---' links an upload page project_context did not "
+            f"serve (served: {sorted(served) or 'none'}): {foreign}"
+        )
+    if served and asks and not any(u in tail for u in served):
+        errors.append(
+            f"project_context served uploadUrl {sorted(served)}, but the text after the "
+            f"final '---' never gives it"
+        )
+    if not served and asks and not re.search(r"\bupload", tail, re.IGNORECASE):
+        errors.append("no uploadUrl was served, and the text after the final '---' no longer says to upload")
+    assert not errors, "capture steps name the wrong upload place:\n  - " + "\n  - ".join(errors)
+
+
+def test_no_transcription_of_an_upload_with_text(before_state, tool_calls):
+    """#3990 V2. `image_transcribe` is a paid call, and never the way to read an
+    upload that is text already: a `.txt` upload (which the tool refuses), or one
+    whose `.txt` layer exists (`hasText: true`). Both are `sidecar_read`'s."""
+    files = [ref for ref in map(_upload_file, tool_calls or []) if ref is not None]
+    if not files:
+        pytest.skip("no image_transcribe of an upload this run")
+    listed = _listed_uploads(before_state, tool_calls)
+    errors = []
+    for ref in files:
+        name = ref[len(_UPLOADS):]
+        if name.endswith(".txt"):
+            errors.append(f"image_transcribe was called on {ref!r}, a text upload")
+        elif listed.get(name):
+            errors.append(f"image_transcribe was called on {ref!r}, whose text layer {ref}.txt exists")
+    assert not errors, "an upload with text was sent to image_transcribe:\n  - " + "\n  - ".join(errors)
+
+
+def test_closing_capture_filename_is_the_upload(before_state, after_state, tool_calls):
+    """#3990 V3. A closing entry names the upload the researcher made, never the
+    `.txt` layer the web tier wrote beside it: `capture_filename` `Y.txt` while
+    `Y` is a listed upload is the layer."""
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    named = []
+    for e in _new_external_entries(before_state, after_state, "external_site"):
+        detail = e.get("external_site") or {}
+        filename = detail.get("capture_filename")
+        if detail.get("capture_received") is True and isinstance(filename, str) and filename.endswith(".txt"):
+            named.append((e.get("id"), filename))
+    if not named:
+        pytest.skip("no closing entry names a .txt capture")
+    listed = _listed_uploads(before_state, tool_calls)
+    errors = [
+        f"log[{entry_id}].external_site.capture_filename is {filename!r}, the text layer "
+        f"of the upload {filename.rsplit('/', 1)[-1][: -len('.txt')]!r}"
+        for entry_id, filename in named
+        if filename.rsplit("/", 1)[-1][: -len(".txt")] in listed
+    ]
+    assert not errors, "a closing entry names an upload's text layer:\n  - " + "\n  - ".join(errors)
+
+
+def test_hosted_upload_is_read_with_the_tools(before_state, tool_calls, builtin_tool_calls, test):
+    """#3990 V4. On a hosted store an upload is not a file the agent can `Read`:
+    production's project folder holds no such path, although the harness's does.
+    When `project_context` served `uploadUrl` and the delegation's capture is
+    `uploads/<name>`, the read its row calls for must be in this run's calls:
+
+    - `hasText: true` -> `sidecar_read` on `uploads/<name>.txt`;
+    - a `.txt` name, or no row at all -> `sidecar_read` on `uploads/<name>`;
+    - any other row -> `image_transcribe({file: "uploads/<name>"})`.
+
+    An `image_transcribe` of the upload that was answered names it as exactly
+    `uploads/<name>` (the mock transcribes `./uploads/<name>` too, where
+    production refuses it), and one whose answer carried a `staged` ref is
+    followed by a `sidecar_read` of that ref; a refused one stages nothing and
+    owes none. A built-in `Read`, `Grep` or `Glob` on an `uploads/` path fails.
+    Skipped with no `uploadUrl`: folder mode `Read`s the path (V6)."""
+    if not _served_upload_urls(tool_calls):
+        pytest.skip("no uploadUrl was served: folder mode reads a capture with Read")
+    name = _capture_upload(test.get("delegation"))
+    if name is None:
+        pytest.skip("the delegation names no uploads/<name> capture")
+
+    listed = _listed_uploads(before_state, tool_calls)
+    read = _sidecar_refs(tool_calls)
+    ref = _UPLOADS + name
+    calls = [c for c in tool_calls or [] if _upload_file(c) == ref]
+    errors = []
+    if listed.get(name):
+        wanted = f"{ref}.txt"
+    elif name.endswith(".txt") or name not in listed:
+        wanted = ref
+    else:
+        wanted = None
+        if not calls:
+            errors.append(f"{ref} has no text layer, and no image_transcribe call names it as `file`")
+    if wanted is not None and wanted not in read:
+        errors.append(f"{ref}: no sidecar_read of {wanted!r}")
+    for call in calls:
+        response = call.get("response") if isinstance(call.get("response"), dict) else {}
+        file = _as_mapping(call.get("args")).get("file")
+        if file != ref and "error" not in response:
+            errors.append(f"image_transcribe file {file!r} is not the ref {ref!r}: production refuses it unread")
+        staged = response.get("staged")
+        staged_ref = staged.get("resultsRef") if isinstance(staged, dict) else None
+        if isinstance(staged_ref, str) and staged_ref and staged_ref not in read:
+            errors.append(f"{ref} was transcribed, but its staged page {staged_ref!r} was never read")
+    for call in builtin_tool_calls or []:
+        tool = call.get("tool")
+        if tool not in ("Read", "Grep", "Glob"):
+            continue
+        args = call.get("args") or {}
+        keys = ("file_path", "path", "glob") + (("pattern",) if tool == "Glob" else ())
+        for key in keys:
+            value = args.get(key)
+            if isinstance(value, str) and _UPLOADS in value.replace("\\", "/"):
+                errors.append(f"{tool} {key}={value!r} reads an upload as a file on a hosted store")
+    assert not errors, "a hosted upload was not read with the tools:\n  - " + "\n  - ".join(errors)
+
+
+def test_refused_transcription_leaves_the_handoff_open(before_state, after_state, test):
+    """#3990 V5, tag-gated (transcribe-refused-stays-open). When
+    `image_transcribe` refuses the upload, the agent asks for the results text
+    and logs nothing: no entry records the capture as received, and the
+    hand-off it answers stays in `awaitingUser`."""
+    if "transcribe-refused-stays-open" not in test.get("tags", []):
+        pytest.skip("not a transcribe-refused-stays-open scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    opened = _open_handoffs(before)
+    assert opened, "fixture defect: the scenario holds no open hand-off to leave open"
+    errors = []
+    received = [
+        e.get("id") for e in _new_external_entries(before_state, after_state, "external_site")
+        if (e.get("external_site") or {}).get("capture_received") is True
+    ]
+    if received:
+        errors.append(f"log {received} record the capture as received, though it was never read")
+    closed = sorted({e.get("id") for e in opened} - {e.get("id") for e in _open_handoffs(after)})
+    if closed:
+        errors.append(f"hand-off(s) {closed} were closed by a later non-partial entry on their URL")
+    assert not errors, "a refused transcription closed its hand-off:\n  - " + "\n  - ".join(errors)
+
+
+def test_folder_mode_upload_is_read_with_read(before_state, tool_calls, builtin_tool_calls, test):
+    """#3990 V6, V4's folder-mode twin. With no `uploadUrl` served (the desktop,
+    folder mode, every store with uploads off), a capture at `uploads/<name>` is
+    a file in the project folder: a built-in `Read` must name it, and no
+    `image_transcribe` or `sidecar_read` may — the tools are the hosted route,
+    and `image_transcribe` is a paid one. The body's fallback to the tools after
+    a failed `Read` is not excused: the scenario must hold the file, so a `Read`
+    fails here only on a wrong path. A `Read` path cut at the run log's argument
+    cap is matched on the part of `uploads/<name>` that survived."""
+    if _served_upload_urls(tool_calls):
+        pytest.skip("an uploadUrl was served: V4 judges the hosted read")
+    name = _capture_upload(test.get("delegation"))
+    if name is None:
+        pytest.skip("the delegation names no uploads/<name> capture")
+
+    ref = _UPLOADS + name
+    assert ref in ((before_state or {}).get("files") or {}), (
+        f"fixture defect: the delegation's capture is {ref}, which the scenario does not hold"
+    )
+    reads = []
+    for call in builtin_tool_calls or []:
+        path = (call.get("args") or {}).get("file_path") if call.get("tool") == "Read" else None
+        named = _upload_ref(path)
+        if named == ref or (named and len(path) >= BUILTIN_ARG_TRUNCATE and ref.startswith(named)):
+            reads.append(path)
+    errors = [] if reads else [f"no built-in Read of {ref}: folder mode reads the capture as a file"]
+    for asked in sorted(r for r in _sidecar_refs(tool_calls) if _upload_ref(r) in (ref, f"{ref}.txt")):
+        errors.append(f"sidecar_read of {asked!r}: with no uploadUrl the capture is read with Read")
+    for call in tool_calls or []:
+        if _upload_file(call) == ref:
+            errors.append(f"image_transcribe of {ref!r}: with no uploadUrl the capture is read with Read")
+    assert not errors, "a folder-mode upload was not read as a file:\n  - " + "\n  - ".join(errors)
 
 
 # --- #2521 Half 2: collection-ID provenance (reporting-only) ----------

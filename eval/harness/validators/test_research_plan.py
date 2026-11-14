@@ -178,7 +178,7 @@ def test_dispose_named_items(before_state, after_state, test):
             if was == now:
                 continue
             # `in_progress` counts too, since section B of
-            # docs/plan/research-step-mode.md: a search that ran without closing
+            # docs/specs/research-step-mode-spec.md: a search that ran without closing
             # its item leaves it `in_progress`, and the router's dispose row now
             # names those as well. Leaving them out is what let a searched item
             # sit undisposed while the declaration stayed refused for good.
@@ -198,7 +198,7 @@ def test_dispose_named_items(before_state, after_state, test):
                 if not now.get("skip_category"):
                     errors.append(f"{iid}: skipped with no skip_category")
                 # A search that RAN is never `skipped`: `research_append` refuses it
-                # (decision 9 of docs/plan/attached-records-baseline.md), because a
+                # (research-append-tool-spec.md §8, the searched-item skip row), because a
                 # skip says nothing was searched and research-exhaustiveness reads a
                 # disposed item as settled.
                 if iid in logged:
@@ -324,7 +324,9 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     by the search-* skills via log entries — never by research-plan.
     The one exception is `_enumerative_skip`; on a targeted or unlabelled
     question a `skipped` item at creation still fails, which is what stops
-    the enumerative obligation over-firing."""
+    the enumerative obligation over-firing. The tag means the test writes a
+    plan, so a run that adds no new item (to a new plan or an existing one)
+    fails rather than passing with nothing checked (#4477)."""
     if "new-plan-items-planned-status" not in test.get("tags", []):
         pytest.skip("not a new-plan-items-planned-status scenario")
     before = before_state.get("research_json")
@@ -342,17 +344,23 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     questions = {q.get("id"): q for q in after.get("questions", []) or []}
 
     errors: list[str] = []
+    new_items = 0
     for plan in after.get("plans", []) or []:
         question = questions.get(plan.get("question_id"))
         for item in plan.get("items", []) or []:
             if item.get("id") in before_item_ids:
                 continue  # pre-existing item, not our responsibility
+            new_items += 1
             status = item.get("status")
             if status != "planned" and not _enumerative_skip(item, question):
                 errors.append(
                     f"new plan item {item.get('id')} has status='{status}'; "
                     f"expected 'planned'"
                 )
+    assert new_items, (
+        "new-plan-items-planned-status test wrote no new plan items: the tag "
+        "means this test writes a plan, so there is nothing to check"
+    )
     assert not errors, "New plan items with non-planned status:\n  - " + "\n  - ".join(errors)
 
 
@@ -1776,13 +1784,20 @@ _RELATIVE = r"(?:(?:grand|step)?(?:son|daughter|child|children|father|mother|par
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖ])")
 
 
+_SUBJECT_OWN_DEATH_RE = re.compile(
+    rf"\b(?:subject['’]s|her)\s+own\s+{_DEATH_WORD}", re.IGNORECASE
+)
+
+
 def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
     """(own, relative): `own` ties the entry to the subject ("Elena's burial",
-    "burials index for Elena", "her age at death", "Elena's entry");
-    `relative` names a relative of hers ("Elena's son", "her husband")."""
+    "burials index for Elena", "her age at death", "Elena's entry", "the
+    subject's own burial"); `relative` names a relative of hers ("Elena's
+    son", "her husband")."""
     g = re.escape(given)
     own = re.compile(
-        rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
+        _SUBJECT_OWN_DEATH_RE.pattern
+        + rf"|\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
         rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b(?!['’]s)"
         rf"|(?<!\bof\s)\b{g}(?:\s+\w+)?,?\s+(?:was\s+)?(?:buried|died)\b"
         rf"|\bher\s+(?:own\s+)?(?:age\s+at\s+)?{_DEATH_WORD}",
@@ -1807,6 +1822,7 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
     her birthplace. Both defects are asserted here.
 
     An item counts only when its rationale or jurisdiction names the subject
+    (by given name, or as "her own" / "the subject's own" death or burial)
     and a death/burial word, and its `date_range` starts after the subject's
     birth window. When every sentence carrying a death word also names a
     relative of hers ("Elena's son", "her husband"), the item counts only if
@@ -1839,7 +1855,8 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
 
     def _qualifies(item: dict) -> bool:
         text = f"{item.get('rationale') or ''} {item.get('jurisdiction') or ''}"
-        if given.lower() not in text.lower() or not re.search(_DEATH_WORD, text, re.IGNORECASE):
+        named = given.lower() in text.lower() or _SUBJECT_OWN_DEATH_RE.search(text)
+        if not named or not re.search(_DEATH_WORD, text, re.IGNORECASE):
             return False
         death_sentences = [
             s for s in _SENTENCE_SPLIT_RE.split(text)
@@ -1923,4 +1940,87 @@ def test_research_plan_hints_review_first(before_state, after_state, test):
     assert any(pid in (i.get("rationale") or "").upper() for i in leads for pid in pids), (
         f"{leads[0].get('id')}'s rationale names none of {sorted(pids)}: "
         f"{leads[0].get('rationale')!r}"
+    )
+
+
+# --- Parentage: the parents' marriage is a dedicated item (issue #4022) -------
+
+# test id -> the candidate father's given name a dedicated parents'-marriage
+# item must pair with a marriage word. Thomas: the hypothesized father of
+# Patrick Flynn from 1850 co-residence (flynn-first-plan-surveyed).
+_PARENTS_MARRIAGE_BY_TEST_ID = {
+    "ut_research_plan_014": "Thomas",
+}
+
+# wed(?:s|ded|ding|lock)?\b rather than wed\w* so "Wednesday" cannot match.
+_MARRIAGE_WORD = r"(?:marri\w*|wed(?:s|ded|ding|lock)?\b|bond\w*|licen[cs]\w*)"
+_FOLDED_WORD = r"(?:baptis\w*|christen\w*|sibling\w*|child\w*)"
+
+
+def test_research_plan_plans_parents_marriage(before_state, after_state, test):
+    """Tag-gated (``parents-marriage-item``): a parentage plan carries a
+    dedicated item for the candidate parents' marriage to each other.
+
+    The body already forbids folding it into a generic church item, and the
+    v14_2026-10-29 run did exactly that on ut_research_plan_014: pli_009
+    (church) carried "A marriage record for Thomas Flynn and his wife ...
+    would supply her maiden name" alongside sibling baptisms. An item counts
+    only when its rationale names the candidate father together with a
+    marriage word and does not also target a baptism, christening, sibling or
+    child in that same sentence. The anti-words are sentence-scoped (the
+    death-route validator's precedent): a 2026-11-03 run wrote "Dedicated
+    search for Thomas Flynn's marriage to Patrick's mother." and then noted the
+    same parish registers may also hold a sibling's baptism — a dedicated item
+    a whole-rationale scan false-failed. The real v14 pli_009 rationale is five
+    sentences; its marriage sentence folds in sibling baptisms (one semicolon
+    sentence), and its last sentence searches "Thomas's marriage and ...
+    children bearing the Flynn surname" — so `child*` is in the anti-words
+    too, or that last sentence would slip the fold through (T-FEH, PR #4447).
+    ``record_type`` is deliberately not tested: the body names a church
+    marriage register as a valid dedicated item (review-ready, 2026-10-30).
+    Known limits, accepted with that decision: any new item pairing the
+    father's name with a marriage word in a clean sentence qualifies (e.g. a
+    FAN item on the marriage bondsman, or a folded item restated across two
+    sentences), so the folded shape is caught only in its measured
+    one-sentence form.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _PARENTS_MARRIAGE_BY_TEST_ID or "parents-marriage-item" in tags, (
+        f"{test_id} has a _PARENTS_MARRIAGE_BY_TEST_ID entry but no "
+        "'parents-marriage-item' tag - restore the tag or delete the entry"
+    )
+    if "parents-marriage-item" not in tags:
+        pytest.skip("not a parents-marriage-item test")
+    father = _PARENTS_MARRIAGE_BY_TEST_ID.get(test_id)
+    assert father, (
+        f"{test_id} carries 'parents-marriage-item' but has no entry in "
+        "_PARENTS_MARRIAGE_BY_TEST_ID"
+    )
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    def _dedicated(item: dict) -> bool:
+        text = item.get("rationale") or ""
+        return any(
+            re.search(rf"\b{re.escape(father)}\b", s, re.IGNORECASE) is not None
+            and re.search(rf"\b{_MARRIAGE_WORD}", s, re.IGNORECASE) is not None
+            and re.search(rf"\b{_FOLDED_WORD}", s, re.IGNORECASE) is None
+            for s in _SENTENCE_SPLIT_RE.split(text)
+        )
+
+    assert any(_dedicated(i) for i in items), (
+        f"no new plan item is dedicated to the candidate parents' marriage: "
+        f"no rationale sentence names {father} with a marriage word "
+        "(marri*/wed*/bond*/licen*) and no baptism, christening, sibling or "
+        "child target in that sentence (items: "
+        + "; ".join(
+            f"{i.get('id')} {i.get('record_type')}: {(i.get('rationale') or '')[:90]}"
+            for i in items
+        )
+        + ")"
     )

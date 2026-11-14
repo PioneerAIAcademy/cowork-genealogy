@@ -5,6 +5,7 @@
 // A selector is `kind:arg[:arg]`, matching how SKILL.md talks about them:
 //   parents-of:I1  children-of:I1  spouses-of:I1  birth-of:I1  death-of:I1
 //   facts-of:I1:Marriage  person:I2  fact:F4[:personId]  relationship:R1
+//   source:S9
 //   facts-before:1850[:personId]  facts-after:1850[:personId]
 //   facts-between:1840:1860[:personId]
 //
@@ -31,6 +32,8 @@ const forget: ForgetSelector[] = rest.map((raw) => {
       return { selector: sel, factId: a, personId: b };
     case "relationship":
       return { selector: sel, relationshipId: a };
+    case "source":
+      return { selector: sel, sourceId: a };
     case "facts-before":
     case "facts-after":
       return { selector: sel, year: Number(a), personId: b || undefined };

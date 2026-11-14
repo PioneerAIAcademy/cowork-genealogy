@@ -15,8 +15,8 @@ description: >-
   (use extraction_append); resolve a conflict where multiple candidates compete
   (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
   after proof-conclusion).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5
+effort: medium
 tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
@@ -123,7 +123,14 @@ pattern for relationship assertions. Example:
 - Create two `pe_` entries: one linking a_004 → I1, another
   linking a_004 → I2
 
-Create one `pe_` entry per person the assertion bears on.
+Create one `pe_` entry per person the assertion bears on — for an assertion
+that names two people: a relationship, a marriage, a couple event, or a fact
+about someone else filed on this persona.
+
+For a fact about one person (name, sex, birth, death, residence, occupation),
+write ONE entry, to the person whose record entry it is. Do not link it to a
+relative as well. `research_append` writes that entry's other one-party facts
+to the same person itself.
 
 **Do this proactively, in the same pass.** When an assertion implies a
 relationship (a census household, a will naming a child, a marriage record),
@@ -233,6 +240,11 @@ review-only, even though "every role in this record" is a linking-mode
 trigger on its own. Name the missing link, say what it would rest on,
 and ask. Creating it is the next request, not this one.
 
+**An attachment link is not a link to review.** A delegation naming
+assertion ids whose only live link is an attachment link (Step 1) is
+linking mode, whatever verb it uses — "confirm", "verify", "check these
+attachments".
+
 In this mode:
 
 - Read the named `pe_` entry (or the entries the user pointed to),
@@ -300,6 +312,22 @@ An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
 assertions from the same persona should be linked together.
 
+**An attachment link counts as unlinked for an assertion the delegation
+names.** A live link that is `speculative`, has a null `match_score` and the
+rationale "Linked because FamilySearch has this record attached to this
+person; not verified." is an attachment link: code wrote it, and nobody
+checked it. An assertion the delegation names whose only live link is one is
+unlinked. Score it with `same_person` and decide it like any unlinked
+assertion (Step 3, the autonomous no-link rule included). When the decision is
+a link, append it (Step 4), then set the attachment link's `superseded_by` to
+the new `pe_` id (Step 6). When it is no link, leave the attachment link as it
+is and say so in your return. An attachment-linked assertion the delegation
+does not name is left alone. Attachment links are not corroboration: the link
+that replaces one is `probable` at most, unless a checked link from another
+record already ties the same person. Its rationale names what matches, the
+score, and whether any other person in the project could be this record's
+person.
+
 ### 2. Identify candidate persons
 
 For each unlinked persona (record_id + record_role group), determine
@@ -309,7 +337,12 @@ which GedcomX person(s) it might be:
 - Name match (exact, phonetic variant, abbreviation)
 - Age/birth year compatibility (±5 years)
 - Location compatibility: the record's place against the tree person's own
-  Residence facts, never against the other records being linked
+  Residence facts, never against the other records being linked. An
+  arrival (immigration) dated after a residence the tree already attests in
+  that country is compatible: it is a return trip, unless the arrival record
+  itself says the person was never in the country before. Never rule a
+  candidate out, or score it down, only because they arrive after they already
+  lived there.
 - Gender match
 - Relationship fit (is this persona in the right position relative
   to known family members?)
@@ -360,8 +393,8 @@ A page that does not exist, or a fetch that fails, is recorded in the
 rationale as not retrieved. Never substitute a remembered rule or another
 place's page for it.
 
-Every `pe_` rationale opens with two check lines, written before you choose
-the tier:
+Every `pe_` rationale opens with two check lines, and the link of an arrival
+or naturalization assertion with three, written before you choose the tier:
 
 - "Date check: [the record's birth, christening or age-derived year] vs
   [the tree person's birth year]: gap [N] years." Compare only the party this
@@ -380,6 +413,20 @@ the tier:
   call. A line that says "outside" without that figure and a fetched page is
   incomplete: make those calls before writing the link. A line ending "outside ... nothing"
   caps the link at `probable`.
+- "Naturalization check: arrival [date] to naturalization [date]: [interval]
+  vs [required] years: met / short, [the project record that explains it, or
+  nothing]." Written on exactly two links: the immigration/arrival
+  assertion's and the naturalization assertion's (never on a name, age,
+  sex, birth or residence assertion of those records), a stub's included,
+  whenever the records in this run or already on the person give both
+  dates, whatever the tier. A line ending "short, nothing" caps both links
+  at `probable`. When a U.S. residence the tree held before this run, or a
+  record already linked to this person, is dated before the arrival, and the
+  arrival record does not say the person was never in the country before, the
+  arrival is a return trip: count from that residence, and write "met, [that
+  record], [N] years from [its year]" when it reaches the requirement and
+  "short, nothing" when it does not. Link the arrival as you would any other
+  fact; that earlier residence is never a reason to stub or withhold it.
 
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity
@@ -408,11 +455,15 @@ never replaces it (see step 3).
    project. You assemble nothing.
 
    Call it **once per record persona and candidate**. That score covers every
-   assertion carrying the same `record_persona_id` except one that names a
-   second person (a relationship, marriage or couple event); write the covered
-   links with the same `match_score` and no further call. An assertion that
-   names a second person, or whose `record_persona_id` is null, needs its own
-   call.
+   assertion carrying the same `record_persona_id`, and on a record where no
+   assertion carries one, every assertion of the same `record_role`. Write the
+   covered links with the same `match_score` and no further call. One that
+   names a second person (a relationship, marriage or couple event) is covered
+   only when the candidate is the person the assertion is about and you also
+   link one of that person's other facts to it. Linked to the second person it
+   names, it is never covered: make that call with `recordRole` (below). An
+   assertion whose `record_persona_id` is null on a record where others carry
+   one needs its own call.
 
    For the **second party** of a relationship or marriage assertion — the party
    the assertion names but is not itself about — add `recordRole` (or
@@ -505,6 +556,17 @@ it, quote it in the entry's `move_bridge` field: `research_append` refuses
 never weighs. A move
 that a corridor or a record explains takes the ordinary tiers; name what
 explains it.
+
+**Arrival to naturalization.** The required residence is the law's at the
+naturalization (U.S. from 1802: five years; arriving as a minor does not
+shorten it). A record in the project explains a shortfall when it shows
+earlier U.S. residence that, counted from, reaches the requirement (the arrival
+was a return trip), an honorable U.S. Army discharge (one year, from 1862), or
+a father naturalized while the person was a minor. An arrival after U.S.
+residence a project record attests is a return trip, not a contradiction,
+unless the arrival record says the person was never in the country before. A
+shortfall is never "consistent"; other facts of those records keep
+their ordinary tiers, and it is not a `core_identifier_conflict`.
 
 **Occupation and age norms weigh; they never cap.** Where trades were
 bound by apprenticeship or indenture, an agreeing occupation is strong
@@ -674,8 +736,8 @@ record. Make that change yourself and report it.
   when the candidate was minted from the persona itself (step 2). **The
   writer now enforces both halves of this.** A link for a reachable
   persona is REFUSED unless `same_person` actually scored that record
-  persona against that person (for a null `record_persona_id`, that
-  assertion), so "no score was obtained" is no longer an option there:
+  persona against that person (step 1 says which facts one score
+  covers), so "no score was obtained" is no longer an option there:
   make the call first. And a link to a person minted from this very record is refused
   if it carries a score at all, whatever the record's retrieval route —
   a number there came from a different comparison. Leave it null and say
@@ -721,6 +783,12 @@ that conflict-resolution is needed to adjudicate which is correct. Do
 not silently ignore this field.
 
 ### 5. Handle new persons (stub creation)
+
+A persona's own facts go to one person: link them to a tree person or mint a
+person for them, never both. A `speculative` link is still the link: never
+also mint a person for that persona. Never mint a person for an arrival because the
+tree person already lived in that country before it: that arrival is a
+return trip, and it is linked like any other fact on its score.
 
 When an assertion's persona doesn't match any existing GedcomX person,
 **materialize the persona onto a new person** via `materialize_facts`'s
@@ -1030,6 +1098,14 @@ When multiple candidates share the same name in the same area:
 
 ## Edge cases and decision rules
 
+- **Arrival after attested residence:** The tree has a Boston residence for
+  a man in 1880 and a passenger list shows him landing at New York in 1883.
+  The list does not say he was never in the country before, so the 1883
+  landing is a return. Link it on its
+  score like any other record, and count naturalization residence from 1880,
+  not 1883. Do not call it a "first arrival", an impossibility or a
+  contradiction, and do not mint a person for it on that ground.
+
 - **Uncertain dates (no birth year):** Widen the age-compatibility
   window. Use occupational and life-stage cues instead (e.g., "listed
   as head of household suggests adult"). Mark confidence no higher
@@ -1069,8 +1145,15 @@ When multiple candidates share the same name in the same area:
   by itself drop a match below what the non-name identifiers
   support. Reclassify as Moderate or Strong, create the link, and
   document the variant explanation in `rationale`.
+- **A `[?]` reading caps the link, a variant does not.** Only an
+  assertion whose value carries `[?]` links at `probable` at most
+  unless another record ties the same person; its `rationale` names
+  both readings. Every other variant follows the rule above: write
+  the link without asking.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
-  links for the same assertion-person combination.
+  links for the same assertion-person combination. The one exception is an
+  attachment link (Step 1): the scored link is appended beside it, and the
+  attachment link is then superseded by it.
 - **Flag a sensitive discovery forward — don't let it surface silently.**
   When a link establishes a sensitive family-structure finding — unknown or
   non-paternity parentage, an undisclosed adoption, or similar — call it out
@@ -1106,7 +1189,9 @@ When multiple candidates share the same name in the same area:
 `rationale`, `superseded_by`) in `research.json`, and stub `persons` in
 `tree.gedcomx.json`. **On re-invocation,** refine `confidence`/`rationale`
 in place or mark an entry `superseded_by` a correction — never delete, and
-never add a second `pe_` for an assertion-person pair already linked.
+never add a second `pe_` for an assertion-person pair already linked, except
+beside an attachment link, which is superseded by a scored link and never
+refined in place.
 
 ---
 

@@ -42,9 +42,15 @@ export const DOCUMENT_FORMS = [
 ] as const;
 export type DocumentForm = (typeof DOCUMENT_FORMS)[number];
 
+/** What kind of name the document says this is. Absent when the text does not
+ *  say; never defaulted (issue #4378, Richard 2026-11-12). */
+export const DOCUMENT_NAME_TYPES = ["birth", "married", "nickname", "also_known_as"] as const;
+export type DocumentNameType = (typeof DOCUMENT_NAME_TYPES)[number];
+
 export interface DocumentName {
   given?: string;
   surname?: string;
+  type?: DocumentNameType;
   uncertain?: true;
   note?: string;
 }
@@ -101,7 +107,7 @@ const KEYS = {
   source: ["title", "repository", "creator", "created", "locator", "url", "notes"],
   informant: ["name", "relation"],
   person: ["id", "principal", "household", "names", "gender", "statedRelation", "fatherBirthPlace", "motherBirthPlace", "facts"],
-  name: ["given", "surname", "uncertain", "note"],
+  name: ["given", "surname", "type", "uncertain", "note"],
   fact: ["type", "value", "date", "place", "computed", "uncertain", "note"],
   relationship: ["type", "person1", "person2", "note"],
   absent: ["name", "factType", "note"],
@@ -204,6 +210,9 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
           if (!isObj(n)) return errs.push(`${nat}: must be an object`);
           unknownKeys(n, KEYS.name, nat);
           if (!isStr(n.given) && !isStr(n.surname)) errs.push(`${nat}: needs a given name or a surname`);
+          if (n.type !== undefined && !(DOCUMENT_NAME_TYPES as readonly unknown[]).includes(n.type)) {
+            errs.push(`${nat}.type: must be one of ${DOCUMENT_NAME_TYPES.join(", ")}, or omitted when the text does not say`);
+          }
         });
       }
       if (!Array.isArray(p.facts)) {
@@ -404,12 +413,49 @@ export interface DocumentMode {
   statedRelations: Map<string, string>;
   /** `${personId}#${factIndex}` -> the fact's marks. */
   factMarks: Map<string, { computed: string[]; note?: string; uncertain?: true }>;
-  /** person id -> a note on the name reading. */
-  nameNotes: Map<string, string>;
+  /** person id -> each name's own note and type, by position in `names`. Set
+   *  only for a person with a name carrying either. */
+  nameMarks: Map<string, { note?: string; type?: DocumentNameType }[]>;
   /** The year of the event the source is about (the death on an obituary). */
   eventYear?: number;
   /** The principal's event fact type, snake_case (`death`, `marriage`, `birth`…). */
   eventType?: string;
+  /** The year a stated age is counted from, for the birth range an age implies.
+   *  Its own field: `eventYear` and `eventType` steer classification, and this
+   *  must not. Absent when the text gives no event to count from. */
+  ageEventYear?: number;
+}
+
+/** The record type's own event fact, for the year an age is counted from. A
+ *  burial's is the burial, else the death. */
+const AGE_EVENT_FACTS: Partial<Record<RecordType, RegExp[]>> = {
+  marriage: [/^marriage/],
+  death: [/^death$/],
+  burial: [/^(burial|cremation)$/, /^death$/],
+  christening: [/^(christening|baptism)$/],
+  birth: [/^birth$/],
+  obituary: [/^death$/],
+  probate: [/^death$/],
+  draft_registration: [/^draft|^military/],
+};
+
+/** The year an age in this document is counted from, in order: a census's year;
+ *  the principal's event year where one is set; the record type's own event
+ *  fact; the source's creation year, only for a page image or verbatim
+ *  transcript. No other fallback: an obituary whose only dated fact is an
+ *  immigration must not give a birth range. */
+function ageEventYearOf(doc: StructuredDocument, principalEventYear: number | undefined): number | undefined {
+  if (doc.recordType === "census") return doc.census?.year;
+  if (principalEventYear !== undefined) return principalEventYear;
+  for (const re of AGE_EVENT_FACTS[doc.recordType] ?? []) {
+    for (const p of doc.persons) {
+      const y = yearOf(p.facts.find((f) => re.test(f.type.toLowerCase()) && yearOf(f.date) !== undefined)?.date);
+      if (y !== undefined) return y;
+    }
+  }
+  return doc.documentForm === "page_image" || doc.documentForm === "verbatim_transcript"
+    ? yearOf(doc.source.created)
+    : undefined;
 }
 
 const PRINCIPAL_EVENT: Partial<Record<RecordType, RegExp>> = {
@@ -440,13 +486,17 @@ export function documentToExtract(
 ): { extract: ExtractDocument; mode: DocumentMode } {
   const statedRelations = new Map<string, string>();
   const factMarks = new Map<string, { computed: string[]; note?: string; uncertain?: true }>();
-  const nameNotes = new Map<string, string>();
+  const nameMarks = new Map<string, { note?: string; type?: DocumentNameType }[]>();
   const indexFields: Record<string, PersonaIndexFields> = {};
 
   const persons: SimplifiedPerson[] = doc.persons.map((p, i) => {
     if (p.statedRelation) statedRelations.set(p.id, p.statedRelation);
-    const nameNote = p.names.map((n) => n.note).filter(Boolean).join("; ");
-    if (nameNote) nameNotes.set(p.id, nameNote);
+    if (p.names.some((n) => n.note || n.type)) {
+      nameMarks.set(
+        p.id,
+        p.names.map((n) => ({ ...(n.note ? { note: n.note } : {}), ...(n.type ? { type: n.type } : {}) })),
+      );
+    }
     p.facts.forEach((f, j) => {
       if ((f.computed && f.computed.length) || f.note || f.uncertain) {
         factMarks.set(`${p.id}#${j}`, {
@@ -527,6 +577,7 @@ export function documentToExtract(
   const pairs = events.filter((f) => f.type.toLowerCase() !== "birth");
   const eventFact = pairs.find(allCarry) ?? pairs[0] ?? events[0];
   const eventYear = yearOf(eventFact?.date);
+  const ageEventYear = ageEventYearOf(doc, eventYear);
 
   const hasWill =
     doc.recordType === "probate"
@@ -547,9 +598,10 @@ export function documentToExtract(
       ...(doc.informant?.name ? { informantName: doc.informant.name } : {}),
       statedRelations,
       factMarks,
-      nameNotes,
+      nameMarks,
       ...(eventYear !== undefined ? { eventYear } : {}),
       ...(eventFact ? { eventType: eventFact.type.toLowerCase() } : {}),
+      ...(ageEventYear !== undefined ? { ageEventYear } : {}),
     },
   };
 }

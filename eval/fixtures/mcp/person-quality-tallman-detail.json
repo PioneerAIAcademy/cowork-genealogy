@@ -1,0 +1,207 @@
+{
+  "tool": "person_quality",
+  "description": "Captured live person_quality (detail: true) for Edward Tallman (KPQ5-V9F), from the same bundle. Verbatim.",
+  "args": {
+    "personId": "KPQ5-V9F",
+    "detail": true
+  },
+  "response": {
+    "personId": "KPQ5-V9F",
+    "segment": "United States 1776 - 1850",
+    "overallScore": 0.9626487569223517,
+    "issueCount": 11,
+    "categories": [
+      {
+        "scoreType": "COMPLETENESS",
+        "count": 2,
+        "score": 0.9024390243902439
+      },
+      {
+        "scoreType": "VERIFIABILITY",
+        "count": 7,
+        "score": 1
+      },
+      {
+        "scoreType": "CONSISTENCY",
+        "count": 2,
+        "score": 0.9855072463768116
+      },
+      {
+        "scoreType": "COHERENCE",
+        "count": 0,
+        "score": 1
+      }
+    ],
+    "issues": [
+      {
+        "sentence": "A marriage date is missing a month.",
+        "conclusionType": "MARRIAGE",
+        "scoreType": "COMPLETENESS"
+      },
+      {
+        "sentence": "A marriage date is missing a month.",
+        "conclusionType": "MARRIAGE",
+        "scoreType": "COMPLETENESS"
+      },
+      {
+        "sentence": "This person has a birth date of 30 November 1838, which does not match the date 1841. Edward Tallman, \"United States, Census, 1870\"",
+        "conclusionType": "BIRTH",
+        "scoreType": "CONSISTENCY"
+      },
+      {
+        "sentence": "This person has a birth place of Peru, Clinton, New York, United States, which does not match the place Peru. Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "conclusionType": "BIRTH",
+        "scoreType": "CONSISTENCY"
+      },
+      {
+        "sentence": "A marriage has no tagged sources.",
+        "conclusionType": "MARRIAGE",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "A marriage has no tagged sources.",
+        "conclusionType": "MARRIAGE",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "A residence has no tagged sources.",
+        "conclusionType": "RESIDENCE",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "A residence has no tagged sources.",
+        "conclusionType": "RESIDENCE",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "A residence has no tagged sources.",
+        "conclusionType": "RESIDENCE",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "A residence has no tagged sources.",
+        "conclusionType": "RESIDENCE",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "A residence has no tagged sources.",
+        "conclusionType": "RESIDENCE",
+        "scoreType": "VERIFIABILITY"
+      }
+    ],
+    "detail": {
+      "conflicts": [
+        {
+          "field": "Death Place",
+          "values": [
+            "Burlington, Chittenden, Vermont, United States",
+            "Burlington, United States"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
+            "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1839-01-31",
+            "+1840"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
+            "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1839",
+            "+1840"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
+            "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
+            "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
+            "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
+            "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD"
+          ]
+        },
+        {
+          "field": "Birth Place",
+          "values": [
+            "New York, United States",
+            "Peru"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
+            "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1"
+          ]
+        },
+        {
+          "field": "Birth Place",
+          "values": [
+            "New York",
+            "Peru"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:KN9R-2KJ",
+            "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL"
+          ]
+        },
+        {
+          "field": "Death Place",
+          "values": [
+            "Burlington, United States",
+            "Vermont, United States"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:QPQ2-58BX",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1839-01-31",
+            "+1841"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
+            "https://familysearch.org/ark:/61903/1:1:QVKW-7BXX"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1839",
+            "+1841"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
+            "https://familysearch.org/ark:/61903/1:1:2V7M-JMY",
+            "https://familysearch.org/ark:/61903/1:1:MCTB-KBM",
+            "https://familysearch.org/ark:/61903/1:1:M5W8-LDP",
+            "https://familysearch.org/ark:/61903/1:1:F8R4-RYM",
+            "https://familysearch.org/ark:/61903/1:1:QVNJ-JDJD"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1840",
+            "+1841"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:M8N9-JJL",
+            "https://familysearch.org/ark:/61903/1:1:MZ83-SG1"
+          ]
+        }
+      ]
+    }
+  }
+}

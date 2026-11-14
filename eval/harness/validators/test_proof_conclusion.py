@@ -26,6 +26,8 @@ import re
 import pytest
 
 from harness.skill_runner import agent_return_text
+from test_universal import _bare_tool_name, _healer_normalized, _tool_reported_removal
+from validators_lib import continue_offers
 
 
 # --- Tool allowlist ---
@@ -203,7 +205,9 @@ def test_q001_disproved_tier(after_state, test):
 # proof-conclusion updates tree.gedcomx.json ONLY when the tier reaches
 # `probable` or higher. Below that (possible / not_proved / disproved) it
 # must leave the tree untouched. The two tags below pin both directions:
-#   `no-tree-write`       — the tree must be byte-identical before and after
+#   `no-tree-write`       — the tree must be unchanged apart from source
+#                           descriptions and research_append's own
+#                           reported unanchored-person sweep
 #   `tree-write-expected` — the concluded ParentChild relationship must be
 #                           ADDED by the skill: absent in the pre-state,
 #                           present afterward (catches found-but-lost)
@@ -212,17 +216,95 @@ def _tree(state):
     return state.get("tree_gedcomx_json") or state.get("tree_gedcomx")
 
 
-def test_no_tree_write_below_probable(before_state, after_state, test):
+def _endpoints(rel) -> list:
+    return [e for e in (rel.get(k) for k in ("parent", "child", "person1", "person2")) if isinstance(e, str) and e]
+
+
+def _without_tool_removal(tree: dict, removed: set[str]) -> dict:
+    """`tree` less the persons research_append's sweep removed and the edges
+    it took with them: an edge touching a removed person whose every endpoint
+    is removed or names no person in the tree. The sweep removes only persons
+    no edge path reaches from an anchor, so an edge it takes has no endpoint on
+    a person who stays; an edge the agent deleted to a person still in the tree
+    keeps that endpoint, stays, and still counts."""
+    if not removed:
+        return tree
+    present = {p.get("id") for p in tree.get("persons") or [] if isinstance(p, dict)}
+    out = dict(tree)
+    if isinstance(tree.get("persons"), list):
+        out["persons"] = [p for p in tree["persons"] if not (isinstance(p, dict) and p.get("id") in removed)]
+    if isinstance(tree.get("relationships"), list):
+        out["relationships"] = [
+            r for r in tree["relationships"]
+            if not (
+                isinstance(r, dict)
+                and any(e in removed for e in _endpoints(r))
+                and all(e in removed or e not in present for e in _endpoints(r))
+            )
+        ]
+    return out
+
+
+_TREE_WRITERS = ("tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts")
+
+
+def _string_values(value) -> set[str]:
+    if isinstance(value, str):
+        return {value}
+    if isinstance(value, dict):
+        value = list(value.values())
+    if isinstance(value, list):
+        return set().union(*(_string_values(v) for v in value))
+    return set()
+
+
+def _tree_writes_naming(tool_calls, ids: set[str]) -> list[str]:
+    """The successful calls that wrote tree.gedcomx.json with one of `ids` as
+    an argument value. The sweep erases a write to a person it then removes, so
+    the end-state diff alone cannot see it."""
+    hits = []
+    for call in tool_calls or []:
+        if not isinstance(call, dict):
+            continue
+        name = _bare_tool_name(call.get("tool", ""))
+        response = call.get("response")
+        if name not in _TREE_WRITERS or not isinstance(response, dict) or response.get("ok") is not True:
+            continue
+        written = response.get("filesWritten")
+        if not (isinstance(written, list) and any(isinstance(f, str) and f.endswith("tree.gedcomx.json") for f in written)):
+            continue
+        named = _string_values(call.get("args")) & ids
+        if named:
+            hits.append(f"{name} naming {sorted(named)}")
+    return hits
+
+
+def test_no_tree_write_below_probable(before_state, after_state, test, tool_calls=None):
     """Tagged `no-tree-write`: at `possible`/`not_proved`/`disproved` the
     skill must not modify tree.gedcomx.json at all. The corresponding
     scenarios deliberately ship a pre-state tree with no concluded
-    ParentChild relationship, so a correct run leaves the tree identical."""
+    ParentChild relationship, so a correct run leaves the tree identical —
+    except for research_append's own unanchored-person sweep when the
+    conclusion resolves the last open question
+    (research-append-tool-spec.md §5.11): the persons it reports removing,
+    and their edges, are taken out of the before tree first. A successful
+    tree write naming one of those persons still fails, since the sweep
+    erased it. Both trees are compared with empty `facts` lists dropped, as
+    the tool's healer drops them on the sweep's write."""
     if "no-tree-write" not in test.get("tags", []):
         pytest.skip("not a no-tree-write scenario")
     before = _tree(before_state)
     after = _tree(after_state)
     if before is None or after is None:
         pytest.skip("Missing tree.gedcomx.json for diff")
+    removed = _tool_reported_removal(tool_calls, before)
+    erased = _tree_writes_naming(tool_calls, removed)
+    assert not erased, (
+        "a below-probable conclusion wrote to the tree, to persons "
+        f"research_append's sweep then removed: {'; '.join(erased)}"
+    )
+    before = _without_tool_removal(_healer_normalized(before), removed)
+    after = _healer_normalized(after)
     # Source-description (S entry) metadata is not a conclusion — a
     # sources-only diff (e.g. citation backfill on an existing S) is
     # permitted below probable; facts/relationships/persons are not.
@@ -1091,7 +1173,6 @@ def test_unsettled_conflict_conclusion_offers_no_continue(text_response, test, a
     if _UNSETTLED_TAG not in (test.get("tags") or []):
         pytest.skip(f"not a {_UNSETTLED_TAG} test")
     from harness.skill_runner import subject_reply_text
-    from validators_lib import continue_offers
 
     reply = subject_reply_text(agent_returns, text_response, "proof-conclusion", test)
     assert reply.strip(), "proof-conclusion returned no reply"

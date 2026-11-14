@@ -8,7 +8,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({ getValidToken: vi.fn() }));
 
-import { personReadTool } from "../../src/tools/person-read.js";
+import { personReadTool, readPerson } from "../../src/tools/person-read.js";
+
+// The whole read: these fixtures carry memories with no artifact link, text or scan, which the model-facing
+// answer drops with the relatives' sources.
+const readFull = async (input: { personId: string; sourceDescriptions?: boolean }) =>
+  (await readPerson(input.personId, {}, LOCAL)).result;
 import { LOCAL } from "../../src/auth/principal.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { isMemoryArtifactUrl } from "../../src/utils/fs-image-fetch.js";
@@ -86,7 +91,7 @@ function routes(opts: { person?: unknown; living?: boolean; pages?: unknown[][];
 describe("person_read + memories", () => {
   it("acceptance 2: a source-style memory arrives in sources[] in the same shape as any source", async () => {
     routes({ pages: [[memory({ id: "175960782", titles: [{ value: "World War II Draft Card" }] })]] });
-    const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+    const out = await readFull({ personId: PID, sourceDescriptions: true });
     expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
     const m = out.sources.find((s) => s.id === "175960782");
     expect(m).toBeDefined();
@@ -132,7 +137,7 @@ describe("person_read + memories", () => {
       );
     });
 
-    const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+    const out = await readFull({ personId: PID, sourceDescriptions: true });
 
     expect(out.sources.find((s) => s.id === "175960782")).toBeDefined();
     // and the memories endpoint was asked about the id that actually exists
@@ -245,7 +250,7 @@ describe("person_read + memories", () => {
         [memory({ id: "d2", artifactMetadata: qualifier("Document") })],
         undefined as unknown as unknown[],   // the real last hop: 204, empty body
       ] });
-      const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+      const out = await readFull({ personId: PID, sourceDescriptions: true });
       expect(out.sources.map((s) => s.id).filter((i) => !i.startsWith("SD_"))).toEqual(["d1", "d2"]);
       expect(err.mock.calls.map((c) => String(c[0])).join("")).toBe("");
     } finally {
@@ -312,7 +317,7 @@ describe("person_read + memories", () => {
                qualifiers: [{ name: "http://familysearch.org/v1/Document" }] }] }),
       memory({ id: "f2", titles: [], artifactMetadata: qualifier("Document") }),
     ]] });
-    const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+    const out = await readFull({ personId: PID, sourceDescriptions: true });
     expect(out.sources.find((s) => s.id === "f1")!.title).toBe("draftcard.jpg");
     expect(out.sources.find((s) => s.id === "f2")!.title).toBe("FamilySearch memory f2");
   });

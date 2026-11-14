@@ -78,8 +78,9 @@ Behavior:
 1. Parse the slug out of the URL (`urlToSlug`, unchanged).
 2. `GET {WIKI_API_URL}/page/{slug}`.
 3. On 200 → return the existing `WikiPageResult` shape `{ url, content }`: the
-   server's `{ title, content, source_url }` remapped, with `content` cut to one
-   part when the page is longer than the cap (see **Pagination**).
+   server's `{ title, content, source_url }` remapped, with the sidebar removed
+   (see **The sidebar**) and `content` cut to one part when the page is longer
+   than the cap (see **Pagination**).
 4. On 404 → throw `No wiki page found for "<slug>". The page may not
    exist in the corpus.` (matches today's wording).
 5. On 5xx → `wiki-query-api error: {status}`.
@@ -154,9 +155,54 @@ and are decoded before the slug is built.
 The `WikiPlacePageResult` members are unchanged; `placeName` is the name that
 resolved — the leaf or alternate name for a country or state, the title's
 jurisdiction (`Schuylkill County, Pennsylvania`) for a page resolved by title.
-The place is resolved first and the page cut afterwards, so every way of resolving
-one is paged the same way; a truncated answer, or a call that passes `offset`, adds
-the paging members described under **Pagination**.
+The place is resolved first, then the page loses its sidebar (see **The sidebar**) and
+is cut, so every way of resolving one is served the same way; a truncated answer, or a
+call that passes `offset`, adds the paging members described under **Pagination**.
+
+---
+
+## The sidebar
+
+Most wiki pages carry a navigation box: a table under an empty header, one column on a
+country's or a US state's pages (`|  |`, `| --- |`) and two on many provinces' and counties'
+(`|  |  |`, `| --- | --- |`), whose row naming `<place> Wiki Topics` heads rows of links to the
+place's topic pages. The same box repeats on every page of a country or state, so both tools
+remove it before the page is cut into parts (`stripWikiSidebar`, `src/utils/wiki-sidebar.ts`).
+`content` is cut from the text without it, and `totalChars`, `offset` and `nextOffset` count that
+text.
+
+1. **The row is found by its words.** A sidebar row is a line that starts with `|` and
+   contains `Wiki Topics`. The wiki spells the row at least four ways, shown here for England:
+   `[England Wiki Topics](https://www.familysearch.org/en/wiki/England_Genealogy)`,
+   `**England Wiki Topics**`,
+   `[**England Wiki Topics**](https://www.familysearch.org/en/wiki/England_Genealogy)` and
+   `**[England Wiki Topics](https://www.familysearch.org/en/wiki/England_Genealogy "England Genealogy")**`.
+   A pattern per spelling would miss the next one.
+2. **The whole table goes.** The table is the run of consecutive lines that start with `|`
+   around the row, from the empty header down to its last row. That run and the blank line
+   after it are removed, so the text on either side joins as it did around the table. Removing
+   only the rows from `Wiki Topics` down would leave `|  |` and `| --- |` behind.
+3. **Only when the run is one table.** The run must hold a single separator row. A run holding
+   two, a content table touching the box with no blank line between them, is left whole:
+   keeping a box costs characters, while cutting a table would lose content. No page checked
+   on 2026-11-09, among the recorded e2e answers and live pages, has a table touching the box.
+4. **Every such table, wherever it sits.** Most pages open with it; some carry it lower down
+   (`Argentina_Online_Genealogy_Records`, under a table of collections).
+5. **Nothing else is touched.** Other tables stay, including ones with the same empty header:
+   `England_Census`'s population table sits under the sidebar and above the first `##`
+   heading, so cutting everything above that heading would take it too. A page with no
+   sidebar comes back unchanged.
+
+Agents lose the topic links with the box. That is accepted, and no link list is put back.
+
+The skill unit evals do not see this rule: the harness serves the answers recorded under
+`eval/fixtures/mcp/` without calling the tool, and a fixture recorded with a sidebar keeps it,
+since editing one marks a skill's run logs stale and needs a paid run.
+
+**Only the live check sees a renamed box.** If the wiki renamed the box, or changed its
+template, so that its row no longer says `Wiki Topics`, the rule would match nothing and both
+tools would serve the sidebar again, with every test still passing. `dev/check-wiki-paging.ts`
+fails in that case for its sample pages, one per shape (see **Live check**).
 
 ---
 
@@ -165,8 +211,9 @@ the paging members described under **Pagination**.
 A few pages are longer than one tool answer can be. Claude Code saves any tool result over
 50,000 characters to a file and hands the agent a preview. `locality-guide` has `Read` but no
 `Bash`, and `Read` refuses a file over 25,000 tokens, so what lies past the preview is lost to
-the research. Measured 2026-10-22, straight from `GET /page/<title>` (lengths in UTF-16 code
-units, the unit `content.length` and `offset` use; `#` lines are lines that start with `#`):
+the research. Measured 2026-10-22, straight from `GET /page/<title>`, so before the sidebar is
+removed (see **The sidebar**; lengths in UTF-16 code units, the unit `content.length` and
+`offset` use; `#` lines are lines that start with `#`):
 
 | page | characters | JSON-escaped body | `#` lines | longest line |
 |---|--:|--:|--:|--:|
@@ -200,9 +247,9 @@ quote, backslash and line break. `fitPage` (`src/utils/text-page.ts`, shared wit
 within the cap, and never splits a surrogate pair; the reasoning for the escape bound is
 `sidecar-read-tool-spec.md` §4 and holds here unchanged. The URL, the place and the paging
 members add a few hundred characters around `content`, so a whole result stays near 41,000, under
-the 50,000 line. A page whose escaped body lies between the cap and that line, such as
-`England_Church_Records` (43,246 characters escaped, measured 2026-10-22), came back whole before
-paging and now comes back in two parts. The cap stays at 40,000 anyway: it is the bound `sidecar_read`
+the 50,000 line. A page whose escaped body lies between the cap and that line comes back in two
+parts though it would fit under the line whole, such as `Ireland_Online_Genealogy_Records` without
+its sidebar (47,502 characters escaped, measured 2026-11-09). The cap stays at 40,000 anyway: it is the bound `sidecar_read`
 already holds, and it leaves the margin under the line that the members around `content` need.
 
 **Where the cut falls.** `fitPage`'s cut is then moved back to a boundary a reader can use
@@ -220,10 +267,11 @@ break past the midpoint, and the part ends in the middle of the row. A cut only 
 start of the part, so a part never grows past the cap, is never empty (the cut is past the midpoint), and
 never ends inside a surrogate pair (it falls beside a `\n` or a `#`).
 
-**A page that fits returns exactly what it always did.** `wiki_read` returns `{ url, content }` and
+**A page that fits returns the shape it always did.** `wiki_read` returns `{ url, content }` and
 `wiki_place_page` `{ url, content, standardPlace, placeName }`: no `truncated: false`, no `totalChars`.
-Only a truncated answer, or any call that passes `offset`, adds `totalChars` (the length of the whole
-page), `offset` (where this part starts) and `truncated`, and, when `truncated`, `nextOffset` (`offset`
+`content` is the whole page less its sidebar (**The sidebar**). Only a truncated answer, or any call
+that passes `offset`, adds `totalChars` (the length of the whole page less its sidebar), `offset`
+(where this part starts) and `truncated`, and, when `truncated`, `nextOffset` (`offset`
 plus `content.length`). They are optional members of `WikiPageResult`, so the fixtures under
 `eval/fixtures/mcp/` stay valid. An `offset` at or past the end returns an empty part with
 `truncated: false`.
@@ -305,6 +353,16 @@ the line; they cannot prove an agent reads them all.
   against the rule written as two backward scans over every short text of `#`, line breaks, `a`
   and a surrogate pair, and a seeded property test: any text, offset and cap walks to the end
   and joins back.
+- `tests/utils/wiki-sidebar.test.ts` — the sidebar rule on three real pages copied into
+  `tests/fixtures/wiki/`: `England_Census` lines 0–46 (the sidebar, then the population table
+  with the same empty header, above the first `##`), `Argentina_Online_Genealogy_Records` (its
+  sidebar under a table of collections) and `Saskatchewan,_Canada_Genealogy` lines 0–25 (a
+  two-column box). Checked: the exact text left, the two header lines gone, each of the four row
+  spellings, the two-column box, every sidebar on a page, one that opens or ends the text, a box
+  left whole when a table touches it above or below, and a page with no sidebar returned
+  unchanged. Both tool suites serve the England page and check that the answer carries no
+  sidebar, that a long page's parts join to the page without it, and that `totalChars` and a
+  continuation's `offset` count that page.
 
 ### Skill unit tests (`eval/tests/unit/<skill>/`)
 
@@ -329,19 +387,24 @@ npx tsx dev/check-wiki-paging.ts --wire   # the same through the built server ov
 npx tsx dev/check-wiki-paging.ts <wiki URL> ...   # your own pages, through wiki_read
 ```
 
-Each case fetches the page whole from the wiki server, follows `nextOffset`, joins the parts and
-compares. It exits non-zero on a mismatch, on a part at or over the CLI line, on a part whose
+Each case fetches the page whole from the wiki server and removes its sidebar with the function
+the tools call (see **The sidebar**), follows `nextOffset`, joins the parts and compares. It exits
+non-zero on a mismatch, on a part at or over the CLI line, on a part whose
 `nextOffset` does not move past where it was asked to start, and on a chain that does not end. The
 walk is bounded by the page and not by a fixed count: every part is non-empty (`fitPage`), so a page
 of N characters cannot need more than N parts, and a walk that reaches that bound reports its last
 part as truncated. A default page that now comes back in one part fails too, since it would pass
-every other check with nothing walked; pages passed on the command line are not held to that.
+every other check with nothing walked; pages passed on the command line are not held to that. A
+default run also fetches its sidebar samples (`SIDEBAR_SAMPLES`, one page per shape of the box: each
+spelling of its row, one lower on the page, a two-column one) and fails any that loses nothing to the
+strip: the rule no longer matches the wiki's box. Under `--wire`, parts that join to the page with its
+sidebar still in are reported as a `build/` older than `src/`.
 
-The default pages run from two parts to twelve. Measured 2026-10-22, each joining back to the page
-exactly, through both tools where a section reaches the page and over stdio:
+The default pages run from two parts to twelve. Measured 2026-11-09, each joining back to the page
+without its sidebar exactly, through both tools where a section reaches the page and over stdio:
 `Schuylkill_County,_Pennsylvania_Genealogy` in 2 parts (37,690 and 28,627 characters, cut at a
-heading), `Pennsylvania_Church_Records` in 2 (38,388 and 26,261, at a heading),
-`Ireland_Online_Genealogy_Records` in 2 (39,957 and 13,118, mid-row), `Norway_Church_Records` in 3,
+heading), `Pennsylvania_Church_Records` in 2 (32,552 and 26,261, at a heading),
+`Ireland_Online_Genealogy_Records` in 2 (39,957 and 7,480, mid-row), `Norway_Church_Records` in 3,
 `Cook_County,_Illinois_Genealogy` in 4 (through `wiki_place_page` its last three parts are
 continuations that make no search) and `San_José,_Costa_Rica,_Catholic_Church_Parish_Finding_Aid`
 in 12, the longest chain, cut at a heading or a line break.

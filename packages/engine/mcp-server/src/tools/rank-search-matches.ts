@@ -1,4 +1,5 @@
 import type { Principal } from "../auth/principal.js";
+import { connectorReauthMessage, isConnector } from "../auth/config.js";
 import { getProjectStore } from "../store/project-store.js";
 import { matchPairs } from "../utils/matcher.js";
 import type { MatchCall, MatcherBackend } from "../types/matcher.js";
@@ -14,12 +15,19 @@ import { gatherRelatives, hasRealGivenName, isRealGivenName } from "../utils/rel
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
+import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
+import { treePidOfArk } from "../utils/ark.js";
+import { isFamilySearchPersonId } from "../utils/fs-id.js";
 import type {
   RankSearchMatchesInput,
   RankSearchMatchesResult,
   RankedMatch,
 } from "../types/rank-search-matches.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
+
+/** The no-match advice. Exported so record_search can swap it on a place
+ *  expansion, which cannot page with offset. */
+export const PAGE_DEEPER_ADVICE = "page deeper (offset) or narrow the query";
 
 /** FamilySearch's match-score fan-out concurrency (deliberately higher than
  *  same_person's conservative PAIR_CONCURRENCY=5; confirmed with the
@@ -171,11 +179,11 @@ export async function rankSearchMatches(
   // `results`, which is never truncated.
   const matches: RankedMatch[] =
     input.top === undefined
-      ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear))
-      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear));
+      ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames))
+      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames));
 
-  if (input.checkAttachments && matches.length > 0) {
-    await applyAttachments(matches, subjectId, principal);
+  if (input.checkAttachments && matches.length > 0 && subject.familySearchId) {
+    await applyAttachments(matches, subject.familySearchId, principal);
   }
 
   const out: RankSearchMatchesResult = {
@@ -221,7 +229,7 @@ export async function rankSearchMatches(
       `Subject '${subjectId}' is scoreable (${subject.discriminatingFacts} ` +
       `dated/placed fact(s)), but no candidate in this pool scored above ` +
       `${realNegative}. Treat that as a real negative for this query — ` +
-      `page deeper (offset) or narrow the query; do not hand-triage the stubs.`;
+      `${PAGE_DEEPER_ADVICE}; do not hand-triage the stubs.`;
   } else if (noSignal) {
     // The candidates that went unscored might hold the match: no negative yet.
     out.diagnostic =
@@ -236,6 +244,10 @@ export async function rankSearchMatches(
   // so `returnedCount: 0` can never ship alongside "of the 2 matches returned".
   const relativeTermNote = buildRelativeTermNote(out.matches);
   if (relativeTermNote) out.relativeTermNote = relativeTermNote;
+  // Same placement, same reason: only about rows actually returned.
+  if (out.matches.some((m) => m.surnameNotOnSubject)) {
+    out.surnameNote = SURNAME_NOT_ON_SUBJECT_NOTE;
+  }
 
   return out;
 }
@@ -638,6 +650,133 @@ const SUBJECT_TOO_THIN_NOTE =
   "score and however well it agrees. Report no row's family as this person's. Name what would settle " +
   "identity (a precise date, or a named spouse, parent or child) and the record most likely to state it.";
 
+export const SURNAME_NOT_ON_SUBJECT_NOTE =
+  "Rows with `surnameNotOnSubject` carry a surname (`candidateSurname`) that this person bears nowhere " +
+  "in the project: not on the tree person, not in linked evidence, and not on a tree spouse, parent or " +
+  "child. The match score does not account for this. Each such row is `needs-review`: report it as " +
+  "consistent with that name, never as a confirmed match, as cleared, or as ready to extract as this " +
+  "person's record. That holds when the surname is the one the research is trying to establish: finding " +
+  "a same-named person under it is not evidence this person bore it. Name the record that would tie " +
+  "this person to that surname (a marriage, or a record giving both surnames for this person).";
+
+/** A surname's comparable words: lower-cased, accent-free, split on spaces and
+ *  hyphens, with particles of three letters or fewer ("de", "van") dropped while
+ *  a longer word remains — otherwise "van Dyke" would match "Van Buren". */
+function surnameTokens(surname: string): string[] {
+  const words = normalizeString(surname).split(/[\s-]+/).filter(Boolean);
+  const long = words.filter((w) => w.length > 3);
+  return long.length > 0 ? long : words;
+}
+
+const SOUNDEX_CODES: Record<string, string> = {
+  b: "1", f: "1", p: "1", v: "1",
+  c: "2", g: "2", j: "2", k: "2", q: "2", s: "2", x: "2", z: "2",
+  d: "3", t: "3",
+  l: "4",
+  m: "5", n: "5",
+  r: "6",
+};
+
+/** American Soundex: the first letter, then up to three digits for the
+ *  consonants after it. Letters coded alike and adjacent, or separated only by
+ *  `h` or `w`, give one digit; a vowel between them gives two. "" for a word
+ *  with no letter a–z. */
+function soundex(word: string): string {
+  const letters = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (!letters) return "";
+  let out = letters[0].toUpperCase();
+  let last = SOUNDEX_CODES[letters[0]] ?? "";
+  for (const ch of letters.slice(1)) {
+    const code = SOUNDEX_CODES[ch];
+    if (code) {
+      if (code !== last) out += code;
+      if (out.length === 4) break;
+      last = code;
+    } else if (ch !== "h" && ch !== "w") {
+      last = "";
+    }
+  }
+  return out.padEnd(4, "0");
+}
+
+/** Two surname words are one name when they are one edit apart
+ *  (Kimbrel/Kimbrell, Smith/Smyth) or share a Soundex code (Stephens/Stevens,
+ *  Reilly/Riley, Christensen/Christiansen, Johansson/Johnson), which `record_search`'s
+ *  fuzzy matching returns for one another. Soundex keeps the first letter, so
+ *  Nelson/Olson and Anderson/Henderson stay distinct; a Sorensen-Dice cutoff did
+ *  not. The cost is that distinct names coded alike (Hall/Hill, Kimbrell/Kemper)
+ *  are not flagged. A word with no letter a–z has no code, so two non-Latin
+ *  surnames (Иванов/Петров) are compared by edits alone. */
+function similarSurnameToken(a: string, b: string): boolean {
+  return levenshteinDistance(a, b) <= 1 || (soundex(a) !== "" && soundex(a) === soundex(b));
+}
+
+/** True when any word of `candidate` is a spelling of any word of any of the
+ *  subject's surnames. */
+function surnameOnSubject(candidate: string, subjectSurnames: string[]): boolean {
+  const cand = surnameTokens(candidate);
+  return subjectSurnames.some((s) =>
+    surnameTokens(s).some((t) => cand.some((c) => similarSurnameToken(c, t))),
+  );
+}
+
+/** Every surname the project gives the subject: the enriched subject's own names
+ *  (tree names plus linked `name` assertions) and the names of each tree person
+ *  sharing a Couple or ParentChild relationship with them, so a maiden name
+ *  borne by a parent, or a married name borne by a spouse or child, is hers. */
+function subjectSurnames(
+  enriched: { names?: any[] },
+  tree: SimplifiedGedcomX,
+  subjectId: string,
+): string[] {
+  const out = new Set<string>();
+  const add = (names: unknown) => {
+    for (const n of Array.isArray(names) ? names : []) {
+      const s = (n as any)?.surname;
+      if (typeof s === "string" && s.trim()) out.add(s.trim());
+    }
+  };
+  add(enriched.names);
+  const family = new Set<string>();
+  for (const r of tree.relationships ?? []) {
+    if (r.type !== "Couple" && r.type !== "ParentChild") continue;
+    const ends = relationshipEndpoints(r);
+    if (!ends.includes(subjectId)) continue;
+    for (const e of ends) if (e !== subjectId) family.add(e);
+  }
+  for (const p of tree.persons ?? []) {
+    if (p.id && family.has(p.id)) add(p.names);
+  }
+  return [...out];
+}
+
+/** The candidate's surnames, preferred first: every name of the principal
+ *  persona in the staged row's gedcomx (a record giving a maiden name beside a
+ *  married one carries both), else — only when the row has no such persona — the
+ *  last word of a multi-word `personName` that is not a generational suffix. */
+function candidateSurnamesOf(r: RecordSearchResult): string[] {
+  const persons = (r.gedcomx as { persons?: any[] } | undefined)?.persons;
+  const persona =
+    Array.isArray(persons) && r.primaryId
+      ? persons.find((p) => p && p.id === r.primaryId)
+      : undefined;
+  if (persona) {
+    const names = Array.isArray(persona.names) ? [...persona.names] : [];
+    names.sort((a: any, b: any) => Number(Boolean(b?.preferred)) - Number(Boolean(a?.preferred)));
+    const out: string[] = [];
+    for (const n of names) {
+      const s = n?.surname;
+      if (typeof s === "string" && s.trim() && !out.includes(s.trim())) out.push(s.trim());
+    }
+    return out;
+  }
+  const words = typeof r.personName === "string" ? r.personName.trim().split(/\s+/) : [];
+  while (words.length > 1 && GENERATIONAL_SUFFIXES.has(words[words.length - 1].toLowerCase().replace(/\./g, ""))) {
+    words.pop();
+  }
+  return words.length > 1 ? [words[words.length - 1]] : [];
+}
+
 /** The response's `subjectTooThin` fields: present only when true. */
 function tooThinField(subject: SubjectDoc): { subjectTooThin?: true; subjectTooThinNote?: string } {
   return subject.subjectTooThin ? { subjectTooThin: true, subjectTooThinNote: SUBJECT_TOO_THIN_NOTE } : {};
@@ -670,6 +809,22 @@ interface SubjectDoc {
    *  same-named individual. Independent of `discriminatingFacts` (a city-only
    *  residence has a place but no narrow date and no relative). */
   subjectTooThin: boolean;
+  /** Every surname the project gives the subject (see `subjectSurnames`). */
+  surnames: string[];
+  /** The FamilySearch person id the subject is attached under, upper-cased:
+   *  what `source_attachments` reports. Undefined when the tree names none. */
+  familySearchId?: string;
+}
+
+/** The PID in the tree person's `ark`, else its tree id when that is shaped
+ *  like a FamilySearch person id. A project tree keys persons `I1`, `I2`…
+ *  (merge-gedcomx.ts) and keeps the FamilySearch id in `ark`; e2e and eval
+ *  trees key persons by the FamilySearch id, mostly with no `ark`. */
+function subjectFamilySearchId(person: SimplifiedPerson): string | undefined {
+  const linked = treePidOfArk(person.ark);
+  if (linked) return linked.toUpperCase();
+  const id = person.id ?? "";
+  return isFamilySearchPersonId(id) ? id.toUpperCase() : undefined;
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
@@ -811,6 +966,13 @@ export async function buildSubjectDoc(
     // An advisory flag never fails the ranking; unflagged is the prior behavior.
     tooThin = false;
   }
+  let surnames: string[];
+  try {
+    surnames = subjectSurnames(enriched, safeTree, subjectId);
+  } catch {
+    // Advisory, like `subjectTooThin`: no surnames means no row is flagged.
+    surnames = [];
+  }
 
   return {
     doc: { persons: [enriched] },
@@ -824,6 +986,8 @@ export async function buildSubjectDoc(
     enrichedNames: (enriched.names ?? []).length - namesBefore,
     enrichedGender: Boolean(enriched.gender) && !hadGender,
     subjectTooThin: tooThin,
+    surnames,
+    familySearchId: subjectFamilySearchId(subject),
   };
 }
 
@@ -844,7 +1008,9 @@ export async function buildSubjectDoc(
  * Counts only `absent`, never `unknown`: "we could not tell" is not a finding
  * to warn about, and warning on it would train the caller to ignore the note.
  */
-function buildRelativeTermNote(matches: RankedMatch[]): string | undefined {
+export function buildRelativeTermNote(
+  matches: ReadonlyArray<Pick<RankedMatch, "relativeTerms">>,
+): string | undefined {
   const absentByPrefix = new Map<string, number>();
   for (const m of matches) {
     for (const [prefix, finding] of Object.entries(m.relativeTerms ?? {})) {
@@ -886,6 +1052,7 @@ function toStub(
   s: ScoredCandidate,
   matchRank: number,
   subjectYear?: number,
+  subjectSurnameList: string[] = [],
 ): RankedMatch {
   const r = s.result;
   const stub: RankedMatch = {
@@ -946,6 +1113,18 @@ function toStub(
       stub.birthYearGap = gap;
     }
   }
+  // Deterministic, like the birth-year flag: a hit under a surname the project
+  // never gives the subject (a recalled married name, say) scores on given name,
+  // date and place, and reads as a clean match. Flag it in code.
+  const candSurnames = candidateSurnamesOf(r);
+  if (
+    candSurnames.length > 0 &&
+    subjectSurnameList.length > 0 &&
+    !candSurnames.some((c) => surnameOnSubject(c, subjectSurnameList))
+  ) {
+    stub.surnameNotOnSubject = true;
+    stub.candidateSurname = candSurnames[0];
+  }
   return stub;
 }
 
@@ -997,23 +1176,29 @@ async function appendScoreLog(
 
 async function applyAttachments(
   matches: RankedMatch[],
-  subjectId: string,
+  familySearchId: string,
   principal: Principal,
 ): Promise<void> {
   const uris = matches.map((m) => m.recordId);
+  const isSubject = (p: { personId: string }) =>
+    p.personId?.toUpperCase() === familySearchId;
   try {
     const att = await sourceAttachmentsTool({ uris }, principal);
     for (const stub of matches) {
       const persons = att.attachments[stub.recordId] ?? [];
-      // subjectId is the tree person's FamilySearch PID; source_attachments
-      // keys attached persons by entity PID, so match on it directly.
-      stub.attachedToSubject = persons.some((p) => p.personId === subjectId);
-      stub.attachedToOther = persons.some((p) => p.personId !== subjectId);
+      stub.attachedToSubject = persons.some(isSubject);
+      stub.attachedToOther = persons.some((p) => !isSubject(p));
     }
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;
-    // Best-effort: an attachments failure must not fail the rank. Leave the
-    // attachedTo* fields unset rather than asserting a wrong answer.
+    // A connector caller whose FamilySearch session has ended must be told: with
+    // the matcher service scoring the pairs, this is the rank's only FamilySearch
+    // call, and swallowing it would return a ranking and no way to sign in again.
+    if (isConnector(principal) && err instanceof Error && err.message === connectorReauthMessage(principal)) {
+      throw err;
+    }
+    // Best-effort: any other attachments failure must not fail the rank. Leave
+    // the attachedTo* fields unset rather than asserting a wrong answer.
   }
 }
 

@@ -4,6 +4,7 @@ import {
   getClientId,
   isHostedMode,
   HOSTED_REAUTH_INSTRUCTION,
+  reauthMessage,
 } from "./config.js";
 import { loadTokens, saveTokens, isExpired } from "./tokenManager.js";
 import {
@@ -152,7 +153,9 @@ function refreshLocalTokens(refreshToken: string): Promise<TokenStore> {
 export async function getValidToken(principal: Principal): Promise<string> {
   if (principal.kind === "bearer") {
     if (!principal.accessToken) {
-      throw new Error(HOSTED_REAUTH_INSTRUCTION);
+      // By surface (auth/config.ts): the worker's Reconnect button, or the
+      // connector's sign-in link. A bearer never gets a desktop text.
+      throw new Error(await reauthMessage(principal, HOSTED_REAUTH_INSTRUCTION));
     }
     return principal.accessToken;
   }

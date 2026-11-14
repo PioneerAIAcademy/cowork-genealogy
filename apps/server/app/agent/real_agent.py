@@ -677,7 +677,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     """The session's hooks. PreToolUse is the only restraint on a bypassPermissions
     session; ``PostToolUse`` ends the turn when a proof-conclusion call completes the
     project. No ``Stop`` hook: a step-mode turn ends at its boundary on purpose
-    (docs/plan/research-step-mode.md, Phase 2).
+    (docs/specs/research-step-mode-spec.md, Phase 2).
 
     The counter lives here rather than on a module global, so two sandboxes in one
     process cannot read each other's state."""
@@ -796,6 +796,21 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     return hooks
 
 
+# Issue #4241: the agent told a researcher to open a report at a sandbox path
+# they can't reach, and didn't know a written proof conclusion is shown under
+# Findings. Alpha-only — the beta already has its own download route (#3987 /
+# #4001) — so this lives here rather than in continue_policy.py, which the
+# prototype worker also imports from.
+RESEARCHER_VIEW_NOTE = (
+    "The researcher sees this project only through the web app and cannot open "
+    "or download files from your working directory, so never tell them to open "
+    "a file path. The app's only download is the tree as GEDCOM (Export GEDCOM "
+    "in the header). A conclusion written to proof_summaries is shown to them "
+    "under Findings; if they ask for a report or document, point them there "
+    "when one exists, and otherwise give the text in your reply."
+)
+
+
 def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None,
                   agent=None):
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
@@ -831,7 +846,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         system_prompt={
             "type": "preset",
             "preset": "claude_code",
-            "append": f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}",
+            "append": f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}\n\n{RESEARCHER_VIEW_NOTE}",
         },
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents

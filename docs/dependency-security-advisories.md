@@ -5,7 +5,11 @@ dependency trees (root pnpm workspace — which since #1488 includes `eval/app` 
 and `packages/engine/mcp-server` npm). Re-run the audits after any dependency
 bump and update this file.
 
-Last reviewed: **2026-11-05**.
+Last reviewed: **2026-11-12**, after issue #4188's Electron 39 → 44 move (Fixed,
+below). `pnpm audit` reports **4 findings (4 moderate)**, the `glob` and `minimatch`
+dev-tooling rows under Deferred, and `pnpm audit --prod` reports **none** (down from
+17 and 14, which #4189's toolchain major left unchanged on 2026-11-09). The engine's
+npm tree is untouched by it (`npm audit --omit=dev` still 0).
 
 > **This file is the mechanism, by decision.** @DallanQ ruled on 2026-09-09 (#2352)
 > that no CI job will audit any dependency tree: failing the build, warning without
@@ -18,13 +22,12 @@ Last reviewed: **2026-11-05**.
 (`packages/engine/mcp-server`) audits clean — `found 0 vulnerabilities` on
 `npm audit --omit=dev`, restored 2026-11-03 after it had regressed to 8 (see the
 engine-tree re-fix under Fixed); `eval/app` is covered by the root `pnpm audit --prod`.
-The production-reachable findings
-are `electron` and `extract-zip` in `apps/electron`, reached via
-`@electron-toolkit/utils` → `electron` (peer) → `extract-zip` (see the two
-paragraphs below), plus `zod` 3.x — a production dependency of the internal-only,
-loopback-bound Eval CRUD UI (`eval/app`), whose fix is the zod-4 move (issue
-#4190). Everything else lives in **devDependencies** — dev tooling
-(eslint, vite/vitest, electron-builder, `@anthropic-ai/mcpb`) or the internal-only
+The root workspace has no
+production-reachable finding open: `pnpm audit --prod` is clean since issue #4188
+moved `electron` to 44.11.1, which also took `extract-zip` out of the tree. `electron`
+is still the one package whose advisories ship (see the two paragraphs below), so a
+new one is never dev-only. Everything open lives in **devDependencies** — dev tooling
+(eslint, electron-builder, `@electron/asar`, `@anthropic-ai/mcpb`) or the internal-only
 Eval CRUD UI. Check reachability with `pnpm why --prod -r <pkg>` — **without `-r`
 the command inspects only the root package, which declares no dependencies, so it
 returns nothing for everything** (`pnpm why --prod react` is silent even though
@@ -49,12 +52,33 @@ packages the runtime at whatever the installed `electron` resolves to. So an adv
 against `electron` reaches every installed Research Viewer, and the `npm ci --omit=dev`
 reasoning above does not cover it. Treat `electron` findings as shipping.
 
-**`pnpm audit --prod` reaches through peer edges, and was right here.** It flags
+**`pnpm audit --prod` reaches through peer edges, and was right to.** It flagged
 `extract-zip` as production because `@electron-toolkit/utils` — a real production
-dependency of `apps/electron` — peer-depends on `electron`, which declares
-`extract-zip`. `pnpm why --prod -r extract-zip` prints that path.
+dependency of `apps/electron` — peer-depends on `electron`, which declared
+`extract-zip` until 40.10.3, 41.7.2 and 42.4.0 moved it to `@electron-internal/extract-zip`.
+Any dependency `electron` declares is reached the same way.
 
 ## Fixed
+
+- **extract-zip** (HIGH ×2: GHSA-7pqw-9j4j-h8q3, GHSA-jmr9-qjv8-65gv) — root pnpm
+  workspace, `2.0.1`, pulled only by `electron`. **Fixed 2026-11-12** (issue #4188)
+  by removing the package, not by a patch: no patched `extract-zip` exists, but
+  every electron 43.x and 44.x (and 40.10.3+, 41.7.2+, 42.4.0+) depends on
+  `@electron-internal/extract-zip` instead, so the
+  move to 44.11.1 (see the electron entry below) dropped it. `pnpm why -r extract-zip` prints
+  nothing. Under Deferred from 2026-09-08 until then.
+
+- **zod 3.25.76** (HIGH GHSA-mrhx-c7xc-m3w5, fix `>=4.6.6`) — `eval/app`, a
+  production dependency of the internal-only, loopback-bound Eval CRUD UI.
+  **Fixed 2026-11-09** (issue #4190) by the zod 3 → 4 major: `zod` `^4.6.6`
+  (→ 4.6.7) and `json-schema-to-zod` unpinned from 2.6.1 to `^2.8.1`, which
+  emits the zod-4 API (its pin is gone from `.github/dependabot.yml`).
+  `mantine-form-zod-resolver` was removed — nothing imported it. The workspace
+  now resolves a single zod, 4.6.7 (`pnpm why --prod -r zod`). Post-fix audits:
+  `pnpm audit --prod` — **14 (3 low / 4 moderate / 7 high)**, electron and
+  extract-zip only (both since cleared by issue #4188); `pnpm audit` — **17 (3 low /
+  7 moderate / 7 high)**. Under
+  Deferred from 2026-11-04 until then.
 
 - **certifi** (CRITICAL, GHSA-6q48-6c7w-9gw2) and **PyJWT** (every advisory the database
   lists for 2.13.0, up to CRITICAL: GHSA-ffc3-869f-jxw9) — both Python trees and the three
@@ -108,22 +132,23 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 
   Post-upgrade audits (re-measured 2026-11-05): `pnpm audit` — **18 findings
   (3 low / 7 moderate / 8 high)**; `pnpm audit --prod` — **15 (3 low /
-  4 moderate / 8 high)**. Every remaining row is one of the five packages this
-  sweep could not clear (electron ×12, extract-zip ×2, glob, minimatch,
-  zod 3.x), all recorded under Deferred with the issue that owns each. (An
+  4 moderate / 8 high)**. Every remaining row was one of the packages this
+  sweep could not clear (glob, minimatch, zod 3.x, plus electron and extract-zip,
+  which issue #4188 has since fixed), each recorded under Deferred or Fixed. (An
   earlier run on 2026-11-04 reported 20 / 9-moderate; two moderate advisories
   left the GitHub advisory DB between the runs — same package set, so nothing in
   this PR changed.)
 
 - **vitest / @vitest/mocker** (MODERATE ×2) — root pnpm workspace, dev-only.
-  **Fixed 2026-11-04** by the sweep above: all four workspace members now
-  declare `^4.1.12` and the lockfile resolves vitest and `@vitest/mocker` at
-  4.1.12, outside the advisory range (`< 4.1.12`). The 2026-09-09 deferral
-  below is withdrawn — its "3 → 4 major across three packages" premise went
-  stale when the members moved to `^4.1.10`. The engine's own copy
-  (`packages/engine/mcp-server/package-lock.json`, a separate npm tree) carried
-  its own vitest/mocker alerts until issue #4186 cleared them on 2026-11-03 (the
-  entry below).
+  **Fixed 2026-11-04** by the sweep above: all four workspace members then
+  declared `^4.1.12` and the lockfile resolved vitest and `@vitest/mocker` at
+  4.1.12, outside the advisory range (`< 4.1.12`). Since issue #4189 all five
+  members declare `^5.1.0` and the lockfile resolves both at 5.1.0, also outside
+  it. The 2026-09-09 deferral below is withdrawn — its "3 → 4 major across
+  three packages" premise went stale when the members moved to `^4.1.10`. The
+  engine's own copy (`packages/engine/mcp-server/package-lock.json`, a separate
+  npm tree) carried its own vitest/mocker alerts until issue #4186 cleared them
+  on 2026-11-03 (the entry below).
 
 - **The engine's production tree, a second time** — `packages/engine/mcp-server`.
   **Fixed 2026-11-03.** It had regressed to **8 advisories on `npm audit --omit=dev`
@@ -222,6 +247,22 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   `contextBridge.exposeInMainWorld('api', …)`, which is exactly the shape it names.
   These ship (see the electron exception above), which is why they led this pass. The
   diff is one `package.json` line plus the lockfile.
+
+  **Fixed again 2026-11-12: 39.8.10 → 44.11.1** (issue #4188, still pinned exactly).
+  **12 advisories, 5 HIGH / 4 MODERATE / 3 LOW**, with no 39.x patch this time. HIGH:
+  `GHSA-jr5w-w6x2-84p9` (compromised eMudhra intermediate certificates; the highest
+  floor, 42.11.16 / 43.8.1 / 44.9.1, with no 41.x fix), `GHSA-hq2x-r82h-9wj4`,
+  `GHSA-gr2m-v5gq-v685`, `GHSA-j84w-jfhq-vhvj` and `GHSA-9qh4-3jw8-366w`. MODERATE:
+  `GHSA-2p8c-gr87-2676`, `GHSA-x562-297c-g43g`, `GHSA-997q-gvvc-jwmx` and
+  `GHSA-fw47-9c62-h3vw`. LOW: `GHSA-98mx-cjp9-gchm`, `GHSA-3qxv-5xgr-q7w9` and
+  `GHSA-h3v5-h239-pg29`. 44.x rather than 42.x because 42 lost upstream support when
+  45.0.0 shipped. The same PR took `@electron/asar` 3 → 4 and
+  `@electron-toolkit/eslint-config-ts` 3 → 4. From 42 on, `electron` no longer
+  downloads its binary in its own `postinstall`, and electron-vite 6 reads
+  `node_modules/electron/path.txt` without triggering the download, so a fresh
+  install failed `electron-vite dev` with "Electron uninstall". `apps/electron` now
+  runs Electron's `install-electron` as its `postinstall` to restore the install-time
+  download.
 
 - **@xmldom/xmldom** (MODERATE), **browserslist** (HIGH), **fast-uri** (HIGH ×4),
   **js-yaml** (HIGH), **nanoid** (HIGH GHSA-2v37-7h3g-55p8) — root pnpm workspace,
@@ -365,54 +406,22 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   already the **newest release of its major line** — the only patched line is
   11.x. eslint and its plugin ecosystem call the minimatch 3 API, so an
   override across the major is not safe and is out of scope for a minor/patch
-  pass. No sibling issue owns this; it clears when the eslint toolchain moves.
+  pass. No sibling issue owns this; it clears when its parents move: the eslint
+  toolchain, electron-builder and, since issue #4188, `@electron/asar` 4.3.1
+  (minimatch ^10.0.1).
   **Revisit when** a patched 3.x/5.x/9.x/10.x publishes (as happened for
   brace-expansion), or the parents move to minimatch 11.
 
 - **glob** (MODERATE GHSA-3g3m-2fjr-6pw4, AbortSignal cancellation bypass;
   vulnerable `>= 9.0.0, <= 14.0.1`, fix `>=14.0.2`) — root
   pnpm workspace, dev-only. **Deferred 2026-11-04 — no in-major fix exists.**
-  The tree resolves 7.2.3 and 10.5.0; only the 10.x copy is in the vulnerable
-  range (7.2.3 predates it). `npm view glob versions` (checked 2026-11-04):
-  10.5.0 is the newest 10.x — the only patched line is 14.x, a cross-major
-  move. **Revisit when** a patched 10.x publishes or the parents move to
-  glob 14.
-
-- **electron** (12 alerts: 5 HIGH / 4 MODERATE / 3 LOW) — `apps/electron`,
-  pinned exactly 39.8.10. **Deferred 2026-11-04 — every fix is cross-major:**
-  the patched versions are 41.10.4/41.10.6 and 42.11.1–42.11.16, nothing
-  inside 39.x (contrast the 2026-09-08 Fixed entry above, whose 15 advisories
-  were all patched inside 39.8.x). electron ships (see the reachability note
-  up top), so these are the highest-value open alerts in the tree. **Owned by
-  issue #4188** (Electron 39 → 42), which also owns the toolchain that moves
-  with it.
-
-- **zod 3.25.76** (HIGH, fix `>=4.6.6`) — `eval/app`, a production dependency
-  of the internal-only, loopback-bound Eval CRUD UI. **Deferred 2026-11-04 —
-  the fix is the zod 3 → 4 major**, coupled to `json-schema-to-zod` 2.6.1
-  (which emits the zod-3 API; see the pins header in `.github/dependabot.yml`)
-  and `mantine-form-zod-resolver` 1.3.0. **Owned by issue #4190.** The tree's
-  *other* zod copy (under `eslint-plugin-react-hooks`) moved to 4.6.7 in the
-  2026-11-04 sweep, but the alert keys on the vulnerable copy and stays open
-  while 3.x remains.
-
-- **extract-zip** (HIGH, unvalidated symlink path traversal) — root pnpm workspace,
-  `2.0.1`, pulled by `electron` itself (both 39.8.5 and 39.8.10 declare
-  `extract-zip: ^2.0.1`). **Deferred 2026-09-08 — no patch exists.** npm reports
-  `patched_versions: <0.0.0`, i.e. no released version fixes it, so there is nothing to
-  bump to and an override has no target. **It is in the production graph** —
-  `apps/electron` → `@electron-toolkit/utils` → `electron` (peer) → `extract-zip`, per
-  `pnpm why --prod -r` — so `pnpm audit --prod` is right to flag it. What limits it is
-  *when* it runs, not whether it ships: `extract-zip` is what electron's own postinstall
-  uses to unpack the runtime archive it downloads from Electron's release server over
-  HTTPS, at install time on a developer's machine. The shipped app never invokes it, and
-  the traversal needs an attacker-controlled zip.
-  Re-checked 2026-11-04: still no patched version (`first_patched_version`
-  absent on both open alerts) — but the "electron drops the dependency" exit
-  has arrived: electron 42 replaces `extract-zip` with
-  `@electron-internal/extract-zip` (`npm view electron@42.11.16 dependencies`),
-  so **issue #4188's 39 → 42 move clears both alerts** by removing the package
-  from the tree. These two ride #4188, not an upstream `extract-zip` release.
+  The tree resolves 7.2.3, 10.5.0 and 13.0.7; the 10.x and 13.x copies are in
+  the vulnerable range (7.2.3 predates it). 10.5.0 comes through electron-builder;
+  13.0.7 arrived 2026-11-12 with `@electron/asar` 4.3.1 (issue #4188), the newest
+  asar, which declares `glob ^13.0.2`. `npm view glob versions` (checked
+  2026-11-12): 10.5.0 and 13.0.7 are the newest of their lines, so the only
+  patched line is 14.x, a cross-major move. **Revisit when** a patched 10.x or
+  13.x publishes, or electron-builder and `@electron/asar` move to glob 14.
 
 - **zod** (HIGH GHSA-mrhx-c7xc-m3w5, memory exhaustion validating oversized
   constrained collections) — `packages/engine/mcp-server` only, the dev-only
@@ -513,43 +522,33 @@ different things. The command to reconcile:
     gh api "/repos/PioneerAIAcademy/cowork-genealogy/dependabot/alerts?state=open&per_page=100" \
       --paginate -q '.[] | [.security_advisory.severity, .dependency.scope, .dependency.manifest_path, .dependency.package.name] | @tsv'
 
-**Measured 2026-11-05 — 126 open alerts** (down from 164 on 2026-11-03, after
-issue #4186 cleared 38 of the engine npm tree's 40; up from 14 on 2026-09-21,
-that jump mostly the search-agent prototype's new manifests —
-`apps/server/proto/{web,worker}` and `apps/server/sandbox/requirements.txt` — which
-had no Dependabot coverage in the earlier count). Measured **after** #4186 merged
-but **before** this PR (#4185) and #4187/#4188/#4190: alerts close only when
-Dependabot rescans the default branch, so the `pnpm-lock.yaml` row below still
-counts the 37 this PR fixes. Expected to survive this PR's rescan: **17 of
-`pnpm-lock.yaml`'s 54** (electron ×12, extract-zip ×2, glob, minimatch, zod —
-each under Deferred).
+**Measured 2026-11-12 — 55 open alerts** (57 on 2026-11-09, before #4190's two
+`zod` alerts closed; 126 on 2026-11-05; 164 on 2026-11-03). Measured **before**
+issue #4188's PR: alerts close only when Dependabot rescans the default branch, so
+the electron and extract-zip rows below still count the alerts that PR fixes.
+Expected to survive its rescan: **29** — all 24 electron alerts (12 on each
+manifest) and both extract-zip alerts close.
 
 | Manifest | Scope | Count | Packages |
 |---|---|---|---|
-| `pnpm-lock.yaml` | runtime† | 54 | electron ×12, undici ×8, brace-expansion ×9, fast-uri ×5, vite ×5, next ×4, ip-address ×3, @vitest/mocker ×2, extract-zip ×2, glob, minimatch, source-map-js, zod |
-| `eval/app/package.json` | runtime | 5 | next ×4, zod |
+| `pnpm-lock.yaml` | runtime† | 16 | electron ×12, extract-zip ×2, glob, minimatch |
 | `apps/electron/package.json` | development | 12 | electron ×12 |
 | `packages/engine/mcp-server/package-lock.json` | development | 2 | tmp ×2 |
-| `apps/server/uv.lock` | runtime + development | 7 | mcp ×4, h2, hpack, opentelemetry-api |
-| `eval/harness/uv.lock` | runtime | 21 | PyJWT ×15, mcp ×4, certifi, cryptography |
 | `apps/server/proto/worker/requirements.txt` | runtime | 20 | PyJWT ×15, mcp ×4, certifi |
 | `apps/server/proto/web/requirements.txt` | runtime | 1 | certifi (CRITICAL) |
 | `apps/server/sandbox/requirements.txt` | runtime | 4 | mcp ×4 |
 
-†The pnpm workspace's dev-tooling rows (vite, @vitest/mocker, the glob/minimatch
-eslint chain) are reported `runtime` by Dependabot, which cannot resolve dev
-scope through a pnpm workspace lockfile — the same misclassification the
-2026-09-21 measurement recorded. `pnpm why --prod -r` is the arbiter; the
-genuinely-runtime rows are electron, extract-zip and zod (see the reachability
-note up top).
+†The pnpm workspace's dev-tooling rows (glob and minimatch, pulled by eslint,
+electron-builder and `@electron/asar`) are
+reported `runtime` by Dependabot, which cannot resolve dev scope through a pnpm
+workspace lockfile — the same misclassification the 2026-09-21 measurement
+recorded. `pnpm why --prod -r` is the arbiter. After #4188's rescan
+`pnpm-lock.yaml` keeps only `glob` and `minimatch`, both dev-only.
 
-Ownership of what remains: the engine npm tree is down to `tmp ×2` (dev-only,
-Deferred) now #4186 has landed; the Python locks and the prototype
-`requirements.txt` bundles (53) are covered by the #4187 note below; electron and
-its 39 → 42 toolchain (24 across both manifests, plus the two extract-zip rows it
-clears in passing) is issue #4188; zod 3 → 4 in eval/app (1) is issue #4190.
-Issues #4188 and #4190 each still edit this section — whoever lands next recounts
-it with the `gh` command above rather than hand-merging.
+Ownership of what remains after that rescan: the engine npm tree is `tmp ×2`
+(dev-only, Deferred); the prototype `requirements.txt` bundles (25) are covered by
+the #4187 note below; `glob` and `minimatch` are Deferred. Recount with the `gh`
+command above rather than hand-merging.
 
 **#4187 (the Python trees), 2026-11-05.** `uv lock --upgrade` in both trees, and the
 three exports regenerated from `apps/server/uv.lock`, leave no locked version inside any

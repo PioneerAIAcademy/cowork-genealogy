@@ -221,19 +221,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
-        "tool": "tree_correct",
-        "quotes": [
-            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
-        ],
-        "reason": (
-            "negative mention: names the tool to say the agent lacks it - "
-            "'nothing in this agent's toolset can raise the gender "
-            "afterwards, since `tree_correct update_person` is not granted "
-            "to it'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
         "tool": "record_search",
         "quotes": [
@@ -666,24 +653,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     },
     {
         "file": "packages/engine/plugin/agents/proof-conclusion.md",
-        "tool": "collections_search",
-        "quotes": [
-            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
-        ],
-        "reason": (
-            "descriptive provenance of record data the agent READS, not "
-            "calls - 'Only describe a source as having an \"accessible\" or "
-            "\"digitized\" image when the record data actually contains an "
-            "image reference (e.g. an `imageId`/`artifacts` field on the "
-            "record, or a nonzero image count from "
-            "`collections_search`/`volume_search`)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/proof-conclusion.md",
         "tool": "volume_search",
         "quotes": [
-            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
+            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `volume_search`)",
         ],
         "reason": (
             "descriptive provenance of record data the agent READS, not "
@@ -691,7 +663,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "\"digitized\" image when the record data actually contains an "
             "image reference (e.g. an `imageId`/`artifacts` field on the "
             "record, or a nonzero image count from "
-            "`collections_search`/`volume_search`)'"
+            "`volume_search`)'"
         ),
     },
     {

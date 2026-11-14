@@ -6,7 +6,9 @@ second entrypoint over the one `createServer(principal)` in `src/server.ts`, nev
 replacement: `build/index.js` keeps stdio and the `.mcpb` is unchanged, and
 `build/http.js` runs the same tools over `node:http`. One process serves every patron's
 turns, so the store is bound **per request**: a `PgS3ProjectStore` on the compose
-Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
+Postgres/S3, selected by the `X-Genealogy-Project-Id` header. A caller on the connector
+door alone also gets `show_project`, `read_project_view` and the page they draw, which the
+image carries (`docs/specs/project-view-tools-spec.md`).
 
 ## The contract
 
@@ -15,6 +17,7 @@ Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
 | `POST /mcp` | Stateless Streamable HTTP, JSON responses (`sessionIdGenerator: undefined`, `enableJsonResponse: true`). One `Server` + transport per request, closed after the response. |
 | `GET` / `DELETE` / anything else on `/mcp` | `405`, `Allow: POST`, `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}` — answered by the entrypoint before any transport exists, so a client's post-initialize `GET` never gets a held-open SSE stream. The SDK client and the Claude Code CLI treat that 405 as "no server-push stream" and continue. |
 | `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`, and `turns`, which the claim fence and the project check read, with its `bearer_sha256` column from `012_turn_bearer.sql`) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, `schema: missing <tables>`, or `schema: missing turns.bearer_sha256` on a database without 012), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
+| `GET /img?t=<token>` | One page image on a signed token, with no bearer. `read_project_view` signs the link on the connector door and this route verifies it with the same per-process key, so a restart voids every link; each lasts 10 minutes. It reads through a store bound from the token's project id. `200` with the bytes and `Content-Type: image/jpeg`, `X-Content-Type-Options: nosniff`, `Cross-Origin-Resource-Policy: cross-origin` and `Cache-Control: private, max-age=<seconds left>`. `404 {"error":"Not found"}`, the body of an unknown path, for no `t`, a bad or expired token, any other method, or an image the project does not hold (`ENOENT`, `ENOTDIR`). Any other store failure → `503 {"jsonrpc":"2.0","error":{"code":-32603,"message":"The page image is unavailable."},"id":null}` and one stderr line `ev=image_failed error=<label>`, never the message. The door never logs a token. |
 | `X-Genealogy-Project-Id` (request header) | The project the request's tools run against, matched against `PROJECT_ID_RE` (`src/store/project-id.ts`). Exactly one value; malformed or duplicated → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid X-Genealogy-Project-Id header."},"id":null}` before any transport exists. |
 | `X-Genealogy-Turn-Id` + `X-Genealogy-Claim-Epoch` (request headers; required with a project, U4) | The claim fence (U6): the worker attempt's turn id (the `PROJECT_ID_RE` shape) and its `claim_epoch` (`[1-9][0-9]{0,17}`), both or neither. Exactly one of the two, a duplicated value, one that misses its pattern after trimming, or a fence without `X-Genealogy-Project-Id` → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid claim fence: send X-Genealogy-Turn-Id and X-Genealogy-Claim-Epoch together, once each, with X-Genealogy-Project-Id."},"id":null}` before any transport exists. A project request without the pair passes the 400 checks and is refused `403` below: the turn id is the project check's key. |
 | Project check (U4, every request with `X-Genealogy-Project-Id`) | After the `400` checks and before any store or transport, `authorizeAttempt` (`src/store/pg-s3-project-store.ts`) admits the request only if an **open** `turns` row with this turn id and project carries `bearer_sha256` equal to the sha256 (hex) of the request's bearer: `SELECT 1 FROM turns WHERE turn_id = $1 AND project_id = $2 AND bearer_sha256 = $3 AND completed_at IS NULL`. It does not test `claim_epoch`; supersession stays with the fence's in-band `StaleClaimError`. Refused (no fence, an empty bearer, or no such row) → `403 {"jsonrpc":"2.0","error":{"code":-32600,"message":"This bearer is not the grant of an open attempt on this project."},"id":null}`, the same body for every reason, and one stderr line `ev=tool_refused reason=<no_fence\|empty_bearer\|no_match> project_id=… turn_id=…` that never carries the bearer or its hash. The check itself failing (Postgres down) → `503 {"jsonrpc":"2.0","error":{"code":-32603,"message":"Project authorization is unavailable."},"id":null}` and `ev=tool_authorize_failed error=<code> project_id=…`, never an admission. A request with no project header takes the connector door: its bearer's sha256 must match a `connector_tokens` row that is unexpired and not ended, for a user who is not blocked and has a FamilySearch token that decrypts, else `401` with `WWW-Authenticate` and one body for every reason. |
@@ -62,6 +65,13 @@ and never the key itself.
 A connector call naming no project binds a store that refuses every project tool and
 answers `project_list` with the user's projects plus one fresh `/proj_` path, which reads
 as an empty project until its first write claims it.
+
+A connector `tools/call` that names someone else's project, or meets a failed token or
+owner lookup, is answered **200 with an `isError` result**, not 403 or 503: Claude
+replaces a 403's body and drops a 503's, so neither message reached the model or a card.
+The result says the call did not run and what to do next. A request with no tool call
+(`initialize`, `tools/list`, a notification) keeps its 403 or 503, a refused token is
+always a 401 over HTTP, and the worker path keeps every status it had.
 
 Each connector user runs at most **4** `tools/call` requests at a time (self-hosted beta
 E4, per user; a constant in `src/utils/user-limits.ts`, not a setting). A call over the
@@ -198,9 +208,10 @@ smoke names all three.
   ```
 
   Two clients. The first presents the connector token under `--connector`, otherwise the
-  stamped turn's headers and bearer; it lists the tools. Every plan row runs through the
-  stamped-turn client, and with `--connector` a second pass runs the plan's store rows
-  through the connector door on its own `/proj_<16 hex>` project, then seeds the caller's
+  stamped turn's headers and bearer; it lists the tools. Every plan row but the
+  connector-only ones runs through the stamped-turn client, and with `--connector` a
+  second pass runs the plan's store rows and those two through the connector door on its
+  own `/proj_<16 hex>` project, then seeds the caller's
   second project and another user's and requires `project_list` to name both of the
   caller's, a fresh path, and not the other user's.
   The second runs every row that passes `--project-path` (the anchor,
@@ -213,7 +224,8 @@ smoke names all three.
   row is gone. `--host-config` says the server's `baseConfig` is
   this host's `~/.familysearch-mcp/config.json` (the default arm; not the `BASE=` arm,
   whose compose `config.json` is `{"hosted": true}`). The smoke fails if any advertised
-  tool is neither called nor a named exclusion, or if a named exclusion is not advertised.
+  tool is neither called nor a named exclusion, if a named exclusion is not advertised, or
+  if a connector-only tool is advertised anywhere but the connector.
 
 ## The D9–10 consumer
 

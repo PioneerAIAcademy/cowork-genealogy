@@ -264,10 +264,10 @@ _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
 # Scope, which is load-bearing: every instruction here addresses "You" — the main
 # thread. NONE of it reaches the spawned agent, which receives only the `prompt`
 # argument (the delegation verbatim). That matters because the agent must still
-# use its own tools: four of the five research-exhaustiveness twins are gated by
-# `test_fetches_registration_start_date`, which requires a `wiki_read` call from
-# the AGENT. A reader who mistakes "call no other tool" for a session-wide rule
-# would fail those four on a check unrelated to this arm.
+# use its own tools: every research-exhaustiveness direct test that reaches Step 1
+# is gated by `test_fetches_registration_start_date`, which requires a
+# `wiki_read` call from the AGENT. A reader who mistakes "call no other tool" for
+# a session-wide rule would fail those tests on a check unrelated to this arm.
 #
 # The markers exist so the relay is copyable as a block, and so
 # `test_direct_delegation_relayed_verbatim`'s failure message can show what the
@@ -898,6 +898,10 @@ class SkillRunResult:
     subagents: list[dict[str, Any]] | None = None
     subagent_capture_status: str | None = None
     main_thread: dict[str, Any] | None = None
+    # MCP results the model received as Claude Code's "too large, saved to file"
+    # notice, as `{tool, tool_use_id, size, agent, can_read}`; read with the fields above.
+    # Feeds only the `oversize_tool_result` warning, never the judge (#4380).
+    oversize_tool_results: list[dict[str, Any]] = field(default_factory=list)
     # Raw Write/Edit/NotebookEdit calls to a protected project file
     # (research.json / tree.gedcomx.json) the main thread tried and was denied,
     # as {"tool", "args"} (see harness.context_policy.protected_file_denial).
@@ -1065,7 +1069,7 @@ async def run_skill(
     _short_circuit = routing_short_circuit_skills or set()
     # The step boundary (decision 25), OPT-IN per test via `execution.step_mode`.
     #
-    # None means no gate, which is every test in the corpus today: PR 1 ships the
+    # None means no gate, which is nearly every test in the corpus: PR 1 ships the
     # mechanism, and a test opts in by declaring the mode its turn runs under. Enforcing
     # by default would change what every existing test measures, and the only place that
     # would show is a paid run -- so the default is the one that cannot surprise anyone.
@@ -1177,7 +1181,7 @@ async def run_skill(
         # The step boundary, BEFORE the stubs: a stub's canned reply must never
         # replace a step denial, or the test would record the hand-off as taken.
         # Only when the test declared a mode; otherwise `_step_gate` is None and this
-        # is inert, which is every test in the corpus today.
+        # is inert, which is nearly every test in the corpus.
         if _step_gate is not None:
             try:
                 _verdict = _step_gate.check(

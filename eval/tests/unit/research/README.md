@@ -143,6 +143,29 @@ session, which a fresh-context test cannot seed; the proof-conclusion
 tree-encoding and `exhaustive_declared` rows reach the same agent that
 `ut_research_s59` already asserts.
 
+## One plan item per search agent (issue #4441)
+
+`ut_research_fo1` (`route-plan-items-one-per-agent.json`) runs
+`search-continue-authorized-in-message`, whose active plan has two open items, on a
+job-shaped message. `fans-out-plan-items` gates
+`test_search_spawns_cover_each_open_item`: one `search-records` spawn per open item
+with no `fallback_for`, the handed items equal to that set, and no spawn carrying
+six or more consecutive words of the researcher's message. Whether the spawns share
+one assistant message is not checked, but `search-records` keeps the stop stub, so a
+router that sends them one after the other records one spawn and fails.
+
+`test_delegation_hands_plan_item_verbatim` reads the handed item from the spawn's
+`plan_item:` block. It fails a spawn with two blocks, two id lines, or an id line
+naming a different item, and accepts any id-line spelling (`planItemId:`,
+`Plan item ID:`) or none.
+
+`ut_research_uh1` clones `ut_research_fsh` on an `--autonomous` run. SKILL.md
+passes `userPresent: no` to `search-hints` only on an `--autonomous` run, and the
+agent reads a missing field as yes. `delegates-user-present-no-hints` adds the
+field to `test_spawn_carries_its_step_mode_fields`. Its `search-external-sites`
+twin, `delegates-user-present-no-external`, has no test yet: the router left the
+field out in 1 of 3 scratch runs, and issue #4554 tracks the fix and the test.
+
 ## What is NOT covered (and why)
 
 - **Second-opinion verdict handling**: gps-mentor is not a routing row; it
@@ -217,6 +240,23 @@ that it called `image_transcribe` with a `projectPath`, read the staged page wit
 `sidecar_read` on the returned `staged.resultsRef`, and — on a single bounded ask —
 handed off to nothing.
 
+`ut_research_b4i` (`bounded-first-message-runs-in-the-setup-turn.json`) and
+`ut_research_b4w` (`…-step-gate.json`) cover a bounded first message with a
+FamilySearch ID and no project (issue #2813 item 3, feedback #4237): init-project
+runs live, then search-records runs in the same turn, with no question, locality
+survey or plan first. b4i has no `step_mode`, the alpha's and Cowork's shape; b4w
+runs under the prototype's step gate, which before #2813 denied the search because
+init-project fixed the setup group. Both are deterministic through the
+`bounded-after-init` tag and
+`test_bounded_first_message_runs_its_deliverable_after_init_project`, which reads
+the hand-off list, that the project exists after the run, that the search was
+handed the subject's tree id, the search's returned text (a gate denial carries the
+gate's reason), that init-project's next-step sentence was left out, and that the
+reply ends on a "Continue with …?" offer, whichever step it names. A hint review
+fails here: it stops for the researcher's verdict
+and writes no offer. **They put init-project's full body in this
+suite's snapshot**, so an init-project body edit now owes a research run.
+
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius
 Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request
@@ -285,6 +325,46 @@ offered … Continue." shape, `stop_at_stub` on `record-structurer`; its
 `test_search_hit_review_yes_extracts_the_matches`, which asserts one spawn whose
 single source carries the hit's id and the ref verbatim. The width of five spawns
 per message is not checked: no run record says which message a spawn came from.
+
+## Hand-back routing (issue #4358)
+
+Both run on `anders-unna-marriage-search` (one planned item) with `search-records`
+stubbed to return a `Hand-back: <owner> — <request>` line above the final `---`.
+`ut_research_hb1` (`handback-same-group-spawned.json`) names `search-external-sites`,
+in the search group, and carries `handback-spawns:search-external-sites`.
+`ut_research_hb2` (`handback-cross-group-not-spawned.json`) names `research-plan`,
+another group, and carries `handback-no-spawn:research-plan`.
+`test_handback_routing_follows_the_step_group` reads the hook records for a main-thread
+spawn of each named agent. The stub reply reaches the router as an agent return (the
+canned text rides in the hook's denial reason), so the router acts on its `Hand-back:`
+line. The validator checks the spawn, not that the report names a cross-group owner or
+ends on "Continue with …?"; the judge reads that part.
+
+## Attached records (issue #3516)
+
+The "Objective but no questions" row runs `extraction_append({ personId })` then
+`timeline_build` for each subject before `@plugin:question-selection`, and "a timeline
+for a person" is a bounded ask that runs the same two calls and stops. Both run on
+`becker-attached-records`, whose subject has two attached indexed census records, and
+both load the two `-attached` Becker `record_read` fixtures (the mock serves
+`extraction_append` only from loaded fixtures).
+
+- `ut_research_ars` (`route-setup-before-first-question.json`): the job.
+  `routes-to:question-selection` with `execution.stop_at_stub`, so a person-evidence
+  spawn before question-selection (attachment links are checked only on request) fails
+  `test_routes_to_expected_skill`.
+- `ut_research_tlb` (`bounded-timeline-for-a-person.json`): the bounded ask.
+  `routes-to:stop`, its first user, with question-selection and the timeline agent both
+  stubbed, so a hand-off to either is recorded and fails the stop.
+
+Both carry `attached-records-setup`, which gates `test_attached_records_setup_order`: an
+`extraction_append` call with `personId`, then a `timeline_build` call after it. It orders
+only those two MCP calls; `tool_calls` and `builtin_tool_calls` share no ordering, so
+"before question-selection" rests on `stop_at_stub` and the `routes-to:` tag.
+
+Every other test on `empty-project-just-created` and `driscoll-source-audit` that reaches
+the row runs the two calls too. Neither subject has an indexed attachment, so both write
+nothing.
 
 ## Moved negatives (issue #2268)
 

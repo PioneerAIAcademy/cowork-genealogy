@@ -10,7 +10,8 @@
  * per-request principal reached it; `bearer` — those tools must succeed.
  *
  * `assertCoverage` is the completeness guard: every advertised tool is either a
- * step in this plan or a named exclusion, and every named exclusion is advertised.
+ * step in this plan or a named exclusion, every named exclusion is advertised, and
+ * a connector-only tool is advertised to the connector and to nobody else.
  */
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -20,6 +21,7 @@ import {
   HOSTED_REAUTH_INSTRUCTION,
   OPENROUTER_API_KEY_MISSING_MESSAGE,
 } from "../src/auth/config.js";
+import { HOUSE_RESEARCHER_PROFILE } from "../src/tools/project-create.js";
 
 export type SmokeMode = "no-bearer" | "bearer";
 
@@ -35,6 +37,10 @@ export interface CallResult {
   /** Parsed JSON of the text content, or `{ raw }` when it is not JSON. */
   body: any;
   text: string;
+  /** The result's `_meta`: where `show_project` carries the documents. */
+  meta?: Record<string, any>;
+  /** The result's `structuredContent`: where `read_project_view` carries them. */
+  structured?: Record<string, any>;
 }
 
 export type CallFn = (tool: string, args: Record<string, unknown>) => Promise<CallResult>;
@@ -53,6 +59,9 @@ export interface SmokeCtx {
   openRouterKeyConfigured: boolean | null;
   /** Values read back from earlier steps (e.g. the evaluations sidecar `file_path`). */
   values: Record<string, unknown>;
+  /** Write `seedDocuments()` into the project, as the driver's store holds it.
+   *  `project_create` always reads FamilySearch, so no smoke can create one. */
+  seedProject: () => Promise<void>;
 }
 
 export interface Expectation {
@@ -68,8 +77,11 @@ export interface SmokeStep {
   offline?: boolean;
   /** Reaches FamilySearch with the caller's token (every `tokenStep`). */
   familySearch?: boolean;
+  /** A tool only the connector door has: `runPlan` runs it for no other caller. */
+  connectorOnly?: true;
   args: (ctx: SmokeCtx) => Record<string, unknown>;
-  /** Host-side fixture write before the call; skipped when `hostProjectDir` is null. */
+  /** Runs before the call: the seed, or a host-side fixture write (which skips
+   *  itself when `hostProjectDir` is null). */
   before?: (ctx: SmokeCtx) => Promise<void>;
   expect: (res: CallResult, ctx: SmokeCtx) => Expectation;
   /** Capture values for later steps. */
@@ -85,6 +97,7 @@ const STAGED_REF = "results/.staging/smoke.json";
 // later validate_research_schema row as an orphan sidecar.
 const FULLTEXT_REF = "results/.staging/smoke-fulltext.json";
 const FULLTEXT_HIT = { id: "ark:/61903/3:1:TEST-0001", textDocument: "Smoke full-text transcript." };
+const OBJECTIVE = "Does this transport reach every tool?";
 
 const SEED_TREE = {
   persons: [
@@ -104,6 +117,36 @@ const SEED_TREE = {
   relationships: [],
   sources: [],
 };
+
+/** The project every row after the seed works on: what `project_create` would
+ *  write for SEED_TREE, with the subject P1. */
+export function seedDocuments(): Record<"research.json" | "tree.gedcomx.json" | "starting-tree.gedcomx.json", unknown> {
+  const today = new Date().toISOString().slice(0, 10);
+  const research: Record<string, unknown> = {
+    project: {
+      id: "rp_001",
+      objective: "Does this transport reach every tool?",
+      title: "smoke",
+      subject_person_ids: ["P1"],
+      status: "active",
+      created: today,
+      updated: today,
+    },
+  };
+  for (const section of [
+    "questions", "plans", "log", "sources", "assertions", "person_evidence",
+    "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
+  ]) research[section] = [];
+  research.researcher_profile = { ...HOUSE_RESEARCHER_PROFILE };
+  return { "research.json": research, "tree.gedcomx.json": SEED_TREE, "starting-tree.gedcomx.json": SEED_TREE };
+}
+
+/** `seedDocuments()` written into a project directory on this host. */
+export async function seedHostProject(dir: string): Promise<void> {
+  for (const [name, doc] of Object.entries(seedDocuments())) {
+    await writeFile(join(dir, name), JSON.stringify(doc, null, 2), "utf-8");
+  }
+}
 
 const CANDIDATE_GEDCOMX = {
   persons: [
@@ -192,6 +235,12 @@ async function writeHostFixture(ctx: SmokeCtx, ref: string, body: unknown): Prom
   await writeFile(file, JSON.stringify(body), "utf-8");
 }
 
+/** The seeded project's research and tree (`seedDocuments`), as a view tool sends them. */
+const carriesProject = (document: any): boolean =>
+  document?.research?.project?.objective === OBJECTIVE &&
+  Array.isArray(document?.tree?.persons) &&
+  document.tree.persons.some((p: any) => p?.id === "P1");
+
 function keyMissing(res: CallResult): Expectation {
   const ok = res.isError && carries(res, OPENROUTER_API_KEY_MISSING_MESSAGE);
   return { ok, detail: ok ? "isError with OPENROUTER_API_KEY_MISSING_MESSAGE" : brief(res) };
@@ -213,10 +262,10 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
 export const CALL_PLAN: readonly SmokeStep[] = [
   // Project tools, in fixture order against a fresh project.
   //
-  // Two refusals first, while the project does not exist yet. A successful
-  // `personId` create cannot be smoked: the run has one project, every later
-  // row works on the one the hand-built row creates, and a second create is
-  // refused as "already exist".
+  // The refusals first, while the project does not exist yet. A successful
+  // create cannot be smoked: `project_create` always reads a FamilySearch
+  // person, so the project every later row works on is seeded by the driver
+  // (`ctx.seedProject`), and a create on it is refused as "already exist".
   {
     tool: "project_create",
     label: "project_create (removed personReadRef)",
@@ -256,18 +305,68 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   {
     tool: "project_create",
+    label: "project_create (removed tree)",
     offline: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      objective: "Does this transport reach every tool?",
-      title: "smoke",
-      subjectPersonIds: ["P1"],
+      objective: "Is a hand-built tree refused by name?",
       tree: SEED_TREE,
     }),
     expect: (res) => ({
-      ok: !res.isError && res.body?.ok === true && linksWellFormed(res.body),
-      detail: res.body?.ok === true ? `wrote ${res.body.filesWritten.join(", ")}` : brief(res, 300),
+      // Refused by server.ts's unknown-argument guard, with project_create's own text.
+      ok: res.isError && /tree is no longer accepted/.test(String(res.body?.error ?? "")),
+      detail: brief(res, 300),
     }),
+  },
+  {
+    tool: "project_create",
+    label: "project_create (no personId)",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a create with no person refused?" }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && carries(res, "personId is required"),
+      detail: brief(res, 300),
+    }),
+  },
+  {
+    tool: "project_create",
+    label: "project_create (the seeded project exists)",
+    offline: true,
+    before: (ctx) => ctx.seedProject(),
+    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is an existing project kept?", personId: FS_PID }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && carries(res, "project_create never overwrites"),
+      detail: brief(res, 300),
+    }),
+  },
+  {
+    // Here because the row above seeds the project, owned by the connector user on
+    // the connector path, and these two rows read it.
+    tool: "show_project",
+    offline: true,
+    connectorOnly: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, show: "latest" }),
+    expect: (res, ctx) => {
+      const entry = res.meta?.["genealogy/project"];
+      const ok = !res.isError && carriesProject(entry) && entry?.echo?.projectPath === ctx.projectPath;
+      return {
+        ok,
+        detail: ok ? "research and tree in _meta, projectPath echoed" : `_meta keys [${Object.keys(entry ?? {})}]: ${brief(res)}`,
+      };
+    },
+  },
+  {
+    tool: "read_project_view",
+    offline: true,
+    connectorOnly: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, part: "document" }),
+    expect: (res) => {
+      const ok = !res.isError && carriesProject(res.structured);
+      return {
+        ok,
+        detail: ok ? "research and tree in structuredContent" : `structuredContent keys [${Object.keys(res.structured ?? {})}]: ${brief(res)}`,
+      };
+    },
   },
   {
     tool: "validate_research_schema",
@@ -289,6 +388,17 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath }),
     expect: okTrue,
+  },
+  {
+    // The source opt-in: the schema must admit includeSources, or server.ts
+    // refuses the argument before the tool runs.
+    tool: "tree_query",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, includeSources: true }),
+    expect: (res) => ({
+      ok: !res.isError && res.body?.ok === true && Array.isArray(res.body?.sources),
+      detail: brief(res, 300),
+    }),
   },
   {
     // The stdio smoke runs the file store, which lists nothing. Over HTTP the
@@ -751,14 +861,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
 
 // ─── Completeness guard ──────────────────────────────────────────────────────
 
-/** Every advertised tool is a step or a named exclusion; every exclusion is advertised. */
-export function assertCoverage(advertisedNames: readonly string[]): string[] {
+/**
+ * Every advertised tool is a step or a named exclusion; every exclusion is advertised.
+ * `connector` says the list came through the connector door: a connector-only tool must
+ * be on that list and on no other.
+ */
+export function assertCoverage(advertisedNames: readonly string[], { connector }: { connector: boolean }): string[] {
   const advertised = new Set(advertisedNames);
-  const planned = new Set(CALL_PLAN.map((s) => s.tool));
+  const connectorOnly = new Set(CALL_PLAN.filter((s) => s.connectorOnly).map((s) => s.tool));
+  const planned = new Set(CALL_PLAN.filter((s) => connector || !s.connectorOnly).map((s) => s.tool));
   const excluded = new Set(Object.keys(EXCLUDED_TOOLS));
   const problems: string[] = [];
   for (const name of advertised) {
-    if (!planned.has(name) && !excluded.has(name)) {
+    if (!connector && connectorOnly.has(name)) {
+      problems.push(`connector-only tool '${name}' is advertised outside the connector`);
+    } else if (!planned.has(name) && !excluded.has(name)) {
       problems.push(`advertised tool '${name}' is neither called by the plan nor a named exclusion`);
     }
   }
@@ -767,7 +884,12 @@ export function assertCoverage(advertisedNames: readonly string[]): string[] {
     if (planned.has(name)) problems.push(`excluded tool '${name}' is also a step in the plan`);
   }
   for (const name of planned) {
-    if (!advertised.has(name)) problems.push(`plan step '${name}' names a tool that is not advertised`);
+    if (advertised.has(name)) continue;
+    problems.push(
+      connectorOnly.has(name)
+        ? `connector-only tool '${name}' is not advertised to the connector`
+        : `plan step '${name}' names a tool that is not advertised`,
+    );
   }
   return problems;
 }
@@ -789,7 +911,7 @@ export interface RunPlanResult {
 
 /** Execute the plan in order, one report line per call; returns the failing labels. */
 export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions = {}): Promise<RunPlanResult> {
-  const steps = opts.offlineOnly ? CALL_PLAN.filter((s) => s.offline) : CALL_PLAN;
+  const steps = CALL_PLAN.filter((s) => (!opts.offlineOnly || s.offline) && (ctx.connector || !s.connectorOnly));
   const failures: string[] = [];
   let skipped = 0;
   for (const step of steps) {
@@ -846,7 +968,13 @@ export async function callViaClient(
   } catch {
     body = { raw: text };
   }
-  return { isError: res.isError === true, body, text };
+  return {
+    isError: res.isError === true,
+    body,
+    text,
+    meta: res._meta,
+    structured: res.structuredContent as CallResult["structured"],
+  };
 }
 
 // ─── Environment ─────────────────────────────────────────────────────────────

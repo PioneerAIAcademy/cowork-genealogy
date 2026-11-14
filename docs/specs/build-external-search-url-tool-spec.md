@@ -11,7 +11,7 @@
 > `conflicts[]` says about a disputed field); the tool does only the
 > string-templating.
 
-An offline tool that builds a pre-filled search URL for one of eighteen
+An offline tool that builds a pre-filled search URL for one of nineteen
 supported external genealogy sites from structured search attributes, either
 as a fresh site-wide search or by appending parameters onto a FamilySearch-
 curated collection link. Given a `projectPath` it also logs the hand-off (§6).
@@ -97,7 +97,7 @@ build_external_search_url({
       | "chronicling_america" | "digital_newspaper_archive" | "archives_gov"
       | "archive_org" | "billiongraves" | "digitalarkivet" | "antenati"
       | "library_archives_canada" | "american_ancestors" | "italian_genealogy"
-      | "archion" | "matricula" | "openarch",
+      | "archion" | "matricula" | "openarch" | "blm_glo",
 
   // A FamilySearch-curated collection link (SKILL.md Case A, :258-277). When
   // present, attributes are appended onto it rather than a fresh site-wide
@@ -106,6 +106,17 @@ build_external_search_url({
 
   // Country-domain variant for `ancestry`/`findmypast` only (§3.9).
   locale?: "us" | "uk",
+
+  // MCP tool only (§6): the project to log the hand-off in, and the plan item.
+  projectPath?: string,
+  planItemId?: string,
+
+  // MCP tool only: the place the search is about, as `external_links_search`
+  // takes it. REQUIRED for a site-wide build (no `baseUrl`) when `projectPath`
+  // is a project, which is refused until that place or one containing it is
+  // stored (§3.12). Not in the schema's `required` list: every call without a
+  // project, and every build with a `baseUrl`, omits it.
+  standardPlace?: string,
 
   attributes: {
     givenName?: string,
@@ -205,6 +216,10 @@ so the line is built here rather than in the agent.
   the user sets the range in the site's own UI), `openarch` (some networks
   are refused by the site outright — a page that never loads is the network
   being blocked, not evidence the record is missing; measured 2026-10-22),
+  `blm_glo` (federal land only — the public-land states; patents only, other
+  GLO record types via the site's Document Category filter; and a free-text
+  name search that can miss a patent indexed under initials, so re-run
+  surname-only before reading a nil as absence; §10.1),
   and the two browse sites
   `archion` and `matricula` (the path through the site — parish → register
   type → volume → image — and, for Archion, that viewing needs a pass; §3.11).
@@ -294,14 +309,16 @@ arguments; the tool still fetches nothing (§9).
 **For the two browse sites, `baseUrl` is the parish page and is returned
 unchanged.** Decided by the lead 2026-09-29: Archion and
 Matricula take the parish URL from the caller's `baseUrl`, not from a
-`standardPlace` lookup. It beat a tool-side place-to-parish table because the
+place-to-parish table in the tool. It beat that table because the
 FamilySearch Wiki pages the agent already reads carry Archion and Matricula
-parish links, while nothing in the repo sources such a table and the tool has
-no `standardPlace` input. The full behaviour is in §3.11.
+parish links, while nothing in the repo sources such a table. That ruling still
+holds. The tool did not then take a `standardPlace`; it does now (§3.12), but
+only to check that the place was looked up, and it maps no place to a parish.
+The full behaviour is in §3.11.
 
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
-Unlike the other seventeen sites, `digital_newspaper_archive` has no fixed
+Unlike the other eighteen sites, `digital_newspaper_archive` has no fixed
 site-wide URL — it is an open bucket for whichever state/regional free
 archive applies to the place being researched (Utah Digital Newspapers,
 California Digital Newspaper Collection, …), and "which one is identified by
@@ -483,6 +500,51 @@ the right parish; the URL is the caller's own.
 
 ---
 
+### 3.12 A site-wide build inside a project needs a looked-up place
+
+**Decided by the lead 2026-11-10.** The search-external-sites
+agent's step 2 says to look up any place missing from `project_context`'s
+`externalCollections` with `external_links_search` before building a URL. It
+often skipped that: on `ut_search_external_sites_002`, `_004`, `_uhh` and
+`_fhk`, which annotators scored a pass. On `_uhh` the lookup would have returned
+MyHeritage's 1855 Massachusetts State Census collection, and the researcher got
+a site-wide search instead. ADR-0011 holds that a precondition beats an advisory,
+so the MCP tool now refuses the build:
+
+- **When.** `projectPath` is given, `classifyProjectPath(projectPath)` is
+  `"project"`, and the build is site-wide: `baseUrl` is absent or blank after
+  trimming, on every site. The archion/matricula site-root fallback counts as
+  site-wide.
+- **What it needs.** `standardPlace`, the place the search is about. Missing,
+  blank or not a string is refused, since an optional input would let an agent
+  that skips the lookup skip the input too.
+- **Match.** A key of `external-collections.json`'s `places` matches when it
+  equals `standardPlace`, or the last 1..n comma-separated segments of it, each
+  segment trimmed and compared case-insensitively. "Massachusetts, United
+  States" covers "Hampshire, Massachusetts, United States"; "Pennsylvania,
+  United States" does not cover "New Pennsylvania, United States". No place
+  resolution and no network.
+- **Always satisfiable in one call.** `recordExternalCollections` stores the
+  queried place with `rows: []` when nothing matched, so a place like Ireland is
+  looked up once and never refused again. There is no second write path.
+- **A place too large to list.** `external_links_search` refuses a place with
+  more than 1,000 links (the United States has 1,998). Decided 2026-11-11 by
+  chesworthrm on the PR: that refusal counts as the lookup. It stores the place
+  as `too_large` with no rows (`external-links-search-tool-spec.md`, "Stored
+  list"), and a `too_large` entry matches **only its exact place**, never a place
+  inside it. So "United States" passes for a nationwide or surname-only search,
+  and "Hampshire, Massachusetts, United States" still needs its own lookup. An
+  explicit "no place" and dropping `projectPath` were both rejected: either one
+  becomes the agent's way past every refusal.
+- **Refusal.** `{ ok: false, reason: "place_not_fetched" }`, before the log
+  write, beside the `baseUrl` collection check (§9.1). The error names
+  `external_links_search({ standardPlace, projectPath })` as the next call. An
+  unreadable `external-collections.json` refuses too, as the `baseUrl` check
+  does.
+- **What it leaves alone.** The agent still chooses between a curated link and
+  a site-wide search. A build with a `baseUrl`, and any build outside a project,
+  is not checked. Its limit is in §9.2.
+
 ## 4. Per-site parameter tables (the ported prose)
 
 Each site's table below is a straight port of the site-wide templates this
@@ -493,7 +555,7 @@ here — this section documents the same mapping the implementation embeds.
 | Site | Base URL (Case B) | Fixed params | Parameters |
 |------|--------------------|--------------|------------|
 | `ancestry` | `https://www.ancestry.com/search/` | — | `name` (`givenName`_`surname` — positional: an absent half keeps its underscore, so a surname-only search is `name=_Flynn`), `birth` (`birthYear`), `birthplace` (`birthPlace`), `death` (`deathYear`), `deathplace` (`deathPlace`), `marriage` (`marriageYear`), `residence` (`residenceYear`_`residencePlace`, positional), `father`/`mother`/`spouse` (`{given}_{surname}` per relative, positional) |
-| `myheritage` | `https://www.myheritage.com/research` | see §3.4 | `qname` (`Name fn.<givenName> fnmo.1 ln.<surname> lnmsrs.false` — one composite field, not two), `qevents-event1` (**one** event slot: `Event et.birth ey.<birthYear>`, falling back to `et.death ey.<deathYear>`, falling back to `et.any ep.<place> epmo.similar` from `birthPlace`/`deathPlace`/`marriagePlace`), `qevents=List` when an event ships. **The twelve flat parameters this row used to name were measured dead (§11.1)** — they produced an unfilled form. `marriageYear` and the four parent fields are not emitted and are reported unused: `et.marriage` and the `qrelatives-*` pointer form were never measured |
+| `myheritage` | `https://www.myheritage.com/research` | see §3.4 | `qname` (`Name fn.<givenName> fnmo.1 ln.<surname> lnmsrs.false` — one composite field, not two), `qevents-event1` (**one** event slot: `Event et.birth ey.<birthYear>`, falling back to `et.death ey.<deathYear>`, falling back to `et.any ep.<place> epmo.similar` from `birthPlace`/`deathPlace`/`marriagePlace`), `qevents=List` when an event ships. **The twelve flat parameters this row used to name were measured dead (§11.1)** — they produced an unfilled form. `marriageYear` and the four parent fields are not emitted and are reported unused: `et.marriage` and the `qrelatives-*` pointer form were never measured. The event attributes the slot drops (a death year or place beside a birth year, a place beside a death year, a second place) are reported in `notes`, so a caller does not log a place the search never used |
 | `findmypast` | `https://www.findmypast.com/search/results` | — | `firstname`, `lastname`, `yearofbirth` (`birthYear`), `yearofbirth_offset` (`birthYearOffset`, only with `yearofbirth`), `keywordsplace` (`birthPlace`, falling back to `marriagePlace`, `deathPlace`, `residencePlace` — the site's one place field, so a marriage or death search scoped by `eventyear` can still name its place), `keywordsplace_proximity` (`placeProximityMiles`, only with `keywordsplace`), `eventyear` (`eventYear`), `fatherfirstname`, `motherfirstname` — ported exactly: the template names only `fatherfirstname`/`motherfirstname`, no `*lastname` counterpart |
 | `findagrave` | `https://www.findagrave.com/memorial/search` | — | `firstname`, `lastname`, `birthyear` (`birthYear`), `deathyear` (`deathYear`). No place parameter — **removed by live verification**: `location` is a free-text autocomplete box whose real filter keys off a hidden `locationId` resolved from a dropdown, not the text itself; four different `location=` values (absent, a real place, a nonsense string, and the exact address copied from a matching result) all returned byte-identical result sets |
 | `newspapers` | `https://www.newspapers.com/search/results/` | — | `keyword` (`givenName`+`surname`+`keywords`, space-joined), `date-start`/`date-end` (both from `searchYear` — a range splits, a single year sets both ends), `region` (`us-<postal>` from the state in `searchPlace`) and `county` (the segment before the state, `County` suffix stripped). **The former `query`/`dr_year`/`dr_place` on `/search/` were measured dead apart from `query` (§11.2).** A `searchPlace` naming no US state scopes nothing and says so in a note |
@@ -508,6 +570,7 @@ here — this section documents the same mapping the implementation embeds.
 | `american_ancestors` | `https://app.americanancestors.org/SearchResults/AdvancedSearch` | — | `Keywords` (`givenName`+`surname`+`keywords`, space-joined — **not** `Name.First`/`Name.Last`, confirmed non-binding via round-trip GET reflection testing), `Location` (`birthPlace`, falling back to `deathPlace`), `FromYear`/`ToYear` (both set to `birthYear`) |
 | `italian_genealogy` | `https://www.italiangenealogy.com/forum/search` | `terms=all`, `sf=all`, `sr=posts` (the exact fields present on the one confirmed-working search URL — omitting them was not tested) | `keywords` (`givenName`+`surname`+`keywords`, space-joined). A phpBB forum, not a records database — no structured name/date/place fields exist anywhere on the site |
 | `openarch` | `https://www.openarchieven.nl/search.php` | `lang=en` (§3.4) | `name` only: `givenName`+`surname` (hyphens inside a name part become spaces — a hyphen is the site's *exclude* operator, measured 2026-10-22 turning "Johanna-Willemina" into 542 unrelated rows against the 1 right baptism) plus the chosen event's year as a trailing `YYYY-YYYY` period — the site's own in-field syntax, echoed back as "from the period …"; a single year is passed as both ends. **The site's `eventtype`/`eventplace` URL filters are deliberately never sent** (measured 2026-10-22): `eventtype` matches record-level type values that church-book (DTB) records carry differently per archive, so a 1800 baptism found without it vanishes under `eventtype=Geboorte`; `eventplace` matches the place as each record spells it, so every form of a comma-qualified FamilySearch place returns nothing ('s-Gravenhage vs The Hague). A `notes` entry tells the user to narrow by event type and place on the results page, naming the supplied place. **One event per search**, marriage > birth > death — its year scopes the period, and the losing events' attributes are reported in `notes`. A call with a year/place but no name part refuses as `no_attributes` (a bare period is not a person search). Measured 2026-10-22: the name+period URL for Maijert Zwaan 1827 returns 3 rows including both 24-6-1827 Rijnsburg civil-marriage entries |
+| `blm_glo` | `https://glorecords.blm.gov/s/advanced-search` | — | `searchTerm` only — the portal's embedded search app takes its route in this one parameter, so its value is the app's own query, form-encoded and then encoded again by the outer append: `/search?q=<surname given>&geostatecodes=<POSTAL>&documenttype=Patent&page=1&pageSize=25`. `q` is `surname`+`givenName`, space-joined (the site has one free-text box, no name fields); `geostatecodes` is the upper-case postal code from `usState`, present only when it resolves. A call with no name part refuses as `no_attributes` (a state alone is not a person search); a `usState` that resolves to a state outside the 30 public-land states refuses as `outside_coverage` (§5). Verified in a real browser 2026-11-11 (§10.1) |
 | `archion` | `https://www.archion.de/de/` (the site root, returned only without `baseUrl`) | — | none — **browse, not search** (§3.11): the caller's parish `baseUrl` is returned unchanged |
 | `matricula` | `https://data.matricula-online.eu/de/` (likewise) | — | none — **browse, not search** (§3.11) |
 
@@ -546,8 +609,8 @@ The static `access` value each site returns (§3.1). `digital_newspaper_archive`
 returns the class value state archives carry generally, `"free_bot_protected"`,
 for whichever archive `baseUrl` names — **not verified per archive** — and
 refuses a `baseUrl` on another supported site's own domain (`invalid_base_url`
-naming that site, §3.2). That refusal covers the other seventeen sites and
-nothing else: a **subscription archive outside** the eighteen still receives the
+naming that site, §3.2). That refusal covers the other eighteen sites and
+nothing else: a **subscription archive outside** the nineteen still receives the
 class default, measured 2026-09-15 returning `free_bot_protected` for
 genealogybank.com, newspaperarchive.com, newsbank.com and
 britishnewspaperarchive.co.uk. This matters because `SKILL.md` instructs the
@@ -562,7 +625,7 @@ round 5).
 |------|----------|
 | `ancestry`, `myheritage`, `findmypast`, `newspapers`, `archion` | `subscription` |
 | `chronicling_america`, `digital_newspaper_archive`, `library_archives_canada`, `openarch` | `free_bot_protected` |
-| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy`, `matricula` | `free` |
+| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy`, `matricula`, `blm_glo` | `free` |
 
 `library_archives_canada` moved into `free_bot_protected` on 2026-09-15: the
 collection-search host answers HTTP 403 with `cf-mitigated: challenge` and a
@@ -594,6 +657,8 @@ nil.
 | `baseUrl`'s host does not belong to `site` (a MyHeritage link with `site: "ancestry"`), or is a host the site retired (`chroniclingamerica.loc.gov`) | `{ ok: false, reason: "invalid_base_url" }` naming both hosts (§3.2) |
 | `chronicling_america` with `searchStartYear` after `searchEndYear` | no `dates` window; `notes` says the start is after the end |
 | `chronicling_america` window entirely outside 1798–1963 | `{ ok: false, reason: "outside_coverage" }` — a URL for it could only log a nil as evidence of absence; a window that only partly overlaps succeeds, with a note |
+| `blm_glo` with a `usState` outside the 30 public-land states (the 13 original states, TX, KY, TN, VT, ME, WV, HI, and DC) | `{ ok: false, reason: "outside_coverage" }` — BLM GLO holds no federal patent there, so a URL could only log a nil as evidence of absence; the error routes to the state's own land office and county deed records |
+| `blm_glo` `baseUrl` on any path but `/s/advanced-search` (the legacy `/search/default.aspx` and `/results/default.aspx`, or the portal root) | `{ ok: false, reason: "invalid_base_url" }` — the legacy paths 301 to `/s/` and drop every parameter, and no other portal path reads `searchTerm`, so the search would run unscoped (§10.1) |
 | `findmypast` call carrying only a tuning knob (`birthYearOffset` / `placeProximityMiles`) | `{ ok: false, reason: "no_attributes" }` — a knob without its slot searches nothing |
 | `attributes` is a JSON string | coerced to the object first; if the result is still not an object, `no_attributes` with an error naming the type |
 | every supplied attribute is rejected by its validator (`{ birthYear: 99999 }`) | `no_attributes`, with each rejection note carried in `errors` so the caller learns why |
@@ -613,6 +678,9 @@ nil.
 | `archion`/`matricula` with `attributes: {}` | succeeds — a browse site appends nothing, so it is exempt from `no_attributes` (§3.11) |
 | `archion`/`matricula` with no `baseUrl` | succeeds with the site root; `notes` asks for the parish page |
 | MCP tool, `projectPath` is a project, and `baseUrl` names a collection (an Ancestry collection id, a MyHeritage collection page) that `external-collections.json` does not hold, compared by collection key (`ancestry:<id>`) | `{ ok: false, reason: "invalid_base_url" }`, and nothing is logged. The message offers both ways forward: omit `baseUrl` for a site-wide search, or use a stored url from `research_query({section: "external_collections"})`; with nothing stored, it names `external_links_search` first. A `baseUrl` that names no collection is not checked (§9.1) |
+| MCP tool, `projectPath` is a project, no `baseUrl` (or a blank one), and `standardPlace` missing, blank or not a string | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message says `standardPlace` is required and names `external_links_search` (§3.12) |
+| MCP tool, `projectPath` is a project, no `baseUrl`, and `external-collections.json` has no entry for `standardPlace` or a place containing it (or no file at all) | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message names `external_links_search({standardPlace, projectPath})` as the next call. A stored `rows: []` entry counts as looked up (§3.12) |
+| MCP tool, `projectPath` is a project, no `baseUrl`, and `external-collections.json` cannot be read | `{ ok: false, reason: "place_not_fetched" }` naming the read error, as the `baseUrl` check does |
 | MCP tool, `projectPath` given, folder holds neither project file | succeeds with the URL and no `logId`; the log tool's no-project sentence rides in `notes` — a standalone search outside a project still gets its link |
 | MCP tool, `projectPath` given, the log write refused (a `planItemId` that is not a `pli_` id, a missing folder, half a project) | `{ ok: false, reason: "log_write_failed", errors }` with the log tool's own errors and **no URL**: a hand-off nobody logged is the failure §6 exists to remove |
 | MCP tool, `planItemId` given without `projectPath` | succeeds; nothing is logged and `notes` says `planItemId` had no effect |
@@ -656,7 +724,7 @@ nil.
 
 ## 7. Test plan (vitest)
 
-- **One passing case per site** — the eighteen rows in §4, each producing the
+- **One passing case per site** — the nineteen rows in §4, each producing the
   documented parameter names with the correct join/encoding.
 - **openarch's one-event slot** — the chosen event's year rides as a
   `YYYY-YYYY` period inside `name`, and no `eventtype`/`eventplace` parameter
@@ -684,7 +752,7 @@ nil.
   `base_url_required`; with it, only `q=<given>+<surname>[+<keywords>]` is
   appended, and a facet/date parameter is never invented even if
   `attributes` supplies `searchStartYear`/`usState`.
-- **Unsupported site** — `supportedSites` names exactly the eighteen supported
+- **Unsupported site** — `supportedSites` names exactly the nineteen supported
   sites.
 - **Browse sites** — the Baiersbronn Archion parish page and a Baiersbronn
   viewer URL (`cHash` kept) come back unchanged with `access: "subscription"`
@@ -699,7 +767,17 @@ nil.
   a failed build writes nothing; a bad `planItemId` is `log_write_failed`
   with the log untouched. `tests/tools/no-project.test.ts` carries the three
   path states: no project (URL, no `logId`), a missing folder and half a
-  project (loud).
+  project (loud: a site `baseUrl` gets the log write's error, and a site-wide
+  build is refused by §3.12's gate, which counts half a project as a project).
+- **The looked-up-place gate (§3.12), both directions.** Refused, logging
+  nothing: an unfetched place; nothing stored at all; a missing, blank or
+  non-string `standardPlace`; a blank `baseUrl` and the archion root fallback
+  (both site-wide); an unreadable `external-collections.json`; a place that
+  only shares a tail with a stored one. Allowed: a fetched place (trimmed, any
+  case), a place inside a fetched one, a `rows: []` entry written by
+  `recordExternalCollections` itself, a build with `baseUrl`, a folder that is
+  not a project, and a call with no `projectPath`. A build error still wins
+  over the gate, and `standardPlace` stays out of the schema's `required`.
 - **`no_attributes`** — a site with every one of its own parameters absent
   (or present only as empty strings) is rejected rather than returning a
   bare site URL.
@@ -711,6 +789,13 @@ nil.
   no such note.
 - **Relative names, partial** — only `fatherGivenName` set still produces a
   `father`/`father_first` value from that half alone.
+- **`blm_glo`** — McElwee/Fabbie/"Montana" builds the §10.1 browser-verified
+  URL character for character, and `MT` or a comma-qualified Montana place
+  builds the same one; reserved characters in a name stay inside the inner
+  `q`; no `usState` is nationwide with a note; an unresolvable one drops the
+  facet with a note; a state with no name is `no_attributes`; every
+  state-land state, DC and a comma-qualified Pennsylvania place refuse as
+  `outside_coverage`, and the public-land edges (Ohio, Alaska) build.
 - **`access` classification** — every supported site returns the value in
   §4.1's table; `american_ancestors` returns `"free"` and still carries the
   results-viewing note; `digital_newspaper_archive` returns
@@ -961,6 +1046,22 @@ url the log already held, which the guard lets through so its hand-off can still
 be closed and its capture logged. On
 2026-10-28 one run carried the field, with one collection-scoped entry, backed.
 
+### 9.2 The looked-up-place gate sees only builds with a `projectPath`
+
+§3.12's gate fires only "inside a project", by the ruling's own words: a build
+with a `projectPath` that is a project. `search-external-sites` calls the
+builder **without** `projectPath` on three paths: triage with no matching
+hand-off, a reported result, and the no-user deferral
+(`search-external-sites.md`, its triage and deferral steps). Those builds are
+not checked, and nothing else checks them.
+
+Not widened, on purpose. Refusing a build without `projectPath`, or gating
+`research_log_append`, would change another tool's contract, and nobody has
+ruled on that. The measured skips (`_002`, `_004`, `_uhh`, `_fhk`) were all on
+the hand-off path, which does pass `projectPath`. `where-else-to-search` never
+passes `projectPath` and always passes `baseUrl`, so the gate never fires for
+it either.
+
 ## 10. Live checks for the eight launch-scope sites and the FindAGrave fix (2026-09-11)
 
 Each of the eight sites added to the launch-scope table (§4) was checked
@@ -1071,6 +1172,38 @@ conditions as a confound (relevant specifically to the sites blocked by
 Cloudflare/WAF challenges here). Each site above is one measurement, by one
 session, on one day (2026-09-11) — the same evidentiary caveat §9 already
 states for Chronicling America applies identically to all of these.
+
+### 10.1 `blm_glo` — the GLO Portal (2026-11-11)
+
+**Full end-to-end verification, in a real browser (one operator, one
+network, one day).** The legacy URLs (`/search/default.aspx`,
+`/results/default.aspx?searchCriteria=…`) 301 to the Salesforce "GLO
+Portal" at `/s/` and drop every parameter, so neither legacy shape is
+templated. The portal's search is a separate app embedded in a frame
+(`glo-entry-prod.blm.gov/ui`, Cloudflare-fronted, results fetched with a
+guest token from `/ui/func/dsto/api/search`). Its code reads `q`, `page`,
+`pageSize`, and treats every other key as a facet with `|`-joined values.
+
+- The portal's own search box produced
+  `/s/advanced-search?searchTerm=%2Fsearch%3Fq%3DMcElwee%26page%3D1%26pageSize%3D25`.
+- Applying the State and Document Category filters in the UI gave a
+  **fragment** URL, `/s/advanced-search#/search?q=*&geostatecodes=MT&documenttype=Patent&page=1&pageSize=25`,
+  which reproduced in a private window. This tool cannot build a `#` form,
+  so the facets were tested inside `searchTerm` instead:
+  - `…?searchTerm=%2Fsearch%3Fq%3DMcElwee%2BFabbie%26geostatecodes%3DMT%26documenttype%3DPatent%26page%3D1%26pageSize%3D25`
+    listed FABBIE S MCELWEE (Patentee), Serial Patent, Accession
+    SER-569015, 02-24-1917, Broadwater County, Montana — the patent an alpha tester found
+    with the legacy URL.
+  - The same URL with `geostatecodes%3DPA` returned "No results found
+    with these parameters" — so the state facet binds; it is not ignored.
+- No login and no challenge page in the browser or the private window →
+  `access: "free"`. A headless Chromium got an empty results page (the
+  embedded app's config request 404ed), so an automated check of this site
+  cannot stand in for a browser one.
+
+**Not checked:** other states' facet values beyond MT and PA (the facet
+takes the postal code the UI itself emitted); `documenttype` values other
+than `Patent`; a second network or day.
 
 ## 11. The three unchecked ports, measured (2026-09-24/25)
 

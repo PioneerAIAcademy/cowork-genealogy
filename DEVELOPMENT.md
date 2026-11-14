@@ -67,6 +67,42 @@ matches the directory; it cannot check that the commands still match. Before
 editing a wrapper, read the "Changing these" rules in
 [`scripts/windows/README.md`](./scripts/windows/README.md).
 
+## Testing a change before it reaches anyone
+
+The beta runs on one server, `malachi`, behind the `Genealogy Research` connector, and
+only the lead deploys to it. There is no test server, so everyone tests their own
+branch, in their own Claude account, before it reaches anyone else. A plugin you upload
+belongs to your account alone: nobody else sees it.
+
+| You changed | Test it here |
+|---|---|
+| A skill, an agent or a hook | Your own plugin on the connector. `make plugin` builds `releases/genealogy-plugin.zip` from your branch. Upload it at Customize → Plugins, removing the copy that is there first, and use an ordinary chat in Desktop or at claude.ai. A chat runs your account's plugin, its agents and its hook in a cloud session, and the connector reads and writes only your own projects. Upload the release zip again when you are done. |
+| An MCP tool | The branch's `.mcpb` and plugin, from `make cowork-install`, in a Cowork task: a new conversation with a folder on your computer attached. The `.mcpb` keeps projects as folders on disk, which a chat does not have. Switch the `Genealogy Research` connector off while you test, because both offer the same tool names, and back on afterwards: the switch stays off in every new conversation until you do. |
+| A card or the case file | `make viewer PROJECT=<folder>` draws them in a browser tab from a project folder. |
+| Something only the connector has: cards inside Claude, connector sign-in and its "sign in again" link, the upload page, owner checks | It cannot be tried from your computer, because Claude reaches a connector from Anthropic's servers. It is first tried on the live server, under the deploy rules below. |
+
+A tool change is written once in `src/`: `src/server.ts` holds the one dispatch, and
+the `.mcpb` and the server only connect a transport to it. No tester needs Docker. The
+folder store and the server's Postgres store share one interface (`src/store/`), and
+CI's `vitest-pg` job runs the engine suite on Postgres for every PR.
+
+**Deploying the beta.** Only the lead deploys, with `make malachi-deploy REF=<sha>`.
+
+1. Back up first, with `make malachi-backup`. A bad store or schema change is the one
+   mistake a redeploy does not undo.
+2. Undo a bad deploy by redeploying the previous commit. Sign-ins survive a redeploy,
+   because the server keeps its tokens in Postgres. Until the card page's URI carries
+   the build (the MCP App plan's M1), Claude may keep showing the old page on a card it
+   already drew.
+3. Deploy nothing during the demo or its rehearsals.
+
+**A test server comes later,** when an hour's breakage would hurt users the lead cannot
+message. It needs its own Funnel port, 8443 or 10000, advertised with the port, because
+sign-in discovery sits at the host root that production already holds
+(`scripts/tailscale-services.sh`); its own stack, data and secrets; its own FamilySearch
+callback; and a connector named exactly `Genealogy Research`, or agents get no tools, on
+a second Claude account if one account cannot hold two connectors with that name.
+
 ## Git hooks
 
 Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
@@ -129,6 +165,11 @@ Example: adding a "list providers" feature.
    - Add its name to `tools` in `packages/engine/mcp-server/manifest.json` — the packaging
      test (`tests/packaging/manifest.test.ts`) fails if the manifest and
      the registry drift apart
+   - A tool only a connector caller sees stays out of `allToolSchemas` and the manifest:
+     its schema stays in its own file (`packages/engine/mcp-server/src/tools/project-view.ts`
+     is the example), `createServer` adds it for a connector principal, its
+     `dev/smoke-calls.ts` row carries `connectorOnly: true`, and the dispatch chain holds no
+     string literal of its name
    - Run `npm run build` in `packages/engine/mcp-server/`
    - Create `packages/engine/mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows
@@ -650,23 +691,27 @@ restart. Order matters:
    scripts/build-mcpb.sh        # if MCP server code changed
    scripts/package-plugin.sh    # if packages/engine/plugin/skills/ changed
    ```
-5. **Re-install via the Cowork UI** (same path end users follow — see
+5. **Re-install in Claude Desktop** (same path end users follow — see
    `README.md` § "Install"):
-   - **MCP:** Claude Desktop → Settings → Extensions → Advanced Settings
-     → "Install extension" → pick the rebuilt
-     `releases/genealogy-mcp.mcpb`. Installs over the old copy; no
-     uninstall needed.
-   - **Plugin:** Claude Desktop → Cowork tab → Customize → **remove the
-     existing Genealogy Research plugin first**, then Add → Upload
-     Plugin → pick the rebuilt `releases/genealogy-plugin.zip`.
-     Uploading on top of the old plugin can leave the old skills in
-     place.
+   - **MCP:** Claude Desktop → Settings → Desktop app → **Manage** next
+     to Extensions → Advanced settings → "Install extension" → pick the
+     rebuilt `releases/genealogy-mcp.mcpb`. While the old copy is
+     installed, the window offers only **Uninstall**: uninstall it, then
+     **Install**. Uninstalling clears an OpenRouter key saved under
+     **Configure** (not one in `~/.familysearch-mcp/config.json`); paste it
+     again there.
+   - **Plugin:** Claude Desktop → Customize → Plugins → Yours → **remove the
+     existing Genealogy Research plugin first** (**…** → **Remove**),
+     then **+ Add** → **Upload plugin** → pick the rebuilt
+     `releases/genealogy-plugin.zip`. Uploading on top of the old plugin
+     can leave the old skills in place.
 6. **Fully quit Claude Desktop.** The MCP server is only re-read on a
    real restart — closing the window is not enough:
    - **macOS:** ⌘Q, or right-click the Dock icon → Quit. From a terminal,
      `pgrep -f Claude` should return nothing afterward.
-   - **Windows:** system-tray icon → right-click → Quit. In Task
+   - **Windows:** system-tray icon → right-click → Exit. In Task
      Manager, confirm no `Claude.exe` process remains.
+   - **Linux:** ≡ → File → Quit (Ctrl+Q).
 7. **Reopen Claude Desktop.**
 
 To confirm the build picked up your change, grep the built file for a

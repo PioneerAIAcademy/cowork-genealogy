@@ -50,6 +50,9 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__sidecar_read
+  - mcp__remote-devices__Genealogy_Research__sidecar_read
+  - mcp__Genealogy_Research__sidecar_read
 ---
 
 # Search Full-Text
@@ -146,7 +149,7 @@ FTS and indexed search are completely different systems:
 - **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs), and finding any person in a paragraph-style record that was never name-indexed, principal included.
 
 FTS results are derivative sources (original → image → AI transcript,
-~10% error rate). **Always verify against the original image.**
+~10% error rate). **Report a doubtful reading and link the page.**
 
 ## Steps
 
@@ -305,10 +308,10 @@ fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<filterParam from 
 fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })
 
 # Natural language search / tree person ID
-fulltext_search({ nlQuery: "KD96-TV2" })
+fulltext_search({ nlQuery: "KD96-TV2", projectPath })
 
 # Wildcard for HTR errors
-fulltext_search({ keywords: "+Fl?nn +Patrick" })
+fulltext_search({ keywords: "+Fl?nn +Patrick", projectPath })
 ```
 
 ### 5. Execute and iterate
@@ -316,8 +319,8 @@ fulltext_search({ keywords: "+Fl?nn +Patrick" })
 Call `fulltext_search` with the constructed query. This agent **logs
 every search**, so `projectPath` (the absolute path to the project
 folder) is **mandatory on every call** — never omit it. **Execute every
-planned search for the task before logging any results or calling
-`research_append`.** Do not stop after the first search if the plan
+planned search for the task before calling `research_append`.** Do not
+stop after the first search if the plan
 item or the user's message requires multiple queries (e.g., separate
 searches for two different people). When supplied,
 the host stages the raw results and the response gains a
@@ -351,23 +354,24 @@ The transcription quirks and HTR error patterns are in the appendix
 ### 6. Triage results
 
 Each staged result carries only flat stub fields — the full transcript
-(`textDocument`) is dropped from the response. It is still on disk at
-`staged.resultsRef`, but reading it pulls the whole page (79–136 KB) back into
-context. Triage from the stubs first:
+(`textDocument`) is dropped from the response and kept in the staged sidecar.
+Triage from the stubs first:
 - **Did your terms hit?** `highlightTerms` lists the matched terms and phrases
   as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
   which query terms appear in the transcript, not where or in what role.
 - **Who and what?** `names` lists the persons the transcript mentions (the FAN
-  net — witnesses, neighbors, heirs); `title` and `recordType` give the
-  document kind.
+  net — witnesses, neighbors, heirs), capped when `namesCount` is present, so
+  read the hit with `sidecar_read` before calling anyone absent from it;
+  `title` and `recordType` give the document kind.
 - **Where and when?** Check `recordPlace`/`places` and `recordDate`/`dates` —
   is the place and approximate date consistent with your person?
 - **Right context, or a false positive?** Whether the name is a genuine mention
   (witness, will clause, deed party) versus a false positive (cross-column
   alignment, a place name matching a surname) cannot be judged from the stubs —
-  the terms are bare. Verify against the original image (see the verification
-  note above), or `Read` the single result you are chasing out of
-  `staged.resultsRef`.
+  the terms are bare. Report it as doubtful and link the page (see the
+  verification note above), or read the one hit you are chasing with
+  `sidecar_read({ projectPath, ref: "<staged.resultsRef>#<hit id>" })`; a ref
+  without `#<hit id>` is refused.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether
@@ -1200,7 +1204,7 @@ are error profiles of the transcription, not palaeography:
   surname wrapping across a page boundary may not be findable as
   a whole token. Try both halves.
 - **~10% error rate** in user-perceived results (empirically
-  observed). Always verify against the original image.
+  observed). Report a doubtful reading and link the page.
 
 ### Coverage
 

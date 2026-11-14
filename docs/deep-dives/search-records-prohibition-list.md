@@ -22,8 +22,8 @@ backstop. *none* = nothing checks it.
 | 3 | A collection-mismatch is not a nil — must not apply spelling-variant escalation to it. | Step 5 | none |
 | 4 | ~~Must never drop `givenName` on a retry — surname-only is not a valid lever.~~ **Retired** by the lead's 2026-08-23 ruling on issue #1008: dropping given name is a legitimate escalation step (`search-strategy-levers.md`'s "Drop given name" lever). Both SKILL.md clauses removed. | — | n/a |
 | 5 | Must never set an `*Exact` qualifier to try to find a record it could not otherwise find. | Step 2 | none |
-| 6 | Every search, including nils, must get its own `research_log_append` call — "a search without a log entry is a search that didn't happen." | Step 5, "Important rules" | guard, untagged (`test_positive_appends_log_entry`) for positive tests; nil-sidecar shape is tag-gated (`sidecar-nil`) |
-| 7 | Must never edit, reorder, or reformat an existing `log[]` entry — append only. | Step 5, "Important rules" | guard (`test_log_append_only`, universal validator, not this file) |
+| 6 | Every search, including nils, must get its own `research_log_append` call. | Steps 3 and 5 | guard, untagged (`test_positive_appends_log_entry`) for positive tests; nil-sidecar shape is tag-gated (`sidecar-nil`) |
+| 7 | Must never edit, reorder, or reformat an existing `log[]` entry — append only. | Step 5 | guard (`test_log_append_only`, universal validator, not this file) |
 | 8 | The plan-item status update (Step 6) must happen the same turn as Step 5, before Step 7. | Step 6 | none — ordering across turns isn't visible to a validator |
 | 9 | Must not set plan-item status to `completed` from this skill. | Step 6 | none |
 | 10 | Must not offer extraction as a next step for a needs-review/disqualified match — "not even as a question." | Step 4 | judge (Result triage / rubric.md) |

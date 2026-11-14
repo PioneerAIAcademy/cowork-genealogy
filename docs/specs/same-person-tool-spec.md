@@ -26,9 +26,9 @@ naturally after `record_search`:
 ```
 search(name, place, year)                                    // find candidates
    ↓
-LLM holds simplified-GedcomX of each candidate in its memory
-   ↓
 (user picks two and asks: "are result 1 and result 10 the same person?")
+   ↓
+record_read(recordId) for each of the two                    // their documents
    ↓
 LLM calls same_person(gedcomx1, primaryId1, gedcomx2, primaryId2)
 ```
@@ -292,7 +292,7 @@ has neither a project nor a record identity to key an attestation on.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `gedcomx1` | `SimplifiedGedcomX` | yes | First record's full simplified-GedcomX document — exactly as the LLM received it from a prior tool call (typically `record_search`). May contain multiple persons (focus + parents + relatives). Sent as `entries[0]` to the FS API. |
+| `gedcomx1` | `SimplifiedGedcomX` | yes | First record's full simplified-GedcomX document — exactly as the LLM received it from a prior tool call (typically `record_read`; a `record_search` answer carries no `gedcomx`). May contain multiple persons (focus + parents + relatives). Sent as `entries[0]` to the FS API. |
 | `primaryId1` | string | yes | The in-document `id` of the person in `gedcomx1` to match against (e.g. `"I1"`, `"primaryPerson"`). Must match a `persons[].id` in `gedcomx1`. |
 | `gedcomx2` | `SimplifiedGedcomX` | yes | Second record's full simplified-GedcomX document. Sent as `entries[1]`. |
 | `primaryId2` | string | yes | The in-document `id` of the focus person in `gedcomx2`. Must match a `persons[].id` in `gedcomx2`. |
@@ -455,8 +455,15 @@ then by persona: when the link's assertion carries a `record_persona_id` P that
 its record's assertions give exactly one role, and names no second person, an
 entry with `party_resolved`, `record_persona_id` P, the same `tree_person_id`,
 and a `record_role` the record gives P answers for that link. So one call per
-(persona, tree person) covers every fact of the persona that carries P except a
-relationship, marriage or other two-person assertion, which needs its own call. It rests on one assumption, stated
+(persona, tree person) covers every fact of the persona that carries P. A
+relationship, marriage or other two-person assertion is covered only when another
+link ties a one-party fact of P, and none of another party, to the same tree
+person (parties keyed by `recordPartyKeyer`);
+otherwise its link may be about the other party and it needs its own call. On a
+record whose assertions carry no persona id (a capture), for an assertion that
+reads as projected (`readsAsFetched`), the party is the `record_role`: an entry with `record_persona_id: null`, `record_source:
+"projection"` and that role answers for every fact of that role, under the same
+two-person rule. It rests on one assumption, stated
 rather than tested: a live `record_read` and a staged `record_read` or
 `record_search` of one record give its persons the same `id`, so the persona the
 fetched route resolves is the one extraction stamped. If they ever differ, the
@@ -989,7 +996,7 @@ export const samePersonSchema = {
         type: "object",
         description:
           "First record's full simplified-GedcomX document. Pass it exactly " +
-          "as received from a prior tool call (e.g. `record_search`)."
+          "as received from a prior tool call (e.g. `record_read`)."
       },
       primaryId1: {
         type: "string",

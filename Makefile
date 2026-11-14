@@ -125,9 +125,13 @@ clean-deps: ## Remove all node_modules (force a from-scratch install; use after 
 # prerequisite: make reads the .make-installed stamp timestamps once at startup,
 # so a single `reinstall: clean-deps install` would still see the (now-deleted)
 # stamps as up-to-date and skip the JS installs. The recursive call re-evaluates
-# them post-clean.
+# them post-clean. The Node and npm check runs first, as its own recipe line, so
+# a version the installs would refuse stops this before anything is deleted (a
+# prerequisite would be unordered under -j).
 .PHONY: reinstall
-reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+reinstall: ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+	node scripts/check-node-floor.mjs
+	$(MAKE) clean-deps
 	$(MAKE) install
 
 # ── Worktrees ────────────────────────────────────────────────────
@@ -273,6 +277,13 @@ mcp-viewer-build: $(JS_DEPS) ## Build the MCP App page and copy it to the viewer
 	pnpm --filter mcp-viewer build
 	mkdir -p $(ENGINE_DIR)/viewer/page
 	cp apps/mcp-viewer/dist/index.html $(ENGINE_DIR)/viewer/page/viewer.html
+
+# Local, not CI: it reads teammates' committed e2e runs, which must never red someone's PR.
+.PHONY: mcp-viewer-sweep
+MCP_VIEWER_SWEEP_DIR := $(CURDIR)/releases/mcp-viewer-sweep
+mcp-viewer-sweep: $(JS_DEPS) $(ENGINE_DEPS) ## Render the MCP App page's cards and text over the McAndrew capture and every committed e2e end state
+	cd $(ENGINE_DIR) && npx tsx dev/sweep-stage.ts --out "$(MCP_VIEWER_SWEEP_DIR)"
+	SWEEP_DIR="$(MCP_VIEWER_SWEEP_DIR)" pnpm --filter mcp-viewer exec vitest run --config vitest.sweep.config.ts
 
 # `cd … && pwd` rather than abspath: Cowork project folders often hold spaces.
 .PHONY: viewer
@@ -532,7 +543,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_admission.py tests/test_proto_admission_pg.py tests/test_proto_pool.py tests/test_proto_pool_pg.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter.py tests/test_proto_openrouter_pg.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_admission.py tests/test_proto_admission_pg.py tests/test_proto_pages.py tests/test_proto_pool.py tests/test_proto_pool_pg.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter.py tests/test_proto_openrouter_pg.py tests/test_proto_connector_auth.py tests/test_proto_connector_auth_pg.py tests/test_malachi_user_admin_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -548,7 +559,7 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_admission_pg.py tests/test_proto_pool_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_admission_pg.py tests/test_proto_pool_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials_pg.py tests/test_proto_openrouter_pg.py tests/test_proto_connector_auth_pg.py tests/test_malachi_user_admin_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -1131,6 +1142,15 @@ malachi-export: ## A project's files to DATA_DIR/exports/<id>/: EMAIL= or PROJEC
 .PHONY: malachi-openrouter
 malachi-openrouter: ## Encrypt the env file's OPENROUTER_SEED_KEY onto one user's row: EMAIL=
 	$(MALACHI) openrouter
+
+.PHONY: beta-block-user
+beta-block-user: ## Block one beta user: ACCOUNT=<id>. Their cookie and connector token are refused from the next request
+	@$(MALACHI) block-user
+
+# @: the recipe never prints the code. It reaches malachi.sh as environment, the container on stdin.
+.PHONY: beta-delete-user
+beta-delete-user: ## Delete one beta user's rows, objects and exports: ACCOUNT=<id> CODE=<deletion code>; reports only, until CONFIRM=yes
+	@$(MALACHI) delete-user
 
 .PHONY: malachi-prune
 malachi-prune: ## Free Docker's root: this stack's old images, and everyone's build cache older than a week
@@ -1765,8 +1785,8 @@ plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
 
 .PHONY: plugin-connector
-plugin-connector: ## Build the plugin's connector release into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name>
-	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)'
+plugin-connector: ## Build the one-install connector plugin (its .mcp.json names the tool server) into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp
+	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)' --server-url '$(SERVER_URL)'
 
 .PHONY: cowork-install
 cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)
@@ -1775,21 +1795,29 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	# click-path is printed rather than automated: both installs are Claude
 	# Desktop UI actions with no CLI.
 	@printf '\n=== Built. Now install BOTH, then fully quit and reopen Claude Desktop ===\n\n'
-	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings -> Extensions ->\n'
-	@printf '   Advanced Settings -> Install extension -> releases/genealogy-mcp.mcpb\n'
-	@printf '   (install straight over the old copy -- no uninstall needed)\n\n'
-	@printf '2. Plugin (.zip):  Claude Desktop -> COWORK tab -> Customize ->\n'
-	@printf '   REMOVE any existing Genealogy Research plugin, then Add -> Upload\n'
-	@printf '   Plugin -> releases/genealogy-plugin.zip\n'
-	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
-	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
+	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings (Cmd+, or Ctrl+,) ->\n'
+	@printf '   Desktop app -> Extensions: Manage -> Advanced settings ->\n'
+	@printf '   Install extension -> pick this file:\n'
+	@printf '     %s\n' '$(CURDIR)/releases/genealogy-mcp.mcpb'
+	@printf '   -> Install, then Install again. Old copy installed? The window\n'
+	@printf '   offers only Uninstall: click it, confirm, then Install. That clears\n'
+	@printf '   a key saved under Configure (a key in ~/.familysearch-mcp/config.json\n'
+	@printf '   stays); paste it again there.\n\n'
+	@printf '2. Plugin (.zip):  Claude Desktop -> Customize -> Plugins -> Yours ->\n'
+	@printf '   REMOVE any existing Genealogy Research plugin (... -> Remove),\n'
+	@printf '   then + Add -> Upload plugin -> pick this file:\n'
+	@printf '     %s\n' '$(CURDIR)/releases/genealogy-plugin.zip'
+	@printf '   -> Upload\n\n'
+	@printf '3. Fully QUIT Claude Desktop (Cmd+Q on a Mac, Ctrl+Q on Linux), then\n'
+	@printf '   reopen it.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
 
 # The prototype's three Elastic Beanstalk source bundles (U12, docs/plan/familysearch-handoff.md),
 # every dependency vendored: releases/eb-{web,worker,tools}.zip + releases/eb-bundles.json. The
 # builder stages outside the repo and needs node >= 22 with the engine's npm, the pnpm workspace
-# installed, and the network (PyPI, npm, the RDS truststore). pip is the version the AL2023
-# Python 3.12 platform ships; pyyaml is apps/server/uv.lock's (test_eb_bundles checks it).
+# installed (which takes Node 22.22.2+ on 22, 24.15+ on 24, or 26+), and the network (PyPI, npm,
+# the RDS truststore). pip is the version the AL2023 Python 3.12 platform ships; pyyaml is
+# apps/server/uv.lock's (test_eb_bundles checks it).
 # ARGS passes through to the builder only (make eb-bundles ARGS="--arch x86_64 --rds-ca FILE"); the
 # verifier always dry-runs both arches, so a single-arch build fails it.
 EB_PIP    := 26.2.1

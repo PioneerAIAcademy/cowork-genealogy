@@ -1,4 +1,5 @@
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, connectorPrincipal } from "../../src/auth/principal.js";
+import { connectorReauthMessage, REJECTED_TOKEN_MESSAGE } from "../../src/auth/config.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -12,10 +13,17 @@ import {
   fetchAllCollections,
   clearCollectionsCache,
   configureCollectionsCache,
+  collectionCountsById,
+  fitToBudget,
+  subPlaceTerms,
+  ANSWER_CHAR_BUDGET,
+  COLLECTION_URL_TEMPLATE,
 } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import type {
+  Collection,
+  CollectionsSearchResult,
   FSCollectionEntry,
   FSCollectionsResponse,
 } from "../../src/types/collection.js";
@@ -128,7 +136,7 @@ describe("collectionsSearchTool with standardPlace", () => {
 
     const result = await collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL);
 
-    expect(result.query).toEqual({ standardPlace: "Alabama" });
+    expect(result).not.toHaveProperty("query");
     expect(result.scope).toBe("Alabama");
     expect(result.totalForPlace).toBe(1);
     expect(result.results[0].id).toBe("1234");
@@ -146,11 +154,7 @@ describe("collectionsSearchTool with standardPlace", () => {
     }, LOCAL);
 
     // The tool derived "Alabama" (the state) from the full standardPlace and
-    // matched the Alabama collection; the input is echoed in query, the derived
-    // jurisdiction in scope.
-    expect(result.query).toEqual({
-      standardPlace: "Birmingham, Jefferson, Alabama, United States",
-    });
+    // matched the Alabama collection; the derived jurisdiction is in scope.
     expect(result.scope).toBe("Alabama");
     expect(result.totalForPlace).toBe(1);
     expect(result.results[0].id).toBe("1234");
@@ -228,11 +232,6 @@ describe("collectionsSearchTool date filter", () => {
       endYear: 1920,
     }, LOCAL);
 
-    expect(result.query).toEqual({
-      standardPlace: "Census",
-      startYear: 1890,
-      endYear: 1920,
-    });
     // Both titles match "Census" (totalForPlace: 2); only the 1900 one survives
     // the 1890–1920 window.
     expect(result.totalForPlace).toBe(2);
@@ -293,6 +292,23 @@ describe("collectionsSearchTool error handling", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("a 401 is a sign-in problem, worded for the caller: the login tool on the desktop, the link on a connector", async () => {
+    const unauthorized = { ok: false, status: 401, statusText: "Unauthorized", headers: new Headers() };
+    mockedGetValidToken.mockResolvedValue("test-token");
+    mockFetch.mockResolvedValue(unauthorized);
+    await expect(collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL)).rejects.toThrow(REJECTED_TOKEN_MESSAGE);
+
+    clearCollectionsCache();
+    const connector = connectorPrincipal({
+      accessToken: "dead-token",
+      userId: "u_1",
+      config: { webPublicUrl: "https://beta.example" },
+    });
+    const failure = await collectionsSearchTool({ standardPlace: "Alabama" }, connector).catch((e: Error) => e.message);
+    expect(failure).toBe(connectorReauthMessage(connector));
+    expect(failure).toContain("https://beta.example/auth/familysearch/login");
+  });
+
   it("throws on non-OK API response", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
     mockFetch.mockResolvedValue({
@@ -337,7 +353,7 @@ describe("collectionsSearchTool error handling", () => {
       expect(r.isError).toBe(true);
       expect(r.text).toMatch(
         new RegExp(
-          `no record-type filter: it lists every collection for the place, so ${alias} ` +
+          `no record-type filter: it lists the place's collections by place and years only, so ${alias} ` +
             "cannot narrow it.*volume_search's recordTypeGroups.*Valid groups: Genealogies, .*Probate",
           "s"
         )
@@ -372,15 +388,139 @@ describe("collectionsSearchTool field mapping", () => {
 
     const result = await collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL);
 
-    expect(result.results[0]).toEqual({
-      id: "1234",
-      title: "Alabama, County Marriages, 1809-1950",
-      dateRange: "1809-1950",
-      recordCount: 524000,
-      personCount: 1048000,
-      imageCount: 120000,
-      url: "https://www.familysearch.org/search/collection/1234",
+    // One lean row for every caller: no counts but personCount, no per-row url,
+    // and no query echo; the link is the one top-level template.
+    expect(result).toEqual({
+      collectionUrl: "https://www.familysearch.org/search/collection/{id}",
+      scope: "Alabama",
+      totalForPlace: 1,
+      results: [
+        {
+          id: "1234",
+          title: "Alabama, County Marriages, 1809-1950",
+          dateRange: "1809-1950",
+          personCount: 1048000,
+        },
+      ],
     });
+  });
+
+  it("collectionCountsById still derives the /Record count the row no longer carries", () => {
+    const counts = collectionCountsById(mockApiResponse);
+    expect(counts.get("1234")).toEqual({ personCount: 1048000, recordCount: 524000 });
+  });
+});
+
+describe("collections_search answer budget", () => {
+  const row = (id: string, title: string): Collection => ({ id, title, dateRange: "1800-1900", personCount: 1000 });
+  const answerOf = (results: Collection[], totalForPlace = results.length): CollectionsSearchResult => ({
+    collectionUrl: COLLECTION_URL_TEMPLATE,
+    scope: "Italy",
+    totalForPlace,
+    results,
+  });
+
+  // A synthetic Italy-scoped catalog well past the budget: 600 national rows,
+  // and one row naming Palermo at the very end of catalog order.
+  function bigItaly(): FSCollectionsResponse {
+    const entries: FSCollectionEntry[] = [];
+    for (let i = 0; i < 600; i++) {
+      entries.push(makeEntry({
+        id: String(100000 + i),
+        title: `Italy, Civil Registration (State Archive), 1802-1940, volume ${i} of a long series`,
+        placeIds: [1],
+        personCount: 12345678,
+        startYear: 1802,
+        endYear: 1940,
+      }));
+    }
+    entries.push(makeEntry({
+      id: "999999",
+      title: "Italy, Palermo, Civil Registration (State Archive), 1820-1910",
+      placeIds: [1],
+      personCount: 5000,
+      startYear: 1820,
+      endYear: 1910,
+    }));
+    return { results: entries.length, entries };
+  }
+
+  it("answers an over-budget catalog within the budget, sub-place row first, with truncated and matched", async () => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => bigItaly() });
+
+    const result = await collectionsSearchTool({ standardPlace: "Palermo, Sicilia, Italy" }, LOCAL);
+
+    expect(JSON.stringify(result).length).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
+    expect(result.truncated).toBe(true);
+    expect(result.matched).toBe(601);
+    expect(result.totalForPlace).toBe(601);
+    expect(result.results.length).toBeLessThan(601);
+    expect(result.results[0].id).toBe("999999");
+    // The rest keep catalog order.
+    expect(result.results[1].id).toBe("100000");
+    expect(result.results[2].id).toBe("100001");
+    expect(result.collectionUrl).toBe(COLLECTION_URL_TEMPLATE);
+  });
+
+  it("matched counts rows after the year filter, not totalForPlace and not the rows returned", async () => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    const catalog = bigItaly();
+    // 100 more Italy rows outside the window: in totalForPlace, not in matched.
+    for (let i = 0; i < 100; i++) {
+      catalog.entries!.push(makeEntry({ id: String(500000 + i), title: `Italy, Late Records ${i}`, placeIds: [1], startYear: 1990, endYear: 2000 }));
+    }
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => catalog });
+
+    const result = await collectionsSearchTool({ standardPlace: "Italy", startYear: 1850, endYear: 1860 }, LOCAL);
+
+    expect(result.totalForPlace).toBe(701);
+    expect(result.matched).toBe(601);
+    expect(result.results.length).toBeLessThan(601);
+  });
+
+  it("keeps rows in order up to the edge: one more would not have fit", () => {
+    const rows = Array.from({ length: 50 }, (_, i) => row(String(i), `Italy, Records ${i}`));
+    const out = fitToBudget(answerOf(rows), "Italy", 1500);
+    expect(out.truncated).toBe(true);
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(1500);
+    // With no sub-place in the input, the kept rows are the first in catalog order.
+    expect(out.results.map((r) => r.id)).toEqual(rows.slice(0, out.results.length).map((r) => r.id));
+    const next = rows[out.results.length];
+    expect(JSON.stringify(out).length + JSON.stringify(next).length + 1).toBeGreaterThan(1500);
+  });
+
+  it("leaves an answer under the budget exactly as it was: catalog order, no truncated or matched", () => {
+    const answer = answerOf([row("1", "Italy, Records"), row("2", "Italy, Palermo, Records")]);
+    const out = fitToBudget(answer, "Palermo, Sicilia, Italy");
+    expect(JSON.stringify(out)).toBe(JSON.stringify(answer));
+    expect(out).not.toHaveProperty("truncated");
+    expect(out).not.toHaveProperty("matched");
+  });
+
+  it("matches a sub-place as a whole word, so Rome does not pull Romeo forward", () => {
+    const rows = [
+      row("1", "Italy, Romeo Family Papers"),
+      row("2", "Italy, Records"),
+      row("3", "Italy, Rome, Catholic Church Records"),
+    ];
+    const out = fitToBudget(answerOf(rows), "Rome, Lazio, Italy", 260);
+    expect(out.truncated).toBe(true);
+    expect(out.results[0].id).toBe("3");
+  });
+});
+
+describe("subPlaceTerms", () => {
+  it("names the parts below the derived scope", () => {
+    expect(subPlaceTerms("Palermo, Sicilia, Italy")).toEqual(["Palermo", "Sicilia"]);
+    expect(subPlaceTerms("Schuylkill, Pennsylvania, United States")).toEqual(["Schuylkill"]);
+    expect(subPlaceTerms("Toronto, Ontario, Canada")).toEqual(["Toronto"]);
+    expect(subPlaceTerms("Italy")).toEqual([]);
+    expect(subPlaceTerms("Pennsylvania, United States")).toEqual([]);
+  });
+
+  it("has none for free text that is its own scope", () => {
+    expect(subPlaceTerms("Census")).toEqual([]);
   });
 });
 

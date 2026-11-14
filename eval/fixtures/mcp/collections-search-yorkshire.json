@@ -1,0 +1,1016 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for Yorkshire, England - 167 collections, scope England (FamilySearch files none at Yorkshire level). Includes 2285341 'England and Wales, Death Registration Index 1837-2007' and 1473016 'England, Deaths and Burials, 1538-1991'. Measured live 2026-11-04 with collectionsSearchTool({ standardPlace: 'Yorkshire, England' }), no year filter. Predicate matches ~Yorkshire.",
+  "args": {
+    "standardPlace": "~Yorkshire"
+  },
+  "response": {
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
+    "scope": "England",
+    "totalForPlace": 167,
+    "results": [
+      {
+        "id": "1473015",
+        "title": "England Marriages, 1538–1973",
+        "dateRange": "1538-1973",
+        "personCount": 30809457
+      },
+      {
+        "id": "2285338",
+        "title": "England and Wales, Birth Registration Index, 1837-2008",
+        "dateRange": "1837-2008",
+        "personCount": 217475854
+      },
+      {
+        "id": "1493745",
+        "title": "England and Wales, Census, 1841",
+        "dateRange": "1841-1841",
+        "personCount": 16552554
+      },
+      {
+        "id": "2563939",
+        "title": "England and Wales, Census, 1851",
+        "dateRange": "1851-1851",
+        "personCount": 1569726
+      },
+      {
+        "id": "1493747",
+        "title": "England and Wales, Census, 1861",
+        "dateRange": "1861-1861",
+        "personCount": 19591543
+      },
+      {
+        "id": "1538354",
+        "title": "England and Wales, Census, 1871",
+        "dateRange": "1871-1871",
+        "personCount": 22933411
+      },
+      {
+        "id": "2562194",
+        "title": "England and Wales, Census, 1881",
+        "dateRange": "1881-1881",
+        "personCount": 26137333
+      },
+      {
+        "id": "1865747",
+        "title": "England and Wales, Census, 1891",
+        "dateRange": "1891-1891",
+        "personCount": 29048399
+      },
+      {
+        "id": "1888129",
+        "title": "England and Wales, Census, 1901",
+        "dateRange": "1901-1901",
+        "personCount": 34138955
+      },
+      {
+        "id": "1921547",
+        "title": "England and Wales, Census, 1911",
+        "dateRange": "1911-1911",
+        "personCount": 36354828
+      },
+      {
+        "id": "5000564",
+        "title": "England and Wales, Census, 1921",
+        "dateRange": "1921-1921",
+        "personCount": 38425632
+      },
+      {
+        "id": "2285341",
+        "title": "England and Wales, Death Registration Index 1837-2007",
+        "dateRange": "1837-2007",
+        "personCount": 87352096
+      },
+      {
+        "id": "4114269",
+        "title": "England and Wales, Index to Death Duty Registers, 1796-1903",
+        "dateRange": "1796-1903",
+        "personCount": 3377366
+      },
+      {
+        "id": "2285732",
+        "title": "England and Wales, Marriage Registration Index, 1837-2005",
+        "dateRange": "1837-2005",
+        "personCount": 201443902
+      },
+      {
+        "id": "2451051",
+        "title": "England and Wales, National Index of Wills and Administrations, 1858-1957",
+        "dateRange": "1858-1957",
+        "personCount": 20310306
+      },
+      {
+        "id": "2836130",
+        "title": "England and Wales, National Register, 1939",
+        "dateRange": "1939-1939",
+        "personCount": 42048306
+      },
+      {
+        "id": "1666142",
+        "title": "England and Wales, Non-Conformist Record Indexes (RG4-8), 1588-1977",
+        "dateRange": "1588-1977",
+        "personCount": 8438061
+      },
+      {
+        "id": "3259459",
+        "title": "England and Wales, Prerogative Court of Canterbury Wills, 1640-1660",
+        "dateRange": "1640-1660",
+        "personCount": 149079
+      },
+      {
+        "id": "5000047",
+        "title": "England, Agreements and Crew Lists, 1857",
+        "dateRange": "1857-1857",
+        "personCount": 75700
+      },
+      {
+        "id": "4325039",
+        "title": "England, Archdiocese of Birmingham, Roman Catholic Parish Records, 1539-1910",
+        "dateRange": "1657-1910",
+        "personCount": 1349739
+      },
+      {
+        "id": "5000359",
+        "title": "England, Armed Forces and Overseas Vital Records, 1360-1981",
+        "dateRange": "1360-1936",
+        "personCount": 185701
+      },
+      {
+        "id": "2836129",
+        "title": "England, Bedfordshire, Parish Registers, 1538-1983",
+        "dateRange": "1537-1983",
+        "personCount": 893896
+      },
+      {
+        "id": "4380176",
+        "title": "England, Berkshire, Parish Registers, 1515-1993",
+        "dateRange": "1538-1935",
+        "personCount": 3648116
+      },
+      {
+        "id": "2334592",
+        "title": "England, Berkshire, Reading, Cemetery Records, 1843-1959",
+        "dateRange": "1843-1959",
+        "personCount": 66809
+      },
+      {
+        "id": "1473014",
+        "title": "England, Births and Christenings, 1538-1975",
+        "dateRange": "1538-1975",
+        "personCount": 90053227
+      },
+      {
+        "id": "1719223",
+        "title": "England, Bristol, Non-Conformist Church Records, 1777-1936",
+        "dateRange": "1777-1936",
+        "personCount": 354960
+      },
+      {
+        "id": "1718965",
+        "title": "England, Bristol, Parish Registers, 1538-1900",
+        "dateRange": "1537-1900",
+        "personCount": 4386307
+      },
+      {
+        "id": "4380170",
+        "title": "England, Buckinghamshire, Church Records, 1217-1994",
+        "dateRange": "1536-1920",
+        "personCount": 4083292
+      },
+      {
+        "id": "3299384",
+        "title": "England, Cambridge, Parish Registers, 1538-1983 ",
+        "dateRange": "1538-1983",
+        "personCount": 1089557
+      },
+      {
+        "id": "1465708",
+        "title": "England, Cambridgeshire Bishop's Transcripts, 1538-1983",
+        "dateRange": "1537-1983",
+        "personCount": 2408398
+      },
+      {
+        "id": "1469935",
+        "title": "England, Cheshire, Bishop's Transcripts, 1598-1900",
+        "dateRange": "1598-1900",
+        "personCount": 5332538
+      },
+      {
+        "id": "1595000",
+        "title": "England, Cheshire, Land Tax Assessments, 1778-1832",
+        "dateRange": "1778-1832",
+        "personCount": 2011950
+      },
+      {
+        "id": "1410775",
+        "title": "England, Cheshire, Marriage Bonds and Allegations, 1606-1900",
+        "dateRange": "1606-1900",
+        "personCount": 1160832
+      },
+      {
+        "id": "1610550",
+        "title": "England, Cheshire, Non-conformist Records, 1671-1900",
+        "dateRange": "1671-1900",
+        "personCount": 540382
+      },
+      {
+        "id": "1614792",
+        "title": "England, Cheshire, Parish Registers, 1538-2000",
+        "dateRange": "1537-2000",
+        "personCount": 9698055
+      },
+      {
+        "id": "1589492",
+        "title": "England, Cheshire, Probate Records, 1492-1940",
+        "dateRange": "1491-1940",
+        "personCount": 107512
+      },
+      {
+        "id": "1415240",
+        "title": "England, Cheshire, Register of Electors, 1842-1900",
+        "dateRange": "1842-1900",
+        "personCount": 4332903
+      },
+      {
+        "id": "1583609",
+        "title": "England, Cheshire, School Records, 1796-1950",
+        "dateRange": "1796-1950",
+        "personCount": 194755
+      },
+      {
+        "id": "1646487",
+        "title": "England, Cheshire, Workhouse Records, 1848-1967",
+        "dateRange": "1848-1967",
+        "personCount": 117104
+      },
+      {
+        "id": "1769414",
+        "title": "England, Cornwall, Parish Registers, 1538-2010",
+        "dateRange": "1537-2010",
+        "personCount": 1773132
+      },
+      {
+        "id": "2340274",
+        "title": "England, Cumberland Parish Registers, 1538-1990",
+        "dateRange": "1538-1990",
+        "personCount": 1095380
+      },
+      {
+        "id": "3154704",
+        "title": "England, Cumbria, Parish Registers, 1538-1990",
+        "dateRange": "1537-1990",
+        "personCount": 2951179
+      },
+      {
+        "id": "3665073",
+        "title": "England, Death Records, 1998-2015",
+        "dateRange": "1998-2015",
+        "personCount": 3293162
+      },
+      {
+        "id": "1473016",
+        "title": "England, Deaths and Burials, 1538-1991",
+        "dateRange": "1538-1991",
+        "personCount": 22070916
+      },
+      {
+        "id": "1911752",
+        "title": "England, Derbyshire, Church of England Parish Registers, 1537-1995",
+        "dateRange": "1536-1995",
+        "personCount": 7234763
+      },
+      {
+        "id": "2515875",
+        "title": "England, Devon Bishop's Transcripts, 1558-1887",
+        "dateRange": "1557-1887",
+        "personCount": 1735024
+      },
+      {
+        "id": "1833719",
+        "title": "England, Devon and Cornwall, Marriages, 1660-1912",
+        "dateRange": "1660-1912",
+        "personCount": 187536
+      },
+      {
+        "id": "4496115",
+        "title": "England, Devon, Ford Park Cemetery and Torquay Cemetery Burials, 1848-1974",
+        "dateRange": "1848-1974",
+        "personCount": 113264
+      },
+      {
+        "id": "2345213",
+        "title": "England, Devon, Parish Registers (Devon Record Office), 1529-1974",
+        "dateRange": "1531-1914",
+        "personCount": 4888296
+      },
+      {
+        "id": "1804330",
+        "title": "England, Devon, Parish Registers, 1538-1971",
+        "dateRange": "1537-1971",
+        "personCount": 1428902
+      },
+      {
+        "id": "3583825",
+        "title": "England, Devon, Plymouth Prison Records, 1821-1919",
+        "dateRange": "1821-1919",
+        "personCount": 13495
+      },
+      {
+        "id": "4116438",
+        "title": "England, Devon, Plymouth, Apprentices, 1570-1910",
+        "dateRange": "1570-1910",
+        "personCount": 10832
+      },
+      {
+        "id": "4133824",
+        "title": "England, Devon, Plymouth, Borough Records, 1519-1905",
+        "dateRange": "1518-1905",
+        "personCount": 109318
+      },
+      {
+        "id": "4325037",
+        "title": "England, Devon, Plymouth, Captive Registers, 1680",
+        "dateRange": "1680-1680",
+        "personCount": 248
+      },
+      {
+        "id": "4134690",
+        "title": "England, Devon, Plymouth, Electoral Rolls, 1781-1973",
+        "dateRange": "1781-1973",
+        "personCount": 74093
+      },
+      {
+        "id": "4138686",
+        "title": "England, Devon, Plymouth, Militia Records, 1625-1831",
+        "dateRange": "1625-1831",
+        "personCount": 806
+      },
+      {
+        "id": "4138681",
+        "title": "England, Devon, Plymouth, Parish Chest Records, 1556-1950",
+        "dateRange": "1555-1950",
+        "personCount": 434651
+      },
+      {
+        "id": "4234526",
+        "title": "England, Devon, Plymouth, Plague Rate, 1626-1629",
+        "dateRange": "1626-1629",
+        "personCount": 659
+      },
+      {
+        "id": "4134692",
+        "title": "England, Devon, Plymouth, Tax and Valuation, 1890-1950",
+        "dateRange": "1890-1950",
+        "personCount": 481549
+      },
+      {
+        "id": "4325035",
+        "title": "England, Devon, Plymouth, World War I Rolls of Honour, 1914-1918",
+        "dateRange": "1914-1919",
+        "personCount": 665
+      },
+      {
+        "id": "4325036",
+        "title": "England, Devon, Plymouth, World War II Records, 1939-1945",
+        "dateRange": "1939-1945",
+        "personCount": 7348
+      },
+      {
+        "id": "1910806",
+        "title": "England, Dorset, Parish Registers, 1538-2001",
+        "dateRange": "1537-2001",
+        "personCount": 2411407
+      },
+      {
+        "id": "2365048",
+        "title": "England, Durham Diocese, Allertonshire, Peculiar Administration Bonds and Inventories, 1670-1808",
+        "dateRange": "1670-1808",
+        "personCount": 0
+      },
+      {
+        "id": "2365051",
+        "title": "England, Durham Diocese, Allertonshire, Peculiar Stray Probate Bonds, 1732-1768",
+        "dateRange": "1732-1768",
+        "personCount": 0
+      },
+      {
+        "id": "1309819",
+        "title": "England, Durham Diocese, Bishop's Transcripts, 1639-1919",
+        "dateRange": "1639-1919",
+        "personCount": 0
+      },
+      {
+        "id": "1840743",
+        "title": "England, Durham Diocese, Calendar of Marriage Bonds & Allegations, 1594-1815",
+        "dateRange": "1594-1815",
+        "personCount": 0
+      },
+      {
+        "id": "1675690",
+        "title": "England, Durham Diocese, Marriage Bonds & Allegations, 1692-1900",
+        "dateRange": "1692-1900",
+        "personCount": 190852
+      },
+      {
+        "id": "2363897",
+        "title": "England, Durham Diocese, Original Will Strays, 1743-1900",
+        "dateRange": "1743-1760",
+        "personCount": 0
+      },
+      {
+        "id": "2365062",
+        "title": "England, Durham Diocese, Probate Inventories, 1676-1846",
+        "dateRange": "1676-1733",
+        "personCount": 0
+      },
+      {
+        "id": "2365059",
+        "title": "England, Durham Diocese, Registered Wills 1526-1858",
+        "dateRange": "1526-1858",
+        "personCount": 0
+      },
+      {
+        "id": "2365056",
+        "title": "England, Durham Diocese, Renunciations, 1767 and 1794",
+        "dateRange": "1767-1794",
+        "personCount": 0
+      },
+      {
+        "id": "2358559",
+        "title": "England, Durham Probate, Commissions, Monitions and Citations, 1650-1858",
+        "dateRange": "1650-1858",
+        "personCount": 0
+      },
+      {
+        "id": "2358734",
+        "title": "England, Durham, Dean and Chapter of Durham's Allerton and Allertonshire Original Wills, Inventories and Bonds, 1666-1845",
+        "dateRange": "1666-1845",
+        "personCount": 0
+      },
+      {
+        "id": "2358715",
+        "title": "England, Durham, Diocese of Durham Original Wills, 1650-1857",
+        "dateRange": "1650-1857",
+        "personCount": 0
+      },
+      {
+        "id": "2353049",
+        "title": "England, Durham, Probate Bonds, 1556-1858 ",
+        "dateRange": "1556-1858",
+        "personCount": 0
+      },
+      {
+        "id": "1465710",
+        "title": "England, Essex, Bishop's Transcripts, 1779-1892",
+        "dateRange": "1779-1892",
+        "personCount": 0
+      },
+      {
+        "id": "3584542",
+        "title": "England, Essex, Non-Conformist Church Records, 1613-1971",
+        "dateRange": "1613-1971",
+        "personCount": 454157
+      },
+      {
+        "id": "1465709",
+        "title": "England, Essex, Parish Registers, 1538-1997",
+        "dateRange": "1537-1997",
+        "personCount": 6748451
+      },
+      {
+        "id": "3648679",
+        "title": "England, Gloucestershire, Non-Conformist Church Records, 1581-1997",
+        "dateRange": "1581-1997",
+        "personCount": 1060270
+      },
+      {
+        "id": "2640059",
+        "title": "England, Hampshire, Bishop's Transcripts 1680-1892",
+        "dateRange": "1680-1892",
+        "personCount": 1822948
+      },
+      {
+        "id": "2556014",
+        "title": "England, Hampshire, Parish Registers, 1538-1980",
+        "dateRange": "1537-1980",
+        "personCount": 4144981
+      },
+      {
+        "id": "4469393",
+        "title": "England, Hampshire, Portsmouth, Baptisms, 1538-1940",
+        "dateRange": "1538-1940",
+        "personCount": 1644908
+      },
+      {
+        "id": "4469392",
+        "title": "England, Hampshire, Portsmouth, Burials, 1538-1926",
+        "dateRange": "1538-1926",
+        "personCount": 357635
+      },
+      {
+        "id": "4469389",
+        "title": "England, Hampshire, Portsmouth, Cemetery Records, 1831-1919",
+        "dateRange": "1831-1919",
+        "personCount": 191973
+      },
+      {
+        "id": "4469387",
+        "title": "England, Hampshire, Portsmouth, Hospital Records, 1878-1918",
+        "dateRange": "1878-1918",
+        "personCount": 71376
+      },
+      {
+        "id": "4469394",
+        "title": "England, Hampshire, Portsmouth, Marriages, 1537-1930",
+        "dateRange": "1537-1930",
+        "personCount": 1879379
+      },
+      {
+        "id": "4469388",
+        "title": "England, Hampshire, Portsmouth, Military Tribunals, 1916-1919",
+        "dateRange": "1916-1919",
+        "personCount": 14140
+      },
+      {
+        "id": "4469395",
+        "title": "England, Hampshire, Portsmouth, Police Staff Records, 1908-1924",
+        "dateRange": "1908-1924",
+        "personCount": 313
+      },
+      {
+        "id": "4469400",
+        "title": "England, Hampshire, Portsmouth, Workhouse Registers, 1879-1919",
+        "dateRange": "1879-1919",
+        "personCount": 60953
+      },
+      {
+        "id": "3155913",
+        "title": "England, Herefordshire, Bishop's Transcripts, 1583-1900",
+        "dateRange": "1583-1900",
+        "personCount": 3530132
+      },
+      {
+        "id": "4149578",
+        "title": "England, Hertfordshire, Marriage Bonds, 1682-1837",
+        "dateRange": "1682-1837",
+        "personCount": 20008
+      },
+      {
+        "id": "2388825",
+        "title": "England, Hertfordshire, Parish Registers, 1538-1912",
+        "dateRange": "1538-1900",
+        "personCount": 2028033
+      },
+      {
+        "id": "2340291",
+        "title": "England, Huntingdonshire, Parish Registers",
+        "dateRange": "1538-1983",
+        "personCount": 680307
+      },
+      {
+        "id": "3736293",
+        "title": "England, Index to Register of Passport Applications, 1851-1903",
+        "dateRange": "1851-1903",
+        "personCount": 376486
+      },
+      {
+        "id": "3491461",
+        "title": "England, Isle of Wight, Parish Registers, 1538-1983",
+        "dateRange": "1537-1983",
+        "personCount": 362816
+      },
+      {
+        "id": "1949386",
+        "title": "England, Kent, Bishop's Transcripts, 1560-1911",
+        "dateRange": "1560-1911",
+        "personCount": 0
+      },
+      {
+        "id": "2384987",
+        "title": "England, Kent, Canterbury Parish Registers, 1538-1986",
+        "dateRange": "1537-1986",
+        "personCount": 3233752
+      },
+      {
+        "id": "1949794",
+        "title": "England, Kent, Land Tax Assessments, 1689-1832",
+        "dateRange": "1689-1832",
+        "personCount": 0
+      },
+      {
+        "id": "1949795",
+        "title": "England, Kent, Manorial Documents, 1241-1976",
+        "dateRange": "1241-1976",
+        "personCount": 0
+      },
+      {
+        "id": "1952887",
+        "title": "England, Kent, Parish Registers, 1538-1911",
+        "dateRange": "1537-1911",
+        "personCount": 1315448
+      },
+      {
+        "id": "1949804",
+        "title": "England, Kent, Quarter Sessions and Court Files, 1558-1899",
+        "dateRange": "1558-1899",
+        "personCount": 0
+      },
+      {
+        "id": "1949807",
+        "title": "England, Kent, Register of Electors, 1570-1907",
+        "dateRange": "1569-1907",
+        "personCount": 4678563
+      },
+      {
+        "id": "1949814",
+        "title": "England, Kent, Wills and Probate, 1440-1881",
+        "dateRange": "1440-1881",
+        "personCount": 0
+      },
+      {
+        "id": "1949802",
+        "title": "England, Kent, Workhouse Records, 1777-1911",
+        "dateRange": "1777-1911",
+        "personCount": 0
+      },
+      {
+        "id": "4489058",
+        "title": "England, Lancashire, Liverpool, Banns and Marriages, 1557-1960",
+        "dateRange": "1844-1907",
+        "personCount": 2736248
+      },
+      {
+        "id": "4489061",
+        "title": "England, Lancashire, Liverpool, Baptisms, 1557-1919",
+        "dateRange": "1557-1919",
+        "personCount": 3187370
+      },
+      {
+        "id": "4489060",
+        "title": "England, Lancashire, Liverpool, Burials, 1557-1968",
+        "dateRange": "1557-1954",
+        "personCount": 710266
+      },
+      {
+        "id": "4488962",
+        "title": "England, Lancashire, Liverpool, Church of England Confirmations, 1734-1930",
+        "dateRange": "1734-1930",
+        "personCount": 9433
+      },
+      {
+        "id": "4489062",
+        "title": "England, Lancashire, Liverpool, Roman Catholic Parish Records, 1709-1968",
+        "dateRange": "1709-1968",
+        "personCount": 1899665
+      },
+      {
+        "id": "4487240",
+        "title": "England, Lancashire, Liverpool, School Records, 1845-1926",
+        "dateRange": "1845-1926",
+        "personCount": 50709
+      },
+      {
+        "id": "4489063",
+        "title": "England, Lancashire, Liverpool, Workhouse Registers, 1800-1928",
+        "dateRange": "1800-1928",
+        "personCount": 1502302
+      },
+      {
+        "id": "5000365",
+        "title": "England, Lancashire, Manchester, Electoral Registers, 1820-1939",
+        "dateRange": "1820-1939",
+        "personCount": 26636227
+      },
+      {
+        "id": "4149574",
+        "title": "England, Lancashire, Marriage Bonds and Allegations, 1746-1799",
+        "dateRange": "1746-1799",
+        "personCount": 94023
+      },
+      {
+        "id": "3656808",
+        "title": "England, Lancashire, Non-Conformist Church Records, 1647-1996",
+        "dateRange": "1647-1996",
+        "personCount": 3524603
+      },
+      {
+        "id": "1482833",
+        "title": "England, Lancashire, Oldham Cemetery Registers, 1797-2004",
+        "dateRange": "1797-2004",
+        "personCount": 791029
+      },
+      {
+        "id": "1465701",
+        "title": "England, Lancashire, Parish Registers 1538-1910",
+        "dateRange": "1537-1910",
+        "personCount": 2653525
+      },
+      {
+        "id": "3460245",
+        "title": "England, Lancashire, Rusholme Road Cemetery 1821-1933",
+        "dateRange": "1821-1933",
+        "personCount": 67177
+      },
+      {
+        "id": "2840172",
+        "title": "England, Leicestershire, Parish Registers, 1533-1991",
+        "dateRange": "1532-1991",
+        "personCount": 5801574
+      },
+      {
+        "id": "4149576",
+        "title": "England, Lincolnshire, Marriage Bonds and Allegations, 1574-1885",
+        "dateRange": "1573-1885",
+        "personCount": 280600
+      },
+      {
+        "id": "2540411",
+        "title": "England, Lincolnshire, Parish Registers, 1538-1990",
+        "dateRange": "1537-1990",
+        "personCount": 9283153
+      },
+      {
+        "id": "2228170",
+        "title": "England, London, Electoral Registers, 1847-1913",
+        "dateRange": "1847-1913",
+        "personCount": 17694080
+      },
+      {
+        "id": "2075052",
+        "title": "England, Manchester, Miscellaneous Records, 1700-1916",
+        "dateRange": "1700-1916",
+        "personCount": 26602283
+      },
+      {
+        "id": "1788853",
+        "title": "England, Manchester, Parish Registers, 1603-1954",
+        "dateRange": "1603-1954",
+        "personCount": 4642626
+      },
+      {
+        "id": "2345429",
+        "title": "England, Middlesex, Chelsea, Royal Hospital, Discharge Documents of Pensioners  (WO 122), 1760-1887",
+        "dateRange": "1760-1887",
+        "personCount": 1710
+      },
+      {
+        "id": "3734475",
+        "title": "England, Middlesex, Parish Registers, 1539-1988",
+        "dateRange": "1538-1988",
+        "personCount": 13189814
+      },
+      {
+        "id": "2489869",
+        "title": "England, Middlesex, Westminster Rate Books, 1634-1900",
+        "dateRange": "1634-1900",
+        "personCount": 10309183
+      },
+      {
+        "id": "4138684",
+        "title": "England, Middlesex, Westminster, Marylebone, Census, 1821 and 1831",
+        "dateRange": "1821-1831",
+        "personCount": 22529
+      },
+      {
+        "id": "2072795",
+        "title": "England, Middlesex, Westminster, Parish Registers, 1538-1913",
+        "dateRange": "1537-1913",
+        "personCount": 2350400
+      },
+      {
+        "id": "4324914",
+        "title": "England, Middlesex, Westminster, Poor Law Records, 1561-1883",
+        "dateRange": "1719-1866",
+        "personCount": 1684908
+      },
+      {
+        "id": "5000008",
+        "title": "England, Military Pension and Service Records, 1702-1933",
+        "dateRange": "1702-1933",
+        "personCount": 911288
+      },
+      {
+        "id": "2484983",
+        "title": "England, Navy Allotment Records, 1795-1850",
+        "dateRange": "1795-1850",
+        "personCount": 998613
+      },
+      {
+        "id": "1824688",
+        "title": "England, Norfolk, Archdeacon's Transcripts, 1600-1812",
+        "dateRange": "1600-1812",
+        "personCount": 0
+      },
+      {
+        "id": "1823613",
+        "title": "England, Norfolk, Bishop's Transcripts, 1685-1941",
+        "dateRange": "1685-1941",
+        "personCount": 2690028
+      },
+      {
+        "id": "1824690",
+        "title": "England, Norfolk, Marriage Bonds, 1557-1915",
+        "dateRange": "1556-1915",
+        "personCount": 13006
+      },
+      {
+        "id": "1824695",
+        "title": "England, Norfolk, Monumental Inscriptions, 1600-1900's",
+        "dateRange": "1600-1900",
+        "personCount": 0
+      },
+      {
+        "id": "1824696",
+        "title": "England, Norfolk, Non-conformist Records, 1613-1901",
+        "dateRange": "1613-1901",
+        "personCount": 12475
+      },
+      {
+        "id": "1416598",
+        "title": "England, Norfolk, Parish Registers (County Record Office), 1510-1997",
+        "dateRange": "1509-1997",
+        "personCount": 1643996
+      },
+      {
+        "id": "1824706",
+        "title": "England, Norfolk, Poor Law Union Records, 1796-1900",
+        "dateRange": "1796-1900",
+        "personCount": 0
+      },
+      {
+        "id": "1824705",
+        "title": "England, Norfolk, Register of Electors, 1832-1915",
+        "dateRange": "1832-1915",
+        "personCount": 4557906
+      },
+      {
+        "id": "2806100",
+        "title": "England, Northamptonshire, Non-conformist Records, 1651-1895",
+        "dateRange": "1651-1895",
+        "personCount": 206837
+      },
+      {
+        "id": "1918635",
+        "title": "England, Northumberland, Cumberland, Durham, Miscellaneous Records, 969-2007",
+        "dateRange": "969-2007",
+        "personCount": 0
+      },
+      {
+        "id": "3648677",
+        "title": "England, Northumberland, Non-Conformist Church Records, 1613-1974",
+        "dateRange": "1613-1974",
+        "personCount": 1363249
+      },
+      {
+        "id": "2355806",
+        "title": "England, Northumberland, Non-conformist Records, 1708-1982",
+        "dateRange": "1708-1982",
+        "personCount": 0
+      },
+      {
+        "id": "2353070",
+        "title": "England, Northumberland, Parish Registers, 1538-1950",
+        "dateRange": "1537-1976",
+        "personCount": 6731834
+      },
+      {
+        "id": "4233297",
+        "title": "England, Nottinghamshire, Church Records, 1578-1937",
+        "dateRange": "1578-1896",
+        "personCount": 2987199
+      },
+      {
+        "id": "3293406",
+        "title": "England, Oxfordshire, Parish Registers 1538-1904",
+        "dateRange": "1537-1904",
+        "personCount": 214800
+      },
+      {
+        "id": "4279961",
+        "title": "England, Royal Naval Volunteer Reserve Ratings, Medal Roll, 1914-1920",
+        "dateRange": "1914-1945",
+        "personCount": 137804
+      },
+      {
+        "id": "2821293",
+        "title": "England, Rutland, Parish Registers, 1538-1991",
+        "dateRange": "1537-1991",
+        "personCount": 718974
+      },
+      {
+        "id": "3155854",
+        "title": "England, Shropshire, Parish Registers, 1538-1922",
+        "dateRange": "1537-1922",
+        "personCount": 2141787
+      },
+      {
+        "id": "4380193",
+        "title": "England, Somerset, Church Records, 1501-1999",
+        "dateRange": "1501-1999",
+        "personCount": 12126170
+      },
+      {
+        "id": "2364451",
+        "title": "England, Staffordshire, Church Records, 1538-1944",
+        "dateRange": "1537-1944",
+        "personCount": 12794522
+      },
+      {
+        "id": "4147975",
+        "title": "England, Surrey, Marriages Bonds and Licenses, 1536-1992",
+        "dateRange": "1535-1992",
+        "personCount": 16109
+      },
+      {
+        "id": "2475028",
+        "title": "England, Surrey, Parish Registers, 1536-1992",
+        "dateRange": "1535-1992",
+        "personCount": 6134207
+      },
+      {
+        "id": "1465706",
+        "title": "England, Sussex, Parish Registers, 1538-1910",
+        "dateRange": "1537-1910",
+        "personCount": 4281571
+      },
+      {
+        "id": "1462403",
+        "title": "England, Warwickshire, Parish Registers, 1535-1972",
+        "dateRange": "1534-1972",
+        "personCount": 7044427
+      },
+      {
+        "id": "4380174",
+        "title": "England, Wiltshire, Church Records, 1518-1990",
+        "dateRange": "1518-1990",
+        "personCount": 6208249
+      },
+      {
+        "id": "1675718",
+        "title": "England, Yorkshire, Allertonshire, Marriage Bonds & Allegations, 1667-1819",
+        "dateRange": "1667-1819",
+        "personCount": 0
+      },
+      {
+        "id": "4319956",
+        "title": "England, Yorkshire, Bishop's Transcripts, 1547-1957",
+        "dateRange": "1547-1938",
+        "personCount": 11853270
+      },
+      {
+        "id": "3477664",
+        "title": "England, Yorkshire, Marriage Bonds and Allegations, 1613-1887",
+        "dateRange": "1613-1887",
+        "personCount": 646034
+      },
+      {
+        "id": "4439317",
+        "title": "England, Yorkshire, Parish Registers, 1538-2016",
+        "dateRange": "1550-2006",
+        "personCount": 27344590
+      },
+      {
+        "id": "4324903",
+        "title": "England, Yorkshire, York, Miscellaneous City Records, 1272-1945",
+        "dateRange": "1509-1926",
+        "personCount": 243523
+      },
+      {
+        "id": "1827268",
+        "title": "Jamaica, Church of England Parish Register Transcripts, 1664-1880",
+        "dateRange": "1664-1880",
+        "personCount": 1492592
+      },
+      {
+        "id": "2072112",
+        "title": "United States, New England Passenger and Crew Lists, 1911-1954",
+        "dateRange": "1911-1954",
+        "personCount": 179903
+      },
+      {
+        "id": "1840474",
+        "title": "United States, New England Petitions for Naturalization Index, 1791-1906",
+        "dateRange": "1791-1906",
+        "personCount": 605290
+      },
+      {
+        "id": "5000341",
+        "title": "United States, New England Seamen Records, 1790-1947",
+        "dateRange": "1790-1947",
+        "personCount": 104553
+      },
+      {
+        "id": "2191222",
+        "title": "United States, New England Seamen's Identification Cards, 1918-1940",
+        "dateRange": "1918-1940",
+        "personCount": 62688
+      },
+      {
+        "id": "2064580",
+        "title": "United States, New England, Petitions for Naturalization, 1787-1906",
+        "dateRange": "1787-1931",
+        "personCount": 851746
+      }
+    ]
+  }
+}

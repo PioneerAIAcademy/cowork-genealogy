@@ -26,8 +26,13 @@ def _new_assertions(before_state, after_state):
 
 
 def _roles_by_name(assertions):
-    """`name` value -> record_role, for every new name assertion."""
-    return {a.get("value"): a.get("record_role") for a in assertions if a.get("fact_type") == "name"}
+    """`name` value -> every record_role carrying it, for every new name
+    assertion. A list, so a value written for two parties is not overwritten."""
+    roles = {}
+    for a in assertions:
+        if a.get("fact_type") == "name":
+            roles.setdefault(a.get("value"), []).append(a.get("record_role"))
+    return roles
 
 
 def _agent_reply(agent_returns, text_response):
@@ -58,7 +63,7 @@ def test_obituary_parentheticals_are_read_as_their_convention(before_state, afte
     problems = []
 
     def role(name):
-        return roles.get(name) or ""
+        return (roles.get(name) or [""])[0] or ""
 
     if not role("Linda Whitaker").startswith("daughter_in_law"):
         problems.append(f"Linda Whitaker (Robert's wife) is {role('Linda Whitaker') or 'missing'}, not a daughter-in-law")
@@ -69,11 +74,13 @@ def test_obituary_parentheticals_are_read_as_their_convention(before_state, afte
     # Either of her two stated names may come first (genealogist ruling
     # 2026-10-04, option C); what is graded is that she is ONE person, the
     # sister, with Whitaker read as a surname and not as a spouse or a given name.
-    graces = [n for n in roles if n in ("Grace Tolman", "Grace Whitaker")]
-    if len(graces) != 1:
-        problems.append(f"Grace (Whitaker) Tolman is {len(graces)} people, not one: {graces}")
-    elif not re.match(r"^(sister|sibling)", role(graces[0])):
-        problems.append(f"{graces[0]} (the sister) is {role(graces[0])}")
+    # One person is one party: the engine writes each of her names as its own
+    # name assertion on the same role (issue #4378), so she is graded by role.
+    grace_roles = sorted({r for n in ("Grace Tolman", "Grace Whitaker") for r in roles.get(n, [])}, key=str)
+    if len(grace_roles) != 1:
+        problems.append(f"Grace (Whitaker) Tolman is {len(grace_roles)} people, not one: {grace_roles}")
+    elif not re.match(r"^(sister|sibling)", grace_roles[0] or ""):
+        problems.append(f"Grace (the sister) is {grace_roles[0]}")
     if any("Whitaker Tolman" in (n or "") for n in roles):
         problems.append("the maiden name Whitaker was written as part of Grace's given name")
     karen = role("Karen Foster")
@@ -208,7 +215,7 @@ def test_census_households_are_kept_apart(before_state, after_state, test):
         pytest.skip("not a multi-household census test")
     roles = _roles_by_name(_new_assertions(before_state, after_state))
     assert roles, "no name assertion was written"
-    wrong = {n: roles.get(n) or "missing" for n in ("Thomas Flynn", "Michael Gallagher") if roles.get(n) != "head_of_household"}
+    wrong = {n: roles.get(n) or "missing" for n in ("Thomas Flynn", "Michael Gallagher") if "head_of_household" not in roles.get(n, [])}
     assert not wrong, f"each dwelling's first person should head their own household: {wrong}"
 
 
@@ -227,3 +234,60 @@ def test_a_batch_is_written_in_one_call(before_state, after_state, tool_calls, t
     assert not missing, f"sources delegated but not written: {missing}"
     calls = [c for c in (tool_calls or []) if _bare_tool_name(str(c.get("tool") or "")) == "extraction_append"]
     assert len(calls) <= 2, f"{len(calls)} extraction_append calls for one batch; expected one (two with a resend)"
+
+
+def _sources(state):
+    return ((state or {}).get("research_json") or {}).get("sources") or []
+
+
+def _assert_page_kept_on(before_state, after_state, source_id):
+    """The page lands on its held record's source, and no new source is written."""
+    assert len(_sources(after_state)) == len(_sources(before_state)), (
+        f"a new source was written: {len(_sources(before_state))} -> {len(_sources(after_state))}"
+    )
+    held = [s for s in _sources(after_state) if s.get("id") == source_id]
+    assert held and (held[0].get("transcription") or "").strip(), f"the page was not kept on {source_id}"
+
+
+def _assert_not_sent(new, names):
+    sent = [a.get("value") for a in new if any(n in str(a.get("value") or "").lower() for n in names)]
+    assert not sent, f"a person the index does not hold was written: {sent}"
+
+
+def test_a_confirming_page_is_kept_with_no_dispute(before_state, after_state, test):
+    """A page that agrees with its index is kept, and disputes nothing.
+
+    Gated on `confirming-page` (scenario flynn-read-page-waiting). src_003's
+    page agrees with a_008/a_009 on Patrick: the page is kept on src_003, no new
+    source, no reading disputes an index assertion, and Michael, whom the index
+    does not hold, is not written.
+    """
+    if not _tagged(test, "confirming-page"):
+        pytest.skip("not a confirming-page test")
+    _assert_page_kept_on(before_state, after_state, "src_003")
+    new = _new_assertions(before_state, after_state)
+    disputes = [(a.get("disputes_assertion_id"), a.get("value")) for a in new if a.get("disputes_assertion_id")]
+    assert not disputes, f"a page that agrees with its index was reported as disputing it: {disputes}"
+    _assert_not_sent(new, ("michael",))
+
+
+def test_a_disputed_reading_names_the_index_assertion(before_state, after_state, test):
+    """A page that reads a name differently disputes exactly that index assertion.
+
+    Gated on `disputed-reading` (scenario flynn-read-page-disputes). The page
+    reads "Patrick Flinn" where a_008 reads "Patrick Flynn": one new assertion
+    disputes a_008 with the page's name, nothing else is disputed, the age the
+    page agrees on is not sent, and Michael is not written.
+    """
+    if not _tagged(test, "disputed-reading"):
+        pytest.skip("not a disputed-reading test")
+    _assert_page_kept_on(before_state, after_state, "src_003")
+    new = _new_assertions(before_state, after_state)
+    disputes = [a for a in new if a.get("disputes_assertion_id")]
+    assert [a.get("disputes_assertion_id") for a in disputes] == ["a_008"], (
+        f"expected one reading disputing a_008, got {[(a.get('disputes_assertion_id'), a.get('value')) for a in disputes]}"
+    )
+    read = re.sub(r"\s*\[\?\]\s*$", "", str(disputes[0].get("value") or "")).strip().lower()
+    assert read == "patrick flinn", f"the dispute does not carry the page's reading: {disputes[0].get('value')!r}"
+    assert not [a for a in new if a.get("fact_type") == "birth"], "the age, which the page agrees on, was sent"
+    _assert_not_sent(new, ("michael",))

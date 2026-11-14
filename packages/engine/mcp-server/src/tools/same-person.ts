@@ -36,7 +36,7 @@ import {
   sameRecord,
   type RecordPersonaGroup,
 } from "../utils/record-persona.js";
-import { recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
+import { readsAsFetched, recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
 import { Mob } from "../utils/mob.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { arkToBareId } from "../utils/ark.js";
@@ -300,7 +300,8 @@ async function readProject(projectPath: string, filename: string): Promise<any> 
       throw new SamePersonInputError(
         `same_person: ${NO_PROJECT_MESSAGE_READ} There are no project references to ` +
           "resolve, so pass the two documents explicitly instead " +
-          "(gedcomx1/primaryId1/gedcomx2/primaryId2).",
+          "(gedcomx1/primaryId1/gedcomx2/primaryId2): get each record's document " +
+          "from `record_read` on its `recordId`.",
       );
     }
     throw new SamePersonInputError(
@@ -729,15 +730,7 @@ export function buildRecordedScore(
   const recordId = String(assertion.record_id ?? "");
   if (recordId === "") return null;
 
-  const log: any[] = Array.isArray(research?.log) ? research.log : [];
-  const logEntry = log.find((l) => l?.id === assertion.log_entry_id);
-  const fetchable =
-    Boolean(assertion.record_persona_id) ||
-    logEntry?.tool === "record_read" ||
-    logEntry?.tool === "person_record_matches" ||
-    (logEntry !== undefined &&
-      PERSONA_BEARING_PRODUCERS.has(logEntry.tool) &&
-      Boolean(logEntry.results_ref));
+  const fetchable = readsAsFetched(assertion, research?.log);
 
   return {
     record_id: recordId,
@@ -1229,11 +1222,12 @@ export const samePersonSchema = {
     "and there is no project to resolve against — comparing two search results " +
     "to each other, for instance. Nothing is recorded on this path.\n" +
     "\n" +
-    "Each result from the `record_search` tool carries a `gedcomx` field and a " +
-    "`primaryId` field. Pass them straight through: `gedcomx1` = the first " +
-    "result's `gedcomx`, `primaryId1` = its `primaryId`; likewise for " +
-    "`gedcomx2`/`primaryId2`. Do NOT hand-build the gedcomx from the flat " +
-    "summary fields — that drops the record ARK and the comparison fails.\n" +
+    "A `record_search` result carries no document. Get each record's document " +
+    "from `record_read` on the result's `recordId` and pass it straight " +
+    "through: `gedcomx1` = the first `record_read` answer, `primaryId1` = the " +
+    "first result's `primaryId`; likewise for `gedcomx2`/`primaryId2`. Do NOT " +
+    "hand-build the gedcomx from the flat summary fields — that drops the " +
+    "record ARK and the comparison fails.\n" +
     "\n" +
     "Returns `score` (float 0-1).\n" +
     "\n" +
@@ -1283,26 +1277,26 @@ export const samePersonSchema = {
       gedcomx1: {
         type: "object",
         description:
-          "First record's simplified-GedcomX document — the `gedcomx` field " +
-          "of a `record_search` result, passed through verbatim.",
+          "First record's simplified-GedcomX document — a `record_read` " +
+          "answer, passed through verbatim.",
       },
       primaryId1: {
         type: "string",
         description:
-          "The `primaryId` field of the same `record_search` result. Must match a " +
-          "`persons[].id` in gedcomx1.",
+          "The `persons[].id` in gedcomx1 of the person to compare — a " +
+          "`record_search` result's `primaryId`.",
       },
       gedcomx2: {
         type: "object",
         description:
-          "Second record's simplified-GedcomX document — the `gedcomx` field " +
-          "of another `record_search` result.",
+          "Second record's simplified-GedcomX document — another " +
+          "`record_read` answer.",
       },
       primaryId2: {
         type: "string",
         description:
-          "The `primaryId` field of the second `record_search` result. Must match a " +
-          "`persons[].id` in gedcomx2.",
+          "The `persons[].id` in gedcomx2 of the person to compare — the second " +
+          "`record_search` result's `primaryId`.",
       },
       matchRelatives: {
         type: "boolean",

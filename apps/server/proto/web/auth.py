@@ -50,10 +50,16 @@ Settings are read from the environment at call time, so a test can set them per 
                              identity read share this many calls per sliding minute, two per
                              sign-in. Unset: no budget. Anything but a whole number of at least
                              2 refuses to start
+  OAUTH_ISSUER               the connector's authorization server (#3997, web/connector_auth.py).
+                             Unset: none of its routes exist. Set: it must equal PUBLIC_URL, which
+                             must have no path, with FamilySearch sign-in on and the chat off;
+                             anything else refuses to start. The tools tier takes the same value
 
 With the chat off (#3992) the session cookie lasts 24 hours rather than 30 days, sign-in asks
 for no ``offline_access``, and each sign-in consumes a single-use state record
-(``signin_states``) before it calls FamilySearch.
+(``signin_states``) before it calls FamilySearch. A plain sign-in there creates no user
+(#3997): only the connector's consent does, so a chat-off tier with no ``OAUTH_ISSUER``
+admits existing users only.
 
 OpenRouter linking (#3988) is the second PKCE round-trip here: the patron's own OpenRouter
 key, stored under the same Fernet key as the FamilySearch grant (``encrypt``), which the
@@ -153,9 +159,16 @@ BROWSER_USER_AGENT = (
 # engine's FS_ACCESS_TOKEN_LIFETIME_S.
 FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60
 
-# Where the callback may send the browser afterwards: only a hash route of our own SPA.
-# The value rides a cookie the browser controls, so anything else is an open redirect.
-SAFE_NEXT_RE = re.compile(r"^#/[A-Za-z0-9/_-]{0,120}$")
+# Where the callback may send the browser afterwards: a hash route of our own SPA, or
+# exactly one chat-off upload page, ``upload/proj_<16 hex>`` (#4001), the one shape both the
+# web tier and the connector mint. ``redirect_target`` appends it to ``<origin>/``. The
+# value rides a cookie the browser controls, so anything else is an open redirect: no
+# leading ``/``, no ``\``, ``.``, ``?`` or scheme can match. ``\Z``, not ``$``, which also
+# matches before a trailing newline.
+# The project id both minters use (the web tier and the connector); the upload page's route
+# takes only this shape too (web/app.py UPLOAD_PAGE_ID_RE), so a sign-in can return to it.
+PROJECT_ID_PATTERN = r"proj_[0-9a-f]{16}"
+SAFE_NEXT_RE = re.compile(rf"^(?:#/[A-Za-z0-9/_-]{{0,120}}|upload/{PROJECT_ID_PATTERN})\Z")
 # PUBLIC_URL's path: unreserved segments only, since it is written into a cookie Path and
 # the SPA's HTML.
 BASE_PATH_RE = re.compile(r"^(/[A-Za-z0-9._~-]+)*$")
@@ -213,7 +226,8 @@ def deletion_code(user_id: str) -> str:
 
     Rotating ``SESSION_SECRET`` changes every code. That is harmless: rotation also signs
     everyone out, and the account menu shows the new code. Never log it, put it in a
-    feedback bundle, or return it from any route but ``GET /api/account``.
+    feedback bundle, or return it from any route but ``GET /api/account`` and the chat-off
+    signed-in page at ``GET /`` (#4001), both ``private, no-store``.
     """
     return hmac.new(session_secret().encode(), b"deletion-code:" + user_id.encode(), hashlib.sha256).hexdigest()[:20]
 
@@ -281,6 +295,30 @@ def signin_calls_per_minute() -> int | None:
             "or leave it unset"
         )
     return value
+
+
+def oauth_issuer() -> str | None:
+    """``OAUTH_ISSUER`` (#3997): the connector's authorization server, or None (unset) for
+    none. The issuer is this tier's own origin, printed byte for byte as the tools tier
+    prints it, so it must equal ``public_url()`` (which never ends in a slash) and
+    PUBLIC_URL can carry no path: ``/.well-known/oauth-authorization-server`` cannot sit
+    under a prefix the edge strips. The flow signs users in with FamilySearch and relies on
+    the chat-off tier's single-use sign-in state and policy pages, so both are required."""
+    issuer = _env("OAUTH_ISSUER")
+    if not issuer:
+        return None
+    problems = []
+    if issuer != public_url():
+        problems.append(f"it must equal PUBLIC_URL ({public_url()}), with no trailing slash")
+    if base_path():
+        problems.append("PUBLIC_URL must have no path")
+    if not familysearch_enabled():
+        problems.append("FAMILYSEARCH_WEB_ENABLED must be on")
+    if chat_enabled():
+        problems.append("GENEALOGY_CHAT must be false")
+    if problems:
+        raise RuntimeError(f"Refusing to start: OAUTH_ISSUER is {issuer!r}, but " + "; ".join(problems))
+    return issuer
 
 
 def session_max_age(*, chat: bool | None = None) -> int:
@@ -354,6 +392,8 @@ def preflight() -> None:
       ``GENEALOGY_MAX_USERS`` other than a positive integer,
       ``GENEALOGY_SIGNIN_CALLS_PER_MINUTE`` other than a whole number of at least 2, or an
       ``FS_REDIRECT_URI`` that is not an absolute http(s) URL with a path, at any scheme.
+    - An ``OAUTH_ISSUER`` that is not PUBLIC_URL, or one set with a PUBLIC_URL path,
+      FamilySearch sign-in off or the chat on (``oauth_issuer``).
     """
     base_path()
     chat_enabled()
@@ -361,6 +401,7 @@ def preflight() -> None:
     max_users()
     signin_calls_per_minute()
     callback_path()
+    oauth_issuer()
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()
@@ -391,7 +432,7 @@ OR_OAUTH_SALT = "or-oauth"
 
 
 def _state_cookie(salt: str, payload: dict[str, Any], next_route: str | None) -> str:
-    """A flow's signed state cookie; ``next`` kept only when it is a safe SPA route."""
+    """A flow's signed state cookie; ``next`` kept only when ``SAFE_NEXT_RE`` admits it."""
     if next_route and SAFE_NEXT_RE.match(next_route):
         payload = {**payload, "next": next_route}
     return URLSafeTimedSerializer(session_secret(), salt=salt).dumps(payload)
@@ -434,6 +475,16 @@ def cookie_kwargs() -> dict[str, Any]:
 
 def oauth_state_cookie(verifier: str, state: str, next_route: str | None) -> str:
     return _state_cookie(FS_OAUTH_SALT, {"verifier": verifier, "state": state}, next_route)
+
+
+def connector_state_cookie(verifier: str, state: str, connector: dict[str, Any]) -> str:
+    """The FamilySearch state cookie of a sign-in the connector's consent page started
+    (#3997): the plain flow's, plus the pending authorization request and the terms
+    acceptance the consent click gave. The same cookie and salt, so the one callback reads
+    either; only the consent POST writes this shape, after checking the request it signed."""
+    return _state_cookie(
+        FS_OAUTH_SALT, {"verifier": verifier, "state": state, "connector": connector, "terms": True}, None,
+    )
 
 
 def read_oauth_state_cookie(token: str | None) -> dict[str, Any] | None:

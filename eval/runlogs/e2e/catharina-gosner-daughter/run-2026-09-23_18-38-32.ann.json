@@ -3,12 +3,11 @@
     "f1": "false",
     "f2": "false"
   },
-  "proof_quality_score": 2,
   "notes": {
-    "f1": "Agent asserted the forbidden parentage again: R11 links Magdalena (I1) to Catharina Gosnerin. This run actually surfaced the correct hypothesis (h_002: two different wives named Catharina) but ruled it out, reasoning 'no death or remarriage record supports this reading' -- it never found the 1751 marriage record (a different collection) that would have confirmed h_002 instead.",
-    "f2": "Agent wrote a positive 'probable' conclusion instead of the required negative one, for the same reason as f1. A prior grader on this same text called this 'partial, not unreasoned': five sources rather than one, sibling correlation across 1741-1756, two competing hypotheses stated, a mentor critique recorded, and an honest statement of its own ceiling (all sources derivative, original Triesen Kirchenbuch not examined) -- real, credited analysis, not carelessness. That reasoning stands, but it bears on proof quality, not on recall: f2's own text requires a documented negative conclusion specifically and says 'leaving the question open as unresolved does not satisfy this finding' -- this run didn't leave it open, it asserted the opposite of what was required. Per-finding grades whether that required conclusion got written, not how carefully the wrong one was reasoned; this run's proof_quality_score of 2, an overstated tier on a careful analysis, is where that work is credited instead."
+    "f1": "Over-claimed: the tree links Magdalena Schedler (I1, chr. 12 Jun 1743) to Catharina Gosnerin as her child (R11) and to Joannes Schedler (R10), gives Catharina a 'Schedlerin' name sourced from the same 1743 record, and ps_001 concludes Magdalena was their daughter.",
+    "f2": "No negative conclusion: q_001 resolved positively and declared exhaustive, 'Schedlerin' read as Catharina Gosnerin's married name, no conflict recorded. The agent stated the two-wives reading (h_002) but ruled it out, the marriage search stopped at 1745 so the 1751 marriage was never found, and the two 1751 Josephus christenings it listed in log_003 were not weighed."
   },
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
-  "findings_hash": "f7be3fcb3657447b90f9a269a48565a6f8f035be96911626f4f44a00f76a881d",
-  "blind_bundle_digest": "4376ff10849d5363cfe75fb913e39978dbde22d058972783a4af4f769e371ec8"
+  "annotator": "benter-070",
+  "findings_hash": "5ec985325e6d37248d7d0f2b90923b17fa93c7455dd77bfbe1153c417f8b2ea2",
+  "blind_bundle_digest": "1dc387d3eec7bcb3ee4378a05b1ba3d0fdf99a1858f2c6b323160ef026b7eb46"
 }

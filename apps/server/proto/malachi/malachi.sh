@@ -157,6 +157,11 @@ load_env() {
   EDGE_PORT_VALUE=$(env_get EDGE_PORT)
   EDGE_PORT_VALUE=${EDGE_PORT_VALUE:-8006}
   PUBLIC_URL_VALUE=$(env_get PUBLIC_URL)
+  # It is also both tiers' OAUTH_ISSUER, which the web tier requires to equal its own
+  # PUBLIC_URL without a trailing slash; refused here, before a running stack is replaced.
+  case $PUBLIC_URL_VALUE in
+    */) die "PUBLIC_URL in $ENV_FILE must not end in '/'" ;;
+  esac
   local key
   for key in $(env_keys "$ENV_FILE") EDGE_PORT; do
     unset "$key"
@@ -295,7 +300,7 @@ expect_code() { # label want url [curl args]
 }
 
 check_http() { # base url
-  local base=${1%/} out code headers
+  local base=${1%/} out code headers named issuer
   printf 'checking %s\n' "$base"
   expect_code "/livez" 200 "$base/livez"
 
@@ -305,6 +310,18 @@ check_http() { # base url
     ok "metadata names /mcp"
   else
     bad "metadata: got $code and no resource ending /mcp"
+  fi
+  # The web tier's half of sign-in: without it Claude's discovery ends in a 404. Its issuer
+  # must be the one the tool server just named, byte for byte (never this base URL, which
+  # is the loopback port when the check runs on the host).
+  named=$(printf '%s' "$out" | sed -n 's/.*"authorization_servers" *: *\[ *"\([^"]*\)".*/\1/p' | head -n 1)
+  out=$(curl -s -w '\n%{http_code}' --max-time 15 "$base/.well-known/oauth-authorization-server" || true)
+  code=${out##*$'\n'}
+  issuer=$(printf '%s' "$out" | sed -n 's/.*"issuer" *: *"\([^"]*\)".*/\1/p' | head -n 1)
+  if [ "$code" = 200 ] && [ -n "$issuer" ] && [ "$issuer" = "$named" ]; then
+    ok "authorization server: issuer matches the tool server's"
+  else
+    bad "authorization server: got $code with issuer '$issuer'; the tool server names '$named'"
   fi
 
   headers=$(curl -s -D - -o /dev/null --max-time 15 -X POST -H 'Content-Type: application/json' \
@@ -611,6 +628,52 @@ cmd_export() {
   printf 'malachi: exported under %s/exports\n' "$DATA"
 }
 
+# ── one user ─────────────────────────────────────────────────────────────────
+
+user_admin() { # args...; stdin passes through
+  compose run --rm --no-deps -T --user "$(id -u):$(id -g)" -e PYTHONPATH=/app \
+    -v "$HERE/user_admin.py:/opt/malachi/user_admin.py:ro" ${REPORT_MOUNT[@]+"${REPORT_MOUNT[@]}"} \
+    web python /opt/malachi/user_admin.py "$@"
+}
+
+cmd_block_user() {
+  [ -n "${ACCOUNT:-}" ] || die "ACCOUNT= is required"
+  load_env
+  user_admin block "--account=$ACCOUNT" </dev/null
+}
+
+# The code reaches the container on stdin: printf is a builtin, so no argv carries it, and
+# neither does -e, which docker and compose both log.
+cmd_delete_user() {
+  [ -n "${ACCOUNT:-}" ] || die "ACCOUNT= is required"
+  [ -n "${CODE:-}" ] || die "CODE= is required: the deletion code the user quoted"
+  local code=$CODE confirm=() id status=0
+  # No child inherits it: make also copies its command-line variables into MAKEFLAGS.
+  unset CODE MAKEFLAGS MAKEOVERRIDES MFLAGS
+  [ "${CONFIRM:-}" != yes ] || confirm=(--confirm)
+  load_env
+  # A global, not a local: the EXIT trap runs after this function has returned.
+  REPORT_DIR=$(mktemp -d)
+  trap 'rm -rf "$REPORT_DIR"' EXIT
+  REPORT_MOUNT=(-v "$REPORT_DIR:/report")
+  printf '%s' "$code" | user_admin delete "--account=$ACCOUNT" ${confirm[@]+"${confirm[@]}"} --report /report/projects ||
+    status=$?
+  # 3: the rows are gone and objects may remain. A rerun finds no user, so the exports go now.
+  [ "$status" = 0 ] || [ "$status" = 3 ] || exit "$status"
+  [ -n "${confirm[*]-}" ] && [ -f "$REPORT_DIR/projects" ] || return 0
+  # The container cannot see the host's exports, so they go here.
+  while IFS= read -r id; do
+    case $id in
+      '' | . | .. | */*) die "refusing to remove an export named '$id'" ;;
+    esac
+    if [ -e "$DATA/exports/$id" ]; then
+      rm -rf "${DATA:?}/exports/$id"
+      printf 'malachi: removed %s/exports/%s\n' "$DATA" "$id"
+    fi
+  done <"$REPORT_DIR/projects"
+  [ "$status" = 0 ] || die "the rows are deleted, but objects may remain: see the message above"
+}
+
 case "${1:-}" in
   env-init) cmd_env_init ;;
   up) cmd_up ;;
@@ -623,8 +686,10 @@ case "${1:-}" in
   restore) cmd_restore ;;
   export) cmd_export ;;
   openrouter) cmd_openrouter ;;
+  block-user) cmd_block_user ;;
+  delete-user) cmd_delete_user ;;
   prune) cmd_prune ;;
   down) cmd_down ;;
   wipe) cmd_wipe ;;
-  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|logs|backup|restore-check|restore|export|openrouter|prune|down|wipe" ;;
+  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|logs|backup|restore-check|restore|export|openrouter|block-user|delete-user|prune|down|wipe" ;;
 esac

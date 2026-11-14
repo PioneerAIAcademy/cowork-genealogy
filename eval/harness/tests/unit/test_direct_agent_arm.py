@@ -336,6 +336,38 @@ def test_spawn_validator_fails_three_ways(calls):
         _universal().test_direct_test_spawned_its_agent(DIRECT_TEST, calls)
 
 
+PATH_DELEGATION = "Build a guide.\n\nprojectPath: C:/Users/x/AppData/Local/Temp/eval-t-0-0-ab"
+PATH_TEST = {"skill": "locality-guide", "delegation": PATH_DELEGATION}
+
+
+def test_verbatim_validator_accepts_a_backslashed_project_path():
+    """Observed: a Windows dispatcher relayed the forward-slash run folder with
+    backslashes. Same folder, so not a reworded delegation."""
+    calls = [
+        _agent_call(
+            subagent_type="locality-guide",
+            prompt=PATH_DELEGATION.replace("AppData/Local/Temp", "AppData\\Local\\Temp"),
+        )
+    ]
+    _universal().test_direct_delegation_relayed_verbatim(PATH_TEST, calls)
+
+
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        PATH_DELEGATION.replace("eval-t-0-0-ab", "eval-t-0-0-zz"),
+        PATH_DELEGATION.replace("Build a guide.", "Build a\\guide."),
+        PATH_DELEGATION.replace("projectPath: ", "projectPath: D:"),
+        PATH_DELEGATION.split("\n\nprojectPath")[0],
+    ],
+    ids=["other_folder", "backslash_outside_path", "other_drive", "path_dropped"],
+)
+def test_verbatim_validator_still_fails_beyond_the_separator(prompt):
+    calls = [_agent_call(subagent_type="locality-guide", prompt=prompt)]
+    with pytest.raises(AssertionError):
+        _universal().test_direct_delegation_relayed_verbatim(PATH_TEST, calls)
+
+
 def test_verbatim_validator_accepts_a_relay_that_adds_harmless_framing():
     """`in`, not `==`. The accept direction: a preamble must not red the test,
     or the arm flakes on phrasing the dispatcher never forbade materially."""
@@ -558,15 +590,21 @@ GENUINE_MID_LINE_FIELDS = {
 }
 
 
-def _project_path_violations(delegations, mid_line_fields):
+def _project_path_violations(delegations, mid_line_fields, hosted_paths=None):
     """`delegations` maps "<suite>/<file>" to the raw `input.delegation`.
 
     Returns (violations, mid_line_keys_seen). Uses the validator's own regex,
-    so it checks exactly the occurrences that receive the allowance.
+    so it checks exactly the occurrences that receive the allowance. A hosted
+    test names a path its own hosted `project_list` fixture lists, since
+    `<workspace>` resolves to a path the hosted store refuses; `hosted_paths`
+    maps "<suite>/<file>" to those paths.
     """
     tu = _universal()
     violations, seen = [], set()
     for rel, delegation in delegations.items():
+        allowed = {"projectPath: <workspace>"} | {
+            f"projectPath: {p}" for p in (hosted_paths or {}).get(rel, ())
+        }
         matches = list(tu._PROJECT_PATH_VALUE.finditer(delegation))
         if len(matches) > 1:
             violations.append(f"{rel}: {len(matches)} projectPath: occurrences")
@@ -575,7 +613,7 @@ def _project_path_violations(delegations, mid_line_fields):
             end = delegation.find("\n", m.start())
             line = delegation[start : len(delegation) if end == -1 else end]
             if m.start() == start:
-                if line != "projectPath: <workspace>":
+                if line not in allowed:
                     violations.append(f"{rel}: field line carries other text: {line!r}")
             elif mid_line_fields.get(rel) == line:
                 seen.add(rel)
@@ -597,9 +635,40 @@ def _corpus_delegations():
     return out
 
 
+def _hosted_listing_paths(raw):
+    """The project paths a test's hosted `project_list` fixtures list. Not `newProjectPath`:
+    the mock answers it as if it held the scenario's project, which production would not."""
+    paths = set()
+    for name in raw.get("mcp_fixtures") or []:
+        try:
+            fixture = json.loads(
+                (REPO_ROOT / "eval" / "fixtures" / "mcp" / f"{name}.json").read_text(encoding="utf-8")
+            )
+        except (OSError, ValueError):
+            continue
+        response = fixture.get("response") if fixture.get("tool") == "project_list" else None
+        if isinstance(response, dict) and response.get("mode") == "hosted":
+            paths |= {p.get("projectPath") for p in response.get("projects") or [] if isinstance(p, dict)}
+    return {p for p in paths if isinstance(p, str) and p}
+
+
+def _corpus_hosted_paths():
+    out = {}
+    for path in sorted((REPO_ROOT / "eval" / "tests" / "unit").glob("*/*.json")):
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        if isinstance(raw, dict) and (paths := _hosted_listing_paths(raw)):
+            out[f"{path.parent.name}/{path.name}"] = paths
+    return out
+
+
 def test_every_project_path_in_the_corpus_is_a_field():
     delegations = _corpus_delegations()
-    violations, seen = _project_path_violations(delegations, GENUINE_MID_LINE_FIELDS)
+    violations, seen = _project_path_violations(
+        delegations, GENUINE_MID_LINE_FIELDS, _corpus_hosted_paths()
+    )
     assert violations == [], "\n".join(violations)
     assert seen == set(GENUINE_MID_LINE_FIELDS), (
         f"allow-listed mid-line field not found: {set(GENUINE_MID_LINE_FIELDS) - seen}"
@@ -657,6 +726,32 @@ def test_project_path_guard_accepts_a_field_line(delegation):
 def test_project_path_guard_flags_prose_and_malformed_fields(rel, delegation):
     violations, _ = _project_path_violations({rel: delegation}, GENUINE_MID_LINE_FIELDS)
     assert violations, f"guard accepted {delegation!r}"
+
+
+HOSTED = {"suite/t.json": {"/proj_7d4b2e91c6a05f38"}}
+
+
+@pytest.mark.parametrize(
+    "rel, delegation, ok",
+    [
+        ("suite/t.json", "Triage it.\nprojectPath: /proj_7d4b2e91c6a05f38", True),
+        ("suite/t.json", "Triage it.\nprojectPath: /proj_ffffffffffffffff", False),
+        ("other/t.json", "Triage it.\nprojectPath: /proj_7d4b2e91c6a05f38", False),
+        ("suite/t.json", "Triage it.\nprojectPath: /proj_7d4b2e91c6a05f38 is the folder", False),
+    ],
+    ids=["listed_path", "unlisted_path", "no_hosted_listing", "trailing_text"],
+)
+def test_project_path_guard_accepts_only_the_tests_own_hosted_path(rel, delegation, ok):
+    violations, _ = _project_path_violations({rel: delegation}, {}, HOSTED)
+    assert (violations == []) is ok, violations
+
+
+def test_hosted_listing_paths_leave_out_the_new_project_path():
+    listing = REPO_ROOT / "eval" / "fixtures" / "mcp" / "project-list-hosted-barnes.json"
+    response = json.loads(listing.read_text(encoding="utf-8"))["response"]
+    paths = _hosted_listing_paths({"mcp_fixtures": ["project-list-hosted-barnes"]})
+    assert paths == {p["projectPath"] for p in response["projects"]}
+    assert response["newProjectPath"] not in paths
 
 
 def test_project_path_guard_flags_a_stale_allow_list_entry():

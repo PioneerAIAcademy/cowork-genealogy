@@ -133,9 +133,11 @@
           "jurisdiction": "Schuylkill County, Pennsylvania",
           "date_range": "1898",
           "repository": "FamilySearch",
-          "rationale": "Patrick's 1908 death falls under Pennsylvania mandatory state registration (effective 1906). The 1908 state death certificate is held by the Pennsylvania State Archives but is not available online or by mail order for this period — confirmed in-person access only, with no microfilm copy in circulation. No remote access path exists.",
+          "rationale": "Patrick's ca. 1898 death falls in Schuylkill County's county death registration period (1893-1906). His death record would name his parents and birthplace.",
           "fallback_for": null,
-          "status": "skipped"
+          "status": "skipped",
+          "skip_category": "no_coverage",
+          "skip_reason": "Schuylkill County's pre-1906 death records were destroyed in the 1920 courthouse fire; no duplicate copies survive, including at the Pennsylvania State Archives."
         },
         {
           "id": "pli_006",
@@ -292,7 +294,7 @@
       },
       "outcome": "positive",
       "results_examined": 9,
-      "notes": "1870 census: Patrick Flynn age 25 in household of Thomas Flynn, Schuylkill Co. — corroborates 1850/1860 placement. 1880 census: Patrick Flynn age 35, head of own household, wife Margaret, no parentage information (relationship column says 'Self'). 1900 census: Patrick Flynn age 55, same household. Later censuses corroborate identity but add no new parentage evidence beyond 1870.",
+      "notes": "1870 census: Patrick Flynn age 25 in household of Thomas Flynn, Schuylkill Co. — corroborates 1850/1860 placement. 1880 census: Patrick Flynn age 35, head of own household, wife Margaret, no parentage information (relationship column says 'Self'). 1900 census: no entry for Patrick, consistent with his death ca. 1898. Later censuses corroborate identity but add no new parentage evidence beyond 1870.",
       "external_site": null
     },
     {
@@ -786,7 +788,7 @@
         {
           "start": "1870-01-01",
           "end": "1898-03-12",
-          "expected_events": ["marriage", "1880_census", "1900_census", "residence", "occupation", "death"],
+          "expected_events": ["marriage", "1880_census", "residence", "occupation", "death"],
           "severity": "high"
         }
       ]

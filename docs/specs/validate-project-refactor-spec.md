@@ -238,7 +238,8 @@ single summary warning. **Both passes run with the caller's `projectPath`** — 
 rules this directly (omitting it on the before-pass re-freezes exactly the
 pre-existing sidecar / dangling-results-ref / D5 class it is meant to tolerate,
 and §5 shows the sidecar pass is invariant under a merge so before and after
-agree). Error identity is keyed on a reindex-stable `key[id=…]` path so the
+agree). Error identity is keyed on a reindex-stable `key[id=…]` path (or
+`sources[ref=…#n]` for a source reference, n counting earlier same-ref siblings) so the
 tree/merge/forget tools' array reindexing does not read a shifted pre-existing
 error as new.
 

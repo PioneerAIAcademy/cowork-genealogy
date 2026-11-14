@@ -45,7 +45,7 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { startHttpServer } from "../../src/http-server.js";
+import { NOT_YOUR_PROJECT_MESSAGE, startHttpServer } from "../../src/http-server.js";
 import {
   authorizeAttempt,
   createPgS3Backend,
@@ -61,6 +61,7 @@ import { runWithProjectStore, type ClaimFence, type ProjectStore } from "../../s
 import { stagePersonRead } from "../../src/tools/person-read.js";
 import { saveSourceImage } from "../../src/utils/image-store.js";
 import { protoBackendOptions } from "../store/pg-s3-test-env.js";
+import { logArgs, seedProject } from "../helpers/seed-project.js";
 
 // The HTTP server with the real per-request store and the real project check —
 // the factories build/http.js installs — against the compose postgres + minio:
@@ -81,6 +82,8 @@ const ENDPOINT = process.env.PROTO_S3_ENDPOINT;
 const BUCKET = process.env.PROTO_S3_BUCKET ?? "projects";
 
 const ANCHOR = "/project";
+/** The origin image links are signed for; the tests fetch them from their own port. */
+const PUBLIC_ORIGIN = "https://beta.example";
 const PROJECT_HEADER = "X-Genealogy-Project-Id";
 const TURN_HEADER = "X-Genealogy-Turn-Id";
 const EPOCH_HEADER = "X-Genealogy-Claim-Epoch";
@@ -196,26 +199,9 @@ if (!DSN || !ENDPOINT) {
       .join("");
   }
 
-  function createArgs(given: string): Record<string, unknown> {
-    return {
-      projectPath: ANCHOR,
-      objective: "Does the project header reach Postgres?",
-      title: `pg ${given}`,
-      subjectPersonIds: ["P1"],
-      tree: {
-        persons: [
-          {
-            id: "P1",
-            gender: "Male",
-            names: [{ id: "N1", preferred: true, given, surname: "Person", type: "BirthName" }],
-            facts: [{ id: "F1", type: "Birth", primary: true, date: "1850", place: "Nowhere" }],
-          },
-        ],
-        relationships: [],
-        sources: [],
-      },
-    };
-  }
+  /** Seed project `id` through the store the server binds for it. */
+  const seed = (id: string, given: string) =>
+    seedProject(new PgS3ProjectStore(backend, { projectId: id, anchorPath: ANCHOR }), ANCHOR, given);
 
   async function personNames(client: Client): Promise<string[]> {
     const result = await client.callTool({ name: "project_context", arguments: { projectPath: ANCHOR } });
@@ -303,7 +289,7 @@ if (!DSN || !ENDPOINT) {
       server = await startHttpServer({
         host: "127.0.0.1",
         port: 0,
-        baseConfig: {},
+        baseConfig: { webPublicUrl: PUBLIC_ORIGIN },
         bindStore,
         authorize: (req) => authorizeAttempt(backend, req),
         lookupConnector: (sha) =>
@@ -343,16 +329,18 @@ if (!DSN || !ENDPOINT) {
       const tokA = `tok-${randomUUID()}`;
       const tokB = `tok-${randomUUID()}`;
       const [turnA, turnB] = await Promise.all([seedTurn(idA, tokA), seedTurn(idB, tokB)]);
+      await Promise.all([seed(idA, "Alpha"), seed(idB, "Beta")]);
+      bindStore.mockClear();
       const [a, b] = await Promise.all([
         connect({ projectId: idA, turnId: turnA, bearer: tokA }),
         connect({ projectId: idB, turnId: turnB, bearer: tokB }),
       ]);
-      const [createdA, createdB] = await Promise.all([
-        a.callTool({ name: "project_create", arguments: createArgs("Alpha") }),
-        b.callTool({ name: "project_create", arguments: createArgs("Beta") }),
+      const [loggedA, loggedB] = await Promise.all([
+        a.callTool({ name: "research_log_append", arguments: logArgs(ANCHOR, "Alpha") }),
+        b.callTool({ name: "research_log_append", arguments: logArgs(ANCHOR, "Beta") }),
       ]);
-      expect(createdA.isError, textOf(createdA)).not.toBe(true);
-      expect(createdB.isError, textOf(createdB)).not.toBe(true);
+      expect(loggedA.isError, textOf(loggedA)).not.toBe(true);
+      expect(loggedB.isError, textOf(loggedB)).not.toBe(true);
 
       const [namesA, namesB] = await Promise.all([personNames(a), personNames(b)]);
       expect(namesA.some((n) => n.includes("Alpha"))).toBe(true);
@@ -362,8 +350,9 @@ if (!DSN || !ENDPOINT) {
 
       expect(new Set(bindStore.mock.calls.map(([id]) => id))).toEqual(new Set([idA, idB]));
 
-      // project_create writes three refs; every .json ref outside the blob
-      // roots routes to `documents`, so each id owns exactly these three rows.
+      // The seed wrote three refs and the log write rewrote one; every .json ref
+      // outside the blob roots routes to `documents`, so each id owns exactly
+      // these three rows.
       for (const id of [idA, idB]) {
         const rows = await backend.pool.query("SELECT name FROM documents WHERE project_id = $1 ORDER BY name", [
           id,
@@ -373,11 +362,11 @@ if (!DSN || !ENDPOINT) {
           "starting-tree.gedcomx.json",
           "tree.gedcomx.json",
         ]);
-        const tree = await backend.pool.query(
-          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'tree.gedcomx.json'",
+        const research = await backend.pool.query(
+          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'research.json'",
           [id],
         );
-        expect(tree.rows[0].doc.persons[0].names[0].given).toBe(id === idA ? "Alpha" : "Beta");
+        expect(research.rows[0].doc.log.map((e: any) => e.query.givenName)).toEqual([id === idA ? "Alpha" : "Beta"]);
       }
     });
 
@@ -419,6 +408,15 @@ if (!DSN || !ENDPOINT) {
         return p;
       };
 
+      /** Create a project at `projectPath` owned by `userId`, through the
+       *  store a connector call binds for that user. */
+      const seedAs = (userId: string, projectPath: string, given: string) =>
+        seedProject(
+          new PgS3ProjectStore(backend, { projectId: projectPath.slice(1), anchorPath: projectPath, ownerId: userId }),
+          projectPath,
+          given,
+        );
+
       /** `projects.owner_id` for a path's id: empty when the project has no row. */
       async function ownerOf(projectPath: string): Promise<Array<string | null>> {
         const rows = await backend.pool.query<{ owner_id: string | null }>(
@@ -441,6 +439,13 @@ if (!DSN || !ENDPOINT) {
         });
         return { status: res.status, text: await res.text() };
       }
+
+      /** The door's answer to a `connCall` naming a project that is not the caller's. */
+      const NOT_YOURS = {
+        jsonrpc: "2.0",
+        id: 1,
+        result: { content: [{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }], isError: true },
+      };
 
       afterAll(async () => {
         // Ordered: projects reference users with no ON DELETE.
@@ -493,12 +498,10 @@ if (!DSN || !ENDPOINT) {
         const b = await seedConnector();
         const projectPath = freshPath();
 
-        // A writes, which claims the project.
-        const created = await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
-        expect(created.status, created.text).toBe(200);
-        // The HTTP status is the DOOR's verdict; the tool's own result is in
-        // the body, and a claim that never happened leaves the project free.
-        expect(created.text, "A's create must actually claim the project").not.toContain('"isError":true');
+        // A's first write claims the project: the store the door binds for A,
+        // carrying A's owner id. project_create reads FamilySearch, which no
+        // offline test reaches, so the create runs here with the read injected.
+        await seedAs(a.userId, projectPath, "Alpha");
 
         // The canary has to be a string A's project ACTUALLY contains, or the
         // "reads nothing" half cannot fail. Prove it is one by reading it back
@@ -510,9 +513,12 @@ if (!DSN || !ENDPOINT) {
         expect(mine.status, mine.text).toBe(200);
         expect(mine.text, "the canary must be in A's own project").toContain("Alpha");
 
-        // B names the same project: refused, and reads nothing.
+        // B names the same project: refused, and reads nothing. The refusal is
+        // a tool error now, so the status no longer tells it from A's answer:
+        // the whole body is the refusal and nothing else.
         const read = await connCall(b.token, "project_context", { projectPath });
-        expect(read.status, read.text).toBe(403);
+        expect(read.status, read.text).toBe(200);
+        expect(JSON.parse(read.text)).toEqual(NOT_YOURS);
         expect(read.text).not.toContain("Alpha");
       });
 
@@ -521,15 +527,39 @@ if (!DSN || !ENDPOINT) {
         const b = await seedConnector();
         const projectPath = freshPath();
         const projectId = projectPath.slice(1);
-        await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
-        const before = await rowCounts(projectId);
-        await connCall(b.token, "research_append", {
-          projectPath,
-          section: "questions",
-          op: "append",
-          entry: { question: "can B write here?", status: "open" },
-        });
-        expect(await rowCounts(projectId)).toEqual(before);
+        await seedAs(a.userId, projectPath, "Alpha");
+        // Versions, not row counts: a write that got through would rewrite A's
+        // existing research.json row in place, which a count cannot see.
+        const versions = async () =>
+          (
+            await backend.pool.query<{ name: string; version: string }>(
+              "SELECT name, version FROM documents WHERE project_id = $1 ORDER BY name",
+              [projectId],
+            )
+          ).rows;
+        const before = await versions();
+        expect(before.length).toBeGreaterThan(0);
+        // A valid entry, so the append would land if the door admitted it.
+        const entry = {
+          question: "can B write here?",
+          rationale: "A gap in the timeline",
+          selection_basis: "objective_decomposition",
+          priority: "high",
+          status: "open",
+          depends_on: [],
+          unblocks: [],
+          resolved: null,
+          resolution_assertion_ids: [],
+          search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+        };
+        const r = await connCall(b.token, "research_append", { projectPath, section: "questions", op: "append", entry });
+        expect(r.status, r.text).toBe(200);
+        expect(JSON.parse(r.text)).toEqual(NOT_YOURS);
+        expect(await versions()).toEqual(before);
+        // The same append as the owner does move the version, so the check above can fail.
+        const mine = await connCall(a.token, "research_append", { projectPath, section: "questions", op: "append", entry });
+        expect(toolBody(mine).ok, mine.text).toBe(true);
+        expect(await versions()).not.toEqual(before);
       });
 
       it("a project whose owner_id is NULL is refused: a connector never claims an ownerless project", async () => {
@@ -539,7 +569,8 @@ if (!DSN || !ENDPOINT) {
         // The engine's own ownerless project, exactly as the worker creates one.
         await backend.pool.query("INSERT INTO projects (project_id) VALUES ($1)", [projectId]);
         const r = await connCall(a.token, "project_context", { projectPath });
-        expect(r.status, r.text).toBe(403);
+        expect(r.status, r.text).toBe(200);
+        expect(JSON.parse(r.text)).toEqual(NOT_YOURS);
       });
 
       it("project_context on a fresh path answers no_project and claims nothing", async () => {
@@ -710,8 +741,7 @@ if (!DSN || !ENDPOINT) {
       it("a research_append carrying a document past the cap is refused in words, and one under it still lands", async () => {
         const a = await seedConnector();
         const projectPath = freshPath();
-        const created = await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
-        expect(created.text).not.toContain('"isError":true');
+        await seedAs(a.userId, projectPath, "Alpha");
 
         // Filled to 5,000 bytes under the cap: room for a question, not for the
         // long rationale the update below gives it.
@@ -793,6 +823,116 @@ if (!DSN || !ENDPOINT) {
         expect(r.status, r.text).toBe(403);
       });
 
+      /** `userId`'s store on a path they own, for seeding what a tool would have written. */
+      const ownedStore = (projectPath: string, userId: string) =>
+        new PgS3ProjectStore(backend, { projectId: projectPath.slice(1), anchorPath: projectPath, ownerId: userId });
+
+      /** The link `read_project_view` signs, as a path on the test's own port. */
+      async function imagePath(token: string, projectPath: string, id: string): Promise<string> {
+        const r = await connCall(token, "read_project_view", { part: "image", id, projectPath });
+        expect(r.status, r.text).toBe(200);
+        const { result } = JSON.parse(r.text);
+        expect(result.isError, r.text).not.toBe(true);
+        const { url } = result.structuredContent as { url: string };
+        expect(url.startsWith(`${PUBLIC_ORIGIN}/img?t=`), url).toBe(true);
+        return url.slice(PUBLIC_ORIGIN.length);
+      }
+
+      const imageBytes = async (path: string): Promise<Buffer> => {
+        const res = await fetch(`${base}${path}`);
+        expect(res.status).toBe(200);
+        return Buffer.from(await res.arrayBuffer());
+      };
+
+      it("show_project and read_project_view read A's documents from Postgres", async () => {
+        const a = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "shown");
+        const args = { show: "latest", projectPath };
+        const shown = await connCall(a.token, "show_project", args);
+        expect(shown.status, shown.text).toBe(200);
+        const { result } = JSON.parse(shown.text);
+        expect(result.isError, shown.text).not.toBe(true);
+        expect(result._meta["genealogy/project"]).toEqual({
+          research: { project: { objective: "shown" } },
+          tree: null,
+          startingTree: null,
+          collections: null,
+          derived: {
+            folderName: projectPath.slice(1),
+            questions: [],
+            awaitingUser: [],
+            treeChanges: null,
+            evaluations: {},
+          },
+          echo: args,
+        });
+        const read = await connCall(a.token, "read_project_view", { part: "document", projectPath });
+        expect(JSON.parse(read.text).result.structuredContent.research).toEqual({ project: { objective: "shown" } });
+      });
+
+      it("a scan written to A's project is served by /img with the same bytes", async () => {
+        const a = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "scanned");
+        const scan = randomBytes(4096);
+        await ownedStore(projectPath, a.userId).writeBytes(projectPath, "images/scan.jpg", scan);
+        const res = await fetch(`${base}${await imagePath(a.token, projectPath, "images/scan.jpg")}`);
+        expect(res.status).toBe(200);
+        expect(res.headers.get("content-type")).toBe("image/jpeg");
+        expect(Buffer.from(await res.arrayBuffer()).equals(scan)).toBe(true);
+      });
+
+      it("A's token never returns B's same-named image", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const pathA = await seedOwned(a.userId, "A's");
+        const pathB = await seedOwned(b.userId, "B's");
+        const scanA = randomBytes(1024);
+        const scanB = randomBytes(1024);
+        await ownedStore(pathA, a.userId).writeBytes(pathA, "images/scan.jpg", scanA);
+        await ownedStore(pathB, b.userId).writeBytes(pathB, "images/scan.jpg", scanB);
+        const fromA = await imageBytes(await imagePath(a.token, pathA, "images/scan.jpg"));
+        const fromB = await imageBytes(await imagePath(b.token, pathB, "images/scan.jpg"));
+        expect(fromA.equals(scanA)).toBe(true);
+        expect(fromB.equals(scanB)).toBe(true);
+        expect(fromA.equals(scanB)).toBe(false);
+      });
+
+      it("a good token with no blob row is 404", async () => {
+        const a = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "no scan");
+        const res = await fetch(`${base}${await imagePath(a.token, projectPath, "images/absent.jpg")}`);
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "Not found" });
+      });
+
+      it("B's read_project_view on A's project is refused as not B's and signs nothing", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "A's alone");
+        await ownedStore(projectPath, a.userId).writeBytes(projectPath, "images/scan.jpg", randomBytes(16));
+        const r = await connCall(b.token, "read_project_view", { part: "image", id: "images/scan.jpg", projectPath });
+        // A refused tools/call on the connector path is a tool error carrying the door's
+        // message, so the card shows it as text.
+        expect(r.status, r.text).toBe(200);
+        expect(JSON.parse(r.text).result, r.text).toEqual({
+          content: [{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }],
+          isError: true,
+        });
+        expect(r.text).not.toContain("/img");
+        expect(r.text).not.toContain("expiresAt");
+      });
+
+      it("show_project on a fresh path is refused, names project_list and leaves no projects row", async () => {
+        const a = await seedConnector();
+        const projectPath = freshPath();
+        const r = await connCall(a.token, "show_project", { show: "setup", projectPath });
+        expect(r.status, r.text).toBe(200);
+        const { result } = JSON.parse(r.text);
+        expect(result.isError, r.text).toBe(true);
+        expect(result.content[0].text).toContain("project_list");
+        expect(await ownerOf(projectPath)).toEqual([]);
+      });
+
       // The race the door CANNOT decide: it sees no projects row for either
       // user, so both are admitted and the first write has to settle it.
       // Driven at the store level because through the door it is not a race at
@@ -833,6 +973,7 @@ if (!DSN || !ENDPOINT) {
         idB = newProject();
         turnA = await seedTurn(idA, tokA);
         turnB = await seedTurn(idB, tokB);
+        await seed(idA, "Owner");
         // B already holds a document, a blob and a staged result.
         const storeB = new PgS3ProjectStore(backend, { projectId: idB, anchorPath: ANCHOR });
         await storeB.writeJson(ANCHOR, "notes.json", { owner: "B" });
@@ -844,7 +985,7 @@ if (!DSN || !ENDPOINT) {
         const before = await rowCounts(idB);
         expect(before).toEqual({ documents: 1, blobs: 1, staging: 1 });
         bindStore.mockClear();
-        const r = await call({ projectId: idB, turnId: turnA, bearer: tokA }, "project_create", createArgs("Intruder"));
+        const r = await call({ projectId: idB, turnId: turnA, bearer: tokA }, "research_log_append", logArgs(ANCHOR, "Intruder"));
         expect(r.status, r.text).toBe(403);
         expect(JSON.parse(r.text)).toEqual(FORBIDDEN_ATTEMPT);
         expect(r.text).not.toContain(tokA);
@@ -856,21 +997,21 @@ if (!DSN || !ENDPOINT) {
       // write and B's project.
       it("A's bearer on B's turn and B's project: 403, and nothing is written", async () => {
         const before = await rowCounts(idB);
-        const r = await call({ projectId: idB, turnId: turnB, bearer: tokA }, "project_create", createArgs("Intruder"));
+        const r = await call({ projectId: idB, turnId: turnB, bearer: tokA }, "research_log_append", logArgs(ANCHOR, "Intruder"));
         expect(r.status, r.text).toBe(403);
         expect(JSON.parse(r.text)).toEqual(FORBIDDEN_ATTEMPT);
         expect(await rowCounts(idB)).toEqual(before);
       });
 
       it("A on A: 200, and the write lands", async () => {
-        const r = await call({ projectId: idA, turnId: turnA, bearer: tokA }, "project_create", createArgs("Owner"));
+        const r = await call({ projectId: idA, turnId: turnA, bearer: tokA }, "research_log_append", logArgs(ANCHOR, "Owner"));
         expect(r.status, r.text).toBe(200);
         expect(r.text).not.toContain('"isError":true');
-        const tree = await backend.pool.query(
-          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'tree.gedcomx.json'",
+        const research = await backend.pool.query(
+          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'research.json'",
           [idA],
         );
-        expect(tree.rows[0]?.doc.persons[0].names[0].given).toBe("Owner");
+        expect(research.rows[0]?.doc.log.map((e: any) => e.query.givenName)).toEqual(["Owner"]);
       });
 
       it("an unknown bearer: 403", async () => {
@@ -984,7 +1125,7 @@ if (!DSN || !ENDPOINT) {
             authorize: (req) => authorizeAttempt(unmigrated, req),
             // This door runs against a database with no connector tables, so
             // the lookups would throw; the cases here never present a connector
-            // token, and a throw is a 503, never an admission.
+            // token, and a throw is never an admission.
             lookupConnector: async () => null,
             projectOwner: async () => ({ exists: false, ownerId: null }),
             ownedProjects: async () => ({ ids: [], truncated: false }),

@@ -25,6 +25,7 @@ import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 import { validateStructuredDocument, probateDecedentId } from "../../src/utils/structured-document.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
+import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const noReader = { readRecord: async () => { throw new Error("no reads on the document path"); } } as any;
@@ -154,6 +155,70 @@ describe("extraction_append: documents", () => {
     });
   });
 
+  describe("every name a document gives, with its type (issue #4378)", () => {
+    const withGrace = () => {
+      const doc = structuredClone(obituary) as any;
+      doc.persons.push({
+        id: "p4", gender: "female", statedRelation: "sister",
+        names: [
+          { given: "Grace", surname: "Whitaker", type: "birth", note: "printed Grace (Whitaker) Tolman" },
+          { given: "Grace", surname: "Tolman", type: "married" },
+        ],
+        facts: [{ type: "residence", place: "Ogden, Weber, Utah" }],
+      });
+      return doc;
+    };
+
+    it("accepts the four name types and refuses any other, naming the four", () => {
+      expect(validateStructuredDocument(withGrace())).toEqual([]);
+      const bad = withGrace();
+      bad.persons[3].names[0].type = "maiden";
+      expect(validateStructuredDocument(bad).join(" ")).toMatch(
+        /persons\[3\]\.names\[0\]\.type: must be one of birth, married, nickname, also_known_as/,
+      );
+    });
+
+    it("writes one name assertion per name, names[0] first, each with its own value, type and note", async () => {
+      const r = await run([{ recordId: "capture:obituary-grace", document: withGrace() }]);
+      expect(r.ok).toBe(true);
+      const all = await assertionsFor("capture:obituary-grace");
+      const graceRole = all.find((a: any) => a.fact_type === "name" && a.value === "Grace Whitaker")?.record_role;
+      expect(graceRole).toBeTruthy();
+      const names = all.filter((a: any) => a.record_role === graceRole && a.fact_type === "name");
+      expect(names.map((a: any) => a.value)).toEqual(["Grace Whitaker", "Grace Tolman"]);
+      expect(names.map((a: any) => a.structured_value)).toEqual([
+        { given: "Grace", surname: "Whitaker", type: "birth" },
+        { given: "Grace", surname: "Tolman", type: "married" },
+      ]);
+      expect(names[0].informant_bias_notes ?? "").toMatch(/printed Grace \(Whitaker\) Tolman/);
+      expect(names[1].informant_bias_notes ?? "").not.toMatch(/printed/);
+      // The first name assertion of a party is still names[0]: readers that take
+      // a party's first name depend on it.
+      expect(all.find((a: any) => a.record_role === graceRole)?.value).toBe("Grace Whitaker");
+      // A name with no type carries none.
+      const harold = all.find((a: any) => a.fact_type === "name" && a.value === "Harold Dean Whitaker");
+      expect(harold.structured_value).toEqual({ given: "Harold Dean", surname: "Whitaker" });
+    });
+
+    it("materializes both names on one person, BirthName Whitaker first and MarriedName Tolman", async () => {
+      await run([{ recordId: "capture:obituary-grace", document: withGrace() }]);
+      const all = await assertionsFor("capture:obituary-grace");
+      const graceRole = all.find((a: any) => a.fact_type === "name" && a.value === "Grace Whitaker")?.record_role;
+      const m = await materializeFacts({ projectPath: dir, personId: "I9", recordId: "capture:obituary-grace", recordRole: graceRole });
+      expect(JSON.stringify(m)).toMatch(/"ok":true/);
+      const tree = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf8"));
+      const grace = tree.persons.find((p: any) => p.id === "I9");
+      expect(grace.names.map((n: any) => [n.given, n.surname, n.type])).toEqual([
+        ["Grace", "Whitaker", "BirthName"],
+        ["Grace", "Tolman", "MarriedName"],
+      ]);
+      const harold = await materializeFacts({ projectPath: dir, personId: "I8", recordId: "capture:obituary-grace", recordRole: all[0].record_role });
+      expect(JSON.stringify(harold)).toMatch(/"ok":true/);
+      const after = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf8"));
+      expect(after.persons.find((p: any) => p.id === "I8").names[0].type).toBeUndefined();
+    });
+  });
+
   describe("a valid three-document batch", () => {
     beforeEach(async () => {
       const r = await run([
@@ -195,7 +260,7 @@ describe("extraction_append: documents", () => {
     it("census: a computed attribute is split into its own inferred assertion", async () => {
       const births = (await assertionsFor("capture:census-1850-flynn")).filter((a: any) => a.fact_type === "birth");
       const place = births.find((a: any) => a.place === "Ireland");
-      const year = births.find((a: any) => a.date === "1818");
+      const year = births.find((a: any) => a.date === "Bet 1817 and 1818");
       expect(place.record_basis).toBe("stated");
       expect(year.record_basis).toBe("inferred");
       expect(year.date_certainty).toBe("approximate");
@@ -1130,6 +1195,93 @@ describe("extraction_append: documents", () => {
     expect((await read()).log).toHaveLength(0);
   });
 
+  describe("a stated age gives a birth range on a text source (#4127)", () => {
+    const births = async (id: string) => (await assertionsFor(id)).filter((a: any) => a.fact_type === "birth" && a.date);
+    const census = (birth: Record<string, unknown>[]) => ({
+      recordType: "census",
+      documentForm: "page_image",
+      census: { jurisdiction: "Ohio, United States", year: 1860 },
+      source: { title: "1860 census, Ohio", repository: "NARA" },
+      persons: [{ id: "p1", principal: true, names: [{ given: "Patrick", surname: "Flynn" }], facts: [{ type: "age", value: "42" }, ...birth] }],
+    });
+    const obit = (created?: string, form = "page_image") => ({
+      recordType: "obituary",
+      documentForm: form,
+      source: { title: "Obituary of Bridget Flynn", repository: "Daily News", ...(created ? { created } : {}) },
+      persons: [{ id: "p1", principal: true, names: [{ given: "Bridget", surname: "Flynn" }], facts: [{ type: "age", value: "68" }, { type: "immigration", date: "1849" }] }],
+    });
+
+    it("a census's computed ~1818 in value gives exactly one dated birth, the range", async () => {
+      const r = await run([{ recordId: "capture:c1860", document: census([{ type: "birth", value: "~1818", computed: ["value"] }]) }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const b = await births("capture:c1860");
+      const all = (await assertionsFor("capture:c1860")).filter((a: any) => a.fact_type === "birth");
+      expect(all).toHaveLength(1);
+      expect(b).toHaveLength(1);
+      expect(b[0]).toMatchObject({ date: "Bet 1817 and 1818", record_basis: "inferred" });
+    });
+
+    it("a census birth the text states, not computed, is kept with no range", async () => {
+      await run([{ recordId: "capture:c1860", document: census([{ type: "birth", date: "1818" }]) }]);
+      expect((await births("capture:c1860")).map((a: any) => a.date)).toEqual(["1818"]);
+    });
+
+    it("a census age with no birth fact adds one inferred range", async () => {
+      await run([{ recordId: "capture:c1860", document: census([]) }]);
+      const b = await births("capture:c1860");
+      expect(b).toHaveLength(1);
+      expect(b[0]).toMatchObject({ date: "Bet 1817 and 1818", record_basis: "inferred", date_certainty: "approximate" });
+    });
+
+    it("an obituary counts the age from the page image's created year", async () => {
+      await run([{ recordId: "capture:obit", document: obit("1890-04-12") }]);
+      expect((await births("capture:obit")).map((a: any) => a.date)).toEqual(["Bet 1821 and 1822"]);
+    });
+
+    it("an obituary with no created year, or an abstract's, gets no range, whatever else it dates", async () => {
+      await run([{ recordId: "capture:obit-none", document: obit() }]);
+      await run([{ recordId: "capture:obit-abs", document: obit("1890-04-12", "abstract") }]);
+      expect(await births("capture:obit-none")).toEqual([]);
+      expect(await births("capture:obit-abs")).toEqual([]);
+    });
+
+    const burial = (facts: Record<string, unknown>[]) => ({
+      recordType: "burial",
+      documentForm: "verbatim_transcript",
+      source: { title: "Burial register, Hilperton", repository: "Wiltshire Archives" },
+      persons: [{ id: "p1", principal: true, names: [{ given: "Albert", surname: "Schreiber" }], facts: [{ type: "age", value: "58" }, ...facts] }],
+    });
+    const marriage = (marriageDate: string) => ({
+      recordType: "marriage",
+      documentForm: "verbatim_transcript",
+      source: { title: "Marriage register, Ohio", repository: "County Clerk" },
+      persons: [
+        { id: "p1", principal: true, names: [{ given: "John", surname: "Hale" }], facts: [{ type: "age", value: "25" }, { type: "marriage", date: marriageDate }] },
+        { id: "p2", names: [{ given: "Mary", surname: "Cole" }], facts: [] },
+      ],
+    });
+
+    it("a burial record counts the age from its burial date", async () => {
+      await run([{ recordId: "capture:burial", document: burial([{ type: "burial", date: "17 March 1921" }]) }]);
+      expect((await births("capture:burial")).map((a: any) => a.date)).toEqual(["Bet 1862 and 1863"]);
+    });
+
+    it("a burial record with no burial date falls back to its death date", async () => {
+      await run([{ recordId: "capture:burial-death", document: burial([{ type: "death", date: "14 March 1921" }]) }]);
+      expect((await births("capture:burial-death")).map((a: any) => a.date)).toEqual(["Bet 1862 and 1863"]);
+    });
+
+    it("a burial record with neither a burial nor a death date gets no range", async () => {
+      await run([{ recordId: "capture:burial-none", document: burial([]) }]);
+      expect(await births("capture:burial-none")).toEqual([]);
+    });
+
+    it("a marriage record counts the age from its marriage date", async () => {
+      await run([{ recordId: "capture:marriage", document: marriage("1850") }]);
+      expect((await births("capture:marriage")).map((a: any) => a.date)).toEqual(["Bet 1824 and 1825"]);
+    });
+  });
+
   describe("a computed entry written as a value (#3543)", () => {
     const death = (birth: Record<string, unknown>) => ({
       recordType: "death",
@@ -1153,7 +1305,7 @@ describe("extraction_append: documents", () => {
       const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       const year = await birthOf("capture:schreiber");
-      expect(year.date).toBe("~1862");
+      expect(year.date).toBe("Bet 1862 and 1863");
       expect(year.record_basis).toBe("inferred");
     });
 

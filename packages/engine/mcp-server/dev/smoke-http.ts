@@ -25,7 +25,9 @@
  *     fence (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`) of a `turns` row
  *     this smoke seeds in Postgres, open at epoch 1 and stamped with the bearer's
  *     sha256 the way the worker stamps a real attempt. It runs every row that
- *     passes a `projectPath`. The row is deleted on every exit path.
+ *     passes a `projectPath`, and under `--connector` it lists the tools too, because
+ *     that list is the only sight of the worker door. The row is deleted on every
+ *     exit path.
  * Seeding needs the database the server reads: `--pg-dsn`, else GENEALOGY_PG_DSN.
  *
  * `--project-id` (default: a fresh `smoke-<uuid>`) is client two's project
@@ -51,6 +53,7 @@ import {
   printHeader,
   report,
   runPlan,
+  seedDocuments,
   type SmokeCtx,
 } from "./smoke-calls.js";
 
@@ -66,6 +69,14 @@ const SEED_TURN_SQL =
   "INSERT INTO turns (turn_id, session_id, project_id, message, claimed_at, claim_epoch, bearer_sha256) " +
   "VALUES ($1, $2, $3, '{}'::jsonb, now(), $4, $5)";
 const DELETE_TURN_SQL = "DELETE FROM turns WHERE turn_id = $1";
+/** The seeded project's rows, as `PgS3ProjectStore` writes them: the projects
+ *  row first, then one documents row per ref. */
+const SEED_PROJECT_SQL = "INSERT INTO projects (project_id) VALUES ($1) ON CONFLICT (project_id) DO NOTHING";
+const SEED_DOCUMENT_SQL = "INSERT INTO documents (project_id, name, doc) VALUES ($1, $2, $3::jsonb)";
+/** The connector's project is claimed by its first write, so its row carries
+ *  the connector user as owner; an ownerless row would be refused at the door. */
+const SEED_OWNED_PROJECT_SQL =
+  "INSERT INTO projects (project_id, owner_id) VALUES ($1, $2) ON CONFLICT (project_id) DO NOTHING";
 
 // ── the connector caller (self-hosted beta E1) ──────────────────────────────
 //
@@ -82,7 +93,6 @@ const SEED_FS_TOKEN_SQL =
 const SEED_CONNECTOR_TOKEN_SQL =
   "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, expires_at) " +
   "VALUES ($1, $2, 'smoke', ARRAY['mcp'], now() + interval '1 hour')";
-const SEED_OWNED_PROJECT_SQL = "INSERT INTO projects (project_id, owner_id) VALUES ($1, $2)";
 const SEED_RESEARCH_SQL =
   "INSERT INTO documents (project_id, name, doc) VALUES ($1, 'research.json', '{\"project\": {}}'::jsonb)";
 
@@ -159,6 +169,14 @@ const ctx: SmokeCtx = {
   missingProjectPath: project.missingProjectPath,
   openRouterKeyConfigured: await hostOpenRouterKeyConfigured(hostConfig),
   values: {},
+  // The server has no file root here, so the project goes straight into the
+  // Postgres it reads.
+  seedProject: async () => {
+    await db.query(SEED_PROJECT_SQL, [projectId]);
+    for (const [name, doc] of Object.entries(seedDocuments())) {
+      await db.query(SEED_DOCUMENT_SQL, [projectId, name, JSON.stringify(doc)]);
+    }
+  },
 };
 
 const turnId = randomUUID();
@@ -271,6 +289,15 @@ for (const [signal, code] of [["SIGINT", 130], ["SIGTERM", 143]] as const) {
 let failures: string[] = [];
 let calls = 0;
 let stage = "seed turns row";
+
+/** One door's tool list against the plan. */
+async function checkCoverage(client: Client, label: string, connector: boolean): Promise<void> {
+  const { tools } = await client.listTools();
+  const problems = assertCoverage(tools.map((t) => t.name), { connector });
+  report(label, problems.length === 0, problems.length === 0 ? `${tools.length} tools advertised, all planned or excluded` : problems.join("; "));
+  if (problems.length > 0) failures.push(label);
+}
+
 try {
   await db.connect();
   connected = true;
@@ -298,10 +325,7 @@ try {
 
   stage = "client one connect";
   await plainClient.connect(transportFor(plainHeaders));
-  const { tools } = await plainClient.listTools();
-  const problems = assertCoverage(tools.map((t) => t.name));
-  report("tools/list coverage", problems.length === 0, problems.length === 0 ? `${tools.length} tools advertised, all planned or excluded` : problems.join("; "));
-  if (problems.length > 0) failures.push("tools/list coverage");
+  await checkCoverage(plainClient, "tools/list coverage", connectorEnabled);
 
   stage = "client two connect (stamped turn)";
   await projectClient.connect(
@@ -312,8 +336,9 @@ try {
       Authorization: `Bearer ${projectBearer}`,
     }),
   );
+  if (connectorEnabled) await checkCoverage(projectClient, "tools/list coverage (worker)", false);
 
-  // EVERY row goes through the stamped-turn client now (E1). It used to split:
+  // Every row but the connector-only ones goes through the stamped-turn client (E1). It used to split:
   // rows passing a projectPath went to the project client, everything else to a
   // client with no headers at all. Under one front door that second client is
   // an unauthenticated connector request, which is a 401 — correctly so, and
@@ -366,6 +391,14 @@ try {
       missingProjectPath: `/proj_${randomBytes(8).toString("hex")}`,
       connector: true,
       values: {},
+      // The connector's own project, owned by the connector user. Inheriting
+      // ctx's would re-seed the worker's project, which already exists.
+      seedProject: async () => {
+        await db.query(SEED_OWNED_PROJECT_SQL, [connectorProjectId, connectorUserId]);
+        for (const [name, doc] of Object.entries(seedDocuments())) {
+          await db.query(SEED_DOCUMENT_SQL, [connectorProjectId, name, JSON.stringify(doc)]);
+        }
+      },
     };
     const connectorRun = await runPlan(
       (tool, args) => callViaClient(connectorClient, tool, args),

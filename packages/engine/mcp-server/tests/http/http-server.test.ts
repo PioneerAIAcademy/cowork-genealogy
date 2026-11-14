@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -32,6 +32,15 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
   return { ...actual, fetchWithRetry: capture, fetchWithTimeout: capture };
 });
 
+// viewer.html is gitignored and CI never builds it, so a `resources/read` case
+// points this at a file it writes or deletes.
+const viewerPage = vi.hoisted(() => ({ path: "" }));
+
+vi.mock("../../src/utils/bundled-data.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/bundled-data.js")>();
+  return { ...actual, viewerPagePath: () => viewerPage.path };
+});
+
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
@@ -50,6 +59,9 @@ import {
   keptFamilySearchStatus,
   toolNameOf,
   PRM_PATH,
+  NOT_YOUR_PROJECT_MESSAGE,
+  AUTHORIZATION_UNAVAILABLE_MESSAGE,
+  CONNECTOR_SCOPE,
   startHttpServer,
   TURN_ID_HEADER,
   type AuthorizeRequest,
@@ -58,8 +70,11 @@ import {
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
+import { processImageTokens } from "../../src/utils/image-tokens.js";
+import { pageUri } from "../../src/tools/project-view.js";
 import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
+import { logArgs, seedProject } from "../helpers/seed-project.js";
 
 // The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
 const PROJECT_HEADER = "X-Genealogy-Project-Id";
@@ -183,27 +198,19 @@ afterAll(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-/** A `project_create` payload whose one tree person is given-named `given`. */
+/** A valid `project_create` payload. Offline it can never succeed (the read
+ *  needs FamilySearch), so a test that needs a project seeds one instead. */
 function createArgs(given: string): Record<string, unknown> {
   return {
     projectPath: SCOPED_ANCHOR,
     objective: "Does the HTTP transport bind a store per request?",
     title: `http ${given}`,
-    subjectPersonIds: ["P1"],
-    tree: {
-      persons: [
-        {
-          id: "P1",
-          gender: "Male",
-          names: [{ id: "N1", preferred: true, given, surname: "Person", type: "BirthName" }],
-          facts: [{ id: "F1", type: "Birth", primary: true, date: "1850", place: "Nowhere" }],
-        },
-      ],
-      relationships: [],
-      sources: [],
-    },
+    personId: "KWCJ-RN4",
   };
 }
+
+/** Seed project `id` in the double's directory for it, as the server binds it. */
+const seed = (id: string, given: string) => seedProject(new ScopedFsStore(root, id), SCOPED_ANCHOR, given);
 
 /** `persons[].name` from `project_context` under one client. */
 async function personNames(client: Client): Promise<string[]> {
@@ -214,8 +221,8 @@ async function personNames(client: Client): Promise<string[]> {
 }
 
 describe("tool server over Streamable HTTP", () => {
-  it("1. tools/list is exactly allToolSchemas, and still works after the post-initialize GET got 405", async () => {
-    const client = await connect();
+  it("1. a worker's tools/list is exactly allToolSchemas, and still works after the post-initialize GET got 405", async () => {
+    const client = await connect({ [PROJECT_HEADER]: `list-${randomUUID()}` });
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual(allToolSchemas.map((s) => s.name).sort());
 
@@ -231,22 +238,21 @@ describe("tool server over Streamable HTTP", () => {
     expect(again.tools.length).toBe(allToolSchemas.length);
   });
 
-  it("2. two concurrent requests with different X-Genealogy-Project-Id headers cannot read each other's documents", async () => {
-    bindStore.mockClear();
+  it("2. two concurrent requests with different X-Genealogy-Project-Id headers cannot read or write each other's documents", async () => {
     const idA = `alpha-${randomUUID()}`;
     const idB = `beta-${randomUUID()}`;
+    await Promise.all([seed(idA, "Alpha"), seed(idB, "Beta")]);
+    bindStore.mockClear();
     const [a, b] = await Promise.all([
       connect({ [PROJECT_HEADER]: idA }),
       connect({ [PROJECT_HEADER]: idB }),
     ]);
-    const [createdA, createdB] = await Promise.all([
-      a.callTool({ name: "project_create", arguments: createArgs("Alpha") }),
-      b.callTool({ name: "project_create", arguments: createArgs("Beta") }),
+    const [loggedA, loggedB] = await Promise.all([
+      a.callTool({ name: "research_log_append", arguments: logArgs(SCOPED_ANCHOR, "Alpha") }),
+      b.callTool({ name: "research_log_append", arguments: logArgs(SCOPED_ANCHOR, "Beta") }),
     ]);
-    expect(createdA.isError, textOf(createdA)).not.toBe(true);
-    expect(createdB.isError, textOf(createdB)).not.toBe(true);
-    expect(JSON.parse(textOf(createdA)).ok).toBe(true);
-    expect(JSON.parse(textOf(createdB)).ok).toBe(true);
+    expect(loggedA.isError, textOf(loggedA)).not.toBe(true);
+    expect(loggedB.isError, textOf(loggedB)).not.toBe(true);
 
     const [namesA, namesB] = await Promise.all([personNames(a), personNames(b)]);
     expect(namesA.some((n) => n.includes("Alpha"))).toBe(true);
@@ -260,11 +266,11 @@ describe("tool server over Streamable HTTP", () => {
     expect(new Set(bound)).toEqual(new Set([idA, idB]));
     for (const id of [idA, idB]) expect(bound.filter((b) => b === id).length).toBeGreaterThan(0);
 
-    // And the double put them in two directories, so the isolation was the
+    // And each write landed in its own directory, so the isolation was the
     // header's doing rather than the same document read twice.
     for (const id of [idA, idB]) {
-      const tree = JSON.parse(await readFile(join(root, id, "tree.gedcomx.json"), "utf-8"));
-      expect(tree.persons[0].names[0].given).toBe(id === idA ? "Alpha" : "Beta");
+      const research = JSON.parse(await readFile(join(root, id, "research.json"), "utf-8"));
+      expect(research.log.map((e: any) => e.query.givenName)).toEqual([id === idA ? "Alpha" : "Beta"]);
     }
   });
 
@@ -318,7 +324,7 @@ describe("tool server over Streamable HTTP", () => {
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
   });
 
-  it("2d. baseConfig's public URL reaches project_context as an upload link built from the header's project id, and no viewer link anywhere", async () => {
+  it("2d. baseConfig's public URL reaches project_context as an upload link built from the header's project id, and no viewer link", async () => {
     const linked = await startHttpServer({
       host: "127.0.0.1",
       port: 0,
@@ -333,15 +339,13 @@ describe("tool server over Streamable HTTP", () => {
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
     try {
       const id = `linked-${randomUUID()}`;
+      await seed(id, "Linked");
       const client = await connect({ [PROJECT_HEADER]: id }, `http://127.0.0.1:${address.port}`);
-      const created = JSON.parse(textOf(await client.callTool({ name: "project_create", arguments: createArgs("Linked") })));
-      expect(created.ok, JSON.stringify(created)).toBe(true);
-      expect("projectUrl" in created).toBe(false);
       const ctx = JSON.parse(
         textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
       );
       expect("projectUrl" in ctx).toBe(false);
-      expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
+      expect(ctx.uploadUrl).toBe(`https://beta.example/upload/${id}`);
     } finally {
       linked.closeAllConnections();
       await new Promise<void>((resolve) => linked.close(() => resolve()));
@@ -638,7 +642,10 @@ describe("tool server over Streamable HTTP", () => {
     });
   });
 
-  it("3. a FamilySearch token the upstream refuses gets the hosted reauth text, never the desktop one", async () => {
+  it("3. a FamilySearch token the upstream refuses gets the connector's sign-in message, never the desktop's or the worker's", async () => {
+    // Self-hosted beta E3: a tool error the model relays, and the connector
+    // stays connected. This server has no public URL, so the message names the
+    // site; the next test shows the link.
     const client = await connect();
     const result = await client.callTool({
       name: "record_read",
@@ -646,9 +653,61 @@ describe("tool server over Streamable HTTP", () => {
     });
     expect(result.isError).toBe(true);
     const body = JSON.parse(textOf(result)) as { error: string };
-    expect(body.error).toBe(HOSTED_REAUTH_INSTRUCTION);
+    expect(body.error).toBe(
+      "FamilySearch session not accepted. Sign in again at the Genealogy Research site, " +
+        'then come back here and say "continue". Nothing is lost.',
+    );
+    expect(body.error).not.toBe(HOSTED_REAUTH_INSTRUCTION);
     expect(body.error).not.toContain("Call the login tool");
     expect(body.error).not.toContain("not logged in");
+  });
+
+  it("3b. with a public URL the message carries the web tier's sign-in link, and login names the same one", async () => {
+    const linked = await startHttpServer({
+      host: "127.0.0.1",
+      port: 0,
+      baseConfig: { webPublicUrl: "https://beta.example/" },
+      bindStore,
+      authorize,
+      lookupConnector,
+      projectOwner,
+      ownedProjects,
+    });
+    const address = linked.address();
+    if (!address || typeof address !== "object") throw new Error("server did not bind a port");
+    try {
+      const client = await connect(undefined, `http://127.0.0.1:${address.port}`);
+      const refused = await client.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB" } });
+      expect(refused.isError).toBe(true);
+      expect((JSON.parse(textOf(refused)) as { error: string }).error).toBe(
+        "FamilySearch session not accepted. Sign in again at https://beta.example/auth/familysearch/login, " +
+          'then come back here and say "continue". Nothing is lost.',
+      );
+      // The connector is still connected: the next call on the same client runs.
+      const login = await client.callTool({ name: "login", arguments: {} });
+      expect(textOf(login)).toContain("https://beta.example/auth/familysearch/login");
+      expect(textOf(login)).not.toContain("Reconnect button");
+
+      // The next turn's first read carries the link too, so it survives an
+      // agent's summary that dropped the tool error.
+      const id = "proj_0a0b0c0d0e0f0a0b";
+      await seedProject(new ScopedFsStore(root, id, `/${id}`), `/${id}`, "Lapsed");
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: TEST_USER_ID });
+      const context = JSON.parse(
+        textOf(await client.callTool({ name: "project_context", arguments: { projectPath: `/${id}` } })),
+      );
+      expect(context.ok).toBe(true);
+      expect(context.signInUrl).toBe("https://beta.example/auth/familysearch/login");
+      const status = JSON.parse(textOf(await client.callTool({ name: "auth_status", arguments: {} })));
+      expect(status).toMatchObject({
+        loggedIn: false,
+        accountId: TEST_USER_ID,
+        signInUrl: "https://beta.example/auth/familysearch/login",
+      });
+    } finally {
+      linked.closeAllConnections();
+      await new Promise<void>((resolve) => linked.close(() => resolve()));
+    }
   });
 
   it("4. two concurrent connector calls each reach upstream with their OWN FamilySearch token, never the connector token", async () => {
@@ -688,10 +747,7 @@ describe("tool server over Streamable HTTP", () => {
       connect({ [PROJECT_HEADER]: idA, Authorization: "Bearer tok-A" }),
       connect({ [PROJECT_HEADER]: idB, Authorization: "Bearer tok-B" }),
     ]);
-    for (const [client, given] of [[a, "Alpha"], [b, "Beta"]] as const) {
-      const created = await client.callTool({ name: "project_create", arguments: createArgs(given) });
-      expect(created.isError, textOf(created)).not.toBe(true);
-    }
+    await Promise.all([seed(idA, "Alpha"), seed(idB, "Beta")]);
     // A has already read 20 distinct images from the group, in its own log.
     const group = "004261111";
     const lines = Array.from({ length: 20 }, (_, i) =>
@@ -808,12 +864,63 @@ describe("tool server over Streamable HTTP", () => {
           call("project_context", { projectPath: "/proj_00112233445566aa" }),
           connectorHeaders(),
         );
-        expect(res.status, `ownerId=${ownerId}`).toBe(403);
+        // A tool error, not a 403: Claude replaces a 403's body with its own
+        // "blocked by a firewall" text, so our message never reached the model.
+        expect(res.status, `ownerId=${ownerId}`).toBe(200);
+        expect(await res.json(), `ownerId=${ownerId}`).toEqual({
+          jsonrpc: "2.0",
+          id: 1,
+          result: { content: [{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }], isError: true },
+        });
         // A NULL owner is refused with the rest: a connector never claims an
         // ownerless project, unlike the web tier's may_create_or_claim.
         expect(bindStore).not.toHaveBeenCalled();
-        await res.text();
       }
+    });
+
+    it("a real MCP client reads the refusal as a tool error, not as a transport failure", async () => {
+      // What the hand-built response has to satisfy: the SDK's own client must
+      // parse it as this call's result, so the message reaches the model.
+      const client = await connect();
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: "u_someone_else" });
+      const refused = await client.callTool({
+        name: "project_context",
+        arguments: { projectPath: "/proj_00112233445566aa" },
+      });
+      expect(refused.isError).toBe(true);
+      expect(refused.content).toEqual([{ type: "text", text: NOT_YOUR_PROJECT_MESSAGE }]);
+      // The same client still works afterwards, on the same connection.
+      const next = await client.callTool({ name: "convert_calendar", arguments: { date: "1 Jan 1900" } });
+      expect(next.content).toBeDefined();
+    });
+
+    it("answers a refused call under the call's own id, a string id included", async () => {
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: "u_someone_else" });
+      const res = await rpc(
+        { ...call("project_context", { projectPath: "/proj_00112233445566aa" }), id: "call-7" },
+        connectorHeaders(),
+      );
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ id: "call-7", result: { isError: true } });
+    });
+
+    it("an owner lookup that throws is a tool error saying to try again, and binds no store", async () => {
+      bindStore.mockClear();
+      projectOwner.mockRejectedValueOnce(new Error("pool is down"));
+      const res = await rpc(
+        call("project_context", { projectPath: "/proj_00112233445566aa" }),
+        connectorHeaders(),
+      );
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toEqual({
+        jsonrpc: "2.0",
+        id: 1,
+        result: { content: [{ type: "text", text: AUTHORIZATION_UNAVAILABLE_MESSAGE }], isError: true },
+      });
+      // Never the cause: a pool error can carry a connection string.
+      expect(JSON.stringify(body)).not.toContain("pool is down");
+      expect(bindStore).not.toHaveBeenCalled();
     });
 
     it("admits a project the caller owns", async () => {
@@ -876,22 +983,40 @@ describe("tool server over Streamable HTTP", () => {
           headers: { Host: "evil.example" },
         });
         expect(res.status).toBe(200);
+        // The shape Claude signed in against (the connector probe, issue #3529).
         expect(await res.json()).toEqual({
           resource: `${issuer}/mcp`,
           authorization_servers: [issuer],
+          scopes_supported: [CONNECTOR_SCOPE],
+          bearer_methods_supported: ["header"],
         });
 
-        const refused = await fetch(`${url}/mcp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
-          body: JSON.stringify(call("convert_calendar", {})),
-        });
+        const post = (headers: Record<string, string>) =>
+          fetch(`${url}/mcp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+            body: JSON.stringify(call("convert_calendar", {})),
+          });
+        // No token: no error code (RFC 6750 3.1), and the URL the challenge
+        // names is the one just served.
+        const noToken = await post({});
+        expect(noToken.status).toBe(401);
+        expect(noToken.headers.get("WWW-Authenticate")).toBe(
+          `Bearer resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
+        );
+        await noToken.text();
+        // A token that was sent and refused says so: this is what tells Claude
+        // to offer Reconnect rather than report the server unreachable.
+        const refused = await post({ Authorization: "Bearer not-a-token-this-server-issued" });
         expect(refused.status).toBe(401);
-        // The URL the challenge names is the one just served.
         expect(refused.headers.get("WWW-Authenticate")).toBe(
-          `Bearer resource_metadata="${issuer}${PRM_PATH}"`,
+          `Bearer error="invalid_token", resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
         );
         await refused.text();
+        // An admitted token is still admitted on this server.
+        const admitted = await post(connectorHeaders());
+        expect(admitted.status).toBe(200);
+        await admitted.text();
       } finally {
         withIssuer.closeAllConnections();
         await new Promise<void>((r) => withIssuer.close(() => r()));
@@ -981,8 +1106,8 @@ describe("tool server over Streamable HTTP", () => {
 
     it("the audit line keeps the FIRST failing FamilySearch status, not the last", () => {
       // A tool makes many FamilySearch requests, concurrently, so last-write
-      // -wins makes the recorded status a race. E3's session-end rule keys on
-      // this value.
+      // -wins makes the recorded status a race. An operator reads this value to
+      // see that a session has ended.
       expect(keptFamilySearchStatus(null, 200)).toBe(200);
       expect(keptFamilySearchStatus(null, 401)).toBe(401);
       // The 401 survives every later success — this is the case that regressed.
@@ -1054,11 +1179,42 @@ describe("tool server over Streamable HTTP", () => {
       expect(text).not.toContain("X-Genealogy-Project-Id");
     });
 
-    it("a lookup that throws is a 503, never an admission", async () => {
+    it("a token lookup that throws is never an admission: a tool call gets the refusal, not the tool's answer", async () => {
       lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
-      const res = await rpc(call("convert_calendar", {}), connectorHeaders());
+      const res = await rpc(call("convert_calendar", { date: "1 Jan 1900" }), connectorHeaders());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      // The refusal, not the tool's answer: the token was never checked.
+      expect(body).toEqual({
+        jsonrpc: "2.0",
+        id: 1,
+        result: { content: [{ type: "text", text: AUTHORIZATION_UNAVAILABLE_MESSAGE }], isError: true },
+      });
+      expect(JSON.stringify(body)).not.toContain("pool is down");
+    });
+
+    it.each([
+      ["initialize", { jsonrpc: "2.0", id: 1, method: "initialize", params: {
+        protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "0" } } }],
+      ["tools/list", { jsonrpc: "2.0", id: 1, method: "tools/list" }],
+      ["a notification", { jsonrpc: "2.0", method: "notifications/initialized" }],
+      ["a tools/call with no id", { jsonrpc: "2.0", method: "tools/call", params: { name: "convert_calendar", arguments: {} } }],
+    ])("a token lookup that throws stays a 503 for %s, which has no tool result to carry a message", async (_what, body) => {
+      lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
+      const res = await rpc(body, connectorHeaders());
       expect(res.status).toBe(503);
-      await res.text();
+      const text = await res.text();
+      expect(JSON.parse(text).error.message).toBe("Project authorization is unavailable.");
+      expect(text).not.toContain("pool is down");
+    });
+
+    it("a refused token is still a 401 over HTTP, whatever the method: that status is what offers Reconnect", async () => {
+      for (const body of [call("convert_calendar", {}), { jsonrpc: "2.0", id: 1, method: "tools/list" }]) {
+        const res = await rpc(body, { Authorization: "Bearer not-a-token-this-server-issued" });
+        expect(res.status).toBe(401);
+        expect(res.headers.get("WWW-Authenticate")).toMatch(/^Bearer/);
+        await res.text();
+      }
     });
 
     describe("project_list on a connector (#3991)", () => {
@@ -1106,7 +1262,10 @@ describe("tool server over Streamable HTTP", () => {
         const body = JSON.parse((await listProjects()).text);
         expect(body.projects).toEqual([]);
         expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
-        expect(body.message).toBe("No project yet: pass newProjectPath as projectPath to start one.");
+        expect(body.message).toBe(
+          "No project yet: pass newProjectPath as projectPath to start one. " +
+            "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.",
+        );
       });
 
       it("an id that is not /proj_ shaped is not listed", async () => {
@@ -1212,6 +1371,405 @@ describe("tool server over Streamable HTTP", () => {
         expect(text).toContain("This call named no project");
         expect(ownedProjects).not.toHaveBeenCalled();
         expect(bindStore).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("the view tools, the page and /img: connector only", () => {
+    const VIEW_TOOLS = ["read_project_view", "show_project"];
+    const ORIGIN = "https://beta.example";
+    const PAGE_URI = "ui://genealogy/viewer.html";
+    const PAGE_MIME_TYPE = "text/html;profile=mcp-app";
+    const PROJECT_ID = "proj_feedfacefeedface";
+    const PROJECT_PATH = `/${PROJECT_ID}`;
+    const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+    const NOT_FOUND = { error: "Not found" };
+
+    /** A door with a public origin, so it can sign image links. */
+    let door: HttpServer;
+    let doorUrl: string;
+
+    beforeAll(async () => {
+      door = await startHttpServer({
+        host: "127.0.0.1",
+        port: 0,
+        baseConfig: { webPublicUrl: `${ORIGIN}/` },
+        bindStore,
+        authorize,
+        lookupConnector,
+        projectOwner,
+        ownedProjects,
+      });
+      const address = door.address();
+      if (!address || typeof address !== "object") throw new Error("server did not bind a port");
+      doorUrl = `http://127.0.0.1:${address.port}`;
+      await mkdir(join(root, PROJECT_ID, "images"), { recursive: true });
+      await writeFile(join(root, PROJECT_ID, "research.json"), JSON.stringify({ project: { title: "Viewed" } }));
+      await writeFile(join(root, PROJECT_ID, "images", "page.jpg"), JPEG);
+    });
+
+    afterAll(async () => {
+      door.closeAllConnections();
+      await new Promise<void>((resolve) => door.close(() => resolve()));
+    });
+
+    const workerHeaders = () => ({ [PROJECT_HEADER]: `view-${randomUUID()}` });
+
+    const rpc = (method: string, params: unknown, headers: Record<string, string> = connectorHeaders()) =>
+      fetch(`${doorUrl}/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+
+    /** A tools/call's `result`, for a call the door admits. */
+    async function toolResult(name: string, args: Record<string, unknown>): Promise<any> {
+      const res = await rpc("tools/call", { name, arguments: args });
+      expect(res.status).toBe(200);
+      const { result } = await res.json();
+      return result;
+    }
+
+    /** The link `read_project_view` signs, as a path on the test's own port. */
+    async function imagePath(id = "images/page.jpg"): Promise<string> {
+      const { structuredContent } = await toolResult("read_project_view", { part: "image", id, projectPath: PROJECT_PATH });
+      expect(structuredContent.url.startsWith(`${ORIGIN}/img?t=`), structuredContent.url).toBe(true);
+      return structuredContent.url.slice(ORIGIN.length);
+    }
+
+    const tokenOf = (path: string): string => new URL(path, doorUrl).searchParams.get("t")!;
+    const get = (path: string, init?: RequestInit) => fetch(`${doorUrl}${path}`, init);
+
+    async function expectNotFound(res: Response): Promise<void> {
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual(NOT_FOUND);
+    }
+
+    /** What the door wrote to stderr and console.error while `run` ran. */
+    async function logsOf(run: () => Promise<void>): Promise<string> {
+      const lines: string[] = [];
+      const stderr = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+        lines.push(String(chunk));
+        return true;
+      }) as typeof process.stderr.write);
+      const consoleError = vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+        lines.push(args.map(String).join(" "));
+      });
+      try {
+        await run();
+      } finally {
+        stderr.mockRestore();
+        consoleError.mockRestore();
+      }
+      return lines.join("");
+    }
+
+    it("a connector lists the two view tools and the worker lists neither", async () => {
+      const everyTool = allToolSchemas.map((s) => s.name).sort();
+      const connector = await connect();
+      const worker = await connect(workerHeaders());
+      const onConnector = (await connector.listTools()).tools.map((t) => t.name).sort();
+      const onWorker = (await worker.listTools()).tools.map((t) => t.name).sort();
+      expect(onConnector).toEqual([...everyTool, ...VIEW_TOOLS].sort());
+      expect(onWorker).toEqual(everyTool);
+    });
+
+    it("the listed tools carry the card link, the app-only visibility and the connector's project rule", async () => {
+      const { tools } = await (await connect()).listTools();
+      const show = tools.find((t) => t.name === "show_project")!;
+      const read = tools.find((t) => t.name === "read_project_view")!;
+      expect(show._meta).toEqual({ ui: { resourceUri: PAGE_URI }, "ui/resourceUri": PAGE_URI });
+      expect(read._meta).toEqual({ ui: { visibility: ["app"] } });
+      for (const tool of [show, read]) {
+        expect(tool.annotations?.readOnlyHint).toBe(true);
+        expect(tool.description).toContain("project_list");
+        expect(Object.keys(tool.inputSchema.properties ?? {})).not.toContain("pad");
+      }
+    });
+
+    it.each(VIEW_TOOLS)("a worker calling %s gets the dispatcher's Unknown tool", async (name) => {
+      const res = await rpc("tools/call", { name, arguments: {} }, workerHeaders());
+      const { error, result } = await res.json();
+      expect(result).toBeUndefined();
+      expect(error.message).toContain(`Unknown tool: ${name}`);
+    });
+
+    it("initialize declares resources and the UI extension to a connector, and neither to a worker", async () => {
+      const params = {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "http-server-test", version: "0" },
+      };
+      const connector = await (await rpc("initialize", params)).json();
+      expect(connector.result.capabilities).toEqual({
+        tools: {},
+        resources: {},
+        extensions: { "io.modelcontextprotocol/ui": { mimeTypes: [PAGE_MIME_TYPE] } },
+      });
+      const worker = await (await rpc("initialize", params, workerHeaders())).json();
+      expect(worker.result.capabilities).toEqual({ tools: {} });
+    });
+
+    it("resources/list names the page to a connector, and is -32601 on a worker", async () => {
+      const connector = await (await rpc("resources/list", {})).json();
+      expect(connector.result.resources).toEqual([expect.objectContaining({ uri: PAGE_URI, mimeType: PAGE_MIME_TYPE })]);
+      const worker = await (await rpc("resources/list", {}, workerHeaders())).json();
+      expect(worker.error.code).toBe(-32601);
+    });
+
+    describe("resources/read", () => {
+      const HTML = "<!doctype html><title>stub page</title>";
+      const missing = () => join(root, "no-such-folder", "viewer.html");
+
+      afterEach(() => {
+        viewerPage.path = missing();
+      });
+
+      it("serves the page with its MIME type and the public origin as a resource domain", async () => {
+        viewerPage.path = join(root, "viewer.html");
+        await writeFile(viewerPage.path, HTML);
+        const { result } = await (await rpc("resources/read", { uri: PAGE_URI })).json();
+        expect(result.contents).toHaveLength(1);
+        expect(result.contents[0]).toMatchObject({ uri: PAGE_URI, mimeType: PAGE_MIME_TYPE, text: HTML });
+        expect(result.contents[0]._meta.ui.csp.resourceDomains).toEqual([ORIGIN]);
+      });
+
+      it("an installed page is listed under a URI carrying its hash, and served under either", async () => {
+        viewerPage.path = join(root, "viewer.html");
+        await writeFile(viewerPage.path, HTML);
+        const versioned = pageUri(HTML);
+        expect(versioned).not.toBe(PAGE_URI);
+        const { result: tools } = await (await rpc("tools/list", {})).json();
+        const show = tools.tools.find((t: { name: string }) => t.name === "show_project");
+        expect(show._meta).toEqual({ ui: { resourceUri: versioned }, "ui/resourceUri": versioned });
+        const { result: listed } = await (await rpc("resources/list", {})).json();
+        expect(listed.resources).toEqual([expect.objectContaining({ uri: versioned })]);
+        for (const uri of [versioned, PAGE_URI]) {
+          const { result } = await (await rpc("resources/read", { uri })).json();
+          expect(result.contents[0]).toMatchObject({ uri, text: HTML });
+        }
+      });
+
+      it("a missing page is a JSON-RPC error with no path in it, and the next request still answers", async () => {
+        viewerPage.path = missing();
+        const res = await rpc("resources/read", { uri: PAGE_URI });
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        const { error, result } = JSON.parse(text);
+        expect(result).toBeUndefined();
+        expect(error.message).toContain("The viewer page is not installed on this server.");
+        expect(text).not.toContain(root);
+        expect(text).not.toContain("viewer.html");
+
+        const next = await (await rpc("tools/list", {})).json();
+        expect(next.result.tools.length).toBe(allToolSchemas.length + VIEW_TOOLS.length);
+      });
+
+      it("refuses any other resource", async () => {
+        const { error } = await (await rpc("resources/read", { uri: "ui://genealogy/other.html" })).json();
+        expect(error.code).toBe(-32602);
+      });
+    });
+
+    describe("the two tools through the door", () => {
+      it("show_project carries the documents in _meta and read_project_view in structuredContent", async () => {
+        const args = { show: "latest", projectPath: PROJECT_PATH };
+        const shown = await toolResult("show_project", args);
+        expect(shown.isError).toBeUndefined();
+        expect(shown._meta["genealogy/project"]).toMatchObject({
+          research: { project: { title: "Viewed" } },
+          derived: { folderName: PROJECT_ID },
+          echo: args,
+        });
+        const read = await toolResult("read_project_view", { part: "document", projectPath: PROJECT_PATH });
+        expect(read.structuredContent.research).toEqual({ project: { title: "Viewed" } });
+      });
+
+      it("a call naming no project is plain text naming project_list, and binds no store", async () => {
+        bindStore.mockClear();
+        const result = await toolResult("show_project", { show: "setup" });
+        expect(result.isError).toBe(true);
+        expect(result.content).toEqual([
+          { type: "text", text: "This call named no project. Call project_list and pass one of its projectPath values." },
+        ]);
+        expect(bindStore).not.toHaveBeenCalled();
+      });
+
+      it("a fresh id is refused in plain text", async () => {
+        const result = await toolResult("read_project_view", {
+          part: "document",
+          projectPath: "/proj_0000000000000000",
+        });
+        expect(result.isError).toBe(true);
+        expect(result.content[0].text).toMatch(/^No project is saved at this projectPath\..*project_list/);
+      });
+
+      it("a store failure reaches the card as a fixed sentence, and the log holds only its label", async () => {
+        bindStore.mockImplementationOnce((projectId, _signal, _fence, opts) => {
+          const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+          vi.spyOn(store, "classifyProject").mockRejectedValue(
+            Object.assign(new Error('password authentication failed for user "dml" at db.internal:5432'), {
+              code: "28P01",
+            }),
+          );
+          return store;
+        });
+        let result: any;
+        const logged = await logsOf(async () => {
+          result = await toolResult("show_project", { show: "latest", projectPath: PROJECT_PATH });
+        });
+        expect(result.isError).toBe(true);
+        expect(result.content).toEqual([{ type: "text", text: "The project could not be read just now. Try again." }]);
+        expect(logged).toContain("ev=view_failed error=28P01\n");
+        expect(logged).not.toContain("db.internal");
+      });
+
+      it("an unknown argument is the tool's own refusal, in plain text", async () => {
+        const result = await toolResult("show_project", { show: "setup", pad: 5, projectPath: PROJECT_PATH });
+        expect(result.isError).toBe(true);
+        expect(result.content[0].text).toMatch(/^show_project has no argument pad\./);
+      });
+
+      it("a server with no public origin signs nothing", async () => {
+        const res = await fetch(`${base}/mcp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...connectorHeaders() },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "tools/call",
+            params: {
+              name: "read_project_view",
+              arguments: { part: "image", id: "images/page.jpg", projectPath: PROJECT_PATH },
+            },
+          }),
+        });
+        const { result } = await res.json();
+        expect(result.isError).toBe(true);
+        expect(result.content[0].text).toMatch(/no route to page images/);
+      });
+    });
+
+    describe("GET /img", () => {
+      it("serves the image with the headers a card's frame needs, through a store bound from the token", async () => {
+        const path = await imagePath();
+        bindStore.mockClear();
+        const res = await get(path);
+        expect(res.status).toBe(200);
+        expect(Buffer.from(await res.arrayBuffer())).toEqual(JPEG);
+        expect(res.headers.get("content-type")).toBe("image/jpeg");
+        expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+        expect(res.headers.get("cross-origin-resource-policy")).toBe("cross-origin");
+        expect(res.headers.get("cache-control")).toMatch(/^private, max-age=(599|600)$/);
+        expect(bindStore).toHaveBeenCalledTimes(1);
+        expect(bindStore.mock.calls[0]).toEqual([PROJECT_ID, expect.any(AbortSignal), undefined, { anchorPath: PROJECT_PATH }]);
+      });
+
+      it("a tampered link is the door's ordinary 404, and reaches no store", async () => {
+        const token = tokenOf(await imagePath());
+        const [payload, signature] = token.split(".");
+        const flip = (s: string) => (s.endsWith("A") ? `${s.slice(0, -1)}B` : `${s.slice(0, -1)}A`);
+        bindStore.mockClear();
+        for (const bad of [
+          `${payload}.${flip(signature)}`,
+          `${flip(payload)}.${signature}`,
+          `${payload}.`,
+          `.${signature}`,
+          payload,
+          `${token}.x`,
+        ]) {
+          await expectNotFound(await get(`/img?t=${bad}`));
+        }
+        expect(bindStore).not.toHaveBeenCalled();
+      });
+
+      it("an expired link is the same 404, at the instant it expires", async () => {
+        const path = await imagePath();
+        const { expiresAt } = processImageTokens.verify(tokenOf(path))!;
+        const clock = vi.spyOn(Date, "now");
+        try {
+          clock.mockReturnValue(expiresAt - 1);
+          expect((await get(path)).status).toBe(200);
+          clock.mockReturnValue(expiresAt);
+          await expectNotFound(await get(path));
+        } finally {
+          clock.mockRestore();
+        }
+      });
+
+      it("no token, an empty one and the path form are the same 404", async () => {
+        const token = tokenOf(await imagePath());
+        await expectNotFound(await get("/img"));
+        await expectNotFound(await get("/img?t="));
+        await expectNotFound(await get(`/img?token=${token}`));
+        await expectNotFound(await get(`/img/${token}`));
+      });
+
+      it.each(["POST", "PUT", "DELETE"])("%s on a good link falls through to the door's 404", async (method) => {
+        await expectNotFound(await get(await imagePath(), { method }));
+      });
+
+      it("an image the project does not hold is the same 404", async () => {
+        await expectNotFound(await get(await imagePath("images/absent.jpg")));
+      });
+
+      it("a store that fails answers 503, and the log holds a label but never the token", async () => {
+        const path = await imagePath();
+        const token = tokenOf(path);
+        const signature = token.split(".")[1];
+        bindStore.mockImplementationOnce((projectId, _signal, _fence, opts) => {
+          const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+          vi.spyOn(store, "readBytes").mockRejectedValue(
+            Object.assign(new Error("postgresql://u:p@db.internal/x"), { code: "ECONNREFUSED" }),
+          );
+          return store;
+        });
+        let status = 0;
+        let body: unknown;
+        const logged = await logsOf(async () => {
+          const res = await get(path);
+          status = res.status;
+          body = await res.json();
+          // Every other answer this route gives, in the same log.
+          await (await get(path)).arrayBuffer();
+          await (await get(`/img?t=${token}x`)).text();
+          await (await get(await imagePath("images/absent.jpg"))).text();
+        });
+        expect(status).toBe(503);
+        expect(body).toEqual({
+          jsonrpc: "2.0",
+          error: { code: -32603, message: "The page image is unavailable." },
+          id: null,
+        });
+        expect(logged).toContain("ev=image_failed error=ECONNREFUSED\n");
+        expect(logged).not.toContain("db.internal");
+        expect(logged).not.toContain(token);
+        expect(logged).not.toContain(signature);
+      });
+
+      it("a store that fails with no code logs its name", async () => {
+        const path = await imagePath();
+        bindStore.mockImplementationOnce((projectId, _signal, _fence, opts) => {
+          const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+          vi.spyOn(store, "readBytes").mockRejectedValue(new TypeError("the bucket said no"));
+          return store;
+        });
+        let status = 0;
+        const logged = await logsOf(async () => {
+          const res = await get(path);
+          status = res.status;
+          await res.text();
+        });
+        expect(status).toBe(503);
+        expect(logged).toContain("ev=image_failed error=TypeError\n");
+        expect(logged).not.toContain("the bucket said no");
+      });
+
+      it("a project folder that is a file answers 404 from ENOTDIR", async () => {
+        const id = "proj_fafafafafafafafa";
+        await writeFile(join(root, id), "not a folder");
+        const { token } = processImageTokens.sign(id, "images/page.jpg");
+        await expectNotFound(await get(`/img?t=${token}`));
       });
     });
   });
@@ -1636,6 +2194,71 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
     expect((await res.json()).error.message).toBe("Not authenticated. Sign in again to reconnect.");
     expect(gated.entered.has(blockedId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("with an issuer, that refusal says the token is dead, so the client signs in again", async () => {
+    // The same path on a server that has an issuer: the shared one has none, so
+    // its challenge is the bare `Bearer` whatever the door passes.
+    const issuer = "https://beta.example";
+    const withIssuer = await startHttpServer({
+      host: "127.0.0.1", port: 0, baseConfig: {}, bindStore, authorize, lookupConnector, projectOwner,
+      ownedProjects, issuer,
+    });
+    const addr = withIssuer.address();
+    if (!addr || typeof addr !== "object") throw new Error("no port");
+    const post = (projectPath: string) =>
+      fetch(`http://127.0.0.1:${addr.port}/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...userA },
+        body: JSON.stringify(call("project_context", { projectPath })),
+      });
+    try {
+      bindStore.mockClear();
+      const gated = gatedStores(5);
+      const held = Array.from({ length: 4 }, (_, i) => post(projPath("f", i)));
+      const waiting = post(projPath("f", 4));
+      try {
+        await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+        lookupConnector.mockImplementationOnce(async () => null);
+      } finally {
+        await release(gated, held);
+      }
+      const res = await waiting;
+      expect(res.status).toBe(401);
+      expect(res.headers.get("WWW-Authenticate")).toBe(
+        `Bearer error="invalid_token", resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
+      );
+      await res.text();
+      await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+    } finally {
+      withIssuer.closeAllConnections();
+      await new Promise<void>((r) => withIssuer.close(() => r()));
+    }
+  });
+
+  it("a call that waited, whose second lookup throws, gets a tool error and never runs", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("9", i) }), userA),
+    );
+    const waitingId = projPath("9", 4).slice(1);
+    const waiting = rpc(call("project_context", { projectPath: `/${waitingId}` }), userA);
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
+    } finally {
+      await release(gated, held);
+    }
+    const res = await waiting;
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      jsonrpc: "2.0",
+      id: 1,
+      result: { content: [{ type: "text", text: AUTHORIZATION_UNAVAILABLE_MESSAGE }], isError: true },
+    });
+    expect(gated.entered.has(waitingId)).toBe(false);
     await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
   });
 

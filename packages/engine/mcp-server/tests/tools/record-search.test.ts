@@ -19,7 +19,13 @@ vi.mock("../../src/auth/config.js", async (orig) => ({
 vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
-  return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
+  return {
+    ...actual,
+    resolveStandardPlace: vi.fn().mockResolvedValue(null),
+    // No place expansion unless a test asks for one (issue #4067), so the
+    // ordered fetch mocks below keep meaning "the one search request".
+    placeSearchNames: vi.fn().mockResolvedValue(null),
+  };
 });
 
 import {
@@ -33,6 +39,7 @@ import {
   recordSearchToolSchema,
 } from "../../src/tools/record-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { placeSearchNames } from "../../src/utils/place-resolver.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
@@ -171,7 +178,8 @@ describe("recordSearchTool happy path", () => {
     expect(result.returned).toBe(1);
     expect(result.results![0].recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
     expect(result.results![0].personName).toBe("Abraham Lincoln");
-    expect(result.paginationCappedAt).toBe(4999);
+    // Always 4999, so the answer drops it (staged-compaction.ts).
+    expect(result).not.toHaveProperty("paginationCappedAt");
   });
 
   it("2. returns results for country-scoped search (recordCountry only)", async () => {
@@ -752,7 +760,7 @@ describe("recordSearchTool response shape", () => {
     expect(r.birthDate).toBe("1880");
     expect(r.birthPlace).toBe("Texas");
     expect(r.collectionId).toBe("9999");
-    expect(r.collectionTitle).toBe("Texas Births");
+    expect(result.collections).toEqual({ "9999": "Texas Births" });
   });
 
   it("28. surfaces treeMatches from entry.hints sorted by stars descending", async () => {
@@ -817,13 +825,14 @@ describe("recordSearchTool response shape", () => {
     expect(result.hasMore).toBe(true);
   });
 
-  it("31. echoes totalMatches and paginationCappedAt", async () => {
+  it("31. echoes totalMatches, and the query when nothing staged, but not paginationCappedAt", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 17, index: 0, entries: [] })
     );
     const result = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
     expect(result.totalMatches).toBe(17);
-    expect(result.paginationCappedAt).toBe(4999);
+    expect(result.query).toEqual({ surname: "Lincoln" });
+    expect(result).not.toHaveProperty("paginationCappedAt");
   });
 });
 
@@ -995,7 +1004,7 @@ describe("recordSearchTool — User-Agent contract", () => {
   });
 });
 
-describe("recordSearchTool — inline gedcomx omission when staged", () => {
+describe("recordSearchTool — inline compaction", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "record-search-omit-"));
@@ -1127,7 +1136,14 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.results).toHaveLength(1);
     expect(out.results![0].gedcomx).toBeUndefined();
     expect(out.results![0].recordId).toBeTruthy();
-    expect(out.results![0].primaryId).toBe("p_1");
+    // The answer drops what only the staged file's readers use; the file keeps it.
+    expect(out.results![0]).not.toHaveProperty("primaryId");
+    expect(out).not.toHaveProperty("query");
+    expect(out).not.toHaveProperty("paginationCappedAt");
+    const staged = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+    expect(staged.payload.results[0].primaryId).toBe("p_1");
+    expect(staged.payload.query).toMatchObject({ surname: "Lincoln" });
+    expect(staged.payload.paginationCappedAt).toBe(4999);
   });
 
   it("slims the inline stub when staged: no collectionUrl, no empty treeMatches, title hoisted", async () => {
@@ -1145,9 +1161,8 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.collections![r.collectionId!]).toBeTruthy();
     // This fixture carries hints, so treeMatches is real signal and is kept.
     expect(r.treeMatches?.length).toBeGreaterThan(0);
-    // primaryId is deliberately KEPT — rank_search_matches skips candidates
-    // without it, so dropping it would silently disable the re-ranker.
-    expect(r.primaryId).toBe("p_1");
+    // rank_search_matches reads primaryId from the staged file, not the answer.
+    expect(r).not.toHaveProperty("primaryId");
   });
 
   it("ranks host-side when subjectId is supplied, and defaults count to 50", async () => {
@@ -1248,7 +1263,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(row.treeMatches).toBeDefined();
   });
 
-  it("keeps inline gedcomx when staging returned null", async () => {
+  it("compacts the answer when staging returned null", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
     // A non-existent projectPath makes stageSearchResults throw → staged: null.
@@ -1259,20 +1274,223 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
 
     expect(out.staged).toBeNull();
     expect(out.stagingError).toBeTruthy();
-    // Never strip when nothing was retained to re-read from.
-    expect(out.results![0].gedcomx).toBeDefined();
+    // Every answer is compacted, staged or not (issue #4386).
+    const r = out.results![0];
+    expect(r.gedcomx).toBeUndefined();
+    expect(r.collectionUrl).toBeUndefined();
+    expect(r.collectionTitle).toBeUndefined();
+    expect(out.collections).toEqual({ [r.collectionId!]: "Some Collection" });
   });
 
-  it("keeps inline gedcomx for an exploratory search with no projectPath", async () => {
+  it("compacts the answer of a search with no projectPath", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    // No projectPath → no staging → full gedcomx returned inline as before.
     const out = await recordSearchTool({
       surname: "Lincoln",
     }, LOCAL);
 
     expect(out.staged).toBeUndefined();
-    expect(out.results![0].gedcomx).toBeDefined();
+    const r = out.results![0];
+    expect(r.gedcomx).toBeUndefined();
+    expect(r.collectionUrl).toBeUndefined();
+    expect(r.collectionTitle).toBeUndefined();
+    expect(out.collections).toEqual({ [r.collectionId!]: "Some Collection" });
+    // The flat stub fields a caller triages on, and record_read's input, stay.
+    expect(r.recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
+    expect(r).not.toHaveProperty("primaryId");
+    expect(r.personName).toBe("Abraham Lincoln");
+    // Nothing staged, so the query echo is the only copy and stays.
+    expect(out.query).toEqual({ surname: "Lincoln" });
+  });
+});
+
+// The overflow issue #4386 exists for: the Dixon 1840 Virginia census fixture is
+// one 100-row page, and with per-result `gedcomx` it serializes past Claude
+// Code's ~50k-character cutoff. Its rows are fed back through FamilySearch's
+// raw entry shape so the page runs the tool end to end.
+describe("recordSearchTool — the Dixon 100-row page", () => {
+  const DIXON = new URL(
+    "../../../../../eval/fixtures/mcp/record-search-dixon-virginia-1840-census.json",
+    import.meta.url,
+  );
+
+  interface DixonRow {
+    recordId: string;
+    personName: string;
+    score: number;
+    sex: string;
+    role: string;
+    events: Array<{ type: string; date: string; place: string }>;
+    collectionId: string;
+    collectionTitle: string;
+    recordArk: string;
+    gedcomx: { persons: Array<{ id: string }> };
+  }
+
+  const dixonEntry = (row: DixonRow): FSSearchEntry => {
+    const [given, ...rest] = row.personName.split(" ");
+    return {
+      id: row.recordId,
+      score: row.score,
+      content: {
+        gedcomx: {
+          persons: [
+            {
+              principal: true,
+              id: row.gedcomx.persons[0].id,
+              display: { name: row.personName, gender: row.sex, role: row.role },
+              gender: { type: `http://gedcomx.org/${row.sex}` },
+              names: [
+                {
+                  nameForms: [
+                    {
+                      fullText: row.personName,
+                      parts: [
+                        { type: "http://gedcomx.org/Given", value: given },
+                        { type: "http://gedcomx.org/Surname", value: rest.join(" ") },
+                      ],
+                    },
+                  ],
+                },
+              ],
+              facts: row.events.map((e) => ({
+                type: `http://gedcomx.org/${e.type}`,
+                date: { original: e.date },
+                place: { original: e.place },
+              })),
+              identifiers: {
+                "http://gedcomx.org/Persistent": [
+                  `https://familysearch.org/ark:/61903/1:1:${row.recordId}`,
+                ],
+              },
+            },
+          ],
+          sourceDescriptions: [
+            {
+              resourceType: "http://gedcomx.org/Collection",
+              about: `https://familysearch.org/collections/${row.collectionId}`,
+              titles: [{ value: row.collectionTitle }],
+            },
+            {
+              identifiers: {
+                "http://gedcomx.org/Persistent": [`https://familysearch.org/${row.recordArk}`],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as FSSearchEntry;
+  };
+
+  const dixonPage = async (): Promise<FSSearchResponse> => {
+    const fixture = JSON.parse(await readFile(DIXON, "utf-8")) as {
+      response: { totalMatches: number; results: DixonRow[] };
+    };
+    return {
+      results: fixture.response.totalMatches,
+      index: 0,
+      entries: fixture.response.results.map(dixonEntry),
+      links: { next: { href: "https://www.familysearch.org/next" } },
+    } as FSSearchResponse;
+  };
+
+  const DIXON_SEARCH = {
+    surname: "Dixon",
+    residenceYearFrom: 1840,
+    residenceYearTo: 1840,
+    count: 100,
+  };
+
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-dixon-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("serializes the page under 40,000 characters with no projectPath", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(await dixonPage()));
+
+    const out = await recordSearchTool(DIXON_SEARCH, LOCAL);
+
+    expect(out.results).toHaveLength(100);
+    // As server.ts sends it: compact JSON.
+    expect(JSON.stringify(out).length).toBeLessThan(40_000);
+    expect(out.results.every((r) => r.gedcomx === undefined)).toBe(true);
+  });
+
+  it("still stages full gedcomx for every row when a project is given", async () => {
+    await writeFile(join(dir, "research.json"), JSON.stringify({ log: [] }), "utf-8");
+    mockFetch.mockResolvedValueOnce(makeOkResponse(await dixonPage()));
+
+    const out = await recordSearchTool({ ...DIXON_SEARCH, projectPath: dir }, LOCAL);
+
+    expect(out.staged).toBeTruthy();
+    expect(out.results.every((r) => r.gedcomx === undefined)).toBe(true);
+    const staged = JSON.parse(
+      await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
+    );
+    expect(staged.payload.results).toHaveLength(100);
+    for (const row of staged.payload.results) {
+      expect(row.gedcomx.persons.length).toBeGreaterThan(0);
+      expect(row.collectionTitle).toBe("United States Census, 1840");
+    }
+  });
+});
+
+// The largest replayed hosted page (issue #4386): a staged, unranked 100-row
+// page of 46,837 characters AFTER the compaction main already did, so its rows
+// are built in that shape (no gedcomx, collectionUrl or per-row title), not
+// fed through the tool. What still made it big: primaryId, score, confidence,
+// empty events, recordTitle repeating the collection, and the envelope's
+// paginationCappedAt and query echo.
+describe("record_search's answer — a synthetic 100-row page at the largest hosted row size", () => {
+  const COLLECTION = "Virginia, Rockingham County, Personal Property Tax Lists, 1782-1850";
+  const syntheticPage = (): RecordSearchToolResponse => {
+    const results = Array.from({ length: 100 }, (_, i) => {
+      const n = String(i).padStart(3, "0");
+      const personName = `Mary Fenstermaker ${n}`;
+      return {
+        recordId: `ark:/61903/1:1:Q${n}-WPBZ`,
+        personName,
+        score: 5.4236,
+        confidence: 4,
+        sex: "Female",
+        birthPlace: "Rockingham, Virginia, United States",
+        collectionId: "1325221",
+        // Nine rows in ten carry the record title FamilySearch writes most;
+        // the rest a household title with the same trailing collection.
+        recordTitle: i % 10 === 0
+          ? `${personName} in household of John Fenstermaker, "${COLLECTION}"`
+          : `Entry for ${personName}, "${COLLECTION}"`,
+        recordArk: `ark:/61903/1:2:Q${n}-WPBZ`,
+        primaryId: `p_${n}1736542891`,
+        events: i % 4 === 0
+          ? []
+          : [{ type: "Residence", date: "1850", place: "Rockingham, Virginia, United States" }],
+      };
+    });
+    return {
+      query: { surname: "Fenstermaker", residencePlace: "Rockingham, Virginia, United States", count: 100, projectPath: "/p" },
+      totalMatches: 1840,
+      paginationCappedAt: 4999,
+      returned: 100,
+      offset: 0,
+      hasMore: true,
+      collections: { "1325221": COLLECTION },
+      results,
+      staged: { resultsRef: "results/.staging/x.json", returnedCount: 100 },
+    } as unknown as RecordSearchToolResponse;
+  };
+
+  // 46,627 characters before (the hosted page: 46,837) and 28,560 after (29,743).
+  it("is over 40,000 characters as main sends it, and under after this compaction", () => {
+    const page = syntheticPage();
+    const before = JSON.stringify(page).length;
+    expect(before).toBeGreaterThan(40_000);
+    const after = JSON.stringify(compactStagedRecordSearch(page)).length;
+    expect(after).toBeLessThan(40_000);
   });
 });
 
@@ -1573,7 +1791,8 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     expect(out.rankingSkipped).toContain("not yet in the tree");
     // Names what was actually given up, so the note is actionable.
     expect(out.rankingSkipped).toContain("ranking");
-    expect(out.rankingSkipped).toContain("jurisdiction");
+    expect(out.rankingSkipped).toContain("jurisdiction");    // It rides two thirds of all searches, so it stays short (issue #4386).
+    expect(out.rankingSkipped!.length).toBeLessThanOrEqual(200);
   });
 
   it("stays absent once a subject IS named", async () => {
@@ -2277,6 +2496,37 @@ describe("#2367/#2336 role on results", () => {
   });
 });
 
+// The rule for each part is unit-tested in tests/utils/search-advice.test.ts and
+// census-note.test.ts. This is the tool-level half: the response carries them.
+describe("recordSearchTool — search advice is attached to the response", () => {
+  it("carries patronymicSearch, childrenSearch and census, in that order, before results", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const out = await recordSearchTool(
+      { surname: "Moen", fatherGivenName: "Hans", recordCountry: "Norway", collectionId: "1401638" },
+      LOCAL,
+    );
+    expect(out.patronymicSearch?.searched).toBe("Moen");
+    expect(out.childrenSearch?.heldBy).toEqual(["collectionId"]);
+    expect(out.census?.schedules[0].year).toBe(1850);
+    const keys = Object.keys(out);
+    const at = (k: string) => keys.indexOf(k);
+    expect(at("patronymicSearch")).toBeGreaterThan(-1);
+    expect([at("patronymicSearch"), at("childrenSearch"), at("census")]).toEqual([
+      at("results") - 3,
+      at("results") - 2,
+      at("results") - 1,
+    ]);
+  });
+
+  it("adds none of them to a search they do not apply to", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const out = await recordSearchTool({ surname: "Lincoln", givenName: "Abraham" }, LOCAL);
+    expect(out.patronymicSearch).toBeUndefined();
+    expect(out.childrenSearch).toBeUndefined();
+    expect(out.census).toBeUndefined();
+  });
+});
+
 // Issue #3054. The tool-level half of the proof the issue asks for: the hint is
 // emitted for ut_search_records_023's exact inputs, and not for nils that do not
 // qualify. The rule itself is unit-tested in tests/utils/surname-variant-hints.test.ts.
@@ -2573,5 +2823,485 @@ describe("#3695 Couple-relationship facts in events", () => {
       if (rel.type!.endsWith("/ParentChild")) rel.facts = [marriage("1840", "Arsdorf")];
     }
     expect(mapEntry(entry)!.events).toEqual([]);
+  });
+});
+
+// ─── Place expansion (issue #4067) ───────────────────────────────────────────
+//
+// A fake FamilySearch that answers each record search by the place it was
+// given, and the Places API with Rieti's real representation listing (place
+// 4662032, read live 2026-11-09). The resolver is the real one; only
+// `placeSearchNames`' default "no expansion" mock is swapped for the actual
+// function, so these tests run the whole path the live tool runs.
+describe("recordSearchTool — searches every name of the place (issue #4067)", () => {
+  const PERIOD = "Rieti, Perugia, Umbria, Italy";
+  const MODERN = "Rieti, Rieti, Lazio, Italy";
+  const PARENT = "Rieti, Lazio, Italy";
+  const TARGET = "Q2HC-CWMP";
+
+  function persona(id: string, given = "Anna"): FSSearchEntry {
+    return {
+      id,
+      score: 1,
+      content: {
+        gedcomx: {
+          persons: [
+            {
+              principal: true,
+              id: `p_${id}`,
+              display: { name: `${given} Marchetti`, gender: "Female", deathDate: "1913", role: "Principal" },
+              facts: [{ type: "http://gedcomx.org/Death", date: { original: "1913" }, place: { original: `Rieti ${id}` } }],
+              identifiers: { "http://gedcomx.org/Persistent": [`https://familysearch.org/ark:/61903/1:1:${id}`] },
+            },
+          ],
+          sourceDescriptions: [
+            { resourceType: "http://gedcomx.org/Collection", about: "https://familysearch.org/collections/2146202", titles: [{ value: "Italia, Rieti" }] },
+          ],
+        },
+      },
+    };
+  }
+
+  const ids = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => `${prefix}${String(i).padStart(2, "0")}-AAAA`);
+
+  /** Rows each search place returns, best first. Unlisted places return none. */
+  let byPlace: Record<string, string[]>;
+  let searchUrls: URL[];
+  let placesCalls: number;
+  let failPlace: string | undefined;
+  let rejectPlace: string | undefined;
+
+  const ok = (body: unknown) => ({ ok: true, status: 200, statusText: "OK", json: async () => body, text: async () => JSON.stringify(body) });
+
+  function placesApi(url: string) {
+    placesCalls++;
+    if (url.includes("/places/search")) {
+      return ok({
+        entries: [{
+          id: "11077059",
+          score: 0.9,
+          content: { gedcomx: { places: [{
+            identifiers: { "http://gedcomx.org/Primary": ["https://api.familysearch.org/platform/places/4662032"] },
+            display: { name: "Rieti", fullName: PERIOD, type: "Municipality" },
+          }] } },
+        }],
+      });
+    }
+    if (url.endsWith("/places/4662032")) {
+      const rep = (id: string, fullName: string, formal?: string) => ({
+        id, place: { resourceId: "4662032" }, display: { fullName }, names: [{ value: "Rieti" }],
+        ...(formal ? { temporalDescription: { formal } } : {}),
+      });
+      return ok({ places: [
+        { id: "4662032" },
+        rep("7065321", MODERN, "+1927/"),
+        rep("7065322", "Rieti, Roma, Lazio, Italy", "+1923/+1927"),
+        rep("11077059", PERIOD, "+1882/+1923"),
+        rep("11077060", "Rieti, Umbria, Umbria, Italy", "+1861/+1882"),
+        rep("13760867", "Rieti, Perugia, Umbria, Papal States", "+1370/+1860"),
+        rep("12885240", "Rieti, Umbria, Papal States", "/+1860"),
+      ] });
+    }
+    if (url.endsWith("/description/7065321")) {
+      return ok({ places: [{ id: "7065321", identifiers: { "http://gedcomx.org/Primary": ["https://api.familysearch.org/platform/places/4662032"] }, display: { name: "Rieti", fullName: MODERN, type: "Municipality" }, jurisdiction: { resourceId: "425995" } }] });
+    }
+    if (url.endsWith("/description/425995")) {
+      return ok({ places: [{ id: "425995", display: { name: "Rieti", fullName: PARENT, type: "Province" } }] });
+    }
+    return { ok: false, status: 404, statusText: "Not Found", json: async () => ({}), text: async () => "" };
+  }
+
+  function recordSearch(url: URL) {
+    searchUrls.push(url);
+    const place = url.searchParams.get("q.deathLikePlace") ?? "";
+    const birth = url.searchParams.get("q.birthLikePlace");
+    if (place === failPlace) return { ok: false, status: 503, statusText: "Service Unavailable", json: async () => ({}) };
+    if (place === rejectPlace) return { ok: false, status: 401, statusText: "Unauthorized", json: async () => ({}) };
+    const rows = byPlace[birth === null ? place : `${place} | ${birth}`] ?? byPlace[place] ?? [];
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    const count = Number(url.searchParams.get("count") ?? 20);
+    const page = rows.slice(offset, offset + count);
+    return ok({
+      results: rows.length,
+      index: offset,
+      entries: page.map((id) => persona(id, id === TARGET ? "Giuseppa" : "Anna")),
+      ...(offset + count < rows.length ? { links: { next: { href: "next" } } } : {}),
+    });
+  }
+
+  beforeEach(async () => {
+    byPlace = {};
+    searchUrls = [];
+    placesCalls = 0;
+    failPlace = undefined;
+    rejectPlace = undefined;
+    const resolver = await vi.importActual<typeof import("../../src/utils/place-resolver.js")>("../../src/utils/place-resolver.js");
+    resolver.__clearPlaceResolverCachesForTests();
+    vi.mocked(placeSearchNames).mockImplementation(resolver.placeSearchNames);
+    mockFetch.mockImplementation(async (input: string | URL) => {
+      const url = String(input);
+      if (url.startsWith("https://api.familysearch.org/platform/places")) return placesApi(url);
+      if (url.startsWith("https://www.familysearch.org/service/search/hr/v2/personas")) return recordSearch(new URL(url));
+      return matchResponse(0.1);
+    });
+  });
+  afterEach(() => {
+    vi.mocked(placeSearchNames).mockReset();
+    vi.mocked(placeSearchNames).mockResolvedValue(null);
+  });
+
+  const MARCHETTI = { surname: "Marchetti", collectionId: "2146202", recordType: "death" as const, deathYearFrom: 1913, deathYearTo: 1913 };
+
+  it("finds Giuseppa Marchetti's death from the period place name, which alone misses her", async () => {
+    // The live sets of 2026-11-09: the period name's 33 do not hold her; the
+    // modern name's 443 hold her first.
+    byPlace[PERIOD] = ids("PER", 33);
+    byPlace[MODERN] = [TARGET, ...ids("MOD", 40)];
+
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
+
+    expect(out.results.map((r) => r.recordId)).toContain(`ark:/61903/1:1:${TARGET}`);
+    const searched = new Set(searchUrls.map((u) => u.searchParams.get("q.deathLikePlace")));
+    expect(searched).toEqual(new Set([
+      PERIOD, MODERN, "Rieti, Roma, Lazio, Italy", "Rieti, Umbria, Umbria, Italy",
+      "Rieti, Perugia, Umbria, Papal States", "Rieti, Umbria, Papal States",
+    ]));
+    const expansion = out.placeExpansion!;
+    expect(expansion.searches[0]).toMatchObject({ places: { deathPlace: PERIOD }, totalMatches: 33 });
+    expect(expansion.searches[1]).toMatchObject({ places: { deathPlace: MODERN }, totalMatches: 41 });
+    expect(out.totalMatches).toBe(41);
+    expect(out.query!.deathPlace).toBe(PERIOD);
+  });
+
+  it("interleaves by each search's rank, typed first, de-duplicated by record", async () => {
+    byPlace[PERIOD] = ["A1AA-AAAA", "SHRD-AAAA", "A3AA-AAAA"];
+    byPlace[MODERN] = ["SHRD-AAAA", "B2BB-BBBB"];
+
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
+
+    expect(out.results.map((r) => r.recordId.split(":").pop())).toEqual(["A1AA-AAAA", "SHRD-AAAA", "B2BB-BBBB", "A3AA-AAAA"]);
+    expect(out.placeExpansion?.mergedCount).toBe(4);
+    expect(out.returned).toBe(4);
+    expect(out.hasMore).toBe(false);
+  });
+
+  it("pages the one merged list: two pages concatenate with no gap and no repeat", async () => {
+    byPlace[PERIOD] = ids("PER", 15);
+    byPlace[MODERN] = [...ids("PER", 5), ...ids("MOD", 15)];
+    const page1 = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10 }, LOCAL);
+    const page2 = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, offset: 10 }, LOCAL);
+    const page3 = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, offset: 20 }, LOCAL);
+    const all = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 30 }, LOCAL);
+
+    const got = [...page1.results, ...page2.results, ...page3.results].map((r) => r.recordId);
+    expect(new Set(got).size).toBe(got.length);
+    expect(got).toEqual(all.results.map((r) => r.recordId));
+    expect(got).toHaveLength(30);
+    expect(page1.hasMore).toBe(true);
+    expect(page2.offset).toBe(10);
+    expect(page3.hasMore).toBe(false);
+  });
+
+  it("stages exactly the page shown on an unranked expansion, starting at the merged offset", async () => {
+    byPlace[PERIOD] = ids("PER", 15);
+    byPlace[MODERN] = ids("MOD", 15);
+    const dir = await mkdtemp(join(tmpdir(), "record-search-expand-page-"));
+    try {
+      const all = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 30 }, LOCAL);
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, offset: 10, projectPath: dir }, LOCAL);
+      const sidecar = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+      expect(sidecar.payload.results.map((r: { recordId: string }) => r.recordId)).toEqual(
+        all.results.slice(10, 20).map((r) => r.recordId),
+      );
+      expect(sidecar.payload.returned).toBe(10);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("standardizes only the rows shown on an unranked expansion", async () => {
+    byPlace[PERIOD] = ids("PER", 15);
+    byPlace[MODERN] = ids("MOD", 15);
+    const resolve = vi.mocked((await import("../../src/utils/place-resolver.js")).resolveStandardPlace);
+    resolve.mockClear();
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 5, offset: 5 }, LOCAL);
+    const asked = new Set(resolve.mock.calls.map((c) => c[0]));
+    expect(asked).toEqual(new Set(out.results.map((r) => `Rieti ${r.recordId.split(":").pop()}`)));
+  });
+
+  it("stops a further name's reads at the time limit and gives each request only the time left", async () => {
+    byPlace[PERIOD] = [TARGET];
+    byPlace[MODERN] = ids("MOD", 150);
+    let now = 1_000_000;
+    // The typed search and the first page of the modern one run at t=0; the
+    // clock then jumps past the deadline before the modern search's second page.
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+    const base = mockFetch.getMockImplementation()!;
+    mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) => {
+      const res = await base(input, init);
+      if (String(input).includes("personas") && String(input).includes(encodeURIComponent(MODERN))) now += 29_000;
+      return res;
+    });
+    try {
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 100, offset: 50 }, LOCAL);
+      const modern = out.placeExpansion!.searches.find((s) => s.places.deathPlace === MODERN)!;
+      expect(modern.returned).toBe(100);
+      expect(modern.error).toMatch(/time limit for this call ran out after 100 rows/);
+      expect(searchUrls.filter((u) => u.searchParams.get("q.deathLikePlace") === MODERN)).toHaveLength(1);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("reads each search in pages of at most 100 when offset + count passes 100", async () => {
+    byPlace[MODERN] = ids("MOD", 99).concat(ids("MOE", 60));
+    await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 50, offset: 100 }, LOCAL);
+    const modern = searchUrls.filter((u) => u.searchParams.get("q.deathLikePlace") === MODERN);
+    expect(modern.map((u) => [u.searchParams.get("offset"), u.searchParams.get("count")])).toEqual([["0", "100"], ["100", "50"]]);
+    expect(searchUrls.every((u) => Number(u.searchParams.get("count")) <= 100)).toBe(true);
+  });
+
+  it("refuses a page too deep to read every name, rather than switching orderings mid-paging", async () => {
+    byPlace[PERIOD] = ids("PER", 3);
+    // 6 names x 5 pages of 100 = 30 requests, past the 24 allowed.
+    await expect(
+      recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 100, offset: 400 }, LOCAL),
+    ).rejects.toThrow(/too deep to search every name of the place: 6 names/);
+    expect(searchUrls).toHaveLength(0);
+    // 6 x 4 = 24 is still allowed.
+    await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 100, offset: 300 }, LOCAL);
+    expect(searchUrls.length).toBeGreaterThan(0);
+  });
+
+  it("does not report 'found nothing' when a name it could not search might hold the record", async () => {
+    failPlace = MODERN;
+    await expect(recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL)).rejects.toThrow(
+      /did not complete for every name of the place \(Rieti, Rieti, Lazio, Italy: .*NOT an empty result/,
+    );
+  });
+
+  it("stops starting further names past the time limit, and still answers from what it searched", async () => {
+    byPlace[PERIOD] = [TARGET];
+    let now = 1_000_000;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => (now += 11_000));
+    try {
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
+      expect(out.results.map((r) => r.recordId)).toEqual([`ark:/61903/1:1:${TARGET}`]);
+      const errors = (out.placeExpansion?.searches ?? []).filter((s) => s.error).map((s) => s.error);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.every((e) => /time limit/.test(e!))).toBe(true);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("starts no further search once the typed search has failed", async () => {
+    failPlace = PERIOD;
+    await expect(recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL)).rejects.toThrow();
+    await new Promise((r) => setTimeout(r, 0));
+    // The typed search plus at most the two that started beside it.
+    expect(searchUrls.length).toBeLessThanOrEqual(3);
+  });
+
+  it("reports hasMore false when the rows past the page all fail mapping", async () => {
+    byPlace[PERIOD] = ids("PER", 3);
+    byPlace[MODERN] = ["NOID"];
+    const base = mockFetch.getMockImplementation()!;
+    mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) => {
+      const res = await base(input, init);
+      if (!String(input).includes(encodeURIComponent(MODERN).replace(/%20/g, "+")) && !String(input).includes(encodeURIComponent(MODERN))) return res;
+      const body = await (res as { json: () => Promise<FSSearchResponse> }).json();
+      // A row with no represented person: mapEntry drops it.
+      body.entries = [{ id: "NOID", content: { gedcomx: { persons: [] } } } as unknown as FSSearchEntry];
+      return { ...res, json: async () => body };
+    });
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 3 }, LOCAL);
+    expect(out.results).toHaveLength(3);
+    expect(out.hasMore).toBe(false);
+  });
+
+  it("adds the modern parent under *PlaceExact and keeps .exact on every search", async () => {
+    byPlace[PARENT] = [TARGET];
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, deathPlaceExact: true }, LOCAL);
+    expect(searchUrls.map((u) => u.searchParams.get("q.deathLikePlace"))).toContain(PARENT);
+    expect(searchUrls.every((u) => u.searchParams.get("q.deathLikePlace.exact") === "on")).toBe(true);
+    expect(out.results.map((r) => r.recordId)).toContain(`ark:/61903/1:1:${TARGET}`);
+  });
+
+  it("keeps the merge when a further name's search fails, and reports it", async () => {
+    byPlace[MODERN] = [TARGET];
+    failPlace = "Rieti, Umbria, Papal States";
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
+    expect(out.results.map((r) => r.recordId)).toContain(`ark:/61903/1:1:${TARGET}`);
+    const failed = out.placeExpansion!.searches
+      .filter((s) => s.error !== undefined);
+    expect(failed.map((s) => s.places.deathPlace)).toEqual(["Rieti, Umbria, Papal States"]);
+  });
+
+  it("fails the call when a further name's search is refused for the session (401)", async () => {
+    byPlace[PERIOD] = [TARGET];
+    rejectPlace = MODERN;
+    await expect(recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL)).rejects.toThrow(/session not accepted/);
+  });
+
+  it("searches every combination of two expanded place fields", async () => {
+    byPlace[`${MODERN} | ${MODERN}`] = [TARGET];
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, birthPlace: PERIOD }, LOCAL);
+    // 6 x 6 = 36 is past the 12-search cap: the longer list loses names from
+    // its end until the product fits (3 x 4 = 12), keeping typed and modern.
+    const pairs = searchUrls.map((u) => [u.searchParams.get("q.deathLikePlace"), u.searchParams.get("q.birthLikePlace")]);
+    expect(pairs).toHaveLength(12);
+    expect(new Set(pairs.map((p) => p.join(" | "))).size).toBe(12);
+    expect(pairs[0]).toEqual([PERIOD, PERIOD]);
+    expect(pairs).toContainEqual([MODERN, MODERN]);
+    const birthNames = new Set(pairs.map((p) => p[1]));
+    const deathNames = new Set(pairs.map((p) => p[0]));
+    expect(birthNames.size * deathNames.size).toBe(12);
+    expect(deathNames.has("Rieti, Umbria, Papal States") || birthNames.has("Rieti, Umbria, Papal States")).toBe(false);
+    expect(out.placeExpansion?.truncated).toBe(true);
+    expect(out.results.map((r) => r.recordId)).toContain(`ark:/61903/1:1:${TARGET}`);
+  });
+
+  it("searches the full product with no truncation when it fits", async () => {
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, birthPlace: "Italy" }, LOCAL);
+    // A country-only birth place does not expand: 6 x 1 = 6 searches.
+    expect(searchUrls).toHaveLength(6);
+    expect(new Set(searchUrls.map((u) => u.searchParams.get("q.birthLikePlace")))).toEqual(new Set(["Italy"]));
+    expect(out.placeExpansion?.truncated).toBeUndefined();
+  });
+
+  it("fails the call as today when the typed place's own search fails", async () => {
+    failPlace = PERIOD;
+    await expect(recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL)).rejects.toThrow(/transient failure, NOT an empty result/);
+  });
+
+  it("makes no Places API call for a repeat search (resolver caches)", async () => {
+    await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
+    const first = placesCalls;
+    expect(first).toBeGreaterThan(0);
+    await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
+    expect(placesCalls).toBe(first);
+  });
+
+  it("issues exactly one search URL with no place, a country-only place, or expandPlaces: false", async () => {
+    await recordSearchTool({ ...MARCHETTI }, LOCAL);
+    await recordSearchTool({ ...MARCHETTI, deathPlace: "Italy" }, LOCAL);
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL, { expandPlaces: false });
+    expect(searchUrls).toHaveLength(3);
+    expect(out.placeExpansion).toBeUndefined();
+  });
+
+  it("reports a nil search only when every name came back empty", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "record-search-expand-nil-"));
+    try {
+      const nil = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, projectPath: dir }, LOCAL);
+      expect(nil.nilSearchNeedsLog).toBeDefined();
+      byPlace["Rieti, Umbria, Papal States"] = [TARGET];
+      const hit = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, projectPath: dir }, LOCAL);
+      expect(hit.nilSearchNeedsLog).toBeUndefined();
+      expect(hit.totalMatches).toBe(1);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  describe("with a named subject (ranked)", () => {
+    let dir: string;
+    const TREE = { persons: [{ id: "I1", names: [{ given: "Giuseppa", surname: "Marchetti" }], facts: [{ type: "Death", date: "15 June 1913", place: "Rieti" }] }], relationships: [] };
+
+    beforeEach(async () => {
+      dir = await mkdtemp(join(tmpdir(), "record-search-expand-rank-"));
+      await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(TREE), "utf-8");
+      // The matcher scores the target high and everyone else low.
+      const base = mockFetch.getMockImplementation()!;
+      mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) => {
+        if (String(input).includes("matchTwoExamples")) {
+          return matchResponse(String(init?.body ?? "").includes(TARGET) ? 0.99 : 0.05);
+        }
+        return base(input, init);
+      });
+    });
+    afterEach(async () => {
+      await rm(dir, { recursive: true, force: true });
+    });
+
+    it("ranks the whole merged pool before cutting to count, so a deep record still surfaces", async () => {
+      // Rank 8 of the modern search: with 6 names interleaved it sits near merged
+      // position 48, past a 10-row page — only ranking the pool reaches it.
+      byPlace[PERIOD] = ids("PER", 10);
+      byPlace[MODERN] = [...ids("MOD", 7), TARGET, ...ids("MOE", 2)];
+      for (const p of ["Rieti, Roma, Lazio, Italy", "Rieti, Umbria, Umbria, Italy", "Rieti, Perugia, Umbria, Papal States", "Rieti, Umbria, Papal States"]) {
+        byPlace[p] = ids(p.slice(7, 10).toUpperCase().replace(/[^A-Z]/g, "X"), 10);
+      }
+
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, projectPath: dir, subjectId: "I1" }, LOCAL);
+
+      expect(out.results).toHaveLength(10);
+      expect(out.results[0]!.recordId).toBe(`ark:/61903/1:1:${TARGET}`);
+      expect(out.returned).toBe(10);
+      expect(out.staged?.returnedCount).toBe(10);
+      const sidecar = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+      expect(sidecar.payload.results.length).toBeGreaterThan(10);
+      expect(sidecar.payload.returned).toBe(10);
+    });
+
+    it("caps the ranked pool, keeping every name's best rows", async () => {
+      byPlace[PERIOD] = ids("PER", 60);
+      byPlace[MODERN] = [TARGET, ...ids("MOD", 59)];
+      ["Rieti, Roma, Lazio, Italy", "Rieti, Umbria, Umbria, Italy", "Rieti, Perugia, Umbria, Papal States", "Rieti, Umbria, Papal States"]
+        .forEach((p, i) => { byPlace[p] = ids(`X${i}Y`, 60); });
+      // 6 names x 60 distinct rows = 360 merged, past the 300 ranked pool.
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 60, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(out.placeExpansion?.rankedPoolCapped).toBe(true);
+      expect(out.results[0]!.recordId).toBe(`ark:/61903/1:1:${TARGET}`);
+      const sidecar = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+      expect(sidecar.payload.results).toHaveLength(300);
+    });
+
+    it("describes the page shown, not the pool, in the ranking summary", async () => {
+      byPlace[PERIOD] = ids("PER", 20);
+      byPlace[MODERN] = ids("MOD", 20);
+      const base = mockFetch.getMockImplementation()!;
+      mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) =>
+        String(input).includes("matchTwoExamples") ? matchResponse(0.001) : base(input, init));
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(out.results).toHaveLength(10);
+      expect(out.ranked?.returnedCount).toBe(10);
+      expect(out.hasMore).toBe(false);
+      // Nobody scores above the floor here, so the no-match advice fires: it must
+      // not tell the agent to page with an offset the tool refuses.
+      expect(out.ranked?.diagnostic).toMatch(/raise `count` \(up to 100\) or narrow the query/);
+      expect(out.ranked?.diagnostic).not.toMatch(/page deeper/);
+    });
+
+    it("refuses offset on a ranked expansion, which could skip a record between pages", async () => {
+      byPlace[PERIOD] = ids("PER", 60);
+      await expect(
+        recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, offset: 50, projectPath: dir, subjectId: "I1" }, LOCAL),
+      ).rejects.toThrow(/ranked search of every name of the place cannot page/);
+      expect(searchUrls).toHaveLength(0);
+      // Unranked paging, and a ranked first page, still run.
+      await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, offset: 50, projectPath: dir }, LOCAL);
+      await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(searchUrls.length).toBeGreaterThan(0);
+    });
+
+    it("still cuts to count, in merged order, when ranking fails", async () => {
+      matcherSettingsMock.mockResolvedValue({ backend: "service", url: "http://matcher.test", apiKey: "k".repeat(32) });
+      const base = mockFetch.getMockImplementation()!;
+      mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) => {
+        if (String(input).startsWith("http://matcher.test")) {
+          return { ok: false, status: 401, statusText: "Unauthorized", json: async () => ({ error: { code: "unauthorized" } }) };
+        }
+        return base(input, init);
+      });
+      byPlace[PERIOD] = ids("PER", 10);
+      byPlace[MODERN] = ids("MOD", 10);
+
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 5, projectPath: dir, subjectId: "I1" }, LOCAL);
+
+      expect(out.rankingError).toBeDefined();
+      expect(out.results.map((r) => r.recordId.split(":").pop())).toEqual(["PER00-AAAA", "MOD00-AAAA", "PER01-AAAA", "MOD01-AAAA", "PER02-AAAA"]);
+    });
   });
 });

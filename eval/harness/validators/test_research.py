@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 import json
+import string
 
 import pytest
 
@@ -491,10 +492,10 @@ def test_no_gate_stop(before_state, after_state, test):
 # ---------------------------------------------------------------------------
 
 
-def test_keeps_waiting_page(before_state, after_state, tool_calls, test):
-    """Tag-gated: a read page of a held record is kept by one
-    `extraction_append({ attachWaitingPages: true })` call, so its text reaches
-    the source that waited, with no second source and no assertion."""
+def test_keeps_waiting_page(before_state, after_state, tool_calls, builtin_tool_calls, test):
+    """Tag-gated: a read page of a held record goes to record-structurer in one
+    spawn, which keeps it. The router does not keep it itself, and writes no
+    source and no assertion for it."""
     if "keeps-waiting-page" not in test.get("tags", []):
         pytest.skip("not a keeps-waiting-page test")
     before = before_state.get("research_json")
@@ -502,24 +503,28 @@ def test_keeps_waiting_page(before_state, after_state, tool_calls, test):
     if before is None or after is None:
         pytest.skip("missing research.json for diff")
 
-    kept = [
+    waiting = [s["id"] for s in before.get("sources", []) if s.get("image_ark") and not s.get("transcription")]
+    assert waiting, "The scenario has no source waiting for its page."
+
+    spawns = [
+        c for c in (builtin_tool_calls or [])
+        if isinstance(c, dict) and (c.get("args") or {}).get("subagent_type") == "record-structurer"
+    ]
+    assert len(spawns) == 1, (
+        f"Expected one record-structurer spawn for the waiting page; got {len(spawns)}."
+    )
+    kept_here = [
         c for c in (tool_calls or [])
         if isinstance(c, dict)
         and bare_tool_name(c.get("tool") or "") == "extraction_append"
         and (c.get("args") or {}).get("attachWaitingPages") is True
     ]
-    assert kept, "No extraction_append call kept the waiting page."
-
-    held = {s["id"]: s for s in after.get("sources", [])}
-    waiting = [s["id"] for s in before.get("sources", []) if s.get("image_ark") and not s.get("transcription")]
-    assert waiting, "The scenario has no source waiting for its page."
-    empty = [i for i in waiting if not (held.get(i) or {}).get("transcription")]
-    assert not empty, f"Still no page on: {empty}"
+    assert not kept_here, "The router kept the page itself; record-structurer keeps it."
     assert len(after.get("sources", [])) == len(before.get("sources", [])), (
-        "Keeping a page fills the existing source; a new source was written."
+        "The router wrote a new source for the waiting page."
     )
     assert len(after.get("assertions", [])) == len(before.get("assertions", [])), (
-        "Keeping a page writes no assertion."
+        "The router wrote an assertion for the waiting page."
     )
 
 
@@ -795,6 +800,8 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
 # tag -> (callee, field, value pattern) lines its spawn prompt must carry.
 _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
+    "delegates-user-present-no-external": (("search-external-sites", "userPresent", r"no"),),
+    "delegates-user-present-no-hints": (("search-hints", "userPresent", r"no"),),
     "delegates-wrap-up": (
         ("research-plan", "planItemIds", r".*pli_\w+"),
         ("research-exhaustiveness", "wrapUp", r"yes"),
@@ -1102,6 +1109,57 @@ def test_bounded_transcription_is_delivered_in_place(
     )
 
 
+def test_bounded_first_message_runs_its_deliverable_after_init_project(
+    skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
+):
+    """Tag-gated (``bounded-after-init``). A bounded record ask with a PID and no
+    project creates the project and runs the search in the same turn (plan section
+    H, issue #2813): the hand-offs are init-project then search-records, repeats
+    allowed and nothing else; init-project made the project; the search is handed
+    the subject's tree id, not the FamilySearch ID; no step denial cut it short; the
+    reply drops init-project's next-step sentence; and it ends on an offer. Which
+    step it offers is the router's call: 2 of 6 scratch runs offered "setting up
+    the project" when the router was told to, so a fixed label is not pinned.
+
+    A gate denial and a stub's reply both come back as the spawn's result, so a
+    denial is told apart by its text, which carries the gate's own reason."""
+    from harness.skill_runner import handoffs, load_step_boundary
+
+    if "bounded-after-init" not in test.get("tags", []):
+        pytest.skip("not a bounded-first-message test")
+    skill_under_test = test.get("skill")
+    taken: list[str] = []
+    for name in handoffs(skills_invoked, builtin_tool_calls):
+        if name != skill_under_test and name not in taken:
+            taken.append(name)
+    assert taken == ["init-project", "search-records"], (
+        f"a bounded record ask with no project hands off to init-project, then "
+        f"search-records, and nothing else; got {taken}"
+    )
+    research = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx") or {}
+    assert research is not None, "init-project made no project, yet the turn went on to search"
+    problems = [
+        p for p in (_handed_subject(prompt, tree, research)[1]
+                    for prompt in _spawn_prompts(builtin_tool_calls, "search-records")) if p
+    ]
+    assert not problems, "; ".join(problems)
+    boundary = load_step_boundary()
+    denial = boundary._DENY_REASON.split("{", 1)[0].strip()
+    denied = [
+        r.get("subagent_type") for r in (agent_returns or [])
+        if denial in (r.get("text") or "")
+    ]
+    assert not denied, f"the step boundary denied {denied} in the turn that created the project"
+    assert "first research question" not in (text_response or ""), (
+        "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
+    )
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    assert boundary.offered_step(text_response) is not None, (
+        f"the reply does not end on a \"Continue with …?\" offer: {lines[-1:]}"
+    )
+
+
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
 
 
@@ -1137,28 +1195,23 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
                 plan_of[item["id"]] = plan["id"]
                 question_of[item["id"]] = plan.get("question_id")
     assert items, "Scenario drift: no active plan item to hand over."
-    decoder = json.JSONDecoder()
+    by_id = {i["id"]: i for i in items}
     problems = []
     for prompt in prompts:
-        named = [i for i in items if i["id"] in prompt]
-        if not named:
-            problems.append(f"names no plan item id: {prompt[:120]!r}")
+        handed, problem = _handed_plan_item(prompt)
+        if problem:
+            problems.append(problem)
             continue
-        item = named[0]
+        item = by_id.get(handed.get("id"))
+        if item is None:
+            problems.append(
+                f"plan_item block hands {handed.get('id')!r}, not an open item of an active plan {sorted(by_id)}"
+            )
+            continue
         if plan_of[item["id"]] not in prompt:
             problems.append(
                 f"does not hand the parent plan id {plan_of[item['id']]} for {item['id']}"
             )
-        marker = prompt.find("plan_item")
-        brace = prompt.find("{", marker) if marker != -1 else -1
-        if brace == -1:
-            problems.append(f"no plan_item JSON block for {item['id']}: {prompt[:160]!r}")
-            continue
-        try:
-            handed, _ = decoder.raw_decode(prompt[brace:])
-        except ValueError:
-            problems.append(f"plan_item block for {item['id']} is not valid JSON")
-            continue
         if handed != item:
             missing = object()  # a dropped key whose value was null must still be named
             diff = sorted(
@@ -1178,6 +1231,88 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
                 f"{qid!r}, which does not ask about a parent: {question_text.get(qid, '')!r}"
             )
         problems.extend(_handed_parents_problems(subject, tree, parents_question))
+    assert not problems, "; ".join(problems)
+
+
+# `plan_item:` as a field, not inside `plan_item_id` or `plan_items`.
+_PLAN_ITEM_BLOCK = re.compile(r"(?<![A-Za-z_])plan_item(?![A-Za-z_])[`*\"']*\s*[:=]")
+# Router prompts write the id line as `planItemId:`, `Plan item ID:` or
+# `plan_item_id:`; `planItemIds:` (a disposal list) is a different field.
+_PLAN_ITEM_ID_NAME = r"plan[\s_]*item[\s_]*id(?!s)"
+
+
+def _handed_plan_item(prompt: str) -> tuple[dict | None, str | None]:
+    """The one plan item a search spawn hands over, read from its `plan_item:`
+    JSON block, or why it hands no single item: no block, two blocks, a block
+    that is not a JSON object, two id lines, or an id line naming another item.
+    A prompt with no id line is fine: the block's own `"id"` names the item."""
+    blocks = list(_PLAN_ITEM_BLOCK.finditer(prompt))
+    if len(blocks) > 1:
+        return None, f"carries {len(blocks)} plan_item blocks; a spawn hands one item: {prompt[:160]!r}"
+    brace = prompt.find("{", blocks[0].end()) if blocks else -1
+    if brace == -1:
+        return None, f"no plan_item JSON block: {prompt[:160]!r}"
+    try:
+        handed, _ = json.JSONDecoder().raw_decode(prompt[brace:])
+    except ValueError:
+        return None, "plan_item block is not valid JSON"
+    if not isinstance(handed, dict):
+        return None, "plan_item block is not a JSON object"
+    ids = _field_values(prompt, "planItemId", name_regex=_PLAN_ITEM_ID_NAME)
+    if len(ids) > 1:
+        return None, f"carries {len(ids)} plan item id lines {ids}; a spawn hands one item"
+    if ids and ids[0] != handed.get("id"):
+        return None, f"id line names {ids[0]!r} but the plan_item block is {handed.get('id')!r}"
+    return handed, None
+
+
+_FANS_OUT_TAG = "fans-out-plan-items"
+_RELAYED_WORDS = 6
+
+
+def _words(text: str) -> list[str]:
+    words = (w.strip(string.punctuation) for w in _quote_and_space_normal(text).lower().split())
+    return [w for w in words if w]
+
+
+def _word_runs(words: list[str], n: int) -> set[tuple[str, ...]]:
+    return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def test_search_spawns_cover_each_open_item(test, builtin_tool_calls, before_state):
+    """Tag-gated (``fans-out-plan-items``). On a job, research/SKILL.md's search
+    step dispatches one search agent per open item of the active plan, each
+    handed that one item and never the researcher's words (issue #4441). Read
+    from the hook records: one search-records spawn per open item with no
+    ``fallback_for``, the handed ids equal to those items, and no spawn carrying
+    6 or more consecutive words of the user message. Whether the spawns share
+    one assistant message is not checked: no record says which message a spawn
+    came from."""
+    if _FANS_OUT_TAG not in (test.get("tags") or []):
+        pytest.skip("not a fans-out test")
+    research = before_state.get("research_json") or {}
+    expected = sorted(
+        item["id"]
+        for plan in research.get("plans", [])
+        if plan.get("status") == "active"
+        for item in plan.get("items", [])
+        if item.get("status") in ("planned", "in_progress") and not item.get("fallback_for")
+    )
+    assert len(expected) > 1, f"Scenario drift: a fans-out test needs two or more open items; got {expected}"
+    prompts = _spawn_prompts(builtin_tool_calls, "search-records")
+    problems = []
+    if len(prompts) != len(expected):
+        problems.append(f"{len(prompts)} search-records spawns for {len(expected)} open plan items {expected}")
+    handed = sorted(str((_handed_plan_item(p)[0] or {}).get("id")) for p in prompts)
+    if handed != expected:
+        problems.append(f"handed plan items {handed}, open plan items {expected}")
+    message = re.sub(r"^/research\b", "", (test.get("user_message") or "").strip())
+    banned = _word_runs(_words(message), _RELAYED_WORDS)
+    for prompt in prompts:
+        if banned & _word_runs(_words(prompt), _RELAYED_WORDS):
+            problems.append(
+                f"a search-records spawn carries {_RELAYED_WORDS}+ consecutive words of the researcher's message: {prompt[:160]!r}"
+            )
     assert not problems, "; ".join(problems)
 
 
@@ -1250,6 +1385,66 @@ def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
     tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
     problems = [p for p in (_handed_subject(prompt, tree, research)[1] for prompt in prompts) if p]
     assert not problems, "; ".join(problems)
+
+
+_SETUP_ORDER_TAG = "attached-records-setup"
+
+
+def test_attached_records_setup_order(tool_calls, test, before_state):
+    """Tag-gated (``attached-records-setup``): the router runs the attached-
+    records step for a subject — ``extraction_append({ personId })``, then
+    ``timeline_build`` after it — on a job's "Objective but no questions" row and
+    on the bounded "a timeline for a person" ask (issue #3516 PR D).
+
+    Checked per subject: each person extracted is built after it, for the same
+    subject. ``timeline_build``'s own contract accepts "a tree person id or the
+    FamilySearch id a tree person links to" (timeline-build.ts), so the router
+    is free to spell the two calls' ``personId`` differently for the same
+    person (e.g. the FamilySearch id on the extract, the tree id on the build,
+    once the earlier call's result surfaces it) — canonicalize both to the
+    person's bare FamilySearch id via the scenario's tree before comparing,
+    rather than requiring an identical literal string. Orders only the two MCP
+    calls. ``tool_calls`` (the mock's MCP log) and ``builtin_tool_calls`` (the
+    hook's) share no ordering, so "both before the first question-selection" is
+    not checked here: on a job test it rests on ``execution.stop_at_stub`` and
+    ``routes-to:question-selection``.
+    """
+    if _SETUP_ORDER_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not an {_SETUP_ORDER_TAG} test")
+
+    tree = before_state.get("tree_gedcomx_json") or {}
+    by_tree_id = {
+        p.get("id"): bare_ark_id(p["ark"])
+        for p in tree.get("persons") or []
+        if isinstance(p, dict) and isinstance(p.get("ark"), str) and p["ark"].strip()
+    }
+
+    def person(c):
+        pid = (c.get("args") or {}).get("personId")
+        pid = pid.strip() if isinstance(pid, str) else ""
+        if not pid:
+            return ""
+        return by_tree_id.get(pid, bare_ark_id(pid))
+
+    first_extract: dict[str, int] = {}
+    builds: dict[str, list[int]] = {}
+    for i, c in enumerate(tool_calls or []):
+        name = bare_tool_name(str(c.get("tool", "")))
+        pid = person(c)
+        if name == "extraction_append" and pid:
+            first_extract.setdefault(pid, i)
+        elif name == "timeline_build" and pid:
+            builds.setdefault(pid, []).append(i)
+    assert first_extract, (
+        "the attached-records step must call extraction_append with personId; it never did. "
+        f"extraction_append calls: {[c.get('args') for c in tool_calls or [] if bare_tool_name(str(c.get('tool', ''))) == 'extraction_append']}"
+    )
+    unbuilt = {pid: at for pid, at in first_extract.items() if not any(b > at for b in builds.get(pid, []))}
+    assert not unbuilt, (
+        "each subject's timeline_build must follow its extraction_append({ personId }) for the same personId; "
+        f"no later timeline_build for {sorted(unbuilt)}. extraction_append(personId) at {first_extract}, "
+        f"timeline_build at {builds}"
+    )
 
 
 _HINTS_HANDOFF_TAG = "asserts-hints-handoff"
@@ -1329,13 +1524,17 @@ _UNCONFIRMED = re.compile(
 )
 
 
-def _field_values(prompt: str, field: str) -> list[str]:
+def _field_values(prompt: str, field: str, *, name_regex: str | None = None) -> list[str]:
     """Every value written for ``field`` in a spawn prompt, in any markup the
     router uses: ``field: v``, ``**field:** v``, ``"field": "v"``, ``field=v``,
     and in prose, where a value can end a sentence or a parenthesis
-    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped."""
+    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped.
+    ``name_regex``, when given, matches the field name instead of ``field``,
+    case-insensitively, for a field routers spell several ways."""
+    name = name_regex or re.escape(field)
     pattern = re.compile(
-        rf"(?<![A-Za-z]){re.escape(field)}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)"
+        rf"(?<![A-Za-z]){name}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)",
+        re.IGNORECASE if name_regex else 0,
     )
     values = (m.group("v").rstrip(".)") for m in pattern.finditer(prompt))
     return [v for v in values if v]
@@ -1448,6 +1647,32 @@ def test_search_hit_review_yes_extracts_the_matches(test, builtin_tool_calls):
     want_ids = sorted({bare_ark_id(ref.partition("#")[2]) for ref in wanted})
     assert record_ids == want_ids, f"the sources' recordIds {record_ids} are not the Matches' hit ids {want_ids}"
     assert results_refs == sorted(wanted), f"the sources' resultsRefs {results_refs} are not the hitRefs {sorted(wanted)}"
+
+
+_HANDBACK_SPAWNS_PREFIX = "handback-spawns:"
+_HANDBACK_NO_SPAWN_PREFIX = "handback-no-spawn:"
+
+
+def test_handback_routing_follows_the_step_group(test, builtin_tool_calls):
+    """Tag-gated (``handback-spawns:<agent>`` / ``handback-no-spawn:<agent>``).
+    research/SKILL.md's search step routes an agent return's ``Hand-back: <owner>``
+    line by step group (issue #4358): an owner in the returning agent's group is
+    spawned in the same turn; any other owner is named in the report and not
+    spawned. Read from the hook records, which the judge cannot see."""
+    from harness.skill_runner import spawn_prompts
+
+    spawns = _data_tag_values(test, _HANDBACK_SPAWNS_PREFIX)
+    refused = _data_tag_values(test, _HANDBACK_NO_SPAWN_PREFIX)
+    if not spawns and not refused:
+        pytest.skip("not a hand-back routing test")
+    problems = []
+    for agent in spawns:
+        if not spawn_prompts(builtin_tool_calls, agent):
+            problems.append(f"the Hand-back to {agent} was not spawned")
+    for agent in refused:
+        if spawn_prompts(builtin_tool_calls, agent):
+            problems.append(f"{agent} is in another step group and was spawned mid-turn")
+    assert not problems, "; ".join(problems)
 
 
 def _marked_unconfirmed(reply: str, title: str) -> bool:

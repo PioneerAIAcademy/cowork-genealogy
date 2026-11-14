@@ -8,7 +8,7 @@ This document defines the complete schema for `research.json`, the GPS audit tra
 
 A genealogy research project consists of two files:
 
-- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/specs/simplified-gedcomx-spec.md`). This is what uploads to FamilySearch.
+- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/specs/simplified-gedcomx-spec.md`).
 - **`research.json`** — The working artifact. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. This is the GPS audit trail that proves the conclusions in the GedcomX file are sound.
 
 ### The two-file boundary
@@ -17,8 +17,6 @@ A genealogy research project consists of two files:
 
 1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, every person a `proof_summaries.claims[]` entry names (a relationship's ends, a fact's subject or subject pair, an identity's `person` and `same_as`, a name's `person`), `namesakes.person_id`, and `hit_verdicts.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
-
-At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
 
 ### Bootstrap sequence
 
@@ -95,7 +93,7 @@ flagged. (One row below is the exception, and says so.)
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
 | `skip_category` | `answered`, `inaccessible`, `no_coverage`, `fallback_not_triggered`, `out_of_scope`, `premise_invalidated`, `user_declined` | plan items, on a `skipped` item |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
-| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, `matricula`, `openarch` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
+| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, `matricula`, `openarch`, `blm_glo` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `record_basis` | `stated`, `inferred`, `absent` | assertions |
@@ -311,7 +309,7 @@ described under "Who actually writes a row" below.
 | `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), survey-surname; `extraction_append` (its own `record_read` entry per record it reads live; an earlier uncited read is cited instead) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | `extraction_append` (by tool identity), citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
 | `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. A wrong extraction is corrected only by `extraction_append`'s re-extraction, which retires the old assertions with `superseded_by` (§5.6). Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
-| `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
+| `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. The one removal is `research_append`'s unanchored-person sweep, which takes out the links naming a minted person it removes (`research-append-tool-spec.md` §5.11). An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline; `timeline_build` (person timelines, by tool identity) | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated. `timeline_build` writes only a person's own timeline (no `hypothesis_id`) and updates it in place on a rerun |
@@ -320,7 +318,7 @@ described under "Who actually writes a row" below.
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 | `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
 | `namesakes` | search-records (the owner: the plugin hook routes the section to it), with search-images and search-full-text as co-writers; `research_append` stamps `record_persona_ids` and `birth_year`, and fills in `birth_year` on a row of a person a call links | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id`, `record_persona_ids` or `birth_year` (Section 5.15). Optional section — absent until a namesake is recorded |
-| `rejected_links` | person-evidence | any caller via `research_query` | Immutable except `reason`, which may be filled in later; `research_append` refuses an update that sets any other field (Section 5.14). Never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
+| `rejected_links` | person-evidence | any caller via `research_query` | Immutable except `reason`, which may be filled in later; `research_append` refuses an update that sets any other field (Section 5.14). Never delete — the whole point is that the record outlives the session that made it. The one removal is `research_append`'s unanchored-person sweep, which takes out the entries naming a minted person it removes (`research-append-tool-spec.md` §5.11). Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 | `hit_verdicts` | the evaluate-search-results agent (sole writer: the plugin hook routes the section to it); `research_append` rewrites `hit_id` to the stored form and folds a repeat append into an update | any caller via `research_query`; `merge_tree_persons` | Mutable (`verdict`, `new_vital_info`, `rationale`); never deleted, except that `merge_tree_persons` removes a collapsed person's row that agrees with its survivor's on the same hit. A row is never retired, and `research_append` refuses an update that sets any other field (Section 5.16). Optional section — absent until a hit is evaluated |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
@@ -486,9 +484,9 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — the deliverable) | Mutable; preserve IDs |
 | `relationships` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, `extraction_append` | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
+| `sources` | init-project, tree-edit, proof-conclusion, `extraction_append`, forget-and-rederive (removal only) | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
@@ -516,8 +514,9 @@ currently no path to correct an assertion's value; a disputed reading
 goes in a conflict.
 `forget-and-rederive` is the fifth writer of `persons` and `relationships` and
 the only **subtractive** one: `tree_forget` removes a slice of the tree so it can
-be re-derived from records as a practice run. It mints nothing, sources nothing,
-and writes no other section. The harness's
+be re-derived from records as a practice run. It mints nothing. In `sources` it
+only removes: the `source` selector removes a description the researcher names,
+with every citation of it. The harness's
 `test_tree_ownership_table` universal validator enforces this ownership, reading
 the same `docs/specs/schemas/ownership.json` as the research.json half — and only
 inside a paid per-skill eval run, which is the whole of this rule's enforcement
@@ -676,14 +675,14 @@ Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_rea
 
 **`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow.
 
-Not every site here is commercial. `chronicling_america`, `digital_newspaper_archive` and `library_archives_canada` are **free to search**, and are in this workflow for a different reason: all three sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. (`library_archives_canada` was reclassified on 2026-09-15: its collection-search host answers 403 with a Cloudflare challenge.) `openarch` (Open Archieven, the Dutch archives aggregator) sits with that group for a blunter reason: no challenge — HTTP 200 with full content and no `cf-mitigated` header, measured 2026-10-22 — but it TCP-drops some source networks outright, so an automated fetch from an affected range fails with no page at all. `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors` (subscription may still gate full results) and `italian_genealogy` are also free to search, with no fetch barrier at all — they are in this workflow only because it never fetches any site directly, not because of bot protection. `archion` (German Protestant church books, whose scans need a paid pass) and `matricula` (Catholic church books, free) are *browse* sites: `url_generated` is the parish page, and the user pages parish → register → volume → image. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
+Not every site here is commercial. `chronicling_america`, `digital_newspaper_archive` and `library_archives_canada` are **free to search**, and are in this workflow for a different reason: all three sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. (`library_archives_canada` was reclassified on 2026-09-15: its collection-search host answers 403 with a Cloudflare challenge.) `openarch` (Open Archieven, the Dutch archives aggregator) sits with that group for a blunter reason: no challenge — HTTP 200 with full content and no `cf-mitigated` header, measured 2026-10-22 — but it TCP-drops some source networks outright, so an automated fetch from an affected range fails with no page at all. `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors` (subscription may still gate full results), `italian_genealogy` and `blm_glo` (the BLM General Land Office land-patent records — federal land in the 30 public-land states) are also free to search, with no fetch barrier at all — they are in this workflow only because it never fetches any site directly, not because of bot protection. `archion` (German Protestant church books, whose scans need a paid pass) and `matricula` (Catholic church books, free) are *browse* sites: `url_generated` is the parish page, and the user pages parish → register → volume → image. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, `matricula`, or `openarch`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
+| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, `matricula`, `openarch`, or `blm_glo`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the results reached the agent. A capture need not be a file: page content already present in the conversation is a capture that arrived without one, and is recorded `true` with `capture_filename` null |
-| `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file |
+| `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file. For a project upload it is the upload's name — the original, never its `<name>.txt` text layer, even when the agent read the layer |
 
 ### 5.4.1 Sidecar result files
 
@@ -703,9 +702,11 @@ A search that returns zero results writes **no** sidecar (`results_ref` is null)
 
 ### 5.5 `sources`
 
-Array of source objects. Sources in `research.json` carry analytical metadata (classification, structured citation detail). The source descriptions themselves also appear in `tree.gedcomx.json` in simplified GedcomX format for upload.
+Array of source objects. Sources in `research.json` carry analytical metadata (classification, structured citation detail). The source descriptions themselves also appear in `tree.gedcomx.json` in simplified GedcomX format.
 
 **1:many relationship with GedcomX:** Multiple research sources can reference the same `gedcomx_source_description_id`. This is the expected pattern when the same underlying record is accessed through different repositories — e.g., the 1850 census via FamilySearch (original image, `source_classification: "original"`) and via Ancestry (derivative index, `source_classification: "derivative"`). They are different sources of the same record, per GPS practice. The GedcomX source description represents the underlying record; the research sources represent distinct access paths with distinct classifications.
+
+**One record acquired twice is one source.** A record is often found first as an index entry and read again later from the register image; the second extraction refines the existing source in place rather than adding a new one (`extraction_append` reports this as `sourceReuse.action: "updated_existing"`). The source keeps the `log_entry_id` of the first acquisition — it answers "when did we first acquire this record?" — while each assertion's `log_entry_id` names the research act that produced that particular claim, so the two legitimately differ and neither is stale. Whether we examined the original is answered by `source_classification` together with `transcription`/`image_filename` (or an image ARK in `url`), never by comparing the two log ids. Do not reconcile them.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -713,7 +714,7 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `gedcomx_source_description_id` | string | yes | Foreign key to `tree.gedcomx.json` `sources[].id` |
 | `citation` | string | yes | Formatted citation per Evidence Explained |
 | `citation_detail` | object | yes | Structured citation breakdown. See below |
-| `source_classification` | `source_classification` | yes | Original, Derivative, or Authored — classified at the source level |
+| `source_classification` | `source_classification` | yes | Original, Derivative, or Authored — classified at the source level. `original` needs stored evidence: a `transcription`, an `image_filename`, or a FamilySearch image ARK in `url` (`research_append` refuses it otherwise; `guardrail-enforcement-spec.md` §5) |
 | `repository` | string | yes | Where this source is held |
 | `access_date` | string | yes | ISO 8601 date when the source was accessed |
 | `url` | string or null | no | URL to the digital source |
@@ -785,6 +786,7 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
 | `superseded_by` | string or null | no | Set only by `extraction_append({ reextract: true })`. **Any non-null value means the assertion is retired**: it is history, not evidence. Either the `a_` id of the assertion that replaced it, or the literal `"retracted"` when the re-extraction wrote no counterpart (an invented relationship, say). Absent or null means live |
 | `superseded_reason` | string or null | no | Why the assertion was retired. Required, non-empty, when `superseded_by` is `"retracted"` |
+| `disputes_assertion_id` | string | no | Tool-stamped, never the caller's: the `a_` id of the index assertion, on the **same source**, that this page reading disputes. Written only by `extraction_append`'s `attachWaitingPages` mode with `pageReadings` (research-append spec §11.9); `research_append` refuses a caller's value. A disputed index value counts as doubtful, like a `[?]` reading (research-append spec §5). The target may be retired: a dispute follows the target's `superseded_by` to its successor |
 
 **`structured_value`** — Optional machine-readable form of `value` that enables programmatic comparison (timeline construction, conflict detection) without parsing prose. The freeform `value` stays for human readability. See Section 5.6.1 for recommended shapes by fact_type.
 
@@ -796,7 +798,7 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 
 | `fact_type` | Shape | Example |
 |-------------|-------|---------|
-| `name` | `{ "given", "surname" }` | `{ "given": "Patrick", "surname": "Flynn" }` |
+| `name` | `{ "given", "surname", "type"? }` — `type` is `birth`, `married`, `nickname` or `also_known_as`, written only by `extraction_append`'s documents path where the text says which; `materialize_facts` mints it as `BirthName`/`MarriedName`/`Nickname`/`AlsoKnownAs`, and any other value, or none, mints no type | `{ "given": "Grace", "surname": "Whitaker", "type": "birth" }` |
 | `birth`, `death`, `burial` | `{ "year", "place" }` | `{ "year": 1845, "place": "Ireland" }` — `year` as number for comparison |
 | `residence` | `{ "place" }` | `{ "place": "Schuylkill County, Pennsylvania" }` |
 | `marriage` | `{ "spouse_given", "spouse_surname", "place" }` | `{ "spouse_given": "Mary", "spouse_surname": "Kelly" }` |
@@ -862,9 +864,13 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised, or the `rj_` ID of the rejection that retired it (Section 5.14). An `rj_` value must name an existing `rejected_links` entry |
 
-**Cardinality:** One assertion can have multiple person_evidence entries linking it to different persons. This is the expected pattern for assertions that imply relationships — e.g., a_004 ("Listed in household of Thomas Flynn, position consistent with child") is evidence for both I1 (Patrick, the child) and I2 (Thomas, the head). Create one `pe_` entry per person the assertion bears on. The `person-evidence` skill writes all links; extraction (`extraction_append`) does not create provisional links.
+**Cardinality:** One assertion can have multiple person_evidence entries linking it to different persons. This is the expected pattern for assertions that imply relationships — e.g., a_004 ("Listed in household of Thomas Flynn, position consistent with child") is evidence for both I1 (Patrick, the child) and I2 (Thomas, the head). Create one `pe_` entry per person the assertion bears on **when the assertion names two people** — a relationship, a marriage, a couple event, or a fact about someone else filed on this persona. A fact about one person (name, sex, birth, death, residence, occupation) gets ONE entry, to the person whose record entry it is; linking it to a relative as well asserts something false about that relative.
 
-When a link is revised (e.g., the assertion is re-linked to a different person), the old entry gets `superseded_by` set to the new entry's ID. The old entry is never deleted.
+**A row can be tool-derived.** A link says the person in role X of record Y *is* tree person Z, so it claims that whole record entry, not the one fact it names. `research_append` therefore writes the entry's other one-party rows itself when a one-party fact is linked, each carrying the trigger's confidence, no `match_score`, and a rationale naming the link it came from. A two-party fact never triggers that and is never produced by it, because its link does not say which of its two parties it is about; negative evidence (`record_basis: "absent"`) is not part of an entry; and an entry belongs to one tree person, so a one-party link is refused when another person already holds the entry through a one-party link of their own. Because the rule runs at write time, a project written before it stays partly linked. Contract: `research-append-tool-spec.md` §5.13.
+
+Writers: the `person-evidence` skill writes links, `research_append` derives the rows above, and `extraction_append` in `personId` mode writes unscored attachment links (`speculative`, no score, a fixed rationale) when a FamilySearch attachment is taken as given.
+
+When a link is revised (e.g., the assertion is re-linked to a different person), the old entry gets `superseded_by` set to the new entry's ID. The old entry is never deleted; the only removal of a link is `research_append`'s unanchored-person sweep, with the minted person it names (`research-append-tool-spec.md` §5.11).
 
 **Circular-corroboration invariant.** A tree fact that was added because of a record cannot confirm that record. A link to a starting-tree person at `probable` or `confident` is refused when the only thing the starting tree offers to corroborate it is the record's own: every source on the person's tree relationship to each parent or spouse the record names is that record or a copy of it (`research-append-tool-spec.md` §5, circular corroboration). Where the record names no such relative the baseline holds, the same test runs on the person's own sources and refuses `confident` only, because a single primary-informant source with no corroborating record is `probable`. A source that is the FamilySearch tree itself counts as no source, and a relationship or person with no source is provenance unknown and stays allowed. A copy is another extracted record sharing a research source or source description, or, on a record carrying no other kind of fact, a party's birth, christening or baptism with the same full date, place and given name. A refusal clears when the relationship gains a source that is another record, or when one record outside the entry is linked at `probable` or `confident` to both the person and the relative. Not covered: proof claims (`proof_summaries`), two indexes of one entry the agent never extracted or dated to the year only, and a two-party assertion.
 
@@ -1000,7 +1006,7 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 
 **Timing:** Proof summaries may be written for questions at any status. A summary for an `in_progress` question represents a preliminary conclusion; its tier should reflect the incomplete state of research (typically `probable` or `possible`, not `proved`). Writing preliminary conclusions is encouraged — it forces the skill to articulate the current state of evidence and identify what's missing.
 
-The `narrative_markdown` is the authoritative GPS conclusion — the written proof per GPS Step 5. The structured fields (`tier`, `vehicle`, `supporting_assertion_ids`, `resolved_conflict_ids`) are metadata about it, not replacements for it. If the narrative and the structured fields disagree, the narrative governs; the skill should update the structured fields to match. The narrative must be readable as a standalone document without reference to the rest of the JSON, written in a form uploadable to FamilySearch as a Memory/Document. It includes inline citations, the evidence summary, conflict resolution rationale, and the confidence tier declaration. It cannot include images (it lives inside a JSON string field); image references should be described by citation.
+The `narrative_markdown` is the authoritative GPS conclusion — the written proof per GPS Step 5. The structured fields (`tier`, `vehicle`, `supporting_assertion_ids`, `resolved_conflict_ids`) are metadata about it, not replacements for it. If the narrative and the structured fields disagree, the narrative governs; the skill should update the structured fields to match. The narrative must be readable as a standalone document without reference to the rest of the JSON. It includes inline citations, the evidence summary, conflict resolution rationale, and the confidence tier declaration. It cannot include images (it lives inside a JSON string field); image references should be described by citation.
 
 **`claims` — per-claim tier breakdown.** A question like "who were the
 parents of X" can resolve into two claims (paternity, maternity) whose evidence
@@ -1096,6 +1102,10 @@ researches; it accumulates across the project's questions (reused, not per-quest
 
 `for_place` is checked at write time: `research_append` refuses an entry whose
 first place FamilySearch's place standard does not have (`research-append-tool-spec.md` §5.8).
+So is `guide_markdown` when a write sets it: `research_append` refuses a value other
+than a string or `null`, and a string without the template's `## Jurisdiction overview`,
+`## Available record types` and `## Research tips` lines
+(`research-append-tool-spec.md` §5.14).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -1104,7 +1114,7 @@ first place FamilySearch's place standard does not have (`research-append-tool-s
 | `for_place` | string or null | no | The specific place of interest that prompted it, when narrower than `place` |
 | `time_period` | string or null | no | Era the guide was scoped to |
 | `jurisdictions` | array | no | Border/name succession from `place_search_all`: `{ name, date_range? }` |
-| `collections` | array | no | Record sets covering the place from `collections_search`: `{ id, title, date_range?, person_count?, record_count? }`. The counts are `collections_search`'s `personCount` / `recordCount` (integer or null); research-plan decides a name search vs an image browse on `person_count > 0` |
+| `collections` | array | no | Record sets covering the place from `collections_search`: `{ id, title, date_range?, person_count?, record_count? }`. `person_count` is `collections_search`'s `personCount`; `record_count` is the collection's indexed record count, which `collections_search` does not return (integer or null for both). `research_append` stamps them from FamilySearch's collection catalog, and sets them null when the id is not in the catalog or the catalog could not be read (research-append-tool-spec §5.12); research-plan decides a name search vs an image browse on `person_count > 0` |
 | `quirks` | string[] | no | Short, actionable gotchas (e.g. "indexed only at county level") |
 | `guide_markdown` | string or null | no | The distilled research guide (from the wiki place pages) — what the viewer renders |
 | `pages_read` | array | yes | Provenance: which wiki sections were fetched — `{ section, url?, found, outcome? }`, `section` ∈ `home` / `getting_started` / `online_records` / `research_tips` (the `locality_page_section` enum). `outcome: "unreachable"` (the `locality_page_outcome` enum) marks a `found: false` caused by a wiki outage rather than a missing page. Makes read-coverage checkable |
@@ -1146,7 +1156,9 @@ is not him" indistinguishable from "we have not checked."
 
 **Kept, never deleted.** A rejection that disappears buys nothing: the next pass
 re-opens the same pair and spends the search again. Deleting is also how a
-disagreement gets erased rather than answered.
+disagreement gets erased rather than answered. The one exception is
+`research_append`'s unanchored-person sweep, which removes a rejection along with
+the minted person it names (`research-append-tool-spec.md` §5.11).
 
 **Only the researcher creates a rejection** (lead, 2026-10-20). A rejection is the
 researcher's statement that a record is not this person. The person-evidence agent
@@ -1232,8 +1244,8 @@ measured by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` §0).
 | `time_period` | string or null | no | When, as free text (e.g. "born about 1873") |
 | `record_ids` | string[] | yes | The ids of the namesake's own records: a record id in the form assertions carry in `record_id`, a page's image id exactly as `image_transcribe` was given it (or its `ark`), or a full-text hit's `id`. Empty on a pool row |
 | `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
-| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included. A record found in none has no key |
-| `birth_year` | integer | no | Tool-stamped, never the caller's: the earliest birth, christening or baptism year among the personas that lookup finds, absent when none states one. Stamped with `record_persona_ids`, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it (see below) |
+| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included, and only a persona one of whose names shares a given word with the row's `name`. A record found in none, or whose persona fails that check, has no key |
+| `birth_year` | integer | no | Tool-stamped, never the caller's: the earliest birth, christening or baptism year among the personas that lookup finds, each sharing a given word with the row's `name`, absent when none states one. Stamped with `record_persona_ids`, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it (see below) |
 | `notes` | string or null | no | Free text |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
@@ -1249,18 +1261,23 @@ the ruling below rejected.
 the record id alone, since a household record gives every member one id, so
 `research_append` stamps the namesake's own persona per listed record, the way it
 fills an assertion's `record_persona_id`: on an append, and on an update that
-sets `record_ids` or `log_entry_ids`, overwriting whatever the caller sent. Each
+sets `record_ids`, `log_entry_ids` or `name`, overwriting whatever the caller sent. Each
 listed id found in the sidecar of a persona-bearing search or read the row cites,
 as a result or as a person of a result's record, is stored in that sidecar's form,
-as an assertion's is. A record found in no sidecar is left
+as an assertion's is. Only a persona sharing a given word with the row's `name` is
+stamped (chesworthrm, 2026-11-09), since a household member listed by mistake
+would otherwise count as the namesake; a Latin or abbreviated form, an initial, or a
+surname first name written without a comma loses its stamp too, the safe direction,
+and §7 says so beside its figures. A record found in no sidecar is left
 unstamped and the row is still written: unlike an assertion, whose persona is
 lost for good when its search staged no sidecar, a missing stamp costs a count,
 not an identity: a row with no persona has no `birth_year`, so it caps every link as a row always did. The first runs that write rows count, with
 `dev/measure-namesake-cap.ts` §7, how many listed records were stamped, how many
 were not though their row cites such a search, and what a persona-keyed refusal
 would refuse and spare; item 10 is decided on those counts. A run whose engine
-cannot stamp a read, or whose engine commit is not in the clone, is left out and
-named rather than counted as zeros (chesworthrm, 2026-11-05). "Would refuse" counts
+cannot stamp a read (chesworthrm, 2026-11-05), stamps without the given name check
+(2026-11-09), or whose engine commit is not in the clone, is left out and named
+rather than counted as zeros. "Would refuse" counts
 a strong link whose assertion's persona is any persona the row stamped, from any
 record id, a household member's included; "spare" counts links to another persona
 of a record the row stamped, the record found as the cap finds a link's (its
@@ -1275,7 +1292,8 @@ share, so a refusal never keys on an image id alone.
 **`birth_year` is what the age exemption reads** (Dallan, 2026-11-05; chesworthrm,
 2026-11-06). A row does not cap a link whose record is dated less than 12 years
 after it, when the record makes the persona an adult (`research-append-tool-spec.md`
-§5). The year comes from the persona the same lookup finds, never from
+§5). The year comes from the persona the same lookup finds, one of the row's
+given name, never from
 `time_period`'s free text, and the earliest of several, which errs toward the cap.
 The stamp writes it with `record_persona_ids`; the fill in writes it alone, on each
 row without one of a person a call's `person_evidence` ops name, so a row written
@@ -1482,11 +1500,9 @@ Users may manually edit `tree.gedcomx.json` — adding a person, correcting a fa
 
 **Layer 1 — evidence, materialized at identity-link time.** When person-evidence links a persona to a tree person, the evidence facts and names that persona asserts materialize onto the person via `materialize_facts`. Each materialized fact and name carries **provenance** — a non-null source reference back to the record it came from. This happens as soon as the identity link is made, **independent of any proof summary**. The tree therefore accumulates evidence facts as research proceeds, not only once a conclusion is reached; conflicting values of the same fact type **coexist as separate sourced facts** rather than being withheld until the conflict is resolved.
 
-**Layer 2 — conclusion, governed by `primary`/`preferred` + `proof_tier`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags together with `proof_tier` — written by **proof-conclusion alone**. Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`/`proof_tier`; the underlying evidence facts stay in the tree as evidence.
+**Layer 2 — conclusion, governed by `primary`/`preferred`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags — written by **proof-conclusion alone**; its strength lives in the proof summary (`tier`, and each claim's `proof_tier` when claims are present). Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`; the underlying evidence facts stay in the tree as evidence.
 
-**Upload is conclusion-gated.** Only `primary`/proof-backed persons, relationships, and facts are sent to FamilySearch at upload time; the tree may hold un-concluded evidence facts that never upload. Upload gating is proof-conclusion / upload-workflow logic, not a materialization concern.
-
-The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary`/`proof_tier` markers that proof summary ps_001 (`probable`) sets, not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but their `primary`/`proof_tier` conclusion markers would be cleared.
+The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary` flag on the birthplace fact and by ps_001 (`probable`), not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but the birthplace's `primary` flag would be cleared.
 
 **Two further evidence-layer writes during active research:**
 - **Source descriptions (`S` entries)** are created by `extraction_append` — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."

@@ -38,6 +38,12 @@
     "external-links-search-any",
     "place-population-any",
     "place-search-all-cork",
-    "place-search-all-any"
+    "place-search-all-any",
+    "catalog-search-empty",
+    "collections-search-any",
+    "volume-search-any",
+    "place-search-any",
+    "wiki-search-any",
+    "wikipedia-search-any"
   ]
 }
