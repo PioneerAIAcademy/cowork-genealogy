@@ -1,49 +1,9 @@
 {
-  "run_log": "v8.json",
+  "run_log": "v9.json",
   "annotator": "eruth937@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_external_sites_fhk",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_fhk",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_fhk",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_fhk",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_fhk",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_fhk",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -51,31 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_fhk",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The agent completed the primary task by generating the MyHeritage search URL, providing capture instructions, and updating the research plan. However, it could have made the FamilySearch alternative more actionable by explicitly offering to search the equivalent collection through FamilySearch."
-    },
-    {
-      "test_id": "ut_search_external_sites_fhk",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The agent generated the correct MyHeritage search URL with the appropriate name and birth-year parameters. However, it failed to adequately surface the FamilySearch collection (1459985), which was returned by collections_search. Although it briefly mentioned FamilySearch, it did not clearly offer the FamilySearch search as an alternative or cross-check. This is a material omission in the response."
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,15 +19,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
       "llm_score": 3,
@@ -99,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "Capture guidance",
       "llm_score": 3,
@@ -107,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -115,7 +51,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_015",
       "dimension_source": "rubric",
       "dimension_name": "Tool selection",
       "llm_score": 3,
@@ -123,7 +75,119 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_015",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
       "dimension_name": "Log entry",
       "llm_score": 3,
@@ -141,14 +205,6 @@
     {
       "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_007",
-      "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
@@ -195,127 +251,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The agent correctly selected Ancestry's Pennsylvania Wills and Probate Records collection (8800) rather than the unrelated 1850 census collection. It generated the correct URL using Thomas Flynn's name and Schuylkill County residence, recorded the search as partial, and appropriately deferred result triage until a capture is uploaded. The search setup was correct, with no significant factual errors."
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
+      "test_id": "ut_search_external_sites_ul2",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -323,15 +259,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
+      "test_id": "ut_search_external_sites_ul2",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -339,7 +267,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_009",
+      "test_id": "ut_search_external_sites_ul2",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -347,71 +275,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_ul1",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_ul1",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_ul1",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_ul1",
+      "test_id": "ut_search_external_sites_ul2",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
       "llm_score": null,
@@ -419,7 +283,79 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_ul1",
+      "test_id": "ut_search_external_sites_ul2",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_ul2",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_ul2",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_ul2",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill generated the correct MyHeritage search URL and used the appropriate tools. However, although collections_search returned FamilySearch collection 1459985, the response did not mention that FamilySearch also holds the 1855 Massachusetts State Census or offer it as an alternative. This omission makes the response incomplete."
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The primary task was completed, including URL generation and capture instructions. However, the response omitted the FamilySearch collection as an alternative, despite the collection being confirmed by the tool results. The response should have included both search options."
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -427,7 +363,55 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_ul1",
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -435,17 +419,33 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_ul1",
+      "test_id": "ut_search_external_sites_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly identified the relevant plan item (pli_006) and generated a valid Ancestry search URL for Thomas Flynn in Schuylkill County. It also recorded the search appropriately. The curated probate collection was used as the URL base, satisfying the required collection-selection workflow."
     },
     {
-      "test_id": "ut_search_external_sites_ul1",
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The tool arguments were correctly formatted and matched the expected values. The agent passed the curated collection URL, Thomas's name, and the standardized Schuylkill County residence to the URL-generation tool. The locality and external-link searches also used appropriate arguments. I found no incorrect tool parameters, "
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
       "dimension_source": "rubric",
-      "dimension_name": "Log entry",
+      "dimension_name": "Tool selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent followed the documented workflow by resolving the locality, retrieving curated Ancestry links, checking relevant collections, and using the probate collection URL as the base for search generation. The required curated collection was selected correctly. I see no clear tool-selection failure that justifies a score of 2."
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
