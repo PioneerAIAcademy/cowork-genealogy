@@ -106,6 +106,40 @@ export const COMPARE_RESEARCH = {
     link('pe_015', 'a_012', 'I4', 'confident'),
     link('pe_016', 'a_013', 'I1', 'confident'),
     link('pe_017', 'a_014', 'I6', 'probable')
+  ],
+  timelines: [
+    {
+      id: 'tl_001',
+      label: 'Mary Flynn',
+      person_ids: ['I1'],
+      generated: '2026-11-02T00:00:00Z',
+      events: [
+        {
+          date: '1880',
+          date_certainty: 'exact',
+          event_type: 'residence',
+          description: 'In the census',
+          assertion_ids: ['a_003'],
+          conflict_note: 'The census puts her in Chicago, the tree in St Paul.'
+        }
+      ],
+      gaps: [{ start: '1851', end: '1879', expected_events: ['census'], severity: 'medium', notes: 'No census found for 1860 or 1870.' }]
+    }
+  ],
+  namesakes: [
+    {
+      id: 'ns_001',
+      person_id: 'I1',
+      name: 'Mary Flynn',
+      place: 'Cork, Ireland',
+      time_period: '1840s',
+      record_ids: ['ark:/61903/1:1:DDDD-444'],
+      notes: 'Another Mary Flynn, born in Cork, who stayed there.',
+      created: '2026-11-02T00:00:00Z'
+    }
+  ],
+  rejected_links: [
+    { id: 'rl_001', assertion_id: 'a_008', person_id: 'I1', reason: 'A man', researcher_words: 'That is her brother, not her.', created: '2026-11-02T00:00:00Z' }
   ]
 } as unknown as ResearchDocument
 

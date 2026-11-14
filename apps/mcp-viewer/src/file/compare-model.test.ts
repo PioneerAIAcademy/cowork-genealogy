@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildRuleIndex } from '../rules/rule-index'
 import { COMPARE_RESEARCH, STARTING_TREE, TODAY_TREE } from './compare-fixture'
-import { compareFindings, type CompareView, type Finding } from './compare-model'
+import { compareFindings, compareLine, type CompareView, type Finding } from './compare-model'
 
 const index = buildRuleIndex({ research: COMPARE_RESEARCH, tree: TODAY_TREE })
 const view = compareFindings(COMPARE_RESEARCH, TODAY_TREE, STARTING_TREE, index) as CompareView
@@ -13,6 +13,19 @@ function person(id: string) {
 function rows(id: string, key: string): Finding[] {
   return person(id)?.findings.filter((f) => f.key === key) ?? []
 }
+
+describe("the card's line", () => {
+  const line = (relatives: number, facts: number) => compareLine({ relatives, facts, peopleWithNew: 0, possibleRelatives: 0 })
+
+  it('names relatives and facts, each half only when there is one, singular at one', () => {
+    expect(line(2, 3)).toBe("This research found 2 new relatives and 3 new facts that aren't on FamilySearch yet")
+    expect(line(1, 1)).toBe("This research found 1 new relative and 1 new fact that aren't on FamilySearch yet")
+    expect(line(0, 3)).toBe("This research found 3 new facts that aren't on FamilySearch yet")
+    expect(line(1, 0)).toBe("This research found 1 new relative that isn't on FamilySearch yet")
+    expect(line(0, 1)).toBe("This research found 1 new fact that isn't on FamilySearch yet")
+    expect(line(0, 0)).toBeNull()
+  })
+})
 
 describe('Compare with FamilySearch', () => {
   it('is null with no starting tree', () => {

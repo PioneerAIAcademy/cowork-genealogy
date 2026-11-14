@@ -53,6 +53,40 @@ p {
   margin-bottom: 12px;
 }
 
+.card-line {
+  margin-bottom: 12px;
+}
+
+.card-line button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-info, inherit);
+  text-align: left;
+  text-decoration: underline;
+}
+
+.compare-records {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.compare-row p {
+  margin-bottom: 4px;
+}
+
+.tag-improved,
+.tag-new {
+  font-weight: 600;
+  opacity: 1;
+}
+
+.tag-differs {
+  font-weight: 600;
+  opacity: 1;
+  color: var(--color-text-warning, inherit);
+}
+
 button {
   padding: 6px 10px;
   border: 1px solid var(--color-border-primary, var(--fallback-line));

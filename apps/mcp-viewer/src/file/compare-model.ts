@@ -39,6 +39,8 @@ export interface Finding {
   tag: Tag
   counted: boolean
   records: CompareRecord[]
+  /** The assertions behind it. */
+  assertionIds: string[]
 }
 
 export interface ComparePerson {
@@ -55,6 +57,18 @@ export interface CompareView {
   people: ComparePerson[]
   possibleRelatives: ComparePerson[]
   counts: { relatives: number; facts: number; peopleWithNew: number; possibleRelatives: number }
+}
+
+/** The card's line: "This research found 2 new relatives and 3 new facts that aren't on
+ *  FamilySearch yet", each half dropped at zero (lead, 2026-11-14). Null when both are zero. */
+export function compareLine(counts: CompareView['counts']): string | null {
+  const halves = [
+    counts.relatives > 0 ? `${counts.relatives} new ${counts.relatives === 1 ? 'relative' : 'relatives'}` : null,
+    counts.facts > 0 ? `${counts.facts} new ${counts.facts === 1 ? 'fact' : 'facts'}` : null
+  ].filter((h): h is string => h !== null)
+  if (halves.length === 0) return null
+  const one = halves.length === 1 && (counts.relatives + counts.facts === 1)
+  return `This research found ${halves.join(' and ')} that ${one ? "isn't" : "aren't"} on FamilySearch yet`
 }
 
 /** The person facts FamilySearch's tree holds, in the order a person's findings show. */
@@ -257,6 +271,7 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
       }
       if (finding.text.length > known.text.length) known.text = finding.text
       known.counted = known.counted || finding.counted
+      for (const id of finding.assertionIds) if (!known.assertionIds.includes(id)) known.assertionIds.push(id)
     }
     rows.set(personId, mine)
   }
@@ -286,7 +301,8 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
           treeValues: reading.pool.map((f) => f.text).filter(Boolean),
           tag: reading.tag,
           counted: countable,
-          records: [record(a)]
+          records: [record(a)],
+          assertionIds: [a.id]
         },
         COMPARED.indexOf(key),
         date?.from ?? 9999
@@ -314,7 +330,7 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
     type === 'Couple'
       ? (family.spouses.get(a)?.has(b) ?? false)
       : (family.children.get(a)?.has(b) ?? false) || (family.children.get(b)?.has(a) ?? false)
-  const edgeRow = (type: string, a: string, b: string, aIsParent: boolean, tag: Tag, records: CompareRecord[], isCounted: boolean) => {
+  const edgeRow = (type: string, a: string, b: string, aIsParent: boolean, tag: Tag, records: CompareRecord[], isCounted: boolean, assertionIds: string[]) => {
     for (const [me, other, otherIsParent] of [
       [a, b, !aIsParent && type !== 'Couple'],
       [b, a, aIsParent]
@@ -330,7 +346,8 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
           treeValues: tag === 'already' ? [name(other)] : [],
           tag,
           counted: isCounted,
-          records
+          records,
+          assertionIds: [...assertionIds]
         },
         COMPARED.length,
         9999
@@ -350,7 +367,7 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
     const supporting = bothLinked(a, b)
     if (joined(before, String(type), a, b)) {
       // The starting tree had it: shown only when a record now supports it.
-      if (supporting.length > 0) edgeRow(String(type), a, b, type === 'ParentChild', 'already', supporting.map(record), false)
+      if (supporting.length > 0) edgeRow(String(type), a, b, type === 'ParentChild', 'already', supporting.map(record), false, supporting.map((s) => s.id))
       continue
     }
     const fromRefs = list(rel.sources as Row[] | undefined)
@@ -364,7 +381,7 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
       }) || supporting.some((s) => strongBoth(a, b, s))
     const isCounted = !isAdded(a) && !isAdded(b) && strong
     if (isCounted) counted.add(`${edge}`)
-    edgeRow(String(type), a, b, type === 'ParentChild', 'new', records, isCounted)
+    edgeRow(String(type), a, b, type === 'ParentChild', 'new', records, isCounted, supporting.map((s) => s.id))
   }
   return finish()
 

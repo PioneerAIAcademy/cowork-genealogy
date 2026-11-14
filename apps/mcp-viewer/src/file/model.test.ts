@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest'
 import type { ResearchDocument } from '../contract'
 import { leftoverIds } from '../rules/id-check'
 import { COMPOUND, MCANDREW, compound, mcandrew } from '../rules/test-data'
+import { COMPARE_DOCUMENT } from './compare-fixture'
+import { compareFindings } from './compare-model'
+import { buildRuleIndex } from '../rules/rule-index'
 import { besideValue, labelWords, pagesWithContent, queryWords, resultsView, searchFile, sourcePeople, toolWords } from './model'
 
 const research = (docs: { research: unknown }) => docs.research as ResearchDocument
@@ -91,6 +94,10 @@ describe('the file', () => {
     expect(pagesWithContent(research(COMPOUND), null)).toEqual(['case', 'sources', 'log'])
     expect(pagesWithContent({}, null)).toEqual([])
     expect(pagesWithContent({}, { places: { Ohio: { rows: [] } } })).toEqual(['sources'])
+    const doc = COMPARE_DOCUMENT
+    const compare = compareFindings(doc.research!, doc.tree, doc.startingTree, buildRuleIndex({ research: doc.research, tree: doc.tree }))
+    expect(pagesWithContent(doc.research!, null, compare, doc.tree)).toEqual(['case', 'compare', 'people', 'sources'])
+    expect(pagesWithContent(doc.research!, null, null, doc.tree)).toEqual(['case', 'people', 'sources'])
   })
 
   it('the search box finds a record by its citation and a person by name', () => {

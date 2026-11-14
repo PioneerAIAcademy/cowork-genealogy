@@ -2,7 +2,7 @@ import type { Source } from '@genealogy/schema'
 import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import { useCallback, useEffect, useState } from 'react'
 import { outcomeWords } from '../cards/kit/searches'
-import { list } from '../cards/kit/view'
+import { isLive, list, strings } from '../cards/kit/view'
 import { resolveFieldId } from '../rules/field-id'
 import { Prose } from '../rules/Prose'
 import { isPageImageArk, personHref } from '../rules/rule-index'
@@ -11,6 +11,10 @@ import { LogLine } from './LogPage'
 import { dateWords } from './case-model'
 import { assertionPerson, besideValue, CONFIDENCE_RANK, labelWords, liveAssertions, resultsView, sourcePeople, sourceTitle, type ResultsView } from './model'
 import { Open } from './Open'
+import { useCompare } from './ComparePage'
+import { usePeople } from './PeoplePage'
+import { relationTo } from './people-model'
+import { lifeOf, timelineOf } from './person-model'
 
 const FOUND_BY_TOOLS = new Set(['record_search', 'fulltext_search'])
 
@@ -189,7 +193,9 @@ function SearchPane({ id }: { id: string }) {
 }
 
 function PersonPane({ id }: { id: string }) {
-  const { research, index } = useFile()
+  const { research, tree, index } = useFile()
+  const { family, subjectId, starting } = usePeople()
+  const compare = useCompare()
   const person = index.persons.get(id)
   if (!person) return <p>This person is not in the tree.</p>
   // Two sources can name one record (two people on one census page): list it once, at its strongest.
@@ -204,13 +210,77 @@ function PersonPane({ id }: { id: string }) {
     }
   }
   const records = [...byTitle.values()]
+  const relation = relationTo(family, subjectId, id)
+  const added = starting !== null && !starting.has(id)
+  const strength = [...(compare?.people ?? []), ...(compare?.possibleRelatives ?? [])].find((p) => p.personId === id)?.strength
+  const life = lifeOf(research, tree, id, index)
+  const timeline = timelineOf(research, id)
+  const gaps = list(timeline?.gaps)
+  const notes = list(timeline?.events).filter((e) => typeof e.conflict_note === 'string' && e.conflict_note.trim())
+  const namesakes = list(research.namesakes).filter((n) => n.person_id === id)
+  const ruledOut = list(research.rejected_links).filter((r) => r.person_id === id)
+  const assertions = new Map(list(research.assertions).filter(isLive).map((a) => [a.id, a]))
   return (
     <div>
       <h2>{person.name ?? 'Someone in the tree'}</h2>
+      {relation && <p className="file-meta">{relation}</p>}
+      {added && <p className="file-meta">Added by this research{strength ? `, ${strength}` : ''}</p>}
       {person.pid && (
         <p>
           <a href={personHref(person.pid)}>On FamilySearch</a>
         </p>
+      )}
+      {life.length > 0 && (
+        <>
+          <h3>Their life in time order</h3>
+          <ul className="file-list">
+            {life.map((row, i) => (
+              <li key={i} className="file-item">
+                <strong>{row.label}:</strong> <Prose text={row.text} index={index} inline />
+                {row.fromRecords && <span className="file-tag">From the records</span>}
+                {row.records.length > 0 && (
+                  <span className="file-meta">
+                    {' '}
+                    ·{' '}
+                    {row.records.map((r, j) => (
+                      <span key={r.sourceId}>
+                        {j > 0 && '; '}
+                        <Open target={{ kind: 'record', id: r.sourceId }}>{r.title}</Open>
+                        {r.confidence && `, ${statusLabel(r.confidence)}`}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {gaps.length > 0 && (
+        <>
+          <h3>Gaps</h3>
+          <ul className="file-list">
+            {gaps.map((gap, i) => (
+              <li key={i} className="file-item">
+                {dateWords(gap.start)} to {dateWords(gap.end)}: no {strings(gap.expected_events).map((e) => labelWords(e).toLowerCase()).join(', ') || 'record'}
+                <span className="file-tag">{statusLabel(String(gap.severity))}</span>
+                {gap.notes && <Prose text={gap.notes} index={index} />}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {notes.length > 0 && (
+        <>
+          <h3>Notes from the timeline</h3>
+          <ul className="file-list">
+            {notes.map((event, i) => (
+              <li key={i} className="file-item">
+                <Prose text={event.conflict_note!} index={index} />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       {records.length > 0 && (
         <>
@@ -222,6 +292,47 @@ function PersonPane({ id }: { id: string }) {
                 <span className="file-meta">{statusLabel(link!.confidence)}</span>
               </li>
             ))}
+          </ul>
+        </>
+      )}
+      {namesakes.length > 0 && (
+        <>
+          <h3>Not the same person as</h3>
+          <ul className="file-list">
+            {namesakes.map((n) => (
+              <li key={n.id} className="file-item">
+                <strong>{n.name}</strong>
+                <span className="file-meta">
+                  {[n.place, n.time_period ?? (n.birth_year ? `born about ${n.birth_year}` : null)].filter(Boolean).map((v) => `, ${v}`).join('')}
+                </span>
+                {n.notes && <Prose text={n.notes} index={index} />}
+                {strings(n.record_ids).length > 0 && <Prose text={`Records: ${strings(n.record_ids).join(', ')}`} index={index} />}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {ruledOut.length > 0 && (
+        <>
+          <h3>Ruled out</h3>
+          <ul className="file-list">
+            {ruledOut.map((r) => {
+              const a = assertions.get(r.assertion_id)
+              const words = r.researcher_words ?? r.reason
+              return (
+                <li key={r.id} className="file-item">
+                  {a ? (
+                    <>
+                      {labelWords(a.fact_type)}: <Prose text={a.value} index={index} inline /> in{' '}
+                      <Open target={{ kind: 'record', id: a.source_id }}>{sourceTitle(list(research.sources).find((s) => s.id === a.source_id) ?? ({ id: a.source_id } as Source), index)}</Open>
+                    </>
+                  ) : (
+                    'A finding'
+                  )}
+                  {words && <Prose text={words} index={index} />}
+                </li>
+              )
+            })}
           </ul>
         </>
       )}

@@ -6,13 +6,16 @@ import type { Session } from '../session'
 import { projectLabel } from '../transport/McpAppResearchTransport'
 import { FileContext, useFile, type CaseFocus, type FileView } from './FileContext'
 import { CasePage } from './CasePage'
+import { compareFindings } from './compare-model'
+import { ComparePage } from './ComparePage'
+import { PeoplePage } from './PeoplePage'
 import { LogPage } from './LogPage'
 import { pagesWithContent, searchFile, sourceTitle, toolWords, type PageKey, type PaneTarget } from './model'
 import { Pane } from './Panes'
 import { SourcesPage } from './SourcesPage'
 
-const PAGE_TITLES: Record<PageKey, string> = { case: 'The case', sources: 'Sources', log: 'Log' }
-const PAGES: Record<PageKey, () => React.JSX.Element> = { case: CasePage, sources: SourcesPage, log: LogPage }
+const PAGE_TITLES: Record<PageKey, string> = { case: 'The case', compare: 'Compare with FamilySearch', people: 'People', sources: 'Sources', log: 'Log' }
+const PAGES: Record<PageKey, () => React.JSX.Element> = { case: CasePage, compare: ComparePage, people: PeoplePage, sources: SourcesPage, log: LogPage }
 
 /** What `show_project` asked the file to open first. */
 function initialPane(input: ToolInput): PaneTarget | null {
@@ -80,7 +83,8 @@ export function NewCaseFile({ session, input }: { session: Session; input: ToolI
   const document: ProjectDocument = fileDocument ?? {}
   const research = document.research ?? {}
   const index = useMemo(() => buildRuleIndex({ research, tree: document.tree }), [research, document.tree])
-  const pages = pagesWithContent(research, document.collections)
+  const compare = useMemo(() => compareFindings(research, document.tree, document.startingTree, index), [research, document.tree, document.startingTree, index])
+  const pages = pagesWithContent(research, document.collections, compare, document.tree)
   // A card's button names its page in the session; a typed `show: file` names it in the input.
   const asked = filePage ?? input.page
   const wanted = typeof asked === 'string' && pages.includes(asked as PageKey) ? (asked as PageKey) : null
