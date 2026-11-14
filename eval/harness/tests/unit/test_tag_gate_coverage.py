@@ -50,11 +50,6 @@ DORMANT: dict[str, str] = {
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"
     ),
-    "tier-proved-q001": (
-        "its only test, ut_proof_conclusion_002, was deleted by PR #4341: Sonnet 5.5 "
-        "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4460 "
-        "restores it"
-    ),
     "naturalization-exception": (
         "its only test, ut_person_evidence_r8t, was deleted when person-evidence moved "
         "to Sonnet 5 medium: it counts the interval from a return-trip arrival; "
