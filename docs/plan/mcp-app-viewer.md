@@ -1,7 +1,8 @@
 # MCP App viewer: research cards and a case file inside Claude
 
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
-an answer (2026-11-08). The fold and the demo scope are not built.
+an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). The
+demo scope is not built.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 
@@ -181,7 +182,8 @@ and the case file cannot disagree.
   `src/store/paths.ts`, and every read goes through `ProjectStore`, so the same
   code reads Postgres and MinIO once folded in.
 - **What it never touches:** `allToolSchemas`, `manifest.json`, the plugin hook's tool
-  maps, any eval. Until the fold, its tools live in `viewer/`, not `src/tools/`.
+  maps, any eval. The tools' core is `src/tools/project-view.ts`, shared with the tool
+  server, and `viewer/tools.ts` adds M0's probes around it.
 - **Transport:** Streamable HTTP, stateless, plain JSON, one `Server` per
   request, as `src/http-server.ts` and the MCP Apps examples do. Binds
   `127.0.0.1`; reached through a public HTTPS tunnel.
@@ -264,14 +266,14 @@ from it, and an unannotated tool defaults to "not read-only".
   Read-only, because the plugin hook almost certainly never sees a card's calls.
   If M0 shows an artifact cannot reach an app-only tool, its visibility becomes
   `["model", "app"]` with a description telling the model not to call it.
-- **The page resource:** `ui://genealogy/viewer.html`, MIME
+- **The page resource:** `ui://genealogy/viewer-<hash>.html`, MIME
   `text/html;profile=mcp-app`, listed by `resources/list` and served by
   `resources/read`. `_meta.ui.csp.resourceDomains` (the `--public-url` origin, plus
   `https://assets.claude.ai` if the page uses the host's fonts) goes on the
   `resources/read` content item, where the spec and Claude's quickstart read it.
-  Claude caches the page per connector and app (the record's **Card renders**), so M1
-  puts the build in the URI: a deploy, or a rollback, then reaches cards that already
-  read the page.
+  Claude caches the page per connector and app (the record's **Card renders**), so the
+  URI carries a hash of the page itself (the tools image writes no build stamp): a deploy,
+  or a rollback, then reaches cards that already read the page.
 - **Images:** on the thin server, `/img/<token>`, outside the secret, reads the signed
   `image_filename` ref through the store. The token is an HMAC, with a per-process
   key, over the project's path relative to `--root`, that ref and a 10-minute
@@ -363,9 +365,13 @@ from it, and an unannotated tool defaults to "not read-only".
       only repeats the name goes.
     - Inside brackets a run is a citation, so it goes. So does a run with no name.
     - A run that goes takes the space before it and any label directly before that
-      (`see`, `see also`, `assertion(s)`, `source(s)`, `tree person(s)`, `for`, `as`).
-      A separator left at a bracket's edge goes, and so does a bracket left with no
-      letter or digit. The words beside an id stay, because agents put evidence there.
+      (`see`, `see also`, `assertion(s)`, `source(s)`, `tree source(s)`,
+      `tree person(s)`, `for`, `as`, `ARK`), and a joiner (`and`, `or`, `vs`, `&`) that
+      would be left hanging. A separator left at a bracket's edge goes, and so does a
+      bracket left with no letter or digit. The words beside an id stay, because agents
+      put evidence there.
+    - An inline code span is shown as plain text, `c\_001` reads as `c_001`, and a
+      record's title loses any id inside it before it names a link.
     - A prototype over the 7,910 proof narratives and link rationales that hold ids
       left no id behind, with about 38 orphaned `'s` and 138 stranded prepositions,
       against 530 and 1,268 if every id is removed.
@@ -660,7 +666,8 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   `(src_001/S26, child_1 role, assertions a_034–a_039)` renders as `(child_1 role)`,
   `born 1887 (S28).` renders as `born 1887.`, `born to I1 and I2` and `I4's birth fact`
   render the names, `I4 (John Vincent Mogan)` shows the name once, and the id check
-  also fails on `src_003/` and on a rendered bracket holding no letter or digit;
+  also fails on `src_003/` and on a rendered bracket holding only separators (a
+  researcher's `[?]` is text, not debris);
 - `(KWJ6-RPH)` in the compound proof links to the person page, `1:2:30` renders as
   text, `https://evil.example/ark:/61903/1:1:QPRC-WPBZ` stays whole with no "on
   FamilySearch" label, a tree source with an Ancestry url leaves its id removed with no
@@ -697,6 +704,11 @@ shows the others on a project that holds them, and "write this up" on the demo
 project produces a file that carries the rating and the reviewer's verdict.
 
 ### M3: The new case file and the demo script (before the demo)
+
+**Built so far:** the shell, pane and search box, The case, Sources and Log. The new file
+replaced `ViewerBody` early (lead, 2026-11-13), to keep the page near the size M0 tested:
+`ViewerBody` had taken it to 1.11 MB, and the swap brings it to 904 KB. People and Compare
+are not built, so timelines, namesakes and rejected links are unreachable until they land.
 
 The new file replaces `ViewerBody`: its shell, right-hand pane and search box; The
 case with So far, the evidence grid and Leads; Compare with FamilySearch; People,
@@ -737,9 +749,20 @@ this same server.
 ## The fold
 
 The two tools and the page move onto the tool server, behind the door.
+`docs/specs/project-view-tools-spec.md` is the contract.
 
-- **Where:** the tools move into `src/tools/`. `src/` cannot import `viewer/`, so
-  `viewer/` keeps its entries and imports from `src/` for `make viewer`.
+**Built so far:** the skeleton this section describes, `derived` whole and the
+`recordSearch` part. It passes the engine's tests on both store backends.
+**Done when, met 2026-11-13** on the self-hosted server at the fold branch: a card drew in
+claude.ai chat and in Desktop Chat, signed in through `Genealogy Research` with FamilySearch,
+on a project created from a real person id; and a page `image_transcribe` saved loaded on
+the card through `/img?t=` from MinIO. Image reading needs a per-account key on the beta
+(`make malachi-openrouter`). `Genealogy Viewer` can retire.
+**Not yet:** the rename to `Genealogy Research` is not built.
+
+- **Where:** `src/tools/project-view.ts` holds the tools, the page's resource and the
+  connector's context. `src/` cannot import `viewer/`, so `viewer/` keeps its entry and
+  imports from `src/` for `make viewer`, adding only M0's probes.
 - **Listing:** `createServer` lists `show_project` and `read_project_view` only when
   `principal.surface` is `"connector"`, so the `.mcpb`, the worker, Fly and the harness
   packaging stay untouched. The test is `principal.kind === "bearer"` and that surface,
@@ -750,9 +773,9 @@ The two tools and the page move onto the tool server, behind the door.
   login.
 - **Arguments:** `rejectUnknownArgs` skips a tool outside `allToolSchemas`, so the two
   tools keep their own unknown-argument check, which answers in plain text.
-- **Capabilities:** `createServer` gains the resources capability and handlers, and
-  the extensions capability from `viewer/mcp.ts`. The door already passes any method
-  on a valid token.
+- **Capabilities:** on the connector surface alone, `createServer` gains the resources
+  capability and handlers, and the extensions capability from `viewer/mcp.ts`. The door
+  already passes any method on a valid token.
 - **Reading:** `viewer/project.ts` stays out of `src/`: it imports `node:fs`, which
   the no-fs lint forbids. The tools read through `ProjectStore` by `/proj_` id. A call
   that names no project gets a tool error naming `project_list`, and the tool
@@ -761,18 +784,24 @@ The two tools and the page move onto the tool server, behind the door.
 - **The page:** the tools Dockerfile gains a pnpm stage that builds it. It sits beside
   `build/` in the image, not in `config/`, so the `.mcpb` does not carry it. The tool
   server reads it through `src/utils/bundled-data.ts`, when a host asks for it.
-- **Large results:** M0 sends the documents in `_meta` at any size. Here `show_project`
-  leaves them out above 1,000,000 bytes and keeps the rest, and the page's loader reads
-  the id from that smaller `_meta`.
-- **Images:** `/img/<token>` becomes a branch in the door's `route()`. The token is an
-  HMAC over the project id, the ref and the expiry, with no bearer. `createServer` signs
-  and the door verifies, so they share one key. The door reads the image through a
-  store it binds from the token's project id.
+- **Large results:** both servers share the rule. `show_project` leaves the documents
+  out above 1,000,000 bytes and keeps `derived` and `echo`, and the page's loader reads
+  the id from that smaller `_meta`. The thin server adds `pad` after the cut, so M0's size
+  probe still works.
+- **Images:** `GET /img?t=<token>` is a branch in the door's `route()`. The token is an
+  HMAC over the project id, the ref and the expiry, with no bearer, and it rides in the
+  query because the edge logs `$uri`. `createServer` signs and the door verifies, so they
+  share one key, per process, and a restart voids every link. The door reads the image
+  through a store it binds from the token's project id. A bad token or a missing image
+  answers the door's ordinary 404, and a store failure answers 503.
 - **Smoke and tests:** `make engine-smoke-http` lists tools through the connector door
-  by default, so `dev/smoke-calls.ts` gains rows for the two tools, and `assertCoverage`
-  learns they are connector-only. `tests/http/http-server.test.ts` and the manifest's
-  dispatch test change with them. The moved code runs on both store backends.
-- **A spec and the catalog:** both tools get a spec and a `docs/catalog.md` entry.
+  by default, so `dev/smoke-calls.ts` has rows for the two tools, marked `connectorOnly`,
+  and `assertCoverage` fails if the connector lacks them or anyone else has them.
+  `tests/http/http-server.test.ts` changes with them. The manifest's dispatch test does
+  not, because the dispatch chain holds no literal of either name. The moved code runs on
+  both store backends.
+- **A spec and the catalog:** `docs/specs/project-view-tools-spec.md`, and a connector-only
+  section in `docs/catalog.md`.
 - **Test projects:** seed them with `dev/seed-project.ts` and set `owner_id`, because
   the door refuses a NULL owner. The script takes no owner yet. remote-server owns the
   seed route, which follows issue #3997.
@@ -792,8 +821,8 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
   result carries it in `_meta`, so the card has it even with no tool input.
 - There is one public origin, `WEB_PUBLIC_URL`. The page's `resourceDomains` and every
   image link use it. `projectUrl` goes away.
-- The edge's commented `/img/` block becomes
-  `location = /img { proxy_pass $tools_upstream; }`: an exact path, with the token in the
+- The edge carries `location = /img { proxy_pass $tools_upstream; }`
+  (`apps/server/proto/malachi/nginx.conf`): an exact path, with the token in the
   query.
 - A tool error reaches the card as text. A 401 stays HTTP, because that is what brings
   up Claude's Reconnect card (and makes it refresh, where a refresh token exists). On the connector path a `tools/call` refused for someone else's

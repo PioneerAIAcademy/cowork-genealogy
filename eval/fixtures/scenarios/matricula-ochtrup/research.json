@@ -1,0 +1,49 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find the 1836 marriage of Wilhelm Kuhlmann, a Catholic, in Ochtrup, Westphalia.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-13",
+    "updated": "2026-11-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and whom did Wilhelm Kuhlmann marry in Ochtrup about 1836?",
+      "rationale": "The marriage entry in the Catholic parish register of Ochtrup names the bride and usually both sets of parents, which no other record for this family does.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-13",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": []
+}

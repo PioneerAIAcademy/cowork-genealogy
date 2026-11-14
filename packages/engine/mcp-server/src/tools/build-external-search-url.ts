@@ -710,6 +710,33 @@ const SUPPORTED_SITES: ExternalSearchSite[] = Object.keys(SITE_BASE_URL) as Exte
 // so a call with no attributes is the normal case, not a `no_attributes` error.
 const BROWSE_SITES: ReadonlySet<ExternalSearchSite> = new Set(["archion", "matricula"]);
 
+// A browse site's front page passed as baseUrl (external_links_search returns
+// it) is not a parish page, so it gets the same route note as no baseUrl.
+function isBrowseSiteRoot(site: ExternalSearchSite, url: string): boolean {
+  const root = SITE_BASE_URL[site];
+  if (!root) return false;
+  try {
+    const u = new URL(url);
+    return u.hostname === new URL(root).hostname && /^\/((de|en)\/?)?$/.test(u.pathname);
+  } catch {
+    return false;
+  }
+}
+
+// The route from the site root to a parish, measured live 2026-11-13 (spec
+// §3.11). Only the no-baseUrl note carries it: SITE_NOTES rides every call,
+// including one that already holds the parish page.
+const BROWSE_SITE_ROOT_STEPS: Partial<Record<ExternalSearchSite, string>> = {
+  archion:
+    "type the town into the place search on this page (\"Ortsname eingeben…\", then \"Jetzt nach Ort " +
+    "suchen\"), then confirm the parish from the archive / Dekanat / parish path shown under each " +
+    "register — or pass the parish page from the wiki or locality guide as baseUrl to link straight to it",
+  matricula:
+    "open the place search (Suchen → Ortssuche, https://data.matricula-online.eu/de/suchen/), type the " +
+    "town as Ort, then confirm the diocese in the parish result before opening it — or pass the parish " +
+    "page from the wiki or locality guide as baseUrl to link straight to it",
+};
+
 function isSupportedSite(site: string): site is ExternalSearchSite {
   return (SUPPORTED_SITES as string[]).includes(site);
 }
@@ -1482,11 +1509,8 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   }
   const siteNote = SITE_NOTES[site];
   if (siteNote) notes.push(siteNote);
-  if (BROWSE_SITES.has(site) && !baseUrl) {
-    notes.push(
-      `no parish URL supplied — this is ${site}'s site root; pass the parish page from the ` +
-        "wiki or locality guide as baseUrl to link straight to the parish",
-    );
+  if (BROWSE_SITES.has(site) && (!baseUrl || isBrowseSiteRoot(site, baseUrl))) {
+    notes.push(`no parish URL supplied — this is ${site}'s site root; ${BROWSE_SITE_ROOT_STEPS[site]}`);
   }
 
   // `locale` applies only to the site-wide fallback — a curated `baseUrl`

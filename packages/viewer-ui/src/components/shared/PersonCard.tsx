@@ -9,6 +9,13 @@ interface PersonCardProps {
   relationship?: string
 }
 
+/** A fact's date or place as text. Older trees hold full GedcomX's `{ original }` object there. */
+function factText(value: unknown): string | null {
+  if (typeof value === 'string') return value
+  const original = (value as { original?: unknown } | null | undefined)?.original
+  return typeof original === 'string' ? original : null
+}
+
 export default function PersonCard({ person, relationship }: PersonCardProps): React.JSX.Element {
   const name = getPreferredName(person)
   const birth = getPrimaryFact(person, 'Birth')
@@ -47,14 +54,14 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
       <div className={styles.facts}>
         {birth && (
           <span className={styles.fact}>
-            b. {birth.date ?? '?'}
-            {birth.place ? `, ${birth.place}` : ''}
+            b. {factText(birth.date) ?? '?'}
+            {factText(birth.place) ? `, ${factText(birth.place)}` : ''}
           </span>
         )}
         {death && (
           <span className={styles.fact}>
-            d. {death.date ?? '?'}
-            {death.place ? `, ${death.place}` : ''}
+            d. {factText(death.date) ?? '?'}
+            {factText(death.place) ? `, ${factText(death.place)}` : ''}
           </span>
         )}
         {!birth && !death && <span className={styles.fact}>No facts recorded</span>}
