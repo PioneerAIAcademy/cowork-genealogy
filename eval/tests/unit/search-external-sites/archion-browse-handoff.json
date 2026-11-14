@@ -21,7 +21,8 @@
   "mcp_fixtures": [
     "place-search-baiersbronn",
     "external-links-search-baiersbronn",
-    "collections-search-baiersbronn"
+    "collections-search-baiersbronn",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Archion is a browse site, not a search: the correct URL is the parish page itself, unchanged. Do not penalize the absence of name or year parameters.",

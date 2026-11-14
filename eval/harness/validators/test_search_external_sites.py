@@ -592,6 +592,57 @@ def test_archion_browse_handoff(tool_calls, test):
     assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
 
 
+def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated (browse-catalog, #4428). On a matricula/archion hand-off the
+    agent checks the FamilySearch Catalog itself (step 2b), still builds the
+    browse-site URL with `projectPath`, and tells the researcher about a filmed
+    copy the Catalog marks `availableOnline: false` by its film number, without
+    offering to read it. The offer would name the film's `imageGroupNumber`, the
+    handle search-images opens, so its absence from the researcher's text is the
+    mechanical half; the center-only wording is the judge's."""
+    if "browse-catalog" not in test.get("tags", []):
+        pytest.skip("not a browse-catalog scenario")
+    calls = [c for c in (tool_calls or []) if isinstance(c, dict)]
+    catalog = [c for c in calls if _bare_tool_name(c.get("tool")) == "catalog_search"]
+    builds = [
+        _as_mapping(c.get("args")) for c in calls
+        if _bare_tool_name(c.get("tool")) == "build_external_search_url"
+        and _as_mapping(c.get("args")).get("site") in ("matricula", "archion")
+    ]
+    errors = []
+    if not catalog:
+        errors.append("no catalog_search call: FamilySearch's filmed copy of the register was never checked")
+    if not builds:
+        errors.append("no build_external_search_url call for matricula or archion: the browse-site link was dropped")
+    elif not any(b.get("projectPath") for b in builds):
+        errors.append("the browse-site build omitted projectPath, so the hand-off was not logged by the tool")
+    films, groups = set(), set()
+    for c in catalog:
+        for hit in _as_mapping(c.get("response")).get("hits") or []:
+            hit = _as_mapping(hit)
+            if hit.get("availableOnline") is not False:
+                continue
+            for note in hit.get("filmNotes") or []:
+                note = _as_mapping(note)
+                if note.get("filmNumber"):
+                    films.add(str(note["filmNumber"]))
+                if note.get("imageGroupNumber"):
+                    groups.add(str(note["imageGroupNumber"]))
+    tail = _researcher_tail(agent_returns, text_response, test)
+    if catalog and not any("response" in c for c in catalog):
+        pass  # a run log replay: a plain fixture match is stored without its response
+    elif catalog and not films:
+        errors.append("the catalog_search responses carry no center-only film, so this test cannot judge the hand-off")
+    elif films and not any(re.search(rf"(?<!\d){f}(?!\d)", tail) for f in films):
+        errors.append(f"the researcher's text names none of the center-only films {sorted(films)}")
+    if any(b.get("site") == "matricula" for b in builds) and not re.search(r"Ortssuche|matricula-online\.eu/\w+/suchen", tail):
+        errors.append("the researcher's text never gives Matricula's place search (Suchen → Ortssuche), the route the tool's note carries")
+    offered = sorted(g for g in groups if re.search(rf"(?<!\d)0*{g}(?!\d)", tail))
+    if offered:
+        errors.append(f"the researcher's text names center-only image group(s) {offered}, which offers a read it cannot give")
+    assert not errors, "the FamilySearch Catalog cross-check fell short:\n  - " + "\n  - ".join(errors)
+
+
 def test_blm_outside_coverage_refusal_is_the_answer(before_state, after_state, tool_calls, test):
     """Tag-gated (blm-outside-coverage, #4402). A `blm_glo` build for a
     state-land state is refused `outside_coverage`, and that refusal is the
