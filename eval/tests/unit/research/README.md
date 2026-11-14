@@ -90,8 +90,8 @@ a signed-in user with no projects; it is the hosted pair of `ut_research_tsv`,
 the folder test of the no-project, no-objective route to tree-survey.
 `uses-new-project-path` and `uses-listed-project` gate the validators that read
 which `projectPath` the router took from that answer, and
-`reads-new-project-path` gates the one that checks `project_context` was called
-at `newProjectPath` and nowhere else. The mock serves every project tool from
+`no-wrong-project-path` gates the one that checks `project_context` was called
+at `newProjectPath` or not at all, and nowhere else. The mock serves every project tool from
 the test's one workspace, so each test's scenario is the project its route
 should open. In `ut_research_hnp`, `ut_research_hsp` and `ut_research_hts` it
 behaves as a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the

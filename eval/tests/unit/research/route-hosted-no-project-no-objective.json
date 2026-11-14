@@ -8,7 +8,7 @@
     "tags": [
       "routing",
       "routes-to:tree-survey",
-      "reads-new-project-path"
+      "no-wrong-project-path"
     ]
   },
   "input": {
@@ -33,7 +33,7 @@
     ]
   },
   "judge_context": [
-    "This is a ROUTING test. project_list answered hosted: no listed projects and newProjectPath /proj_5e7b2a91c04d8f36. A deterministic validator (test_no_project_reads_new_project_path) checks that project_context was called at that path; do not grade that yourself.",
+    "This is a ROUTING test. project_list answered hosted: no listed projects and newProjectPath /proj_5e7b2a91c04d8f36. A deterministic validator (test_no_project_reads_no_wrong_project_path) checks that project_context, if called, was called at that path only; do not grade that yourself.",
     "The project at newProjectPath is empty (no research.json) and the message states no person and no question, so the routing table row is 'No research.json at all, and the message states no objective -> tree-survey'. init-project as the first hand-off is wrong here. tree-survey is spawned with no projectPath because it surveys the FamilySearch tree, not a project; a hand-off that does not name newProjectPath is correct.",
     "The people in the suggestions (Hannah Pruitt, Frank Ellery, Ruth Ashby) come from the stubbed tree-survey, not from the router, and an empty project is expected. Relaying them is correct; do not score them as fabricated.",
     "tree-survey is stubbed with two suggestions that end with a request to pick one. The router should relay the suggestions and stop for the researcher's pick; spawning init-project with a person the researcher never chose is a fault. Grade only the quality of the router's own work: state derivation and narration.",
