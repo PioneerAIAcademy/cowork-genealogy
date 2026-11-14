@@ -1208,6 +1208,25 @@ def _record_facts_from_assertions(state: dict, assertion: dict) -> list[dict]:
     return out
 
 
+def _scored_another_party(args: dict, assertion: dict, by_id: dict) -> bool:
+    """Whether a `same_person` call scored a party of this assertion's record
+    other than the assertion's own: it names another `recordPersonaId` or
+    `recordRole`, or names none and its own assertion is another party of the
+    same record. Its tree person is then not the person this assertion's facts
+    describe, so those facts carry no birth year to compare with it. False when
+    either party is unknown, as for a call that embeds its documents."""
+    own = {str(k).lower() for k in (assertion.get("record_persona_id"), assertion.get("record_role")) if k}
+    named = args.get("recordPersonaId") or args.get("recordRole")
+    if named:
+        party = {str(named).lower()}
+    else:
+        called = by_id.get(args.get("assertionId") or "") or {}
+        if called.get("record_id") != assertion.get("record_id"):
+            return False
+        party = {str(k).lower() for k in (called.get("record_persona_id"), called.get("record_role")) if k}
+    return bool(own) and bool(party) and not (own & party)
+
+
 def report_chronological_contradiction_not_speculative(
     before_state, after_state, tool_calls
 ):
@@ -1314,7 +1333,7 @@ def report_chronological_contradiction_not_speculative(
         )
         if sp_args is None:
             for (side_a, side_b), args in sp_by_pair.items():
-                if side_b == person_id:
+                if side_b == person_id and not _scored_another_party(args, assertion, assertions):
                     record_persona_id, sp_args = side_a, args
                     break
         if sp_args is None:

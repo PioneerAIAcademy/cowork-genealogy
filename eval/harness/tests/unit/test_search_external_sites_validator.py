@@ -82,6 +82,7 @@ from test_search_external_sites import (  # noqa: E402
     test_refused_transcription_leaves_the_handoff_open as check_refused_open,
     test_folder_mode_upload_is_read_with_read as check_folder_read,
     test_blm_outside_coverage_refusal_is_the_answer as check_blm_refusal,
+    test_browse_site_catalog_cross_check as check_browse_catalog,
 )
 
 from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
@@ -657,6 +658,88 @@ def test_archion_quiet_on_the_parish_page_with_projectpath():
 )
 def test_archion_fires(calls, match):
     expect_fires(lambda: check_archion(calls, ARCHION), match)
+
+
+# --- a browse-site hand-off checks the FamilySearch Catalog (#4428) ------
+
+BROWSE_CATALOG = {"type": "positive", "tags": ["browse-catalog"]}
+MATRICULA_ROOT = "https://data.matricula-online.eu/de/"
+
+
+def _catalog(available_online=False, response=True):
+    call = {"tool": "mcp__genealogy__catalog_search", "args": {"standardPlace": "Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany"}}
+    if response:
+        call["response"] = {
+            "hits": [
+                {
+                    "id": "koha:202974",
+                    "title": "Kirchenbuch, 1667-1875",
+                    "filmNotes": [
+                        {"filmNumber": "876539", "imageGroupNumber": "8643224", "text": "Taufen, Heiraten, Tote 1667-1809"},
+                        {"filmNumber": "876540", "imageGroupNumber": "8109455", "text": "Taufen, Heiraten, Tote 1804-1865"},
+                    ],
+                    "availableOnline": available_online,
+                }
+            ]
+        }
+    return call
+
+
+def _matricula(**over):
+    args = {"site": "matricula", "attributes": {}, "projectPath": "/p"}
+    args.update(over)
+    return _build(**args)
+
+
+GOOD_TAIL = (
+    "Invocation: hand-off.\n---\nOpen the Matricula link, then Suchen → Ortssuche for Ochtrup. FamilySearch filmed the "
+    "same Catholic register as film 876540, viewable only at a FamilySearch Center or affiliate library.\n"
+    "Next, upload the page."
+)
+
+
+def test_browse_catalog_quiet_on_a_named_center_only_film():
+    expect_passes(lambda: check_browse_catalog([_catalog(), _matricula()], GOOD_TAIL, BROWSE_CATALOG))
+
+
+def test_browse_catalog_quiet_on_a_replay_with_no_recorded_response():
+    calls = [_catalog(response=False), _matricula()]
+    expect_passes(lambda: check_browse_catalog(calls, "x\n---\nOpen the Matricula link, then Suchen → Ortssuche.", BROWSE_CATALOG))
+
+
+def test_browse_catalog_quiet_on_the_place_search_given_as_its_url():
+    tail = GOOD_TAIL.replace("Suchen → Ortssuche", "the place search at https://data.matricula-online.eu/de/suchen/")
+    expect_passes(lambda: check_browse_catalog([_catalog(), _matricula()], tail, BROWSE_CATALOG))
+
+
+def test_browse_catalog_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_browse_catalog([], "", POSITIVE)
+
+
+@pytest.mark.parametrize(
+    "calls, reply, match",
+    [
+        ([_matricula()], GOOD_TAIL, "no catalog_search call"),
+        ([_catalog()], GOOD_TAIL, "browse-site link was dropped"),
+        ([_catalog(), _matricula(projectPath=None)], GOOD_TAIL, "omitted projectPath"),
+        ([_catalog(), _matricula()], "Film 876540 is at a FamilySearch Center.\n---\nOpen the Matricula link.", "names none of the center-only films"),
+        ([_catalog(), _matricula()], GOOD_TAIL.replace("film 876540", "film 8765401"), "names none of the center-only films"),
+        ([_catalog(), _matricula()], GOOD_TAIL + " I can read image group 008109455 for you.", "offers a read"),
+        ([_catalog(available_online=True), _matricula()], GOOD_TAIL, "no center-only film"),
+        (
+            [_catalog(), _matricula()],
+            GOOD_TAIL.replace(
+                "Suchen → Ortssuche for Ochtrup",
+                "find Ochtrup in the places/dioceses list (Diocese of Münster)",
+            ),
+            "never gives Matricula's place search",
+        ),
+    ],
+    ids=["no_catalog", "no_build", "no_projectpath", "film_only_above_the_line", "film_number_inside_a_longer_one", "offers_the_group", "no_center_only_hit", "diocese_list_route"],
+)
+def test_browse_catalog_fires(calls, reply, match):
+    expect_fires(lambda: check_browse_catalog(calls, reply, BROWSE_CATALOG), match)
 
 
 # --- a plan item's collection_url is the baseUrl (#2995) -----------------

@@ -121,7 +121,7 @@ Rules:
   `omittedSourceIds` names the source entries cut that that follow-up would not
   bring back: call with `personIds: [<first returned id>], sourceIds:
   omittedSourceIds`. An agent that needs source content asks for the subject's
-  sources by `personIds`, not with an opt-in on a family or whole-tree read.
+  sources by `personIds`, not with an opt-in on a family or whole-tree read. The one exception is research-plan's tree survey, which reads every person in scope with `includeSources: true`: the survey's job is a relative's person-level attachments, a deed attached only to a relative is otherwise unreachable, and the 40k cap bounds the read: persons are cut from the end with their sources, then sources, and the survey follows `omittedPersonIds`. It is the one exception to the rule that an agent reads the subject's sources only.
 
 ### 2.3 Not in scope
 

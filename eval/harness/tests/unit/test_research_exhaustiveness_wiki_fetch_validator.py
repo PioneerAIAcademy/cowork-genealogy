@@ -18,6 +18,7 @@ call under whichever of the three server spellings the session resolved
 match nothing on two thirds of runs.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -41,6 +42,12 @@ ALREADY_DECLARED = {"tags": ["research-exhaustiveness", "already-declared", "re-
 TENTATIVE_VALUE = {"tags": [
     "research-exhaustiveness", "tentative-value-sweep", "decline-declaration",
     "alternative-record", "regression",
+]}
+# ut_d3c's real tags, copied the same way. Its conflict tag sits beside
+# `no-gate-declaration` and `conflict-resolution`, which a gate must not key on.
+BLOCKED_BY_CONFLICT = {"tags": [
+    "conflict-resolution", "blocked-by-conflict", "stop-criteria",
+    "declaration-honesty", "no-gate-declaration", "no-exhaustive-declaration",
 ]}
 
 
@@ -116,8 +123,13 @@ def test_skips_a_run_that_returns_at_a_step_0_precondition():
     here on v1_2026-10-06_09-22-36 with the same two-call list while the judge
     scored all six dimensions 3, having stopped at the Step 0 sweep and routed
     to research-plan exactly as the body prescribes.
+
+    `blocked-by-conflict` is the fifth (issue #4323): ut_d3c stops at the
+    Step 0 open-conflict block and failed here 3/3 on Sonnet 5 medium while the
+    judge scored every dimension 3.
     """
-    for tags in (IN_PROGRESS, PLANNED, ALREADY_DECLARED, TENTATIVE_VALUE):
+    for tags in (IN_PROGRESS, PLANNED, ALREADY_DECLARED, TENTATIVE_VALUE,
+                 BLOCKED_BY_CONFLICT):
         with pytest.raises(pytest.skip.Exception):
             check([_call("mcp__genealogy__project_context")], tags)
 
@@ -189,3 +201,105 @@ def test_still_fires_on_an_ordinary_positive_that_skipped_the_fetch():
              _call("mcp__genealogy__research_append")]
     with pytest.raises(AssertionError, match="did not fetch"):
         check(calls, POSITIVE)
+
+
+def test_a_conflict_test_without_the_block_tag_still_owes_the_fetch():
+    """The other direction for the #4323 arm: d3c is exempt because it stops
+    at the Step 0 open-conflict block, not because it is about conflicts or
+    expects no gate value. The same tags minus `blocked-by-conflict` must still
+    fire. Three-way for the reason given in
+    `test_a_decline_without_a_step_0_tag_still_owes_the_fetch`: a widened gate
+    raises `Skipped`, which would otherwise mark this test skipped — green."""
+    tags = {"tags": [t for t in BLOCKED_BY_CONFLICT["tags"]
+                     if t != "blocked-by-conflict"]}
+    calls = [_call("mcp__genealogy__project_context"),
+             _call("mcp__genealogy__research_query"),
+             _call("mcp__genealogy__research_append")]
+    try:
+        check(calls, tags)
+    except pytest.skip.Exception:
+        pytest.fail(
+            "a run without `blocked-by-conflict` was exempted — the gate must "
+            "key on the Step 0 tag, not on `conflict-resolution` or "
+            "`no-gate-declaration`."
+        )
+    except AssertionError:
+        return
+    pytest.fail("the check did not fire on a run that owes the fetch")
+
+
+def test_d3c_is_graded_by_the_no_gate_validator():
+    """d3c's verdict needs a deterministic check, not just the judge: it is
+    exempt from the registration fetch, so without `no-exhaustive-declaration`
+    a run that wrote `question_answered` over the open conflict was graded by
+    nothing but the LLM (code review on #4323). Reads the real test file so
+    dropping the tag fails here.
+
+    Three-way for the reason given in
+    `test_a_decline_without_a_step_0_tag_still_owes_the_fetch`: a validator
+    that no longer gates on d3c raises `Skipped`, which would otherwise mark
+    THIS test skipped — green."""
+    from test_research_exhaustiveness import test_no_exhaustive_declaration
+
+    d3c = json.loads(
+        (Path(__file__).resolve().parents[3] / "tests" / "unit"
+         / "research-exhaustiveness"
+         / "direct-ut_research_exhaustiveness_d3c.json").read_text(encoding="utf-8")
+    )["test"]
+    assert d3c["tags"] == BLOCKED_BY_CONFLICT["tags"]
+
+    def state(stopped_because, status):
+        return {"research_json": {"questions": [{
+            "id": "q_001", "status": status,
+            "search_stop": {"stopped_because": stopped_because},
+        }]}}
+
+    def run(after):
+        try:
+            test_no_exhaustive_declaration(state(None, "in_progress"), after, d3c)
+        except pytest.skip.Exception:
+            pytest.fail("the no-gate validator skipped d3c — its verdict is "
+                        "graded by the judge alone")
+
+    with pytest.raises(AssertionError, match="Unexpected stop-gate write"):
+        run(state("question_answered", "exhaustive_declared"))
+    run(state("blocked_by_conflict", "in_progress"))
+
+
+def test_d3c_is_graded_on_the_stop_it_writes():
+    """d3c owes a `blocked_by_conflict` stop, and the no-gate check above
+    misses the two ways it fails: a `resources_spent` decline in its place,
+    and no write at all. v5_2026-11-02_10-47-43 recorded the first, and the
+    judge scored it 3 on every dimension (review of PR #4540). Reads the real
+    d3c file; a skip is turned into a failure for the reason given in
+    `test_a_decline_without_a_step_0_tag_still_owes_the_fetch`."""
+    from test_research_exhaustiveness import test_open_conflict_writes_blocked_by_conflict as check_stop
+
+    d3c = json.loads(
+        (Path(__file__).resolve().parents[3] / "tests" / "unit"
+         / "research-exhaustiveness"
+         / "direct-ut_research_exhaustiveness_d3c.json").read_text(encoding="utf-8")
+    )["test"]
+
+    def state(stopped_because):
+        return {"research_json": {"questions": [{
+            "id": "q_001", "status": "in_progress",
+            "search_stop": {"stopped_because": stopped_because},
+        }]}}
+
+    def run(after, test=d3c):
+        try:
+            check_stop(state(None), after, test)
+        except pytest.skip.Exception:
+            pytest.fail("the blocked-by-conflict check skipped d3c")
+
+    run(state("blocked_by_conflict"))
+    for wrong in ("resources_spent", "question_answered"):
+        with pytest.raises(AssertionError, match="owes a `blocked_by_conflict` stop, not"):
+            run(state(wrong))
+    with pytest.raises(AssertionError, match="no question's search_stop was written"):
+        run(state(None))
+
+    untagged = {"tags": [t for t in d3c["tags"] if t != "blocked-by-conflict"]}
+    with pytest.raises(pytest.skip.Exception):
+        check_stop(state(None), state("resources_spent"), untagged)

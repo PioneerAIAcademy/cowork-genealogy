@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 import json
+import string
 
 import pytest
 
@@ -799,6 +800,8 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
 # tag -> (callee, field, value pattern) lines its spawn prompt must carry.
 _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
+    "delegates-user-present-no-external": (("search-external-sites", "userPresent", r"no"),),
+    "delegates-user-present-no-hints": (("search-hints", "userPresent", r"no"),),
     "delegates-wrap-up": (
         ("research-plan", "planItemIds", r".*pli_\w+"),
         ("research-exhaustiveness", "wrapUp", r"yes"),
@@ -1192,28 +1195,23 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
                 plan_of[item["id"]] = plan["id"]
                 question_of[item["id"]] = plan.get("question_id")
     assert items, "Scenario drift: no active plan item to hand over."
-    decoder = json.JSONDecoder()
+    by_id = {i["id"]: i for i in items}
     problems = []
     for prompt in prompts:
-        named = [i for i in items if i["id"] in prompt]
-        if not named:
-            problems.append(f"names no plan item id: {prompt[:120]!r}")
+        handed, problem = _handed_plan_item(prompt)
+        if problem:
+            problems.append(problem)
             continue
-        item = named[0]
+        item = by_id.get(handed.get("id"))
+        if item is None:
+            problems.append(
+                f"plan_item block hands {handed.get('id')!r}, not an open item of an active plan {sorted(by_id)}"
+            )
+            continue
         if plan_of[item["id"]] not in prompt:
             problems.append(
                 f"does not hand the parent plan id {plan_of[item['id']]} for {item['id']}"
             )
-        marker = prompt.find("plan_item")
-        brace = prompt.find("{", marker) if marker != -1 else -1
-        if brace == -1:
-            problems.append(f"no plan_item JSON block for {item['id']}: {prompt[:160]!r}")
-            continue
-        try:
-            handed, _ = decoder.raw_decode(prompt[brace:])
-        except ValueError:
-            problems.append(f"plan_item block for {item['id']} is not valid JSON")
-            continue
         if handed != item:
             missing = object()  # a dropped key whose value was null must still be named
             diff = sorted(
@@ -1233,6 +1231,88 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
                 f"{qid!r}, which does not ask about a parent: {question_text.get(qid, '')!r}"
             )
         problems.extend(_handed_parents_problems(subject, tree, parents_question))
+    assert not problems, "; ".join(problems)
+
+
+# `plan_item:` as a field, not inside `plan_item_id` or `plan_items`.
+_PLAN_ITEM_BLOCK = re.compile(r"(?<![A-Za-z_])plan_item(?![A-Za-z_])[`*\"']*\s*[:=]")
+# Router prompts write the id line as `planItemId:`, `Plan item ID:` or
+# `plan_item_id:`; `planItemIds:` (a disposal list) is a different field.
+_PLAN_ITEM_ID_NAME = r"plan[\s_]*item[\s_]*id(?!s)"
+
+
+def _handed_plan_item(prompt: str) -> tuple[dict | None, str | None]:
+    """The one plan item a search spawn hands over, read from its `plan_item:`
+    JSON block, or why it hands no single item: no block, two blocks, a block
+    that is not a JSON object, two id lines, or an id line naming another item.
+    A prompt with no id line is fine: the block's own `"id"` names the item."""
+    blocks = list(_PLAN_ITEM_BLOCK.finditer(prompt))
+    if len(blocks) > 1:
+        return None, f"carries {len(blocks)} plan_item blocks; a spawn hands one item: {prompt[:160]!r}"
+    brace = prompt.find("{", blocks[0].end()) if blocks else -1
+    if brace == -1:
+        return None, f"no plan_item JSON block: {prompt[:160]!r}"
+    try:
+        handed, _ = json.JSONDecoder().raw_decode(prompt[brace:])
+    except ValueError:
+        return None, "plan_item block is not valid JSON"
+    if not isinstance(handed, dict):
+        return None, "plan_item block is not a JSON object"
+    ids = _field_values(prompt, "planItemId", name_regex=_PLAN_ITEM_ID_NAME)
+    if len(ids) > 1:
+        return None, f"carries {len(ids)} plan item id lines {ids}; a spawn hands one item"
+    if ids and ids[0] != handed.get("id"):
+        return None, f"id line names {ids[0]!r} but the plan_item block is {handed.get('id')!r}"
+    return handed, None
+
+
+_FANS_OUT_TAG = "fans-out-plan-items"
+_RELAYED_WORDS = 6
+
+
+def _words(text: str) -> list[str]:
+    words = (w.strip(string.punctuation) for w in _quote_and_space_normal(text).lower().split())
+    return [w for w in words if w]
+
+
+def _word_runs(words: list[str], n: int) -> set[tuple[str, ...]]:
+    return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def test_search_spawns_cover_each_open_item(test, builtin_tool_calls, before_state):
+    """Tag-gated (``fans-out-plan-items``). On a job, research/SKILL.md's search
+    step dispatches one search agent per open item of the active plan, each
+    handed that one item and never the researcher's words (issue #4441). Read
+    from the hook records: one search-records spawn per open item with no
+    ``fallback_for``, the handed ids equal to those items, and no spawn carrying
+    6 or more consecutive words of the user message. Whether the spawns share
+    one assistant message is not checked: no record says which message a spawn
+    came from."""
+    if _FANS_OUT_TAG not in (test.get("tags") or []):
+        pytest.skip("not a fans-out test")
+    research = before_state.get("research_json") or {}
+    expected = sorted(
+        item["id"]
+        for plan in research.get("plans", [])
+        if plan.get("status") == "active"
+        for item in plan.get("items", [])
+        if item.get("status") in ("planned", "in_progress") and not item.get("fallback_for")
+    )
+    assert len(expected) > 1, f"Scenario drift: a fans-out test needs two or more open items; got {expected}"
+    prompts = _spawn_prompts(builtin_tool_calls, "search-records")
+    problems = []
+    if len(prompts) != len(expected):
+        problems.append(f"{len(prompts)} search-records spawns for {len(expected)} open plan items {expected}")
+    handed = sorted(str((_handed_plan_item(p)[0] or {}).get("id")) for p in prompts)
+    if handed != expected:
+        problems.append(f"handed plan items {handed}, open plan items {expected}")
+    message = re.sub(r"^/research\b", "", (test.get("user_message") or "").strip())
+    banned = _word_runs(_words(message), _RELAYED_WORDS)
+    for prompt in prompts:
+        if banned & _word_runs(_words(prompt), _RELAYED_WORDS):
+            problems.append(
+                f"a search-records spawn carries {_RELAYED_WORDS}+ consecutive words of the researcher's message: {prompt[:160]!r}"
+            )
     assert not problems, "; ".join(problems)
 
 
@@ -1444,13 +1524,17 @@ _UNCONFIRMED = re.compile(
 )
 
 
-def _field_values(prompt: str, field: str) -> list[str]:
+def _field_values(prompt: str, field: str, *, name_regex: str | None = None) -> list[str]:
     """Every value written for ``field`` in a spawn prompt, in any markup the
     router uses: ``field: v``, ``**field:** v``, ``"field": "v"``, ``field=v``,
     and in prose, where a value can end a sentence or a parenthesis
-    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped."""
+    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped.
+    ``name_regex``, when given, matches the field name instead of ``field``,
+    case-insensitively, for a field routers spell several ways."""
+    name = name_regex or re.escape(field)
     pattern = re.compile(
-        rf"(?<![A-Za-z]){re.escape(field)}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)"
+        rf"(?<![A-Za-z]){name}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)",
+        re.IGNORECASE if name_regex else 0,
     )
     values = (m.group("v").rstrip(".)") for m in pattern.finditer(prompt))
     return [v for v in values if v]

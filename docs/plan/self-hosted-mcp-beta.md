@@ -306,11 +306,23 @@ The first invited user waits for all of these.
 1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/review`. `/code-review ultra` runs only where one of those calls for it (lead, 2026-11-12).
 2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat and Desktop Chat:
    1. install the plugin, connect it from its Connectors tab and sign in;
-   2. research a person, and see the cards and case file;
+   2. research a person, and see the cards and case file, then run the project-first check below;
    3. upload a capture;
    4. start a second project, then resume the first in a new task;
    5. let the session end, sign in again from the link, and continue;
    6. install a newer zip over the old one.
+
+   **The project-first check** (step 2; PR #4474, so the build must contain `b97c19276`). Send each message once, each in a new chat, on one surface: claude.ai chat and Desktop Chat behave the same. The server cannot delete a project, so a repeat finds the first run's project.
+   - "For PID KNHX-4YB, Elizabeth's marriage says Cuyahoga, Ohio but two of her children have births back in Groton, Connecticut after the Ohio records. Can you evaluate the sources, and create a plan for figuring out why the contradictions?"
+   - "PID LDJK-B4Q, Caleb Blood has an uncle and a cousin with the exact same name. His cousin has the same birth year. Can you review his records and make sure they all belong to him and not one of the other two?"
+   - "For the children of PID L6KS-9PW, Daniel Cook, can you explain what could be behind the migration patterns?"
+
+   For each, record the first `project_list` reply, the tool names in order up to and including the first Skill or Agent call, and whether `project_create` ran before the first answer. It passes when:
+   - **all three** run `project_create` before the first answer, for the person the message names;
+   - **the first,** the new-user case, gets a first `project_list` reply of "No project yet" ending in "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.";
+   - **the second and third,** the returning-user case and recorded separately, get a first `project_list` reply listing the earlier projects, and the model still starts a new project for the new person.
+
+   A run that answers inline goes to the lead, naming the message and which case it was.
 3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. Whether D4 tells users to set it on the page is the lead's call.
 4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
 5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1.
@@ -360,7 +372,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 |---|---|
 | Sun 8 Nov | Sitting 1 |
 | Thu 12 Nov | Sitting 2. A long token with no refresh, and one install, are decided; the length is the lead's call, and E3 follows from the results |
-| By 13 Nov | E2 merged; the stack up on `malachi` with the edge off |
+| 13 Nov | E2 and E3 merged; the stack up on `malachi` with the edge on, running the MCP App's fold. Nobody has signed in yet |
 | About 19 Nov | The first live sign-in |
 | About 23 Nov | A full run with cards, a planted dead token, and signing in again |
 | By 1 Dec | Policy text and plain pages |
