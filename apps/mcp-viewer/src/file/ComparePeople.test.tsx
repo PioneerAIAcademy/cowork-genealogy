@@ -80,6 +80,7 @@ describe('the person page', () => {
     expect(page).toMatch(/Birth: 1850, Illinois, United States · 1880 census, confident/)
     expect(page).toMatch(/Residence: 1880, St Paul, Ramsey, Minnesota, United States · Marriage record, confident/)
     expect(page).toContain('From the records')
+    expect(page).toContain('Looked for, not found')
     expect(page).toContain('1851 to 1879: no census')
     expect(page).toContain('No census found for 1860 or 1870.')
     expect(page).toContain('The census puts her in Chicago, the tree in St Paul.')

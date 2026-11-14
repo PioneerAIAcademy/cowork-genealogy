@@ -44,6 +44,8 @@ describe('comparing dates', () => {
     expect(compareDates(d('1851'), d('1850'))).toBe('conflict')
     expect(compareDates(d('about 1850'), d('~1850'))).toBe('same')
     expect(compareDates(d('about 1850'), d('1850'))).toBe('less')
+    expect(compareDates(d('1850'), d('about 1850'))).toBe('same')
+    expect(compareDates(d('4 Apr 1850'), d('about 1850'))).toBe('more')
   })
 
   it('an approximate year agrees within two years, and not beyond', () => {

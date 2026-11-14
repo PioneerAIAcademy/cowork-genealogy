@@ -5,6 +5,7 @@ import type { RuleIndex } from '../rules/rule-index'
 import { dateWords, factKey } from './case-model'
 import { readDate } from './compare-read'
 import { besideValue, CONFIDENCE_RANK, labelWords, sourcePeople, sourceTitle } from './model'
+import { isAbsent } from './record-basis'
 
 type Row = Record<string, unknown>
 
@@ -23,6 +24,8 @@ export interface LifeRow {
   records: LifeRecord[]
   /** A linked record's finding that no tree fact holds. */
   fromRecords: boolean
+  /** The record was looked at for this and lacked it. */
+  absent: boolean
 }
 
 function folded(type: unknown): string {
@@ -78,7 +81,7 @@ export function lifeOf(research: ResearchDocument, tree: unknown, personId: stri
       else {
         behind = [...linked.keys()]
           .map((id) => assertions.get(id)!)
-          .filter((a) => folded(a.fact_type) === key && yearOf(a.date) === year)
+          .filter((a) => !isAbsent(a) && folded(a.fact_type) === key && yearOf(a.date) === year)
       }
     }
     for (const a of behind) used.add(a.id)
@@ -88,13 +91,20 @@ export function lifeOf(research: ResearchDocument, tree: unknown, personId: stri
         .map((a) => recordOf(a.source_id))
         .filter((r): r is LifeRecord => r !== null && !seen.has(r.sourceId) && (seen.add(r.sourceId), true))
     }
-    return { label: labelWords(fact.type), text: line(fact.value, fact.date, fact.place), year, records, fromRecords: false }
+    return { label: labelWords(fact.type), text: line(fact.value, fact.date, fact.place), year, records, fromRecords: false, absent: false }
   })
   for (const [id] of linked) {
     if (used.has(id)) continue
     const a = assertions.get(id)!
     const record = recordOf(a.source_id)
-    rows.push({ label: labelWords(a.fact_type), text: line(a.value, a.date, a.place), year: yearOf(a.date), records: record ? [record] : [], fromRecords: true })
+    rows.push({
+      label: labelWords(a.fact_type),
+      text: line(a.value, a.date, a.place),
+      year: yearOf(a.date),
+      records: record ? [record] : [],
+      fromRecords: true,
+      absent: isAbsent(a)
+    })
   }
   return rows.sort((x, y) => (x.year ?? 9999) - (y.year ?? 9999))
 }

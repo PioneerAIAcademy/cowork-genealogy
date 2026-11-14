@@ -17,6 +17,7 @@ import {
 } from './compare-read'
 import { besideValue, CONFIDENCE_RANK, labelWords, sourcePeople, sourceTitle } from './model'
 import { familyOf, personIds, subjectOf, treeName, type Family } from './people-model'
+import { isAbsent } from './record-basis'
 
 type Row = Record<string, unknown>
 
@@ -98,7 +99,7 @@ function str(value: unknown): string | null {
 function factText(value: unknown, date: unknown, place: unknown): string {
   const v = str(value) ?? ''
   const rest = besideValue(v, dateWords(date), str(place) ?? '')
-  return v ? `${v}${rest}` : rest.replace(/^, /, '')
+  return (v ? `${v}${rest}` : rest.replace(/^, /, '')) || 'with no date or place'
 }
 
 /** The starting tree's facts for one person: names, sex, their facts, and their couples' facts. Keys unfolded. */
@@ -283,7 +284,8 @@ export function compareFindings(research: ResearchDocument, tree: unknown, start
     rows.set(personId, mine)
   }
 
-  const live = list(research.assertions).filter(isLive)
+  // A record that lacked the value is not a finding of it.
+  const live = list(research.assertions).filter((a) => isLive(a) && !isAbsent(a))
   for (const a of live) {
     const key = folded(factKey(a.fact_type))
     if (!COMPARED_SET.has(key)) continue

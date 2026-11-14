@@ -48,7 +48,7 @@ export const TODAY_TREE = {
 }
 
 const CHICAGO = 'Chicago, Cook, Illinois, United States'
-const base = { record_role: 'principal', information_quality: 'primary', informant: 'clerk', informant_proximity: 'eyewitness', record_basis: 'original_record', extracted_for_question_ids: ['q_001'] }
+const base = { record_role: 'principal', information_quality: 'primary', informant: 'clerk', informant_proximity: 'eyewitness', record_basis: 'stated', extracted_for_question_ids: ['q_001'] }
 const assertion = (id: string, source: string, record: string, fact_type: string, value: string, extra: object = {}) => ({
   id,
   source_id: source,
@@ -96,7 +96,9 @@ export const COMPARE_RESEARCH = {
     assertion('a_014', 'src_002', MARRIAGE, 'name', 'Bridget Flynn'),
     assertion('a_015', 'src_002', MARRIAGE, 'birth', 'born', { date: '4 Mar 1820', place: 'Cork, Ireland' }),
     assertion('a_016', 'src_001', CENSUS, 'birthplace', 'Ohio, United States'),
-    assertion('a_017', 'src_002', MARRIAGE, 'birthplace', 'Iowa, United States')
+    assertion('a_017', 'src_002', MARRIAGE, 'birthplace', 'Iowa, United States'),
+    assertion('a_018', 'src_001', CENSUS, 'occupation', 'Mary Flynn absent from the 1880 occupation column', { date: '1880', record_basis: 'absent' }),
+    assertion('a_019', 'src_001', CENSUS, 'immigration', 'No immigration year given', { date: '1880', record_basis: undefined, evidence_type: 'negative' })
   ],
   person_evidence: [
     link('pe_001', 'a_001', 'I1', 'confident'),
@@ -118,7 +120,9 @@ export const COMPARE_RESEARCH = {
     link('pe_017', 'a_014', 'I6', 'probable'),
     link('pe_018', 'a_015', 'I2', 'probable'),
     link('pe_019', 'a_016', 'I3', 'speculative'),
-    link('pe_020', 'a_017', 'I3', 'speculative')
+    link('pe_020', 'a_017', 'I3', 'speculative'),
+    link('pe_021', 'a_018', 'I1', 'confident'),
+    link('pe_022', 'a_019', 'I1', 'confident')
   ],
   timelines: [
     {

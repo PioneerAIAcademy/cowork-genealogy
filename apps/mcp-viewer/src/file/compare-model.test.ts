@@ -81,6 +81,23 @@ describe('Compare with FamilySearch', () => {
     expect(husband?.records[0]?.sourceId).toBe('src_002')
   })
 
+  it('a record that lacked a value is no finding, in either spelling, and counts nothing', () => {
+    expect(rows('I1', 'occupation')).toEqual([])
+    expect(rows('I1', 'immigration')).toEqual([])
+  })
+
+  it('a tree fact with no date or place still shows as on FamilySearch', () => {
+    expect(rows('I2', 'death')[0]?.treeValues).toEqual(['1890'])
+    const bare = compareFindings(
+      COMPARE_RESEARCH,
+      TODAY_TREE,
+      { ...STARTING_TREE, persons: STARTING_TREE.persons.map((p) => (p.id === 'I1' ? { ...p, facts: [{ type: 'Residence' }] } : p)) },
+      index
+    )
+    const residence = bare?.people.find((p) => p.personId === 'I1')?.findings.find((f) => f.key === 'residence')
+    expect(residence?.treeValues).toEqual(['with no date or place'])
+  })
+
   it('a marriage shows under both spouses', () => {
     expect(rows('I1', 'marriage')[0]?.tag).toBe('improved')
     expect(rows('I3', 'marriage')[0]?.tag).toBe('improved')

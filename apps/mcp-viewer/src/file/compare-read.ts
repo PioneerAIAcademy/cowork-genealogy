@@ -61,6 +61,9 @@ export function compareDates(finding: ReadDate | null, tree: ReadDate | null): R
     const near = finding.from <= tree.to + 2 && tree.from <= finding.to + 2
     if (!near) return 'conflict'
     if (finding.approximate && tree.approximate) return 'same'
+    const exact = finding.approximate ? tree : finding
+    // A bare year against "about" that year says nothing more: "1850" and "about 1850" agree.
+    if (exact.month === null) return finding.approximate ? 'less' : 'same'
     return finding.approximate ? 'less' : 'more'
   }
   if (finding.from !== tree.from) return 'conflict'

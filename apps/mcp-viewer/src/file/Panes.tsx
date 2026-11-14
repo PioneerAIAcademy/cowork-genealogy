@@ -237,7 +237,7 @@ function PersonPane({ id }: { id: string }) {
             {life.map((row, i) => (
               <li key={i} className="file-item">
                 <strong>{row.label}:</strong> <Prose text={row.text} index={index} inline />
-                {row.fromRecords && <span className="file-tag">From the records</span>}
+                {row.fromRecords && <span className="file-tag">{row.absent ? 'Looked for, not found' : 'From the records'}</span>}
                 {row.records.length > 0 && (
                   <span className="file-meta">
                     {' '}
