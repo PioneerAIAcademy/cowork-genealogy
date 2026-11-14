@@ -1,0 +1,42 @@
+{
+  "tool": "place_search",
+  "description": "place_search for Ochtrup: the town since 1946, the Prussian municipality of 1816-1946 (the standardPlace for an 1836 event), and the village of the Hochstift Münster before 1816. Measured live 2026-11-13 with placeSearchTool({ placeName: 'Ochtrup' }). Catch-all predicate: the only place_search fixture the matricula-ochtrup test loads.",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Ochtrup, Steinfurt, North Rhine-Westphalia, Germany",
+        "type": "Town",
+        "dateRange": "+1946/",
+        "latitude": 52.2059,
+        "longitude": 7.1872,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ochtrup&focusedId=7722335",
+        "wikipediaUrl": "https://de.wikipedia.org/wiki/Ochtrup"
+      },
+      {
+        "standardPlace": "Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany",
+        "type": "Municipality",
+        "dateRange": "+1816/+1946",
+        "latitude": 52.2059,
+        "longitude": 7.1872,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ochtrup&focusedId=9288448",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Ochtrup"
+      },
+      {
+        "standardPlace": "Ochtrup, Hochstift Münster, Holy Roman Empire",
+        "type": "Village",
+        "dateRange": "+1203/+1816",
+        "latitude": 52.2059,
+        "longitude": 7.1872,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ochtrup&focusedId=11868660",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Ochtrup"
+      }
+    ],
+    "verdict": {
+      "standardPlace": null,
+      "reason": "the writers store no standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places: the engine leaves a one-part place unstandardized unless it can tell which place it is; write its parent jurisdictions into the place text (e.g. \"Springfield, Illinois\")"
+    }
+  }
+}
