@@ -10,6 +10,7 @@ import {
   compareValues,
   nameWords,
   newNamePieces,
+  newSurname,
   placeParts,
   readDate,
   type ReadDate,
@@ -170,9 +171,11 @@ function dateAndPlace(a: Assertion): { date: ReadDate | null; place: string[] } 
 function readFinding(key: string, a: Assertion, facts: StartingFact[]): Reading3 & { pool: StartingFact[] } {
   if (key === 'name') {
     const names = facts.map((f) => f.text)
-    if (names.length === 0) return { tag: 'new', changes: nameWords(a.value).length ? [`name:${nameWords(a.value).sort().join(' ')}`] : [], pool: [] }
-    const pieces = newNamePieces(a.value, names)
-    return pieces.length ? { tag: 'improved', changes: [`name:${pieces.sort().join(' ')}`], pool: facts } : { tag: 'already', changes: [], pool: facts }
+    // Only a new surname counts; a new given name still reads Improved.
+    const surname = newSurname(a.value, names)
+    const changes = surname ? [`name:${surname}`] : []
+    if (names.length === 0) return { tag: 'new', changes, pool: [] }
+    return newNamePieces(a.value, names).length ? { tag: 'improved', changes, pool: facts } : { tag: 'already', changes: [], pool: facts }
   }
   if (key === 'sex') {
     const mine = sexOf(a.value)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { closeWord, compareDates, comparePlaces, compareValues, newNamePieces, placeParts, readDate } from './compare-read'
+import { closeWord, compareDates, comparePlaces, compareValues, newNamePieces, newSurname, placeParts, readDate } from './compare-read'
 
 const d = (text: string, certainty?: string) => readDate(text, certainty)
 
@@ -94,6 +94,28 @@ describe('names and values', () => {
     expect(newNamePieces('John Mc Andrews', ['John McAndrew'])).toEqual([])
     expect(newNamePieces('John McAndrew', ['John Mc Andrew'])).toEqual([])
     expect(newNamePieces('José María', ['Jose Maria'])).toEqual([])
+  })
+
+  it('only a new surname is one, and a surname may be spelled further off', () => {
+    expect(newSurname('Maria Joanna de Jesus', ['Maria Joana'])).toBe('jesus')
+    expect(newSurname('Hannah Grice', ['Hannah Earnest'])).toBe('grice')
+    expect(newSurname('Mrs Smith', ['Mary Jones'])).toBe('smith')
+    expect(newSurname('John Kelly Jr.', ['John Flynn'])).toBe('kelly')
+    // A new given name, a one-word name, a surname initial: no new surname.
+    expect(newSurname('Mary Ann Flynn', ['Mary Flynn'])).toBeNull()
+    expect(newSurname('Wm A Bagley', ['William Bagley'])).toBeNull()
+    expect(newSurname('Anne', ['Hannah Earnest'])).toBeNull()
+    expect(newSurname('Anne [Grice]', ['Hannah Earnest'])).toBeNull()
+    expect(newSurname('Sarah B.', ['Sarah Andrews'])).toBeNull()
+    // Surname variants, within a third of their letters.
+    expect(newSurname('Maria Anna Schneider', ['Maria Anna Schmieder'])).toBeNull()
+    expect(newSurname('Liesabeth Ollenborgs', ['Liesbeth Oldenburg'])).toBeNull()
+    expect(newSurname('Catharina Karel', ['Catharina Carell'])).toBeNull()
+    expect(newNamePieces('Liesabeth Ollenborgs', ['Liesbeth Oldenburg'])).toEqual([])
+    // Further off than that is a different surname, and a given name keeps the quarter.
+    expect(newSurname('Emma Ferber', ['Emma Becker'])).toBe('ferber')
+    expect(newSurname('Elizabeth Slack', ['Elizabeth Geach'])).toBe('slack')
+    expect(newNamePieces('Mikkel Ferber', ['Michel Ferber'])).toEqual(['mikkel'])
   })
 
   it('values compare as word sets', () => {

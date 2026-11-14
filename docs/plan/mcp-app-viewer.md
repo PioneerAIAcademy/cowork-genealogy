@@ -632,9 +632,11 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   half dropped at zero (lead, 2026-11-14). Only findings with a probable or confident link
   count (lead, 2026-11-13). A person the research added counts once, as a relative. A
   fact, on a person already in the tree, is a new event, a more specific or a different
-  date, a more specific or a different place, or a new piece of a name, and a link between
-  two people already in the tree. Name variants and dates that agree (`about 1850`, `~1850`,
-  `1850`, or an approximate year within two) do not count (lead, 2026-11-14).
+  date, a more specific or a different place, or a new surname, and a link between two
+  people already in the tree. A new given name, a one-word name, a surname spelled within a
+  third of its letters (`Ollenborgs`, `Oldenburg`), and dates that agree (`about 1850`,
+  `~1850`, `1850`, or an approximate year within two) do not count (lead, 2026-11-14). Compare
+  still shows a new given name as Improved.
 - **The case file:** `ViewerBody` in fullscreen, fed by `McpAppResearchTransport`. A
   search's results open in its side panel, and Sources shows a record's page image
   and transcription.

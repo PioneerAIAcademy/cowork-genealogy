@@ -138,8 +138,18 @@ function distance(a: string, b: string): number {
   return prev[b.length]
 }
 
-function nearSpelling(word: string, other: string): boolean {
-  return distance(word, other) <= Math.max(1, Math.floor(Math.max(word.length, other.length) / 4))
+function nearSpelling(word: string, other: string, share = 4): boolean {
+  return distance(word, other) <= Math.max(1, Math.floor(Math.max(word.length, other.length) / share))
+}
+
+const SUFFIXES = new Set(['sr', 'jr', 'ii', 'iii', 'iv'])
+
+/** Where a name's surname is among its words: its last word but a suffix, when a word comes
+ *  before it and it is more than an initial; -1 when the name has none. */
+function surnameAt(words: string[]): number {
+  let i = words.length - 1
+  while (i > 0 && SUFFIXES.has(words[i])) i--
+  return i > 0 && words[i].length > 1 ? i : -1
 }
 
 /** Close enough to be the same name spelled another way. */
@@ -153,21 +163,38 @@ function joinedPairs(words: string[]): string[] {
   return words.slice(1).map((w, i) => words[i] + w)
 }
 
-/** The finding's name words that no tree name word is, is close to, or is the initial of.
+/** Which of the finding's name words no tree name word is, is close to, or is the initial of.
  *  Neighbours are also tried joined, on both sides (`Mc Andrews` against `McAndrew`), by
- *  spelling alone: a shared first four letters says nothing about a joined pair. */
-export function newNamePieces(finding: unknown, treeNames: unknown[]): string[] {
+ *  spelling alone: a shared first four letters says nothing about a joined pair. A surname
+ *  may differ by a third of its letters (`Ollenborgs` against `Oldenburg`), other words by a
+ *  quarter. */
+function namePieces(finding: unknown, treeNames: unknown[]): { mine: string[]; fresh: boolean[]; surname: number } {
   const words = treeNames.map(nameWords)
   const single = words.flat()
   const joinedTree = words.flatMap(joinedPairs)
   const mine = nameWords(finding)
-  return mine.filter((w, i) => {
+  const surname = surnameAt(mine)
+  const fresh = mine.map((w, i) => {
     if (w.length === 1) return !single.some((t) => t.startsWith(w))
-    if (single.some((t) => closeWord(w, t))) return false
+    if (single.some((t) => closeWord(w, t) || (i === surname && nearSpelling(w, t, 3)))) return false
     if (joinedTree.some((t) => nearSpelling(w, t))) return false
     const joined = [i > 0 ? mine[i - 1] + w : null, i + 1 < mine.length ? w + mine[i + 1] : null]
     return !joined.some((j) => j !== null && single.some((t) => nearSpelling(j, t)))
   })
+  return { mine, fresh, surname }
+}
+
+/** The finding's name words the tree's names do not hold. */
+export function newNamePieces(finding: unknown, treeNames: unknown[]): string[] {
+  const { mine, fresh } = namePieces(finding, treeNames)
+  return mine.filter((_, i) => fresh[i])
+}
+
+/** The finding's surname, when the tree's names do not hold it; null when it has none. Only a
+ *  new surname counts on the card (lead, 2026-11-14): a new given name is mostly a variant. */
+export function newSurname(finding: unknown, treeNames: unknown[]): string | null {
+  const { mine, fresh, surname } = namePieces(finding, treeNames)
+  return surname >= 0 && fresh[surname] ? mine[surname] : null
 }
 
 /** Words of a value (an occupation, a religion): equal, a subset, a superset, or neither. */

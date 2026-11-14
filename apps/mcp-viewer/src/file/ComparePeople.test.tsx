@@ -115,7 +115,7 @@ const SEARCHING = (): ProjectDocument => {
   return d
 }
 
-const LINE = "This research found 1 new relative and 9 new facts that aren't on FamilySearch yet"
+const LINE = "This research found 1 new relative and 8 new facts that aren't on FamilySearch yet"
 
 describe("the card's Compare line", () => {
   it('shows under the conclusion card and opens the file on Compare', async () => {

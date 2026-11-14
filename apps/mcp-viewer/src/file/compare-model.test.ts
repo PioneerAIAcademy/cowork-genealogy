@@ -142,10 +142,15 @@ describe('Compare with FamilySearch', () => {
   })
 
   it('counts an added person once, and each person, fact and change once', () => {
-    // Mary: a new name piece (ann), another (kelly), a different residence place, a more
-    // specific birth date and place (the birthplace assertion repeats the place: once), the
-    // marriage's date and place (once for the couple), and the added mother edge; Patrick: a
-    // different birth date. John's two birthplaces are speculative: shown, not counted.
-    expect(view.counts).toEqual({ relatives: 1, facts: 9, peopleWithNew: 4, possibleRelatives: 1 })
+    // Mary: a new surname (kelly), a different residence place, a more specific birth date and
+    // place (the birthplace assertion repeats the place: once), the marriage's date and place
+    // (once for the couple), and the added mother edge; Patrick: a different birth date. Her
+    // new middle name (ann) and John's two speculative birthplaces are shown, not counted.
+    expect(view.counts).toEqual({ relatives: 1, facts: 8, peopleWithNew: 4, possibleRelatives: 1 })
+  })
+
+  it('a new surname counts and a new given name only shows', () => {
+    expect(rows('I1', 'name').find((f) => f.text === 'Mary Ann Flynn')).toMatchObject({ tag: 'improved', counted: false })
+    expect(rows('I1', 'name').find((f) => f.text === 'Mary Kelly')).toMatchObject({ tag: 'improved', counted: true })
   })
 })
