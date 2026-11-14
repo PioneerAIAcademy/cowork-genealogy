@@ -85,7 +85,7 @@ export const COMPARE_RESEARCH = {
     assertion('a_003', 'src_001', CENSUS, 'residence', 'lived', { date: '1880', place: CHICAGO }),
     assertion('a_004', 'src_002', MARRIAGE, 'birth', 'born', { date: '4 Apr 1850', place: CHICAGO }),
     assertion('a_005', 'src_002', MARRIAGE, 'marriage', 'married', { date: '12 May 1872', place: CHICAGO }),
-    assertion('a_006', 'src_002', MARRIAGE, 'name', 'Mary Kelly'),
+    assertion('a_006', 'src_002', MARRIAGE, 'name', 'Mary Kelly Flynn', { structured_value: { given: 'Mary', surname: 'Kelly Flynn' } }),
     assertion('a_007', 'src_003', BIRTH, 'birth', 'born', { date: '1875', place: CHICAGO }),
     assertion('a_008', 'src_003', BIRTH, 'name', 'Thomas Flynn'),
     assertion('a_009', 'src_001', CENSUS, 'death', 'died', { date: '1895' }),

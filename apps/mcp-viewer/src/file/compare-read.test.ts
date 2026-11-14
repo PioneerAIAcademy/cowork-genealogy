@@ -118,6 +118,18 @@ describe('names and values', () => {
     expect(newNamePieces('Mikkel Ferber', ['Michel Ferber'])).toEqual(['mikkel'])
   })
 
+  it('a surname the record stored is read as stored, wherever it sits in the name', () => {
+    expect(newSurname('Mary Kelly Flynn', ['Mary Flynn'], 'Kelly Flynn')).toBe('kelly')
+    expect(newSurname('Mary Kelly Flynn', ['Mary Flynn'], 'Flynn')).toBeNull()
+    expect(newSurname('Mary Kelly Flynn', ['Mary Flynn'])).toBeNull()
+    expect(newSurname('Marina Lopez Pichardo', ['Marina Pichardo'], 'Lopez Pichardo')).toBe('lopez')
+    expect(newSurname('Mary Rejnic Kraynak', ['Maria Rejnic'], 'Rejnic Kraynak')).toBe('kraynak')
+    expect(newSurname('Jura Gagdosse [= Georgius Gajdoš]', ['Georg Novak'], 'Gagdosse [Gajdoš]')).toBe('gagdosse')
+    expect(newSurname('Liesabeth Ollenborgs', ['Liesbeth Oldenburg'], 'Ollenborgs')).toBeNull()
+    expect(newNamePieces('Liesabeth Ollenborgs', ['Liesbeth Oldenburg'], 'Ollenborgs')).toEqual([])
+    expect(newSurname('Mary Kelly', ['Mary Flynn'], '')).toBe('kelly')
+  })
+
   it('values compare as word sets', () => {
     expect(compareValues('LABOURER IN TUBE TRADE', 'Tube Inspector Foreman Non Ferrous')).toBe('conflict')
     expect(compareValues('Farmer', 'farmer')).toBe('same')

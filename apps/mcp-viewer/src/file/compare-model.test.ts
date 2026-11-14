@@ -151,6 +151,7 @@ describe('Compare with FamilySearch', () => {
 
   it('a new surname counts and a new given name only shows', () => {
     expect(rows('I1', 'name').find((f) => f.text === 'Mary Ann Flynn')).toMatchObject({ tag: 'improved', counted: false })
-    expect(rows('I1', 'name').find((f) => f.text === 'Mary Kelly')).toMatchObject({ tag: 'improved', counted: true })
+    // Kelly is not the last word: it counts because the record stored it as surname.
+    expect(rows('I1', 'name').find((f) => f.text === 'Mary Kelly Flynn')).toMatchObject({ tag: 'improved', counted: true })
   })
 })

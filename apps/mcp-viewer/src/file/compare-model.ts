@@ -172,10 +172,11 @@ function readFinding(key: string, a: Assertion, facts: StartingFact[]): Reading3
   if (key === 'name') {
     const names = facts.map((f) => f.text)
     // Only a new surname counts; a new given name still reads Improved.
-    const surname = newSurname(a.value, names)
+    const stored = a.structured_value?.surname
+    const surname = newSurname(a.value, names, stored)
     const changes = surname ? [`name:${surname}`] : []
     if (names.length === 0) return { tag: 'new', changes, pool: [] }
-    return newNamePieces(a.value, names).length ? { tag: 'improved', changes, pool: facts } : { tag: 'already', changes: [], pool: facts }
+    return newNamePieces(a.value, names, stored).length ? { tag: 'improved', changes, pool: facts } : { tag: 'already', changes: [], pool: facts }
   }
   if (key === 'sex') {
     const mine = sexOf(a.value)

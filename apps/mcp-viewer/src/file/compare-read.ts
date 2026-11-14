@@ -163,38 +163,46 @@ function joinedPairs(words: string[]): string[] {
   return words.slice(1).map((w, i) => words[i] + w)
 }
 
-/** Which of the finding's name words no tree name word is, is close to, or is the initial of.
- *  Neighbours are also tried joined, on both sides (`Mc Andrews` against `McAndrew`), by
- *  spelling alone: a shared first four letters says nothing about a joined pair. A surname
- *  may differ by a third of its letters (`Ollenborgs` against `Oldenburg`), other words by a
- *  quarter. */
-function namePieces(finding: unknown, treeNames: unknown[]): { mine: string[]; fresh: boolean[]; surname: number } {
+/** Which of the finding's name words no tree name word is, is close to, or is the initial of,
+ *  and which of its surname words. The surname is the one the record stored
+ *  (`structured_value.surname`), else the name's last word. Neighbours are also tried joined,
+ *  on both sides (`Mc Andrews` against `McAndrew`), by spelling alone: a shared first four
+ *  letters says nothing about a joined pair. A surname word may differ by a third of its
+ *  letters (`Ollenborgs` against `Oldenburg`), other words by a quarter. */
+function namePieces(finding: unknown, treeNames: unknown[], surname?: unknown): { pieces: string[]; surnames: string[] } {
   const words = treeNames.map(nameWords)
   const single = words.flat()
   const joinedTree = words.flatMap(joinedPairs)
-  const mine = nameWords(finding)
-  const surname = surnameAt(mine)
-  const fresh = mine.map((w, i) => {
+  const isNew = (list: string[], i: number, isSurname: boolean): boolean => {
+    const w = list[i]
     if (w.length === 1) return !single.some((t) => t.startsWith(w))
-    if (single.some((t) => closeWord(w, t) || (i === surname && nearSpelling(w, t, 3)))) return false
+    if (single.some((t) => closeWord(w, t) || (isSurname && nearSpelling(w, t, 3)))) return false
     if (joinedTree.some((t) => nearSpelling(w, t))) return false
-    const joined = [i > 0 ? mine[i - 1] + w : null, i + 1 < mine.length ? w + mine[i + 1] : null]
+    const joined = [i > 0 ? list[i - 1] + w : null, i + 1 < list.length ? w + list[i + 1] : null]
     return !joined.some((j) => j !== null && single.some((t) => nearSpelling(j, t)))
-  })
-  return { mine, fresh, surname }
+  }
+  const mine = nameWords(finding)
+  const stored = typeof surname === 'string' ? nameWords(surname) : []
+  const at = surnameAt(mine)
+  const isSurname = (i: number) => (stored.length ? stored.includes(mine[i]) : i === at)
+  const pieces = mine.filter((_, i) => isNew(mine, i, isSurname(i)))
+  const surnames = stored.length
+    ? stored.filter((w, i) => w.length > 1 && isNew(stored, i, true))
+    : at >= 0 && pieces.includes(mine[at]) ? [mine[at]] : []
+  return { pieces, surnames }
 }
 
 /** The finding's name words the tree's names do not hold. */
-export function newNamePieces(finding: unknown, treeNames: unknown[]): string[] {
-  const { mine, fresh } = namePieces(finding, treeNames)
-  return mine.filter((_, i) => fresh[i])
+export function newNamePieces(finding: unknown, treeNames: unknown[], surname?: unknown): string[] {
+  return namePieces(finding, treeNames, surname).pieces
 }
 
-/** The finding's surname, when the tree's names do not hold it; null when it has none. Only a
- *  new surname counts on the card (lead, 2026-11-14): a new given name is mostly a variant. */
-export function newSurname(finding: unknown, treeNames: unknown[]): string | null {
-  const { mine, fresh, surname } = namePieces(finding, treeNames)
-  return surname >= 0 && fresh[surname] ? mine[surname] : null
+/** The finding's surname words the tree's names do not hold, joined; null when there are none.
+ *  Only a new surname counts on the card (lead, 2026-11-14): a new given name is mostly a
+ *  variant. */
+export function newSurname(finding: unknown, treeNames: unknown[], surname?: unknown): string | null {
+  const { surnames } = namePieces(finding, treeNames, surname)
+  return surnames.length ? surnames.join(' ') : null
 }
 
 /** Words of a value (an occupation, a religion): equal, a subset, a superset, or neither. */
