@@ -48,7 +48,7 @@ export default function PlansSection(): React.JSX.Element {
           <div key={questionId} className={styles.group}>
             <div className={styles.groupHeader}>{questionText}</div>
             {questionPlans.map((plan) => {
-              const sortedItems = [...plan.items].sort((a, b) => a.sequence - b.sequence)
+              const sortedItems = [...(Array.isArray(plan.items) ? plan.items : [])].sort((a, b) => a.sequence - b.sequence)
 
               return (
                 <Card

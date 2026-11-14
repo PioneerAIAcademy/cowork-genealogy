@@ -220,7 +220,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 
 | Component | Count | Where | What it is for |
 |---|---|---|---|
-| **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
+| **MCP tools** — `src/tools/`, advertised on every surface via `allToolSchemas` in `src/tool-schemas.ts`, plus the two connector-only tools in `src/tools/project-view.ts` | every tool in `allToolSchemas`, plus those two on the connector | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **2** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **31** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
@@ -676,7 +676,7 @@ Architecturally:
   request carrying `X-Genealogy-Project-Id` is the worker path: a
   `PgS3ProjectStore` bound from that header, fenced on the attempt's claim
   (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer
-  is the one stamped on that open turn of that project (U4). Every other request
+  is the one stamped on that open turn of that project (U4). Every other `/mcp` request
   is the connector path: the bearer is looked up by sha256 in
   `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
   `projectPath` rather than a header, a refusal is 401 with
@@ -688,6 +688,12 @@ Architecturally:
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
+- **A connector-only tool has its own sites.** Its schema stays in
+  `src/tools/project-view.ts`, `createServer` adds it for a connector principal
+  alone, its `dev/smoke-calls.ts` row carries `connectorOnly: true`, and it has
+  no `manifest.json` entry. No string literal of its name goes in the dispatch
+  chain: `manifest.test.ts` reads each one as a dispatch case and fails on a tool
+  outside `allToolSchemas`. Contract: `docs/specs/project-view-tools-spec.md`.
 - **If your tool signals failure by RETURNING `{ ok: false }` rather than
   throwing** — a fifth site, conditional on that shape, and the count above does
   not include it. Add the tool to `OK_FALSE_IS_FAILURE` in `src/tool-result.ts`
@@ -1820,7 +1826,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
-| `apps/mcp-viewer` | the MCP App page: research cards drawn inside Claude, served by the thin server in `packages/engine/mcp-server/viewer/`. Neither ships in an artifact (`docs/plan/mcp-app-viewer.md`). |
+| `apps/mcp-viewer` | the MCP App page: research cards drawn inside Claude. The page ships in the tools image, built by `apps/server/proto/tools/Dockerfile`, and the connector serves it as `ui://genealogy/viewer-<hash>.html`, versioned by the page itself (`docs/specs/project-view-tools-spec.md`). The `.mcpb` and `eb-tools.zip` carry no page. `make viewer` serves it through the thin server in `packages/engine/mcp-server/viewer/`, which ships in no artifact. |
 | `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
