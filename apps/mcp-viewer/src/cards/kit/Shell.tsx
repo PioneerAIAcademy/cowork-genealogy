@@ -1,4 +1,7 @@
-import type { ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
+
+/** A line the viewer adds below any card's actions, such as Compare's count. Cards never set it. */
+export const CardLine = createContext<ReactNode>(null)
 
 export interface Point {
   label: string
@@ -18,6 +21,7 @@ export interface ShellProps {
 
 /** The frame every card draws in: a title, a few labelled points, at most two actions. */
 export function Shell({ title, points = [], footer, actions = [], heightLimit }: ShellProps) {
+  const line = useContext(CardLine)
   return (
     <article className="card" style={heightLimit ? { maxHeight: heightLimit } : undefined}>
       <h1>{title}</h1>
@@ -33,6 +37,7 @@ export function Shell({ title, points = [], footer, actions = [], heightLimit }:
       )}
       {footer && <p className="footer">{footer}</p>}
       {actions.length > 0 && <div className="actions">{actions.slice(0, 2)}</div>}
+      {line && <div className="card-line">{line}</div>}
     </article>
   )
 }
