@@ -1,24 +1,27 @@
-// One MCP Server: the two tools and the page resource. HTTP builds one per
-// request; stdio builds one for the process.
+// One MCP Server per request: the two tools and the page resource.
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
-  ErrorCode,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
-  McpError,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { callTool, PAGE_URI, toolSchemas, type ToolContext } from "./tools.js";
-
-export const PAGE_MIME_TYPE = "text/html;profile=mcp-app";
-export const DISPLAY_NAME = "Genealogy Viewer";
-const UI_EXTENSION = "io.modelcontextprotocol/ui";
+import {
+  DISPLAY_NAME,
+  PAGE_MIME_TYPE,
+  pageResourceList,
+  pageResourceRead,
+  pageUri,
+  pointAtPage,
+  requirePageUri,
+  UI_EXTENSION,
+} from "../src/tools/project-view.js";
+import { callTool, toolSchemas, type ToolContext } from "./tools.js";
 
 export interface McpOptions extends ToolContext {
   pageHtml: string;
-  /** The origin images load from. Absent on stdio. */
-  publicUrl?: string;
+  /** The origin images load from. */
+  publicUrl: string;
 }
 
 export function createMcpServer(options: McpOptions): Server {
@@ -27,26 +30,15 @@ export function createMcpServer(options: McpOptions): Server {
     // ext-apps' helpers set the tool _meta but not this; hosts look for it on the wire.
     { capabilities: { tools: {}, resources: {}, extensions: { [UI_EXTENSION]: { mimeTypes: [PAGE_MIME_TYPE] } } } },
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolSchemas }));
+  const uri = pageUri(options.pageHtml);
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: pointAtPage(toolSchemas, uri) }));
   server.setRequestHandler(CallToolRequestSchema, (request) =>
     callTool(options, request.params.name, request.params.arguments ?? {}),
   );
-  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-    resources: [{ uri: PAGE_URI, name: DISPLAY_NAME, mimeType: PAGE_MIME_TYPE }],
-  }));
+  server.setRequestHandler(ListResourcesRequestSchema, async () => pageResourceList(uri));
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-    if (request.params.uri !== PAGE_URI) throw new McpError(ErrorCode.InvalidParams, "Unknown resource.");
-    const resourceDomains = options.publicUrl ? [options.publicUrl] : [];
-    return {
-      contents: [
-        {
-          uri: PAGE_URI,
-          mimeType: PAGE_MIME_TYPE,
-          text: options.pageHtml,
-          _meta: { ui: { csp: { resourceDomains } } },
-        },
-      ],
-    };
+    requirePageUri(request.params.uri);
+    return pageResourceRead(request.params.uri, options.pageHtml, options.publicUrl);
   });
   return server;
 }

@@ -1,67 +1,45 @@
-import { useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
+import { cardView } from '../cards/kit/view'
+import { Shell } from '../cards/kit/Shell'
+import { CARDS, cardKind } from '../cards/registry'
 import { fullscreenOffered } from '../display-mode'
-import { SIZE_LADDER } from '../probes'
-import { headline, reportText } from '../report'
 import type { Session } from '../session'
+import { NewCaseFile } from '../file/NewCaseFile'
+import { headline } from './status'
 
 export function Viewer({ session }: { session: Session }) {
   const state = useSyncExternalStore(session.subscribe, session.getState)
-  const inFile = state.display.mode === 'fullscreen'
-  const probesShown = state.connection === 'connected' && state.load.phase !== 'stopped'
-  const image = state.imageProbe
+  const { load, heightLimit } = state
+  const snapshot = state.connection !== 'unreachable' && load.phase === 'ready' ? load.snapshot : null
+  const input = useMemo(() => load.input ?? snapshot?.echo ?? {}, [load.input, snapshot])
+  const view = useMemo(() => (snapshot ? cardView(snapshot, input) : null), [snapshot, input])
 
+  if (view && state.display.mode === 'fullscreen') return <NewCaseFile session={session} input={input} />
+  if (!view) {
+    return (
+      <main className="page">
+        <Shell title={headline(state)} heightLimit={heightLimit} />
+      </main>
+    )
+  }
+
+  const canOpen = fullscreenOffered(state.display)
+  const actions = canOpen
+    ? [
+        <button key="file" type="button" onClick={() => void session.openFile()}>
+          Open the case file
+        </button>
+      ]
+    : []
+  const Card = CARDS[cardKind(input.show, view)]
   return (
     <main className="page">
-      <h1>{inFile ? 'Case file' : headline(state)}</h1>
-      {inFile && <p>The case file opens here. For now this is a placeholder.</p>}
-
-      <div className="actions">
-        {inFile && (
-          <button type="button" onClick={() => void session.requestMode('inline')}>
-            Back to the card
-          </button>
-        )}
-        {!inFile && fullscreenOffered(state.display) && (
-          <button type="button" onClick={() => void session.requestMode('fullscreen')}>
-            Open full screen
-          </button>
-        )}
-        {probesShown &&
-          SIZE_LADDER.map((chars) => (
-            <button key={chars} type="button" onClick={() => void session.runSizeProbe(chars)}>
-              Read {chars} characters
-            </button>
-          ))}
-        {probesShown && (
-          <button type="button" onClick={() => void session.runImageProbe()}>
-            Load an image
-          </button>
-        )}
-        {probesShown && (
-          <button type="button" onClick={() => void session.runLinkProbe()}>
-            Open a link
-          </button>
-        )}
-      </div>
-
-      {image?.url && (
-        <img
-          key={image.url}
-          className="probe-image"
-          src={image.url}
-          alt={`Image probe: ${image.ref}`}
-          onLoad={(event) =>
-            session.imageSettled({
-              ok: true,
-              width: event.currentTarget.naturalWidth,
-              height: event.currentTarget.naturalHeight
-            })
-          }
-          onError={() => session.imageSettled({ ok: false })}
-        />
-      )}
-
-      <pre className="report">{reportText(state)}</pre>
+      <Card
+        view={view}
+        heightLimit={heightLimit}
+        actions={actions}
+        onSeeResults={canOpen ? (logId) => void session.openFile(logId) : undefined}
+      />
     </main>
   )
 }
