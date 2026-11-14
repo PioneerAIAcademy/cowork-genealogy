@@ -191,7 +191,11 @@ snake_case envelope it reads.
    `attachedToSubject`; one attached to any other id sets `attachedToOther`.
    When neither rule yields an id, no attachments call is made and both flags
    stay unset rather than asserting a wrong answer — as they do when the
-   attachments call fails.
+   attachments call fails. In both cases the result carries
+   `attachmentsChecked: false`, because on `record_search` a row with no flag
+   reads as attached to nobody. The result also carries `realNegativeFloor` (the
+   active matcher's `floors.realNegative`), which `record_search` uses to slim
+   below-floor rows.
 7. **Return** every scored stub (below), or the first `top` when the caller
    supplied one. Bulk gedcomx is never in the return.
 
@@ -273,7 +277,7 @@ Sorted by `matchScore` descending; no gedcomx.
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
       "matchScore": 0.99999,       // 0–1; null when scoring failed — never dropped
-      "attachedToSubject": false,  // only when checkAttachments and the subject has a FamilySearch id
+      "attachedToSubject": false,  // only when checkAttachments and the subject has a FamilySearch id; the standalone tool keeps false, `record_search` rows carry it only when true
       "attachedToOther": true,
       "birthYearConflict": true,   // only when the birth years differ by more than 2
       "birthYearGap": -5,          // candidate year minus subject year; with the flag
@@ -291,7 +295,8 @@ Sorted by `matchScore` descending; no gedcomx.
 
 On a subject-named `record_search` there is ONE row list: `results` comes back
 ANNOTATED in place with `matchScore` / `matchRank` / `searchRank` /
-`attachedTo*` and ordered best first, and `ranked` carries metadata only
+`attachedTo*` (only when true; `matchScore` rounded to 2 decimals) and ordered
+best first, and `ranked` carries metadata only
 (ruled 2026-09-15). Measured on this branch at 50 rows, and pinned by
 `tests/utils/staged-compaction.test.ts` so it cannot go stale silently: the
 rejected drop shape is 35,956 bytes, the shipped one 34,206 — 4.9% smaller.
