@@ -2,7 +2,7 @@
   "tool": "wiki_place_page",
   "description": "wiki_place_page research_tips for Mexico (https://www.familysearch.org/en/wiki/Mexico_Research_Tips_and_Strategies), captured live 2026-11-15 with the engine's wikiPlacePageTool (issue #4516). Links \"Improve your Search Results for Hispanic Ancestors in FamilySearch.org\".",
   "args": {
-    "standardPlace": "~Mexico",
+    "standardPlace": "Mexico",
     "section": "research_tips"
   },
   "response": {
