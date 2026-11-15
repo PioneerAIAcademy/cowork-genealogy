@@ -13,8 +13,7 @@ description: >-
   init-project or tree-survey. Choose this over any sub-skill when the user states
   an objective rather than a specific action.
   Do NOT use when the user explicitly targets one step only (search-records,
-  research-plan, question-selection, etc.) or only asks where the project stands
-  (answered from project_context, no skill).
+  research-plan, question-selection, etc.).
 allowed-tools:
   - project_list
   - project_context
@@ -53,9 +52,21 @@ first message with no project runs init-project first, then its deliverable
    verbatim, or its whole return when it has none or is from gps-mentor or
    research-exhaustiveness; from init-project in a bounded turn, leave out its
    sentence naming the next step;
-2. end with **"Continue with `<label>`?"**, using the exact label below,
+2. when the step that ran has a card below and you have `show_project`, call
+   `show_project({ projectPath, show: <card>, questionId })` with the question
+   it worked on, and do not restate what the card shows;
+3. end with **"Continue with `<label>`?"**, using the exact label below,
    then on the same line the project's `projectUrl` when a tool gave you one;
-3. end your turn.
+4. end your turn.
+
+| Step that ran | `<card>` |
+|---|---|
+| init-project, question-selection, locality-guide | `setup` |
+| search-records, search-images, search-external-sites, search-full-text, record-structurer, evaluate-search-results | `search` |
+| proof-conclusion, gps-mentor | `conclusion` |
+
+No other step draws a card. Find `show_project` by bare name (`+show_project` in
+ToolSearch); when it is not there, skip the card.
 
 Nothing runs after that line. Do not start the next step, and do not promise
 one in prose you then act on.
@@ -162,7 +173,7 @@ two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person;
-a timeline for a person; where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
+a timeline for a person; where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers; then, when you have `show_project`, call it with `show: "latest"`).
 Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
 when it is a step in the label table. **The others are not started this turn:**
