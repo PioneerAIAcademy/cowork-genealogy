@@ -2,7 +2,7 @@
   "tool": "wiki_read",
   "description": "wiki_read of https://www.familysearch.org/en/wiki/Germany_Naming_Customs, captured live 2026-11-15 with the engine's wikiReadTool (issue #4516). States children baptised with two given names were often called by the second, e.g. Johann Friedrich as Friedrich.",
   "args": {
-    "url": "~Germany_Naming_Customs"
+    "url": "https://www.familysearch.org/en/wiki/Germany_Naming_Customs"
   },
   "response": {
     "url": "https://www.familysearch.org/en/wiki/Germany_Naming_Customs",

@@ -2,7 +2,7 @@
   "tool": "wiki_read",
   "description": "wiki_read of https://www.familysearch.org/en/wiki/Norway_Church_Records (first part), captured live 2026-11-15 with the engine's wikiReadTool (issue #4516). States that name spelling was set by the recorder, e.g. Sivert as Syver, Sjur, Siver, Sifuer or Siffuer.",
   "args": {
-    "url": "~Norway_Church_Records"
+    "url": "https://www.familysearch.org/en/wiki/Norway_Church_Records"
   },
   "response": {
     "url": "https://www.familysearch.org/en/wiki/Norway_Church_Records",

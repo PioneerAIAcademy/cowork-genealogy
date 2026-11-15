@@ -32,11 +32,12 @@
     "catalog-search-empty",
     "wiki-place-page-any",
     "wiki-search-any",
-    "wiki-read-any",
+    "wiki-read-not-found-any",
     "wikipedia-search-any"
   ],
   "judge_context": [
     "Read-coverage is enforced deterministically by the validator (`test_localities_persisted_with_full_page_coverage` checks a localities[] entry was persisted with `pages_read` covering all four wiki sections). Do NOT independently re-count wiki_place_page calls — grade the persisted entry's substance.",
+    "The place and collection fixtures in this test are empty on purpose, and pages it does not serve return 'No wiki page found': grade the quirk. Do not dock Jurisdiction accuracy or Record availability for empty tool results or missing pages.",
     "The quirk under test (issue #4516): although Mexicans use two surnames, most indexed records carry only the first (paternal) surname, so searches should use the paternal surname alone; when the person is not found, search through the parents (a parent search with each parent's first surname, leaving out the child's name). Source: https://www.familysearch.org/en/wiki/Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org — 'Although most Hispanic use a double surname, normally the records are only indexed with the first or paternal surname. Try searching using only the paternal surname.' and, under 'Search with a relationship': 'Try leaving out the child's name.' / 'Because of the Spanish double surname system, try doing a parent search with just the first last names of each parent.'",
     "How the page reaches the agent: Mexico's research_tips place page (Mexico_Research_Tips_and_Strategies, served by its own wiki_place_page fixture) links this page; the wiki_read fixture serves it in full. The rule is reachable only if the agent follows that link.",
     "Correctness and Completeness turn on the persisted research.json: the new localities[] entry's `quirks` array must include a quirk carrying this rule (paraphrase is fine; citing the page URL is good practice). A run that states the rule only in guide_markdown or in its reply, and not in `quirks`, fails this point: research-plan reads `quirks`, not the guide.",
