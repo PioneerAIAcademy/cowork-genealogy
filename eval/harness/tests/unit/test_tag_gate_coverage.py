@@ -50,11 +50,6 @@ DORMANT: dict[str, str] = {
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"
     ),
-    "tier-proved-q001": (
-        "its only test, ut_proof_conclusion_002, was deleted by PR #4341: Sonnet 5.5 "
-        "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4460 "
-        "restores it"
-    ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "

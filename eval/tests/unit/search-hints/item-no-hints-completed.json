@@ -10,7 +10,8 @@
       "pending-only",
       "writes-nothing",
       "item-ends:completed",
-      "direct-arm"
+      "direct-arm",
+      "no-hints"
     ]
   },
   "input": {

@@ -2389,17 +2389,16 @@ decides, not what the run can reach.** `question-selection` applies the same sha
 with nobody waiting to answer, skip the ask and take the action.
 
 Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
-"can a human act on this right now?". Three bodies keep a genuine two-sided answer because
+"can a human act on this right now?". Two bodies keep a genuine two-sided answer because
 a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
 `agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
-can), `search-external-sites` (a user who named the plan item will capture it; mid-run
-nobody will) and `search-hints` (a user who asked for a hint review will give verdicts;
-mid-run nobody will). Each has eval fixtures on each side. The mode difference survives in
-the router, which sets that field from the flag: on an autonomous e2e run the router hands
-search-external-sites and search-hints `userPresent: no` where a hosted "Keep going." run
-leaves them at `yes` (search-hints gets no field, which means yes). So an autonomous e2e
-run is meant never to reach their `yes` side, but no check makes the router send the field
-to those two (the research unit suite checks it only on person-evidence's spawn): one
+can) and `search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will). `search-hints` decides hints itself on every run. Each has eval fixtures on
+each side. The mode difference survives in the router, which sets that field from the
+flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
+where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
+never to reach its `yes` side, but no check makes the router send the field to
+search-external-sites (the research unit suite checks it only on person-evidence's spawn): one
 committed step-mode run spawned search-external-sites without it, and its capture item
 stayed waiting (`docs/specs/e2e-test-spec.md` §5).
 
