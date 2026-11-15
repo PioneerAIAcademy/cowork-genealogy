@@ -763,6 +763,28 @@ The caller prints everything after that `---` verbatim and nothing above it. No 
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
+### Norway Church Books / "Norway, Marriages, 1660-1926" (collection `1468080`)
+
+- Name spellings were set by the recorder, so the same person's given name
+  is spelled differently from record to record (FamilySearch Wiki,
+  [Norway Church Records](https://www.familysearch.org/en/wiki/Norway_Church_Records),
+  Baptisms: "The spelling of a name was determined by the recorder, so many
+  variations resulted."). The same woman, **Unna** in the tree, is indexed
+  "Urna Halsteinsdr" on her own marriage entry and "Udna Halstensdatter" in
+  the 1801 census.
+- Both runs that hit this collection changed *which party was
+  principal* and *dropped surname/place filters*, but neither run
+  varied the *spelling of the given name itself* — so a real, findable
+  record was missed twice in a row.
+- **Compensation — do this explicitly, not just structural query
+  changes:** for any Norwegian patronymic given name, run the exact
+  name AND at least these vowel-substituted spellings before widening
+  to other repositories: swap the medial vowel (Unna → Urna → Udna →
+  Anna), and try the single-letter-doubled/undoubled form (Unna → Una).
+  Treat "I varied the query structure" and "I varied the name spelling"
+  as two separate, both-required steps — doing one is not a substitute
+  for the other.
+
 ### Luxembourg, Church and Civil Registration (5000012)
 
 - Some civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
