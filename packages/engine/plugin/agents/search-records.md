@@ -820,7 +820,7 @@ Quirks affect how queries should be constructed for that collection.
 
 ### Luxembourg, Church and Civil Registration (5000012)
 
-- Some civil birth acts (about 10–16% when measured) index the newborn by **given name only** — no surname; the parents carry the surname.
+- Some civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
 - A query with `surname` drops every birth entry with no indexed surname: the record is in the collection, but `surname` hides it.
 - **When a surname search does not return the child's own birth:** immediately execute a call with `givenName: <child>` **and** `fatherSurname: <father>` (or `fatherGivenName`, `motherSurname`, `motherGivenName` — at least one parent anchor is required alongside `givenName`), no `surname`, anchored on `collectionId: 5000012` or `recordCountry: Luxembourg`. Example: `{ givenName: "Theresia", fatherSurname: "Reding", collectionId: "5000012", recordCountry: "Luxembourg" }`. Do not return with a recommendation to re-run — execute the re-anchored call now, in the same invocation.
 - **`givenName` alone is not sufficient** — it returns too many unrelated births; the parent-name anchor is what narrows it to the right family.
