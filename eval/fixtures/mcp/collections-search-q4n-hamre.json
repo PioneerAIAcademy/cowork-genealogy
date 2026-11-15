@@ -1,6 +1,6 @@
 {
   "tool": "collections_search",
-  "description": "collections_search for \"Hamre, Hordaland, Norway\", 1770-1800, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "description": "collections_search for \"Hamre, Hordaland, Norway\", 1770-1800, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls. Collection 1467014 personCount, 1468080 personCount, 1468081 personCount, 4237104 personCount aligned to the value the corpus already serves for that id (test_no_collection_attribute_conflicts_across_corpus); the live value differed.",
   "args": {
     "standardPlace": "~Hamre"
   },
@@ -13,25 +13,25 @@
         "id": "1467014",
         "title": "Norway, Baptisms, 1634-1927",
         "dateRange": "1634-1927",
-        "personCount": 4988380
+        "personCount": 15082744
       },
       {
         "id": "1468081",
         "title": "Norway, Burials, 1666-1927",
         "dateRange": "1666-1927",
-        "personCount": 798860
+        "personCount": 1671901
       },
       {
         "id": "4237104",
         "title": "Norway, Church Books, 1797-1958",
         "dateRange": "1797-1958",
-        "personCount": 46445393
+        "personCount": 46445308
       },
       {
         "id": "1468080",
         "title": "Norway, Marriages, 1660-1926",
         "dateRange": "1660-1926",
-        "personCount": 2996583
+        "personCount": 3519558
       },
       {
         "id": "1661306",
