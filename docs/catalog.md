@@ -20,7 +20,8 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 57 tools.
+The MCP server exposes 57 tools. A caller on the remote connector also gets the two
+under [Connector only](#connector-only).
 
 ### FamilySearch records and places
 
@@ -40,7 +41,7 @@ The MCP server exposes 57 tools.
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
-| `person_read` | FamilySearch Family Tree person data — relatives (including **siblings**, fetched via each parent) and the subject's attached sources (relatives carry none, and a source with a record link carries the link but no citation, which `record_read` returns), and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries), transcribed inline where the read's time budget allowed | OAuth |
+| `person_read` | FamilySearch Family Tree person data — relatives (including **siblings**, fetched via each parent) and the subject's attached sources (relatives carry only names and vital facts and no sources, and a source with a record link carries the link but no citation, which `record_read` returns), and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries) as a title and links, with no text (`image_transcribe` reads one) | OAuth |
 | `tree_gaps` | Survey a FamilySearch tree for holes it likely has records for (parents missing before a line ends, couples with no children, gaps between births, a wife with no surname, a person with no birth date or place, a deceased adult with no spouse or death date) across up to 8 generations of ancestors and 4 of descendants; returns the holes with a search year range, place, collection coverage (with census years and place level) and `pendingHints` (how many of FamilySearch's pending record hints are about the event the hole is missing, read from the collection title, with a census counted only if taken in the hole's window), holes with a fitting hint first, never the tree; living people never carry a hole | OAuth |
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
@@ -79,7 +80,7 @@ way project state changes.
 | `tree_forget` | Strip a slice of the local tree to stage a practice run (project-start only; refused once a plan exists) | None |
 | `merge_tree_persons` | Merge two local tree persons | None |
 | `merge_warnings` | Pre-merge conflict report for two tree persons | None |
-| `person_quality` | FamilySearch's data-quality score for a tree person, as plain-English issues in four categories. `detail: true` adds the per-fact breakdown — which attached sources touch each fact and whether each agrees, plus the disagreements between sources | OAuth |
+| `person_quality` | FamilySearch's data-quality score for a tree person, as plain-English issues in four categories. `detail: true` adds the disagreements between attached sources: the field, the differing values, and each source's link (the `url` `person_read` returns) | OAuth |
 | `rank_search_matches` | Rank search results against a named subject | None |
 | `convert_calendar` | Convert between Julian/Gregorian, Quaker, and French Republican dates | None |
 | `census_children_gap` | From a mother's 1900/1910 US census children-born and children-living counts, work out how many of her children the tree is missing and each one's exact birth window, bounded by the census days | None |
@@ -101,6 +102,18 @@ way project state changes.
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with their one-hop family, sources with record ids) — the context call agents make instead of reading project files | None |
 | `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's newest 100 projects (objective, subjects, status), saying when there are more, and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
+
+### Connector only
+
+These two connector-only tools draw a project as cards inside Claude. A caller on the
+remote connector gets them and no other surface does, so they are not in the count
+above or `manifest.json`, and the `.mcpb` does not list them. Spec:
+[specs/project-view-tools-spec.md](specs/project-view-tools-spec.md).
+
+| Tool | Purpose | Auth |
+|------|---------|------|
+| `show_project` | Shows the researcher a card of the project in the conversation: a research step, where the research stands, or the case file. The model gets one line and the card gets the project's documents | Connector sign-in |
+| `read_project_view` | What a card reads, hidden from the model: the project's documents, one search's results file, or a signed link to one page image | Connector sign-in |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 

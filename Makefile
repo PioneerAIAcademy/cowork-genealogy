@@ -278,6 +278,13 @@ mcp-viewer-build: $(JS_DEPS) ## Build the MCP App page and copy it to the viewer
 	mkdir -p $(ENGINE_DIR)/viewer/page
 	cp apps/mcp-viewer/dist/index.html $(ENGINE_DIR)/viewer/page/viewer.html
 
+# Local, not CI: it reads teammates' committed e2e runs, which must never red someone's PR.
+.PHONY: mcp-viewer-sweep
+MCP_VIEWER_SWEEP_DIR := $(CURDIR)/releases/mcp-viewer-sweep
+mcp-viewer-sweep: $(JS_DEPS) $(ENGINE_DEPS) ## Render the MCP App page's cards and text over the McAndrew capture and every committed e2e end state
+	cd $(ENGINE_DIR) && npx tsx dev/sweep-stage.ts --out "$(MCP_VIEWER_SWEEP_DIR)"
+	SWEEP_DIR="$(MCP_VIEWER_SWEEP_DIR)" pnpm --filter mcp-viewer exec vitest run --config vitest.sweep.config.ts
+
 # `cd … && pwd` rather than abspath: Cowork project folders often hold spaces.
 .PHONY: viewer
 viewer: mcp-viewer-build $(ENGINE_DEPS) ## Open the MCP App viewer in a browser tab: make viewer PROJECT=<folder> [PORT=8090]

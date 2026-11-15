@@ -35,6 +35,7 @@ export interface AppLike {
   ): Promise<CallToolResult>
   openLink(params: { url: string }, options?: { timeout?: number }): Promise<{ isError?: boolean }>
   requestDisplayMode(params: { mode: DisplayMode }): Promise<{ mode: DisplayMode }>
+  updateModelContext(params: { content: Array<{ type: 'text'; text: string }> }): Promise<unknown>
 }
 
 export function createAppHost(app: AppLike): Host {
@@ -81,6 +82,14 @@ export function createAppHost(app: AppLike): Host {
     async requestDisplayMode(mode) {
       try {
         return (await app.requestDisplayMode({ mode })).mode
+      } catch (err) {
+        throw toToolCallError(err)
+      }
+    },
+
+    async tellModel(text) {
+      try {
+        await app.updateModelContext({ content: [{ type: 'text', text }] })
       } catch (err) {
         throw toToolCallError(err)
       }

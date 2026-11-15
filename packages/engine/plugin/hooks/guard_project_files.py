@@ -131,7 +131,12 @@ FORK_SUBAGENT_TYPE = "fork"
 # Held in the hook because the hook runs in the VM with no access to the repo.
 AGENT_ONLY_TOOLS = {
     "build_external_search_url": ("search-external-sites", "where-else-to-search"),
-    "catalog_search": ("locality-guide", "search-images", "search-records"),
+    "catalog_search": (
+        "locality-guide",
+        "search-external-sites",
+        "search-images",
+        "search-records",
+    ),
     "census_children_gap": ("check-warnings", "question-selection"),
     "collections_search": (
         "gps-mentor",
