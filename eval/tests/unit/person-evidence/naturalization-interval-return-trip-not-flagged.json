@@ -18,7 +18,9 @@
   },
   "mcp_fixtures": [
     "same-person-gaetjen-voter-1875",
-    "same-person-gaetjen-arrival-1871"
+    "same-person-gaetjen-arrival-1871",
+    "same-person-gaetjen-voter-1875-stub",
+    "same-person-gaetjen-arrival-1871-stub"
   ],
   "execution": {
     "max_wall_clock_seconds": 1200,

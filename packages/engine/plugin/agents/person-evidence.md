@@ -395,7 +395,8 @@ or naturalization assertion with three, written before you choose the tier:
   [the tree person's birth year]: gap [N] years." Compare only the party this
   link is about: on the second party of a relationship assertion (the father
   a "son of" entry names), the record states no year for that party, so write
-  "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. An
+  "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. A gap of five
+  years or less between an age-derived year and the tree's is compatible, not a conflict. An
   approximate tree year ("~1845") is the tree's birth year like any other: a
   gap the event cannot explain goes in `core_identifier_conflict` whatever the
   precision of either date.
