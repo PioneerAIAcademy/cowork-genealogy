@@ -773,15 +773,6 @@ Quirks affect how queries should be constructed for that collection.
 - Search dual surnames separately; search by parents' names instead
   of the principal
 
-### German Lutheran/Catholic Registers
-
-- Given-name standardization incomplete: "Johann Friedrich" vs.
-  "Friedrich Johann" may not match each other
-- Umlauts (ä/ö/ü) may be indexed as ae/oe/ue or stripped
-- **Compensation:** Use wildcards; try both name orderings; try
-  both "Mueller" and "Müller" (diacritic stripping should handle
-  this, but indexed text may store the "ue" spelling)
-
 ### Norway Church Books / "Norway, Marriages, 1660-1926" (collection `1468080`)
 
 - Patronymic given names for women are transcribed with unstable
