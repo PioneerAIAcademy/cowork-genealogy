@@ -597,7 +597,9 @@ identity that would let you add them).
 **The `same_person` score is an input, never a substitute.**
 When a score is available it *modulates* confidence within what
 correlation supports — a high score can firm up a Moderate match; a low
-score should pull a tentative Strong back to Moderate. But:
+score you cannot explain should pull a tentative Strong back to Moderate. A low
+score you can explain (a surname spelling variant, a thin tree person) does not
+demote a Strong match: write the link and state the score. But:
 
 - A **qualitative conflict caps confidence regardless of score.** A
   0.85 score paired with a contradicting birthplace, an impossible age,
