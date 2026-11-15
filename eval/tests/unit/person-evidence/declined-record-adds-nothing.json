@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "delegation": "person-evidence: assertion a_001 is Patrick Flynn's (I1) Kilrush baptism, which names his mother as Bridget Doyle (source src_001 / tree source S2). Bridget Doyle is not yet in the tree. Link this baptism's parentage assertion to the right persons.\n\nprojectPath: <workspace>",
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003. They are a Kilrush baptism found for Patrick Flynn (I1); it names his mother as Bridget Doyle, who is not in the tree.\n\nprojectPath: <workspace>",
     "scenario": "flynn-baptism-contradicts-birth"
   },
   "mcp_fixtures": [
