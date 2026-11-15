@@ -7,6 +7,10 @@ describe("today's sections in the new case file", () => {
     expect(Object.keys(SECTION_HOMES).sort()).toEqual(Object.keys(sectionComponents).sort())
   })
 
+  it('no section is pending', () => {
+    expect(Object.entries(SECTION_HOMES).filter(([, home]) => /pending/i.test(home))).toEqual([])
+  })
+
   it('M3-1 houses the sections it owns', () => {
     for (const key of ['localities', 'external_collections', 'log', 'sources', 'assertions', 'person_evidence']) {
       expect(SECTION_HOMES[key]).not.toMatch(/^pending/)

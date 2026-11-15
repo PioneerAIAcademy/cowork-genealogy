@@ -645,4 +645,17 @@ describe('opening the case file', () => {
     expect(session.getState().fileLogId).toBeNull()
     expect(projectLabel(session.getState().fileDocument)).toBe('From the snapshot')
   })
+
+  it('opens on the page a button names, and a plain open forgets it', async () => {
+    const app = new FakeApp()
+    const { session } = await connected(app)
+    app.sendInput(INPUT)
+    app.sendResult(RESULT_WITH_META)
+    app.callServerTool.mockResolvedValue({ content: [], structuredContent: READ_DOCUMENT as Record<string, unknown> })
+    await session.openFile(undefined, 'compare')
+    expect(session.getState().filePage).toBe('compare')
+    expect(session.getState().fileLogId).toBeNull()
+    await session.openFile()
+    expect(session.getState().filePage).toBeNull()
+  })
 })
