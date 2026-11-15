@@ -1971,9 +1971,10 @@ export function coreIdentifierContradictionInvariants(
   if (findings.length === 0) return [];
   return [
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
-      `A contradicted core identifier is a no-link regardless of the match score: write no ` +
-      `person_evidence entry for this pairing and name the contradiction in your return, ` +
-      `without asking the user. Or have conflict-resolution settle it first in a fact ` +
+      `A link past a contradicted core identifier is accepted only at 'speculative', whatever ` +
+      `the match score. When you are deciding a new link for the person the request is about, ` +
+      `it is a no-link: write no person_evidence entry for this pairing and name the ` +
+      `contradiction in your return, without asking the user. Or have conflict-resolution settle it first in a fact ` +
       `conflict whose disputed_attribute is 'birth_place' (or 'birth_date' for a date): ` +
       `'resolved' preferring another assertion, or 'moot' carrying independence_analysis and ` +
       `weighing_analysis (a moot still caps with only a resolution_rationale, or while any ` +
@@ -2245,7 +2246,10 @@ function coreIdentifierConflictInvariants(entry: any): string[] {
   if (entry.confidence === "speculative") return [];
   return [
     `confidence '${entry.confidence}' is not available on a link that declares a core-identifier ` +
-      `conflict (core_identifier_conflict: ${JSON.stringify(declared)}). A contradicted core ` +
+      `conflict (core_identifier_conflict: ${JSON.stringify(declared)}). Such a link is ` +
+      `accepted only at 'speculative', and that tier is for a parent of a linked person whom ` +
+      `the record names differently: write that link at 'speculative' and keep ` +
+      `core_identifier_conflict. For the person the request is about, a contradicted core ` +
       `identifier is a no-link regardless of the match score: write no person_evidence entry ` +
       `for this pairing and name the conflict in your return, without asking the user. If the ` +
       `conflict is explained and does not bear on identity, say so in the rationale and clear ` +
