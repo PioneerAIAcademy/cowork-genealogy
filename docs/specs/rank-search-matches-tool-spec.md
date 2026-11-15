@@ -401,6 +401,21 @@ A Sorensen-Dice cutoff of 0.66 is not used: it treats Nelson/Olson and
 Anderson/Henderson as one name. The cost is that distinct surnames coded alike
 (Hall/Hill, Kimbrell/Kemper) are not flagged.
 
+Two surnames are also the same when a *joined* form of one is within one edit of
+a joined form of the other, so a particle spaced differently from the tree's is
+not flagged: Van Buren/VanBuren, Mc Williams/McWilliams, Mc Andrew/McAndrew,
+Van der Linde/Vanderlinde and St. Clair/StClair. A joined form splits on spaces
+and hyphens, drops a trailing "." from each word before checking the particle
+list (van, von, de, di, du, la, le, mc, mac, st, ste, saint, ten, ter, op, des,
+del, der, den, fitz, vander, vande, vanden, ver, ap), joins each run of
+particles onto the word after it, and drops "." and "'". Joined forms are
+compared by edit distance only, never by Soundex: a joined form's code is mostly
+its particle (vandyke/vandeusen are both V532, vanburen/vanbergen both V516,
+mcwilliams/mclean both M245), so Soundex would clear Van Dyke against Van
+Deusen and McWilliams against Mc Lean. The joined forms add to the comparison
+above and do not replace it, so a tree Van Buren still matches a record indexed
+Buren.
+
 When at least one returned row carries the flag, the response carries
 `surnameNote` (`SURNAME_NOT_ON_SUBJECT_NOTE`): each such row is `needs-review`,
 reported as consistent with that name and never as a confirmed match, as cleared,

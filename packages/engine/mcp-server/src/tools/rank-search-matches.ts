@@ -668,6 +668,37 @@ function surnameTokens(surname: string): string[] {
   return long.length > 0 ? long : words;
 }
 
+/** Surname particles. A run of them is joined onto the word after it when
+ *  comparing a surname spelled with a space against one spelled without
+ *  ("Van Buren" / "VanBuren"). */
+const SURNAME_PARTICLES = new Set([
+  "van", "von", "de", "di", "du", "la", "le", "mc", "mac", "st", "ste", "saint",
+  "ten", "ter", "op", "des", "del", "der", "den", "fitz", "vander", "vande",
+  "vanden", "ver", "ap",
+]);
+
+/** A surname's joined words: split as in `surnameTokens`, with each run of
+ *  particles joined onto the word after it ("van der linde" → "vanderlinde",
+ *  "mc williams" → "mcwilliams"; a trailing "." is dropped before the particle
+ *  check), and "." and "'" removed. A trailing run with no word after it stays
+ *  a token of its own. */
+function joinedSurnameTokens(surname: string): string[] {
+  const words = normalizeString(surname).split(/[\s-]+/).filter(Boolean);
+  const out: string[] = [];
+  let run = "";
+  for (const w of words) {
+    const bare = w.replace(/\.$/, "");
+    if (SURNAME_PARTICLES.has(bare)) {
+      run += bare;
+    } else {
+      out.push((run + w).replace(/[.']/g, ""));
+      run = "";
+    }
+  }
+  if (run) out.push(run);
+  return out;
+}
+
 const SOUNDEX_CODES: Record<string, string> = {
   b: "1", f: "1", p: "1", v: "1",
   c: "2", g: "2", j: "2", k: "2", q: "2", s: "2", x: "2", z: "2",
@@ -712,11 +743,17 @@ function similarSurnameToken(a: string, b: string): boolean {
 }
 
 /** True when any word of `candidate` is a spelling of any word of any of the
- *  subject's surnames. */
+ *  subject's surnames, or when any joined word of one (particles joined on:
+ *  "VanBuren" / "Van Buren") is within one edit of any joined word of the other.
+ *  Joined words are never compared by Soundex: a joined word's code is mostly
+ *  its particle (vandyke and vandeusen are both V532). */
 function surnameOnSubject(candidate: string, subjectSurnames: string[]): boolean {
   const cand = surnameTokens(candidate);
-  return subjectSurnames.some((s) =>
-    surnameTokens(s).some((t) => cand.some((c) => similarSurnameToken(c, t))),
+  const candJoined = joinedSurnameTokens(candidate);
+  return subjectSurnames.some(
+    (s) =>
+      surnameTokens(s).some((t) => cand.some((c) => similarSurnameToken(c, t))) ||
+      joinedSurnameTokens(s).some((t) => candJoined.some((c) => levenshteinDistance(c, t) <= 1)),
   );
 }
 
