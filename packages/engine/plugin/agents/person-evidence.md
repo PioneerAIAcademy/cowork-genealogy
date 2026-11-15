@@ -415,7 +415,9 @@ or naturalization assertion with three, written before you choose the tier:
   assertion's and the naturalization assertion's (never on a name, age,
   sex, birth or residence assertion of those records), a stub's included,
   whenever the records in this run or already on the person give both
-  dates, whatever the tier. A line ending "short, nothing" caps both links
+  dates, whatever the tier. Write the same line on both links, whichever
+  person each is linked to: it compares the two records, and an earlier
+  residence counts from the person who holds the naturalization. A line ending "short, nothing" caps both links
   at `probable`. When a U.S. residence the tree held before this run, or a
   record already linked to this person, is dated before the arrival, and the
   arrival record does not say the person was never in the country before, the
@@ -520,11 +522,17 @@ your return ("record gives birthplace Germany; tree attests Ireland
 across three censuses"). That is the rule for the focus person: the
 person the request names or, when it names none, the question's subject
 if the record lists them, otherwise the person on the record closest to
-the subject. When the record names a parent of a linked person
-differently from the tree person who is that parent, link the parent's
-assertions to that tree person at `speculative` and name both values in
-`core_identifier_conflict`; mint no second parent. A spouse or child
-named differently is a different person (Step 5). A contradiction that is explained and does not
+the subject. A parent counts against a person only this way: when the
+record names both of the person's parents differently from the tree's,
+or names one parent and that one differs, it is a conflict on the
+person. When it names one parent differently and the person's own facts
+and the other parent agree, it is not: link the person with
+`core_identifier_conflict` null, and link the differing parent's
+assertions to the tree person who is that parent at `speculative`, with
+both names in `core_identifier_conflict` on that parent's links only;
+mint no second parent. A spelling variant or abbreviation is not a
+different name. A spouse or child named differently is a different
+person (Step 5). A contradiction that is explained and does not
 bear on identity is not one: link on the rest, leave
 `core_identifier_conflict` null, and say why in the `rationale`. The
 score never promotes a contradiction.

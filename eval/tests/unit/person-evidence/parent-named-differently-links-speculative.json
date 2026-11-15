@@ -28,7 +28,8 @@
     "Adding a second mother to the tree (a new Bridget Doyle, by materialize_facts or tree_edit add_person) is a FAIL on Correctness. Leaving the mother's assertions unlinked, with the disagreement only in the reply, is a PARTIAL (2) on Completeness. A `probable` or `confident` link to I3 that PERSISTS is a FAIL on Confidence calibration; a refused attempt at one, followed by the `speculative` link, is a PARTIAL (2).",
     "Nothing from the baptism is written onto I3: the name Bridget added to I3 is a FAIL on Correctness. No relationship is written or changed; a tree_edit add_relationship call is a FAIL on Correctness. materialize_facts for Patrick (I1) is expected and correct.",
     "Linking a_001 to Thomas (I2) is acceptable and NOT required. The mother's same_person score (about 0.0001) reflects the differing given name; the rationale states it. Do not grade the value of any score.",
-    "The reply names both given names and says the mother's link is speculative for that reason."
+    "The reply names both given names and says the mother's link is speculative for that reason.",
+    "The differing name is stated in `core_identifier_conflict` on the mother's links only. Patrick's own links carry none: one parent named differently, while his own facts and his father agree, is not a conflict on him (lead, 2026-11-15). A run that withholds Patrick's link, or writes nothing, over the mother's name is a FAIL on Correctness."
   ],
   "execution": {
     "max_wall_clock_seconds": 600,

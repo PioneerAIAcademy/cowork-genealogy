@@ -791,6 +791,66 @@ describe("samePerson — project-relative arm", () => {
     expect(file.scores["a_005|I1"]).not.toHaveProperty("confidence");
   });
 
+  describe("settledConflicts", () => {
+    const BIRTH = {
+      id: "a_007", record_id: RECORD, record_role: "principal",
+      fact_type: "birth", value: "Born in Pennsylvania", place: "Pennsylvania",
+      record_persona_id: null, record_basis: "stated", log_entry_id: "log_1",
+    };
+    const OTHER = {
+      id: "a_020", record_id: "https://www.familysearch.org/ark:/61903/1:1:CENS-1", record_role: "head",
+      fact_type: "birth", value: "Born in Ireland", place: "Ireland",
+      record_persona_id: null, record_basis: "stated", log_entry_id: "log_1",
+    };
+    const withBirth = (conflicts: any[]) => {
+      const base = research();
+      return { ...base, assertions: [...base.assertions, BIRTH, OTHER], conflicts };
+    };
+    const conflict = (status: string, preferred: string | null) => ({
+      id: "c_001", conflict_type: "fact", disputed_attribute: "birthplace",
+      competing_assertion_ids: ["a_020", "a_007"], status, preferred_assertion_id: preferred,
+    });
+    const IRISH_TREE = {
+      ...TREE,
+      persons: [
+        { ...TREE.persons[0], facts: [{ type: "Birth", date: "1820", place: "Ireland" }] },
+        TREE.persons[1],
+      ],
+    };
+
+    it("names the record's birth place that a resolved conflict set aside", async () => {
+      await project(withBirth([conflict("resolved", "a_020")]), IRISH_TREE);
+      okScore();
+      const result = notHaving(
+        await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+        "matchRelatives",
+      );
+      expect(result.settledConflicts).toHaveLength(1);
+      expect(result.settledConflicts![0]).toContain("'c_001'");
+      expect(result.settledConflicts![0]).toContain('"Pennsylvania"');
+    });
+
+    it("is absent while that conflict is unresolved", async () => {
+      await project(withBirth([conflict("unresolved", null)]), IRISH_TREE);
+      okScore();
+      const result = await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1" },
+        LOCAL,
+      );
+      expect(result).not.toHaveProperty("settledConflicts");
+    });
+
+    it("is absent on a pairing with nothing set aside", async () => {
+      await project();
+      okScore();
+      const result = await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1" },
+        LOCAL,
+      );
+      expect(result).not.toHaveProperty("settledConflicts");
+    });
+  });
+
   it("asks FamilySearch once, and rethrows its failure rather than retrying it", async () => {
     await project();
     mockFetch.mockResolvedValueOnce({

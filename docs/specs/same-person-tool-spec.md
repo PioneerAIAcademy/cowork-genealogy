@@ -532,6 +532,30 @@ It says what was scored and whom.
 | `recorded` | boolean | yes | `true` when the score was written to the attestation. |
 | `recordPersona` | `{ id, name, role }` | yes | The record persona that was scored. `id` is the fetched `persons[].id` on route 1 and the projected group's persona id on route 2, and `null` when the record names none. `name` is the record's name for it, `""` when it gives none. `role` is the `record_role` the record's assertions give that persona, `null` when no assertion names it. |
 | `treePerson` | `{ id, name }` | yes | The tree person it was scored against: the `treePersonId` passed, and that person's preferred name (`""` when it has none). |
+| `settledConflicts` | string[] | no | One sentence per birth place or birth date of the scored record person that a settled fact conflict set aside and that differs from the tree person's Birth fact. Each names the conflict id, the value and its assertion, and says it is not a reason to lower or withhold the link. Absent when there is none. |
+
+#### `settledConflicts`
+
+`person-evidence` writes no link when a core fact of the record person
+contradicts the tree person. A birth place or date that `conflict-resolution`
+has already weighed and set aside still differs from the tree, and would be
+read as that contradiction on every later record carrying it. The field tells
+the caller which differences are settled, on the call it already makes for the
+link.
+
+- Computed by `settledBirthDisputes` (`src/utils/settled-birth-disputes.ts`)
+  from the project documents alone, by the rule `research_append`'s
+  contradiction gate applies (`resolvedAgainstIds`): a `resolved` fact conflict
+  with a `preferred_assertion_id`, or a `moot` one carrying both analyses whose
+  record person no identity conflict doubts, sets aside every competitor but
+  the preferred one, on the arm its `disputed_attribute` names.
+- Only for the assertion's own record person. A call whose `recordRole` or
+  `recordPersonaId` names the second party of a relationship returns none.
+- Only a value that differs from the tree person's Birth fact is named. With no
+  Birth fact, nothing is.
+- The unit harness serves canned `same_person` scores, and its mock adds this
+  field by running the same compiled function (`_record_match_score` in
+  `eval/harness/harness/mock_mcp.py`).
 
 It returns none of `queryArk`, `candidateArk`, `apiTitle` or `updated`. Those are
 the API's framing of the request: the ARKs are the ones the request carried,
