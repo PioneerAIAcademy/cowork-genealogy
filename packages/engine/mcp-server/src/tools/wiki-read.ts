@@ -7,11 +7,44 @@ import {
   WIKI_OFFSET_PROPERTY,
   WIKI_PAGE_MAX_CHARS,
   WIKI_PAGING_NOTE,
+  WIKI_TOPIC_SUFFIXES,
   type WikiReadInput,
   type WikiPageResult,
 } from "../types/wikiPage.js";
+import { fetchPage } from "../utils/wiki-page-fetch.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
+
+/**
+ * For a regional record-type slug `{Region},_{Country}_{Suffix}`, the country's own
+ * `{Country}_{Suffix}` slug; null for any other slug.
+ */
+export function countryTopicSlug(slug: string): string | null {
+  for (const suffix of WIKI_TOPIC_SUFFIXES) {
+    if (!slug.endsWith(`_${suffix}`)) continue;
+    const prefix = slug.slice(0, -(suffix.length + 1));
+    const cut = prefix.lastIndexOf(",_");
+    if (cut < 0) return null;
+    const country = prefix.slice(cut + 2);
+    return country ? `${country}_${suffix}` : null;
+  }
+  return null;
+}
+
+/** The not-found message, naming the country's page when a regional one is missing and it exists. */
+async function notFoundMessage(slug: string, baseUrl: string): Promise<string> {
+  const base = `No wiki page found for "${slug}". The page may not exist in the corpus.`;
+  const country = countryTopicSlug(slug);
+  if (!country) return base;
+  try {
+    if ((await fetchPage(baseUrl, country)) !== null) {
+      return `${base} The country's page exists: ${FS_WIKI_BASE}/${country}`;
+    }
+  } catch {
+    // The hint is extra; a failed lookup leaves the plain message.
+  }
+  return base;
+}
 
 function urlToSlug(url: string): string {
   const match = url.match(/\/wiki\/([^?#]+)/);
@@ -47,9 +80,7 @@ export async function wikiReadTool(input: WikiReadInput, principal: Principal): 
   }
 
   if (response.status === 404) {
-    throw new Error(
-      `No wiki page found for "${slug}". The page may not exist in the corpus.`
-    );
+    throw new Error(await notFoundMessage(slug, baseUrl));
   }
 
   if (!response.ok) {

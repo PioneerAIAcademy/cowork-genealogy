@@ -9,7 +9,7 @@ vi.mock("../../src/auth/config.js", () => ({
   getWikiApiUrl: mockGetWikiApiUrl,
 }));
 
-import { wikiReadTool, wikiReadSchema } from "../../src/tools/wiki-read.js";
+import { countryTopicSlug, wikiReadTool, wikiReadSchema } from "../../src/tools/wiki-read.js";
 import { WIKI_PAGE_MAX_CHARS } from "../../src/types/wikiPage.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
@@ -335,5 +335,59 @@ describe("wikiReadSchema, paging", () => {
       "when `truncated` is true, call again with `offset: nextOffset` until it is false",
     );
     expect(wikiReadSchema.inputSchema.properties.offset.description).toContain("`nextOffset`");
+  });
+});
+
+describe("wikiReadTool, a missing regional record-type page (issue #4516)", () => {
+  const notFound = { ok: false, status: 404, json: async () => ({}) };
+  const plainFor = (slug: string) => `No wiki page found for "${slug}". The page may not exist in the corpus.`;
+
+  it("derives the country's slug from a regional record-type slug", () => {
+    expect(countryTopicSlug("Württemberg,_Germany_Naming_Customs")).toBe("Germany_Naming_Customs");
+    expect(countryTopicSlug("Bavaria_(Bayern),_German_Empire_Church_Records")).toBe("German_Empire_Church_Records");
+    expect(countryTopicSlug("Lincolnshire,_England_Census")).toBe("England_Census");
+    expect(countryTopicSlug("Norway_Church_Records")).toBeNull();
+    expect(countryTopicSlug("Hamre,_Hordaland,_Norway_Genealogy")).toBeNull();
+  });
+
+  it("names the country's page when it exists", async () => {
+    mockFetch
+      .mockResolvedValueOnce(notFound)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ title: "Germany_Naming_Customs", content: "# G", source_url: "" }),
+      });
+    const err = await wikiReadTool(
+      { url: "https://www.familysearch.org/en/wiki/W%C3%BCrttemberg,_Germany_Naming_Customs" },
+      LOCAL
+    ).catch((e: Error) => e);
+    expect((err as Error).message).toBe(
+      `${plainFor("Württemberg,_Germany_Naming_Customs")} The country's page exists: ` +
+        "https://www.familysearch.org/en/wiki/Germany_Naming_Customs"
+    );
+    expect(mockFetch.mock.calls[1][0]).toBe(`${API_BASE}/page/Germany_Naming_Customs`);
+  });
+
+  it("keeps the plain message when the country's page is missing too", async () => {
+    mockFetch.mockResolvedValue(notFound);
+    const err = await wikiReadTool({ url: "https://www.familysearch.org/en/wiki/Hordaland,_Norway_Census" }, LOCAL).catch(
+      (e: Error) => e
+    );
+    expect((err as Error).message).toBe(plainFor("Hordaland,_Norway_Census"));
+  });
+
+  it("keeps the plain message when the country lookup fails", async () => {
+    mockFetch.mockResolvedValueOnce(notFound).mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({}) });
+    const err = await wikiReadTool({ url: "https://www.familysearch.org/en/wiki/Hordaland,_Norway_Census" }, LOCAL).catch(
+      (e: Error) => e
+    );
+    expect((err as Error).message).toBe(plainFor("Hordaland,_Norway_Census"));
+  });
+
+  it("makes no second request for a missing page that is not a regional record-type page", async () => {
+    mockFetch.mockResolvedValueOnce(notFound);
+    await expect(wikiReadTool({ url: TEST_URL }, LOCAL)).rejects.toThrow(/No wiki page found/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });

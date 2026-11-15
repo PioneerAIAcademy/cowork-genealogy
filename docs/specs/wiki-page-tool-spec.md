@@ -82,7 +82,11 @@ Behavior:
    (see **The sidebar**) and `content` cut to one part when the page is longer
    than the cap (see **Pagination**).
 4. On 404 → throw `No wiki page found for "<slug>". The page may not
-   exist in the corpus.` (matches today's wording).
+   exist in the corpus.` (matches today's wording). When the slug is a regional
+   record-type page, `{Region},_{Country}_{Suffix}` with a suffix from
+   `WIKI_TOPIC_SUFFIXES` (see **Country topic pages**), one more `GET` checks the
+   country's `{Country}_{Suffix}`; when it exists the message adds ` The country's
+   page exists: <url>`. A failed check leaves the plain message.
 5. On 5xx → `wiki-query-api error: {status}`.
 6. On network failure → `Could not reach wiki-query-api at {base}
    ({cause}).`
@@ -158,6 +162,36 @@ jurisdiction (`Schuylkill County, Pennsylvania`) for a page resolved by title.
 The place is resolved first, then the page loses its sidebar (see **The sidebar**) and
 is cut, so every way of resolving one is served the same way; a truncated answer, or a
 call that passes `offset`, adds the paging members described under **Pagination**.
+
+#### Country topic pages (`topicPages`, `home` only)
+
+The first part of a `home` answer (no `offset`, or `offset: 0`) carries `topicPages`, a
+list of `{ topic, url }` for the record-type pages of the place's country that exist.
+The suffixes are `WIKI_TOPIC_SUFFIXES` (`src/types/wikiPage.ts`): Church_Records,
+Naming_Customs, Vital_Records, Civil_Registration, Census, Probate_Records,
+Land_and_Property, Military_Records. For each, the place's comma parts are tried
+broadest first (`countryCandidates`), and the first `{Part}_{Suffix}` page the server
+returns is listed, so the country's page wins and a part the wiki does not title topic
+pages by falls through to the next (`England, United Kingdom` lists
+`England_Church_Records`). The list is in suffix order and may be empty. A lookup that
+fails omits that topic and never fails the place page; a list built with no failure is
+memoised per wiki URL and place. Why: the corpus copy of a country's home page links
+none of these pages (measured 2026-11-15 for Norway, Germany, Mexico and England), and an
+agent asked about church books did not construct `{Country}_Church_Records` on its own. Cost: up to eight `GET`s per part, in parallel, on the first `home` call
+for a place.
+
+#### Search help (`searchHelp`, `research_tips` only)
+
+The first part of a `research_tips` answer carries `searchHelp` when the page (sidebar
+removed) links a wiki page whose link title matches `SEARCH_HELP_TITLE`,
+`/\b(search results|search tips|searching)\b/i`. The first such link is read and cut to
+8,000 escaped characters: `{ title, url, content, truncated }`. A missing or unreadable
+linked page adds nothing. The pattern is narrow on purpose: a bare "search" also matches
+the research-strategy pages many countries link (`England Search Strategies for Births,
+Marriages and Deaths`, the Norway record-search strategy series), which are not about
+searching the index. Measured 2026-11-15 across 14 research-tips pages, it matches only
+`Improve your Search Results for Hispanic Ancestors in FamilySearch.org` (Mexico, Spain,
+Peru, Chile). The 8,000 cap keeps a full-size part plus the help under the CLI spill line.
 
 ---
 
@@ -340,13 +374,14 @@ the line; they cannot prove an agent reads them all.
   characters; one heading and one 46,000-character row; 66,000 double quotes): every
   part serializes under 50,000 characters; the parts joined across the `nextOffset` chain
   equal the page exactly; the chain ends with `truncated: false` and no `nextOffset`; a
-  9,000-character page returns exactly today's object with no extra key; `offset` of
+  9,000-character page returns exactly today's object with no extra key (for a `home` page, plus `topicPages`); `offset` of
   `"5"`, `-1` and `1.5` is refused before any request. For `wiki_place_page` the same over
   a title-resolved page and an alternate-name page, and over the continuation: a title-resolved
   page read in parts makes no search and no Places call after the first part and still joins;
   the next part comes back when the Places lookup fails by then; a continuation with no entry,
   after a 404 on the remembered page, or from the start resolves in full; another section, place
   or wiki server URL does not take an entry.
+- Country topic pages and search help (`wiki-place-page.test.ts`): only existing topic pages are listed, in suffix order; a topic falls through from a part the wiki does not title topic pages by to the next (`England, United Kingdom`); an empty list; a failed lookup omits that topic and the page still returns; no `topicPages` on a continuation part or another section; `searchHelp` carries a search-results page, ignores a research-strategy page, cuts a long help page and says so, and adds nothing when the linked page is missing; `SEARCH_HELP_TITLE` matches search-results, search-tips and searching titles, not strategies. Calls that count requests count only the place's own resolution, not the topic lookups. In `wiki-read.test.ts`: `countryTopicSlug` on regional, country-level and non-topic slugs; the not-found message names the country's page when it exists, stays plain when it does not or the lookup fails, and makes no second request for a non-topic slug.
 - `tests/utils/text-page.test.ts` — the cut rules and their edges (a heading exactly at
   the midpoint is not past it; a part that already ends at a heading is kept), the cap
   taken from `maxChars` and not a constant, progress for a `maxChars` under 6, the cut checked

@@ -7,6 +7,9 @@ import { WIKI_SEARCH_TIMEOUT_MS } from "./wiki-search.js";
 import type { WikiSearchAPIResponse } from "../types/wiki-search.js";
 import { getWikiApiUrl } from "../auth/config.js";
 import { describeFetchError, fetchWithRetry } from "../utils/http.js";
+import { fetchPage, type PageApiResponse } from "../utils/wiki-page-fetch.js";
+
+export { fetchPage };
 import { pageText, requireWholeNumber } from "../utils/text-page.js";
 import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -14,9 +17,12 @@ import {
   WIKI_OFFSET_PROPERTY,
   WIKI_PAGE_MAX_CHARS,
   WIKI_PAGING_NOTE,
+  WIKI_TOPIC_SUFFIXES,
   type WikiPlacePageInput,
   type WikiPlacePageResult,
   type WikiPageSection,
+  type WikiSearchHelp,
+  type WikiTopicPage,
 } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
@@ -25,11 +31,6 @@ const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
 // which the skill records into research.json `pages_read[].section`.
 const SECTIONS = VALIDATOR_ENUMS.locality_page_section;
 
-interface PageApiResponse {
-  title: string;
-  content: string;
-  source_url: string;
-}
 
 // Where a place resolved to, kept for the CONTINUATION calls of a paged page (`offset` above 0).
 // Resolving a sub-state place costs a POST /search and Places API lookups before the page GET.
@@ -47,9 +48,14 @@ function resolvedPageKey(baseUrl: string, section: WikiPageSection, standardPlac
   return JSON.stringify([baseUrl, section, standardPlace]);
 }
 
+// A place's country topic pages, per wiki URL and candidate list. Only a list built with no
+// failed lookup is kept, so a transient error is retried on the next call.
+const topicPagesCache = new Map<string, WikiTopicPage[]>();
+
 /** Test-only: empty the memo so cases don't bleed into each other. */
 export function __clearResolvedPagesForTests(): void {
   resolvedPages.clear();
+  topicPagesCache.clear();
 }
 
 function nameToSlug(name: string): string {
@@ -79,36 +85,6 @@ function candidateSlugsFor(
   }
 }
 
-/**
- * GET {WIKI_API_URL}/page/{slug}.
- * Returns the response body on 200, null on 404 (so the caller can try
- * the next candidate), and throws on network failure or any other
- * non-OK status (a transient 5xx must not be silently treated as
- * "page not found"). Exported for `dev/check-wiki-paging.ts`, which reads a
- * page whole through it.
- */
-export async function fetchPage(
-  baseUrl: string,
-  slug: string
-): Promise<PageApiResponse | null> {
-  let response: Response;
-  try {
-    response = await fetchWithRetry(`${baseUrl}/page/${slug}`, {
-      method: "GET",
-      headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
-    });
-  } catch (error) {
-    throw new Error(
-      `Could not reach wiki-query-api at ${baseUrl} (${describeFetchError(error)}).`
-    );
-  }
-
-  if (response.status === 404) return null;
-  if (!response.ok) {
-    throw new Error(`wiki-query-api error: ${response.status}`);
-  }
-  return (await response.json()) as PageApiResponse;
-}
 
 /**
  * Try a list of candidate place names against the wiki-query-api server,
@@ -297,6 +273,76 @@ async function resolvePlacePage(
 }
 
 /**
+ * The jurisdictions a place's topic pages may be titled by, broadest first, so the country's
+ * page wins and a part the wiki does not title topic pages by falls through to the next.
+ */
+export function countryCandidates(standardPlace: string): string[] {
+  return standardPlace.split(",").map((p) => p.trim()).filter(Boolean).reverse();
+}
+
+/**
+ * The country's record-type pages that exist: for each `WIKI_TOPIC_SUFFIXES` entry, the first
+ * candidate whose `{Candidate}_{Suffix}` page the server returns. A lookup that fails omits
+ * that topic rather than failing the place page.
+ */
+async function topicPagesFor(standardPlace: string, baseUrl: string): Promise<WikiTopicPage[]> {
+  const candidates = countryCandidates(standardPlace);
+  const key = JSON.stringify([baseUrl, candidates]);
+  const cached = topicPagesCache.get(key);
+  if (cached) return cached;
+  let failed = false;
+  const found = await Promise.all(
+    WIKI_TOPIC_SUFFIXES.map(async (suffix): Promise<WikiTopicPage | null> => {
+      for (const name of candidates) {
+        const slug = `${nameToSlug(name)}_${suffix}`;
+        try {
+          if ((await fetchPage(baseUrl, slug)) !== null) {
+            return { topic: suffix.replace(/_/g, " "), url: `${FS_WIKI_BASE}/${slug}` };
+          }
+        } catch {
+          failed = true;
+          return null;
+        }
+      }
+      return null;
+    })
+  );
+  const pages = found.filter((p): p is WikiTopicPage => p !== null);
+  if (!failed) topicPagesCache.set(key, pages);
+  return pages;
+}
+
+/** A linked page counts as search help when its title says it is about searching records. */
+export const SEARCH_HELP_TITLE = /\b(search results|search tips|searching)\b/i;
+const SEARCH_HELP_MAX_CHARS = 8_000;
+const WIKI_LINK = /\]\(https:\/\/www\.familysearch\.org\/en\/wiki\/([^)\s"]+)\s+"([^"]+)"\)/g;
+
+/**
+ * The first page the research-tips text links whose link title matches `SEARCH_HELP_TITLE`,
+ * read and cut to `SEARCH_HELP_MAX_CHARS`. Undefined when none is linked or it cannot be read.
+ */
+async function searchHelpFor(content: string, baseUrl: string): Promise<WikiSearchHelp | undefined> {
+  for (const [, slug, title] of content.matchAll(WIKI_LINK)) {
+    if (!SEARCH_HELP_TITLE.test(title)) continue;
+    let page: PageApiResponse | null;
+    try {
+      page = await fetchPage(baseUrl, decodeURIComponent(slug));
+    } catch {
+      return undefined;
+    }
+    if (page === null || typeof page.content !== "string") return undefined;
+    const cut = pageText(stripWikiSidebar(page.content), undefined, SEARCH_HELP_MAX_CHARS);
+    return {
+      title,
+      url: `${FS_WIKI_BASE}/${slug}`,
+      content: cut.content,
+      truncated: cut.paging?.truncated ?? false,
+    };
+  }
+  return undefined;
+}
+
+/**
  * The page for a place. A call that CONTINUES a page (`continuing`, `offset` above 0) whose
  * place an earlier call resolved fetches that page directly. A remembered page that now 404s is
  * forgotten and the place is resolved in full; a network failure or a 5xx on that GET is thrown,
@@ -366,7 +412,18 @@ export async function wikiPlacePageTool(
   // before the cut, so `totalChars` and `offset` count the text the caller reads.
   if (typeof hit.content !== "string") return hit;
   const { content, paging } = pageText(stripWikiSidebar(hit.content), offset, WIKI_PAGE_MAX_CHARS);
-  return { ...hit, content, ...paging };
+  const result: WikiPlacePageResult = { ...hit, content, ...paging };
+  // Added to the first part only: a continuation call already had them.
+  if (!offset) {
+    const baseUrl = await getWikiApiUrl(principal);
+    if (section === "home") {
+      result.topicPages = await topicPagesFor(standardPlace, baseUrl);
+    } else if (section === "research_tips") {
+      const help = await searchHelpFor(stripWikiSidebar(hit.content), baseUrl);
+      if (help) result.searchHelp = help;
+    }
+  }
+  return result;
 }
 
 export const wikiPlacePageSchema = {
@@ -379,7 +436,9 @@ export const wikiPlacePageSchema = {
     "independent city. The other three sections exist only for a country or a " +
     "state/province: for a more specific place they return no page, so " +
     "broaden the standardPlace one jurisdiction (see places guidance) and " +
-    "call again. " +
+    "call again. 'home' also returns `topicPages`, the country's record-type " +
+    "pages to read with wiki_read; 'research_tips' returns `searchHelp` when it " +
+    "links a page on searching the place's records. " +
     WIKI_PAGING_NOTE,
   inputSchema: {
     type: "object" as const,
