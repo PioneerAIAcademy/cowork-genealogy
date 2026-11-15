@@ -225,6 +225,23 @@ def lost_tool_answers(log: dict[str, Any]) -> list[tuple[str, str, str]]:
     return lost
 
 
+def unparsed_tool_calls(log: dict[str, Any]) -> list[tuple[str, int]]:
+    """`(bare tool, bytes)` for each call whose input Claude Code could not parse as
+    JSON (#4588). The call never reached its tool and the agent wrote it again.
+    Claude Code records it with `args` replaced by
+    `{"__unparsedToolInput": {"raw": <first 2048 chars>, "len": <whole size>}}`,
+    and with no agent type, so the row names no agent."""
+    out = []
+    for call in log.get("tool_calls") or []:
+        args = call.get("args") if isinstance(call, dict) else None
+        marker = args.get("__unparsedToolInput") if isinstance(args, dict) else None
+        if marker is None:
+            continue
+        size = marker.get("len") if isinstance(marker, dict) else None
+        out.append((str(call.get("tool") or "?").split("__")[-1], size if _is_num(size) else 0))
+    return out
+
+
 def render(
     log: dict[str, Any],
     name: str,
@@ -334,6 +351,13 @@ def render(
     if lost:
         out += ["", "TOOL ANSWERS LOST TO THE SIZE CAP (the agent got only a 'saved to file' notice)"]
         out += [f"  {tool:<26} {agent:<26} {size}" for tool, agent, size in lost]
+
+    unparsed = unparsed_tool_calls(log)
+    if unparsed:
+        out += ["", "TOOL CALLS REFUSED AS INVALID JSON (never reached the tool; the agent wrote each again)"]
+        for tool in sorted({t for t, _ in unparsed}):
+            sizes = [size for t, size in unparsed if t == tool]
+            out.append(f"  {tool:<26} {len(sizes):>3} call(s)   {_num(sum(sizes))} bytes rewritten")
 
     # --- SUMMARY -----------------------------------------------------------
     out += ["", "SUMMARY"]

@@ -119,6 +119,7 @@ research_append({
   fields?: object,           // shallow-merged onto the existing entry; ids immutable
   edits?: { field: "narrative_markdown" | "exhaustive_search_summary",
             old: string, new: string }[],   // proof_summaries update only, §3.9
+  guideSection?: string,     // localities update only, §5.14: one guide section
 
   // plan_items append/update target their parent plan:
   planId?: string,           // required for section = "plan_items"
@@ -2322,86 +2323,88 @@ two-party link usually sits on an entry whose own person already holds it
 through a one-party link of their own, and there nothing is unreached: the
 facts belong to that person and are already linked to them.
 
-### 5.14 A localities guide carries the template's three headings (a precondition)
+### 5.14 A localities guide is saved one section per call
 
-A `localities` write is **refused** when it sets `guide_markdown` to a value other
-than a string or `null`, or to a string that lacks any of the locality-guide
-template's three level-two headings: `## Jurisdiction overview`, `## Available record types` and
-`## Research tips`. The wiring is `localityGuideHeadingRefusals` in `research-append.ts`, called from
-`prepareOps` on the line before the `for_place` check (§5.8). The titles are
-`LOCALITY_GUIDE_HEADINGS` and the matcher is `missingGuideHeadings`.
+`guide_markdown` on a `localities` entry is built by this tool. The caller appends
+the entry without it, then sends the guide one section per call with `guideSection`
+on an update of that entry. A write that sets `guide_markdown` itself is refused.
+The wiring is `expandGuideSections` and `localityGuideWholeRefusals` in
+`research-append.ts`; the placing is `mergeGuideSection` in
+`src/utils/locality-guide-sections.ts`.
 
-**Why.** On Sonnet 5 at low effort, `ut_locality_guide_010` (New Orleans record loss)
-saved a guide whose sections were renamed to fit a narrow question ("## Where to look
-for copies or substitutes"), with no `## Available record types`. The same miss hit
-`ut_locality_guide_002`. research-plan reads the guide back from `guide_markdown`,
-and the eval's `test_persisted_guide_is_the_guide` requires the template headings.
-010 was deleted from the suite for it, to be restored once this rule is in.
+**Why.** Every tool call is JSON the model writes, and a guide sent whole is 12,000
+to 18,000 characters of prose inside one JSON string. One unescaped character loses
+the call: Claude Code refuses it before this tool sees it, and the agent writes the
+whole entry again, 70 to 150 seconds each time. In the locality-guide unit suite,
+2 of 31 save attempts failed that way on Sonnet 4.6 at high effort and 17 of 35 on
+Sonnet 5 at low (run logs `v7_2026-11-06_11-18-01` and `v8_2026-11-11_13-24-50`).
+A section is 577 bytes at the median over the 428 guides saved in
+committed files, so a failed call costs one section and the rest of the guide stays
+saved.
 
-**How often it refuses.** Measured on 2026-11-12 over the committed e2e final research
-files (`eval/runlogs/e2e/*/*.final-research.json`): of the 29 string guides written
-since 2026-10-15, when the saved entry became the only copy of the guide, 5 lack a
-heading and would now be refused (two anders-monsen runs, one cruz-corona, two
-hannah-earnest); none of the 10 written since 2026-11-01 would be. Each of the 5
-also fails the eval's `test_persisted_guide_is_the_guide`, which applies the same rule.
+- **The call.** `{ section: "localities", op: "update", entryId: "loc_NNN",
+  guideSection: "<markdown>" }`, top-level or as a batch op. `guideSection` is one
+  or more blocks, each beginning with its own `## ` or `### ` heading line. `fields`
+  may sit beside it and change other fields in the same call.
+- **Placing a block.** A block replaces the stored block with the same heading
+  (compared without case, at the same level and, for a `### `, under the same `## `).
+  A new `## ` block goes in the order of `LOCALITY_GUIDE_OUTLINE`, the template's
+  headings; one the outline does not name goes after those it does. A `### ` block
+  goes under the `## ` heading sent above it in the same call; else under the outline
+  section that names it; else under `## Available record types`. The tool adds that
+  `## ` line when the guide has none. A sent heading matches an outline title when it
+  begins with it, so `### Vital records (civil registration)` is `Vital records`. A
+  `## ` block sent again replaces that section's heading and the text before its first
+  `### `; the `### ` blocks under it stay.
+- **The title line.** The guide's `# Locality Guide: <for_place or place> (<time_period>)`
+  line is written by the tool, unless the stored guide already has text before its
+  first heading or the call sends a `# ` line above its first block.
+- **The limit.** `guideSection` is at most `GUIDE_SECTION_MAX_CHARS` (4,000)
+  characters. 4 of the 6,716 blocks in those 428 guides are longer.
+- **Several at once.** Calls for one entry may arrive together; each is placed under
+  the project lock on the guide the one before it left. In a batch, each op is placed
+  on the guide the earlier op left.
+- **What is still missing.** Every successful `localities` write returns
+  `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists,
+  as `## <title>`, each of `LOCALITY_GUIDE_HEADINGS` (`## Jurisdiction overview`,
+  `## Available record types`, `## Research tips`) the entry's guide lacks, matched by
+  `missingGuideHeadings`; `next` says how to send them and is absent when `missing` is
+  empty. No write is refused for a missing heading.
+- **Refusals**, one per op, `ops[i]:`-prefixed in a batch, nothing written:
+  - `guide_markdown` set to anything but `null` in an append's `entry` or an update's
+    `fields`: `guide_markdown is not written directly: this tool builds it. Append this
+    entry without it, then send|Leave it out of \`fields\`, and send the guide one
+    section per call: …`
+  - `guideSection` over the limit, naming the size and the limit.
+  - `guideSection` with no `## ` or `### ` heading line, or with text other than one
+    `# ` line above its first heading.
+  - `guideSection` that is not a string; on an append; on another section; with an
+    `entryId` that names no stored locality; or beside a `guide_markdown` in `fields`.
+- **What it does not check.** An absent `guide_markdown`, or `null`. Entries already in
+  `research.json`: a guide saved whole before this rule stays as it is, and a section
+  sent to it is placed into it.
+- **The heading matcher.** `missingGuideHeadings` is the eval validator's `_heading()`
+  (`eval/harness/validators/test_locality_guide.py`): a line that starts with exactly
+  two `#`s, then spaces or tabs, then the title, in any case, with anything after it.
+  The JS form is `(?<![^\n])##[ \t]+<title>` with the flags `iu`, because JS's `m`
+  also starts a line after a lone `\r`, U+2028 or U+2029, and JS's `i` without `u`
+  does not match `ſ` for `s`. The parity table in `research-append.test.ts` and its
+  twin in `eval/harness/tests/unit/test_locality_guide_validators.py` run the same
+  shapes through both.
+- **Not covered.** A guide returned with no project is never written. The
+  collection-catalog read for §5.12 happens before the lock and still runs for a call
+  this rule refuses, which warms the cache for the corrected call.
+- **Keeping the template in step.** `tests/packaging/locality-guide-headings.test.ts`
+  fails when the template block in `packages/engine/plugin/agents/locality-guide.md`
+  drops one of `LOCALITY_GUIDE_HEADINGS`, when its `## ` and `### ` headings differ
+  from `LOCALITY_GUIDE_OUTLINE` in title or order, or when the eval validator's title
+  tuple differs from `LOCALITY_GUIDE_HEADINGS`.
 
-- **Matching rule.** The eval validator's `_heading()`
-  (`eval/harness/validators/test_locality_guide.py`), which grades the saved guide: a
-  line that starts with exactly two `#`s, then spaces or tabs, then the title, in any
-  case, with anything after it. `## AVAILABLE RECORD TYPES (1840-1900)` passes;
-  `### Available record types` and the words in mid-line do not. The JS form is
-  `(?<![^\n])##[ \t]+<title>` with the flags `iu`, not `^##[ \t]+<title>` with `im`:
-  JS's `m` also starts a line after a lone `\r`, U+2028 or U+2029, which Python's
-  `MULTILINE` does not, and JS's `i` without `u` does not match `ſ` for `s`, which
-  Python's `IGNORECASE` does. The two agree on every shape in the parity table in
-  `research-append.test.ts`; its twin in
-  `eval/harness/tests/unit/test_locality_guide_validators.py` runs the same shapes
-  through `_heading()` itself, so a change to either side fails one of the two. They
-  still differ on `İ` or `ı` standing for an `i`, which Python matches and no
-  English heading carries.
-- **When the rule runs.** On a `localities` `append`, and on an `update` whose
-  `fields` set `guide_markdown`. An empty string is refused, naming all three. It runs
-  even when an earlier `prepareOps` check has already collected a refusal, so both come
-  back in one call. A check that stops the call outright still ends it first, for
-  example the lane gate, the caller `assertions` gate, one source per call, an `edits`
-  refusal, an entry-link refusal or a malformed `sourceDescription`. Once it refuses,
-  the `for_place` lookup (§5.8) and the collection-count stamp (§5.12) are skipped.
-- **What it does not check.** An absent `guide_markdown`, or `null`: the schema
-  allows both (`$defs/locality` does not require the field and types it
-  `["string", "null"]`). An `update` whose `fields` do not set it. Entries already in
-  `research.json`, so a guide saved before the rule stays as it is.
-- **The refusal.** One per op, `ops[i]:`-prefixed in a batch. It names each missing
-  heading and asks for the fix, never for the guide to be left out:
-  > `guide_markdown lacks the locality guide template's heading(s) '## <title>'[, '## <title>']. Add it|each as its own line beginning with exactly those words after two #s, put the guide's text for that section under it, and re-send this entry with the whole guide.`
-
-  ("heading" and "it" for one missing heading, "headings" and "each" for more.)
-
-  A value of any other type (a number, an array of lines, an object) is refused with
-  its own message, since `validator.ts` does not type this field:
-  > `guide_markdown must be the whole guide as one markdown string, not <an array|an object|a number|a boolean>. Re-send this entry with it as a string carrying the template's '## Jurisdiction overview', '## Available record types', '## Research tips' lines.`
-
-  A single-op refusal also carries the `localities` worked example
-  (`research-append-examples.ts`), whose guide carries all three headings.
-- **Not covered.** A guide returned with no project is never written, so this rule
-  cannot reach it (the no-project misses on 002 and 026). The collection-catalog read
-  for §5.12 happens before the lock and still runs for a call this rule refuses, on
-  purpose: it warms `fetchAllCollections`' cache, so the corrected re-send's counts
-  come from the catalog rather than a cold read that may run past its 20 seconds.
-- **Keeping the titles in step.** `tests/packaging/locality-guide-headings.test.ts`
-  runs `missingGuideHeadings` on the template block under "Locality Guide Output
-  Format" in `packages/engine/plugin/agents/locality-guide.md`, and fails when the
-  template drops, demotes or renames a heading; it also renames each heading in a
-  copy to show the check can fail. It also reads the title tuple `_GUIDE_HEADINGS` is
-  built from in the eval validator and fails when it differs from
-  `LOCALITY_GUIDE_HEADINGS`.
-
-**Decision: a writer precondition, not an agent-body line** (review-ready,
-2026-11-11). Whether a guide carries its headings can be decided from the document
-alone, so ADR-0011 and CLAUDE.md's lane rule put it at the writer, beside §5.8 and
-§5.12. Rejected: a line in `agents/locality-guide.md` telling the agent to keep the
-headings. The body is where Sonnet 5 already ignores the template, prose is the last
-resort, and that edit would owe a paid locality-guide eval run. Step 6 of the agent
-already says to fix a refused entry and call again.
+**Decision: the tool takes sections, the agent body does not ask for care** (lead,
+2026-11-15). How much text one call carries can be decided at the writer, so ADR-0011
+puts it there. Rejected: a body line telling the agent to escape quotes, which a
+cheaper model follows less often; and a repair step in the engine, which never sees a
+call Claude Code refused.
 
 ## 6. Decisions recorded
 
@@ -2557,15 +2560,21 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   write kept; a collection with no id nulled; a number id stored as a string; a spent
   FamilySearch budget rethrown; an update stamped like an append;
   a null loader and an internal `researchAppend` write left unstamped.
-- **locality guide headings** (§5.14): each heading missing in turn refused and named
-  alone; all three, extra sections, and an upper-case heading with a suffix accepted;
-  a level-three heading, the words in mid-line and an empty guide refused; `null` and
-  an absent key accepted; an update not setting the guide accepted over a persisted
-  heading-less one, and one setting a heading-less guide refused; a batch refusal
-  names only its op and makes no place lookup, and names every refused guide; a
-  refusal an earlier check collected comes back beside it; a number, an array or an
-  object refused; a refused call still reads the catalog; the refusal never asks for the guide to be dropped; the worked example passes
-  the rule. A parity table pins `missingGuideHeadings` to the eval validator's
+- **locality guide sections** (§5.14): an append with no guide saved, with the missing
+  headings and how to send them; a guide built from sections, title line from the
+  entry; the missing list after each; template order whatever the arrival order; a
+  section sent again replacing its own block only; a `## ` sent again keeping its
+  `### ` blocks; an unnamed `### ` and an unnamed `## ` placed after the named ones; a
+  `### ` under the `## ` sent above it; quotes, backslashes and tabs saved as sent; a
+  guide sent whole refused on append and on update, with a number, an array or an
+  object; `null` and an absent key accepted; a guide saved before the rule left alone,
+  and a section placed into it; a section over the limit refused and one at it
+  accepted; a section with no heading, text above it, or only the title line refused;
+  a non-string, an append, another section, an unknown entry and a `guide_markdown`
+  beside it refused; other fields changed in the same call; a batch placing each op on
+  the one before, and writing nothing when one is refused; five calls at once all
+  landing; the worked example carrying no guide; a refused call still reading the
+  catalog. A parity table pins `missingGuideHeadings` to the eval validator's
   `_heading()` answers, and its twin runs the same shapes through `_heading()`.
 - **place levers** — sidecar copy preferred over geocoding; `resolvedPlaces`
   echo; country-contradiction rejected; `standard_place: null` opt-out honored;

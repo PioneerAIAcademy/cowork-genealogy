@@ -1102,9 +1102,8 @@ researches; it accumulates across the project's questions (reused, not per-quest
 
 `for_place` is checked at write time: `research_append` refuses an entry whose
 first place FamilySearch's place standard does not have (`research-append-tool-spec.md` §5.8).
-So is `guide_markdown` when a write sets it: `research_append` refuses a value other
-than a string or `null`, and a string without the template's `## Jurisdiction overview`,
-`## Available record types` and `## Research tips` lines
+`guide_markdown` is built by `research_append` from the sections a caller sends one
+per call; a write that sets the field itself to anything but `null` is refused
 (`research-append-tool-spec.md` §5.14).
 
 | Field | Type | Required | Description |
