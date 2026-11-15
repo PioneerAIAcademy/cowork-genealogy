@@ -770,12 +770,8 @@ Quirks affect how queries should be constructed for that collection.
 
 ### Mexico Civil Registration
 
-- Post-2020 indexes often produced by Computer-Aided Indexing (CAI)
-  with higher OCR-style error rates, especially with accented
-  characters and joined cursive
-- **Compensation:** Use wildcards generously (`fatherSurname=
-  L*pez`); search dual surnames separately; search by parents'
-  names instead of the principal
+- Search dual surnames separately; search by parents' names instead
+  of the principal
 
 ### German Lutheran/Catholic Registers
 
