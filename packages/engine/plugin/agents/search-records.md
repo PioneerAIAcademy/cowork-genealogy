@@ -763,21 +763,9 @@ Quirks affect how queries should be constructed for that collection.
 
 ### US Federal Censuses (1790–1940)
 
-- Indexed by community volunteers; mostly accurate but cursive
-  handwriting causes common transcription errors: S/L, F/T, n/u,
-  U/V confusions; double-S misread as F or "long s"
 - **Compensation:** Use surname wildcards (`surname=Sm?th`);
   search by neighbors; for unindexed enumeration districts, switch
   to image browsing
-- **A wildcard at the start or middle of a surname can be as useful as one at
-  the end.** A family surnamed Bipes was indexed across records as Bipes,
-  Bippes, Biepes, Bieps, Bifes, Bipers, Bippers, and Piper — no single
-  trailing wildcard catches all of these. When a surname keeps resisting
-  every explicit variant, try a leading or middle wildcard (`surname=?ip*s`
-  or `surname=B*p*s`) alongside the usual trailing one.
-- Collection-specific forms expose extra fields (Residence Year
-  locked to census year, Race, Marital Status, 1935 Residence for
-  1940 census)
 
 ### England parish registers (IGI Community Indexed)
 
@@ -879,6 +867,13 @@ described on the tool itself — read them there.
 |---|---|---|
 | `*` | Zero or more characters | Allowed at start, middle, or end (`*bou` is valid — measured). |
 | `?` | Exactly one character | May appear at any position (e.g., `surname=Sm?th`). |
+
+**A wildcard at the start or middle of a surname can be as useful as one at
+the end.** A family surnamed Bipes was indexed across records as Bipes,
+Bippes, Biepes, Bieps, Bifes, Bipers, Bippers, and Piper — no single
+trailing wildcard catches all of these. When a surname keeps resisting
+every explicit variant, try a leading or middle wildcard (`surname=?ip*s`
+or `surname=B*p*s`) alongside the usual trailing one.
 
 **Constraints.** Four long-standing ones did not survive measurement and have
 been deleted rather than carried struck through: a three-letter minimum per
