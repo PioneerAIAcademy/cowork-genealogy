@@ -591,7 +591,7 @@ the `rationale` as a departure; it does not move the tier by itself.
 
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
-| **Weak** — only the name matches, or a core identifier of the focus person conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse, or the parent of a linked person — even when the persona is a fact-less stub (see the note below the table). | none | **No link** (below). |
+| **Weak** — only the name matches, or a core identifier of the focus person conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | none | **No link** (below). |
 | **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Create the link. The rationale says what matches and what doesn't. |
 | **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` | Create the link. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
