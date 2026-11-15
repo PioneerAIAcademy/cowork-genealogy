@@ -24,3 +24,6 @@ Links the baptism to Patrick (I1): name, date, place and father agree. The mothe
 the record is the place I3 holds in the tree, and a person has one mother, so her assertions
 are linked to I3 at `speculative` with the two given names stated in
 `core_identifier_conflict`. No second mother is added, and no relationship is written.
+
+`a_004` is the relationship assertion for the father (child of Thomas Flynn) and `a_005` his name,
+so the project holds both parents the register names.

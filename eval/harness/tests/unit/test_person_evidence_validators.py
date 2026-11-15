@@ -2185,6 +2185,10 @@ def test_exception_fails_an_inversion(assertion_id, rationale, conflict):
     ("a_014", _RES_1869 + _NAT + "short. The 1869 directory shows he was already resident, so the "
               "1871 arrival is a return trip."),
     ("a_007", _RES_1869 + _NAT + "met, counting residence from 1869 (src_003)."),
+    ("a_007", _RES_1869 + _NAT + "short, but the 1869 San Francisco directory (U.S. residence before the "
+              "arrival, linked to I1, and the arrival record does not say he was never in the country "
+              "before) makes the 1871 landing a return trip; counted from 1869 that is 6 years: met, "
+              "1869 San Francisco directory."),
     ("a_010", "The 1869 directory shows residence before the June 1871 arrival, so the arrival is a "
               "return trip, not a contradiction."),
     ("a_010", "The apparent timeline conflict between the 1869 directory and the June 1871 arrival "

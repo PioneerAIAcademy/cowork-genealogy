@@ -1535,7 +1535,7 @@ _SHORTFALL = re.compile(
 # A negator up to two words before the match, in the same clause: "no
 # shortfall", "no residence shortfall", "does not fall short".
 _NEGATED = re.compile(r"\b(?:no|not|without|never|nor)\b(?:\s+\S+){0,2}\s*$", re.IGNORECASE)
-_CLAUSE_BREAK = re.compile(r"[,.;:!?\n]")
+_CLAUSE_BREAK = re.compile(r"[,.;:!?\n()]")
 # A negator anywhere earlier in the clause: "there is no evidence that this was
 # a return trip", "nothing here is impossible".
 _CLAUSE_NEGATOR = re.compile(

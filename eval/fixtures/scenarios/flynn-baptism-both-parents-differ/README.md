@@ -25,3 +25,6 @@ Writes nothing. A child of the same name baptised in the same year to a differen
 another child: both parents differing is a conflict on Patrick himself, so the record is not
 linked to him and nothing else from it enters the project. The reply names both pairs of
 parents.
+
+`a_004` is the relationship assertion for the father (child of Thomas Flynn) and `a_005` his name,
+so the project holds both parents the register names.

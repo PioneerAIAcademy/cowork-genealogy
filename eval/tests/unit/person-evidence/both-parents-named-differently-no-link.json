@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003. They are a Kilrush baptism found for Patrick Flynn (I1).\n\nprojectPath: <workspace>",
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003, a_004, a_005. They are a Kilrush baptism found for Patrick Flynn (I1).\n\nprojectPath: <workspace>",
     "scenario": "flynn-baptism-both-parents-differ"
   },
   "mcp_fixtures": [
