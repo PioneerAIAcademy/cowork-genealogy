@@ -777,13 +777,6 @@ Quirks affect how queries should be constructed for that collection.
   L*pez`); search dual surnames separately; search by parents'
   names instead of the principal
 
-### Mexico Catholic Church Records
-
-- Sometimes indexed without parents' names due to partial indexing
-  templates
-- **Compensation:** Drop the principal's name and search by
-  `fatherGivenName/Surname` + `motherGivenName/Surname`
-
 ### German Lutheran/Catholic Registers
 
 - Given-name standardization incomplete: "Johann Friedrich" vs.
