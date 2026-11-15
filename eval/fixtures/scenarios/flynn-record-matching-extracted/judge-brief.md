@@ -14,7 +14,7 @@ entries, and the tree's persons (`I1`, `I2`, `I3`) and relationships (`RT1` to
 `RT3`) carry no source references. `starting-tree.gedcomx.json` is a copy of
 `tree.gedcomx.json`, so all three persons existed before the research began.
 
-A delegation that names one assertion of a record person is about that person:
-linking the person's other assertions from the same record in the same pass,
-and the record's other persons to the tree persons they match, is expected and
-is not scope creep.
+What a delegation owes is the assertions it names. Linking assertions it does
+not name, of the same person or of the record's other persons, is not scope
+creep and is not required: doing it does not lower a score, and neither does
+leaving it.
