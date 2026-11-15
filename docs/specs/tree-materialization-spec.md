@@ -141,7 +141,7 @@ read as its confidence.
 | Skill | Responsibility | Tools |
 |---|---|---|
 | **extraction** — `extraction_append` *(assertion-only; replaced the record-extraction skill and record-extractor agent, since retired)* | Extract classified assertions onto `record_id`+`record_role` (personas), **including relationship-type assertions** (parent-child, spouse), with roles and classifications decided in code; create the per-record S-entry. FamilySearch records come in as `recordIds`; any other source is structured by the record-structurer agent and sent as `documents`. **Writes only the source S-entry** (through `researchAppend`'s composite `sourceDescription`); it writes no persons, facts, names, or relationships. | `extraction_append` (sources + assertions + composite `sourceDescription`; logs its own `record_read` entry per record) |
-| **person-evidence** *(grows — the fix)* | Decide identity (link persona→person, or mint a new person); **write the linked persona's assertions as sourced facts/names onto the tree person** via `materialize_facts`; own the **household skeleton** — mint each member (sibling stubs included) via `materialize_facts` create-or-enrich, and write parent-child + spouse-spouse **edges** via `tree_edit` `add_relationship`, each edge carrying a source-ref resolved from the relationship assertion's `source_id` (same resolver as `materialize_facts`). Match later personas to fact-less stubs to enrich them. Before committing a household's materialization, **dry-run `merge_warnings`** as a coherence gate (§9). **Never sets `primary`/`preferred`.** | **`materialize_facts`** (new), `research_append` (`pe_` links), `same_person`, `tree_edit` (`add_relationship`), `merge_warnings` |
+| **person-evidence** *(grows — the fix)* | Decide identity (link persona→person, or mint a new person); **write the linked persona's assertions as sourced facts/names onto the tree person** via `materialize_facts`; own the **household skeleton** — mint each member (sibling stubs included) via `materialize_facts` create-or-enrich, and write parent-child + spouse-spouse **edges** via `tree_edit` `add_relationship`, each edge carrying a source-ref resolved from the relationship assertion's `source_id` (same resolver as `materialize_facts`). Match later personas to fact-less stubs to enrich them. **Never sets `primary`/`preferred`.** | **`materialize_facts`** (new), `research_append` (`pe_` links), `same_person`, `tree_edit` (`add_relationship`) |
 | **conflict-resolution** *(unchanged role, now fed by materialization)* | Resolve the coexisting-conflict facts materialization surfaces; write `conflicts`. | `research_append` (conflicts) |
 | **proof-conclusion** *(narrows)* | Weigh already-materialized evidence, set **`primary`/`preferred`** on the concluded value — via `tree_correct` `update_fact` when the value matches an existing evidence fact, or via `tree_edit` `add_fact` (`primary:true` + multi-refs) when the conclusion is **synthesized** and matches no single record (§7.1); write the `proof_summary`; copy ESM citations onto S-entries; collapse duplicate tree persons. | `tree_correct` (`update_fact` → set `primary`), `tree_edit` (`add_fact`), `research_append` (`proof_summaries`), `merge_tree_persons`, `merge_warnings` |
 
@@ -1397,6 +1397,12 @@ deferred to Open Questions or a follow-up issue. The
 `match-merge-workflow-spec.md` edit and its integration-test coherence
 assertions (`hasSameCensus`, `hasEventsOutsideLifespanFar`) are preserved and
 carried by that phase.
+
+**Changed 2026-11-15:** no agent runs the `merge_warnings` dry-run before
+materializing, here or in §12 phase 3. `person-evidence` no longer holds the
+tool; `materialize_facts`' own warning refusal and a `person_warnings` call
+after its last link cover the write (`match-merge-workflow-spec.md` §5.4). The
+tool and its integration test are unchanged.
 
 **Verification gate for the phase:** `grep` for any surviving
 `merge_record_into_tree` / `mergeRecordIntoTree` reference returns nothing
