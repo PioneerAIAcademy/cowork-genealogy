@@ -140,6 +140,10 @@ export interface SamePersonProjectResult {
   recordPersona: ScoredRecordPersona;
   /** The tree person it was scored against. */
   treePerson: ScoredTreePerson;
+  /** One sentence per birth place or birth date of the scored record person
+   *  that a settled fact conflict set aside (`settledBirthDisputes`). Absent
+   *  when there is none. */
+  settledConflicts?: string[];
 }
 
 /** One scored relative pairing returned by `matchRelatives: true` mode. */
