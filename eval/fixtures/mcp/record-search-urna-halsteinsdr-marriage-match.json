@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "Norway, Marriages, 1660-1926 (collection 1468080) search that finds the real marriage entry ONLY once the bride's surname is also tried under its collection-specific abbreviation 'Halsteinsdr' (the index drops '-atter' the same way it substitutes the given-name vowel; see references/collection-quirks.md, Norway section). Fires on any call against this collection whose surname is exactly 'Halsteinsdr', regardless of given-name spelling -- proving the surname half of the 'vary both together' instruction was actually tried, not just the already-fixed given-name half (record-search-urna-variant-marriage-match.json). Must be listed before record-search-surname-not-abbreviated-zero-results.json in the test's mcp_fixtures array so it matches first.",
+  "description": "Norway, Marriages, 1660-1926 (collection 1468080) search that finds the real marriage entry ONLY once the bride's surname is also tried under its abbreviation 'Halsteinsdr' (the index drops '-atter'). Fires on any call against this collection whose surname is exactly 'Halsteinsdr', regardless of given-name spelling -- proving the surname half of the 'vary both together' instruction was actually tried, not just the already-fixed given-name half (record-search-urna-variant-marriage-match.json). Must be listed before record-search-surname-not-abbreviated-zero-results.json in the test's mcp_fixtures array so it matches first.",
   "args": {
     "surname": "Halsteinsdr",
     "collectionId": "1468080"

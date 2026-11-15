@@ -285,7 +285,7 @@ and on how often that relative is indexed in the records you are searching:
 
 For wildcard rules and fuzzy matching behavior, read the “Name search mechanics” reference at the end of this file. Place expansion, date granularity and event-family semantics are in `record_search`'s own parameter descriptions — read them there, not from memory.
 
-**Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check the “Collection-specific indexing quirks” reference at the end of this file for an entry on it and apply its guidance exactly.** Required, not optional — it documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) the general name-variant strategy will not surface.
+**Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Luxembourg, Church and Civil Registration"), check the “Collection-specific indexing quirks” reference at the end of this file for an entry on it and apply its guidance exactly.** Required, not optional — it documents indexing behaviors the general name-variant strategy will not surface.
 
 **Name variant strategy:** If the name as spelled in the tree returns few results, try:
 - Phonetic variants (Flynn → Flyn, Flinn)
@@ -294,6 +294,8 @@ For wildcard rules and fuzzy matching behavior, read the “Name search mechanic
 - Initials (J. Smith)
 - Maiden names for married women
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
+
+Varying a name’s spelling is a separate step from changing which fields you search: a search that adds, drops or moves fields while keeping the same spelling has not tried a spelling variant.
 
 **Secondary names need variants too — the given name, not just the surname.** The
 variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`
@@ -760,31 +762,6 @@ The caller prints everything after that `---` verbatim and nothing above it. No 
 
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
-
-### Norway Church Books / "Norway, Marriages, 1660-1926" (collection `1468080`)
-
-- Patronymic given names for women are transcribed with unstable
-  vowels — the same underlying name has been observed indexed as
-  **Unna**, **Urna**, and **Udna** across different records in the
-  same collection family (confirmed from two separate live test runs
-  against the real API: the target bride's own marriage entry indexed
-  her as "Urna Halsteinsdr"; an 1801 census entry for the same woman
-  indexed her as "Udna Halstensdatter"). This is a genuine transcription
-  artifact of 18th/19th-century Gothic-script Norwegian handwriting, not
-  a data-entry rule — it recurs across unrelated records for the same
-  person.
-- Both runs that hit this collection changed *which party was
-  principal* and *dropped surname/place filters*, but neither run
-  varied the *spelling of the given name itself* — so a real, findable
-  record was missed twice in a row.
-- **Compensation — do this explicitly, not just structural query
-  changes:** for any Norwegian patronymic given name, run the exact
-  name AND at least these vowel-substituted spellings before widening
-  to other repositories: swap the medial vowel (Unna → Urna → Udna →
-  Anna), and try the single-letter-doubled/undoubled form (Unna → Una).
-  Treat "I varied the query structure" and "I varied the name spelling"
-  as two separate, both-required steps — doing one is not a substitute
-  for the other.
 
 ### Luxembourg, Church and Civil Registration (5000012)
 

@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "Norway, Marriages, 1660-1926 (collection 1468080) search for the bride under the tree's exact spelling 'Unna Halsteinsdatter' — zero results, because the real index entry is transcribed with a different given-name vowel ('Urna'). Used to force a search-records retry-with-spelling-variant decision.",
+  "description": "Norway, Marriages, 1660-1926 (collection 1468080) search for the bride under the tree's exact spelling 'Unna Halsteinsdatter' — zero results, because the real index entry spells the given name 'Urna'. Used to force a search-records retry-with-spelling-variant decision.",
   "args": {
     "givenName": "Unna",
     "collectionId": "1468080"
