@@ -2,14 +2,14 @@
   "test": {
     "id": "ut_search_hints_006",
     "skill": "search-hints",
-    "name": "A hint whose record is extracted but never linked is triaged, not reported as already linked",
+    "name": "A hint whose record is extracted but never linked is decided, not reported as already linked",
     "type": "positive",
     "description": "Patrick Flynn (FamilySearch LZNY-BRF) has three pending hints. The 1908 death certificate (MDEF) is extracted as src_004 (a_011-a_013), but in this scenario no person_evidence entry links any of those assertions to anyone: whether the certificate is Patrick's was never decided. Extracted is not linked, so triage must read it and recommend a verdict like any other hint, naming src_004 and saying it is not linked, instead of reporting it as already linked and skipping it (issue #2029, benter-070's review on PR #3157).",
     "tags": [
       "triage",
       "extracted-not-linked",
       "confidence-disclosed",
-      "writes-nothing",
+      "records-decisions",
       "direct-arm"
     ]
   },
@@ -33,7 +33,7 @@
     "The certificate names Patrick Flynn, died 12 March 1908 in Schuylkill County, born 1845 in Pennsylvania, father Thomas Flynn. It carries no imageArk, so the index is the only evidence and there is no image to read. Its Pennsylvania birthplace disagrees with the censuses' Ireland; the project already weighed that as resolved conflict c_001, keeping Ireland and treating the certificate's son-in-law informant as a likely error. The reply need not name c_001 or re-weigh the birthplace: noting the disagreement, or the son-in-law informant, is enough, and leaving c_001 unnamed must not reduce Correctness or Recommendation soundness. Name, death place, county and father agree with the tree. The return should name src_004, say it is extracted but not linked, and make the identity recommendation itself; handing that call to person-evidence is a deferral. Saying the certificate still needs person-evidence to link it is correct and is not a deferral. A deferral is a reply that gives MDEF no accept/reject/not-enough recommendation of its own.",
     "Each hint's FamilySearch confidence (1-5) must be stated, and must not be the sole reason for its recommendation. The three hints are M70C (the 1870 census), M80C (the 1880 census) and MDEF (the 1908 death certificate). The 1850 census (MXYZ) is an ACCEPTED match, not a hint, and is not in this reply's scope.",
     "A reply that says 'Hint MDEF: accept — extracted as src_004, not linked; <reasoning>' is correct and complete. Giving accept (or reject or not enough information to judge) on the hint line IS the independent recommendation; noting that person-evidence will handle the link is a workflow description, not a deferral. Correctness=3 when the hint line carries accept/reject/not-enough plus the src_004 and not-linked facts. The M70C (1870 census) record returns no imageArk in the fixture; accepting it on index agreement alone when the facts match strongly is correct and should not reduce Correctness.",
-    "Triage writes nothing: no log entry, no person_evidence link, no tree edit. Linking the certificate is person-evidence's job, not this agent's"
+    "The review logs each new accept and reject itself. An accept of the death certificate logs nothing, since the project already holds its record as src_004; a reject of it would be logged. It writes no person_evidence link and no tree edit: linking the certificate is person-evidence's job, handed back with a Hand-back: person-evidence line"
   ],
   "execution": {
     "max_wall_clock_seconds": 420
