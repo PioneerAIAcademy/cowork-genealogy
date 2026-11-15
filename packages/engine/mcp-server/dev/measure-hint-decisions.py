@@ -351,6 +351,8 @@ async def run_case(
         error = f"{type(e).__name__}: {e}"[:400]
     elapsed = time.monotonic() - t0
     final = (result.result if result and result.result else "\n".join(text)) or ""
+    if not error and not any(e.get("rewrote") == "person_record_matches" for e in events):
+        error = "the hint list never reached the agent (person_record_matches failed or was not called)"
     return {
         "slug": case["slug"],
         "pid": pid,
@@ -370,7 +372,7 @@ async def run_case(
 
 
 LINE_RE = re.compile(
-    r"1:1:([A-Z0-9]{4}-[A-Z0-9]{3,5})[^\n]{0,60}?\b(accept|reject|not enough information|already linked)\b",
+    r"\b([A-Z0-9]{4}-[A-Z0-9]{3,5})\b[^\n]{0,60}?\b(accept|reject|not enough information|already linked)\b",
     re.I,
 )
 
@@ -428,7 +430,7 @@ async def run(args: argparse.Namespace) -> None:
     if log.exists():
         for line in log.read_text(encoding="utf-8").splitlines():
             r = json.loads(line)
-            if not r.get("error"):
+            if not r.get("error") and any(e.get("rewrote") == "person_record_matches" for e in r.get("hook_events", [])):
                 done.add((r["slug"], r["pid"]))
     todo = [c for c in cases if (c["slug"], c["pid"]) not in done]
     print(f"{len(todo)} cases to run ({len(done)} already done) -> {log}", file=sys.stderr)
@@ -461,6 +463,15 @@ def report(args: argparse.Namespace) -> None:
             r = json.loads(line)
             latest[(r["slug"], r["pid"])] = r
         rows = list(latest.values())
+        for r in rows:
+            if not r.get("error") and not any(e.get("rewrote") == "person_record_matches" for e in r.get("hook_events", [])):
+                r["error"] = "the hint list never reached the agent"
+            said = {m.group(1): m.group(2).lower() for m in LINE_RE.finditer(r.get("final") or "")}
+            for h in r.get("hints", []):
+                if h["verdict"] == "unreported" and bare(h["ark"]) in said:
+                    h["verdict"] = {"not enough information": "nei", "already linked": "linked"}.get(
+                        said[bare(h["ark"])], "unreported (said " + said[bare(h["ark"])] + ", not logged)"
+                    )
         ok = [r for r in rows if not r.get("error")]
         print(f"\n== {log.stem}: {len(ok)} cases ran, {len(rows) - len(ok)} errored")
         for truth, wrong in (("accepted", "reject"), ("rejected", "accept")):
