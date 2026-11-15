@@ -820,9 +820,9 @@ Quirks affect how queries should be constructed for that collection.
 
 ### Luxembourg, Church and Civil Registration (5000012)
 
-- Civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
+- Some civil birth acts (about 10–16% when measured) index the newborn by **given name only** — no surname; the parents carry the surname.
 - A query with `surname` drops every birth entry with no indexed surname: the record is in the collection, but `surname` hides it.
-- **To find a child's own birth:** immediately execute a call with `givenName: <child>` **and** `fatherSurname: <father>` (or `fatherGivenName`, `motherSurname`, `motherGivenName` — at least one parent anchor is required alongside `givenName`), no `surname`, anchored on `collectionId: 5000012` or `recordCountry: Luxembourg`. Example: `{ givenName: "Theresia", fatherSurname: "Reding", collectionId: "5000012", recordCountry: "Luxembourg" }`. Do not return with a recommendation to re-run — execute the re-anchored call now, in the same invocation.
+- **When a surname search does not return the child's own birth:** immediately execute a call with `givenName: <child>` **and** `fatherSurname: <father>` (or `fatherGivenName`, `motherSurname`, `motherGivenName` — at least one parent anchor is required alongside `givenName`), no `surname`, anchored on `collectionId: 5000012` or `recordCountry: Luxembourg`. Example: `{ givenName: "Theresia", fatherSurname: "Reding", collectionId: "5000012", recordCountry: "Luxembourg" }`. Do not return with a recommendation to re-run — execute the re-anchored call now, in the same invocation.
 - **`givenName` alone is not sufficient** — it returns too many unrelated births; the parent-name anchor is what narrows it to the right family.
 - **A nil under `surname` in this collection says nothing about whether the birth is indexed** — drop `surname` and re-anchor on the parents' names before concluding absence.
 - Marriages and deaths are indexed with a surname; the name-only pattern applies to birth acts only.
