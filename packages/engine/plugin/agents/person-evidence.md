@@ -530,8 +530,9 @@ and the other parent agree, it is not: link the person with
 `core_identifier_conflict` null, and link the differing parent's
 assertions to the tree person who is that parent at `speculative`, with
 both names in `core_identifier_conflict` on that parent's links only;
-mint no second parent. A spelling variant or abbreviation is not a
-different name. A spouse or child named differently is a different
+mint no second parent. A spelling variant, an abbreviation, or a
+missing or partial name (a surname alone, a given name not indexed) is
+not a different name. A spouse or child named differently is a different
 person (Step 5). A contradiction that is explained and does not
 bear on identity is not one: link on the rest, leave
 `core_identifier_conflict` null, and say why in the `rationale`. The

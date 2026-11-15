@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_person_evidence_s3n",
+    "skill": "person-evidence",
+    "name": "A parent named by surname alone is a partial name, not a different one: the record links as usual",
+    "type": "positive",
+    "description": "The Kilrush baptism of Patrick Flynn (I1) names one parent, the mother, by surname alone: 'Doyle', with no given name and no father entered. The tree holds his mother as Mary Doyle (I3). The parent rule makes a record that names one parent, differently, a conflict on the person; a missing or partial name is not a different name (lead, 2026-11-15), so that rule does not fire and the record links as usual. Indexes often give a parent this way.",
+    "tags": [
+      "person-evidence",
+      "parent-partial-name",
+      "one-parent-named"
+    ]
+  },
+  "input": {
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003. They are Patrick Flynn's (I1) Kilrush baptism.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-baptism-mother-surname-only"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-baptism-mother-surname-only",
+    "same-person-flynn-baptism-differently-relatives",
+    "same-person-flynn-baptism-differently-child",
+    "same-person-flynn-baptism-surname-only-mother",
+    "same-person-flynn-baptism-surname-only-no-father"
+  ],
+  "judge_context": [
+    "The register names one parent, the mother, by surname alone (Doyle), and no father. The tree holds Patrick's mother as Mary Doyle (I3). A surname with no given name is a partial name, not a different one (lead, 2026-11-15), so it is no conflict on Patrick and none on the mother.",
+    "Correct result: a_001 and a_003 linked to Patrick (I1), `confident` or `probable`; a_002, and a_001 for the mother's side, linked to I3. `probable` is the ordinary tier for the mother: her place in the record is I3's place in the tree and the surname agrees. `speculative` with the partial name given as the reason, and no conflict declared, is also acceptable. No link carries a `core_identifier_conflict`.",
+    "Writing nothing, or withholding Patrick's link, because the record names one parent and she differs is a FAIL on Correctness: the name does not differ. A `core_identifier_conflict` declared over the mother's name is a PARTIAL (2) on Confidence calibration. Adding a second mother to the tree is a FAIL on Correctness. Leaving the mother's assertions unlinked is a PARTIAL (2) on Multi-person awareness.",
+    "The mother's same_person score (about 0.001) is low because the record gives her a surname and nothing else; the rationale states it. Do not grade the value of any score. The record names no father: a same_person call for one returns the tool's answer that the record holds no such person, and no link to Thomas (I2) is owed. No relationship is written or changed; materialize_facts for Patrick (I1) is expected."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}
