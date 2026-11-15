@@ -411,13 +411,13 @@ or naturalization assertion with three, written before you choose the tier:
   caps the link at `probable`.
 - "Naturalization check: arrival [date] to naturalization [date]: [interval]
   vs [required] years: met / short, [the project record that explains it, or
-  nothing]." Written on exactly two links: the immigration/arrival
-  assertion's and the naturalization assertion's (never on a name, age,
-  sex, birth or residence assertion of those records), a stub's included,
-  whenever the records in this run or already on the person give both
-  dates, whatever the tier. Write the same line on both links, whichever
-  person each is linked to: it compares the two records, and an earlier
-  residence counts from the person who holds the naturalization. A line ending "short, nothing" caps both links
+  nothing]." Written only when the arrival and the naturalization are
+  linked to the same person, a stub included, in this run or before it;
+  linked to different persons they have no interval and get no line. It
+  goes on the immigration/arrival assertion's link and the naturalization
+  assertion's (never on a name, age, sex, birth or residence assertion of
+  those records), whichever of the two this run writes, whatever the
+  tier. A line ending "short, nothing" caps both links
   at `probable`. When a U.S. residence the tree held before this run, or a
   record already linked to this person, is dated before the arrival, and the
   arrival record does not say the person was never in the country before, the
@@ -514,7 +514,7 @@ household composition, and the independence of the evidence —
 determines the allowed confidence:
 
 **Before you pick a tier**, decide whether any core identifier —
-birthplace, a birth or christening date, an age, a parent, a spouse —
+birthplace, a birth or christening date, an age, both parents, a spouse —
 *contradicts* what the tree person already attests. If one does, and no
 `resolved` or `moot` conflict has settled it, the
 match is Weak: write no link (**No link**, below) and name both sides in
@@ -638,7 +638,8 @@ demote a Strong match: write the link and state the score. But:
 **No link.** A **Weak** match, a core-identifier conflict included, gets
 no link, whoever asked and whether or not a user is present. Do not create the pe_ entry, do not
 link or mint the record's other persons when the no-link is the focus person's, and do not
-record a rejection: only the researcher creates one. State it in your
+record a rejection: only the researcher creates one. One parent of a linked person named
+differently is not a no-link: that parent's link is written at `speculative` (above). State it in your
 returned summary: the candidate, the score, and exactly what conflicted
 or is missing. Then recommend `hypothesis-tracking` as the follow-up if
 the unlinked identity is worth persisting as a hypothesis (you write
