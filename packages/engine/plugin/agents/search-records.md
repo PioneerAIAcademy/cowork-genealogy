@@ -761,12 +761,6 @@ The caller prints everything after that `---` verbatim and nothing above it. No 
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
-### US Federal Censuses (1790–1940)
-
-- **Compensation:** Use surname wildcards (`surname=Sm?th`);
-  search by neighbors; for unindexed enumeration districts, switch
-  to image browsing
-
 ### England parish registers (IGI Community Indexed)
 
 - Pre-1837 parish records extracted decades ago — static "Legacy"
