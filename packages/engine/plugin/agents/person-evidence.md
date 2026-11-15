@@ -512,14 +512,18 @@ determines the allowed confidence:
 
 **Before you pick a tier**, decide whether any core identifier —
 birthplace, a birth or christening date, an age, a parent, a spouse —
-*contradicts* what the tree person already attests. If one does, the
+*contradicts* what the tree person already attests. If one does, and no
+`resolved` or `moot` conflict has settled it, the
 match is Weak: write no link (**No link**, below) and name both sides in
 your return ("record gives birthplace Germany; tree attests Ireland
-across three censuses"). That is the rule for the focus person. When the
-focus person is linked and the contradiction is on another persona of the
-record (a relative the record names differently from the tree person
-their position points to), link that persona at `speculative` and name
-both values in `core_identifier_conflict`. A contradiction that is explained and does not
+across three censuses"). That is the rule for the focus person: the
+person the request names or, when it names none, the question's subject
+if the record lists them, otherwise the person on the record closest to
+the subject. When the record names a parent of a linked person
+differently from the tree person who is that parent, link the parent's
+assertions to that tree person at `speculative` and name both values in
+`core_identifier_conflict`; mint no second parent. A spouse or child
+named differently is a different person (Step 5). A contradiction that is explained and does not
 bear on identity is not one: link on the rest, leave
 `core_identifier_conflict` null, and say why in the `rationale`. The
 score never promotes a contradiction.

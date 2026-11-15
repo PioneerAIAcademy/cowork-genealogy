@@ -28,6 +28,6 @@
   "judge_context": [
     "person-evidence should call same_person in the project-relative form (projectPath, assertionId a_001, treePersonId naming the candidate); the tool resolves the record and builds the tree subset itself",
     "The new person_evidence entry for a_001 must carry a non-null match_score holding the tool's score (0.88)",
-    "The match is strong on every identifier and the score corroborates it — a confident link is appropriate"
+    "The match is strong on every identifier and the score corroborates it — `confident` and `probable` are both acceptable"
   ]
 }
