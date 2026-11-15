@@ -821,9 +821,8 @@ describe("samePerson — project-relative arm", () => {
     it("names the record's birth place that a resolved conflict set aside", async () => {
       await project(withBirth([conflict("resolved", "a_020")]), IRISH_TREE);
       okScore();
-      const result = notHaving(
+      const result = projectResult(
         await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
-        "matchRelatives",
       );
       expect(result.settledConflicts).toHaveLength(1);
       expect(result.settledConflicts![0]).toContain("'c_001'");
