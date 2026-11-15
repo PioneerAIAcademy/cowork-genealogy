@@ -14,6 +14,9 @@ import type { PaneTarget } from '../src/file/model'
 import { Pane } from '../src/file/Panes'
 import { SourcesPage } from '../src/file/SourcesPage'
 import { CasePage } from '../src/file/CasePage'
+import { compareFindings, compareLine, type CompareView } from '../src/file/compare-model'
+import { ComparePage } from '../src/file/ComparePage'
+import { PeoplePage } from '../src/file/PeoplePage'
 import { buildRuleIndex } from '../src/rules/rule-index'
 import type { RuleIndex } from '../src/rules/rule-index'
 
@@ -24,6 +27,11 @@ const PID_IN_TEXT = /(?<![\w-])(?=[A-Z0-9-]*[A-Z])[A-Z0-9]{4}(?:-[A-Z0-9]{3,4})+
 const URL = /https?:\/\/[^\s<>]+|\]\([^)]*\)/g
 const REVIEWED = ['compound-objective-fully-covered', 'compound-objective-part-unframed']
 const CRAFT_ONLY = 'flynn-prior-craft-verdict'
+/** Compare on real data: each named assertion must be found, on that person, with that tag. */
+const COMPARE_EXPECTED = [
+  { project: 'hannah-earnest-children--run-2026-07-22_19-18-50', personId: 'PQQT-5G1', assertionId: 'a_137', tag: 'already', why: 'a Darlaston birth with United Kingdom added' },
+  { project: 'hannah-earnest-children--run-2026-07-22_19-18-50', personId: 'GN29-3TT', assertionId: 'a_148', tag: 'new', why: 'the tube trade occupation' }
+]
 
 interface Staged {
   name: string
@@ -138,6 +146,7 @@ it('the new case file draws its pages and every pane with no id left, for every 
       problems.push(`${where}: ${hit} | …${text.slice(Math.max(0, at - 60), at + token.length + 30)}…`)
     }
   }
+  const compareRuns: Array<{ name: string; compare: CompareView }> = []
   for (const { name, document: doc } of staged()) {
     const research = doc.research ?? {}
     const transport = new McpAppResearchTransport({ read: async () => ({ found: false }) })
@@ -171,6 +180,12 @@ it('the new case file draws its pages and every pane with no id left, for every 
     if (REVIEWED.includes(name) && !(host.querySelector('#case-reviewer .prose'))) problems.push(`${name}: The case shows no reviewer notes`)
     if (name === CRAFT_ONLY && /Verdict:/.test(caseText('q_001'))) problems.push(`${name}: The case shows a craft read as the verdict`)
     draw(`${name} log`, base, <LogPage />)
+    draw(`${name} people`, base, <PeoplePage />)
+    const compare = compareFindings(research, doc.tree, doc.startingTree, base.index)
+    if (compare) {
+      draw(`${name} compare`, base, <ComparePage />)
+      compareRuns.push({ name, compare })
+    }
     const targets: Array<Extract<PaneTarget, { id: string }>> = [
       ...(research.sources ?? []).map((s) => ({ kind: 'record' as const, id: s.id })),
       ...(research.log ?? []).map((e) => ({ kind: 'search' as const, id: e.id })),
@@ -178,6 +193,24 @@ it('the new case file draws its pages and every pane with no id left, for every 
     ]
     for (const target of targets) draw(`${name} ${target.kind} ${target.id}`, { ...base, pane: target }, <Pane />)
   }
+  for (const want of COMPARE_EXPECTED) {
+    const run = compareRuns.find((r) => r.name === want.project)
+    const person = run && [...run.compare.people, ...run.compare.possibleRelatives].find((p) => p.personId === want.personId)
+    const finding = person?.findings.find((f) => f.assertionIds.includes(want.assertionId))
+    if (!finding) problems.push(`${want.project}: Compare has no finding for ${want.assertionId} on ${want.personId} (${want.why})`)
+    else if (finding.tag !== want.tag) problems.push(`${want.project}: ${want.why} reads ${finding.tag}, not ${want.tag}`)
+  }
+  const tags: Record<string, number> = {}
+  for (const { compare } of compareRuns) {
+    for (const p of [...compare.people, ...compare.possibleRelatives]) for (const f of p.findings) tags[f.tag] = (tags[f.tag] ?? 0) + 1
+  }
+  const totals = compareRuns.map(({ compare }) => compare.counts.relatives + compare.counts.facts).sort((a, b) => a - b)
+  const at = (q: number) => totals[Math.min(totals.length - 1, Math.floor(totals.length * q))] ?? 0
+  console.log(
+    `compare: ${compareRuns.length} projects; tags ${JSON.stringify(tags)}; card count median ${at(0.5)}, 75th ${at(0.75)}, 90th ${at(0.9)}, max ${totals[totals.length - 1] ?? 0}, at zero ${totals.filter((t) => t === 0).length}`
+  )
+  const lines = compareRuns.map(({ compare }) => compareLine(compare.counts)).filter(Boolean)
+  console.log(`compare: ${lines.length} card lines, e.g. "${lines[Math.floor(lines.length / 2)] ?? ''}"`)
   console.log(`new case file: drawn ${drawn}, problems ${problems.length}`)
   if (process.env.SWEEP_OUT) writeFileSync(`${process.env.SWEEP_OUT}.new`, problems.join('\n'), 'utf-8')
   expect(problems.length, problems.slice(0, 40).join('\n')).toBe(0)

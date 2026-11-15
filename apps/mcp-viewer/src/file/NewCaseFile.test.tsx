@@ -55,7 +55,7 @@ describe('the new case file', () => {
   it('shows only the pages with content, opens the one asked for, and holds no id', async () => {
     await fileOn(COMPOUND_DOC(), { page: 'log' })
     const nav = screen.getByRole('navigation', { name: 'Pages' })
-    expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['The case', 'Sources', 'Log'])
+    expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['The case', 'People', 'Sources', 'Log'])
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Log')
     expect(leftoverIds(text(document_().body))).toEqual([])
     fireEvent.click(within(nav).getByRole('button', { name: 'Sources' }))
