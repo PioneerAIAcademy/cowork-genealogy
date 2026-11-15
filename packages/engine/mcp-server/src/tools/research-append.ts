@@ -1833,6 +1833,16 @@ function contradictionScope(
   // already refuses in the same document (Maine vs New Brunswick, North Carolina
   // vs Kentucky, a 9-year birth gap). No new class; it closes the side door
   // round refusals that already stand.
+  //
+  // What stays open: a two-party assertion linked `confident` with no one-party
+  // link beside it (ut_person_evidence_k2b, 2026-11-15, 1 run in 20). Reading
+  // the party from the link's own recorded `same_person` score does not close
+  // it. Replayed 2026-11-15 over 244 saved runs with the party taken from each
+  // run's same_person calls, it added 24 refusals and every one was a correct
+  // link: a "child of X" assertion linked to the parent X after a call that
+  // passed no `recordRole`, so the score names the child and the child's
+  // christening is compared with the parent's birth. A score's party is the
+  // call's default, not evidence of which side the link is about.
   const own = partyKey(linked);
   const parties = isRelational(linked)
     ? partiesLinkedTo(linked, entry.person_id, onRecord, partyKey, personLinks)
