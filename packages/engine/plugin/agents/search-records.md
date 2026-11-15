@@ -761,11 +761,6 @@ The caller prints everything after that `---` verbatim and nothing above it. No 
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
-### Mexico Civil Registration
-
-- Search dual surnames separately; search by parents' names instead
-  of the principal
-
 ### Norway Church Books / "Norway, Marriages, 1660-1926" (collection `1468080`)
 
 - Patronymic given names for women are transcribed with unstable
