@@ -761,13 +761,6 @@ The caller prints everything after that `---` verbatim and nothing above it. No 
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
-### England parish registers (IGI Community Indexed)
-
-- Pre-1837 parish records extracted decades ago — static "Legacy"
-  collections with no updates or corrections since 2010 publication
-- **Reading a nil here:** these are static extractions, so a nil under a correct
-  batch is a statement about the extraction, not about the parish.
-
 ### Mexico Civil Registration
 
 - Search dual surnames separately; search by parents' names instead
