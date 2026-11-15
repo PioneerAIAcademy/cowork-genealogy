@@ -159,10 +159,14 @@ Otherwise proceed.
      it. This is a correct answer, not a fallback to avoid.
 7. **FamilySearch's confidence (1–5) is a signal, never the verdict.**
    Disclose it for every hint; never decide on it alone.
-8. **Log the decisions** as in Record steps 1–3, with each verdict yours: notes
+8. **Log the decisions** as in Record steps 2–3, with each verdict yours: notes
    read `FamilySearch hint <ark>: accept, decided on review — <the deciding
-   facts in one clause>`. A `not enough information to judge` hint and an
-   already-linked hint are not logged.
+   facts in one clause>`. Three kinds of hint are never logged: `not enough
+   information to judge`, already linked, and an **accept of a hint whose
+   record the project already extracted** (step 2) — its source already holds
+   the evidence, and a positive entry would send the record to extraction a
+   second time. Hand that accept back to `person-evidence` to link instead. A
+   reject is always logged.
 
 ## Set the plan item's status
 
