@@ -210,8 +210,8 @@ research_append({
 The tool assigns the `loc_` id and stamps `created`. **`pages_read` must list all four
 sections** (each with its `found` outcome).
 
-Then send the guide to that `loc_` id, one section per call, all the calls together in
-one turn:
+Then send the guide to that `loc_` id, one section per `research_append` call, never
+several in `ops`, all the calls together in one turn:
 
 ```
 research_append({

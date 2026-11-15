@@ -2359,8 +2359,10 @@ saved.
 - **The title line.** The guide's `# Locality Guide: <for_place or place> (<time_period>)`
   line is written by the tool, unless the stored guide already has text before its
   first heading or the call sends a `# ` line above its first block.
-- **The limit.** `guideSection` is at most `GUIDE_SECTION_MAX_CHARS` (4,000)
-  characters. 4 of the 6,716 blocks in those 428 guides are longer.
+- **The limit.** One call carries at most `GUIDE_SECTION_MAX_CHARS` (4,000)
+  characters of guide: a `guideSection` over it is refused, and so is every
+  `guideSection` op of a batch whose sections together pass it. 4 of the 6,716 blocks
+  in those 428 guides are longer.
 - **Several at once.** Calls for one entry may arrive together; each is placed under
   the project lock on the guide the one before it left. In a batch, each op is placed
   on the guide the earlier op left.

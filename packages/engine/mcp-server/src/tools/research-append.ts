@@ -12393,9 +12393,10 @@ const GUIDE_SECTION_OPS = new WeakSet<object>();
 
 /** How a guide is sent, for the refusals and the `guide.next` line. */
 const GUIDE_SECTION_HOW =
-  "one section per call: op 'update', the entry's id as entryId, and guideSection holding that " +
-  "section's '## ' heading line with its text under it. Each '### ' subsection of Available record " +
-  "types and of Repository guide is its own call, beginning with its '### ' line.";
+  "one section per research_append call, never several in `ops`: op 'update', the entry's id as " +
+  "entryId, and guideSection holding that section's '## ' heading line with its text under it. Each " +
+  "'### ' subsection of Available record types and of Repository guide is its own call, beginning " +
+  "with its '### ' line.";
 
 /**
  * Place each op's `guideSection` into `fields.guide_markdown`, in place, and return
@@ -12415,6 +12416,17 @@ function expandGuideSections(
   const pending = new Map<string, string>();
   const stored = (id: string) =>
     (Array.isArray(research?.localities) ? research.localities : []).find((l: any) => l?.id === id);
+  // The limit is on the call, not the op: a batch of every section is the whole
+  // guide in one JSON string again.
+  const sent = ops.flatMap((op, i) => (op && typeof op.guideSection === "string" ? [[i, op.guideSection.length] as const] : []));
+  const sentChars = sent.reduce((sum, [, n]) => sum + n, 0);
+  if (sent.length > 1 && sentChars > GUIDE_SECTION_MAX_CHARS) {
+    return [
+      `this call carries ${sentChars} characters of guide in ${sent.length} sections (ops ` +
+        `${sent.map(([i]) => i).join(", ")}); one call carries at most ${GUIDE_SECTION_MAX_CHARS}. ` +
+        "Send each section as its own research_append call, not in `ops`.",
+    ];
+  }
   ops.forEach((op, i) => {
     if (!op || typeof op !== "object") return;
     if (op.guideSection == null) delete op.guideSection;

@@ -19227,6 +19227,35 @@ describe("research_append: a localities guide is saved one section per call (#45
     expect(guide.indexOf("### Church records")).toBeLessThan(guide.indexOf("## Research tips"));
   });
 
+  it("refuses a batch whose sections together pass the size limit, and says to send each alone", async () => {
+    await writeProject();
+    await append();
+    const big = (title: string) => `## ${title}\n${"- A line of the guide.\n".repeat(70)}`;
+    const ops = ["Jurisdiction overview", "Boundary changes", "Research tips"].map((t) => ({
+      section: "localities", op: "update", entryId: "loc_001", guideSection: big(t),
+    }));
+    expect(ops.every((o) => o.guideSection.length < GUIDE_SECTION_MAX_CHARS)).toBe(true);
+    const r = await researchAppend({ projectPath: dir, ops } as never);
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors.filter((e) => e.includes("characters of guide in 3 sections (ops 0, 1, 2)"));
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("not in `ops`");
+    expect((await readResearch()).localities[0].guide_markdown).toBeUndefined();
+  });
+
+  it("the size limit of a batch counts guide sections only", async () => {
+    await writeProject();
+    await append();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: TIPS },
+        { section: "localities", op: "update", entryId: "loc_001", fields: { quirks: ["x".repeat(GUIDE_SECTION_MAX_CHARS)] } },
+      ],
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
   it("in a batch, a refused section names its op and nothing is written", async () => {
     await writeProject();
     await append();
