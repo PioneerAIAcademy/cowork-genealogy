@@ -1,0 +1,57 @@
+{
+  "tool": "place_population",
+  "description": "place_population for \"Hordaland, Norway\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Hordaland"
+  },
+  "response": {
+    "place": {
+      "place_id": "1930104",
+      "name": "Hordaland",
+      "level": "province",
+      "parent": {
+        "place_id": "1927171",
+        "name": "Norway"
+      }
+    },
+    "population": {
+      "gapminder": {
+        "source_url": "https://www.gapminder.org/data/documentation/gd003/",
+        "level": "country",
+        "place": {
+          "place_id": "1927171",
+          "name": "Norway"
+        },
+        "data": [
+          {
+            "year": 1800,
+            "population": 900000,
+            "data_type": "estimate"
+          }
+        ]
+      }
+    },
+    "indexed_records": {
+      "familysearch_births": {
+        "description": "Indexed birth records",
+        "level": "country",
+        "place": {
+          "place_id": "1927171",
+          "name": "Norway"
+        },
+        "data": [
+          {
+            "period_start": 1750,
+            "period_end": 1800,
+            "records": 844537
+          },
+          {
+            "period_start": 1800,
+            "period_end": 1850,
+            "records": 1347168
+          }
+        ]
+      }
+    }
+  }
+}

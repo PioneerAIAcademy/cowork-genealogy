@@ -1,0 +1,556 @@
+{
+  "tool": "place_search",
+  "description": "place_search for \"Norway\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "Norway"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Norway",
+        "type": "Country",
+        "dateRange": "+872/",
+        "latitude": 62,
+        "longitude": 10,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=40",
+        "wikipediaUrl": "https://nn.wikipedia.org/wiki/Noreg"
+      },
+      {
+        "standardPlace": "Europe",
+        "type": "Continent",
+        "latitude": 49,
+        "longitude": 13,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Europe&focusedId=280",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Europe"
+      },
+      {
+        "standardPlace": "Clement, Dickey, North Dakota, United States",
+        "type": "Hamlet",
+        "dateRange": "+1889/",
+        "latitude": 46.1544,
+        "longitude": -98.2439,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Clement&focusedId=4705109"
+      },
+      {
+        "standardPlace": "Norway, New South Wales, Australia",
+        "type": "District",
+        "latitude": -33.771,
+        "longitude": 149.813,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=3448273"
+      },
+      {
+        "standardPlace": "Norway, Manchester, Jamaica",
+        "type": "Subdistrict",
+        "latitude": 18.2181,
+        "longitude": -77.5643,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=1176491"
+      },
+      {
+        "standardPlace": "Norway, Racine, Wisconsin, United States",
+        "type": "Hamlet",
+        "latitude": 42.81242,
+        "longitude": -88.16446,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=12643993",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Wisconsin"
+      },
+      {
+        "standardPlace": "Norway, Oxford, Maine, United States",
+        "type": "Town",
+        "dateRange": "+1820/",
+        "latitude": 44.2289,
+        "longitude": -70.6117,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=11695333",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Maine"
+      },
+      {
+        "standardPlace": "Norway, Prince, Prince Edward Island, Canada",
+        "type": "Hamlet",
+        "dateRange": "+1870/",
+        "latitude": 47.0089,
+        "longitude": -64.0335,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=8110176",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Prince_Edward_Island"
+      },
+      {
+        "standardPlace": "Norway, Dixon, Nebraska, United States",
+        "type": "District",
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5884935"
+      },
+      {
+        "standardPlace": "Norway, Benton, Iowa, United States",
+        "type": "City",
+        "dateRange": "+1860/",
+        "latitude": 41.9025,
+        "longitude": -91.9203,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5825353",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Iowa"
+      },
+      {
+        "standardPlace": "Norway, Thomas, Nebraska, United States",
+        "type": "Hamlet",
+        "dateRange": "+1885/",
+        "latitude": 41.9989,
+        "longitude": -100.7178,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5642918",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Nebraska"
+      },
+      {
+        "standardPlace": "Norway, Marion, West Virginia, United States",
+        "type": "Hamlet",
+        "latitude": 39.4706,
+        "longitude": -80.1867,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5543753"
+      },
+      {
+        "standardPlace": "Norway, Racine, Wisconsin, United States",
+        "type": "Town",
+        "latitude": 42.7961,
+        "longitude": -88.1228,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5525823",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Wisconsin"
+      },
+      {
+        "standardPlace": "Norway, Dickinson, Michigan, United States",
+        "type": "City",
+        "dateRange": "+1879/",
+        "latitude": 45.7869,
+        "longitude": -87.90374,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5446008",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Michigan"
+      },
+      {
+        "standardPlace": "Norway, Yankton, South Dakota, United States",
+        "type": "Hamlet",
+        "dateRange": "+1889/",
+        "latitude": 43.1606,
+        "longitude": -97.5958,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4904111"
+      },
+      {
+        "standardPlace": "Norway, Orangeburg, South Carolina, United States",
+        "type": "Town",
+        "dateRange": "+1892/",
+        "latitude": 33.4517,
+        "longitude": -81.1256,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4879481",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_South_Carolina"
+      },
+      {
+        "standardPlace": "Norway, Coos, Oregon, United States",
+        "type": "Town",
+        "dateRange": "+1873/",
+        "latitude": 43.1011,
+        "longitude": -124.1556,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4772325",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Oregon"
+      },
+      {
+        "standardPlace": "Norway, Dickey, North Dakota, United States",
+        "type": "Town",
+        "dateRange": "+1889/",
+        "latitude": 46.1389,
+        "longitude": -98.1453,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4705198"
+      },
+      {
+        "standardPlace": "Norway, Herkimer, New York, United States",
+        "type": "Town",
+        "dateRange": "+1792/",
+        "latitude": 43.2183,
+        "longitude": -74.9483,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4612960",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_New_York"
+      },
+      {
+        "standardPlace": "Norway, Yazoo, Mississippi, United States",
+        "type": "Hamlet",
+        "latitude": 32.903888,
+        "longitude": -90.39806,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4355225"
+      },
+      {
+        "standardPlace": "Norway, Republic, Kansas, United States",
+        "type": "Village",
+        "dateRange": "+1870/",
+        "latitude": 39.6961,
+        "longitude": -97.7736,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4150426",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Kansas"
+      },
+      {
+        "standardPlace": "Norway, LaSalle, Illinois, United States",
+        "type": "Village",
+        "latitude": 41.4656,
+        "longitude": -88.6644,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4066302",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Illinois#Heritage"
+      },
+      {
+        "standardPlace": "Norway, Harare, Mashonaland East, Zimbabwe",
+        "type": "Farm",
+        "dateRange": "+1983/",
+        "latitude": -18.25,
+        "longitude": 30.9667,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=717001"
+      },
+      {
+        "standardPlace": "Norway, Norway, Oxford, Massachusetts, United States",
+        "type": "Town",
+        "latitude": 44.2139,
+        "longitude": -70.5453,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=8305990"
+      },
+      {
+        "standardPlace": "Norway, Mission Township, LaSalle, Illinois, United States",
+        "type": "Town",
+        "latitude": 41.4656,
+        "longitude": -88.6644,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=8245714",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Illinois"
+      },
+      {
+        "standardPlace": "Norway, Norway, Herkimer, New York, United States",
+        "type": "Hamlet",
+        "latitude": 43.2083,
+        "longitude": -74.9525,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4627012"
+      },
+      {
+        "standardPlace": "Norway, Union Township, White, Indiana, United States",
+        "type": "Village",
+        "dateRange": "+1845/",
+        "latitude": 40.7783,
+        "longitude": -86.7594,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4112960",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Indiana"
+      },
+      {
+        "standardPlace": "Norway, York, Ontario, Canada",
+        "type": "Neighborhood or suburb",
+        "dateRange": "+1867/+1909",
+        "latitude": 43.67443,
+        "longitude": -79.31486,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=10564401"
+      },
+      {
+        "standardPlace": "Norway, Rouxville, Orange Free State, South Africa",
+        "type": "Farm",
+        "latitude": -30.2333,
+        "longitude": 26.7667,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=6794817"
+      },
+      {
+        "standardPlace": "Clement, Dickey, Dakota Territory, United States",
+        "type": "Hamlet",
+        "dateRange": "+1888/+1889",
+        "latitude": 46.1544,
+        "longitude": -98.2439,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Clement&focusedId=4705108"
+      },
+      {
+        "standardPlace": "Norway, Marion, Virginia, United States",
+        "type": "Town",
+        "latitude": 39.4706,
+        "longitude": -80.1867,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5543752"
+      },
+      {
+        "standardPlace": "Norway, Orangeburgh District, South Carolina, British Colonial America",
+        "type": "Town",
+        "latitude": 33.4517,
+        "longitude": -81.1256,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4879482"
+      },
+      {
+        "standardPlace": "Norway, Norway, Cumberland, Massachusetts, United States",
+        "type": "Town",
+        "latitude": 44.2139,
+        "longitude": -70.5453,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=8305989",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway_(CDP),_Maine"
+      },
+      {
+        "standardPlace": "Norway, Salisbury, Mashonaland South, Southern Rhodesia",
+        "type": "Farm",
+        "dateRange": "/+1980",
+        "latitude": -18.25,
+        "longitude": 30.9667,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=717000"
+      },
+      {
+        "standardPlace": "Norway, Yankton, Dakota Territory, United States",
+        "type": "Village",
+        "dateRange": "+1873/+1889",
+        "latitude": 43.1606,
+        "longitude": -97.5958,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4904112"
+      },
+      {
+        "standardPlace": "Norway, Dickey, Dakota Territory, United States",
+        "type": "Village",
+        "dateRange": "/+1889",
+        "latitude": 46.1389,
+        "longitude": -98.1453,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4705197"
+      },
+      {
+        "standardPlace": "Norway, York, Canada West, British North America",
+        "type": "Village",
+        "dateRange": "+1841/+1867",
+        "latitude": 43.6737,
+        "longitude": -79.3077,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=10564400"
+      },
+      {
+        "standardPlace": "Norway, York, Home, Upper Canada, British North America",
+        "type": "Village",
+        "dateRange": "+1825/+1841",
+        "latitude": 43.6737,
+        "longitude": -79.3077,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=10564399"
+      },
+      {
+        "standardPlace": "Norway, Oxford, Massachusetts, United States",
+        "type": "Town",
+        "dateRange": "+1805/+1820",
+        "latitude": 44.2289,
+        "longitude": -70.6117,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4273204",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Maine"
+      },
+      {
+        "standardPlace": "Norway, Cumberland, Massachusetts, United States",
+        "type": "Town",
+        "dateRange": "+1797/+1805",
+        "latitude": 44.2143,
+        "longitude": -70.5471,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4273203",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Maine"
+      },
+      {
+        "standardPlace": "Township of Norway, Dickinson, Michigan, United States",
+        "type": "Township",
+        "dateRange": "+1891/",
+        "latitude": 45.8706,
+        "longitude": -87.8919,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Township%20of%20Norway&focusedId=5446797",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway_Township,_Michigan"
+      },
+      {
+        "standardPlace": "Norway Township, Lincoln, South Dakota, United States",
+        "type": "Township",
+        "dateRange": "+1889/",
+        "latitude": 43.1194,
+        "longitude": -96.6183,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4898637"
+      },
+      {
+        "standardPlace": "Norway Township, Roberts, South Dakota, United States",
+        "type": "Township",
+        "dateRange": "+1889/",
+        "latitude": 45.8694,
+        "longitude": -97.1753,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4896376"
+      },
+      {
+        "standardPlace": "Norway Township, Turner, South Dakota, United States",
+        "type": "Township",
+        "dateRange": "+1889/",
+        "latitude": 43.2931,
+        "longitude": -97.2108,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4895397"
+      },
+      {
+        "standardPlace": "Norway Township, Clay, South Dakota, United States",
+        "type": "Township",
+        "dateRange": "+1889/",
+        "latitude": 42.7917,
+        "longitude": -97.0833,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4894229"
+      },
+      {
+        "standardPlace": "Norway Township, Traill, North Dakota, United States",
+        "type": "Township",
+        "dateRange": "+1889/",
+        "latitude": 47.4478,
+        "longitude": -97.1433,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4706520"
+      },
+      {
+        "standardPlace": "Norway Township, Kittson, Minnesota, United States",
+        "type": "Township",
+        "dateRange": "+1901/",
+        "latitude": 48.6683,
+        "longitude": -96.5942,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4346898",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway_Township,_Kittson_County,_Minnesota"
+      },
+      {
+        "standardPlace": "Norway Township, Fillmore, Minnesota, United States",
+        "type": "Township",
+        "dateRange": "+1860/",
+        "latitude": 43.7206,
+        "longitude": -91.7917,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4346834",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway_Township,_Fillmore_County,_Minnesota"
+      },
+      {
+        "standardPlace": "Norway Township, Republic, Kansas, United States",
+        "type": "Township",
+        "latitude": 39.6992,
+        "longitude": -97.7806,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4144038"
+      },
+      {
+        "standardPlace": "Norway Township, Winnebago, Iowa, United States",
+        "type": "Township",
+        "latitude": 43.4608,
+        "longitude": -93.5608,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4081482"
+      },
+      {
+        "standardPlace": "Norway Township, Humboldt, Iowa, United States",
+        "type": "Township",
+        "latitude": 42.6894,
+        "longitude": -94.0344,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4081481"
+      },
+      {
+        "standardPlace": "Norway Township, Wright, Iowa, United States",
+        "type": "Township",
+        "latitude": 42.8611,
+        "longitude": -93.7908,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4081473"
+      },
+      {
+        "standardPlace": "Rosedale, Pennsbury Township, Chester, Pennsylvania, United States",
+        "type": "Village",
+        "dateRange": "+1871/",
+        "latitude": 39.8489,
+        "longitude": -75.6106,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Rosedale&focusedId=8592706"
+      },
+      {
+        "standardPlace": "Rosedale, Kennett Township, Chester, Pennsylvania, United States",
+        "type": "Village",
+        "dateRange": "+1871/",
+        "latitude": 39.8478,
+        "longitude": -75.6644,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Rosedale&focusedId=8587016"
+      },
+      {
+        "standardPlace": "Norway Township, Menominee, Michigan, United States",
+        "type": "Township",
+        "dateRange": "+1881/+1891",
+        "latitude": 45.8706,
+        "longitude": -87.8919,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=12121931",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway_Township,_Michigan"
+      },
+      {
+        "standardPlace": "Norway Township, Lincoln, Dakota Territory, United States",
+        "type": "Township",
+        "dateRange": "/+1889",
+        "latitude": 43.1194,
+        "longitude": -96.6183,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4898636"
+      },
+      {
+        "standardPlace": "Norway Township, Roberts, Dakota Territory, United States",
+        "type": "Township",
+        "dateRange": "/+1889",
+        "latitude": 45.8694,
+        "longitude": -97.1753,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4896377"
+      },
+      {
+        "standardPlace": "Norway Township, Turner, Dakota Territory, United States",
+        "type": "Township",
+        "dateRange": "/+1889",
+        "latitude": 43.2931,
+        "longitude": -97.2108,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4895396"
+      },
+      {
+        "standardPlace": "Norway Township, Clay, Dakota Territory, United States",
+        "type": "Township",
+        "dateRange": "/+1889",
+        "latitude": 42.7917,
+        "longitude": -97.0833,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4894230"
+      },
+      {
+        "standardPlace": "Norway Township, Traill, Dakota Territory, United States",
+        "type": "Township",
+        "dateRange": "/+1889",
+        "latitude": 47.4478,
+        "longitude": -97.1433,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4706519"
+      },
+      {
+        "standardPlace": "Belles, Saint Joseph, Dominica",
+        "type": "Village",
+        "latitude": 15.4331,
+        "longitude": -61.3666,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Belles&focusedId=1912484",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Belles"
+      },
+      {
+        "standardPlace": "Norse, Bosque, Texas, United States",
+        "type": "Hamlet",
+        "dateRange": "+1854/",
+        "latitude": 31.7559,
+        "longitude": -97.6722,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norse&focusedId=5965860",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norse,_Texas"
+      },
+      {
+        "standardPlace": "Clermont, Fayette, Iowa, United States",
+        "type": "City",
+        "dateRange": "+1851/",
+        "latitude": 42.9994,
+        "longitude": -91.65,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Clermont&focusedId=5847397",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Clermont,_Iowa"
+      },
+      {
+        "standardPlace": "Clement Township, Dickey, North Dakota, United States",
+        "type": "Township",
+        "dateRange": "+1889/",
+        "latitude": 46.1458,
+        "longitude": -98.1833,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Clement%20Township&focusedId=4706398"
+      },
+      {
+        "standardPlace": "Clement Township, Dickey, Dakota Territory, United States",
+        "type": "Township",
+        "dateRange": "/+1889",
+        "latitude": 46.1458,
+        "longitude": -98.1833,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Clement%20Township&focusedId=4706397"
+      },
+      {
+        "standardPlace": "Norse, McLennan, Texas, United States",
+        "type": "Hamlet",
+        "dateRange": "+1850/+1854",
+        "latitude": 31.7559,
+        "longitude": -97.6722,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norse&focusedId=12661942",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norse,_Texas"
+      },
+      {
+        "standardPlace": "Norse, Milam, Texas, United States",
+        "type": "Hamlet",
+        "dateRange": "+1845/+1850",
+        "latitude": 31.7559,
+        "longitude": -97.6722,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norse&focusedId=12661941",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norse,_Texas"
+      }
+    ],
+    "verdict": {
+      "standardPlace": "Norway",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "tool": "place_population",
+  "description": "place_population for \"Hamre, Hordaland, Norway\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Hamre"
+  },
+  "response": {
+    "error": "Place not found",
+    "place_id": "1969802"
+  }
+}

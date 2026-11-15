@@ -1,0 +1,444 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for \"Hamre, Hordaland, Norway\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Hamre"
+  },
+  "response": {
+    "totalHits": 21,
+    "returned": 21,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "koha:701507",
+        "title": "1835 folketelling for Hamre prestegjeld (Hordaland)",
+        "creator": "Norge. Rentekammeret",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Mikrofilm av mss. i Statsarkivet i Bergen.",
+          "The 1835 census records for Hamre clerical district which at this time period included the following parishes: Åsane, Hamre (Hammer), Meland and Alversund. These records contains mainly statistical informations such as the name of the farm, name of person running the farm (self owners, tenant farmers), number of people living in household, approximate age of these people, their occupation and sex, etc.",
+          "1835 folketelling for Hamre prestegjeld som på denne tid omfattet sognene: Åsane, Hamre (Hammer), Meland og Alversund. Disse bøker omfatter statistiske opplysninger som navnet på gården, navnet på gårdbrukeren (selveier, husmann), antall personer i husholdningen, omtrent alder, kjønn og næringsvei m.m."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Alversund - Census - 1835",
+          "Norway, Hordaland, Hamre - Census - 1835",
+          "Norway, Hordaland, Meland - Census - 1835",
+          "Norway, Hordaland, Åsane - Census - 1835"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1694692",
+            "imageGroupNumber": "9071208",
+            "text": "1835 folketelling for Hamre prestegjeld (Hordaland)"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:701516",
+        "title": "1845 folketelling for Hamre prestegjeld (Hordaland)",
+        "creator": "Norge. Rentekammeret",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Mikrofilm av mss. i Statsarkivet i Bergen.",
+          "The 1845 census records for Hamre clerical district, which at this time period included the following parishes: Hamre (Hammer), Åsane, Alversund and Meland. These records contains mainly statistical informations such as the name of the farm, name of person running the farm (self owners, tenant farmers), number of people living in household, approximate age of these people, their occupations and sex, etc.",
+          "1845 folketelling for Hamre prestegjeld som på denne tid omfattet sognene: Hamre (Hammer), Åsane, Alversund og Meland. Disse bøker omfatter statistiske opplysninger som navnet på gården, navnet på gårdbrukeren (selveier, husmann), antall personer i husholdningen, omtrent alder, kjønn og næringsvei m.m."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Alversund - Census - 1845",
+          "Norway, Hordaland, Hamre - Census - 1845",
+          "Norway, Hordaland, Meland - Census - 1845",
+          "Norway, Hordaland, Åsane - Census - 1845"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1694692",
+            "imageGroupNumber": "9071208",
+            "text": "1845 folketelling for Hamre prestegjeld (Hordaland)"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:238420",
+        "title": "Bygdebok for Alenfit/ Nils Hjelmtveit ... [et al.]",
+        "creator": "Hjelmtveit, Nils, 1892-",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Band II A. Andre opplaget, med 2 hefter innbundet: Tillegg og rettingar.",
+          "A genealogy of the people and their farms in Alenfit (from the Viking period, a coastal district whose inhabitants were responsible for manning and equipping a warship) which includes Alversund and Seim plus parts of Sæbø, Lygra and Hamre in Hordaland county.",
+          "Contents: v. 1. Gards- og personhistorie fram til kring 1814 -- v. 2a. Gårds- og personhistorie for Seim sokn frå kring 1814 til 1970, med tillegg og rettingar til band I og II A -- v. 2B. Gards- og personhistorie for skulekrinsane Øvstegard og Isdal/Gjervik i tidlegare Hamre kommune i Hordaland frå kring 1814 til og med 2003.",
+          "Also available on microfilm.",
+          "View the genealogies of individuals in this source. (https://www.familysearch.org/search/genealogies/results?q.subcollectionId=MMD6-PC1)"
+        ],
+        "subjects": [
+          "Norway, Hordaland, Alversund - Genealogy",
+          "Norway, Hordaland, Alversund - History",
+          "Norway, Hordaland, Hamre - Genealogy",
+          "Norway, Hordaland, Hamre - History",
+          "Norway, Hordaland, Lygra - Genealogy",
+          "Norway, Hordaland, Lygra - History",
+          "Norway, Hordaland, Seim - Genealogy",
+          "Norway, Hordaland, Seim - History",
+          "Norway, Hordaland, Sæbø - Genealogy",
+          "Norway, Hordaland, Sæbø - History"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "908635",
+            "imageGroupNumber": "7941060",
+            "text": "v. 1 also on microfilm. Salt Lake City : Filmed by the Genealogical Society of Utah, 1973. on 1 microfilm reel ; 35 mm."
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:1015854",
+        "title": "Bygdebok for Hamre : Vassbygd og Eikanger skulekrinsar i tidlegare Hamre kommune : gards- og ættesoga/ av Egil Hopsdal, Sverre Helland, Arne Fyllingsnes",
+        "creator": "Fyllingsnes, Arne",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Farms with vital information on farm residents i Hamre, Hordaland co., Norway."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Hamre - Genealogy",
+          "Norway, Hordaland, Hamre - History"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:400364",
+        "title": "Fogden og sorenskriverens manntall 1664-1666",
+        "creator": "Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "This census was taken by the local civil authorities. It lists the names of the farms, farmowners (including widows), sons of farm owners, male farm hands, cottagers and sons of cottagers and the age of each person. The clerical authorities took a census during this same time period. Both censuses should be used as they supplement each other. The clerical census is more complete.",
+          "Denne folketelling ble tatt av de sivile myndigheter og omfatter gårdsnavnet, gårdbrukeren (eller enken) samt deres sønner, mannlige dagsarbeidere, husmenn og deres sønner, samt alder på hver person. En annen folketelling ble tatt på samme tid av sognepresten og begge bør søkes, men den tatt av sognepresten er som regel mer komplett."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Alversund - Census - 1664-1666",
+          "Norway, Hordaland, Hamre - Census - 1664-1666",
+          "Norway, Hordaland, Hosanger - Census - 1664-1666",
+          "Norway, Hordaland, Meland - Census - 1664-1666",
+          "Norway, Hordaland, Åsane - Census - 1664-1666"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "122979",
+            "imageGroupNumber": "8620909",
+            "text": "Nordhordland fogderi b. 13 Hammer (Hamre) prestegjeld"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:496290",
+        "title": "Folketelling 1 Feb 1801, Norge",
+        "creator": "Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "The 1801 census (b. 42) for Hamre clerical district includes Hamre, Åsane, Alversund, and Meland parishes. It lists the farm name, person's name, position in the household, age, marital status, and occupation.",
+          "A typewritten edition with indexes is available on microfiche. It is called \"Mikrokortutgåva av 1801-teljina\".",
+          "1801 folketelling (b. 42) for Hamre prestegjeld som omfatter sognene: Hamre, Åsane, Alversund, og Meland. Inkluderer gårdsnavnet, personens navn, stilling i familien, alder, om gift eller ugift og næringsvei."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Alversund - Census - 1801",
+          "Norway, Hordaland, Hamre - Census - 1801",
+          "Norway, Hordaland, Meland - Census - 1801",
+          "Norway, Hordaland, Åsane - Census - 1801"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "123002",
+            "imageGroupNumber": "4199691",
+            "text": "Folketelling 1 Feb 1801, Norge"
+          },
+          {
+            "filmNumber": "6201166",
+            "text": "Hammer (Hamre, Alversund)"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:417743",
+        "title": "Folketelling for kongeriget Norge den 31te desember 1875",
+        "creator": "Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "This 1875 census contains the persons name, residence, position in the family, occupation, sex, marital status, year of birth, place of birth, religion if not a member of the state church, and other miscellaneous information.",
+          "Denne folketelling omfatter personenes navn, bosted, stilling i familien, næringsvei, kjønn, ektestand, fødselsår, fødselssted og religion om ikke medlem av statskirken m.m."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Hamre - Census - 1875",
+          "Norway, Hordaland, Åsane - Census - 1875"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "273483",
+            "imageGroupNumber": "8625073",
+            "text": "b. 70 Krets 1-6"
+          },
+          {
+            "filmNumber": "273484",
+            "imageGroupNumber": "8625074",
+            "text": "b. 71 Krets 7-10"
+          },
+          {
+            "filmNumber": "273485",
+            "imageGroupNumber": "8625075",
+            "text": "b. 71 Krets 11-14"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:259301",
+        "title": "Folketellingen den 31te desember 1865",
+        "creator": "Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "This census contains the persons name, residence, status in the family, occupation, sex, martial status, place of birth, religion if not a member of the state church, and other miscellaneous information. Each book usually contains one clerical district (prestegjeld). In some books there are two clerical districts recorded. The parishes and school districts in each clerical district are listed at the beginning of each book.",
+          "Denne folketelling omfatter personenes navn, bosted, stilling i familien, næringsvei, kjønn, ektestand, hvor født, alder og religion om ikke medlem av statskirken m.m. Hver bok omfatter som regel et prestegjeld, men det hender at en bok kan omfatte to. Et register over sognene og skoledistriktene i hvert prestegjeld finnes i begynnelsen av hver bok."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Alversund - Census - 1865",
+          "Norway, Hordaland, Hamre - Census - 1865",
+          "Norway, Hordaland, Meland - Census - 1865",
+          "Norway, Hordaland, Åsane - Census - 1865"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "123072",
+            "imageGroupNumber": "8679251",
+            "text": "Søndre Bergenhus amt (Hordaland fylke) b. 297 Hammer (Hamre) prestegjeld Mælan (Meland) sogn Alvesund sogn Hammer (Hamre) sogn Aasene (Åsane) sogn"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:385278",
+        "title": "Folketellingen for Norge den 3 desember 1900",
+        "creator": "Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "This census contains the persons name, sex, resident or temporary resident, temporarily absent and where person is, position in the family, marital status, occupation, date of birth, place of birth, citizenship, religion, and other miscellaneous information.",
+          "Denne folketelling omfatter personenes navn, kjønn, bosted (eller bosted for personer som var midlertidig tilstede eller fraværende), stilling i familien, ektestand, næringsvei, hvor født, når født, borgerskap og religion m.m."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Hamre - Census - 1900",
+          "Norway, Hordaland, Åsane - Census - 1900"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "274308",
+            "imageGroupNumber": "9189918",
+            "text": "b. 35 Krets 1-6"
+          },
+          {
+            "filmNumber": "274309",
+            "imageGroupNumber": "9189919",
+            "text": "b. 35 Krets 6-9"
+          },
+          {
+            "filmNumber": "274310",
+            "imageGroupNumber": "9189920",
+            "text": "b. 36 Krets 9-15"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:2358815",
+        "title": "Hamre : gards- og ættesoge for tidlegare Hamre kommune og sokn på Osterøy/ Håkon S. Aasheim",
+        "creator": "Aasheim, Håkon S.",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Includes bibliographical references (v. 2, p. 655-658)."
+        ],
+        "subjects": [
+          "Norway, Hordaland, Hamre - Genealogy"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:769257",
+        "title": "Hamre döde, [1762-1826]/ [Elna F. Luker]",
+        "creator": "Den Norske kirke. Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:209228",
+        "title": "Kirkebøker fra Hamre prestegjeld/ etter avskrift av Elna F. Luker",
+        "creator": "Den Norske kirke. Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:47267",
+        "title": "Kirkebøker, 1677-1928",
+        "creator": "Den Norske kirke. Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:356753",
+        "title": "Manntall 1701 : opptatt av fogd, sorenskriver og sogneprest ifølge kongebrev av 26 juli 1701",
+        "creator": "Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:494924",
+        "title": "Pantebøker, 1741-1893",
+        "creator": "Norge. Sorenskriveri (Nordhordaland, Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:261335",
+        "title": "Register over døpte, gifte og begravede, utdrag av Hamre kirkebok nr. 1 & 3 ; : Hamre kirkebok nr. 2/ avskrift av Einar Haarstad",
+        "creator": "Den Norske kirke. Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "HSB (Headquarters Storage Building)",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:438738",
+        "title": "Skifteprotokoller, 1702-1910",
+        "creator": "Norge. Sorenskriveri (Nordhordaland, Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:438920",
+        "title": "Skifteprotokoller, 1773-1810",
+        "creator": "Norge. Prosti (Nordhordland, Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:737446",
+        "title": "Slægtrigister vedkommende E.J. Rongveds Slegt/ E.J. Rongved",
+        "creator": "Rongved, E. J.",
+        "repositoryCalls": [
+          "HSB (Headquarters Storage Building)",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:394974",
+        "title": "Sogneprestenes manntall 1664-1666",
+        "creator": "Hamre prestegjeld (Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:505971",
+        "title": "Tingbøker, 1642-1701",
+        "creator": "Norge. Sorenskriveri (Nordhordaland, Hordaland)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": false
+      }
+    ]
+  }
+}

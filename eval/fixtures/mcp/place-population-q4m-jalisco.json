@@ -1,0 +1,307 @@
+{
+  "tool": "place_population",
+  "description": "place_population for \"Jalisco, Mexico\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Jalisco"
+  },
+  "response": {
+    "place": {
+      "place_id": "1928728",
+      "name": "Jalisco",
+      "level": "province",
+      "parent": {
+        "place_id": "1927078",
+        "name": "Mexico"
+      }
+    },
+    "population": {
+      "populstat": {
+        "source_url": "http://populstat.info/Americas/mexicop.htm",
+        "data": [
+          {
+            "year": 1882,
+            "population": 983500,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1889,
+            "population": 1161700,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1891,
+            "population": 1159300,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1892,
+            "population": 1250000,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1896,
+            "population": 1107200,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1900,
+            "population": 1153900,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1910,
+            "population": 1208900,
+            "data_type": "estimate"
+          }
+        ]
+      },
+      "gapminder": {
+        "source_url": "https://www.gapminder.org/data/documentation/gd003/",
+        "level": "country",
+        "place": {
+          "place_id": "1927078",
+          "name": "Mexico"
+        },
+        "data": [
+          {
+            "year": 1880,
+            "population": 10257544,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1881,
+            "population": 10376959,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1882,
+            "population": 10497744,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1883,
+            "population": 10619914,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1884,
+            "population": 10743503,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1885,
+            "population": 10868529,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1886,
+            "population": 10995007,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1887,
+            "population": 11122954,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1888,
+            "population": 11252388,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1889,
+            "population": 11389902,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1890,
+            "population": 11535683,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1891,
+            "population": 11689921,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1892,
+            "population": 11852808,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1893,
+            "population": 12024541,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1894,
+            "population": 12198760,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1895,
+            "population": 12375501,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1896,
+            "population": 12554799,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1897,
+            "population": 12736692,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1898,
+            "population": 12921218,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1899,
+            "population": 13094664,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1900,
+            "population": 13256749,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1901,
+            "population": 13407183,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1902,
+            "population": 13545676,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1903,
+            "population": 13671927,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1904,
+            "population": 13799353,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1905,
+            "population": 13927963,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1906,
+            "population": 14057768,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1907,
+            "population": 14188781,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1908,
+            "population": 14321011,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1909,
+            "population": 14423929,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1910,
+            "population": 14497312,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1911,
+            "population": 14540934,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1912,
+            "population": 14554565,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1913,
+            "population": 14537976,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1914,
+            "population": 14521403,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1915,
+            "population": 14504846,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1916,
+            "population": 14488304,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1917,
+            "population": 14471778,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1918,
+            "population": 14462101,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1919,
+            "population": 14495700,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1920,
+            "population": 14573164,
+            "data_type": "estimate"
+          }
+        ]
+      }
+    },
+    "indexed_records": {
+      "familysearch_births": {
+        "description": "Indexed birth records",
+        "level": "country",
+        "place": {
+          "place_id": "1927078",
+          "name": "Mexico"
+        },
+        "data": [
+          {
+            "period_start": 1850,
+            "period_end": 1900,
+            "records": 11279603
+          },
+          {
+            "period_start": 1900,
+            "period_end": 1910,
+            "records": 3303577
+          },
+          {
+            "period_start": 1910,
+            "period_end": 1920,
+            "records": 3280140
+          },
+          {
+            "period_start": 1920,
+            "period_end": 1930,
+            "records": 4369937
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,482 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for \"Mexico\", 1880-1920, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "Mexico"
+  },
+  "response": {
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
+    "scope": "Mexico",
+    "totalForPlace": 81,
+    "results": [
+      {
+        "id": "1502404",
+        "title": "Mexico, Aguascalientes, Catholic Church Records, 1601-1962",
+        "dateRange": "1601-1962",
+        "personCount": 5961239
+      },
+      {
+        "id": "2072126",
+        "title": "Mexico, Aguascalientes, Civil Registration, 1859-1961",
+        "dateRange": "1859-1961",
+        "personCount": 3648677
+      },
+      {
+        "id": "1937239",
+        "title": "Mexico, Archdiocese of Guadalajara, Miscellaneous Marriage Records, 1539-1939",
+        "dateRange": "1539-1939",
+        "personCount": 0
+      },
+      {
+        "id": "1506640",
+        "title": "Mexico, Baja California and Baja California Sur, Catholic Church Records, 1750-1984",
+        "dateRange": "1750-1984",
+        "personCount": 513699
+      },
+      {
+        "id": "1916086",
+        "title": "Mexico, Baja California and Baja California Sur, Civil Registration, 1860-2004",
+        "dateRange": "1860-2004",
+        "personCount": 645854
+      },
+      {
+        "id": "1473011",
+        "title": "Mexico, Baptisms, 1560-1950",
+        "dateRange": "1559-1950",
+        "personCount": 95295361
+      },
+      {
+        "id": "1473200",
+        "title": "Mexico, Campeche, Catholic Church Records, 1638-2003",
+        "dateRange": "1638-2003",
+        "personCount": 5796085
+      },
+      {
+        "id": "1916245",
+        "title": "Mexico, Campeche, Civil Registration, 1860-1926",
+        "dateRange": "1860-1926",
+        "personCount": 483874
+      },
+      {
+        "id": "1616412",
+        "title": "Mexico, Chiapas, Catholic Church Records, 1557-1978",
+        "dateRange": "1556-1978",
+        "personCount": 13624277
+      },
+      {
+        "id": "1916246",
+        "title": "Mexico, Chiapas, Civil Registration, 1841-1991",
+        "dateRange": "1841-1991",
+        "personCount": 6212409
+      },
+      {
+        "id": "1521780",
+        "title": "Mexico, Chihuahua, Catholic Church Records, 1632-2005",
+        "dateRange": "1632-2005",
+        "personCount": 11115821
+      },
+      {
+        "id": "1922462",
+        "title": "Mexico, Chihuahua, Civil Registration, 1861-1997",
+        "dateRange": "1861-1997",
+        "personCount": 8411804
+      },
+      {
+        "id": "1502401",
+        "title": "Mexico, Coahuila, Catholic Church Records, 1627-1978",
+        "dateRange": "1627-1978",
+        "personCount": 9564270
+      },
+      {
+        "id": "1916233",
+        "title": "Mexico, Coahuila, Civil Registration, 1861-1998",
+        "dateRange": "1861-1998",
+        "personCount": 9154392
+      },
+      {
+        "id": "1508604",
+        "title": "Mexico, Colima, Catholic Church Records, 1707-1969",
+        "dateRange": "1707-1969",
+        "personCount": 3096260
+      },
+      {
+        "id": "1916241",
+        "title": "Mexico, Colima, Civil Registration, 1860-1997",
+        "dateRange": "1860-1997",
+        "personCount": 1414093
+      },
+      {
+        "id": "1473013",
+        "title": "Mexico, Deaths, 1680-1940",
+        "dateRange": "1680-1940",
+        "personCount": 623486
+      },
+      {
+        "id": "2313185",
+        "title": "Mexico, Distrito Federal, British Consulate Deaths, 1827-1926",
+        "dateRange": "1827-1926",
+        "personCount": 1267
+      },
+      {
+        "id": "1615259",
+        "title": "Mexico, Distrito Federal, Catholic Church Records, 1514-1970",
+        "dateRange": "1513-1970",
+        "personCount": 37518605
+      },
+      {
+        "id": "1923424",
+        "title": "Mexico, Distrito Federal, Civil Registration, 1832-2006",
+        "dateRange": "1832-2006",
+        "personCount": 22531623
+      },
+      {
+        "id": "1554576",
+        "title": "Mexico, Durango, Catholic Church Records, 1604-1985",
+        "dateRange": "1604-1985",
+        "personCount": 11371741
+      },
+      {
+        "id": "1916235",
+        "title": "Mexico, Durango, Civil Registration, 1861-1995",
+        "dateRange": "1861-1995",
+        "personCount": 6887476
+      },
+      {
+        "id": "1860831",
+        "title": "Mexico, Guanajuato, Catholic Church Records, 1519-1984",
+        "dateRange": "1518-1984",
+        "personCount": 60886421
+      },
+      {
+        "id": "1922031",
+        "title": "Mexico, Guanajuato, Civil Registration, 1862-1930",
+        "dateRange": "1862-1930",
+        "personCount": 9388953
+      },
+      {
+        "id": "1823323",
+        "title": "Mexico, Guerrero, Catholic Church Records, 1576-1979",
+        "dateRange": "1575-1979",
+        "personCount": 21256623
+      },
+      {
+        "id": "1918291",
+        "title": "Mexico, Guerrero, Civil Registration, 1860-1996",
+        "dateRange": "1860-1996",
+        "personCount": 8406460
+      },
+      {
+        "id": "1804358",
+        "title": "Mexico, Hidalgo, Catholic Church Records, 1546-1971",
+        "dateRange": "1545-1971",
+        "personCount": 20998936
+      },
+      {
+        "id": "1919702",
+        "title": "Mexico, Hidalgo, Civil Registration, 1861-2001",
+        "dateRange": "1861-2001",
+        "personCount": 14302067
+      },
+      {
+        "id": "1874591",
+        "title": "Mexico, Jalisco, Catholic Church Records, 1590-2022",
+        "dateRange": "1590-2022",
+        "personCount": 79657362
+      },
+      {
+        "id": "1918187",
+        "title": "Mexico, Jalisco, Civil Registration, 1857-2000",
+        "dateRange": "1857-2000",
+        "personCount": 28607850
+      },
+      {
+        "id": "1473012",
+        "title": "Mexico, Marriages, 1570-1950",
+        "dateRange": "1569-1950",
+        "personCount": 4654
+      },
+      {
+        "id": "1883388",
+        "title": "Mexico, Michoacán, Catholic Church Records, 1555-1996",
+        "dateRange": "1554-1996",
+        "personCount": 35092325
+      },
+      {
+        "id": "1916243",
+        "title": "Mexico, Michoacán, Civil Registration, 1859-1940",
+        "dateRange": "1859-1940",
+        "personCount": 8737820
+      },
+      {
+        "id": "1837907",
+        "title": "Mexico, Morelos, Catholic Church Records, 1598-1994",
+        "dateRange": "1598-1994",
+        "personCount": 6619737
+      },
+      {
+        "id": "1922412",
+        "title": "Mexico, Morelos, Civil Registration, 1861-1920",
+        "dateRange": "1861-1920",
+        "personCount": 271306
+      },
+      {
+        "id": "1837908",
+        "title": "Mexico, México, Catholic Church Records, 1567-1970",
+        "dateRange": "1566-1970",
+        "personCount": 57883700
+      },
+      {
+        "id": "1916244",
+        "title": "Mexico, México, Civil Registration, 1861-1941",
+        "dateRange": "1861-1941",
+        "personCount": 9919193
+      },
+      {
+        "id": "1883377",
+        "title": "Mexico, Nayarit, Catholic Church Records, 1596-1967",
+        "dateRange": "1596-1967",
+        "personCount": 7398811
+      },
+      {
+        "id": "1916242",
+        "title": "Mexico, Nayarit, Civil Registration, 1868-2001",
+        "dateRange": "1868-2001",
+        "personCount": 2159505
+      },
+      {
+        "id": "1473204",
+        "title": "Mexico, Nuevo León, Catholic Church Records, 1544-1982",
+        "dateRange": "1544-1982",
+        "personCount": 10224701
+      },
+      {
+        "id": "1916238",
+        "title": "Mexico, Nuevo León, Civil Registration, 1859-1962",
+        "dateRange": "1859-1962",
+        "personCount": 5832525
+      },
+      {
+        "id": "1909191",
+        "title": "Mexico, Oaxaca, Catholic Church Records, 1559-2022",
+        "dateRange": "1558-2022",
+        "personCount": 75473176
+      },
+      {
+        "id": "1923401",
+        "title": "Mexico, Oaxaca, Civil Registration, 1861-2002",
+        "dateRange": "1861-2002",
+        "personCount": 16828719
+      },
+      {
+        "id": "1837906",
+        "title": "Mexico, Puebla, Catholic Church Records, 1545-2009",
+        "dateRange": "1544-2009",
+        "personCount": 71758781
+      },
+      {
+        "id": "1918287",
+        "title": "Mexico, Puebla, Civil Registration, 1861-1956",
+        "dateRange": "1861-1956",
+        "personCount": 9200957
+      },
+      {
+        "id": "1881200",
+        "title": "Mexico, Querétaro, Catholic Church Records, 1590-1970",
+        "dateRange": "1590-1970",
+        "personCount": 15221669
+      },
+      {
+        "id": "1922415",
+        "title": "Mexico, Querétaro, Civil Registration, 1864-2005",
+        "dateRange": "1864-2005",
+        "personCount": 4369295
+      },
+      {
+        "id": "1916247",
+        "title": "Mexico, Quintana Roo, Civil Registration, 1866-1902",
+        "dateRange": "1866-1902",
+        "personCount": 13763
+      },
+      {
+        "id": "1860864",
+        "title": "Mexico, San Luis Potosí, Catholic Church Records, 1586-1977",
+        "dateRange": "1586-1977",
+        "personCount": 33662943
+      },
+      {
+        "id": "1916239",
+        "title": "Mexico, San Luis Potosí, Civil Registration, 1859-2000",
+        "dateRange": "1859-2000",
+        "personCount": 14976025
+      },
+      {
+        "id": "2040013",
+        "title": "Mexico, San Luis Potosí, Miscellaneous Records, 1570-1882",
+        "dateRange": "1570-1882",
+        "personCount": 0
+      },
+      {
+        "id": "1473206",
+        "title": "Mexico, Sinaloa, Catholic Church Records, 1671-1968",
+        "dateRange": "1671-1968",
+        "personCount": 13270787
+      },
+      {
+        "id": "2290241",
+        "title": "Mexico, Sinaloa, Civil Registration, 1861-1929",
+        "dateRange": "1861-1929",
+        "personCount": 4298911
+      },
+      {
+        "id": "1473203",
+        "title": "Mexico, Sonora, Catholic Church Records, 1657-1994",
+        "dateRange": "1657-1994",
+        "personCount": 4649893
+      },
+      {
+        "id": "1918289",
+        "title": "Mexico, Sonora, Civil Registration, 1861-1995",
+        "dateRange": "1861-1995",
+        "personCount": 3927221
+      },
+      {
+        "id": "1909106",
+        "title": "Mexico, Tabasco, Catholic Church Records, 1803-1970",
+        "dateRange": "1803-1970",
+        "personCount": 2913578
+      },
+      {
+        "id": "1790934",
+        "title": "Mexico, Tamaulipas, Catholic Church Records, 1703-1964",
+        "dateRange": "1703-1964",
+        "personCount": 4127606
+      },
+      {
+        "id": "1916237",
+        "title": "Mexico, Tamaulipas, Civil Registration, 1800-2002",
+        "dateRange": "1800-2002",
+        "personCount": 5334793
+      },
+      {
+        "id": "1837905",
+        "title": "Mexico, Tlaxcala, Catholic Church Records, 1576-1994",
+        "dateRange": "1575-1994",
+        "personCount": 13875817
+      },
+      {
+        "id": "1658994",
+        "title": "Mexico, Tlaxcala, Civil Registration, 1867-1950",
+        "dateRange": "1867-1950",
+        "personCount": 1798694
+      },
+      {
+        "id": "1883382",
+        "title": "Mexico, Veracruz, Catholic Church Records, 1590-1978",
+        "dateRange": "1590-1978",
+        "personCount": 36146734
+      },
+      {
+        "id": "1922413",
+        "title": "Mexico, Veracruz, Civil Registration, 1821-1963",
+        "dateRange": "1821-1963",
+        "personCount": 8776531
+      },
+      {
+        "id": "1909116",
+        "title": "Mexico, Yucatán, Catholic Church Records, 1543-1977",
+        "dateRange": "1542-1977",
+        "personCount": 23017921
+      },
+      {
+        "id": "1916248",
+        "title": "Mexico, Yucatán, Civil Registration, 1860-2005",
+        "dateRange": "1860-2005",
+        "personCount": 12308512
+      },
+      {
+        "id": "1804458",
+        "title": "Mexico, Zacatecas, Catholic Church Records, 1605-1980",
+        "dateRange": "1605-1980",
+        "personCount": 23125939
+      },
+      {
+        "id": "1916240",
+        "title": "Mexico, Zacatecas, Civil Registration, 1857-2001",
+        "dateRange": "1857-2001",
+        "personCount": 11442181
+      },
+      {
+        "id": "3465358",
+        "title": "New Mexico, Alien Arrivals, 1917-1954",
+        "dateRange": "1917-1954",
+        "personCount": 17243
+      },
+      {
+        "id": "1680839",
+        "title": "New Mexico, Births and Christenings, 1726-1918",
+        "dateRange": "1726-1918",
+        "personCount": 793977
+      },
+      {
+        "id": "2341907",
+        "title": "New Mexico, Catholic Church Records, 1701-1956",
+        "dateRange": "1701-1956",
+        "personCount": 0
+      },
+      {
+        "id": "1966081",
+        "title": "New Mexico, County Death Records, 1907-1952",
+        "dateRange": "1907-1952",
+        "personCount": 16088
+      },
+      {
+        "id": "2110325",
+        "title": "New Mexico, County Marriages, 1885-1954",
+        "dateRange": "1885-1954",
+        "personCount": 162523
+      },
+      {
+        "id": "1680843",
+        "title": "New Mexico, Deaths and Burials, 1788-1798; 1838-1955",
+        "dateRange": "1788-1955",
+        "personCount": 21536
+      },
+      {
+        "id": "1546466",
+        "title": "New Mexico, Deaths, 1889-1945",
+        "dateRange": "1889-1945",
+        "personCount": 514549
+      },
+      {
+        "id": "1680844",
+        "title": "New Mexico, Marriages, 1751-1918",
+        "dateRange": "1751-1918",
+        "personCount": 251439
+      },
+      {
+        "id": "4233366",
+        "title": "New Mexico, Military Discharge Records, ca.1918 - ca.1989",
+        "dateRange": "1891-1959",
+        "personCount": 801
+      },
+      {
+        "id": "2187007",
+        "title": "New Mexico, Naturalization Records, 1882-1983",
+        "dateRange": "1882-1983",
+        "personCount": 27046
+      },
+      {
+        "id": "2110742",
+        "title": "New Mexico, Territorial Census, 1885",
+        "dateRange": "1885-1885",
+        "personCount": 59040
+      },
+      {
+        "id": "1803932",
+        "title": "United States, Border Crossings from Mexico to United States, 1903-1957",
+        "dateRange": "1903-1957",
+        "personCount": 6555222
+      }
+    ]
+  }
+}
