@@ -29,7 +29,8 @@
     "catalog-search-empty",
     "catalog-search-empty-keywords",
     "record-search-halsteinsdatter-unpinned-zero-results",
-    "record-search-unna-halsteinsdr-unpinned-zero-results"
+    "record-search-unna-halsteinsdr-unpinned-zero-results",
+    "record-search-unna-unpinned-given-name-only"
   ],
   "execution": {
     "max_wall_clock_seconds": 600
