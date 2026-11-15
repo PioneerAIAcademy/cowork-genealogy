@@ -807,15 +807,6 @@ Quirks affect how queries should be constructed for that collection.
 - **Compensation:** Drop the principal's name and search by
   `fatherGivenName/Surname` + `motherGivenName/Surname`
 
-### Ellis Island Passenger Lists
-
-- Wildcards work here like anywhere else. (The long-standing claim that they
-  were disabled in these collections was refuted by measurement and is not
-  carried struck through — see the “Name search mechanics” reference's Constraints.)
-- **Still useful:** multiple specific spellings, ship name + arrival year
-  via other parameters, and the external Stephen Morse one-step tools —
-  passenger-list indexing is rough regardless of whether wildcards work.
-
 ### United States SSDI (Social Security Death Index)
 
 - Names may be indexed first-name-last-name without middle initial;
