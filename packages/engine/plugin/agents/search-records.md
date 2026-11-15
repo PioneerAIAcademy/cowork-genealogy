@@ -285,7 +285,7 @@ and on how often that relative is indexed in the records you are searching:
 
 For wildcard rules and fuzzy matching behavior, read the “Name search mechanics” reference at the end of this file. Place expansion, date granularity and event-family semantics are in `record_search`'s own parameter descriptions — read them there, not from memory.
 
-**Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check the “Collection-specific indexing quirks” reference at the end of this file for an entry on it and apply its guidance exactly.** Required, not optional — it documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) the general name-variant strategy will not surface. If an entry says two fields must be varied together (e.g. a given name and a surname abbreviation), vary them together in the same call before concluding a plan item is exhausted.
+**Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check the “Collection-specific indexing quirks” reference at the end of this file for an entry on it and apply its guidance exactly.** Required, not optional — it documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) the general name-variant strategy will not surface.
 
 **Name variant strategy:** If the name as spelled in the tree returns few results, try:
 - Phonetic variants (Flynn → Flyn, Flinn)
