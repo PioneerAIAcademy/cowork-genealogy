@@ -807,13 +807,6 @@ Quirks affect how queries should be constructed for that collection.
 - **Compensation:** Drop the principal's name and search by
   `fatherGivenName/Surname` + `motherGivenName/Surname`
 
-### United States SSDI (Social Security Death Index)
-
-- Names may be indexed first-name-last-name without middle initial;
-  some entries have only "Mrs." prefix
-- **Compensation:** Search by SSN if known; use exact birth and
-  death dates
-
 ### German Lutheran/Catholic Registers
 
 - Given-name standardization incomplete: "Johann Friedrich" vs.
