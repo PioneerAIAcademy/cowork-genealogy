@@ -13,7 +13,7 @@ description: >-
   research-exhaustiveness), or wants to search records (use search-records
   or search-external-sites).
 model: claude-haiku-5-5
-effort: medium
+effort: low
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
@@ -396,7 +396,9 @@ record type in the rationale bullet, the next-step hint, or
 land, church record or any other kind, even when a tool's finding (a count,
 a date, a birth window) came from one: name the finding, never the record it
 came from — "the computed birth window" is correct, "the window the census
-data defines" is not.** Return **≤8 lines** to the caller, in this order:
+data defines" is not. When searches remain on an open question, call them
+"the remaining searches" and list none of them.** Return **≤8 lines** to the
+caller, in this order:
 
 - the `q_` id written, or "no question written" and the one-line reason
 - the question in full, quoted as written
