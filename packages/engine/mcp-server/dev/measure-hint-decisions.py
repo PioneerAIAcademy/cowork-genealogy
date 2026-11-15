@@ -390,7 +390,7 @@ def judge(
         if p and e.get("outcome") in ("positive", "negative"):
             logged[p] = "accept" if e["outcome"] == "positive" else "reject"
     said = {m.group(1): m.group(2).lower() for m in LINE_RE.finditer(final)}
-    transcribed = {str(c["input"].get("ark", "")) for c in calls if c["tool"] == "image_transcribe"}
+    transcribed = {str(c["input"].get("imageId", "")) for c in calls if c["tool"] == "image_transcribe"}
     read = {bare(str(c["input"].get("recordId", ""))) for c in calls if c["tool"] == "record_read"}
     out = []
     for h in hints:
@@ -409,7 +409,7 @@ def judge(
                 "said": said.get(p),
                 "record_read": p in read,
                 "has_image": bool(img),
-                "image_read": bool(img) and any(bare(img) == bare(t) or img.split("/")[-1] in t for t in transcribed),
+                "image_read": bool(img) and any(img.rsplit(":", 1)[-1] in t for t in transcribed if t),
             }
         )
     return out
