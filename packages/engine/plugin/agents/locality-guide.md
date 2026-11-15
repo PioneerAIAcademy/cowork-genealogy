@@ -117,9 +117,11 @@ Once `place_search` (step 2) has returned the `standardPlace`, issue the survey 
 **Fetch the jurisdiction's own wiki pages by constructed URL — never restate their contents from memory.** A `{Jurisdiction}_{Topic}` page needs no `wiki_search` first, so these join the batch above:
 
 - `{Jurisdiction}_Vital_Records` — REQUIRED. The level and year each registration system began.
-- `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census`, `_Naming_Customs` — at the point the guide needs that record type's facts.
+- `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census`, `_Naming_Customs` — for each record type the request names, and at the point the guide needs that record type's facts; when the narrower jurisdiction's page is not found, fetch the country's.
 
 On `No wiki page found`, or a page that returns only generic content, record and report the gap; do not fill it from memory, and do not drop an instruction that does not depend on the page. Only a `wiki_read` on a URL `wiki_search` returned waits for that call.
+
+When a page you fetched links a page on how to search that place's indexed records, `wiki_read` it in the same turn and record each search rule it states as a quirk.
 
 **An error naming wiki-query-api (`Could not reach wiki-query-api`, `wiki-query-api error: <status>`) is an outage, not a missing page.** Retry each failed call once. If it fails again: record that section `found: false`, `outcome: "unreachable"`, `url: null`; in the guide, say the FamilySearch Wiki could not be reached, never that it has no page; add the quirk `"FamilySearch Wiki unreachable during this survey (<sections>); these pages may exist — re-run locality-guide before relying on their absence."`; and say in `summary_for_user` that the guide was built without the FamilySearch Wiki.
 
