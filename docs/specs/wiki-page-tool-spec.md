@@ -80,7 +80,9 @@ Behavior:
 3. On 200 → return the existing `WikiPageResult` shape `{ url, content }`: the
    server's `{ title, content, source_url }` remapped, with the sidebar removed
    (see **The sidebar**) and `content` cut to one part when the page is longer
-   than the cap (see **Pagination**).
+   than the cap (see **Pagination**). The first part also carries `collectionNotices`
+   when the page links a collection page that carries a Legacy notice (see **Collection
+   notices**).
 4. On 404 → throw `No wiki page found for "<slug>". The page may not
    exist in the corpus.` (matches today's wording). When the slug is a regional
    record-type page, `{Region},_{Country}_{Suffix}` with a suffix from
@@ -90,6 +92,32 @@ Behavior:
 5. On 5xx → `wiki-query-api error: {status}`.
 6. On network failure → `Could not reach wiki-query-api at {base}
    ({cause}).`
+
+#### Collection notices (`collectionNotices`, first part only)
+
+FamilySearch's wiki has one page per historical-record collection, titled
+`<Collection> - FamilySearch Historical Records`, and a record-type page links them ("How
+to Use this Collection"). When a collection is a partial index that is no longer added to
+or corrected, its page opens with the wiki's standard notice, which begins
+`**This is a Legacy Collection**`. A record-type page (`England_Church_Records`) can link
+that page while saying nothing of the notice, so an agent reading the record-type page
+never sees it.
+
+The first part of a `wiki_read` answer (no `offset`, or `0`) carries
+`collectionNotices: [{ title, url, notice }]` for the collection pages that part links
+whose own text carries the notice:
+
+- a link counts when its target is `https://www.familysearch.org/en/wiki/<slug>` with
+  `<slug>` ending `_-_FamilySearch_Historical_Records`; an anchor is ignored and each
+  page is checked once, in the order first linked;
+- at most `COLLECTION_NOTICE_MAX_PAGES` (10) pages are checked, all at once;
+- `notice` is the notice's line as plain text: link targets, emphasis marks and the
+  table's closing `|` removed, whitespace collapsed, cut to 1,000 characters;
+- a page that is missing, fails or carries no notice adds nothing, and the read still
+  returns; with none found the key is absent.
+
+Nothing in the code names a country or a collection: the link pattern and the notice
+marker are the wiki's own conventions.
 
 ### `wiki_place_page` (`src/tools/wiki-place-page.ts`)
 
@@ -381,7 +409,7 @@ the line; they cannot prove an agent reads them all.
   the next part comes back when the Places lookup fails by then; a continuation with no entry,
   after a 404 on the remembered page, or from the start resolves in full; another section, place
   or wiki server URL does not take an entry.
-- Country topic pages and search help (`wiki-place-page.test.ts`): only existing topic pages are listed, in suffix order; a topic falls through from a part the wiki does not title topic pages by to the next (`England, United Kingdom`); an empty list; a failed lookup omits that topic and the page still returns; no `topicPages` on a continuation part or another section; `searchHelp` carries a search-results page, ignores a research-strategy page, cuts a long help page and says so, and adds nothing when the linked page is missing; `SEARCH_HELP_TITLE` matches search-results, search-tips and searching titles, not strategies. Calls that count requests count only the place's own resolution, not the topic lookups. In `wiki-read.test.ts`: `countryTopicSlug` on regional, country-level and non-topic slugs; the not-found message names the country's page when it exists, stays plain when it does not or the lookup fails, and makes no second request for a non-topic slug.
+- Country topic pages and search help (`wiki-place-page.test.ts`): only existing topic pages are listed, in suffix order; a topic falls through from a part the wiki does not title topic pages by to the next (`England, United Kingdom`); an empty list; a failed lookup omits that topic and the page still returns; no `topicPages` on a continuation part or another section; `searchHelp` carries a search-results page, ignores a research-strategy page, cuts a long help page and says so, and adds nothing when the linked page is missing; `SEARCH_HELP_TITLE` matches search-results, search-tips and searching titles, not strategies. Calls that count requests count only the place's own resolution, not the topic lookups. In `wiki-read.test.ts`: `countryTopicSlug` on regional, country-level and non-topic slugs; the not-found message names the country's page when it exists, stays plain when it does not or the lookup fails, and makes no second request for a non-topic slug. Collection notices (`wiki-read.test.ts`): a linked page with the notice comes back as plain text with its title and URL; a page with no notice, a missing page and a failed lookup add nothing and the read still returns; a page linked twice (one with an anchor) is checked once; of 12 linked pages only the first 10 are checked, all in flight together; a later part makes no lookup; the description names the field.
 - `tests/utils/text-page.test.ts` — the cut rules and their edges (a heading exactly at
   the midpoint is not past it; a part that already ends at a heading is kept), the cap
   taken from `maxChars` and not a constant, progress for a `maxChars` under 6, the cut checked

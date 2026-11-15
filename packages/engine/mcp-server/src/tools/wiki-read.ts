@@ -9,7 +9,8 @@ import {
   WIKI_PAGING_NOTE,
   WIKI_TOPIC_SUFFIXES,
   type WikiReadInput,
-  type WikiPageResult,
+  type WikiReadResult,
+  type WikiCollectionNotice,
 } from "../types/wikiPage.js";
 import { fetchPage } from "../utils/wiki-page-fetch.js";
 
@@ -46,6 +47,63 @@ async function notFoundMessage(slug: string, baseUrl: string): Promise<string> {
   return base;
 }
 
+/** At most this many linked collection pages are checked per read. */
+export const COLLECTION_NOTICE_MAX_PAGES = 10;
+const COLLECTION_NOTICE_MAX_CHARS = 1_000;
+const COLLECTION_PAGE_LINK =
+  /https:\/\/www\.familysearch\.org\/en\/wiki\/([^\s()"#?]+?_-_FamilySearch_Historical_Records)(?=[\s()"#?]|$)/g;
+const LEGACY_NOTICE = "**This is a Legacy Collection**";
+
+/** The slugs of the collection pages a page links, in order, without repeats. */
+export function collectionPageSlugs(content: string): string[] {
+  const slugs: string[] = [];
+  for (const match of content.matchAll(COLLECTION_PAGE_LINK)) {
+    let slug = match[1];
+    try {
+      slug = decodeURIComponent(slug);
+    } catch {
+      // A malformed escape is kept as written.
+    }
+    if (!slugs.includes(slug)) slugs.push(slug);
+  }
+  return slugs;
+}
+
+/** The Legacy-collection notice on a collection page, as plain text, or null when it has none. */
+export function legacyNotice(content: string): string | null {
+  const start = content.indexOf(LEGACY_NOTICE);
+  if (start < 0) return null;
+  const end = content.indexOf("\n", start);
+  const line = content.slice(start, end < 0 ? undefined : end);
+  const text = line
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\*+/g, "")
+    .replace(/\s*\|\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.length > COLLECTION_NOTICE_MAX_CHARS ? text.slice(0, COLLECTION_NOTICE_MAX_CHARS) : text;
+}
+
+/** The linked collection pages that carry the Legacy notice. A failed or missing page is skipped. */
+async function collectionNoticesFor(content: string, baseUrl: string): Promise<WikiCollectionNotice[]> {
+  const slugs = collectionPageSlugs(content).slice(0, COLLECTION_NOTICE_MAX_PAGES);
+  const found = await Promise.all(
+    slugs.map(async (slug): Promise<WikiCollectionNotice | null> => {
+      try {
+        const page = await fetchPage(baseUrl, slug);
+        if (!page || typeof page.content !== "string") return null;
+        const notice = legacyNotice(page.content);
+        if (!notice) return null;
+        const title = typeof page.title === "string" && page.title ? page.title : slug.replace(/_/g, " ");
+        return { title, url: `${FS_WIKI_BASE}/${slug}`, notice };
+      } catch {
+        return null;
+      }
+    })
+  );
+  return found.filter((n): n is WikiCollectionNotice => n !== null);
+}
+
 function urlToSlug(url: string): string {
   const match = url.match(/\/wiki\/([^?#]+)/);
   if (!match) {
@@ -60,7 +118,7 @@ interface PageApiResponse {
   source_url: string;
 }
 
-export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiPageResult> {
+export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiReadResult> {
   // Argument checks first: a bad offset must not cost a request.
   const offset = input.offset === undefined ? undefined : requireWholeNumber("offset", input.offset, 0);
   const slug = urlToSlug(input.url);
@@ -93,7 +151,12 @@ export async function wikiReadTool(input: WikiReadInput, principal: Principal): 
   // goes before the cut, so `totalChars` and `offset` count the text the caller reads.
   if (typeof data.content !== "string") return { url, content: data.content };
   const { content, paging } = pageText(stripWikiSidebar(data.content), offset, WIKI_PAGE_MAX_CHARS);
-  return { url, content, ...paging };
+  const result: WikiReadResult = { url, content, ...paging };
+  if (!offset) {
+    const notices = await collectionNoticesFor(content, baseUrl);
+    if (notices.length) result.collectionNotices = notices;
+  }
+  return result;
 }
 
 export const wikiReadSchema = {
@@ -102,6 +165,7 @@ export const wikiReadSchema = {
     "Read any FamilySearch wiki page from the hosted wiki-query-api server. " +
     "Pass the full FamilySearch wiki URL; the page title is extracted and the corresponding markdown is fetched from the server. " +
     "Use this for specific wiki pages not covered by the country-specific tools. " +
+    "On the first part, `collectionNotices` lists the FamilySearch collection pages the page links that carry a Legacy-collection notice (a partial index that is no longer added to or corrected), with that notice. " +
     WIKI_PAGING_NOTE,
   inputSchema: {
     type: "object" as const,

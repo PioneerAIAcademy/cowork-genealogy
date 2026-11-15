@@ -391,3 +391,110 @@ describe("wikiReadTool, a missing regional record-type page (issue #4516)", () =
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("wikiReadTool, collection notices", () => {
+  const WIKI = "https://www.familysearch.org/en/wiki";
+  const legacyLine =
+    "| [Information icon.png](https://x/icon.png) | **This is a Legacy Collection** This collection is a partial index " +
+    'of records for this locality. *As no additional records will be added, this is considered to be a ["Legacy" ' +
+    "collection](https://x/Legacy)*. **Verify with original records.** |";
+  const LEGACY_TEXT =
+    "This is a Legacy Collection This collection is a partial index of records for this locality. " +
+    'As no additional records will be added, this is considered to be a "Legacy" collection. Verify with original records.';
+  const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+  const collectionLink = (slug: string, anchor = "") =>
+    `[How to Use this Collection](${WIKI}/${slug}_-_FamilySearch_Historical_Records${anchor})`;
+
+  function serve(pages: Record<string, { status: number; content?: string; title?: string }>) {
+    mockFetch.mockImplementation(async (url: string) => {
+      const slug = decodeURIComponent(url.slice(`${API_BASE}/page/`.length));
+      const page = pages[slug];
+      if (!page) return { ok: false, status: 404, json: async () => ({}) };
+      if (page.status !== 200) return { ok: false, status: page.status, json: async () => ({}) };
+      return ok({ title: page.title ?? slug, content: page.content ?? "", source_url: "" });
+    });
+  }
+
+  it("lists a linked collection page that carries the Legacy notice, as plain text", async () => {
+    serve({
+      Region_Church_Records: { status: 200, content: `### Baptisms\n* ${collectionLink("Region,_Births")}` },
+      "Region,_Births_-_FamilySearch_Historical_Records": {
+        status: 200,
+        title: "Region, Births - FamilySearch Historical Records",
+        content: `# Region, Births\n${legacyLine}\n## What is in This Collection?`,
+      },
+    });
+    const result = await wikiReadTool({ url: `${WIKI}/Region_Church_Records` }, LOCAL);
+    expect(result.collectionNotices).toEqual([
+      {
+        title: "Region, Births - FamilySearch Historical Records",
+        url: `${WIKI}/Region,_Births_-_FamilySearch_Historical_Records`,
+        notice: LEGACY_TEXT,
+      },
+    ]);
+  });
+
+  it("leaves out linked pages with no notice, missing pages and failed lookups, and still returns the page", async () => {
+    serve({
+      Region_Church_Records: {
+        status: 200,
+        content: [collectionLink("Plain"), collectionLink("Missing"), collectionLink("Broken")].join("\n"),
+      },
+      "Plain_-_FamilySearch_Historical_Records": { status: 200, content: "# Plain\nNo notice here." },
+      "Broken_-_FamilySearch_Historical_Records": { status: 400 },
+    });
+    const result = await wikiReadTool({ url: `${WIKI}/Region_Church_Records` }, LOCAL);
+    expect(result.content).toContain("Plain");
+    expect(result).not.toHaveProperty("collectionNotices");
+  });
+
+  it("checks each linked page once, ignoring anchors", async () => {
+    serve({
+      Region_Church_Records: {
+        status: 200,
+        content: [collectionLink("Region,_Births"), collectionLink("Region,_Births", "#Collection_Content")].join("\n"),
+      },
+      "Region,_Births_-_FamilySearch_Historical_Records": { status: 200, content: legacyLine },
+    });
+    const result = await wikiReadTool({ url: `${WIKI}/Region_Church_Records` }, LOCAL);
+    expect(result.collectionNotices).toHaveLength(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("checks at most 10 linked pages, all at once", async () => {
+    const slugs = Array.from({ length: 12 }, (_, i) => `C${i}`);
+    let inFlight = 0;
+    let peak = 0;
+    mockFetch.mockImplementation(async (url: string) => {
+      const slug = decodeURIComponent(url.slice(`${API_BASE}/page/`.length));
+      if (slug === "Region_Church_Records") {
+        return ok({ title: slug, content: slugs.map((s) => collectionLink(s)).join("\n"), source_url: "" });
+      }
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight--;
+      return ok({ title: slug, content: legacyLine, source_url: "" });
+    });
+    const result = await wikiReadTool({ url: `${WIKI}/Region_Church_Records` }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(11);
+    expect(peak).toBe(10);
+    expect(result.collectionNotices?.map((n) => n.url)).toEqual(
+      slugs.slice(0, 10).map((s) => `${WIKI}/${s}_-_FamilySearch_Historical_Records`)
+    );
+  });
+
+  it("makes no lookup on a later part", async () => {
+    serve({
+      Region_Church_Records: { status: 200, content: `${collectionLink("Region,_Births")}\n` + "x".repeat(10) },
+      "Region,_Births_-_FamilySearch_Historical_Records": { status: 200, content: legacyLine },
+    });
+    const result = await wikiReadTool({ url: `${WIKI}/Region_Church_Records`, offset: 5 }, LOCAL);
+    expect(result).not.toHaveProperty("collectionNotices");
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the field in its description", () => {
+    expect(wikiReadSchema.description).toContain("collectionNotices");
+  });
+});

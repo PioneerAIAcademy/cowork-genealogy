@@ -94,6 +94,19 @@ export interface WikiSearchHelp {
   truncated: boolean;
 }
 
+/** A collection page the read page links that carries the wiki's Legacy-collection notice.
+ *  docs/specs/wiki-page-tool-spec.md, "Collection notices". */
+export interface WikiCollectionNotice {
+  title: string;
+  url: string;
+  notice: string;
+}
+
+export interface WikiReadResult extends WikiPageResult {
+  /** First part only: linked collection pages that carry the Legacy-collection notice. */
+  collectionNotices?: WikiCollectionNotice[];
+}
+
 export interface WikiPlacePageResult extends WikiPageResult {
   standardPlace: string;
   placeName: string;
