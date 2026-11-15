@@ -9,7 +9,13 @@ vi.mock("../../src/auth/config.js", () => ({
   getWikiApiUrl: mockGetWikiApiUrl,
 }));
 
-import { countryTopicSlug, wikiReadTool, wikiReadSchema } from "../../src/tools/wiki-read.js";
+import {
+  COLLECTION_NOTICE_MAX_CHARS,
+  countryTopicSlug,
+  legacyNotice,
+  wikiReadTool,
+  wikiReadSchema,
+} from "../../src/tools/wiki-read.js";
 import { WIKI_PAGE_MAX_CHARS } from "../../src/types/wikiPage.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
@@ -492,6 +498,31 @@ describe("wikiReadTool, collection notices", () => {
     const result = await wikiReadTool({ url: `${WIKI}/Region_Church_Records`, offset: 5 }, LOCAL);
     expect(result).not.toHaveProperty("collectionNotices");
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("cuts a long notice at the last sentence end within the cap", () => {
+    const sentence = "This sentence is forty characters long. ";
+    const notice = legacyNotice(`**This is a Legacy Collection** ${sentence.repeat(30)}|`);
+    expect(notice!.length).toBeLessThanOrEqual(COLLECTION_NOTICE_MAX_CHARS);
+    expect(notice!.endsWith(".")).toBe(true);
+    expect(notice!.startsWith("This is a Legacy Collection This sentence")).toBe(true);
+  });
+
+  it("keeps a full part with ten long notices under the CLI spill line", async () => {
+    const slugs = Array.from({ length: 10 }, (_, i) => `Collection_number_${i}`);
+    const longNotice = `**This is a Legacy Collection** ${"A sentence that runs on and on. ".repeat(200)}|`;
+    mockFetch.mockImplementation(async (url: string) => {
+      const slug = decodeURIComponent(url.slice(`${API_BASE}/page/`.length));
+      const content =
+        slug === "Region_Church_Records"
+          ? slugs.map((s) => collectionLink(s)).join("\n") + "\n" + "word ".repeat(30_000)
+          : longNotice;
+      return ok({ title: slug, content, source_url: "" });
+    });
+    const result = await wikiReadTool({ url: `${WIKI}/Region_Church_Records` }, LOCAL);
+    expect(result.truncated).toBe(true);
+    expect(result.collectionNotices).toHaveLength(10);
+    expect(JSON.stringify(result).length).toBeLessThan(CLI_SPILL_CHARS);
   });
 
   it("names the field in its description", () => {

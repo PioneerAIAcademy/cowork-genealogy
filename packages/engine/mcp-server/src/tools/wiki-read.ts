@@ -49,7 +49,8 @@ async function notFoundMessage(slug: string, baseUrl: string): Promise<string> {
 
 /** At most this many linked collection pages are checked per read. */
 export const COLLECTION_NOTICE_MAX_PAGES = 10;
-const COLLECTION_NOTICE_MAX_CHARS = 1_000;
+/** Ten notices this long, with a full part, stay under the CLI spill line. */
+export const COLLECTION_NOTICE_MAX_CHARS = 450;
 const COLLECTION_PAGE_LINK =
   /https:\/\/www\.familysearch\.org\/en\/wiki\/([^\s()"#?]+?_-_FamilySearch_Historical_Records)(?=[\s()"#?]|$)/g;
 const LEGACY_NOTICE = "**This is a Legacy Collection**";
@@ -81,7 +82,10 @@ export function legacyNotice(content: string): string | null {
     .replace(/\s*\|\s*$/, "")
     .replace(/\s+/g, " ")
     .trim();
-  return text.length > COLLECTION_NOTICE_MAX_CHARS ? text.slice(0, COLLECTION_NOTICE_MAX_CHARS) : text;
+  if (text.length <= COLLECTION_NOTICE_MAX_CHARS) return text;
+  const head = text.slice(0, COLLECTION_NOTICE_MAX_CHARS);
+  const sentenceEnd = head.lastIndexOf(". ");
+  return sentenceEnd > 0 ? head.slice(0, sentenceEnd + 1) : head;
 }
 
 /** The linked collection pages that carry the Legacy notice. A failed or missing page is skipped. */
