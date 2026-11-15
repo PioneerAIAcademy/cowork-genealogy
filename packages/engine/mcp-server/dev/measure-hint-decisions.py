@@ -218,11 +218,24 @@ async def make_project(ws: Path, case: dict[str, Any], pids: set[str], mcp: Mcp)
         tree = json.loads(tree_file.read_text(encoding="utf-8"))
         origin = "unstripped-tree"
     else:
-        await mcp.call("project_create", {"projectPath": str(ws), "personId": case["pid"]})
+        await mcp.call(
+            "project_create",
+            {
+                "projectPath": str(ws),
+                "personId": case["pid"],
+                "objective": f"Review the FamilySearch hints on {case['pid']}.",
+            },
+        )
         tree = json.loads((ws / "tree.gedcomx.json").read_text(encoding="utf-8"))
         origin = "project_create"
     strip_sources(tree, pids)
-    (ws / "tree.gedcomx.json").write_text(json.dumps(tree, indent=1, ensure_ascii=False), encoding="utf-8")
+    path = ws / "tree.gedcomx.json"
+    mode = path.stat().st_mode if path.exists() else None
+    if mode is not None:
+        path.chmod(mode | 0o200)
+    path.write_text(json.dumps(tree, indent=1, ensure_ascii=False), encoding="utf-8")
+    if mode is not None:
+        path.chmod(mode)
     return origin
 
 
