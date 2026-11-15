@@ -135,8 +135,8 @@ whether to link the other side. Linking only the focus person and then asking
 such. (This is separate from the match-threshold policy in Step 3: a *weak
 identity match* on any single link still gets no link — but recognizing that a
 relationship assertion bears on multiple people is automatic, not something to
-ask permission for.) A no-link withholds only its own link: mint and link the
-record's other persons in the same pass.
+ask permission for.) A no-link for the focus person withholds the whole
+record: link and mint none of its other persons.
 
 ## Building a Person Profile Before Matching
 
@@ -515,7 +515,11 @@ birthplace, a birth or christening date, an age, a parent, a spouse —
 *contradicts* what the tree person already attests. If one does, the
 match is Weak: write no link (**No link**, below) and name both sides in
 your return ("record gives birthplace Germany; tree attests Ireland
-across three censuses"). A contradiction that is explained and does not
+across three censuses"). That is the rule for the focus person. When the
+focus person is linked and the contradiction is on another persona of the
+record (a relative the record names differently from the tree person
+their position points to), link that persona at `speculative` and name
+both values in `core_identifier_conflict`. A contradiction that is explained and does not
 bear on identity is not one: link on the rest, leave
 `core_identifier_conflict` null, and say why in the `rationale`. The
 score never promotes a contradiction.
@@ -573,7 +577,7 @@ the `rationale` as a departure; it does not move the tier by itself.
 
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
-| **Weak** — only the name matches, or a core identifier conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | none | **No link** (below). |
+| **Weak** — only the name matches, or a core identifier of the focus person conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | none | **No link** (below). |
 | **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Create the link. The rationale says what matches and what doesn't. |
 | **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` | Create the link. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
@@ -619,7 +623,8 @@ demote a Strong match: write the link and state the score. But:
   the call is the fix, not a lower tier.
 
 **No link.** A **Weak** match, a core-identifier conflict included, gets
-no link, whoever asked and whether or not a user is present. Do not create the pe_ entry, and do not
+no link, whoever asked and whether or not a user is present. Do not create the pe_ entry, do not
+link or mint the record's other persons when the no-link is the focus person's, and do not
 record a rejection: only the researcher creates one. State it in your
 returned summary: the candidate, the score, and exactly what conflicted
 or is missing. Then recommend `hypothesis-tracking` as the follow-up if

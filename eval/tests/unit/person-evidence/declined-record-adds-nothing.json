@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_person_evidence_k2b",
+    "skill": "person-evidence",
+    "name": "A record declined for its focus person adds nothing: the mother it names is not minted or linked",
+    "type": "positive",
+    "description": "The Kilrush baptism offered for Patrick Flynn (I1, born about 1845) christens its Patrick on 12 March 1858. That is a core-fact conflict on the person the request is about, so the record gets no link (lead ruling 2026-11-15). The record also names a mother, Bridget Doyle, who is not in the tree. She is not added and nothing is linked to her or to the father (lead ruling 2026-11-15, case A): a record the agent declined leaves nothing in the project. The reply states the contradiction and what the record names.",
+    "tags": [
+      "person-evidence",
+      "no-link",
+      "core-fact-conflict",
+      "declined-record-adds-nothing"
+    ]
+  },
+  "input": {
+    "delegation": "person-evidence: assertion a_001 is Patrick Flynn's (I1) Kilrush baptism, which names his mother as Bridget Doyle (source src_001 / tree source S2). Bridget Doyle is not yet in the tree. Link this baptism's parentage assertion to the right persons.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-baptism-contradicts-birth"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-baptism-contradicts-birth",
+    "same-person-flynn-baptism-mother"
+  ],
+  "judge_context": [
+    "The register christens this Patrick on 12 March 1858; the tree's Patrick (I1) was born about 1845. An Irish Catholic baptism follows birth within days, so the thirteen-year gap is a core-fact conflict on the person the request is about, and the record explains no delay (no adult or conditional baptism).",
+    "The correct result is that nothing from this record is written (lead rulings 2026-11-15): no pe_ link to Patrick (I1), no pe_ link to Thomas (I2), Bridget Doyle not added to the tree and not linked, and no ParentChild edge. The reply names both dates, says the record was not linked for that reason, and reports that the record names Bridget Doyle as the mother.",
+    "Adding Bridget (by materialize_facts or tree_edit add_person), or linking any assertion of this record to her or to Thomas, is a FAIL on Correctness: a person or a link from a record the agent declined has entered the project. Writing the ParentChild edge is a FAIL on Correctness.",
+    "A `confident` or `probable` link to Patrick that PERSISTS is a FAIL on Correctness and on Confidence calibration. A refused `confident` or `probable` attempt followed by no link is a PARTIAL (2) on Confidence calibration. A `speculative` link to Patrick with the contradiction named is a PARTIAL (2) on Confidence calibration. A reply that asks the user whether to link is a PARTIAL (2) on Completeness.",
+    "Multi-person awareness, and Person minting and connecting edges: nothing is owed to the record's other persons when the focus person gets no link. Mark both N/A when the run wrote nothing; never mark the unlinked mother or father down.",
+    "Completeness is the reply: both dates, the decision, and the mother the record names. A run that makes no research_append and no materialize_facts call is correct here and is not incomplete.",
+    "Calling same_person for the Patrick pairing is correct. The canned score is not the subject of this test: do not grade its value, and do not treat a second call for Bridget as required."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}
