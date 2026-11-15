@@ -8,7 +8,8 @@ record ruled out, and the agent accepting it is a false accept.
 The cases are the e2e fixtures' `source_pid` persons (every accepted and
 rejected match on each) plus, because rejected matches are rare, every relative
 in a fixture's `unstripped-tree.gedcomx.json` that has at least one rejected
-match. A case holds at most --cap hints: every rejected match first, then the
+match. A case holds at most --cap hints at --min-confidence or above (default
+4, the floor search-hints asks for): every rejected match first, then the
 accepted ones in a stable order.
 
 How the agent is fed: the agent body of packages/engine/plugin/agents/search-hints.md
@@ -174,9 +175,10 @@ async def build_key(out: Path) -> None:
     )
 
 
-def hints_for(case: dict[str, Any], cap: int) -> list[dict[str, Any]]:
-    rej = [{**m, "truth": "rejected"} for m in case["rejected"]]
-    acc = sorted(case["accepted"], key=lambda m: hashlib.sha1(m["ark"].encode()).hexdigest())
+def hints_for(case: dict[str, Any], cap: int, min_conf: int) -> list[dict[str, Any]]:
+    rej = [{**m, "truth": "rejected"} for m in case["rejected"] if (m.get("confidence") or 0) >= min_conf]
+    acc = [m for m in case["accepted"] if (m.get("confidence") or 0) >= min_conf]
+    acc = sorted(acc, key=lambda m: hashlib.sha1(m["ark"].encode()).hexdigest())
     acc = [{**m, "truth": "accepted"} for m in acc]
     return (rej + acc)[:cap]
 
@@ -441,7 +443,7 @@ async def run(args: argparse.Namespace) -> None:
         async def one(c: dict[str, Any]) -> None:
             async with sem:
                 try:
-                    r = await run_case(c, hints_for(c, args.cap), args, mcp)
+                    r = await run_case(c, hints_for(c, args.cap, args.min_confidence), args, mcp)
                 except Exception as e:  # noqa: BLE001
                     r = {"slug": c["slug"], "pid": c["pid"], "role": c["role"], "error": f"{type(e).__name__}: {e}"[:400], "hints": []}
                 async with lock:
@@ -484,6 +486,10 @@ def report(args: argparse.Namespace) -> None:
             print(f"  {truth} matches reviewed: {n} on {persons} persons")
             print(f"    {label}: {pct(wrong)}   correct: {pct('accept' if truth == 'accepted' else 'reject')}"
                   f"   not enough information: {pct('nei')}   unreported: {pct('unreported')}   linked: {pct('linked')}")
+            for band, lo, hi in (("1-3", 1, 3), ("4-5", 4, 5)):
+                b = [h for h in hs if lo <= (h.get("confidence") or 0) <= hi]
+                if b:
+                    print(f"    confidence {band}: {sum(h['verdict'] == wrong for h in b)} {label} of {len(b)}")
             bad = [h for h in hs if h["verdict"] == wrong]
             if bad:
                 print(f"    of the {label}: image read {sum(h['image_read'] for h in bad)}, "
@@ -499,12 +505,14 @@ def report(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["key", "run", "report"])
     ap.add_argument("--out", required=True)
     ap.add_argument("--model", default="claude-haiku-5-5")
     ap.add_argument("--effort", default="medium")
     ap.add_argument("--cap", type=int, default=10)
+    ap.add_argument("--min-confidence", type=int, default=4)
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--slug", nargs="*", default=[])

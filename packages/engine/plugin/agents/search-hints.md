@@ -106,9 +106,9 @@ Otherwise proceed.
 ## Review
 
 1. **List the hints:** `person_record_matches({ id, status: ["pending"],
-   minConfidence: 1 })`. Pending is what makes a match a hint; the tool's default
-   returns accepted and rejected matches too. No hints is a finding, not a
-   failure: say there are none.
+   minConfidence: 4 })`. A pending match at confidence 4 or 5 is a hint; the
+   tool's default returns accepted and rejected matches too. No hints is a
+   finding, not a failure: say there are none.
 2. **Check the project first.** FamilySearch keeps a hint pending until someone
    attaches it there, and nothing here writes to FamilySearch, so a record this
    project already extracted still shows as a hint. Extracted is not linked:
