@@ -771,13 +771,8 @@ Quirks affect how queries should be constructed for that collection.
 
 - Pre-1837 parish records extracted decades ago — static "Legacy"
   collections with no updates or corrections since 2010 publication
-- **Compensation: the IGI batch number.** It enumerates a parish exhaustively
-  and is the canonical way to work one. How to obtain one, what it rejects, how
-  it pages and what a nil under it means are all on `record_search`'s
-  `batchNumber` parameter — read them there.
 - **Reading a nil here:** these are static extractions, so a nil under a correct
   batch is a statement about the extraction, not about the parish.
-- Cross-check with FreeREG and FindMyPast via `search-external-sites`.
 
 ### Mexico Civil Registration
 
