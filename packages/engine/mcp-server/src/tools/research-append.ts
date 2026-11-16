@@ -1969,15 +1969,22 @@ function placeNamesOf(a: any, coords?: BirthPlaceCoords): string[] {
   );
 }
 
+/** Whether two birth places agree under one of the FamilySearch place's other
+ *  names, when the prefetch read them: a historical jurisdiction resolves to a
+ *  different country ("Upper Canada, British North America" against "Ontario,
+ *  Canada") though FamilySearch keeps both as one place. */
+function placesAgreeByName(x: any, y: any, coords?: BirthPlaceCoords): boolean {
+  const ny = placeNamesOf(y, coords);
+  return placeNamesOf(x, coords).some((n) => ny.some((m) => compatiblePlace(n, m)));
+}
+
 /** Two birth places that neither agree, under any of their names, nor fall
  *  within the distance band. A place's other names matter here because a
  *  historical jurisdiction resolves to a different country ("Upper Canada,
  *  British North America" against "Ontario, Canada"): the live walk over the e2e
  *  subjects read two people as self-contradicting on that alone. */
 function attachedPlacesFar(x: any, y: any, birth: any, coords?: BirthPlaceCoords, unresolvedIsNear = false): boolean {
-  if (birthPlacesAgree(x, y)) return false;
-  const ny = placeNamesOf(y, coords);
-  if (placeNamesOf(x, coords).some((n) => ny.some((m) => compatiblePlace(n, m)))) return false;
+  if (birthPlacesAgree(x, y) || placesAgreeByName(x, y, coords)) return false;
   return birthPlacesFarApart(withBirthYear(x, birth), withBirthYear(y, birth), coords, unresolvedIsNear);
 }
 
@@ -2091,6 +2098,26 @@ export function birthPlaceCoordNames(
   return [...names, ...attachedBirthPlaceNames(entry, research, tree, personLinks, batchAssertions)];
 }
 
+/** The standard places whose other FamilySearch names the place arms read for
+ *  one link: both sides of every birth place that disagrees with the tree's, and
+ *  the attached-births arm's places. */
+export function birthPlaceNameLookups(
+  entry: any,
+  research: any,
+  tree: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+): string[] {
+  const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
+  if (!scope) return [];
+  const names: string[] = [];
+  for (const a of disagreeingBirthPlaces(scope)) {
+    if (typeof a.standard_place === "string") names.push(a.standard_place);
+    if (typeof scope.birth.standard_place === "string") names.push(scope.birth.standard_place);
+  }
+  return [...names, ...attachedBirthPlaceNames(entry, research, tree, personLinks, batchAssertions)];
+}
+
 /** The standard places the attached-births arm compares for one link (#4444):
  *  the person's attached births and the record's own birth places, which the
  *  prefetch also reads the other names of. Empty unless the person has two. */
@@ -2128,7 +2155,9 @@ function contradictionFindings(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear));
+  const far = disagreeingBirthPlaces(scope).find(
+    (a) => !placesAgreeByName(a, birth, birthPlaceCoords) && birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear),
+  );
   if (far) {
     findings.push(
       `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
@@ -11001,7 +11030,7 @@ async function prefetchBirthPlaceCoords(
   const assertions = new Map(batchAssertions);
   const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
   const names: string[] = [];
-  // Names the attached-births arm compares, whose other names are read too.
+  // Names the place arms compare, whose other names are read too.
   const withNames = new Set<string>();
   for (const op of ops) {
     const fields = (op as any).fields ?? {};
@@ -11029,15 +11058,15 @@ async function prefetchBirthPlaceCoords(
     }
     if (!entry || typeof entry !== "object") continue;
     names.push(...birthPlaceCoordNames(entry, research, tree, personLinks, assertions));
-    for (const n of attachedBirthPlaceNames(entry, research, tree, personLinks, assertions)) withNames.add(n);
+    for (const n of birthPlaceNameLookups(entry, research, tree, personLinks, assertions)) withNames.add(n);
     if (!reRaising) continue;
     for (const l of relationalLinksScopedBy(entry, research, personLinks, assertions)) {
       names.push(...birthPlaceCoordNames(l, research, tree, personLinks, assertions));
-      for (const n of attachedBirthPlaceNames(l, research, tree, personLinks, assertions)) withNames.add(n);
+      for (const n of birthPlaceNameLookups(l, research, tree, personLinks, assertions)) withNames.add(n);
     }
   }
-  if (names.length === 0) return new Map();
-  return lookupWithin([...new Set(names)], (name) => birthPlaceInfo(name, withNames.has(name)), BIRTH_PLACE_COORDS_BUDGET_MS);
+  if (names.length === 0 && withNames.size === 0) return new Map();
+  return lookupWithin([...new Set([...names, ...withNames])], (name) => birthPlaceInfo(name, withNames.has(name)), BIRTH_PLACE_COORDS_BUDGET_MS);
 }
 
 function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set<string> {

@@ -122,9 +122,10 @@ for (const { label, research, tree } of docs) {
     const names = new Set<string>();
     const withNames = new Set<string>();
     for (const e of live) for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
-    const attachedNames = (ra as any).attachedBirthPlaceNames as ((e: any, r: any, t: any, l?: any) => string[]) | undefined;
+    const attachedNames = ((ra as any).birthPlaceNameLookups ?? (ra as any).attachedBirthPlaceNames) as ((e: any, r: any, t: any, l?: any) => string[]) | undefined;
     if (attachedNames) for (const e of live) for (const n of attachedNames(e, research, tree, personLinks)) withNames.add(n);
     const info = (ra as any).birthPlaceInfo as ((n: string, w: boolean) => Promise<any>) | undefined;
+    for (const n of withNames) names.add(n);
     coords = names.size
       ? await lookupWithin([...names], (n) => (info ? info(n, withNames.has(n)) : standardPlaceToCoords(n)), 60_000)
       : new Map();
