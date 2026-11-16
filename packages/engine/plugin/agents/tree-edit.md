@@ -117,7 +117,7 @@ On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
 ## Record and duplicate checking
 
-When the user asks what records are attached, call `person_record_matches({ id: "KWCJ-RN4", status: ["accepted"] })`; for every match whatever its status, omit `status` — the default returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
+To list record matches, call `person_record_matches({ id: "KWCJ-RN4", minConfidence: 1 })`; the default floor of 2 leaves out confidence 1. Pass `status` only to narrow to what the user asked for: `["accepted"]` when only attached records were asked for, `["accepted", "pending"]` when pending ones were asked for too. With no `status` it returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
 
 When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; merge decisions still require proof-conclusion.
 

@@ -1,0 +1,25 @@
+{
+  "id": "find-records-arthur-naisbitt",
+  "message": "Can you help me find records on Arthur Lee Naisbitt KWCF-S1C on FamilySearch? Is he found in records and sources not currently attached to his PID?",
+  "expected_owner": "search-records",
+  "expected_save": [
+    {
+      "section": "log",
+      "tool": "record_search"
+    }
+  ],
+  "setup_units": [
+    "init-project"
+  ],
+  "ends_on_offer": true,
+  "must_not": "No `question-selection` or `research-plan` spawn (graded by no_research_job: the #4237 failure); no search for a record already attached to KWCF-S1C",
+  "caps": {
+    "wall_clock_seconds": 1800,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 80,
+    "max_turns": 80,
+    "max_cost_usd": 4.0
+  },
+  "is_plan_ask": false
+}

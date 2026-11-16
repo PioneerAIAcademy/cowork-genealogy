@@ -1,0 +1,112 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "William",
+          "surname": "Hartley",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "~1845",
+          "place": "Halifax, Yorkshire, England",
+          "assertion_id": "a_011",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1861",
+          "place": "Halifax, Yorkshire, England",
+          "assertion_id": "a_012",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Occupation",
+          "date": "1861",
+          "value": "Woolsorter",
+          "place": "Halifax, Yorkshire, England",
+          "assertion_id": "a_013",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Joseph",
+          "surname": "Hartley",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "~1818",
+          "place": "Halifax, Yorkshire, England",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "RT1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "1861 England Census, Halifax, Yorkshire — Joseph Hartley household"
+    },
+    {
+      "id": "S3",
+      "title": "Halifax St John, Yorkshire — burial register, 1870"
+    },
+    {
+      "id": "S4",
+      "title": "Lister Lane Cemetery, Halifax, Yorkshire — interment register"
+    },
+    {
+      "id": "S5",
+      "title": "1881 England Census, Halifax, Yorkshire — Samuel Greenwood household"
+    }
+  ]
+}
