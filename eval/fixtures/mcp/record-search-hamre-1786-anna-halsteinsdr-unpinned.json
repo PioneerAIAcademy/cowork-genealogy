@@ -1,0 +1,308 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-16, engine recordSearchTool) of record_search givenName Anna, surname Halsteinsdr, with no collectionId, marriage 1770-1800, subjectId KZHH-VTX. 1794 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023. Listed after the collection-1468080 fixtures, so it answers only calls with no collectionId.",
+  "args": {
+    "givenName": "Anna",
+    "surname": "Halsteinsdr"
+  },
+  "response": {
+    "query": {
+      "surname": "Halsteinsdr",
+      "givenName": "Anna",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "subjectId": "KZHH-VTX"
+    },
+    "totalMatches": 1794,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NCZ6-TR6",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Ole",
+        "recordArk": "ark:/61903/1:2:MJH5-8RG",
+        "batchNumber": "C42331-5",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NCCT-VXK",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Abbelu",
+        "recordArk": "ark:/61903/1:2:MJHR-VJX",
+        "batchNumber": "C42331-5",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NCT8-5V8",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Mons Olsen",
+        "recordArk": "ark:/61903/1:2:MJCF-WP2",
+        "batchNumber": "C42331-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NCTD-HXQ",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Ole Olsen",
+        "recordArk": "ark:/61903/1:2:MJCF-WW6",
+        "batchNumber": "C42331-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NCTD-HX4",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Ole Olsen",
+        "recordArk": "ark:/61903/1:2:MJCF-WWX",
+        "batchNumber": "C42331-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NCT8-FJH",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Christi Halsteinsen",
+        "recordArk": "ark:/61903/1:2:MJCF-48B",
+        "batchNumber": "C42331-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NCT8-53K",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Halstein Olsen",
+        "recordArk": "ark:/61903/1:2:MJCF-WPX",
+        "batchNumber": "C42331-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N4GC-ZSD",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Halstein Anderssen",
+        "recordArk": "ark:/61903/1:2:MJSC-1XL",
+        "batchNumber": "C42143-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4N-2BP",
+        "personName": "Anna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Rasmus Andersen",
+        "recordArk": "ark:/61903/1:2:MJ92-S26",
+        "batchNumber": "C42938-2",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFPD-JJ1",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "17 Oct 1773",
+            "place": "Näsby"
+          },
+          {
+            "type": "Marriage",
+            "date": "17 Oct 1773",
+            "place": "Blacksta, Södermanland, Sweden"
+          }
+        ],
+        "personName": "Anna Hallstensdotter",
+        "sex": "Female",
+        "collectionId": "1647693",
+        "recordTitle": "Entry for Lars Pehrsson and Anna Hallstensdotter",
+        "recordArk": "ark:/61903/1:2:1KQP-3ZM",
+        "batchNumber": "V00914-1",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPXS-6WKN",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1770",
+            "place": "Schippenbeil, Kreis Bartenstein, Ostpreußen, Preußen, Deutschland"
+          }
+        ],
+        "personName": "Anna Schiemanns",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Michael Grosmann, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRR1-8PHG",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPK4-PHV6",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "16 May 1775",
+            "place": "Notzingen, Kirchheim, Königreich Württemberg, Deutsches Reich"
+          }
+        ],
+        "personName": "Anna Maria Haustens",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Bartholomaus Horn, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRBK-9W1Q",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP5C-BL2R",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "von 1602 bis 1922",
+            "place": "Rietheim, Rietheim, Urach, Königreich Württemberg, Deutsches Reich"
+          }
+        ],
+        "personName": "Anna Elisabetha Haustenen",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Caspar Kocher, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QTMP-R9HD",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPK3-3H5Q",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Nov 1780",
+            "place": "Sülze, Sülze, Mecklenburg-Schwerin, Deutschland"
+          }
+        ],
+        "personName": "Anna Maria Haltanssen",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Jochem Ruback, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRBJ-XLGL",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:F8TV-T56",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Apr 1787",
+            "place": "Kemijärvi, Lappi, Finland"
+          }
+        ],
+        "personName": "Anna Henrics Dotter Helisten",
+        "sex": "Female",
+        "collectionId": "1676970",
+        "recordTitle": "Entry for Matts Olofsson Tenno",
+        "recordArk": "ark:/61903/1:2:MPWF-87P",
+        "batchNumber": "M45104-3",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:HC86-912M",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Dec 1793",
+            "place": "Östmark, Värmland, Sweden"
+          }
+        ],
+        "personName": "Anna Halstensdr",
+        "sex": "Female",
+        "collectionId": "1520596",
+        "recordTitle": "Entry for Mans Olsson",
+        "recordArk": "ark:/61903/1:2:WZJ9-FSN2",
+        "batchNumber": "M41168-2",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X98K-N1GC",
+        "events": [
+          {
+            "type": "MarriageRegistration",
+            "date": "24 May 1784",
+            "place": "Overijse, Brabant, België"
+          }
+        ],
+        "personName": "Anna Maria Halsteers",
+        "collectionId": "4496123",
+        "recordTitle": "Entrée de Joannes Stendels, \"Belgique, Brabant, registres paroissiaux et etat-civil, 1704-1916\"",
+        "recordArk": "ark:/61903/1:2:H45Y-YW5X",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:HCJB-543Z",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20 Oct 1782",
+            "place": "Sorunda, Stockholm, Sweden"
+          }
+        ],
+        "personName": "Anna Halvastensdr",
+        "sex": "Female",
+        "collectionId": "1520596",
+        "recordTitle": "Entry for Peter Larsson",
+        "recordArk": "ark:/61903/1:2:WZ27-352M",
+        "batchNumber": "M43354-1",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:HCJ3-GD3Z",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 May 1791",
+            "place": "Västanfors, Västmanland, Sweden"
+          }
+        ],
+        "personName": "Anna Holstensdr",
+        "sex": "Female",
+        "collectionId": "1520596",
+        "recordTitle": "Entry for Anders Olsson",
+        "recordArk": "ark:/61903/1:2:WZKP-DYN2",
+        "batchNumber": "M40213-5",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V3L-1WTL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20. Januar 1790",
+            "place": "Austria"
+          }
+        ],
+        "personName": "Maria Anna Halsterin",
+        "sex": "Female",
+        "birthDate": "1765",
+        "collectionId": "5000002",
+        "recordTitle": "Eintrag für Albert Baum, „Österreich, Katholische Kirchenbücher, 1565-2007“",
+        "recordArk": "ark:/61903/1:2:HSC9-18MR",
+        "role": "Bride"
+      }
+    ],
+    "collections": {
+      "1467014": "Norway, Baptisms, 1634-1927",
+      "1520596": "Sweden, Marriages, 1630-1920",
+      "1647693": "Sweden, Södermanland, Church Records, 1604-1900; index 1640-1860",
+      "1676970": "Finland, Marriages, 1682-1892",
+      "3015626": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+      "4496123": "Belgium, Brabant, Civil Registration and Church Records, 1704-1916",
+      "5000002": "Austria, Catholic Church Records, 1565-2007"
+    }
+  }
+}

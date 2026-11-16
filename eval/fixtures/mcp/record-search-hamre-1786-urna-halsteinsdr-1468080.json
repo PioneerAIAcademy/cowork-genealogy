@@ -1,0 +1,62 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-16, engine recordSearchTool) of record_search givenName Urna, surname Halsteinsdr, in collection 1468080, marriage 1770-1800, subjectId KZHH-VTX. 2 matches; the first row is the bride NW44-PMK, Urna Halsteinsdr, in the 25 Jun 1786 Hamre marriage (record MY3L-FH3). Used by ut_search_records_023.",
+  "args": {
+    "givenName": "Urna",
+    "surname": "Halsteinsdr",
+    "collectionId": "1468080"
+  },
+  "response": {
+    "query": {
+      "surname": "Halsteinsdr",
+      "givenName": "Urna",
+      "collectionId": "1468080",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "subjectId": "KZHH-VTX"
+    },
+    "totalMatches": 2,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NW44-PMK",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Jun 1786",
+            "place": "Hamre, Hordaland, Norway"
+          }
+        ],
+        "personName": "Urna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Monsen",
+        "recordArk": "ark:/61903/1:2:MY3L-FH3",
+        "batchNumber": "M42039-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWD5-3L9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Sep 1778",
+            "place": "Herøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Andersen",
+        "recordArk": "ark:/61903/1:2:MY3K-SBX",
+        "batchNumber": "M42205-1",
+        "role": "Bride"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926"
+    }
+  }
+}

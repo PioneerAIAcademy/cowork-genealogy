@@ -1,0 +1,279 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-16, engine recordSearchTool) of record_search givenName Unna, surname Halsteinsdr, with no collectionId, marriage 1770-1800, subjectId KZHH-VTX. 502 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023. Listed after the collection-1468080 fixtures, so it answers only calls with no collectionId.",
+  "args": {
+    "givenName": "Unna",
+    "surname": "Halsteinsdr"
+  },
+  "response": {
+    "query": {
+      "surname": "Halsteinsdr",
+      "givenName": "Unna",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "subjectId": "KZHH-VTX"
+    },
+    "totalMatches": 502,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:6D3K-GRYM",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Beching Stoke"
+          },
+          {
+            "type": "Marriage",
+            "date": "12 Feb 1795",
+            "place": "Beechingstoke, Wiltshire, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "4380174",
+        "recordArk": "ark:/61903/1:2:4BRR-SVZM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6D3K-VYGT",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Beching Stoke"
+          },
+          {
+            "type": "Marriage",
+            "date": "12 Feb 1795",
+            "place": "Beechingstoke, Wiltshire, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "sex": "Female",
+        "collectionId": "4380174",
+        "recordTitle": "Entry for James Gilbert",
+        "recordArk": "ark:/61903/1:2:4BR5-1SDR",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWD5-3L9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Sep 1778",
+            "place": "Herøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Andersen",
+        "recordArk": "ark:/61903/1:2:MY3K-SBX",
+        "batchNumber": "M42205-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPFX-3V1K",
+        "personName": "Hallstein",
+        "sex": "Male",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für John, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRT2-TLRB",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPJZ-K8JX",
+        "personName": "Hallstein",
+        "sex": "Male",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Johannes Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRY2-Z8B5",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68WS-3RRJ",
+        "personName": "Halsteensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Sivert Nielsen",
+        "recordArk": "ark:/61903/1:2:4BFZ-GTWK",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6832-BMTK",
+        "personName": "Halstensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Andreas Martin Halstensen",
+        "recordArk": "ark:/61903/1:2:4BXX-H5LM",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N6YH-7FQ",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "1473015",
+        "recordTitle": "Entry for William Hailstone",
+        "recordArk": "ark:/61903/1:2:9QLL-SYG",
+        "batchNumber": "I02501-9",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2WK-8RHJ",
+        "personName": "Hällsten",
+        "sex": "Male",
+        "collectionId": "1647693",
+        "recordTitle": "Entry for Carl Jacob Jonsson and Johanna Fredrica Bernhardina Hällsten",
+        "recordArk": "ark:/61903/1:2:QL36-J1KH",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QKJH-8MY2",
+        "personName": "Halston",
+        "sex": "Female",
+        "collectionId": "1807364",
+        "recordTitle": "Entry for Charles St Clare and Josephine Hatch",
+        "recordArk": "ark:/61903/1:2:Q2PX-65W5",
+        "role": "Mother Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLSW-1D7M",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "2562514",
+        "recordTitle": "Entry for Joseph",
+        "recordArk": "ark:/61903/1:2:QPMJ-NNB6",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLS4-PYG2",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "2562514",
+        "recordTitle": "Entry for Kilpin",
+        "recordArk": "ark:/61903/1:2:QPMJ-G3MW",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLSC-BTPW",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "2562514",
+        "recordTitle": "Entry for Kilpin",
+        "recordArk": "ark:/61903/1:2:QPMV-RSQV",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QJ8G-JV25",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1873",
+            "place": "Cass County, Texas, United States"
+          }
+        ],
+        "personName": "Halston",
+        "collectionId": "1827575",
+        "recordArk": "ark:/61903/1:2:QKS4-QHZ5",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KBML",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1825",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-66ZL",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KF2G",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1822",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-69MG",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-K8JF",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1821",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-DTYF",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KKRY",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1823",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-677Y",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KFLX",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1822",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-699X",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-H8GL",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1771",
+            "place": ", St Margaret, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-91C8",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926",
+      "1473015": "England Marriages, 1538–1973",
+      "1647693": "Sweden, Södermanland, Church Records, 1604-1900; index 1640-1860",
+      "1807364": "Louisiana, Parish Marriages, 1787-1958",
+      "1827575": "Texas, County Tax Rolls, 1837-1910",
+      "2489869": "England, Middlesex, Westminster Rate Books, 1634-1900",
+      "2562514": "British Newspaper Archive, Family Notices",
+      "3015626": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+      "4237104": "Norway, Church Books, 1797-1958",
+      "4380174": "England, Wiltshire, Church Records, 1518-1990"
+    }
+  }
+}

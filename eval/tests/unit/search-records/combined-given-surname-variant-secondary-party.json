@@ -2,19 +2,16 @@
   "test": {
     "id": "ut_search_records_023",
     "skill": "search-records",
-    "name": "Vary a secondary party's given name AND surname together, not just the already-fixed given name alone",
+    "name": "Vary the bride's given name with her full surname kept; the abbreviated surname is not needed",
     "type": "positive",
-    "description": "Modeled on a real 2026-07-21 e2e re-run of the anders-monsen-ancestry fixture. The skill correctly retried the bride's given name with spelling variants (Unna -> Urna/Una, the ut_search_records_022 fix) and correctly fell back to a principal-only search when the secondary name was exhausted -- but never tried the surname's other spelling: the same index abbreviates her surname to 'Halsteinsdr' (not 'Halsteinsdatter'), which record_search returns as surnameVariantHints on the nil. The live run never set surname to anything but 'Halsteinsdatter' across 24 record_search calls, so it never recovered the marriage record.",
+    "description": "Modeled on the anders-monsen-ancestry e2e fixture. The bride the tree calls Unna Halsteinsdatter is indexed 'Urna Halsteinsdr' on the 25 Jun 1786 Hamre marriage (record MY3L-FH3, bride persona NW44-PMK) in Norway, Marriages, 1660-1926. Every record_search fixture is a live capture (2026-11-16) with this delegation's arguments: with the given name Urna the search finds her under the full surname Halsteinsdatter as well as under Halsteinsdr, with or without the collection; under Unna, Udna, Una or Anna it finds her under neither. The test checks that the skill varies the given name and recovers the record; it does not require the abbreviated surname.",
     "tags": [
       "search",
       "marriage",
       "name-variation",
-      "surname",
       "norway",
       "secondary-party",
       "regression",
-      "collection-quirks",
-      "surname-variant-hints-followed",
       "direct-arm"
     ]
   },
@@ -24,30 +21,45 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
-    "record-search-urna-halsteinsdr-marriage-match",
-    "record-search-urna-halsteinsdr-spouse-marriage-match",
-    "record-search-surname-not-abbreviated-zero-results",
+    "record-search-hamre-1786-urna-halsteinsdatter-1468080",
+    "record-search-hamre-1786-urna-halsteinsdr-1468080",
+    "record-search-hamre-1786-unna-halsteinsdatter-1468080",
+    "record-search-hamre-1786-unna-halsteinsdr-1468080",
+    "record-search-hamre-1786-udna-halsteinsdatter-1468080",
+    "record-search-hamre-1786-udna-halsteinsdr-1468080",
+    "record-search-hamre-1786-una-halsteinsdatter-1468080",
+    "record-search-hamre-1786-una-halsteinsdr-1468080",
+    "record-search-hamre-1786-anna-halsteinsdatter-1468080",
+    "record-search-hamre-1786-anna-halsteinsdr-1468080",
+    "record-search-hamre-1786-urna-halsteinsdatter-unpinned",
+    "record-search-hamre-1786-unna-halsteinsdatter-unpinned",
+    "record-search-hamre-1786-unna-halsteinsdr-unpinned",
+    "record-search-hamre-1786-udna-halsteinsdatter-unpinned",
+    "record-search-hamre-1786-udna-halsteinsdr-unpinned",
+    "record-search-hamre-1786-una-halsteinsdatter-unpinned",
+    "record-search-hamre-1786-una-halsteinsdr-unpinned",
+    "record-search-hamre-1786-anna-halsteinsdatter-unpinned",
+    "record-search-hamre-1786-anna-halsteinsdr-unpinned",
+    "record-search-urna-halsteinsdr-unpinned-marriage-match",
+    "record-search-unna-halsteinsdtr-unpinned-no-match",
     "rank-search-matches-anders-unna-marriage",
     "record-read-urna-anders-1786-marriage",
+    "record-read-urna-anders-1786-marriage-bride",
     "catalog-search-empty",
-    "catalog-search-empty-keywords",
-    "record-search-halsteinsdatter-unpinned-zero-results",
-    "record-search-urna-halsteinsdr-unpinned-marriage-match",
-    "record-search-unna-halsteinsdtr-unpinned-no-match"
+    "catalog-search-empty-keywords"
   ],
   "execution": {
     "max_turns": 35,
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
-    "Ground truth: the real marriage record indexes the bride as 'Urna Halsteinsdr' -- both the given name AND the surname are spelled differently from the tree's 'Unna Halsteinsdatter'. record_search returns the surname abbreviation as surnameVariantHints on a nil (src/utils/surname-variant-hints.ts).",
-    "The mock is rigged so that ONLY a call with surname or spouseSurname exactly 'Halsteinsdr' returns the positive match, regardless of which given-name spelling is used in the same call; every other combination -- the original spelling, a given-name-only variant with surname still 'Halsteinsdatter', a principal-only search with no surname filter, or any other query shape -- returns zero results. This means the ONLY way to recover the record is a record_search call with surname or spouseSurname: 'Halsteinsdr' (spouseSurname is the shape the live index answers -- the bride is not indexed as a principal), proving the skill tried the surname abbreviation record_search hinted, not just the already-fixed given-name variant.",
-    "DO NOT grade whether a record_search call sent an abbreviated surname. The deterministic validator test_surname_variant_hints_followed reads the tool calls and decides it: a run that never set surname or spouseSurname to an abbreviated form of 'Halsteinsdatter' fails there. The case it guards is the 2026-07-21 e2e miss, where the skill varied the given name and tried a principal-only fallback and never applied the collection's surname abbreviation, returned by record_search as surnameVariantHints on the nil.",
-    "Correctness: score 3 if the reply reports the positive match and correctly attributes it to Anders Monsen (LKFW-9XH) / Unna Halsteinsdatter (KZHH-VTX). Score 2 if the skill stumbles onto the record without a deliberate surname-abbreviation attempt (e.g. by dropping every filter until only collectionId remains and eyeballing an unfiltered dump) -- this technically finds the record but doesn't demonstrate applying the collection's surname abbreviation (from surnameVariantHints).",
-    "Tool Arguments: the validator above decides whether an abbreviated surname was sent. Grade the rest: expect a record_search call against collectionId '1468080' carrying subjectId 'LKFW-9XH' so the pool is ranked inline.",
-    "This test isolates the surname half of the same record's spelling that ut_search_records_022 isolates for the given-name half. Passing 022 does not imply passing this test -- a skill that only ever varies the given name will fail here even though it now passes 022. Do not treat a call that varies ONLY the given name as satisfying this test's ground truth, however many such calls are made.",
-    "Log quality: the negative surname-unvaried attempts and the eventual surname-abbreviated attempt should each produce their own research_log_append entry, not be collapsed into one.",
-    "record_read is stocked but OPTIONAL. The marriage record's full content is already in the search response's gedcomx, so the skill may report from the search hit or may read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
+    "Ground truth: the 25 Jun 1786 Hamre marriage (record MY3L-FH3) indexes the bride as 'Urna Halsteinsdr' (persona NW44-PMK) and the groom as 'Anders Monsen' (persona NW44-PM2). The tree calls her Unna Halsteinsdatter (KZHH-VTX).",
+    "Every record_search fixture is a live capture (2026-11-16) with this delegation's arguments. With givenName 'Urna' the search returns the bride as its first row under surname 'Halsteinsdatter' or 'Halsteinsdr', with or without collectionId 1468080. With givenName 'Unna', 'Udna', 'Una' or 'Anna' it does not return her under either surname. So the given-name spelling is what recovers the record; the abbreviated surname is neither required nor wrong.",
+    "Correctness: score 3 if the skill recovers the marriage through a record_search whose givenName is a spelling variant of 'Unna' and reports it attributed to Unna Halsteinsdatter (KZHH-VTX) and Anders Monsen. Score 2 if it finds the record without a deliberate given-name variant (for example by dropping filters and reading an unfiltered dump). Score 1 if it concludes a negative, or moves to another repository, without ever changing a letter of the given name.",
+    "Do not score down a search that sends the abbreviated surname 'Halsteinsdr' or 'Halsteinsdtr', and do not require one: the live index finds her under the full surname once the given name is 'Urna'.",
+    "Tool Arguments: expect record_search calls against collectionId '1468080' carrying subjectId 'KZHH-VTX'. A call that hits fixture_not_found because no fixture covers that spelling or query shape is a fixture gap, not a Tool Arguments defect, when its arguments are otherwise correct.",
+    "Log quality: each nil search and the positive search should each produce their own research_log_append entry, not be collapsed into one.",
+    "record_read is stocked but OPTIONAL for both personas (NW44-PM2, NW44-PMK). The search response already carries the record, so the skill may report from the hit or read the record first; score neither path down."
   ],
   "judge_reads_files": true
 }

@@ -1,0 +1,266 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-16, engine recordSearchTool) of record_search givenName Anna, surname Halsteinsdatter, in collection 1468080, marriage 1770-1800, subjectId KZHH-VTX. 14 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023.",
+  "args": {
+    "givenName": "Anna",
+    "surname": "Halsteinsdatter",
+    "collectionId": "1468080"
+  },
+  "response": {
+    "query": {
+      "surname": "Halsteinsdatter",
+      "givenName": "Anna",
+      "collectionId": "1468080",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "subjectId": "KZHH-VTX"
+    },
+    "totalMatches": 14,
+    "returned": 14,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NWHH-XNY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "3 Jul 1774",
+            "place": "Vanylven, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Anna Halsteensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hans Olsen",
+        "recordArk": "ark:/61903/1:2:MY3J-155",
+        "batchNumber": "M42218-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4L-5LR",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "6 Nov 1780",
+            "place": "Uppheim, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Halsteensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Michel Joensen",
+        "recordArk": "ark:/61903/1:2:MY32-MSG",
+        "batchNumber": "M42333-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4H-259",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Jun 1771",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Halstesdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Michelsen",
+        "recordArk": "ark:/61903/1:2:MY3L-DK8",
+        "batchNumber": "M42143-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW47-ZQY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "6 Jul 1794",
+            "place": "Fjelberg, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Nils Ostmundsen",
+        "recordArk": "ark:/61903/1:2:MY3L-L5H",
+        "batchNumber": "M42904-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4Y-B4J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jul 1791",
+            "place": "Edøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Ane Halsteensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jens Olsen",
+        "recordArk": "ark:/61903/1:2:MY3K-HC5",
+        "batchNumber": "M42197-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWW5-WM4",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "14 Apr 1782",
+            "place": "Tolga, Hedmark, Norway"
+          }
+        ],
+        "personName": "Anne Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Bersven Rasmusen",
+        "recordArk": "ark:/61903/1:2:MY3G-Q5P",
+        "batchNumber": "M42446-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7RF-VB4",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "22 Jun 1773",
+            "place": "Stange, Hedmark, Norway"
+          }
+        ],
+        "personName": "Anne Halsteensen",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Mons Johan Friderich Grundt",
+        "recordArk": "ark:/61903/1:2:MYSN-58Z",
+        "batchNumber": "M42450-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWP-1MJ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "8 Jul 1787",
+            "place": "Tolga, Hedmark, Norway"
+          }
+        ],
+        "personName": "Anne Halstendsr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Lars Sjulsen",
+        "recordArk": "ark:/61903/1:2:MY3G-XSG",
+        "batchNumber": "M42446-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWH9-498",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "17 May 1774",
+            "place": "Kornstad, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Ane Halsteensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Pedersen",
+        "recordArk": "ark:/61903/1:2:MY3V-RFX",
+        "batchNumber": "M42019-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWP-JPP",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "9 Jul 1797",
+            "place": "Stor Elvdal, Hedmark, Norway"
+          }
+        ],
+        "personName": "Anne Halsteensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Joen Joensen",
+        "recordArk": "ark:/61903/1:2:MY3B-XZP",
+        "batchNumber": "M42410-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWP-KY7",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1 Jan 1793",
+            "place": "Stor Elvdal, Hedmark, Norway"
+          }
+        ],
+        "personName": "Anne Halsteensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Frideric Olsen",
+        "recordArk": "ark:/61903/1:2:MY3B-XQY",
+        "batchNumber": "M42410-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW7Y-NH9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "8 Jan 1780",
+            "place": "Kongsberg, Buskerud, Norway"
+          }
+        ],
+        "personName": "Anne Malene Andersdr Gulbrandsen or Halvsteensen",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erland Jorgensen Erlandson",
+        "recordArk": "ark:/61903/1:2:MYQM-7BJ",
+        "batchNumber": "M42859-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWCK-WF8",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 May 1783",
+            "place": "Vågå, Oplandenes, Norway"
+          }
+        ],
+        "personName": "Anne Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Knud Amundsen",
+        "recordArk": "ark:/61903/1:2:MYQV-F1Y",
+        "batchNumber": "M42100-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWD5-3L9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Sep 1778",
+            "place": "Herøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Andersen",
+        "recordArk": "ark:/61903/1:2:MY3K-SBX",
+        "batchNumber": "M42205-1",
+        "role": "Bride"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926"
+    }
+  }
+}
