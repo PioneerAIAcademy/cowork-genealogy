@@ -1,6 +1,6 @@
 {
-  "run_log": "v6_2026-10-30_14-22-51.json",
-  "annotator": "ikeboateng2018@gmail.com",
+  "run_log": "v8_2026-11-14_16-05-05.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_locality_guide_r7k",
@@ -8,7 +8,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "There was conflict; the guide failed to clarify whether the register belongs to Billy. "
+      "comment": "the AI names Ballylinny’s film numbers as a likely pattern for Billy without ever mentioning that Ballylinny’s own congregation actually worshipped in a third parish, Ballyclare, so the reader still can’t tell how far that pattern can be trusted."
     },
     {
       "test_id": "ut_locality_guide_r7k",
@@ -16,15 +16,15 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "There should be Presbyterian register information that the wiki_search tool actually returned, which makes it complete here."
+      "comment": "the researcher asked which register covers a Presbyterian family in Billy and the AI never gets past “unconfirmed.”"
     },
     {
       "test_id": "ut_locality_guide_r7k",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "one catalog_search went out with keywords only and no place, which is exactly why it came back unmatched."
     },
     {
       "test_id": "ut_locality_guide_r7k",
@@ -40,7 +40,7 @@
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "No clarity on the start dates."
+      "comment": "right record classes named but no confirmed Billy specific dates."
     },
     {
       "test_id": "ut_locality_guide_r7k",
@@ -48,170 +48,18 @@
       "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The research strategy is incomplete, so I agree with the score."
-    },
-    {
-      "test_id": "ut_locality_guide_028",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There's a fabrication of specific details about the 1784 Habsburg reform's tabular format and column structure without tool support for those specifics in the 1812 context. "
-    },
-    {
-      "test_id": "ut_locality_guide_028",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_028",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There's no clarity to confirm which specific parish served Javorje in 1812, stating instead that 'no tool result returned for this run names the specific parish."
-    },
-    {
-      "test_id": "ut_locality_guide_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The guide did well, but at some point it included unsupported claims about predominantly Yankee Protestant and early mill industry marked as general context."
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "It failed to address some requirement. So I agree with the score."
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "It failed to address the cross-border search strategy required by the per-test context."
-    },
-    {
-      "test_id": "ut_locality_guide_024",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "PRONI and the Ulster Historical Foundation are the right names but there’s no real sequence to the advice."
     },
     {
       "test_id": "ut_locality_guide_024",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There was an indication of incorrect tool usage. "
-    },
-    {
-      "test_id": "ut_locality_guide_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_locality_guide_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_024",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "A call failed, indicating the recordTypeGroups parameter was not expected by the fixture. This is incorrect tool usage."
-    },
-    {
-      "test_id": "ut_locality_guide_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_k9d",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_k9d",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_k9d",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -219,6 +67,54 @@
       "comment": null
     },
     {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it’s useful but reads as a features list rather than a plan with a real order to it."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it’s careful almost everywhere but slips in the 1845 and 1864 dates as “commonly cited” without saying they weren’t actually confirmed by a tool this session."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the core question about Billy’s Church of Ireland registers gets a real answer, but almost every other record type is left as a blank."
+    },
+    {
       "test_id": "ut_locality_guide_k9d",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
@@ -230,9 +126,33 @@
       "test_id": "ut_locality_guide_k9d",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it never pins down Billy’s own boundary history."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "vague beyond the vital and church sections."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the Ulster Historical Foundation’s URL is right but it’s still described as a generic fee service rather than tied to the specific church register gap the guide itself raised."
     },
     {
       "test_id": "ut_locality_guide_v7h",
@@ -261,29 +181,37 @@
     {
       "test_id": "ut_locality_guide_v7h",
       "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Billy’s own register dates are still unconfirmed."
     },
     {
-      "test_id": "ut_locality_guide_012",
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "same gap connection problem as correctness."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "though I’d put it more plainly than the write up did, the AI never overclaims the 1906 date, it just never states it either, and that’s the actual gap."
     },
     {
-      "test_id": "ut_locality_guide_012",
+      "test_id": "ut_locality_guide_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "no courthouse, state archive, or historical society gets named even though the brief specifically asked for one beyond FamilySearch."
     },
     {
-      "test_id": "ut_locality_guide_012",
+      "test_id": "ut_locality_guide_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -291,15 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_012",
+      "test_id": "ut_locality_guide_001",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -307,7 +227,247 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_012",
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "same 1906 gap."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "vital records are well covered but everything else stays generic."
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response is reasonable but limited by how little the tools actually returned this run."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "still vague on a few start dates."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": ", the AI’s own text says newspaper and cemetery collections for this era were “not returned by tools” and treats that as a gap, it never claims several are available online"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it’s a bit generic on sequencing, though I’d drop the newspaper objection here too for the same reason as correctness."
+    },
+    {
+      "test_id": "ut_locality_guide_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The AI did well. there’s no “lost but later reconstructed” phrasing anywhere in the actual guide"
+    },
+    {
+      "test_id": "ut_locality_guide_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "There’s no Patrick Flynn or Schuylkill County anywhere in this test’s delegation, scenario, or the AI’s actual reply, the whole guide is correctly built for Pittsburgh and Allegheny County from start to finish"
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
       "llm_score": 3,
@@ -318,9 +478,9 @@
       "test_id": "ut_locality_guide_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "the AI correctly treats the Pennsylvania probate collection as present but unindexed rather than saying anything inconsistent about it"
     },
     {
       "test_id": "ut_locality_guide_015",
@@ -350,38 +510,22 @@
       "test_id": "ut_locality_guide_015",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "could have been clearer that no FamilySearch collection actually covers 1793 itself."
     },
     {
       "test_id": "ut_locality_guide_015",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "good named sources but no real step order."
     },
     {
       "test_id": "ut_locality_guide_016",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -397,7 +541,23 @@
     {
       "test_id": "ut_locality_guide_016",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -411,7 +571,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_017",
+      "test_id": "ut_locality_guide_019",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -419,7 +579,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_017",
+      "test_id": "ut_locality_guide_019",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -427,7 +587,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_017",
+      "test_id": "ut_locality_guide_019",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -435,7 +595,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_017",
+      "test_id": "ut_locality_guide_019",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -443,7 +603,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_017",
+      "test_id": "ut_locality_guide_019",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 3,
@@ -451,7 +611,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_017",
+      "test_id": "ut_locality_guide_019",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
       "llm_score": 3,
@@ -459,15 +619,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_018",
+      "test_id": "ut_locality_guide_020",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -475,7 +627,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_018",
+      "test_id": "ut_locality_guide_020",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -483,7 +635,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_018",
+      "test_id": "ut_locality_guide_020",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -491,7 +643,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_018",
+      "test_id": "ut_locality_guide_020",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -499,9 +651,73 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_018",
+      "test_id": "ut_locality_guide_020",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI list several types that stay vague."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -548,11 +764,11 @@
     },
     {
       "test_id": "ut_locality_guide_023",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the repository table assigns Fold3, Ancestry, and NARA record types and access levels that weren’t actually returned with that detail, which is exactly the kind of fabrication this test is built to catch."
     },
     {
       "test_id": "ut_locality_guide_023",
@@ -579,196 +795,76 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_w6j",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_w6j",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_k9d",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "One unsupported claim Ireland registers. I agree with the score."
-    },
-    {
-      "test_id": "ut_locality_guide_v7h",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There was no printing of a URL, no tool returned."
-    },
-    {
-      "test_id": "ut_locality_guide_v7h",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There was no church of Ireland digitized familySearch volume for Billy, which was returned according to the guide."
-    },
-    {
-      "test_id": "ut_locality_guide_r8f",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There's an unsupported claim about HSP's collection. "
-    },
-    {
-      "test_id": "ut_locality_guide_r8f",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_r8f",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_r8f",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_r8f",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The response was great, but there is no clarity about the record availability."
-    },
-    {
-      "test_id": "ut_locality_guide_r8f",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The strategy failed specificity on alternative repositories."
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There is an error on the Archives Nationales d'Outre-Mer, which is in 'Aix-en-Provence' when it is actually located in Aix-en-Provence, but the correct full name is Archives Nationales d'Outre-Mer."
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_022",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There's an error claiming five digitized volumes exist on FamilySearch for Schuylkill County, but four of the five are browse-only with no name index, and the one partially indexed volume covers deed records.'"
-    },
-    {
-      "test_id": "ut_locality_guide_023",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The guide did its job, but it fabricates specific claims not grounded in tool responses."
-    },
-    {
       "test_id": "ut_locality_guide_023",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "This also did well, but it conflates tool-returned generic content with Vermont-specific availability."
+      "comment": "same fabrication concern."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI stated decent but generic pitfalls"
     },
     {
       "test_id": "ut_locality_guide_w6j",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The guide fails the critical per-test requirement, which it does not name the FamilySearch collection."
+      "corrected_score": 3,
+      "comment": "the Riding filing claim in the short summary is stated plainly but the fuller persisted guide does ground it in actual named collections, and the Borthwick probate claim is accurate since only an index, not the case papers, was found online"
     },
     {
       "test_id": "ut_locality_guide_w6j",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "It didn't finish on specific actionable tools surfaced."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_w6j",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_w6j",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_w6j",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "No clarity on FamilySearch collection that holds the indexed civil death records."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_w6j",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The strategy of the research is incomplete. "
+      "comment": "good pitfalls but no real first-this-then-that order."
     }
   ]
 }
