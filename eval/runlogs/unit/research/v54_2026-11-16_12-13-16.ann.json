@@ -1,6 +1,6 @@
 {
-  "run_log": "v53_2026-11-13_11-26-08.json",
-  "annotator": "johnpeterbrown@ymail.com",
+  "run_log": "v54_2026-11-16_12-13-16.json",
+  "annotator": "ernestjacob789@gmail.com",
   "corrections": [
     {
       "test_id": "ut_research_021",
@@ -101,26 +101,26 @@
     {
       "test_id": "ut_research_b4w",
       "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "Correct expeted behavior to route to external"
-    },
-    {
-      "test_id": "ut_research_b4w",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_b4w",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "The LLM is wrong on its first point: search-records is stubbed, and the judge context says relaying the stub’s canned report as the searches done is correct, so the missing record_search calls aren’t a fabrication. Its second point is right, though, and that’s what costs the point. The closing paragraph names Ancestry, MyHeritage, FindAGrave, and newspaper archives, none of which any tool returned, and the judge context says to mark down for exactly that. Everything else is accurate: the project was created, and Patrick’s details match the person read."
     },
     {
       "test_id": "ut_research_b4i",
@@ -221,7 +221,7 @@
     {
       "test_id": "ut_research_utf",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -237,7 +237,7 @@
     {
       "test_id": "ut_research_utf",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -366,16 +366,16 @@
       "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
       "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -488,23 +488,23 @@
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 3,
-      "comment": "correct behavior"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
+      "comment": "The reply names no FamilySearch collection titles and says outright, “I cannot name specific FamilySearch collections without a confirmed tool result.” Everything else is a generic record type (civil registration, mission registers, hut-tax registers) or a hedged pointer (“some may be on FamilySearch”). The history and the CMS archives note are accurate. One small oddity: it tells the user to “treat the collection names below” as a framework, when it actually lists none."
     },
     {
       "test_id": "ut_research_ken",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "correct behavior"
+      "corrected_score": 2,
+      "comment": "Nothing was invoked, so this doesn’t look like a hand-off truncation. Claude correctly avoided inventing collections but never ran collections_search to confirm none exist, which is the one thing that would have answered the question directly. Instead it offered to run a lookup later. Use N/A if you treat the missing lookup as a harness artifact."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     },
     {
       "test_id": "ut_research_018",
@@ -526,8 +526,8 @@
       "test_id": "ut_research_018",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -558,16 +558,16 @@
       "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -1083,6 +1083,30 @@
       "comment": null
     },
     {
+      "test_id": "ut_research_ue1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ue1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ue1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -1124,6 +1148,30 @@
     },
     {
       "test_id": "ut_research_pq2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_uh1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_uh1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_uh1",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -1181,14 +1229,6 @@
     {
       "test_id": "ut_research_zfp",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -1201,6 +1241,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "All three required findings come through correctly: the 1870 census accepted, the 1880 census accepted despite being indexed as “Glynn,” and the 1908 death certificate already in the project. Claude also didn’t ask the researcher to decide the hints. The LLM’s complaint about “unavailable in this environment” is a non-issue, since a missing fixture is unavailability from the user’s side, and mentioning fixtures would be wrong."
     },
     {
       "test_id": "ut_research_hnp",
@@ -1443,6 +1491,30 @@
       "comment": null
     },
     {
+      "test_id": "ut_research_fo1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fo1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fo1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -1608,7 +1680,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "correct behavior"
+      "comment": "Same test as the earlier run, and the LLM makes the same mistake. “Has been handed off to register as a hypothesis” describes the delegation, not a completed write, and the hand-off appears in the ungraded agent returns. The judge context says the callee is a stub that writes nothing and to penalize only a claim that the hypothesis was written. Claude never made that claim. It also kept the sibling premise out of its own voice: it quoted the log note, labelled the relationship “inferred... with no record linking them,” and said it will be “tested by the upcoming searches rather than assumed.” It never carried the other women’s parents’ birthplaces over to Elizabeth."
     },
     {
       "test_id": "ut_research_uc1",
@@ -1665,14 +1737,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "correct behavior"
     },
     {
       "test_id": "ut_research_gm4",
@@ -1680,7 +1744,15 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "correct behavior"
+      "comment": "The LLM says Claude didn’t flag the contradiction, but it did, plainly: “If Robert died in Pulaski County in 1861, he is a different person from the Robert who married in 1870. That means the 1870 bond’s parental birthplace evidence no longer applies to the Burton-household Robert.” That rules out the identity link the judge context is testing. Calling h_002 overall “weakened” rather than refuted is fair, since its separate sibling claim could still stand. Claude adds nothing to the reported record (no residence, origin, or relationship beyond the parents’ names), and its link to Polley is framed as a conditional to test."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge context says a step to locate or extract the record counts as following the lead, and that ending with a question isn’t graded. Claude proposed searching for the death record itself and for James and Elizabeth Eastham, the people the record names. There’s no jump to a conclusion or exhaustiveness. The only soft spot is that it says “earlier records” instead of tying the parents to Pulaski County, but that doesn’t meet the failure the judge context describes."
     },
     {
       "test_id": "ut_research_wu1",
