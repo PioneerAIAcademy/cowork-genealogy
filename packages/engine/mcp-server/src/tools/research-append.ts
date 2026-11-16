@@ -88,6 +88,8 @@ import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 import { GUIDE_SECTION_MAX_CHARS, mergeGuideSection } from "../utils/locality-guide-sections.js";
+import { normalizeRegistrationStart } from "../utils/registration-level.js";
+import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -11122,6 +11124,73 @@ function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record
  *  the lock, or `"unavailable"` when that read failed. */
 export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
 
+/** The most collections one locality's fill adds. The largest list in 18 surveyed
+ *  places was New York's 65; a country-wide scope can run to several hundred. */
+export const LOCALITY_COLLECTIONS_FILL_MAX = 150;
+
+/** A `localities` append in these ops: the catalog is read for it even when it
+ *  sends no collections. */
+function hasLocalityAppend(ops: readonly unknown[]): boolean {
+  return ops.some((op: any) => op && typeof op === "object" && op.section === "localities" && op.op === "append");
+}
+
+/**
+ * Add to a `localities` append's `collections` every FamilySearch collection for
+ * the place that the entry did not send, from the catalog (spec §5.12, "The whole
+ * list"). Runs after the count stamp, so the rows the entry sent stay first, as
+ * stamped.
+ *
+ * locality-guide copied about a third of what `collections_search` returned (109 of
+ * 331 over 17 real places), and research-plan plans from this list without its own
+ * search, so a collection left out was hidden from the plan. The scope is the one
+ * `collections_search` derives: the entry's `place`, else the first jurisdiction
+ * name whose scope matches a title.
+ */
+function fillLocalityCollections(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined || catalog === "unavailable") return;
+  ops.forEach((op: any, i) => {
+    if (!op || typeof op !== "object" || op.section !== "localities" || op.op !== "append") return;
+    const entry = op.entry;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return;
+    if (entry.collections !== undefined && !Array.isArray(entry.collections)) return;
+    const names = [entry.place, ...(Array.isArray(entry.jurisdictions) ? entry.jurisdictions.map((j: any) => j?.name) : [])];
+    for (const name of names) {
+      if (typeof name !== "string" || name.trim() === "") continue;
+      const scope = standardPlaceToCollectionsQuery(name);
+      const needle = scope.toLowerCase();
+      if (needle === "") continue;
+      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
+      if (inScope.length === 0) continue;
+      const sent: unknown[] = entry.collections ?? [];
+      const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
+      const missing = inScope.filter(([id]) => !sentIds.has(id));
+      const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
+      const added = missing.slice(0, room).map(([id, c]) => ({
+        id,
+        title: c.title as string,
+        date_range: c.dateRange ?? null,
+        person_count: c.personCount,
+        record_count: c.recordCount,
+      }));
+      if (added.length === 0 && missing.length === 0) return;
+      entry.collections = [...sent, ...added];
+      warnings.push(
+        fmt(
+          i,
+          `localities collections: added ${added.length === missing.length ? `the ${added.length}` : `${added.length} of the ${missing.length}`} ` +
+            `other FamilySearch collections for "${scope}" from the catalog, after the ${sent.length} sent`,
+        ),
+      );
+      return;
+    }
+  });
+}
+
 /**
  * Stamp each `localities` collection's `person_count` / `record_count` from
  * FamilySearch's catalog (issue #4385): research-plan decides a name search vs an
@@ -12152,7 +12221,10 @@ async function prepareOps(
 
   errors.push(...localityGuideWholeRefusals(ops, fmt));
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
-  if (errors.length === 0) stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
+  if (errors.length === 0) {
+    stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
+    fillLocalityCollections(ops, options.collectionCatalog, warnings, fmt);
+  }
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
@@ -12397,6 +12469,20 @@ const GUIDE_SECTION_HOW =
   "entryId, and guideSection holding that section's '## ' heading line with its text under it. Each " +
   "'### ' subsection of Available record types and of Repository guide is its own call, beginning " +
   "with its '### ' line.";
+
+/** Read each localities op's `registration_start` levels into the closed list, in
+ *  place (utils/registration-level.ts). */
+function normalizeLocalityRegistration(ops: ResearchAppendOp[]): void {
+  for (const op of ops) {
+    if (!op || typeof op !== "object" || op.section !== "localities") continue;
+    for (const holder of [op.entry, op.fields]) {
+      if (!holder || typeof holder !== "object" || Array.isArray(holder)) continue;
+      const rows = (holder as Record<string, unknown>).registration_start;
+      const next = normalizeRegistrationStart(rows, VALIDATOR_ENUMS.registration_level);
+      if (next !== rows) (holder as Record<string, unknown>).registration_start = next;
+    }
+  }
+}
 
 /**
  * Place each op's `guideSection` into `fields.guide_markdown`, in place, and return
@@ -12911,7 +12997,7 @@ export async function researchAppendFromCaller(
   // pay an outbound request — and run CONCURRENTLY: serialized, a batch that
   // both stamps locality collections and completes a plan item could spend both
   // budgets back to back before the lock is even taken.
-  const wantsCatalog = !!loadCatalog && localityCollectionLists(writeOps).length > 0;
+  const wantsCatalog = !!loadCatalog && (localityCollectionLists(writeOps).length > 0 || hasLocalityAppend(writeOps));
   const wantsSearchable = !!loadFulltextSearchable && touchesTerminalPlanItem(writeOps);
   const [collectionCatalog, fulltextSearchable] = await Promise.all([
     wantsCatalog ? readCatalog(loadCatalog!) : Promise.resolve(undefined),
@@ -13071,6 +13157,7 @@ export async function researchAppend(
     }
     const guideErrors = expandGuideSections(ops, research, fmt);
     if (guideErrors.length > 0) return fail(boundErrors(guideErrors));
+    normalizeLocalityRegistration(ops);
 
     let retracted = new Set<string>();
     if (options.retireAssertions) {

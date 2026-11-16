@@ -2187,8 +2187,24 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   429 pause, `isFsBudgetExhausted`) is a refusal, not a failed read: it is rethrown,
   so the call fails with that error and nothing is written, as for an assertion's
   geocode.
+- **The whole list.** After the stamp, a `localities` append gains every catalog
+  collection for its place that it did not send (`fillLocalityCollections`), as
+  `{ id, title, date_range, person_count, record_count }`, after the rows it sent.
+  The place's collections are the ones `collections_search` lists: titles holding
+  the scope `standardPlaceToCollectionsQuery` derives from the entry's `place`,
+  else from the first `jurisdictions[].name` whose scope matches a title. At most
+  `LOCALITY_COLLECTIONS_FILL_MAX` (150) rows in all; the largest list in 18
+  surveyed places was 65. One warning says what was added:
+  > `localities collections: added the <n> other FamilySearch collections for "<scope>" from the catalog, after the <m> sent`
+
+  Nothing is added, and nothing is said, on an update, when the catalog cannot be
+  read, when no title holds the scope, or when the entry already holds them all.
+  **Why:** locality-guide copied about a third of what `collections_search`
+  returned (109 of 331 rows over 17 real places), and research-plan plans from this
+  list without its own search, so a collection left out was hidden from the plan.
 - **When the catalog is read.** Once per call, in `researchAppendFromCaller`, before
-  the project lock, and only when the call carries a `localities` collection. A cold
+  the project lock, and only when the call appends a `localities` entry or carries a
+  `localities` collection. A cold
   read can run past 30 seconds (2 of 51 in the committed e2e run logs took 33 and 36,
   collections-search-tool-spec "Timeout") and Cowork's bridge aborts a call at 60, so
   the write waits at most 20 seconds; a read still running then goes on and fills
@@ -2402,6 +2418,22 @@ saved.
   drops one of `LOCALITY_GUIDE_HEADINGS`, when its `## ` and `### ` headings differ
   from `LOCALITY_GUIDE_OUTLINE` in title or order, or when the eval validator's title
   tuple differs from `LOCALITY_GUIDE_HEADINGS`.
+
+**A locality's registration levels.** `registration_start[].level` is a closed list,
+and the agent writes it with a note in brackets (`national (GRO)`), as two levels
+joined (`county/town`) or in a `-wide` form (`statewide`). Each was a refused append
+of a 6,000-character entry: 24 of the 90 saving runs of the unit suite, and three of
+four one-turn runs on real places. So before validation, on an append's `entry` and
+an update's `fields` (`normalizeRegistrationStart`, `utils/registration-level.ts`):
+
+- The levels a value names are the list words in its text outside brackets;
+  `statewide` reads as `state` and `nationwide` as `national`.
+- A value naming one or more becomes one row per level, each a copy of the row.
+- The value as written is kept in the row's `note` when it said more than the
+  levels, unless the row already has a note.
+- A value naming none is left as sent and refused by the validator with the list.
+  A list word inside the brackets names nothing: `non-Catholic civil registry
+  (parallel to parish)` is refused, not saved as `parish`.
 
 **Decision: the tool takes sections, the agent body does not ask for care** (lead,
 2026-11-15). How much text one call carries can be decided at the writer, so ADR-0011

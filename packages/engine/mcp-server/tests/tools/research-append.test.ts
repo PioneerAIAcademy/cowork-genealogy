@@ -19307,6 +19307,57 @@ describe("research_append: a localities guide is saved one section per call (#45
     expect(refused.ok).toBe(false);
     expect(loader).toHaveBeenCalledTimes(1);
   });
+
+  const reg = (level: unknown, extra: Record<string, unknown> = {}) => ({
+    event: "birth", level, year: 1852, source_url: "https://www.familysearch.org/en/wiki/Kentucky_Vital_Records", ...extra,
+  });
+
+  it("an append reads a level with a note, two joined levels and a -wide form into the list, and saves", async () => {
+    await writeProject();
+    const r = await append({ registration_start: [reg("national (GRO)"), reg("county/town"), reg("statewide")] });
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).localities[0].registration_start).toEqual([
+      reg("national", { note: "national (GRO)" }),
+      reg("county"),
+      reg("town"),
+      reg("state"),
+    ]);
+  });
+
+  it("an update of registration_start reads its levels the same way", async () => {
+    await writeProject();
+    await append();
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { registration_start: [reg("county (Philadelphia only)")] },
+    });
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).localities[0].registration_start).toEqual([
+      reg("county", { note: "county (Philadelphia only)" }),
+    ]);
+  });
+
+  it("still refuses a level that names none in the list, with the list in the message", async () => {
+    await writeProject();
+    const r = await append({ registration_start: [reg("non-Catholic civil registry (parallel to parish)")] });
+    expect(r.ok).toBe(false);
+    expect(refusals(r)[0]).toContain("is not a valid registration_level");
+    expect(refusals(r)[0]).toContain("province");
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+
+  it("accepts province, district and municipality as written", async () => {
+    await writeProject();
+    const r = await append({ registration_start: [reg("province"), reg("district"), reg("municipality")] });
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses a registration_start note that is not a string", async () => {
+    await writeProject();
+    const r = await append({ registration_start: [reg("state", { note: 7 })] });
+    expect(r.ok).toBe(false);
+    expect(refusals(r)[0]).toContain("note must be a string");
+  });
 });
 
 // The engine and the eval grader must agree on every shape, or a guide the tool
