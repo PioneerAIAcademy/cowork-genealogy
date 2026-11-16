@@ -32,11 +32,21 @@ import { connectorSignInUrl } from "../auth/config.js";
 import { connectorSession } from "../utils/session-check.js";
 import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
+import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
+import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
+import { readStartingTree } from "../utils/starting-tree.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
+/** The closed set of extra lists `include` may name. Open PR #4497 adds
+ *  "persons" and "sources" to the same list; whichever lands second merges the
+ *  values. */
+export const PROJECT_CONTEXT_INCLUDE = ["status"] as const;
+export type ProjectContextInclude = (typeof PROJECT_CONTEXT_INCLUDE)[number];
+
 export interface ProjectContextInput {
   projectPath: string;
+  include?: ProjectContextInclude[];
 }
 
 /** `row` without the keys whose value is null, "" or []: in this answer an
@@ -245,6 +255,8 @@ export type ProjectContextResult =
        *  kind checks it is listed, so a newer body on an older engine keeps
        *  today's behaviour instead of having its write refused. */
       claimKinds: string[];
+      owedFindings?: OwedFinding[];
+      status?: StatusRow[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent also when
@@ -292,6 +304,14 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // Primary surface for "which build is this?" — 8 skills call project_context,
   // 0 call auth_status — so it rides on every return branch, no-project included.
   const buildId = readBuildInfo().version;
+  // `include` is a closed list: an unknown value is a clear error, not a silent no-op.
+  if (
+    input.include !== undefined &&
+    (!Array.isArray(input.include) ||
+      !input.include.every((v) => (PROJECT_CONTEXT_INCLUDE as readonly string[]).includes(v)))
+  ) {
+    return { ok: false, errors: [`include must be an array of: ${PROJECT_CONTEXT_INCLUDE.join(", ")}.`], buildId };
+  }
   let research: any;
   let tree: any;
   try {
@@ -426,6 +446,14 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       omitEmpty({ id, question: questionText.get(id) ?? "", ...rest }, ["nextStep"]) as ProjectContextQuestionStatus,
   );
 
+  // Decision 33: what the project still owes. Before questionStatuses in the
+  // answer, so a reader scoping to that array by its key does not take these
+  // items' own `nextStep` for a question's.
+  const owed = owedFindings(research, tree);
+  const status = input.include?.includes("status")
+    ? conclusionStatus(research, tree, await readStartingTree(input.projectPath))
+    : undefined;
+
   const awaitingUser = awaitingUserHandOffs(research?.log).map((row) => omitEmpty(row) as ProjectContextAwaitingUser);
   const waiting = await waitingPages(input.projectPath, research);
 
@@ -476,7 +504,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       : []
     ).filter((x: unknown): x is string => typeof x === "string"),
     openQuestions,
+    owedFindings: owed,
     questionStatuses,
+    ...(status ? { status } : {}),
     persons,
     sources,
     localities,
@@ -610,6 +640,11 @@ export const projectContextSchema = {
     "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
     "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +
     "claimKinds lists the proof_summaries claim kinds this engine accepts. " +
+    "owedFindings [{kind, ref, personIds, nextStep, blocksCompletion}] lists what the project still owes, in " +
+    "order: extract (a positive search with nothing extracted), conclude (a question with tied assertions and no " +
+    "proof summary), hypothesis (a supported hypothesis with no summary), encode (a likely claim no tree object " +
+    "carries), then the advisory raise, claims and frame. With include: [\"status\"], status lists every tree fact " +
+    "and relationship with its status read from claims. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
@@ -626,6 +661,14 @@ export const projectContextSchema = {
       projectPath: {
         type: "string",
         description: "Absolute path to the project directory holding research.json and tree.gedcomx.json.",
+      },
+      include: {
+        type: "array",
+        items: { type: "string", enum: [...PROJECT_CONTEXT_INCLUDE] },
+        description:
+          'Optional closed list naming extra lists to return. "status": every tree fact and relationship with ' +
+          "its status read from proof-summary claims (well established, likely, tentative, ruled out, set aside, " +
+          "from your starting tree, found in a record, …).",
       },
     },
     required: ["projectPath"],

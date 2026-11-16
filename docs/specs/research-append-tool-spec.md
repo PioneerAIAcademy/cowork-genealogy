@@ -1498,12 +1498,25 @@ that did nothing.
 ### 5.2 Tree-encoding completion advisory (warning, not a precondition)
 
 A **warning** — never a rejection — emitted on the successful write that sets
-`project.status: "completed"`, when the completed project holds a
-tier-≥-`probable` proof summary but **none** of the tree persons its evidence
-touches gained any new fact or relationship since the project's opening tree. It
-rides `validation.warnings` and never touches `ok`. Implemented as
-`treeEncodingCompletionWarnings` in `research-append.ts`, using the `tree_diff`
-tool against the write-once `starting-tree.gedcomx.json` baseline.
+`project.status: "completed"`. It rides `validation.warnings` and never touches
+`ok`. Two arms:
+
+- **Owed findings (Decision 33 of `docs/plan/conclusion-tree.md`).** Each owed
+  item that blocks completion (`conclude`: a question with tied assertions and no
+  summary; `hypothesis`: a supported hypothesis with no summary) and each `encode`
+  item (an affirmed claim at `probable` or better that no tree object carries by
+  Decision 31's join) becomes one warning, from `src/utils/owed-findings.ts`, the
+  same list `project_context.owedFindings` serves. Over the 181 completed
+  committed e2e runs, 0 carry a blocking item; on the 3 whose summaries carry
+  claims, `encode` fires 0 times (`dev/replay-owed-findings.ts`).
+- **The legacy shape match, for claim-less summaries only.** When a
+  tier-≥-`probable` proof summary that states **no claims** has evidence persons
+  none of whom gained any new fact or relationship since the opening tree, it
+  warns. Implemented as `treeEncodingCompletionWarnings` in `research-append.ts`,
+  using the `tree_diff` tool against the write-once `starting-tree.gedcomx.json`
+  baseline. A summary that states claims is judged by `encode` instead. This arm
+  is Decision 24's legacy reading and stays until Stage 1b's part 4 bodies write
+  claims, when it is removed.
 
 - **Why a baseline file.** `research_append` loads only the *current* tree, so it
   cannot tell a conclusion this session encoded from a fact already seeded. The

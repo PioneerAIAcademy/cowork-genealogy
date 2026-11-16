@@ -215,6 +215,18 @@ export function claimGrounding(claim: any, research: any, summaries: readonly an
   return groundingShortfall(claim, new Evidence(research, summaries));
 }
 
+/** The persons rule 7 finds the claim does not reach: each named person no cited
+ *  assertion links, or, for a fact whose value persona is tied to no subject, that
+ *  subject. Empty when the claim is grounded. The status lookup names them. */
+export function claimUngroundedPersons(claim: any, research: any, summaries: readonly any[] = []): string[] {
+  const ev = new Evidence(research, summaries);
+  if (groundingShortfall(claim, ev) === null) return [];
+  const cited = citedIds(claim).filter((id) => ev.assertions.has(id));
+  const linked = ev.linkedFrom(cited);
+  const unlinked = (isDenied(claim) ? denialAnchors(claim) : namedPersons(claim)).filter((p) => !linked.has(p));
+  return unlinked.length > 0 ? unlinked : namedPersons(claim);
+}
+
 /** Rule 7's verdict on one claim: null when grounded, else why it would stand at possible. */
 function groundingShortfall(claim: any, ev: Evidence): string | null {
   const kind = claimKind(claim);

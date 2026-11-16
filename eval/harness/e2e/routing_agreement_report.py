@@ -124,7 +124,20 @@ def next_step_unit(text: str) -> str:
 
 
 def next_steps(response_summary: str) -> list[str]:
-    """Each non-null nextStep in a project_context summary, as a unit."""
+    """Each non-null nextStep of ``questionStatuses`` in a project_context
+    summary, as a unit.
+
+    The summary may be truncated, so it is read by regex, not parsed. Only the
+    text from the ``"questionStatuses":`` key on is scanned: ``owedFindings``
+    (Decision 33) carries its own ``nextStep`` keys and comes before it in the
+    answer, so a scan of the whole summary would count an owed item as a
+    question's step. A summary with no ``questionStatuses`` key (one written
+    before owed findings existed, or cut before the key) is scanned whole, as it
+    always was.
+    """
+    start = response_summary.find('"questionStatuses":')
+    if start != -1:
+        response_summary = response_summary[start:]
     out = []
     for m in NEXT_STEP_RE.finditer(response_summary):
         if m.group(1) == "null":

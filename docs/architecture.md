@@ -294,8 +294,9 @@ how to word it:
 > **Direction.** Both gates the §4 law named moved into the tool: the
 > **mentor gate** as a refusal — since removed, with gps-mentor off the default
 > `/research` path — and the **tree-encoding gate** as a warning on
-> `opWarnings`, which diffs the final tree against a write-once
-> `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
+> `opWarnings`: owed findings (an `encode` item for a likely claim no tree object
+> carries) plus, for a summary with no claims, a diff of the final tree against a
+> write-once `starting-tree.gedcomx.json` baseline. It ships warn-only rather than as a
 > refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
 > hard-block correct work when a wrong refusal has no override). **If you are
 > adding a new cross-turn invariant, do not add it as prose.** If it cannot be

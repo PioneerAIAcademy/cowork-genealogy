@@ -142,6 +142,7 @@ import type { FulltextSearchableLoader } from "../types/volume-search.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 import { claimRuleFindings, questionCapFindings } from "../validation/claim-rules.js";
+import { owedFindings } from "../utils/owed-findings.js";
 import { applyRuleMode, ruleMode, summaryConcern } from "../validation/rule-modes.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
@@ -7945,6 +7946,10 @@ function treeEncodingCompletionWarnings(
   const warnings: string[] = [];
   for (const ps of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
     if (!ps || (ps.tier !== "proved" && ps.tier !== "probable")) continue;
+    // A summary that states claims is judged claim by claim (owed `encode`
+    // items); this shape match is Decision 24's legacy reading of one that does
+    // not, kept until Stage 1b's part 4 bodies write claims.
+    if (Array.isArray(ps.claims) && ps.claims.length > 0) continue;
     const supporting = new Set(
       Array.isArray(ps.supporting_assertion_ids) ? ps.supporting_assertion_ids : [],
     );
@@ -7963,6 +7968,16 @@ function treeEncodingCompletionWarnings(
     );
   }
   return warnings;
+}
+
+/** Decision 33: completing a project while it still owes a blocking finding (a
+ *  question with tied assertions and no summary; a supported hypothesis with no
+ *  summary), or an `encode` item (a likely claim no tree object carries), warns.
+ *  It never refuses until Stage 1c measures the rate. */
+function owedCompletionWarnings(research: any, tree: SimplifiedGedcomX): string[] {
+  return owedFindings(research, tree)
+    .filter((f) => f.blocksCompletion || f.kind === "encode")
+    .map((f) => `the project is completed while it still owes ${f.kind} ${f.ref}: ${f.nextStep}.`);
 }
 
 /** Next `<prefix>NNN` id (max + 1, zero-padded to 3) for a research section.
@@ -13083,8 +13098,10 @@ export async function researchAppend(
     );
     let treeEncodingWarnings: string[] = [];
     if (completingNow) {
-      const startingTree = await readStartingTree(projectPath);
-      treeEncodingWarnings = treeEncodingCompletionWarnings(research, tree, startingTree);
+      treeEncodingWarnings = [
+        ...treeEncodingCompletionWarnings(research, tree, prep.startingTree ?? null),
+        ...owedCompletionWarnings(research, tree),
+      ];
     }
 
     // A planned next action unlikely to be usable: a jurisdiction outside every

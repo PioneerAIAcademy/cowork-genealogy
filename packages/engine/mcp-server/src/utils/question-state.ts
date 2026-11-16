@@ -32,10 +32,11 @@
  * gate's population to within two runs.
  */
 
+import { owedFindings, type OwedFinding } from "./owed-findings.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
 import { disputeGroups, disputeGroupKey } from "./page-disputes.js";
 import { countsForLinkedRung } from "./tree-person.js";
-import { isLiveAssertion } from "./assertion-liveness.js";
+import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 
 export type QuestionState =
@@ -658,15 +659,29 @@ export function endsOnConflict(summary: any, lastSearched: number): boolean {
  * question with a proof summary is `concluded` even if its plan is thin,
  * because the artifact is what any downstream check joins on.
  */
+/** This question's owed items of one kind: `encode` items on its summaries, or
+ *  `hypothesis` items on hypotheses that relate to it. */
+function owedFor(research: any, tree: any, qid: unknown, summaries: any[], kind: "encode" | "hypothesis"): OwedFinding[] {
+  const owed = owedFindings(research, tree).filter((f) => f.kind === kind);
+  if (kind === "encode") {
+    const ids = new Set(summaries.map((s) => `${s?.id}/`));
+    return owed.filter((f) => [...ids].some((prefix) => f.ref.startsWith(prefix)));
+  }
+  const related = new Set(
+    arr(research?.hypotheses)
+      .filter((h) => arr(h?.related_question_ids).includes(qid))
+      .map((h) => h?.id),
+  );
+  return owed.filter((f) => related.has(f.ref));
+}
+
 export function questionStatus(research: any, question: any, tree: any = null): QuestionStatus {
   const qid = question?.id;
 
   const plans = arr(research?.plans).filter((p) => p?.question_id === qid);
   const itemIds = new Set(plans.flatMap((p) => arr(p?.items).map((i) => i?.id)));
   const logs = arr(research?.log).filter((e) => itemIds.has(e?.plan_item_id));
-  const assertions = arr(research?.assertions).filter((a) =>
-    isLiveAssertion(a) && arr(a?.extracted_for_question_ids).includes(qid),
-  );
+  const assertions = questionAssertions(research, qid);
   const assertionIds = new Set(assertions.map((a) => a?.id));
   const summaries = arr(research?.proof_summaries).filter((s) => s?.question_id === qid);
 
@@ -773,6 +788,16 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     nextStep = `researcher's choice: research-plan or proof-conclusion (default ${
       lowOverturnRisk(question) ? "proof-conclusion" : "research-plan"
     })`;
+  } else if (tree && owedFor(research, tree, qid, summaries, "encode").length > 0) {
+    // A claim affirmed at probable or better that no tree object carries
+    // (Decision 33's `encode`): proof-conclusion encodes it. Above the concluded
+    // and blocked arms, so a resolved question still reports it. Skipped with no
+    // tree, as competingParentSets is: a tree-less reader cannot tell.
+    nextStep = owedFor(research, tree, qid, summaries, "encode")[0].nextStep;
+  } else if (summaries.length === 0 && owedFor(research, tree, qid, summaries, "hypothesis").length > 0) {
+    // A supported hypothesis on this question with no summary yet: concluding it
+    // is the next step, not more searching.
+    nextStep = owedFor(research, tree, qid, summaries, "hypothesis")[0].nextStep;
   } else if (summaries.length > 0 && !resolved) {
     // A summary on a question still open was written while the preconditions
     // gate blocked the conclusion: proof-conclusion resolves the question it
