@@ -62,10 +62,13 @@ shape: `returned_count` is 1 and finalize recomputes it as usual. The engine exp
 separately — `STAGING_SEARCH_TOOLS` (the two above) and `STAGING_CAPABLE_TOOLS` (every producer)
 — and the eval mock's search notes mirror the SEARCH set (`eval/CLAUDE.md`, "Eval vs production parity").
 **Every nag stays on the search set:** the nil-search note, the unlogged-search note (the reader
-skips an acquisition file) and `research_log_append`'s retained-none warning (§6). Record-extraction
-logs an upload as `user_provided` and a `record_read` with no `stagedResultsRef`, so an acquisition
-file never pairs with a log entry, and a nag on it would tell the model to undo a correctly logged
-read. An acquisition file that is never finalized is removed by the TTL prune like any other.
+skips an acquisition file) and `research_log_append`'s retained-none warning (§6). An acquisition
+file is finalized by the extraction that uses it: `extraction_append` logs each `record_read` and
+each `image_transcribe` page it extracts with that read's own `stagedResultsRef`, and a document
+it has no staged page for as `user_provided`, so a nag on a file not yet logged would tell the model to log a
+read the extraction logs itself. An `image_transcribe` entry logged without its staged ref is
+refused (§6.1). An acquisition file that is never finalized is removed by the TTL prune like any
+other.
 
 **A third acquisition producer, `person_read`** (given a `projectPath`), stages the tree read
 it returns. It is in `STAGING_CAPABLE_TOOLS` only, never `STAGING_SEARCH_TOOLS`,
@@ -315,6 +318,53 @@ The eval mock echoes the call's arguments into `query` for these two tools
 rather than serving a fixture's recorded query, so the unit harness stages the
 same ground truth production does.
 
+### 6.1 An image entry with no staged page
+
+`research_log_append` refuses two image-tool entries that no image call can stand
+behind. Both refusals run for every op before any op is applied, right
+after the already-logged check and before the required-fields check, so a mislabelled
+entry is not first asked to fill fields it is about to lose. A batch with one is
+refused whole and writes nothing.
+
+- **`image_transcribe` with no `stagedResultsRef`** (absent, `null`, or the string
+  `"null"`). `image_transcribe` stages the page it reads whenever it is given a
+  project (§2), so a genuine entry carries the ref that call returned. One without it
+  is a reading no image tool made (the researcher's own, or the main thread's look at
+  an upload with `Read`, as a tester's `log_113` was), a summary of several
+  pages, or a call made without `projectPath`. **Exempt:** an entry logged
+  `outcome: "error"` whose `resultsExamined` is `0`: a call that failed (a 403, a
+  timeout, the image cap) read and staged nothing, so no ref can exist, and the entry
+  records a real attempt. An `error` entry that claims a page was examined is refused.
+- **`image_read` whose `query` names a `file`** (as an object, or a JSON string of
+  one), whatever the outcome. `image_read` takes no `file`, so such an entry is always
+  a mislabelled upload.
+
+**Why `image_read` is otherwise unchecked.** It stages nothing, and nothing it writes
+can prove a call happened. Its only persisted trace is `results/image-browse.jsonl`
+(`recordImageBrowse`), which is best-effort, records only the first tool to read an
+image, and is keyed by DGS image id; `dgsImageId()` returns `undefined` for a `3:1`
+ARK, so a check against it would refuse every genuine ARK-based `image_read`.
+Refusing every `image_read` entry was rejected: a genuine one is a real tool call and
+is legitimate to log.
+
+**The refusal names the remedy.** A reading no image tool made is logged as
+`tool: "user_provided"`. A page `image_transcribe` read is logged with the
+`staged.resultsRef` that call returned, and when it returned none (no `projectPath`,
+or a staging failure, `staged: null` with a `stagingError`), by calling it again with
+`projectPath`. For an entry shaped as a browse (a `query` key among `imageIds`,
+`imageGroupNumber`, `imageRange`, `pagesAttempted`, `imagesExamined`,
+`imageIdsExamined`, or `resultsExamined` above 1) it adds that a browse across several
+pages, or one the image cap stopped, is logged as `tool: "image_search"`, as
+search-images logs one. The text never suggests `image_read`, and offers
+`image_search` only to a browse: both are unchecked, so naming one to a single-page
+reading would teach the model to log the same reading under it.
+
+**Write-time only.** `validate_research_schema` does not check this. Committed
+fixtures carry entries the rule would now refuse (five `image_transcribe` entries
+with no `results_ref`, by a walk of `log[]` across `eval/**/research.json`), and a
+validator rule would red them. What the rule refused in the committed runs:
+`guardrail-enforcement-spec.md` §4.
+
 ---
 
 ## 7. Lifecycle & cleanup
@@ -421,6 +471,13 @@ output change.
   `stageSearchResults`; a fresh one is kept.
 - **Staging failure is non-fatal** — an unwritable `results/` yields results +
   `staged: null` + note, not a tool error.
+- **An image entry with no staged page (§6.1)**: `research-log-append.test.ts`,
+  "an image-tool entry with no image call behind it". An unstaged
+  `image_transcribe` entry is refused, singly, in a batch and with the ref `"null"`,
+  and the message names `user_provided` and neither unchecked tool; a browse shape is
+  told `image_search`; a failed call (`error`, 0 examined) passes and an `error`
+  entry with a page examined does not; an `image_read` naming a `file` is refused and
+  one keyed by its ARK passes.
 
 ---
 

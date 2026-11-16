@@ -2040,6 +2040,63 @@ function fillStagedSearchCounts(
   }
 }
 
+const USER_PROVIDED_REMEDY =
+  "A reading no image tool made (the researcher's own, or one made with `Read` on an upload) is " +
+  'logged as `tool: "user_provided"`.';
+
+/** `query` keys of a log entry that stands for more than one page. */
+const BROWSE_QUERY_KEYS = ["imageIds", "imageGroupNumber", "imageRange", "pagesAttempted", "imagesExamined", "imageIdsExamined"];
+
+/** The logged `query` as a plain object, read as `applyLogAppendOp` reads it, or null. */
+function queryObject(query: unknown): Record<string, unknown> | null {
+  const q = coerceJsonArg(query);
+  return q !== null && typeof q === "object" && !Array.isArray(q) ? (q as Record<string, unknown>) : null;
+}
+
+/**
+ * Refuse an image-tool entry no image call stands behind (issue #4581).
+ * `image_transcribe` stages the page it reads whenever it has a project, so a
+ * genuine entry carries the ref that call returned; one without it is a reading
+ * no tool made, a browse summary, or a call made without `projectPath`. A failed
+ * call reads and stages nothing, so an `error` entry that examined nothing
+ * passes; an absent count is left to `preflightRequiredFields` to ask for.
+ * `image_read` stages nothing and leaves no trace that proves a call, so it is
+ * refused only where it cannot be genuine: it takes no `file`. The messages
+ * offer neither unchecked tool for a single-page reading, since a refused
+ * reading would come back relabelled under it; `image_search` is named only
+ * for an entry shaped as a browse. Runs before the other preflights, so a
+ * mislabelled op is not first asked to fill fields for an entry it must relabel.
+ */
+function preflightImageToolEntry(op: ResearchLogAppendOp): void {
+  if (op.tool === "image_transcribe" && typeof asNull(op.stagedResultsRef) !== "string") {
+    const examined = coerceJsonArg(op.resultsExamined);
+    const failedCall = op.outcome === "error";
+    if (failedCall && (examined === 0 || examined === undefined || examined === null)) return;
+    const q = queryObject(op.query);
+    const browse = (typeof examined === "number" && examined > 1) || BROWSE_QUERY_KEYS.some((k) => q?.[k] !== undefined);
+    throw new LogAppendError(
+      "an `image_transcribe` entry needs the `stagedResultsRef` its call returned: without it the log " +
+        `cannot show the page was machine-read. ${USER_PROVIDED_REMEDY} A page \`image_transcribe\` read ` +
+        "is logged with the `staged.resultsRef` that call returned; if it returned none, call " +
+        "`image_transcribe` again with `projectPath` and pass the `staged.resultsRef` it returns." +
+        (browse
+          ? ' A browse across several pages, or one the image cap stopped, is logged as `tool: "image_search"`.'
+          : "") +
+        (failedCall ? ' A call that failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`.' : ""),
+    );
+  }
+  if (op.tool === "image_read") {
+    const file = queryObject(op.query)?.file;
+    if (file === undefined || file === null) return;
+    throw new LogAppendError(
+      "`image_read` takes no `file`, so an entry whose `query` names one records a reading of an upload " +
+        `that no image tool made. ${USER_PROVIDED_REMEDY} To machine-read the upload, call ` +
+        '`image_transcribe` with `projectPath` and that `file`, then log it as `tool: "image_transcribe"` ' +
+        "with the `staged.resultsRef` it returns.",
+    );
+  }
+}
+
 /**
  * Fill an omitted `tool` from the staged envelope, then refuse once naming every
  * required field still missing. Runs first, so every later preflight sees the
@@ -2650,6 +2707,7 @@ export async function researchLogAppend(
             logged.set(i, found);
             continue;
           }
+          preflightImageToolEntry(input.ops[i]);
           await preflightRequiredFields(input.ops[i], projectPath);
           const staged = await preflightStagedRef(input.ops[i], projectPath);
           if (staged) stagedChecks.set(i, staged);
@@ -2744,6 +2802,7 @@ export async function researchLogAppend(
       const prior = alreadyLoggedResult(found, "stagedResultsRef");
       return { ok: true, ...prior, filesWritten: [], validation: { valid: true, warnings: opWarnings } };
     }
+    preflightImageToolEntry(singleOp);
     await preflightRequiredFields(singleOp, projectPath);
     const singleStaged = await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
@@ -2905,7 +2964,8 @@ export const researchLogAppendSchema = {
         type: ["string", "null"],
         description:
           "The `staged.resultsRef` handle returned by record_search / fulltext_search " +
-          "(when called with projectPath). Omit/null for nil and external-site searches.",
+          "(when called with projectPath). Omit/null for nil and external-site searches. An " +
+          "`image_transcribe` entry for a page it read needs the `staged.resultsRef` that call returned.",
       },
       ops: {
         type: "array",

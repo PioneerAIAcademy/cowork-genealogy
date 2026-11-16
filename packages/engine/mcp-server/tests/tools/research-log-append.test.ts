@@ -426,6 +426,153 @@ describe("research_log_append", () => {
     expect(await exists(handle!.resultsRef)).toBe(false); // consumed
   });
 
+  describe("an image-tool entry with no image call behind it (#4581)", () => {
+    // The log_113 shape: the main thread read an uploaded crop itself with `Read`
+    // and logged that reading as an image_transcribe call that never happened.
+    const unstagedTranscribe = {
+      tool: "image_transcribe",
+      query: { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    };
+    const errorsOf = (result: Awaited<ReturnType<typeof researchLogAppend>>) =>
+      result.ok ? [] : result.errors;
+
+    it("refuses an image_transcribe entry with no staged ref (the log_113 shape)", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe });
+      expect(result.ok).toBe(false);
+      const [message] = errorsOf(result);
+      expect(message).toMatch(/needs the `stagedResultsRef` its call returned/);
+      expect(message).toMatch(/tool: "user_provided"/);
+      expect(message).toMatch(/staged\.resultsRef/);
+      expect(message).not.toMatch(/image_read/);
+      expect(message).not.toMatch(/image_search/);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it('refuses it when stagedResultsRef is the string "null"', async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, stagedResultsRef: "null" });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/needs the `stagedResultsRef` its call returned/);
+    });
+
+    it("refuses it in a batch before any op is applied, and keeps the sibling's staged file", async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Tyler" }, results: [{ recordId: "A" }] },
+      });
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: handle!.resultsRef } as any,
+          unstagedTranscribe,
+        ],
+      });
+      expect(result.ok).toBe(false);
+      const errors = errorsOf(result);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(/^ops\[1\]: an `image_transcribe` entry needs/);
+      expect((await readJson("research.json")).log).toEqual([]);
+      expect(await exists(handle!.resultsRef)).toBe(true);
+    });
+
+    it("refuses a multi-page browse summary logged as image_transcribe, naming image_search", async () => {
+      // The committed e2e shapes: a cap-stopped browse, an imageIds summary, and
+      // one ARK standing for several pages examined.
+      for (const [query, resultsExamined] of [
+        [{ imageGroupNumber: "100881427", pagesAttempted: "650-712" }, 0],
+        [{ imageIds: ["007226375_00231", "007226375_00232"] }, 2],
+        [{ imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" }, 5],
+      ] as const) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          tool: "image_transcribe",
+          query,
+          outcome: "partial",
+          resultsExamined,
+          planItemId: null,
+        });
+        expect(result.ok).toBe(false);
+        expect(errorsOf(result)[0]).toMatch(/several pages, or one the image cap stopped, is logged as `tool: "image_search"`/);
+      }
+    });
+
+    it("accepts a failed image_transcribe call logged as an error that examined nothing", async () => {
+      for (const resultsExamined of [0, "0"] as const) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          ...unstagedTranscribe,
+          outcome: "error",
+          resultsExamined: resultsExamined as any,
+          notes: "403 Forbidden: the image is restricted.",
+        });
+        expect(result.ok).toBe(true);
+        expect((await readJson("research.json")).log[0].tool).toBe("image_transcribe");
+      }
+    });
+
+    it("refuses an error entry that claims it examined a page, naming the failed-call shape", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, outcome: "error", resultsExamined: 1 });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`/);
+    });
+
+    it("leaves a missing resultsExamined on an error entry to the required-fields check", async () => {
+      await writeProject(baseResearch());
+      const { resultsExamined: _omitted, ...rest } = unstagedTranscribe;
+      const result = await researchLogAppend({ projectPath: dir, ...rest, outcome: "error" } as any);
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/missing required field `resultsExamined`/);
+    });
+
+    it("refuses an image_read entry whose query names an uploaded file, as an object or a JSON string", async () => {
+      for (const query of [{ file: "uploads/x.jpg" }, JSON.stringify({ file: "uploads/x.jpg" })]) {
+        for (const outcome of ["positive", "error"]) {
+          await writeProject(baseResearch());
+          const result = await researchLogAppend({
+            projectPath: dir,
+            tool: "image_read",
+            query,
+            outcome,
+            resultsExamined: outcome === "error" ? 0 : 1,
+            planItemId: null,
+          });
+          expect(result.ok).toBe(false);
+          const [message] = errorsOf(result);
+          expect(message).toMatch(/`image_read` takes no `file`/);
+          expect(message).toMatch(/tool: "user_provided"/);
+          expect((await readJson("research.json")).log).toEqual([]);
+        }
+      }
+    });
+
+    it("accepts an image_read entry keyed by its image ARK, with no file or a null one", async () => {
+      for (const query of [
+        { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" },
+        { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123", file: null },
+      ]) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          tool: "image_read",
+          query,
+          outcome: "positive",
+          resultsExamined: 1,
+          planItemId: null,
+        });
+        expect(result.ok).toBe(true);
+      }
+    });
+  });
+
   it("prefers an explicit `query` over the staged payload's echo", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({
@@ -1508,24 +1655,21 @@ describe("research_log_append", () => {
       expect(warnOf(result)).not.toMatch(/retained none/);
     });
 
-    it("does not warn for image_transcribe or record_read — record-extraction logs both without a stagedResultsRef by instruction", async () => {
-      for (const [tool, query] of [
-        ["image_transcribe", { imageArk: "ark:/61903/3:1:XXXX-XXX" }],
-        ["record_read", { recordId: "ark:/61903/1:1:XXXX-XXX" }],
-      ] as const) {
-        await writeProject(baseResearch());
-        const result = await researchLogAppend({
-          projectPath: dir,
-          tool,
-          query,
-          outcome: "positive",
-          resultsExamined: 1,
-          resultsAvailable: 1,
-          planItemId: null,
-        });
-        expect(result.ok).toBe(true);
-        expect(warnOf(result)).not.toMatch(/retained none/);
-      }
+    it("does not warn for a record_read logged without a stagedResultsRef", async () => {
+      // Its image_transcribe half moved to the #4581 block below: an unstaged
+      // image_transcribe entry is now refused, not merely left unwarned.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_read",
+        query: { recordId: "ark:/61903/1:1:XXXX-XXX" },
+        outcome: "positive",
+        resultsExamined: 1,
+        resultsAvailable: 1,
+        planItemId: null,
+      });
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
     });
 
     it("(batch) surfaces one warning per offending op", async () => {

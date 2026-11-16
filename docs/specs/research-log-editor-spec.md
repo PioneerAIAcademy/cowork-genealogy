@@ -419,6 +419,8 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | written with `outcome: "positive"`, plus a warning naming the outcome sent — the entry grades the fetch, not the search |
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validateSidecars`, the `"payload has no 'results' array — cannot verify retrieval integrity"` check) |
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
+| `tool === "image_transcribe"` with no `stagedResultsRef` (absent, `null` or `"null"`), unless `outcome: "error"` with `resultsExamined` 0 | input error, raised before any op is applied; write nothing. The message names `tool: "user_provided"` for a reading no image tool made and the `staged.resultsRef` (or a re-run with `projectPath`) for a page `image_transcribe` read, adds `tool: "image_search"` only for an entry shaped as a browse, and never names `image_read`. Rule and reasons: `search-result-staging-spec.md` §6.1 |
+| `tool === "image_read"` whose `query` names a `file` | input error, raised before any op is applied; write nothing. `image_read` takes no `file`, so the entry is a mislabelled upload; the message names `user_provided` and `image_transcribe` with `projectPath` and that `file`. See `search-result-staging-spec.md` §6.1 |
 | `query` is prose rather than an object, on a read-style entry (`record_read`, `image_transcribe`, `image_read`) | **not reached** — the MCP input schema rejects it first. An ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing and the call is refused *before* the tool runs: nothing is logged and the turn is spent. This is why `search-records`' Step 5 prescribes a canonical key per read-style tool (`{"recordId": …}`, `{"recordIds": [...]}`, `{"imageArk": …}`). The mechanism belongs here rather than in the body, per CLAUDE.md's no-explanatory-prose rule; as of 2026-10-03 the body still restates it, and moving it out edits a snapshot input, so it waits on the next paid `search-records` eval release |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
@@ -1160,6 +1162,15 @@ the command that measured it are in `guardrail-enforcement-spec.md`.
   and the empty string. The census check judges the decoded text: a hedged
   escaped table passes and an unhedged one is refused, with or without a
   trailing real newline.
+- **An image entry with no image call behind it (§8)**: refused, with nothing
+  written: an `image_transcribe` entry with no staged ref (singly, in a batch where
+  the sibling's staged file is kept, and with the ref `"null"`), whose message names
+  `user_provided` and neither `image_read` nor `image_search`; a browse shape, whose
+  message names `image_search`; an `error` entry claiming a page examined; and an
+  `image_read` whose `query` names a `file`, as an object or a JSON string. Passes: a
+  staged `image_transcribe`, a failed call logged `error` with 0 examined, and an
+  `image_read` keyed by its ARK. An `error` entry with no count is asked for it by
+  the required-fields check.
 
 ---
 
