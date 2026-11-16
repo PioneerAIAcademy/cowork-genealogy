@@ -705,9 +705,10 @@ rules in `research/SKILL.md` branch on it; find them with
   it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
   run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
   and in an autonomous run". The rules are there so an e2e run never waits on an
-  external-site capture nobody will upload. No check makes the router send the field
-  to search-external-sites (the research unit suite checks it only on person-evidence's spawn),
-  and an agent reads a missing field as `yes`:
+  external-site capture nobody will upload. The research unit suite checks that the router sends
+  the field to search-external-sites on the opening turn of an autonomous run
+  (`ut_research_ue1`, tag `delegates-user-present-no-external`). A spawn later in a
+  run is checked by nothing, and an agent reads a missing field as `yes`:
   `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
   search-external-sites without it, and that plan item stayed `in_progress` waiting
   for a capture.
