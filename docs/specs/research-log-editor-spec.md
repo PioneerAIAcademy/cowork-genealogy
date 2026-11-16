@@ -418,9 +418,9 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `resultsExamined` not a non-negative integer (after coercing a numeric string) | input error; write nothing |
 | `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | written with `outcome: "positive"`, plus a warning naming the outcome sent — the entry grades the fetch, not the search |
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validateSidecars`, the `"payload has no 'results' array — cannot verify retrieval integrity"` check) |
-| `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
-| `tool === "image_transcribe"` with no `stagedResultsRef` (absent, `null` or `"null"`), unless `outcome: "error"` with `resultsExamined` 0 | input error, raised before any op is applied; write nothing. The message names `tool: "user_provided"` for a reading no image tool made and the `staged.resultsRef` (or a re-run with `projectPath`) for a page `image_transcribe` read, adds `tool: "image_search"` only for an entry shaped as a browse, and never names `image_read`. Rule and reasons: `search-result-staging-spec.md` §6.1 |
-| `tool === "image_read"` whose `query` names a `file` | input error, raised before any op is applied; write nothing. `image_read` takes no `file`, so the entry is a mislabelled upload; the message names `user_provided` and `image_transcribe` with `projectPath` and that `file`. See `search-result-staging-spec.md` §6.1 |
+| `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1. Not for an `image_transcribe` page read, which keeps its ref whatever it found (next row) |
+| `tool` is `image_transcribe` (compared trimmed, lower-cased, hyphens as underscores, any `mcp__` or `mcp__<server>__` prefix dropped) with no `stagedResultsRef` (absent, `null` or `"null"`), unless `outcome: "error"` with `resultsExamined` 0 | input error, raised before any op is applied and before the required-fields check; write nothing. The message names `tool: "user_provided"` for a reading no image tool made and the `staged.resultsRef` (or a re-run with `projectPath`) for a page `image_transcribe` read, adds `tool: "image_search"` only for an entry whose `query` lists or spans several pages and names no `file`, and never names `image_read`. A tool named in a variant spelling is also told to name it `image_transcribe`, as the staged file records it. Rule, reasons and what it lets through: `search-result-staging-spec.md` §6.1 |
+| `tool` is `image_read` (compared the same way) and its `query` names a `file` | input error, raised before any op is applied; write nothing. `image_read` takes no `file`, so the entry is a mislabelled upload; the message names `user_provided` and `image_transcribe` with `projectPath` and that `file`. See `search-result-staging-spec.md` §6.1 |
 | `query` is prose rather than an object, on a read-style entry (`record_read`, `image_transcribe`, `image_read`) | **not reached** — the MCP input schema rejects it first. An ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing and the call is refused *before* the tool runs: nothing is logged and the turn is spent. This is why `search-records`' Step 5 prescribes a canonical key per read-style tool (`{"recordId": …}`, `{"recordIds": [...]}`, `{"imageArk": …}`). The mechanism belongs here rather than in the body, per CLAUDE.md's no-explanatory-prose rule; as of 2026-10-03 the body still restates it, and moving it out edits a snapshot input, so it waits on the next paid `search-records` eval release |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
@@ -428,7 +428,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file and no log entry records it — pruned after 24h, never staged, or logged before `staged_ref` existed | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search, or `image_transcribe` for a page |
 | `stagedResultsRef` names no staged file, but a log entry records it as its `staged_ref` (already logged) | not an error: return that entry with `alreadyLogged: true` and a warning naming its id; write nothing for that op |
-| that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it |
+| that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it. The `tool` is compared as the image-entry rows above compare it, so a re-send under a variant spelling of the logged tool is the same entry and returns it. When the logged entry and the new one would both be `image_transcribe`, which needs a ref of its own (row above), the correction is a fresh `image_transcribe` call with `projectPath`, logged with its new ref |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
@@ -1164,13 +1164,17 @@ the command that measured it are in `guardrail-enforcement-spec.md`.
   trailing real newline.
 - **An image entry with no image call behind it (§8)**: refused, with nothing
   written: an `image_transcribe` entry with no staged ref (singly, in a batch where
-  the sibling's staged file is kept, and with the ref `"null"`), whose message names
-  `user_provided` and neither `image_read` nor `image_search`; a browse shape, whose
-  message names `image_search`; an `error` entry claiming a page examined; and an
-  `image_read` whose `query` names a `file`, as an object or a JSON string. Passes: a
-  staged `image_transcribe`, a failed call logged `error` with 0 examined, and an
-  `image_read` keyed by its ARK. An `error` entry with no count is asked for it by
-  the required-fields check.
+  the sibling's staged file is kept, with the ref `null` or `"null"`, under a
+  qualified or variant tool name, and before a missing field is asked for), whose
+  message names `user_provided` and neither `image_read` nor `image_search` unless the
+  `query` lists or spans several pages (a table of shapes pins which do); an `error` entry claiming a page examined; and an `image_read` whose
+  `query` names a `file`, as an object or a JSON string, singly or in a batch.
+  Passes: a staged `image_transcribe`, a failed call logged `error` with 0 examined
+  (which does not clear an unstaged op beside it), and an `image_read` keyed by its
+  ARK. An `error` entry with no count is asked for it by the required-fields check. A
+  differing re-send of a logged page is told to read it again, and that read logs; a
+  re-send under a variant of its own tool name returns the logged entry, and one as
+  `user_provided` gets the ordinary advice.
 
 ---
 

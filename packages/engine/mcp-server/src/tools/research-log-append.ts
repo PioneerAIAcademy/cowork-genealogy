@@ -49,6 +49,7 @@ import {
 import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { arkToBareId } from "../utils/ark.js";
 import { opensHandOff } from "../utils/awaiting-hand-offs.js";
 import {
   collectionKey,
@@ -2044,8 +2045,64 @@ const USER_PROVIDED_REMEDY =
   "A reading no image tool made (the researcher's own, or one made with `Read` on an upload) is " +
   'logged as `tool: "user_provided"`.';
 
-/** `query` keys of a log entry that stands for more than one page. */
-const BROWSE_QUERY_KEYS = ["imageIds", "imageGroupNumber", "imageRange", "pagesAttempted", "imagesExamined", "imageIdsExamined"];
+/** `query` keys that list page ids, or name a span of pages, in a browse entry. */
+const PAGE_KEYS = ["imageIds", "imageIdsExamined", "pagesRead", "imageRange", "imagesExamined", "imagesAttempted", "pagesAttempted"];
+
+const DGS_ID = /^\d+(?:_\d+)*$/;
+/** A bare ARK-style id (prefixes already dropped by `arkToBareId`): hyphen-joined letter-digit groups with a digit. */
+const ARK_STYLE_ID = /^(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)+$/;
+
+/**
+ * A page id, normalized so one page in two spellings compares equal, or null:
+ * a finite number, a DGS-style id (`00033`, `004433380_00033`, each segment
+ * read as a number), or an ARK-style id of letter-digit groups joined by
+ * hyphens with a digit somewhere, in any ARK form `arkToBareId` reads (a bare
+ * id, `3:1:...`, `ark:/61903/3:1:...`, a resolver URL), upper-cased. Words,
+ * file names, upload paths and prose are never one.
+ */
+function pageId(x: unknown): string | null {
+  if (typeof x === "number") return Number.isFinite(x) ? String(x) : null;
+  if (typeof x !== "string") return null;
+  const t = x.trim();
+  if (DGS_ID.test(t)) return t.split("_").map(Number).join("_");
+  const bare = arkToBareId(t);
+  return ARK_STYLE_ID.test(bare) ? bare.toUpperCase() : null;
+}
+
+/**
+ * Whether one `query` value names two or more distinct page ids: a list of them
+ * (JSON text read as one), text whose comma- or semicolon-separated parts are
+ * all page ids, or a whole value that is a range `lo-hi` (hyphen or en dash) of
+ * two DGS-style ids, where `hi` has no `_` or has `lo`'s prefix, and `lo`'s last
+ * segment is below `hi`'s (`650-712`, `004433380_00033-00047`).
+ */
+function namesSeveralPages(value: unknown): boolean {
+  const v = coerceJsonArg(value);
+  const several = (items: unknown[]) => {
+    const ids = items.map(pageId);
+    return ids.length > 1 && ids.every((id) => id !== null) && new Set(ids).size > 1;
+  };
+  if (Array.isArray(v)) return several(v);
+  if (typeof v !== "string") return false;
+  if (several(v.split(/[,;]/).filter((x) => x.trim() !== ""))) return true;
+  const range = /^\s*(\d+(?:_\d+)*)\s*[-\u2013]\s*(\d+(?:_\d+)*)\s*$/.exec(v);
+  if (range === null) return false;
+  const lo = range[1].split("_").map(Number);
+  const hi = range[2].split("_").map(Number);
+  const prefixMatches = hi.length === 1 || hi.slice(0, -1).join("_") === lo.slice(0, -1).join("_");
+  return prefixMatches && lo[lo.length - 1] < hi[hi.length - 1];
+}
+
+/**
+ * Whether a logged `query` lists or spans several pages and names no `file`,
+ * the only entries `imageToolEntryRefusal` offers `image_search`
+ * (search-result-staging-spec.md §6.1). Structural on purpose: a guess from
+ * loose text or from which keys are absent offered it to single readings.
+ */
+function isBrowseQuery(q: Record<string, unknown> | null): boolean {
+  if (q === null || q.file != null) return false;
+  return PAGE_KEYS.some((k) => namesSeveralPages(q[k]));
+}
 
 /** The logged `query` as a plain object, read as `applyLogAppendOp` reads it, or null. */
 function queryObject(query: unknown): Record<string, unknown> | null {
@@ -2054,55 +2111,85 @@ function queryObject(query: unknown): Record<string, unknown> | null {
 }
 
 /**
- * Refuse an image-tool entry no image call stands behind (issue #4581).
- * `image_transcribe` stages the page it reads whenever it has a project, so a
- * genuine entry carries the ref that call returned; one without it is a reading
- * no tool made, a browse summary, or a call made without `projectPath`. A failed
- * call reads and stages nothing, so an `error` entry that examined nothing
- * passes; an absent count is left to `preflightRequiredFields` to ask for.
- * `image_read` stages nothing and leaves no trace that proves a call, so it is
- * refused only where it cannot be genuine: it takes no `file`. The messages
- * offer neither unchecked tool for a single-page reading, since a refused
- * reading would come back relabelled under it; `image_search` is named only
- * for an entry shaped as a browse. Runs before the other preflights, so a
- * mislabelled op is not first asked to fill fields for an entry it must relabel.
+ * A logged `tool` read for comparison: trimmed, case-folded, hyphens as
+ * underscores, and any `mcp__` or `mcp__<server>__` prefix dropped, so the
+ * qualified name a model sees in its own tool list is the same tool. The entry
+ * is persisted as sent; an image entry in a variant spelling can carry no
+ * staged ref anyway (the staged file's tool is compared exactly). Exported for
+ * `dev/measure-image-log-entries.ts`.
  */
-function preflightImageToolEntry(op: ResearchLogAppendOp): void {
-  if (op.tool === "image_transcribe" && typeof asNull(op.stagedResultsRef) !== "string") {
+export function canonicalToolName(tool: unknown): string | undefined {
+  if (typeof tool !== "string") return undefined;
+  return tool.trim().toLowerCase().replace(/^mcp__(?:.+__)?/, "").replace(/-/g, "_");
+}
+
+/**
+ * The refusal for an image-tool entry no image call stands behind, or null
+ * (issue #4581). `image_transcribe` stages the page it reads whenever it has a
+ * project, so a genuine entry carries the ref that call returned; one without
+ * it is a reading no tool made, a browse summary, or a call made without
+ * `projectPath`. A failed call reads and stages nothing, so an `error` entry
+ * that examined nothing passes; an absent count is left to
+ * `preflightRequiredFields` to ask for. `image_read` stages nothing and leaves
+ * no trace that proves a call, so it is refused only where it cannot be
+ * genuine: it takes no `file`. The messages offer neither unchecked tool for a
+ * single-page reading, since a refused reading would come back relabelled under
+ * it; `image_search` is named only for an entry whose `query` stands for
+ * several pages (`isBrowseQuery`). Exported for
+ * `dev/measure-image-log-entries.ts`.
+ */
+export function imageToolEntryRefusal(
+  op: Pick<ResearchLogAppendOp, "tool" | "query" | "outcome" | "resultsExamined" | "stagedResultsRef">,
+): string | null {
+  const tool = canonicalToolName(op.tool);
+  if (tool === "image_transcribe" && typeof asNull(op.stagedResultsRef) !== "string") {
     const examined = coerceJsonArg(op.resultsExamined);
     const failedCall = op.outcome === "error";
-    if (failedCall && (examined === 0 || examined === undefined || examined === null)) return;
-    const q = queryObject(op.query);
-    const browse = (typeof examined === "number" && examined > 1) || BROWSE_QUERY_KEYS.some((k) => q?.[k] !== undefined);
-    throw new LogAppendError(
+    if (failedCall && (examined === 0 || examined === undefined || examined === null)) return null;
+    const browse = isBrowseQuery(queryObject(op.query));
+    return (
       "an `image_transcribe` entry needs the `stagedResultsRef` its call returned: without it the log " +
-        `cannot show the page was machine-read. ${USER_PROVIDED_REMEDY} A page \`image_transcribe\` read ` +
-        "is logged with the `staged.resultsRef` that call returned; if it returned none, call " +
-        "`image_transcribe` again with `projectPath` and pass the `staged.resultsRef` it returns." +
-        (browse
-          ? ' A browse across several pages, or one the image cap stopped, is logged as `tool: "image_search"`.'
-          : "") +
-        (failedCall ? ' A call that failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`.' : ""),
+      `cannot show the page was machine-read. ${USER_PROVIDED_REMEDY} A page \`image_transcribe\` read ` +
+      "is logged with the `staged.resultsRef` that call returned; if it returned none, call " +
+      "`image_transcribe` again with `projectPath` and pass the `staged.resultsRef` it returns." +
+      (browse
+        ? ' A browse across several pages, or one the image cap stopped, is logged as `tool: "image_search"`.'
+        : "") +
+      (failedCall ? ' A call that failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`.' : "") +
+      (op.tool !== "image_transcribe" ? " Name the tool `image_transcribe`: the staged file records that name." : "")
     );
   }
-  if (op.tool === "image_read") {
+  if (tool === "image_read") {
     const file = queryObject(op.query)?.file;
-    if (file === undefined || file === null) return;
-    throw new LogAppendError(
+    if (file === undefined || file === null) return null;
+    return (
       "`image_read` takes no `file`, so an entry whose `query` names one records a reading of an upload " +
-        `that no image tool made. ${USER_PROVIDED_REMEDY} To machine-read the upload, call ` +
-        '`image_transcribe` with `projectPath` and that `file`, then log it as `tool: "image_transcribe"` ' +
-        "with the `staged.resultsRef` it returns.",
+      `that no image tool made. ${USER_PROVIDED_REMEDY} To machine-read the upload, call ` +
+      '`image_transcribe` with `projectPath` and that `file`, then log it as `tool: "image_transcribe"` ' +
+      "with the `staged.resultsRef` it returns."
     );
   }
+  return null;
+}
+
+/**
+ * Refuse an op `imageToolEntryRefusal` refuses. Runs before the other
+ * preflights, so a mislabelled op is not first asked to fill fields for an
+ * entry it must relabel. It needs no filled `tool`: it fires only with no
+ * staged ref, and `tool` is filled only from one.
+ */
+function preflightImageToolEntry(op: ResearchLogAppendOp): void {
+  const refusal = imageToolEntryRefusal(op);
+  if (refusal !== null) throw new LogAppendError(refusal);
 }
 
 /**
  * Fill an omitted `tool` from the staged envelope, then refuse once naming every
- * required field still missing. Runs first, so every later preflight sees the
- * filled `tool`. Without it an omitted `tool` reached the staging check as
- * `'undefined'` and read as a mismatch, and a caller that dropped the staged ref
- * to get past it lost the search's results (feedback issue #3069).
+ * required field still missing. Runs before every preflight but
+ * `preflightImageToolEntry`, so each later one sees the filled `tool`. Without
+ * it an omitted `tool` reached the staging check as `'undefined'` and read as a
+ * mismatch, and a caller that dropped the staged ref to get past it lost the
+ * search's results (feedback issue #3069).
  */
 async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   const ref = asNull(op.stagedResultsRef);
@@ -2651,16 +2738,26 @@ export async function researchLogAppend(
       const prior = research.log.find((e: { id?: string }) => e.id === found.logId) ?? {};
       const differs: string[] = [];
       const sent = (v: unknown) => v !== undefined && v !== null && v !== "";
-      if (sent(op.tool) && op.tool !== prior.tool) differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      if (sent(op.tool) && canonicalToolName(op.tool) !== canonicalToolName(prior.tool)) {
+        differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      }
       if (sent(op.planItemId) && op.planItemId !== prior.plan_item_id) {
         differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
       }
       if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
       if (differs.length > 0) {
+        // An image_transcribe entry with no ref is refused (`imageToolEntryRefusal`),
+        // so a correction to a logged page needs a page of its own, not no ref.
+        const pageRead =
+          canonicalToolName(prior.tool) === "image_transcribe" &&
+          (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
         throw new LogAppendError(
           `stagedResultsRef '${ref}' is already logged as ${found.logId}, and this re-send differs in ` +
             `${differs.join(", ")}. The log is append-only: leave ${found.logId} as it is and append a ` +
-            "new entry, without the stagedResultsRef, whose notes state the correction.",
+            (pageRead
+              ? "new entry whose notes state the correction: call `image_transcribe` again with " +
+                "`projectPath` and log it with the new `staged.resultsRef` it returns."
+              : "new entry, without the stagedResultsRef, whose notes state the correction."),
         );
       }
       return found;
@@ -2868,7 +2965,8 @@ export const researchLogAppendSchema = {
     "the search tool returned (when you called it with `projectPath`) as " +
     "`stagedResultsRef`; the host finalizes that staged file into the sidecar " +
     "without you re-serializing the payload. Omit `stagedResultsRef` for nil " +
-    "searches and external-site searches.\n" +
+    "searches and external-site searches; a page read with `image_transcribe` " +
+    "keeps its `staged.resultsRef` even when it found nothing.\n" +
     "\n" +
     "Returns a compact summary (logId, resultsRef, returnedCount, filesWritten) — " +
     "never the payload. On a validation failure nothing is written and " +
@@ -2965,7 +3063,8 @@ export const researchLogAppendSchema = {
         description:
           "The `staged.resultsRef` handle returned by record_search / fulltext_search " +
           "(when called with projectPath). Omit/null for nil and external-site searches. An " +
-          "`image_transcribe` entry for a page it read needs the `staged.resultsRef` that call returned.",
+          "`image_transcribe` entry needs the `staged.resultsRef` that call returned, even when the " +
+          "page held nothing you sought.",
       },
       ops: {
         type: "array",
