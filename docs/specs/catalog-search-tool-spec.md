@@ -21,7 +21,8 @@ Every figure below is measured, from `packages/engine/mcp-server/dev/probe-catal
 source; re-run a section rather than trusting a figure that looks stale. The
 exception is **Answer size**, whose figures come from
 `packages/engine/mcp-server/dev/try-catalog-search.ts`, run over answers saved from
-live calls on 2026-10-22.
+live calls on 2026-10-22. The `catalogId` facts (**Opening one entry by its
+id**) were measured live on 2026-11-16 and are recorded in probe section F.
 
 ## Design
 
@@ -156,7 +157,7 @@ constant would have to be introduced and the slice widened.
 | | |
 |---|---|
 | search | `GET https://www.familysearch.org/service/search/catalog/v3/search` |
-| item | `GET https://www.familysearch.org/service/search/catalog/item/{koha\|olib}:{n}` |
+| item | `GET https://www.familysearch.org/service/search/catalog/item/{koha\|olib}:{n}` — reached by hydration and by `catalogId` |
 
 ### Headers
 
@@ -186,8 +187,9 @@ once. Re-deriving the header here would lose that re-read.
 ## Input
 
 Every field is optional, but **at least one of `standardPlace`, `keywords`,
-`surname`, `title`, `author`, `subject`, `filmNumber` or `callNumber` must be
-present** — the service will answer an empty query with millions of hits.
+`surname`, `title`, `author`, `subject`, `filmNumber`, `callNumber` or
+`catalogId` must be present** — the service will answer an empty query with
+millions of hits.
 
 | field | type | maps to | notes |
 |---|---|---|---|
@@ -204,6 +206,7 @@ present** — the service will answer an empty query with millions of hits.
 | `availability` | string | `q.availability` | The service matches **exactly**: `Online` → 472 (473 re-measured in review), `online` and `ONLINE` → 0, with no error. A clean zero reads to the agent as "the Catalog holds nothing", so the tool **normalises any capitalisation of `online` to `Online`**. Only that one value is normalised — it is the only one measured live; anything else passes through unchanged rather than being guessed at |
 | `count` | integer, 1–200 | `count` | the tool sends 25 when omitted; max 200 (201 → 400). The *service's* default was never measured — every probe query passes `count` |
 | `hydrate` | integer, 0–25 | — | item calls to make, default 10; `0` skips hydration |
+| `catalogId` | string (a whole number accepted) | item endpoint | opens **one** entry; no search is made. See **Opening one entry by its id**. No other query field may be given with it; `count` and `hydrate` are range-checked as usual and otherwise have no effect |
 
 Everything ANDs: place id 333 + `exactPlace` → 803; plus `keywords=census` → 54.
 
@@ -298,7 +301,10 @@ item segment. The item's `author` list is not carried either: no plugin body,
 validator or recorded fixture reads it. Nor is a film note's `copy_location`:
 the hit's `repositoryCalls` names the same places ("Online", "FamilySearch
 Library", "Granite Mountain Record Vault"), so it only repeated them on every
-reel.
+reel. A `catalogId` hit is the exception: it has no search hit to take
+`creator` and `repositoryCalls` from, so it derives both from those two item
+fields once (see **Opening one entry by its id**); neither list is carried as
+such.
 
 ### Film notes: one entry per reel
 
@@ -381,7 +387,64 @@ to ask with a smaller `count`, or a narrower query. `returned` is the number of
 hits that are listed. The hits that are listed are the first ones, in the order
 the Catalog gave them.
 
+### Opening one entry by its id
+
+A researcher pastes a Catalog link (`https://www.familysearch.org/en/search/catalog/koha:36984`)
+far more often than a film number, and searching the id as keywords finds
+nothing (`koha:36984`) or unrelated items (`36984`). `catalogId` sends it to the
+item endpoint instead and answers in the search's own shape: `totalHits`,
+`returned` and `hydrateRequested` are all 1, `placeResolved: true`,
+`hydrationTimedOut: false`, and the one hit is built by the same
+`hydrateFromSource` and `shapeAnswer` as a hydrated search hit.
+
+**Accepted, and nothing else.** The user's bearer is attached to a URL built
+from this input, so parsing is strict and a refusal makes no request:
+
+- `koha:<digits>` or `olib:<digits>`, any case, trimmed — normalised to lower case;
+- the digits alone, as a string or a non-negative whole number — normalised to `koha:<digits>`;
+- an `http(s)://` link on `familysearch.org` or `www.familysearch.org` (no port,
+  no user info) whose path is `/[<lang>/]search/catalog/<id>[/]`, `<id>` being
+  either form above. The query string and fragment are ignored.
+
+Anything else — another host, a lookalike host, `koha:1/../x`, `koha:12?x=1`,
+`koha:`, a fraction, a negative number, a blank — is refused with an error that
+names the forms. The item URL is `ITEM_URL_PREFIX + id`, built only after the
+normalised id matches `^(koha|olib):\d+$`.
+
+**The prefix only labels the id.** Measured 2026-11-16: the item endpoint serves
+the same entry for `36984`, `koha:36984`, `olib:36984` and `KOHA:36984`
+(titleno 36984, St. Marylebone christenings 1821–1827), and the same olib entry
+for `2333650`, `koha:2333650` and `olib:2333650`. The two namespaces share one
+number space, which is why bare digits (and the older `/search/catalog/<digits>`
+links) are accepted. The item response names no namespace, only `titleno`, so the
+hit's `id` is the caller's id after normalisation, and bare digits are labelled
+`koha:`. That label can be wrong for one of the rare olib entries (4 of 2,991
+sampled); the entry fetched is still the right one.
+
+**What the hit carries.** The item endpoint has no `repositoryCalls` and no
+`creator`, so a `catalogId` hit takes:
+
+- `title` from the item's `title`, else `display_title`, else `"(untitled)"`;
+- `creator` from the `fullname` of the first `author` whose `type` is `Author`
+  (an `Added Author` is a contributor, not the creator), else none;
+- `repositoryCalls` as `"Online"` first when the item reads available online,
+  then the distinct `copy_location` of its film notes, in order. A digitized book
+  with no film notes has `["Online"]`; one with neither has `[]`. The item's
+  `copy` block (books) is not read: its shape was not measured.
+
+Search hits are unchanged by all of this.
+
+**Not found is an error.** An unknown id answers 404 with an empty body, and the
+tool throws `No Catalog entry <id>; check the ID, or search by title or film
+number.` An empty hit list would read as "the Catalog holds nothing". The lookup
+is one request, so it keeps `fsFetch`'s default retries, not hydration's
+`attempts: 1`. A very large item is fitted to the budget like any hydrated hit,
+and its hint offers the keyword search (see **What this does not cover**).
+
 ### The item URL needs no parsing — it is `identifier.value`
+
+This section is about **search hits**. Only `catalogId` builds an item URL, from
+a validated id (above); hydration never does.
 
 Measured 2026-10-02 against Maine (`q.placeId=333&q.place.exact=on`), which
 returned the probe's recorded 803 hits:
@@ -409,7 +472,7 @@ So: the value must be a string beginning
 `https://www.familysearch.org/service/search/catalog/item/`. A hit whose
 `identifier` is absent, non-string, or off-prefix is returned `hydrated: false`
 and **no request is made for it**, and it carries no `id`. Nothing is
-reconstructed — the check only refuses a URL we did not measure. The URL is not
+reconstructed from a search hit — the check only refuses a URL we did not measure. The URL is not
 in the answer (see **Response**).
 
 `id` on the response is the item segment following the prefix (`koha:3308785`) — the remainder stripped at the first `/`, `?` or `#`, not the whole remainder, which would carry a query string or a trailing path into a citation. The probe measured 25/25 bare ids, so the two read the same today; they are written to stay that way —
@@ -676,7 +739,12 @@ result set rather than as another page.
 | condition | message |
 |---|---|
 | `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` or `recordTypeGroups` supplied | refused by `server.ts`'s unknown-argument guard before the handler runs: `"catalog_search has no record-type filter, so drop {field} and search by place. To list record volumes by type, use volume_search's recordTypeGroups (an array of group names). Valid groups: {RECORD_TYPE_GROUP_NAMES}."` |
-| no searchable field given | names the eight fields and says at least one is required — refused before any request. "Given" means a value the query can **carry**: the guard and `buildQuery` ask the same question (`searchableValue`), because a guard testing presence while `buildQuery` tested `typeof === "string"` let `filmNumber: 568142` through to a query with no `q.*` filter at all — the whole catalogue's top 25, returned as if they answered. The MCP boundary checks argument names, not types (`server.ts` casts `arguments`), so a number, `null` or a blank string is a live input |
+| `catalogId` not one of the accepted forms | names the forms and says no request was made; nothing is fetched |
+| `catalogId` with any of the query fields, `exactPlace` or `year` | refused, naming the fields, before any request: a filter beside a lookup could only be dropped, and a dropped field silently changes the answer |
+| `catalogId` answers 404 | `No Catalog entry <id>; check the ID, or search by title or film number.` — never `hits: []` |
+| `catalogId` answers 200 with no `source` object | names the id and says to retry, then search by title or film number; never an empty hit |
+| `catalogId` answers 401, 403, another non-2xx, or a 200 that is not JSON | the same messages as the search, from the same helpers, naming the Catalog **lookup** where the search's say search |
+| no searchable field given | names the nine fields and says at least one is required — refused before any request. "Given" means a value the query can **carry**: the guard and `buildQuery` ask the same question (`searchableValue`), because a guard testing presence while `buildQuery` tested `typeof === "string"` let `filmNumber: 568142` through to a query with no `q.*` filter at all — the whole catalogue's top 25, returned as if they answered. The MCP boundary checks argument names, not types (`server.ts` casts `arguments`), so a number, `null` or a blank string is a live input |
 | `standardPlace` present but not a usable name (object, array, blank) | names the value. It was the one field read unguarded, so the resolver's internal `s.trim is not a function` reached the agent verbatim. A number is coerced to its text, as `str` does for unquoted film numbers, and simply fails to resolve |
 | `exactPlace` without a place | refused, not dropped: `.exact` alone 400s, and silently dropping it returned the WIDER set with nothing saying so, so the agent read the hit count as an answer to the narrower question it asked |
 | `year` non-integer, or outside 1000–2200 | names the range and the value. Integrality alone is not enough: `1e21` **is** an integer and reaches the wire as `q.year=1e%2B21`, costing the same 400 as the `NaN` the guard was written for; `0` and `-1850` likewise |
@@ -798,6 +866,12 @@ readers and every access uses one of them:
 | a Norway-sized page (ten hydrated items of 3 to 1,804 entries) is within the budget at the defaults, lists all 25 hits, and cuts each giant to a prefix of its own entries (they are equal-sized, so skipping lists the same); 25 giants at `hydrate: 25` are within it too; one giant alone gets far more entries than when ten share the room | the 1,476,812-character case is bounded by the shaping, not by the default |
 | a hit that needs less than an equal share is listed whole and what it leaves goes to the giant; a giant at rank 1 does not starve the small hits behind it, and the room they leave is used; what a cut hit leaves unused goes on to the hits after it | smallest demand first with the hand-down. They bound the size above and below, so an equal share for every hit goes red, and so does charging a cut hit its whole offer |
 | a hit that fits its offer exactly is listed whole, and one a character short is cut | the edge is "no more than", not "less than" |
+| `catalogId`: `koha:`, `olib:`, upper case, padded, bare digits as a string and a number, and links (`/en/`, `/pt-br/`, `http://` without www, upper-case host, `/search/catalog/<digits>`, query and fragment) each make exactly one request, to `ITEM_URL_PREFIX + id`, and come back with that `id` | the accepted forms, and the legitimate variants a strict parser must not refuse |
+| `catalogId`: an off-host, lookalike-host, userinfo, port, `ftp:`, extra-path and traversal link, `koha:1/../x`, `koha:12?x=1`, `koha:`, `koha:12a`, another namespace, blank, negative, fractional, `NaN`, object, array and `null` are refused with **no** request | the bearer reaches only a URL built from a validated id |
+| `catalogId` with `standardPlace`, `keywords`, `filmNumber`, `availability`, `year` or `exactPlace: false` is refused with no request; with `count`/`hydrate` it is accepted and they change nothing; a `count` out of range is still refused | a filter beside a lookup could only be dropped |
+| a `catalogId` answer is one hydrated hit with `totalHits`, `returned` and `hydrateRequested` 1, its title, its Author (not an Added Author), its film note's DGS, and `repositoryCalls` from `copy_location` with `Online` first when online; `display_title` and `(untitled)` are the title fallbacks | the item endpoint has no `repositoryCalls` or `creator` of its own |
+| a `catalogId` 404 throws the not-found error; a 401, 403, other failure, non-JSON 200 and 200 with no entry each give their framed error | an empty hit list would read as "the Catalog holds nothing" |
+| a search hit's item call still uses `identifier.value` after `catalogId` exists | only the `catalogId` path builds a URL |
 | a first entry too big to fit beside another hit does not push the answer over the budget, and a lone 38,000-character entry beside a 15,000-character hit ends under the spill line by cutting the hit | the first entry of a hit was kept whatever it cost, and a second pass then cut the hit the first had listed whole |
 | the floor of a hit is its whole list when that costs no more than its cheapest cut, and the cheapest cut when it costs more | every floor is reserved, so the answer fits whenever any listing does |
 | ten hits of two entries of about 150 characters each, offered 250 each, are all listed whole; on saved answers padded to count 100, no cut hit is bigger than the same hit whole | a cut that adds two fields can cost more than the entries it removes |

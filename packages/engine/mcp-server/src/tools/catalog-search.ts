@@ -808,6 +808,9 @@ export function parseCatalogId(raw: unknown): string {
       id = normaliseId(text);
     }
   }
+  // The CATALOG_ID_RE test is a BACKSTOP: every branch above already yields
+  // only that shape, so deleting it reds nothing. It is kept because the URL
+  // built from `id` carries the user's bearer.
   if (id === undefined || !CATALOG_ID_RE.test(id)) return refuse();
   return id;
 }
