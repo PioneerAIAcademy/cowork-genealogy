@@ -13,10 +13,37 @@ test output.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+
+def workspace_parent(os_name: str = os.name, short_tmp: str = "/tmp") -> str | None:
+    """The directory per-test workspaces are created under, or None for the
+    platform's default temp directory.
+
+    A model types the workspace path back: the direct-agent arm's main thread
+    relays `projectPath:` to the agent, and
+    `test_direct_delegation_relayed_verbatim` compares it character for
+    character. macOS's default temp directory carries a 30-character random
+    component (`/var/folders/tv/yzyl...0000gn/T`). The main thread repeated a
+    stretch of it in seven runs of `ut_person_evidence_001` on 2026-11-15 and
+    2026-11-16, each failed before the agent started. On POSIX the workspaces
+    go under `/tmp` instead, resolved so the folder the SDK reports as its cwd
+    is the one the test expects (`/private/tmp` on macOS; unchanged on Linux,
+    where it already is the default). Windows keeps its default.
+    """
+    if os_name != "posix":
+        return None
+    try:
+        tmp = Path(short_tmp).resolve()
+    except OSError:
+        return None
+    if tmp.is_dir() and os.access(tmp, os.W_OK | os.X_OK):
+        return str(tmp)
+    return None
 
 
 # The SDK stores session entries under ~/.claude/projects/<encoded-cwd>/.

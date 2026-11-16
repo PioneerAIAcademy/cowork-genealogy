@@ -224,6 +224,7 @@ the four objects in this branch’s own record-extraction candidate, so quote th
 | §5 | Misrouted plan items name their cause | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` **append** op writing into a plan other than the one its own call created, leaving that plan empty — whether the other plan pre-existed (the hard-coded-`pl_001` misroute) or was created by the same call (a forgotten sibling, which needs the opposite fix and gets a different sentence). Adds **no** refusal — the call was already refused by the row above, or by `items` being required — it replaces a message naming the symptom with one naming the cause, because the previous message drove the model to `"items": []` and that then validated | **enforcing** (since 2026-09-01; fires on **6** corpus `plans` append ops, measured at 9a0eb98e5 — both halves of the retry loop in each of three unit runs, where nine item ops carry a hard-coded `pl_001`, a **completed** plan for another question, while the plan the same call created ends empty. That is exactly the corruption this arm exists to stop, committed to the corpus, so it is the arm's strongest evidence rather than a gap. It is a derivable **floor**, not a total: the assigned `pl_` id is only recoverable where a scenario fixture seeds the plan ids. The arm still adds no refusal — every call it catches is one the row above or the required-field check already refused — so it changes the message, not the outcome — but no check observes whether the new message actually breaks the loop, and none can outside a paid eval run. **Narrowed by the terminal-plan row below**, which refuses a terminal parent in `applyOne`, so those items are not among the ops this post-pass judges: all 6 measured instances name a `completed` plan and are now preempted, so this arm covers an `active` other plan or a same-call sibling, and the prescription it supplies moved into the earlier refusal. Its same-question form survives only where the created plan is itself terminal, since the one-active-plan rule returns early on a non-active entry — which is why two of its tests now assert the terminal refusal and a third pins the surviving case) |
 | §5 | A terminal plan takes no new items | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` **append** op whose parent plan is `completed` or `superseded` — a settled audit trail. `research-plan`'s prose forbade this in two places and did not bind; the plan carries `status`, so it is decidable from the documents alone and becomes a writer precondition. **Appends only** — an update targets an item already inside the plan, and denying it would strand an `in_progress` item there with no route out | **enforcing** (fires on **54 of 2447** `plan_items` append ops, over 6 calls in 4 run logs, measured at a85d8f569; **0** name a `superseded` parent and **0** *update* ops name a terminal parent. Per ADR-0011 limit 2 the bar is inspection, not a rate: every one of the 54 is the same true positive — scenario `flynn-first-plan-surveyed`, `pl_001`, completed, attached to `q_002`, in `ut_research_plan_005` and `ut_research_plan_014` — so none is a legitimate write. A derivable **floor** for the same reason as the row above: a plan created during a run is `active` at creation, so only a seeded fixture plan can be terminal. Unlike that row this one **does** add refusals; what no check observes is whether the refusal message breaks the model's retry loop, and none can outside a paid eval run) |
 | §5 | A completed plan item needs a search of its own record type | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` op (or an `items`-bearing `plans` op) leaving an item at `completed` whose `record_type` has a known vocabulary (probate, census, vital/vital_record, church/church_record, marriage, naturalization, obituary) when a `log[]` entry is attributed to it but NONE names a search of that type — the probate item closed off a deed/land search (`ut_search_full_text_016`/`_020`). The CONTENT half of the completion check; the structural half below owns the no-attribution case, so the two never double-report, and a `record_type` outside the vocabulary gets the structural check only. Mirrors the eval validator `test_plan_item_completion_matches_its_own_record_type` — `RECORD_TYPE_TERMS` ported to TS, the two planes must agree, change both or neither | **enforcing** (refuses 3 of 75 completions of a vocabulary-bearing `record_type` across 1,261 plan-item completions in the committed unit and e2e runs, re-measured by `eval/harness/scripts/measure_plan_item_completion_record_type.py`. All three refusals are the one fixture `ut_research_plan_d9k` `pli_006` in pre-fork run logs — a probate item whose only logged search is an 1870-census `record_search`, a true positive the guard is built for; the d9k scenario was forked (`flynn-dispose-probate-searched`) to give `pli_006` its own probate search, and the forked run (`v14`) refuses 0. Bare `estate` was dropped from the probate vocabulary — it is land in "real estate" and in British/Irish estate records — and the term match is a leading word-boundary so stems like `naturaliz` and plurals like "baptisms" still match; pinned by the guard-case file) |
+| §5 | A completed plan item needs a search that could have found something | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` op, or a `plans` op's inline `items`, leaving an item at `completed` when every non-`error` `fulltext_search` attributed to it is scoped to a `query.imageGroupNumber`, every one of those returned nothing, every such id is a bare run of digits that FamilySearch does not report as full-text searchable, and no `image_search` entry at any outcome names the item. The nil is a fact about the volume, not the person, so the completion claims a search that could not have happened and the volume never surfaces as unread. The only invariant here that needs an answer outside the documents: resolved once per call in `researchAppendFromCaller` from an ops-gated unlocked pre-read, with every unanswerable path — failed request, spent FS budget, no loader — treated as UNKNOWN, which refuses nothing. `planItemSearchedSkipInvariants` is silent wherever this refuses, so a skip stays the item's exit — which requires the pre-read to run on a **terminal** op, `skipped` as well as `completed`: gated on `completed` alone, a skip resolves no answer, the exemption sees UNKNOWN and the searched-skip rule refuses the skip too, leaving the item refused both ways and its question undeclarable | **enforcing** (refuses nothing across the committed corpus — 240 e2e final-research documents and 1,255 plan-item completions — measured at eb75332e1 by `dev/probe-void-search-candidates.ts`. Twenty-one completions carry an attributed scoped full-text search, five are all-void with no image search, four of those are answerable, and FamilySearch reports every one of their groups as searchable. Four scoped group ids in the corpus are NOT searchable and each is held back by a different one of the four conditions — not void (104 rows), a skipped item, a skipped item an image search also names, and a null `plan_item_id` — so every condition is load-bearing on real data. Not inert, and per ADR-0011 limit 2 the bar is inspection, not a rate, which the labelled case set carries) |
 | §5 | A completed plan item needs a log entry naming it | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` op leaving the item at `completed` while no `log[]` entry carries its id in `plan_item_id`, and the same check over `items[]` on a `plans` append or an `items`-bearing `plans` update — on an update, only the items it newly completes. Completing an item asserts its search was done; `log[]` is where a search is recorded. Both halves live in `research.json`, so it is decidable from the documents alone. **Gated on the op that sets the status**, so `in_progress` and `skipped` moves and unrelated edits to an already-completed item are untouched; an `append` carrying `completed` is refused unconditionally, since the id is minted inside the call | **enforcing** (fires on 1 of 24 `plan_items` update ops setting `completed` in the unit corpus, measured at 4791ea9cb — a true positive in `search-images`/`mid-research-flynn` — and on the one unit append setting `completed`, where `research` completes an item whose search was logged earlier under another question. The e2e plane is **not** clear, measured at 4791ea9cb: 32 of 1254 `plan_items` update ops are refused there on an ORDERED replay, plus all 4 `completed`-setting appends — 36 of 1258, over 17 run logs across 15 fixtures. An order-blind join gives 28 of 1254 and is a floor only, since the rule reads live state. 1 of the 58 update ops in the quarantine plane is refused. The `plans` arm changes no corpus outcome, measured at 4791ea9cb — 8 of 376 `plans` append ops carry non-empty inline `items`; 6 carry only `planned` items and the other 2 sit on calls already refused for other reasons — and no `plans` update writes `items`. What no check observes is whether the refusal message breaks the model's retry loop, and none can outside a paid eval run) |
 | n/a | Malformed element reported, not thrown | engine (validator) — so Cowork, hosted, both harnesses, and `validate_research_schema` | a `null` or primitive element in any document array, and a primitive in a required-object field. `checkRequired` tests `field in obj` and `in` THROWS on null and on every primitive, so one stray element took `validateParsed` down with `TypeError: Cannot use 'in' operator` — and because every writer tool validates the whole document, every one of them failed with a message naming no field and no fix, while the read-only reporter crashed instead of saying what to repair. Guarded at the 20 array loops, at **four** further sites outside them that a loop-by-loop patch missed (three dereferences in `person-id-refs.ts`, reached from the cross-file pass, and the cross-file `sources` ref), and at **four** required-object fields — `exhaustive_declaration`, `external_site` and `citation_detail`, whose `typeof X === "object" && X !== null` opening skipped a primitive silently, plus `researcher_profile`, whose `typeof rp !== "object"` opening caught a string and missed `[]`. The four missed cross-file sites are why the tests enumerate every section rather than sampling one. **Arrays are treated differently on the two halves, deliberately:** an array ELEMENT is left alone (`in` does not throw on one, so re-shaping its messages would be an unrelated change riding on a crash fix), while an array in a required-object FIELD is refused, and refused once rather than once per missing key | **enforcing** (since 2026-09-01; reachable by hand edit or a truncated write, and the one persisted itemless plan in the committed corpus arrived exactly that way, from a run that made zero MCP tool calls) |
 | §5 | A couple event lives on the Couple, never on a person | engine (MCP tool) — so Cowork, hosted, both harnesses | a `tree_edit`/`tree_correct` op putting a couple event (any type `isCoupleEventFactType` accepts) on a person: `add_fact` with a `personId`, an `add_person` inline fact, or an `update_fact` with a `personId` that retypes a fact into one. Editing a person-level couple event already there is admitted, because legacy documents are read, never repaired; 14 such facts sit in 9 committed e2e starting trees. The refusal names the Couple route, `add_relationship` with the fact inline or `add_fact` with `relationshipId` | **enforcing**. Refuses 6 ops in 4 committed runs, measured at fbf785290 by `packages/engine/mcp-server/dev/replay-tree-refusals.ts`, all read individually per ADR-0011 limit 2 and all true positives; in every one the Couple route was open in the same call. Agents already take that route 95 times in 57 runs, and 0 `update_fact` ops retype a person's fact into one |
@@ -1255,6 +1256,85 @@ form no longer reaches that dead end, since its remedy cites the log id instead.
 with `planItemId` — which is available whenever the search was not already
 logged unattributed. Only a paid eval run could show how often the narrow case
 is reached.
+
+### A completed plan item needs a search that could have found something
+
+A plan item may not stand at `completed` when every full-text search attributed
+to it was **guaranteed to return nothing**: scoped to image groups FamilySearch
+does not report as full-text searchable. Such a nil is a fact about the volume's
+coverage, not about the person, so the completion claims a search that could not
+have happened — and nothing downstream then knows the volume is unread, so
+`research-exhaustiveness` and the proof's "Not yet reached" list both omit it
+The case that prompted the rule was a Walpole,
+New Hampshire town-records item closed `completed` while its own log recorded
+the volume as not full-text searchable, leaving baptisms the researcher later
+named out of the proof's unreached list. One of its five attributed full-text
+searches named an image group, returned nothing, and named an id FamilySearch
+does not report as searchable; the other four were keyword or place searches
+returning thousands of rows that searched no volume. This rule refuses that
+completion — verified against the bundle's own documents with the live answer on
+2026-11-13, and through the unknown-id hole above, since the id is a collection
+rather than an image group.
+
+Refused only when all four hold: the item's attributed non-`error` entries
+include a `fulltext_search` scoped to a `query.imageGroupNumber`; every such
+entry is void (`results_available === 0`); every such id is a bare run of digits
+and FamilySearch reports none of them as searchable; and no `image_search` entry,
+at any outcome including `error`, names the item. The fourth keeps the rule clear
+of the pattern the lead dropped on 2026-11-09 — an index item closed after every
+page returned 403, and two capped partial browses also marked completed.
+
+`planItemSearchedSkipInvariants` is silent wherever this rule would refuse, so a
+skip remains the item's exit. Without that exemption the item would be neither
+completable nor skippable and its question never declarable, the deadlock the
+dispose flow removed.
+
+Unlike every other write-boundary invariant here, this one needs an answer the
+documents do not hold, so `researchAppendFromCaller` resolves it once per call
+from an ops-gated unlocked pre-read and threads it in. Everything that cannot
+answer — a failed request, a spent FamilySearch budget, a read past its time
+budget, no loader at all — is UNKNOWN, and UNKNOWN never refuses.
+
+The answer carries **the ids that were asked about** alongside the ids reported
+searchable, and the rule refuses only when it holds an answer for every id it is
+judging. That is what makes the unlocked pre-read safe, and the first statement
+of this was wrong in the dangerous direction: an id missing from the pre-read is
+missing from the request and therefore missing from the reply, which is exactly
+what would make the "none of them are searchable" condition hold. A document
+that grew between the pre-read and the lock would have produced a refusal on a
+search that genuinely ran. Requiring an answer per id makes a stale pre-read
+fall silent instead.
+
+**What it knowingly lets through.** The endpoint reports which ids ARE
+searchable and says nothing about the rest, so an all-digit id FamilySearch does
+not recognise at all — a collection id logged in the `imageGroupNumber` field, a
+retired group — is absent from the reply exactly as a known-unsearchable one is,
+and is read as unsearchable. The shape test (`/^\d+$/`) screens the id's shape,
+not its existence. The refusal message names this case directly, telling the
+agent to search a collection id with `record_search`, and the escape is cheap:
+the item is skippable, and any `image_search` naming it silences the rule
+outright. A narrower answer would need the endpoint to distinguish "known and
+not searchable" from "unknown", which it does not.
+
+**Measured 2026-11-12 at eb75332e1 by `dev/probe-void-search-candidates.ts`.**
+Across the committed e2e corpus — 240 final-research documents, 1,255 plan-item
+completions — this rule refuses nothing. Twenty-one completions carry an
+attributed scoped `fulltext_search`; five are all-void with no image search; four
+of those five are answerable; and FamilySearch reports every one of their groups
+as searchable. Four scoped group ids in the corpus are not searchable, and each is
+held back by a different one of the four conditions, so every condition is
+load-bearing on real data: `008128955` in `bagley-father-1884` returned 104 rows
+and so is not void, on a completed item; `008350256` in
+`john-perry-witbeck-vitals` sits on a skipped item; `004120517` in
+`spriggs-parents-1898` is on a skipped item and an image search names it; and
+`5219332` in `maria-vazsan-spouse` — whose own log note reads "Tool confirmed:
+this volume is NOT full-text searchable" — carries a null `plan_item_id`, so the
+attribution condition cannot match it. Four completions meet every condition but
+searchability; the probe reports that second figure alongside the first, so a
+reader can tell how much of the silence is FamilySearch's answer rather than the
+other conditions. The rule is therefore not inert. Per ADR-0011 limit 2 the bar
+here is inspection, not a rate, and the labelled case set carries it.
+
 
 ### A plan item's `collection_url` is a stored curated collection
 

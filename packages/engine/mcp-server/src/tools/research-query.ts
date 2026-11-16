@@ -34,6 +34,7 @@ import { unregisteredDisagreements, type UnregisteredDisagreement } from "../uti
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
 
 const MAX_ITEMS = 50;
 
@@ -162,11 +163,67 @@ export type ResearchQueryResult =
        *  for links carrying a reason — the ordering is by consequence, and a rank
        *  with no reason is a number to distrust. Absent where nothing stands out. */
       reviewReasons?: Record<string, string[]>;
+      /** `person_evidence` only: for the live links on this page, each birth
+       *  place or birth date of the linked record person that a settled fact
+       *  conflict set aside and that differs from the tree person's
+       *  (`settledBirthDisputes`, the sentences `same_person` returns). Links
+       *  sharing the same sentences share one row. A review reads its links
+       *  here and never calls `same_person`, so this is where it learns a
+       *  disagreement is settled. Absent when there is none. */
+      settledConflicts?: SettledConflictRow[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
   | { ok: false; errors: string[]; reason?: "no_project" };
+
+export interface SettledConflictRow {
+  /** The `pe_` ids on this page the sentences apply to. */
+  linkIds: string[];
+  notes: string[];
+}
+
+/** Whether any fact conflict is resolved or moot, the only state in which
+ *  `settledBirthDisputes` can return anything: lets a project with none skip
+ *  the tree read. */
+function hasSettledFactConflict(research: any): boolean {
+  return (Array.isArray(research?.conflicts) ? research.conflicts : []).some(
+    (c: any) => c?.conflict_type === "fact" && (c?.status === "resolved" || c?.status === "moot"),
+  );
+}
+
+/** The settled birth disputes behind the live links in `links`, one row per
+ *  distinct set of sentences. Never throws: an unreadable tree yields none. */
+async function settledConflictRows(
+  projectPath: string,
+  research: any,
+  links: any[],
+): Promise<SettledConflictRow[]> {
+  const live = links.filter(
+    (pe) =>
+      pe?.superseded_by == null &&
+      typeof pe?.id === "string" &&
+      typeof pe?.assertion_id === "string" &&
+      typeof pe?.person_id === "string",
+  );
+  if (live.length === 0 || !hasSettledFactConflict(research)) return [];
+  let tree: any;
+  try {
+    tree = await readProjectJson(projectPath, "tree.gedcomx.json");
+  } catch {
+    return [];
+  }
+  const rows = new Map<string, SettledConflictRow>();
+  for (const pe of live) {
+    const notes = settledBirthDisputes(research, tree, pe.assertion_id, pe.person_id);
+    if (notes.length === 0) continue;
+    const key = notes.join("\u0000");
+    const row = rows.get(key) ?? { linkIds: [], notes };
+    row.linkIds.push(pe.id);
+    rows.set(key, row);
+  }
+  return [...rows.values()];
+}
 
 class ResearchQueryError extends Error {}
 
@@ -767,6 +824,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
         .map((r) => [r.id, r.reasons]),
     );
     if (Object.keys(reviewReasons).length > 0) page.reviewReasons = reviewReasons;
+    if (section === "person_evidence") {
+      const settled = await settledConflictRows(projectPath, research, ordered.slice(start, start + MAX_ITEMS));
+      if (settled.length > 0) page.settledConflicts = settled;
+    }
     // Per id over the whole match set, so a page answers "0 means none" for
     // every id it was asked about, not only for the ids its items carry.
     if (listFilter) {
