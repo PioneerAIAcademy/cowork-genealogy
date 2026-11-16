@@ -68,15 +68,20 @@ def _new_questions(before: dict, after: dict) -> list[dict]:
 # user asked for a person's parents. `will` is matched only with a preceding
 # article/possessive so the modal verb ("who will…") can't false-positive --
 # except that a preceding possessive pronoun doesn't rule out the modal
-# either: "searches for her will be planned next" still reads as "her" (the
-# subject) "will be planned" (the verb), not "her will" (the document). The
-# `(?!\s+be\b)` lookahead excludes that one observed shape (issue #4166
-# review, ut_question_selection_007's flaky run).
+# either: "searches for her will be planned next" and "the search for her will
+# begin" are the modal verb before a base verb, not "her will" the document.
+# `_MODAL_VERB_AFTER` excludes "will" followed by a common base verb; both
+# observed false positives were ut_question_selection_007 runs (issue #4166
+# review; issue #4382 PR 2).
+_MODAL_VERB_AFTER = (
+    "be|begin|start|need|have|continue|come|go|take|turn|focus|look|use|move|"
+    "follow|proceed|depend|require|remain|rest|resume|run|show|tell|help|work"
+)
 _RECORD_SCOPED_PATTERNS = (
     r"\bcensus\b",
     r"\bcertificates?\b",
     r"\bregisters?\b",
-    r"\b(?:a|the|his|her|their)\s+will\b(?!\s+be\b)",
+    r"\b(?:a|the|his|her|their)\s+will\b(?!\s+(?:" + _MODAL_VERB_AFTER + r")\b)",
     r"\bprobate\b",
     r"\bdeeds?\b",
     r"\bmuster\s+roll\b",
