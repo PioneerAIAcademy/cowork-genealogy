@@ -69,6 +69,9 @@ class SingleAskSpec:
     forbidden_tools: tuple[str, ...] = ()
     required_tools: tuple[str, ...] = ()
     ends_on_offer: bool = False
+    # An open issue that owns this fixture's FAIL ("#2813"): printed KNOWN-FAIL and
+    # left out of the panel's exit code, so a new FAIL stands out.
+    known_issue: str = ""
 
 
 _BOUNDARY = load_step_boundary()
@@ -305,14 +308,17 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
     order = " > ".join(
         u["unit"] if u["main_thread"] else f"({u['unit']})" for u in g.units
     ) or "none"
+    status = "PASS" if g.passed else "KNOWN-FAIL" if spec.known_issue else "FAIL"
     line = (
-        f"{'PASS' if g.passed else 'FAIL'} {spec.id}  "
+        f"{status} {spec.id}  "
         f"expected={_owner_text(owners(spec))}  first={g.first_unit or 'none'}  "
         f"save={'ok' if save_ok else save_detail}  "
         f"stop={g.stop}"
     )
     if g.failed:
         line += f"  failed=[{','.join(g.failed)}]"
+    if spec.known_issue:
+        line += f"  known_issue={spec.known_issue}"
     line += f"\n    units: {order}  extraction_append={g.extraction_appends}"
     if g.background_spawns:
         line += (
@@ -324,6 +330,11 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
     for name in ("forbidden_tools", "required_tools", "ends_on_offer"):
         if name in g.checks and not g.checks[name][0]:
             line += f"\n    {name}: {g.checks[name][1]}"
+    if spec.known_issue and g.passed:
+        line += (
+            f"\n    passed with known_issue {spec.known_issue} set: if that issue is fixed, "
+            "remove known_issue so a new FAIL counts again"
+        )
     if spec.must_not:
         line += f"\n    must not (not graded): {spec.must_not}"
     return line
