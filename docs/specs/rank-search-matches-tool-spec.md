@@ -408,7 +408,10 @@ Van der Linde/Vanderlinde and St. Clair/StClair. A joined form splits on spaces
 and hyphens, drops a trailing "." from each word before checking the particle
 list (van, von, de, di, du, la, le, mc, mac, st, ste, saint, ten, ter, op, des,
 del, der, den, fitz, vander, vande, vanden, ver, ap), joins each run of
-particles onto the word after it, and drops "." and "'". Like the words above,
+particles onto the word after it, and drops "." and "'". A surname made only of
+particles is one joined form (Van Der/Vander), and a run of particles after the
+last word is dropped, so Linde, van der against Berg, van der or Vander, and
+Rosa, de la against Cruz, de la, stay flagged. Like the words above,
 a joined form whose own word has three letters or fewer is dropped while a longer
 one remains, so da Silva against da Costa and van 't Hof against van 't Veer stay
 flagged. Joined forms are

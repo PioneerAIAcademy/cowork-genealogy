@@ -680,10 +680,11 @@ const SURNAME_PARTICLES = new Set([
 /** A surname's joined words: split as in `surnameTokens`, with each run of
  *  particles joined onto the word after it ("van der linde" → "vanderlinde",
  *  "mc williams" → "mcwilliams"; a trailing "." is dropped before the particle
- *  check), and "." and "'" removed. A trailing run with no word after it stays
- *  a token of its own. As in `surnameTokens`, a joined word whose own word has
- *  three letters or fewer is dropped while a longer one remains, so "da costa"
- *  gives "costa" and "van 't veer" gives "veer". */
+ *  check), and "." and "'" removed. A surname made only of particles is one
+ *  token ("van der" gives "vander"), and a run after the last word is dropped
+ *  ("linde, van der" gives "linde,"). As in `surnameTokens`, a joined word whose
+ *  own word has three letters or fewer is dropped while a longer one remains, so
+ *  "da costa" gives "costa" and "van 't veer" gives "veer". */
 function joinedSurnameTokens(surname: string): string[] {
   const words = normalizeString(surname).split(/[\s-]+/).filter(Boolean);
   const out: { joined: string; word: string }[] = [];
@@ -698,7 +699,7 @@ function joinedSurnameTokens(surname: string): string[] {
       run = "";
     }
   }
-  if (run) out.push({ joined: run, word: run });
+  if (run && out.length === 0) out.push({ joined: run, word: run });
   const long = out.filter((t) => t.word.length > 3);
   return (long.length > 0 ? long : out).map((t) => t.joined);
 }

@@ -537,6 +537,9 @@ describe("rank_search_matches", () => {
         ["St.Clair", "St Claire"],
         ["Van-Buren", "VanBuran"],
         ["O'Brien", "O Brien"],
+        ["Van Der", "Vander"],
+        ["Le Roy", "LeRoy"],
+        ["Van Os", "Vanos"],
       ])("does not flag %s vs %s", async (tree, record) => {
         expect(await flagged(tree, record)).not.toHaveProperty("surnameNotOnSubject");
       });
@@ -547,6 +550,14 @@ describe("rank_search_matches", () => {
         ["McWilliams", "Mc Lean"],
         ["VanBuren", "Van Bergen"],
       ])("still flags %s vs %s (joined tokens are not compared by Soundex)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it.each([
+        ["Linde, van der", "Berg, van der"],
+        ["Rosa, de la", "Cruz, de la"],
+        ["Linde, van der", "Vander"],
+      ])("still flags %s vs %s (a particle run after the last word is not a word)", async (tree, record) => {
         expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
       });
 
