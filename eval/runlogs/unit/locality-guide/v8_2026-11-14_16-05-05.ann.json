@@ -427,14 +427,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 1,
-      "comment": "good pitfalls but no real first-this-then-that order."
-    },
-    {
       "test_id": "ut_locality_guide_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -865,6 +857,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "good pitfalls but no real first-this-then-that order."
     }
   ]
 }
