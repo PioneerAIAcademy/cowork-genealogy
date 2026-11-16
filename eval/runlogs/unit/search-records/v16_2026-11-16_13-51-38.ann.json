@@ -13,14 +13,6 @@
     {
       "test_id": "ut_search_records_cdl",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_search_records_cdl`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: executed the search on the specified collection and jurisdiction, triaged the results, identified the two main candidates, noted the lack of spouse/parent information in snippets, flagged the Santiago Cedillo record (X7LS-KMLK) as a possible anchor, correctly reported that ranking was withheld due to the subject's lack of dated/placed facts, set the plan item to in_progress, and named a next step (reading the Santiago record or a child's birth record to establish parentage).\n\nJunior: (Pass: The skill fully satisfied the task requirements by executing the specified search, triaging results, identifying the two leading candidates, noting the absence of spouse/parent details in the snippets, highlighting Santiago Cedillo (X7LS-KMLK) as a potential anchor record, correctly withholding ranking due to insufficient dated/located facts for the subject, updating the plan item to in_progress, and providing a clear next step to establish parentage.)"
-    },
-    {
-      "test_id": "ut_search_records_cdl",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
@@ -305,6 +297,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> The skill treated the nil result from the formal-name search as a finding to investigate, not an endpoint. It immediately consulted the tree.gedcomx.json, identified the Nickname entry 'Bitsie Jackson' on person I1, and retried the search with that variant. The retry was logged as a separate entry (log_003) with its own query and outcome. The skill did not declare the search exhausted after the nickname hit; instead, it correctly assessed that the match is needs-review and identified the next steps (independent anchors like 1880/1910 census or marriage record). The nil escalation was thorough and well-reasoned.\n\nJunior: (Pass: The skill handled the nil result appropriately by treating it as a lead rather than an endpoint. It identified the nickname “Bitsie Jackson” from the tree, retried the search using that variant, logged the retry separately, and correctly assessed the resulting match as needs-review. It also identified reasonable next steps using independent records to verify identity, demonstrating a thorough and evidence-based nil-escalation process.)"
+    },
+    {
+      "test_id": "ut_search_records_cdl",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_search_records_cdl`** — `base` / `Completeness`\nLLM: 3 → Junior: 2\n\n> The skill addressed all required elements: executed the search on the specified collection and jurisdiction, triaged the results, identified the two main candidates, noted the lack of spouse/parent information in snippets, flagged the Santiago Cedillo record (X7LS-KMLK) as a possible anchor, correctly reported that ranking was withheld due to the subject's lack of dated/placed facts, set the plan item to in_progress, and named a next step (reading the Santiago record or a child's birth record to establish parentage).\n\nJunior: (Partial - the reply no longer decides by the spouse's name, but its next step is to read Santiago's 1918 death record (X7LS-KMLK). That record names Nicolasa only as his wife, not her parents, so it cannot separate the 1943 and 1945 women. The reply names no record that would state her parents, which the judge context asks for.)"
     }
   ]
 }
