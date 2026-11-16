@@ -52,4 +52,22 @@ describe("import-baseline (Decision 7)", () => {
     expect(b.isImportFact(["I5"], birth("F2", "1850", [{ ref: "S2" }]))).toBe(false);
     expect(b.isImportFact(["I5"], birth("F3", "1850"))).toBe(false);
   });
+
+  it("a merge of two baseline persons keeps the absorbed person's imports as imports", () => {
+    const start = {
+      persons: [person("I2", [birth("F1", "1850")]), person("I5", [{ id: "F9", type: "Death", date: "1910", sources: [{ ref: "S1", quality: 1 }] }]), person("I9")],
+      relationships: [{ id: "R1", type: "ParentChild", parent: "I5", child: "I9", sources: [{ ref: "S1", quality: 1 }] }],
+      sources: [FS],
+    };
+    const merged = {
+      persons: [person("I2", [birth("F1", "1850"), { id: "F9", type: "Death", date: "1910", sources: [{ ref: "S1", quality: 1 }] }]), person("I9")],
+      relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I9", sources: [{ ref: "S1", quality: 1 }] }],
+      sources: [FS],
+    };
+    const b = importBaseline(merged, start);
+    expect(b.isImportFact(["I2"], merged.persons[0].facts[1])).toBe(true);
+    expect(b.isImportEdge(merged.relationships[0])).toBe(true);
+    // A new fact that repeats another baseline person's value is not an import.
+    expect(b.isImportFact(["I9"], { id: "F77", type: "Birth", date: "1850" })).toBe(false);
+  });
 });

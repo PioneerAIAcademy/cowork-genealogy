@@ -1460,6 +1460,113 @@
      "label": "found in a record, not yet checked"
     }
    ]
+  },
+  {
+   "name": "a proved claim whose persons are linked only at probable reads likely (Decision 30)",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "probable",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_2",
+      "assertion_id": "a_f",
+      "person_id": "I2",
+      "confidence": "probable",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "proved",
+        "supporting_assertion_ids": [
+         "a_c",
+         "a_f"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+     }
+    ],
+    "sources": []
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R2"
+     },
+     "label": "likely"
+    }
+   ]
   }
  ]
 }

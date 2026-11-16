@@ -132,12 +132,15 @@ def next_steps(response_summary: str) -> list[str]:
     (Decision 33) carries its own ``nextStep`` keys and comes before it in the
     answer, so a scan of the whole summary would count an owed item as a
     question's step. A summary with no ``questionStatuses`` key (one written
-    before owed findings existed, or cut before the key) is scanned whole, as it
-    always was.
+    before owed findings existed) is scanned whole, as it always was. One cut
+    after ``owedFindings`` but before ``questionStatuses`` holds no question
+    step at all, so it yields none rather than scoring owed items as steps.
     """
     start = response_summary.find('"questionStatuses":')
     if start != -1:
         response_summary = response_summary[start:]
+    elif '"owedFindings":' in response_summary:
+        return []
     out = []
     for m in NEXT_STEP_RE.finditer(response_summary):
         if m.group(1) == "null":

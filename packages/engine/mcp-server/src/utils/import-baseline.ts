@@ -69,18 +69,29 @@ export function importBaseline(tree: any, startingTree: any | null): ImportBasel
     if (r?.type === "Couple") baselineFacts.set(ends(r).join("+"), Array.isArray(r.facts) ? r.facts : []);
   }
 
+  const allBaselineFacts = [...baselineFacts.values()].flat();
   return {
     isImportEdge(edge) {
       if (baselineEdges.has(edgeKey(edge))) return true;
-      // An endpoint the baseline lacks: a person this project minted, or the
-      // survivor of a merge that removed the baseline person. Only the
-      // FamilySearch-tree ref the import carried still marks it; a minted
-      // object often has no refs, so "no refs" says nothing here.
-      return !ends(edge).every((p) => baselinePersons.has(p)) && fsRef(edge);
+      // Not a baseline edge by its endpoints: one a merge re-pointed (the
+      // absorbed person's edge, now on the survivor) still carries the
+      // FamilySearch-tree ref the import came with. A minted edge often has no
+      // refs, so "no refs" says nothing here.
+      return fsRef(edge);
     },
     isImportFact(holderIds, fact) {
       const holder = [...holderIds].sort().join("+");
       if (!holderIds.every((p) => baselinePersons.has(p))) return fsRef(fact);
+      // A merge moves the absorbed person's facts onto the survivor unchanged,
+      // id and all: a fact with a baseline fact's id and strictly equal value,
+      // on any baseline person, is that import wherever it now sits. The id
+      // keeps a new fact that merely repeats another person's value out.
+      if (
+        typeof fact?.id === "string" &&
+        allBaselineFacts.some((f) => f?.id === fact.id && sameFactValue(f as SimplifiedFact, fact as SimplifiedFact))
+      ) {
+        return true;
+      }
       const facts = baselineFacts.get(holder) ?? [];
       // Strict equality on type, date, place and value, not the merge tools'
       // compatibility test (Decision 31), and never an id alone: an added "Birth

@@ -621,6 +621,46 @@
    },
    "tree": null,
    "expect": []
+  },
+  {
+   "name": "claims also fires for a disproved summary that states none, as claim rule 5 does",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "resolved"
+     }
+    ],
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_001"
+      ]
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "disproved"
+     }
+    ]
+   },
+   "tree": null,
+   "expect": [
+    {
+     "kind": "claims",
+     "ref": "ps_001",
+     "blocksCompletion": false
+    }
+   ]
   }
  ]
 }

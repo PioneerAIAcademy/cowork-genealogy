@@ -170,3 +170,8 @@ def test_owed_findings_next_steps_are_not_counted_as_question_steps():
 
 def test_a_summary_without_question_statuses_is_scanned_whole():
     assert next_steps('{"ok":true,"x":[{"nextStep":"research-plan"}]') == ["research-plan"]
+
+
+def test_a_summary_cut_after_owed_findings_yields_no_question_step():
+    summary = '{"ok":true,"owedFindings":[{"kind":"conclude","nextStep":"proof-conclusion — q_001 has 2 tied"}],"questi'
+    assert next_steps(summary) == []

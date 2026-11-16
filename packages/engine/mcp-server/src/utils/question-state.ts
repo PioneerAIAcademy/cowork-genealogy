@@ -661,8 +661,8 @@ export function endsOnConflict(summary: any, lastSearched: number): boolean {
  */
 /** This question's owed items of one kind: `encode` items on its summaries, or
  *  `hypothesis` items on hypotheses that relate to it. */
-function owedFor(research: any, tree: any, qid: unknown, summaries: any[], kind: "encode" | "hypothesis"): OwedFinding[] {
-  const owed = owedFindings(research, tree).filter((f) => f.kind === kind);
+function owedFor(all: readonly OwedFinding[], research: any, qid: unknown, summaries: any[], kind: "encode" | "hypothesis"): OwedFinding[] {
+  const owed = all.filter((f) => f.kind === kind);
   if (kind === "encode") {
     const ids = new Set(summaries.map((s) => `${s?.id}/`));
     return owed.filter((f) => [...ids].some((prefix) => f.ref.startsWith(prefix)));
@@ -675,8 +675,16 @@ function owedFor(research: any, tree: any, qid: unknown, summaries: any[], kind:
   return owed.filter((f) => related.has(f.ref));
 }
 
-export function questionStatus(research: any, question: any, tree: any = null): QuestionStatus {
+export function questionStatus(
+  research: any,
+  question: any,
+  tree: any = null,
+  owed?: readonly OwedFinding[],
+): QuestionStatus {
   const qid = question?.id;
+  // Computed only when an owed-finding arm is reached; questionStates passes it.
+  let owedList = owed;
+  const getOwed = (): readonly OwedFinding[] => (owedList ??= owedFindings(research, tree));
 
   const plans = arr(research?.plans).filter((p) => p?.question_id === qid);
   const itemIds = new Set(plans.flatMap((p) => arr(p?.items).map((i) => i?.id)));
@@ -788,16 +796,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     nextStep = `researcher's choice: research-plan or proof-conclusion (default ${
       lowOverturnRisk(question) ? "proof-conclusion" : "research-plan"
     })`;
-  } else if (tree && owedFor(research, tree, qid, summaries, "encode").length > 0) {
+  } else if (tree && owedFor(getOwed(), research, qid, summaries, "encode").length > 0) {
     // A claim affirmed at probable or better that no tree object carries
     // (Decision 33's `encode`): proof-conclusion encodes it. Above the concluded
     // and blocked arms, so a resolved question still reports it. Skipped with no
     // tree, as competingParentSets is: a tree-less reader cannot tell.
-    nextStep = owedFor(research, tree, qid, summaries, "encode")[0].nextStep;
-  } else if (summaries.length === 0 && owedFor(research, tree, qid, summaries, "hypothesis").length > 0) {
-    // A supported hypothesis on this question with no summary yet: concluding it
-    // is the next step, not more searching.
-    nextStep = owedFor(research, tree, qid, summaries, "hypothesis")[0].nextStep;
+    nextStep = owedFor(getOwed(), research, qid, summaries, "encode")[0].nextStep;
   } else if (summaries.length > 0 && !resolved) {
     // A summary on a question still open was written while the preconditions
     // gate blocked the conclusion: proof-conclusion resolves the question it
@@ -825,7 +829,15 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     const planned = openItems(plans)
       .filter((i) => i?.status === "planned" && !waitingOnUpload.has(i?.id))
       .sort((x, y) => (Number(x?.sequence) || 0) - (Number(y?.sequence) || 0));
-    if (planned.length === 0) {
+    // A supported hypothesis on this question, with nothing left to search and no
+    // summary yet: concluding it is the next step (Decision 33's `hypothesis`).
+    // Below extraction, framing and every planned search, which come first.
+    const supported = planned.length === 0 && summaries.length === 0
+      ? owedFor(getOwed(), research, qid, summaries, "hypothesis")
+      : [];
+    if (supported.length > 0) {
+      nextStep = supported[0].nextStep;
+    } else if (planned.length === 0) {
       nextStep = "research-exhaustiveness, then proof-conclusion";
     } else {
       const lane = searchStepFor(planned[0]);
@@ -865,7 +877,9 @@ export function questionStatus(research: any, question: any, tree: any = null): 
 /** Every question's state, in document order. `tree` is optional: without it
  *  `competingParentSets` is always empty. */
 export function questionStates(research: any, tree: any = null): QuestionStatus[] {
+  // The owed list is project-wide: compute it once, not once per question.
+  const owed = owedFindings(research, tree);
   return arr(research?.questions)
     .filter((q) => typeof q?.id === "string")
-    .map((q) => questionStatus(research, q, tree));
+    .map((q) => questionStatus(research, q, tree, owed));
 }

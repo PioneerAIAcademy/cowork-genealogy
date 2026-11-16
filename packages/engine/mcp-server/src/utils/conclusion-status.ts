@@ -6,7 +6,7 @@
 
 import { claimCoversEdge, claimCoversFact, claimKind, isBiologicalClaim, nearMiss } from "./claim-join.js";
 import { importBaseline } from "./import-baseline.js";
-import { claimUngroundedPersons } from "../validation/claim-rules.js";
+import { claimProvedCapped, claimUngroundedPersons } from "../validation/claim-rules.js";
 import { PROOF_TIER_RANK } from "../validation/validator.js";
 
 export const STATUS_LABELS = {
@@ -107,6 +107,8 @@ export function conclusionStatus(research: any, tree: any, startingTree: any | n
       const missing = claimUngroundedPersons(x.c, research, summaries);
       if (missing.length > 0) return `tentative, not yet confirmed to be ${missing.map((p) => nameOf.get(p) ?? p).join(" and ")}`;
     }
+    // Decision 30 (claim rule 12): a proved claim on a probable-only identity stands at probable.
+    if (claimProvedCapped(x.c, research, summaries)) return STATUS_LABELS.probable;
     return STATUS_LABELS[x.c.proof_tier as keyof typeof STATUS_LABELS] ?? STATUS_LABELS.found;
   };
 

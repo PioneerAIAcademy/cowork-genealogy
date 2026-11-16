@@ -8068,15 +8068,24 @@ describe("research_append (project singleton section)", () => {
     expect(r.validation.warnings.join(" ")).toMatch(/completed while it still owes conclude q_001: proof-conclusion — q_001 has 1 tied assertion\(s\) and no proof summary/);
   });
 
-  it("completion with an encode item warns, and the legacy shape match skips a summary with claims", async () => {
+  it("completion with an encode item warns", async () => {
     await writeProject(withClaims([birthClaim("1850")]), baseTree);
     await writeBaseline(baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth from ps_001/);
-    expect(w).not.toMatch(/no tree person it draws evidence from/);
+    expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth from ps_001/);
+  });
+
+  it("the legacy shape match is skipped for a summary that carries claims", async () => {
+    // The same unencoded probable summary without claims draws the legacy
+    // warning (#1490 above); with claims, only the owed encode item speaks.
+    await writeProject(withClaims([birthClaim("1850")]), baseTree);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
   });
 
   it("completion with nothing owed is silent", async () => {

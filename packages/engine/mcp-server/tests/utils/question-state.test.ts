@@ -1352,4 +1352,14 @@ describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
       "proof-conclusion — hypothesis h_001 is supported and no related question has a proof summary",
     );
   });
+
+  it("a supported hypothesis does not jump ahead of a planned search", () => {
+    const d = doc({
+      plans: [{ id: "pl_001", question_id: Q, status: "active", items: [{ id: "pli_001", status: "planned", sequence: 1, repository: "FamilySearch", record_type: "census" }] }],
+      assertions: [{ id: "a_1", record_id: "r", extracted_for_question_ids: [Q] }],
+      hypotheses: [{ id: "h_001", status: "supported", related_question_ids: [Q] }],
+      person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
+    });
+    expect(questionStatus(d, question(), tree).nextStep ?? "").not.toMatch(/^proof-conclusion — hypothesis/);
+  });
 });

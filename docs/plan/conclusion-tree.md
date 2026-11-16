@@ -258,7 +258,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
     - `conclude`: a question with an assertion tied to it (the per-question filter in `questionStatus`, `src/utils/question-state.ts`) and no proof summary;
     - `hypothesis`: a `supported` hypothesis with no proof summary on a related question;
     - `encode`: an affirmed tree-object claim at `probable` or better that no tree object matches by Decision 31's join. It replaces `treeEncodingCompletionWarnings`' shape match for a summary that states claims; the shape match stays for claim-less summaries (Decision 24's legacy reading) until part 4's bodies write claims, so completion does not go silent in between;
-    - advisory, never blocking: `raise` (an affirmed claim at `possible` that is not a set-aside rival), `claims` (a legacy summary at `possible` or better with none), `frame` (a project where no assertion is tied to any question).
+    - advisory, never blocking: `raise` (an affirmed claim at `possible` that is not a set-aside rival), `claims` (a legacy summary at `possible` or better, or `disproved`, with none, as claim rule 5 reads it), `frame` (a project where no assertion is tied to any question).
   - `blocksCompletion` is true for `conclude` and `hypothesis`. Completion with a blocking item, or with an `encode` item, warns (Decision 33).
   - `src/utils/question-state.ts`: `nextStep` gains the matching arms.
   - `docs/specs/schemas/owed-findings-vectors.json` (new) pins the list. Spec: `docs/specs/project-context-tool-spec.md`.
