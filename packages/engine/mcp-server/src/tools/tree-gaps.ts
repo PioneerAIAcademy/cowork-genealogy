@@ -314,7 +314,7 @@ async function readHints(
     if (!window) return;
     try {
       const res = await personRecordMatches(
-        { id, status: ["pending"], count: MAX_HINTS_PER_PERSON },
+        { id, status: ["pending"], minConfidence: 4, count: MAX_HINTS_PER_PERSON },
         principal,
         window,
       );
