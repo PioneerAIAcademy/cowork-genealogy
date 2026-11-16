@@ -595,7 +595,7 @@ function roleFamily(role: string): RoleFamily {
   return "other";
 }
 
-interface Classification {
+export interface Classification {
   informant: string;
   informant_proximity: string;
   information_quality: string;
@@ -973,6 +973,22 @@ export function normalizeFactType(raw: unknown): string {
     .toLowerCase();
 }
 
+/**
+ * The classification of one fact a read page adds to an indexed record (#4286):
+ * the `classify` row `extractRecord`'s `push()` takes for a FamilySearch record,
+ * keyed on the record type, the persona's role and the fact. Never copied from a
+ * sibling assertion. `bias` and `defaulted` are returned as `push()` reads them.
+ */
+export function classifyReading(
+  recordType: RecordType,
+  role: string,
+  factType: string,
+  collection?: string,
+  relationshipType?: string,
+): Classification {
+  return classify(recordType, role, factClassOf(factType, recordType), collection, factType, relationshipType ?? "");
+}
+
 function factClassOf(factType: string, recordType: RecordType): FactClass {
   if (factType === "residence") return "residence";
   // The medical certificate on a death record: the physician's section.
@@ -993,10 +1009,13 @@ function factClassOf(factType: string, recordType: RecordType): FactClass {
   return eventFor[factType] === recordType ? "event" : "identity";
 }
 
-function fullName(p: SimplifiedPerson): string {
-  const n = p.names?.[0];
+function nameText(n: { given?: string; surname?: string } | undefined): string {
   if (!n) return "";
   return [n.given, n.surname].filter((x) => x && String(x).trim() !== "").join(" ").trim();
+}
+
+function fullName(p: SimplifiedPerson): string {
+  return nameText(p.names?.[0]);
 }
 
 // ─── the extractor ──────────────────────────────────────────────────────────
@@ -1379,16 +1398,24 @@ export function extractRecord(
     // Name — mandatory, and first. It is the identifying fact everything else
     // hangs on; a parent with a birthplace and no name is an incomplete
     // extraction.
-    const name = fullName(p);
-    if (name !== "") {
-      push(party, "name", name, {
+    // A document keeps every name it gives, each its own assertion carrying its
+    // own type and note, `names[0]` first (the preferred one downstream). An
+    // indexed record writes only `names[0]`, and never a type: the index types
+    // every persona BirthName whatever the record says (issue #4378).
+    const names = mode ? (p.names ?? []) : (p.names ?? []).slice(0, 1);
+    names.forEach((n, i) => {
+      const text = nameText(n);
+      if (text === "") return;
+      const marks = mode?.nameMarks.get(party.id)?.[i];
+      push(party, "name", text, {
         structured_value: {
-          given: p.names?.[0]?.given ?? "",
-          surname: p.names?.[0]?.surname ?? "",
+          given: n.given ?? "",
+          surname: n.surname ?? "",
+          ...(marks?.type ? { type: marks.type } : {}),
         },
-        ...(mode?.nameNotes.get(party.id) ? { informant_bias_notes: mode.nameNotes.get(party.id) } : {}),
+        ...(marks?.note ? { informant_bias_notes: marks.note } : {}),
       });
-    }
+    });
 
     // Sex, where the record gives one.
     const g = genderOf(p);
@@ -1790,7 +1817,7 @@ const DOUBLE_DATED = /\b\d{4}\/\d{1,4}\b/;
 export const TRAILING_DOUBT = /\s*\[\?\]$/;
 
 /** A value with the doubt marker, added once. */
-const withDoubt = (v: string) => (v.includes("[?]") ? v : `${v} [?]`);
+export const withDoubt = (v: string) => (v.includes("[?]") ? v : `${v} [?]`);
 
 /**
  * The dates the calendar route may apply to (genealogist ruling, 2026-09-30,

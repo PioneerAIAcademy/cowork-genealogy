@@ -20,7 +20,11 @@ export interface RecordReadInput {
 // The tool returns simplified GEDCOMX directly. A LIVE read given a
 // `projectPath` also stages the record (issue #2048 / #2489) and carries the
 // staging handle beside the document; a sidecar-mode read carries neither.
-export type RecordReadResult = SimplifiedGedcomX & {
+export type RecordReadResult = SimplifiedGedcomX & RecordReadAnswerFields;
+
+/** What `record_read` adds beside the document, on the full and the compacted
+ *  answer alike. */
+export interface RecordReadAnswerFields {
   /** The page-image document-image ARK. The requested persona's own source
    *  refs are tried first, then document order — a record can carry several
    *  page images, and the co-resident on scan 2 is not on scan 1. A source is
@@ -53,6 +57,32 @@ export type RecordReadResult = SimplifiedGedcomX & {
   staged?: { resultsRef: string; returnedCount: number } | null;
   /** Why `staged` is null — staging is best-effort and never fails the read. */
   stagingError?: string;
+}
+
+/** A persona cut to its names by `compactRecordReadAnswer`'s persona cap. */
+export interface RecordReadStubPersona {
+  id?: string;
+  ark?: string;
+  gender?: string;
+  names?: import("./gedcomx.js").SimplifiedName[];
+}
+
+/** What `record_read` returns at the MCP boundary: the handler's
+ *  `RecordReadResult` after `compactRecordReadAnswer` (record-read-tool-spec.md,
+ *  "The answer"). In-process readers keep the full `RecordReadResult`. */
+export type CompactRecordReadAnswer = RecordReadAnswerFields & {
+  /** Whole personas, then names-only stubs (record-read-tool-spec.md §6.2). */
+  persons?: Array<import("./gedcomx.js").SimplifiedPerson | RecordReadStubPersona>;
+  relationships?: import("./gedcomx.js").SimplifiedRelationship[];
+  /** The requested persona's citation, else the record's, else the first a
+   *  source carries. */
+  citation?: string;
+  /** The record (1:2:) source's url. */
+  recordUrl?: string;
+  /** The collection's title, present only when `citation` does not contain it. */
+  collectionTitle?: string;
+  /** How many personas the persona cap left out of `persons`. */
+  personsOmitted?: number;
 };
 
 /** One staged `record_read` result element. Declared here rather than inline so

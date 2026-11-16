@@ -137,11 +137,14 @@ can drop:
   }],
   waitingPages?: [{                      // read pages of held records — §2.8; absent when none
     sourceId: string,
-    ref: string,                         // the staged page
+    ref: string,                         // the staged or logged page
+    index: [{                            // the record's index: the source's live assertions
+      assertionId: string, role: string, factType: string, value: string,
+    }],
   }],
   claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
-    [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
+    [place: string]: { total: number, byRecordType: { [recordType: string]: number } } | { tooLarge: true },
   },
   sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
   unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
@@ -151,6 +154,7 @@ can drop:
     hasText: boolean,                    // uploads/<name>.txt exists
   }],
   uploadUrl?: string,                    // upload page; only with webPublicUrl, uploadsEnabled and a store id — §2.7
+  signInUrl?: string,                    // FamilySearch sign-in page; only for a connector caller whose session has ended — §2.8
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -515,8 +519,14 @@ Present only when the project holds `external-collections.json` (written by
 ```typescript
 externalCollections?: {
   [place: string]: { total: number, byRecordType: { [recordType: string]: number } }
+                 | { tooLarge: true }
 }
 ```
+
+A place `external_links_search` refused as too large to list (more than 1,000
+links, such as the United States) is `{ tooLarge: true }`: looked up, but its
+collections are unknown. It is never reported as `total: 0`, which a planner
+would read as "no curated collections here".
 
 Counts only, never rows — the lists run to hundreds of rows per state, and the
 rows are read with `research_query({section: "external_collections", place,
@@ -612,6 +622,28 @@ to a viewer page. On the hosted tool server the settings arrive as `WEB_PUBLIC_U
 with exit 2. The tool takes the principal as its last parameter because the
 link reads the per-user config.
 
+### 2.8 `signInUrl` — a connector caller whose FamilySearch session has ended
+
+```typescript
+signInUrl?: string    // `${webPublicUrl}/auth/familysearch/login`
+```
+
+Present only when the caller came through the connector, the per-user config has
+`webPublicUrl`, and FamilySearch answers **401** to one
+`GET /platform/users/current` made with the caller's token
+(`connectorSession`, `src/utils/session-check.ts`). It puts the sign-in link in
+front of the model at the start of the next turn, so it reaches the user even when
+an agent's summary dropped the tool error that first carried it.
+
+- Any other answer learns nothing and adds no key: a 200, another status, a
+  timeout (5 s), a spent FamilySearch budget or a network failure. An outage never
+  sends a signed-in user to sign in again, and the check never fails the call.
+- The answer is remembered per user for 60 s, and a new token is a new question at
+  once, so signing in again shows on the next call.
+- With no link to give (the worker, the desktop, or no `webPublicUrl`) FamilySearch
+  is not asked.
+- Only the status is read; the response body is discarded.
+
 What nothing checks: that the web tier writes the text layer under the name
 this side reads. Each side is tested against its own fixture.
 
@@ -626,8 +658,12 @@ good. `cc=` selects
 nothing and is ignored. An ARK with `i=` or `groupId=` never joins: those pick one
 image of several, and a read that fails on them falls back to the bare URL, which can
 land on any image. The oldest logged read wins, then the oldest staged one. Read-only.
-Absent when nothing waits. The router answers with one
-`extraction_append({ attachWaitingPages: true })`. A page that expires from staging
+Absent when nothing waits. Each entry carries `index`, the source's live assertions
+(id, role, fact type, value), so record-structurer, which holds no `research_query`,
+can name the assertion a reading disputes or the persona a new fact is about. The
+router hands the list to record-structurer in one spawn, which reads each page and
+answers with one `extraction_append({ attachWaitingPages: true, pageReadings })`
+(research-append spec §11.9). A page that expires from staging
 drops out. It reads every fresh staged file while any source waits, as
 `unloggedStagedSearches` does on a search.
 
@@ -640,7 +676,11 @@ drops out. It reads every fresh staged file while any source waits, as
 - **No assertion bodies.** Per-assertion detail (values, classifications) is
   deliberately excluded — it is exactly the growing payload the diet
   removes. Refinement flows get the specific `a_` ids from the delegating
-  caller, who holds file access.
+  caller, who holds file access. **One exception (2026-11-09):** `waitingPages[].index`
+  lists the id, role, fact type and value of a waiting page's own record. It is
+  bounded (one record per page, present only while a page waits), carries no
+  classification, and record-structurer has no other way to reach those ids — a
+  relay through the spawn prompt is a model copying ids nothing checks.
 - **camelCase output.** This is an MCP wire surface. The snake_case source
   fields (`gedcomx_source_description_id`, `record_id`) are renamed at the
   boundary like every other tool.
@@ -713,7 +753,7 @@ untouched.
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
@@ -756,6 +796,10 @@ untouched.
   With a project-id store: `uploadUrl` with both settings, none while uploads are
   off or unset, none without `webPublicUrl` or without a store id, and never a
   `projectUrl`; a failing listing omits `uploads` and still answers.
+  `signInUrl`: present on a 401, absent on a 200, a 503 and a failed request, and
+  no FamilySearch request for the worker or with no `webPublicUrl`
+  (`tests/tools/project-context.test.ts`); `tests/http/http-server.test.ts` 3b
+  drives it through the door, with `auth_status` beside it.
   `tests/http/http-server.test.ts` 2d drives the link, with both settings on,
   through `startHttpServer`'s `baseConfig`.
 - **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan

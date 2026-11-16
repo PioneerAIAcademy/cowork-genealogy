@@ -32,6 +32,9 @@ tools:
   - mcp__genealogy__place_search
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_search
+  - mcp__genealogy__catalog_search
+  - mcp__remote-devices__Genealogy_Research__catalog_search
+  - mcp__Genealogy_Research__catalog_search
   - mcp__genealogy__collections_search
   - mcp__remote-devices__Genealogy_Research__collections_search
   - mcp__Genealogy_Research__collections_search
@@ -231,7 +234,8 @@ Instead, for each capture-required external-site plan item:
    owns item structure; an executing skill may only update the `status` of an
    item that already exists, and inventing one to close puts a search in the
    plan that was never planned.
-5. **Return to the caller** — do not wait.
+5. **Return to the caller** — do not wait. The built URL goes after the `---`,
+   pasted whole, so the researcher can run it later.
 
 ## Before you search
 
@@ -298,7 +302,7 @@ A place absent from `externalCollections` was never fetched: call
 `external_links_search({ standardPlace, host: "<e.g. ancestry.com>",
 projectPath })` once (it stores the list), then read as above. Keep rows
 whose `url` is on your target site; a row for the plan item's record type and
-years → Case A, none → Case B.
+years → Case A, none → Case B. Keep the `standardPlace` for step 3.
 
 ### 2b. Check FamilySearch's own holdings
 
@@ -316,6 +320,25 @@ it (step 4), say plainly that FamilySearch holds the same collection and offer t
 FamilySearch copy via search-records. **Never present a competitor as the source
 for a collection FamilySearch holds.** Ground any statement about which collections
 or census years exist in this `collections_search` result, never in memory.
+
+**For `archion` and `matricula`, also call `catalog_search`** for the parish's place:
+
+```
+catalog_search({ standardPlace: "<standardPlace>" })
+```
+
+Keep a hit whose title, creator or `filmNotes` name that parish's church books and
+cover the register type and year. For a kept hit, step 4 gets one sentence, after
+the `---`, starting `FamilySearch has filmed this register: "<title>", film <filmNumber>`,
+with the `filmNumber` of the film note covering the year, then:
+- `availableOnline: false` → viewable only at a FamilySearch Center or an affiliate
+  library. Never offer to read it.
+- `availableOnline: true` → offer to read it, and put the film note's
+  `imageGroupNumber` in the caller lines as the handoff to search-images.
+- `availableOnline` absent → name the film and say nothing about where it can be
+  viewed.
+
+Still build the archion/matricula URL. No kept hit → say nothing about the Catalog.
 
 ### 3. Build the URL
 
@@ -339,7 +362,10 @@ The tool then writes the search's in-flight `external_site` log
 entry itself and returns its `logId`. It returns
 `{ ok: true, url, notes, access, logId }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
-blindly or hand-writing a URL. **One exception:** when the results for that URL
+blindly or hand-writing a URL. On `reason: "place_not_fetched"`, make the
+`external_links_search` call the error names, read the stored list (step 2), then
+build again.
+**One exception:** when the results for that URL
 are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
 is not awaiting anything — call the tool **without** `projectPath`, so no
 in-flight entry is written, and log the search once at step 6.
@@ -371,13 +397,14 @@ build_external_search_url({
 
 Tell the user plainly: "No FamilySearch-curated link for [site] in
 [year window] — using the site-wide search instead." Then call the tool
-without `baseUrl` — it builds the site-wide search, which covers the whole
-site index, not a scoped collection:
+without `baseUrl`, passing the `standardPlace` from step 2 — it builds the
+site-wide search, which covers the whole site index, not a scoped collection:
 
 ```
 build_external_search_url({
   site: "ancestry",
   attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" },
+  standardPlace: "Ireland",
   projectPath: "<projectPath>",
   planItemId: "<pli_XXX>"
 })
@@ -403,8 +430,11 @@ build_external_search_url({
 | `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Keyword-only — the site's own structured name fields do not bind |
 | `italian_genealogy` | `givenName`/`surname`/`keywords` | A discussion forum, not a records database — keyword search over posts only |
 | `openarch` | `givenName`/`surname`, one event's year — `marriageYear`/`birthYear`/`deathYear`, marriage first | Open Archieven, Dutch records — the year becomes a `YYYY-YYYY` period inside the one `name` field. Event type and place are never URL filters (they hide church-book records and re-spelled places): pass the event's place anyway and relay the tool's note telling the user to narrow by type and place on the results page. A call with no name part is refused |
+| `blm_glo` | `givenName`/`surname`, `usState` | BLM General Land Office — federal land patents in the 30 public-land states. Pass the land's state as `usState`; without one the search is nationwide. On `outside_coverage` (the 13 original states, ME, VT, KY, TN, WV, TX, HI, DC): say BLM holds no patents there, route to the state land office and county deed records, and log nothing; never re-call for that land without `usState` or with another state. Before logging a nil, re-run surname-only. A call with no name part is refused |
 | `archion` | none — browse site | German Protestant church books; viewing the scans needs an Archion pass. **Pass the parish page as `baseUrl`** — from the delegation or a `localities` entry, never from memory; it comes back unchanged, with the path through the site in `notes`. Without one the tool returns the site root and says so |
 | `matricula` | none — browse site | Chiefly Catholic church books; free. Same as `archion`: pass the parish page as `baseUrl` |
+
+For either browse site, the route to the parish is the one in the tool's `notes`, relayed whole. Never give a route through the site from memory.
 
 Every observation the tool makes — an attribute the site doesn't read, a
 value it rejected, a site's standing caution — comes back in the response's
@@ -478,7 +508,13 @@ plain prose:
    from the delegation;
 5. any `notes` the tool returned alongside the `handoffLine` (an attribute it
    ignored, a caution about the site) — relay these here too, not only above
-   the line (see "Every observation the tool makes" above).
+   the line (see "Every observation the tool makes" above);
+6. when `collections_search` returned the same collection (step 2b), one
+   sentence saying FamilySearch holds it too and can be searched there instead
+   — here, after the `---`, Case A or Case B;
+7. when `catalog_search` kept a filmed copy of the register (step 2b), its
+   sentence from step 2b, with the film number — here, after the `---`, never
+   only in the caller lines.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
@@ -753,9 +789,10 @@ the record might still be findable through other methods.
 
 After online searches across multiple sites return negative
 results, note the possibility of undigitized records and suggest:
-- A `catalog_search` of the place — hand it to search-records; the
-  Catalog lists registers filmed or imaged but never indexed, which
-  `collections_search` does not reach
+- The FamilySearch Catalog for the place, which lists registers filmed or
+  imaged but never indexed, which `collections_search` does not reach: for
+  archion/matricula, report step 2b's `catalog_search` hit; for any other site,
+  hand a Catalog search to search-records
 - Contacting the relevant county courthouse or church archive
 - Consulting finding aids for archival collections at state or
   national archives
@@ -1058,7 +1095,8 @@ plain prose with **no label, heading or field name**:
    archive was searched for whom, and what came of it — in plain words. A
    hand-off carries its content here, in full (Step 4's list), and, when
    `collections_search` found the same collection FamilySearch holds, one
-   sentence saying so and that it can be searched instead. If nothing was
+   sentence saying so and that it can be searched instead, and step 2b's
+   `catalog_search` sentence when it kept a filmed copy. If nothing was
    found, say so plainly and say what was searched, so the reader knows the
    search was real. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.

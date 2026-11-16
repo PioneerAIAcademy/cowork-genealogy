@@ -512,7 +512,15 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 
+# What record_search adds to an answer to say how to search next:
+# `patronymicSearch`, `childrenSearch` and `census`. Computed by the compiled
+# `searchAdvice` from the call's own arguments and the answer's counts, so no
+# fixture carries a copy.
+_SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
+
+_VOLUME_SEARCH_JS = _MCP_BUILD / "tools" / "volume-search.js"
 
 
 #: Compiled modules already warned about, so a missing build says so once per
@@ -562,6 +570,15 @@ def _unknown_args_module_present() -> bool:
     return _compiled_module_present(
         _UNKNOWN_ARGS_JS,
         "mock tool calls will NOT be checked for non-parameter arguments",
+    )
+
+
+def _volume_search_module_present() -> bool:
+    """A build predating #4414 serves every volume_search fixture unfiltered,
+    which reads as `omitSearchable` being silently ignored."""
+    return _compiled_module_present(
+        _VOLUME_SEARCH_JS,
+        "volume_search responses will NOT have omitSearchable applied",
     )
 
 
@@ -687,6 +704,75 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
         return None
 
 
+def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Production's `searchAdvice` for a `record_search` call, as (key, value)
+    pairs in the order production serializes them before `results`. Empty when
+    nothing applies, the build predates it, or node fails (with a warning: a
+    harness fault must not look like the model ignoring the advice)."""
+    if not _compiled_module_present(_SEARCH_ADVICE_JS, "record_search responses will carry no search advice"):
+        return []
+    script = (
+        f"import {{ searchAdvice, SEARCH_ADVICE_KEYS }} from '{_node_module_url(_SEARCH_ADVICE_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const advice = searchAdvice(input.args, input.counts);"
+        " process.stdout.write(JSON.stringify("
+        " SEARCH_ADVICE_KEYS.filter((k) => advice[k]).map((k) => [k, advice[k]])));"
+    )
+    try:
+        counts = {"totalMatches": response.get("totalMatches"), "ranked": response.get("ranked")}
+        proc = _run_node_eval(
+            script, json.dumps({"args": args, "counts": counts}), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return [(k, v) for k, v in json.loads(proc.stdout.strip())]
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock record_search could not compute its search advice ({exc})", stacklevel=2)
+        return []
+
+
+def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
+    """Production's `omitSearchable` post-processing (#4414), applied to a
+    canned `volume_search` fixture exactly as `volumeSearchTool` applies it to
+    its own computed page — before `fitToBudget`.
+
+    Calls the COMPILED `filterSearchableVolumes` (`build/tools/volume-search.js`),
+    never a Python restatement: the omission rule (two searchability signals, a
+    labelling tie-break, the concept-id fallback) is tool behaviour, and a
+    second copy is a second thing to drift (CLAUDE.md, "Code reuse"). A node
+    failure serves the fixture unfiltered, with a warning — a harness fault
+    must not read as the flag having been exercised.
+    """
+    if not _volume_search_module_present():
+        return response
+    script = (
+        f"import {{ filterSearchableVolumes }} from '{_node_module_url(_VOLUME_SEARCH_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(filterSearchableVolumes(input)));"
+    )
+    try:
+        # DEFAULT, not LONG, and store=False: `filterSearchableVolumes` is a
+        # pure function over the response object -- no network, no file I/O,
+        # no store, same reasoning as `_reject_unknown_args`.
+        proc = _run_node_eval(
+            script,
+            json.dumps(response),
+            timeout=NODE_EVAL_TIMEOUT_DEFAULT,
+            store=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return json.loads(proc.stdout)
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
+        warnings.warn(
+            f"mock volume_search could not apply omitSearchable ({e}); the fixture was served unfiltered.",
+            stacklevel=2,
+        )
+        return response
+
+
 def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     """`response` with `key` moved immediately before `results` — where the real
     record_search serializes `surnameVariantHints`, after the pre-`results` notes."""
@@ -753,9 +839,14 @@ def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[s
 
 def _record_match_score(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
-) -> tuple[bool, dict[str, Any] | None]:
+) -> tuple[bool, dict[str, Any] | None, list[str], list[str]]:
     """Write the attestation a real `same_person` call would have written, and
-    work out whom the call is about.
+    work out whom the call is about, which of the record person's birth
+    disputes a settled conflict set aside (production's `settledConflicts`,
+    from the compiled `settledBirthDisputes`, for the assertion's own party),
+    and which warnings the link would introduce (production's
+    `warningsIfLinked`, from the compiled function of that name, for the party
+    that was scored).
 
     `same_person` is not in LIVE_TOOLS -- it calls FamilySearch -- so the
     compiled tool never executes here and `recordMatchScore` never runs. That
@@ -788,16 +879,17 @@ def _record_match_score(
         and `recordMatchScore` no-ops when persona id and role are both empty,
         so both cases simply write nothing and the caller stays silent.
 
-    Returns `(attested, parties)`: whether an attestation was written, and the
-    `recordPersona`/`treePerson` the documents give for this call (None when
-    there are none, or the tree could not be read: that costs the overlay only,
-    never the attestation). Never raises: a harness that fails the run over its
+    Returns `(attested, parties, settled, link_warnings)`: whether an attestation
+    was written, the `recordPersona`/`treePerson` the documents give for this call
+    (None when there are none, or the tree could not be read: that costs the
+    overlay only, never the attestation), the `settledConflicts` sentences and
+    the `warningsIfLinked` sentences. Never raises: a harness that fails the run over its
     own bookkeeping is worse than one that does not attest, and the writer-side
     gate failing loudly is the signal we want.
     """
     score = response.get("score")
     if not isinstance(score, (int, float)):
-        return False, None
+        return False, None, [], []
     assertion_id = args.get("assertionId")
     tree_person_id = args.get("treePersonId")
     if not isinstance(assertion_id, str) or not isinstance(tree_person_id, str):
@@ -806,13 +898,17 @@ def _record_match_score(
         # absent assertion, so the write would not happen anyway (confirmed by
         # mutation: removing this changes no test). It is an early-out that
         # avoids spawning a node process per two-document call.
-        return False, None
+        return False, None, [], []
 
     sp_js = _MCP_BUILD / "tools" / "same-person.js"
     ms_js = _MCP_BUILD / "utils" / "match-scores.js"
     pio_js = _MCP_BUILD / "utils" / "project-io.js"
-    if not (sp_js.exists() and ms_js.exists() and pio_js.exists()):
-        return False, None
+    ra_js = _MCP_BUILD / "utils" / "settled-birth-disputes.js"
+    mf_js = _MCP_BUILD / "utils" / "persona-copy.js"
+    if not (
+        sp_js.exists() and ms_js.exists() and pio_js.exists() and ra_js.exists() and mf_js.exists()
+    ):
+        return False, None, [], []
 
     _url = _node_module_url
 
@@ -833,27 +929,49 @@ def _record_match_score(
         f"import {{ buildRecordedScore, describeScoredPair }} from '{_url(sp_js)}';"
         f"import {{ recordMatchScore }} from '{_url(ms_js)}';"
         f"import {{ readProjectJson, withProjectLock }} from '{_url(pio_js)}';"
+        f"import * as ra from '{_url(ra_js)}';"
+        f"import * as mf from '{_url(mf_js)}';"
         "let raw='';for await (const c of process.stdin) raw+=c;"
         "const i=JSON.parse(raw);"
         "const research=await readProjectJson(i.projectPath,'research.json');"
+        # Production's `ownParty` test: the settled disputes are the scored
+        # assertion's own record person's, never a second party's.
+        "const scored=(research.assertions ?? []).find((a) => a.id===i.assertionId);"
+        "const own=scored && (i.role==null || i.role===scored.record_role)"
+        "  && (i.recordPersonaId==null || i.recordPersonaId===scored.record_persona_id);"
+        "let settled=[];"
+        "try { if (own && typeof ra.settledBirthDisputes==='function') {"
+        "  const t=await readProjectJson(i.projectPath,'tree.gedcomx.json');"
+        "  settled=ra.settledBirthDisputes(research,t,i.assertionId,i.treePersonId); } } catch {}"
         "const rec=buildRecordedScore(research,i.assertionId,i.treePersonId,"
         "  i.role ?? undefined,i.result,i.recordPersonaId ?? undefined);"
         "if (rec!==null) await withProjectLock(i.projectPath, async () => {"
         "  await recordMatchScore(i.projectPath,rec); });"
         "let parties=null;"
+        "let linkWarnings=[];"
+        # The warnings are for the persona production scored: `recordPersona.role`,
+        # else the role asked for, else the assertion's own.
         "try { const tree=await readProjectJson(i.projectPath,'tree.gedcomx.json');"
         "  parties=describeScoredPair(research,tree,i.assertionId,i.treePersonId,"
-        "    i.role ?? undefined,i.recordPersonaId ?? undefined); } catch {}"
-        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties}));"
+        "    i.role ?? undefined,i.recordPersonaId ?? undefined);"
+        "  if (scored && typeof mf.warningsIfLinked==='function') {"
+        "    let starting=null;"
+        "    try { starting=await readProjectJson(i.projectPath,'starting-tree.gedcomx.json'); } catch {}"
+        "    linkWarnings=mf.warningsIfLinked(research,tree,scored.record_id,"
+        "      parties?.recordPersona?.role ?? i.role ?? scored.record_role,i.treePersonId,starting); }"
+        "} catch {}"
+        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties, settled, linkWarnings}));"
     )
     try:
         proc = _run_node_eval(
             script, input_str=json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG
         )
         if proc.returncode != 0:
-            return False, None
+            return False, None, [], []
         out = json.loads(proc.stdout or "{}")
-        return bool(out.get("wrote")), out.get("parties")
+        settled = [s for s in out.get("settled") or [] if isinstance(s, str)]
+        link_warnings = [s for s in out.get("linkWarnings") or [] if isinstance(s, str)]
+        return bool(out.get("wrote")), out.get("parties"), settled, link_warnings
     except subprocess.TimeoutExpired:
         # Never raises, by contract -- but a swallowed timeout is indistinguishable
         # from "no score", and the writer-side gate turns that into a refusal of a
@@ -864,9 +982,9 @@ def _record_match_score(
             f"for assertion {assertion_id}; the link will be refused as unattested",
             stacklevel=2,
         )
-        return False, None
+        return False, None, [], []
     except Exception:
-        return False, None
+        return False, None, [], []
 
 
 def _overlay_parties(
@@ -1087,6 +1205,47 @@ def _record_birth_ranges(response: dict[str, Any]) -> dict[str, str] | None:
     except Exception as exc:  # noqa: BLE001 — a harness fault must not look like the model ignoring it
         warnings.warn(f"mock record_read could not compute birthRanges ({exc})", stacklevel=2)
         return None
+
+
+#: The compiled function production's server applies to every `record_read`
+#: answer at the MCP boundary (#4415).
+_RECORD_READ_COMPACTOR = "compactRecordReadAnswer"
+
+
+def _compact_record_read(response: dict[str, Any], record_id: str) -> dict[str, Any]:
+    """Run the compiled `compactRecordReadAnswer` on a served `record_read`.
+
+    `record_id` is the agent's call `recordId`, never the fixture's
+    `args.recordId`, which carries the `~` predicate prefix. Applied after
+    staging, so the staged sidecar keeps the full document, as production's
+    does. Returns the response untouched, with a warning, when the build is
+    absent or node fails.
+    """
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock record_read compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {_RECORD_READ_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" process.stdout.write(JSON.stringify({_RECORD_READ_COMPACTOR}(input.response, input.recordId)));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"response": response, "recordId": record_id}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+            store=False,
+        )
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock record_read compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock record_read compaction failed in node ({exc})", stacklevel=2)
+        return response
 
 
 def _stage_record_read(
@@ -1389,6 +1548,50 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     return str(out.get("message") or f"{field} could not be read")
 
 
+def _trim_person_read(response: dict[str, Any]) -> dict[str, Any]:
+    """Trim a canned full `person_read` to the model-facing answer (#4384).
+
+    Runs the COMPILED `trimPersonReadForModel`, so every fixture is cut exactly
+    as production cuts its answer. Returns the response untrimmed, with a
+    warning, when node or the build is unavailable: a harness fault, never a
+    production shape.
+    """
+    person_read_js = _MCP_BUILD / "tools" / "person-read.js"
+    if not person_read_js.exists():
+        _warn_untrimmed(f"no engine build at {person_read_js}")
+        return response
+    url = _node_module_url(person_read_js)
+    script = (
+        f"import {{ trimPersonReadForModel }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const r = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(trimPersonReadForModel(r)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            _warn_untrimmed(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+            return response
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("persons"), list):
+            _warn_untrimmed("the trim returned no `persons`")
+            return response
+        return parsed
+    except Exception as e:
+        _warn_untrimmed(f"{type(e).__name__}: {e}")
+        return response
+
+
+def _warn_untrimmed(why: str) -> None:
+    warnings.warn(
+        f"mock person_read could not be trimmed ({why}); the response goes back in the "
+        "full shape production no longer returns, so results for this call are not "
+        "comparable to production",
+        stacklevel=2,
+    )
+
+
 def _stage_person_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1645,8 +1848,14 @@ def create_mock_server(
                 and _workspace is not None
                 and "error" not in response
             ):
-                entry["attested"], parties = _record_match_score(_workspace, args, response)
+                entry["attested"], parties, settled, link_warnings = _record_match_score(
+                    _workspace, args, response
+                )
                 response = _overlay_parties(response, parties)
+                if settled:
+                    response = {**response, "settledConflicts": settled}
+                if link_warnings:
+                    response = {**response, "warningsIfLinked": link_warnings}
 
             # Production's external_links_search stores the place's full list in
             # external-collections.json whenever it is given a projectPath (#2995).
@@ -1660,6 +1869,16 @@ def create_mock_server(
                 response = _store_external_collections(
                     _workspace, args, response, _stored_rows.get(source_name)
                 )
+
+            # Production's person_read answers, and stages, the model-facing trim
+            # of the full read (#4384). A fixture holds the full read, which
+            # project_create's stand-in keeps reading from the manifest.
+            if (
+                _name == "person_read"
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _trim_person_read(response)
 
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.
@@ -1685,6 +1904,19 @@ def create_mock_server(
                 and not args.get("includeFacets")
             ):
                 response = {k: v for k, v in response.items() if k != "facets"}
+
+            # Production's volume_search applies `omitSearchable` to its own
+            # computed page before fitToBudget (#4414); call the same compiled
+            # filter on a canned fixture, keyed on the call's OWN args, never
+            # the fixture's recorded predicate -- the fixture itself stays
+            # unfiltered for a call that doesn't ask.
+            if (
+                _name == "volume_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("omitSearchable")
+            ):
+                response = _filter_searchable_volumes(response)
 
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
@@ -1809,6 +2041,18 @@ def create_mock_server(
             if _name == "record_read" and isinstance(response, dict) and "indexFields" in response:
                 response = {k: v for k, v in response.items() if k != "indexFields"}
 
+            # Production's server compacts every record_read answer at the MCP
+            # boundary (#4415): after staging, so the sidecar stays full, and with
+            # the agent's own `recordId`. The extraction_append records map below
+            # is in-process in production and stays full.
+            if (
+                _name == "record_read"
+                and isinstance(response, dict)
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _compact_record_read(response, str(args.get("recordId") or ""))
+
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
             # The fixture keeps the full page; this is what production sends.
@@ -1919,9 +2163,14 @@ def create_mock_server(
                         reordered.setdefault(_key, _value)
                     response = reordered
 
+            # The search advice, as production adds it: each key before `results`.
+            if _name == "record_search" and isinstance(response, dict) and "error" not in response:
+                for _advice_key, _advice in _search_advice(dict(args), response):
+                    response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
+
             # Production serializes surnameVariantHints immediately before
-            # `results`, after the pre-`results` notes above — placed last so
-            # the order matches.
+            # `results`, after the pre-`results` notes and the advice above —
+            # placed last so the order matches.
             if isinstance(response, dict) and SURNAME_VARIANT_HINTS_KEY in response:
                 response = _place_before_results(response, SURNAME_VARIANT_HINTS_KEY)
 
@@ -2733,6 +2982,11 @@ def _make_extraction_append_handler(
                 # personId mode reads the person's attached records itself, as
                 # `ark:/61903/1:1:<id>`. Stage the fixtures for exactly those ids.
                 wanted += [f"ark:/61903/1:1:{b}" for b in _attached_record_ids(_ws, input_obj["personId"])]
+            if input_obj.get("attachWaitingPages") is True and input_obj.get("pageReadings") is not None:
+                # A page pass (#4286) re-reads a held record whose log entry keeps
+                # no index, to classify what its page says. Stage the records the
+                # readings name, by the id their assertions carry.
+                wanted += _page_reading_record_ids(_ws, input_obj["pageReadings"])
             for rid in wanted:
                 key = rid.strip()
                 bare = key.rsplit("1:1:", 1)[-1].rsplit("/", 1)[-1]
@@ -2791,6 +3045,30 @@ def _make_extraction_append_handler(
         return _tool_envelope("extraction_append", response)
 
     return handler
+
+
+def _page_reading_record_ids(workspace: Path, page_readings: Any) -> list[str]:
+    """The record ids of the assertions a `pageReadings` call names, read from the
+    workspace's research.json. Unreadable input stages nothing: the tool refuses
+    it on its own terms."""
+    try:
+        research = json.loads((Path(workspace) / "research.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    record_of = {
+        a.get("id"): a.get("record_id")
+        for a in research.get("assertions") or []
+        if isinstance(a, dict) and isinstance(a.get("record_id"), str)
+    }
+    ids: list[str] = []
+    for entry in page_readings if isinstance(page_readings, list) else []:
+        for r in (entry or {}).get("readings") or [] if isinstance(entry, dict) else []:
+            if not isinstance(r, dict):
+                continue
+            rid = record_of.get(r.get("disputesAssertionId") or r.get("personAssertionId"))
+            if rid and rid not in ids:
+                ids.append(rid)
+    return ids
 
 
 def _mock_memory_kinds(read: dict[str, Any]) -> dict[str, str]:

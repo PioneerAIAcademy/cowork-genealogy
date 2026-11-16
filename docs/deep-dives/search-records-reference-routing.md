@@ -388,9 +388,10 @@ the same treatment.
 
 ## What nothing checks
 
-- **That the census fetch fires in production.** ADR-0012's Enforcement is
-  "None". `test_census_wiki_fixture_actually_used` covers the unit tier only,
-  across the 16 tests whose search is a census search.
+- **That a census search is answered with the `census` block in production.**
+  search-records no longer fetches the census page: `record_search` supplies the
+  schedule facts (ADR-0012). `test_census_search_answer_carried_census_block`
+  covers the unit tier only, across the 20 tests whose search is a census search.
 - **The per-year follow-up, now that its fixtures are gone.** The country page
   is a coarse table: it settles relationship availability for every year at
   once, and settles little else. The per-year detail `census-field-availability.md`

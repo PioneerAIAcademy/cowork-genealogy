@@ -101,7 +101,7 @@ that would replace it (probed 2026-10-02, §5):
   marriage, is ours: neither `Denmark_Military_Records` nor its levying-roll
   subpage says it. The page does not even state on its main page that the army
   rolls list the father's name.
-- **The `fs_hints` review item on identity, parentage, birth, death and marriage questions.** It answers a reported gap: a subject had pending record hints and the plan did not suggest looking at them. A pending FamilySearch hint is a record FamilySearch already surfaced for the subject; on any of those questions one may already answer it, so research-plan emits a `record_type: "fs_hints"` item at `sequence` 1 — the cheapest first read — when the person has an `ark` in the project tree, and none when they do not: a hints item for a local id with no FamilySearch id has nothing to read, and search-hints closes one that slips through as `skipped`/`inaccessible` so it cannot hold the router. It is a **plan item, not a routing row**: research-plan's "you thought of the search → it goes in a plan" rule holds, and no self-initiated review runs unasked. The PID lives in the item's `rationale` rather than a new `plan_items` field, because nothing else needs a per-item person id and `project.subject_person_ids` would be wrong for a parentage question about someone other than the subject. The item never blocks the other searches: once it is `in_progress` awaiting verdicts with no log entry naming it, `nextUnexecutedItem` (`question-state.ts`) skips it. Finding no hints never stops or skips another search. search-hints sets the item's own status through the `plan_items` lane the hook grants it — the same shape search-records and search-images hold.
+- **The `fs_hints` review item on identity, parentage, birth, death and marriage questions.** It answers a reported gap: a subject had pending record hints and the plan did not suggest looking at them. A pending FamilySearch hint is a record FamilySearch already surfaced for the subject; on any of those questions one may already answer it, so research-plan emits a `record_type: "fs_hints"` item at `sequence` 1 — the cheapest first read — when the person has an `ark` in the project tree, and none when they do not: a hints item for a local id with no FamilySearch id has nothing to read, and search-hints closes one that slips through as `skipped`/`inaccessible` so it cannot hold the router. It is a **plan item, not a routing row**: research-plan's "you thought of the search → it goes in a plan" rule holds, and no self-initiated review runs unasked. The PID lives in the item's `rationale` rather than a new `plan_items` field, because nothing else needs a per-item person id and `project.subject_person_ids` would be wrong for a parentage question about someone other than the subject. The item never blocks the other searches: search-hints decides the hints and completes the item in the spawn that reviews it. Finding no hints never stops or skips another search. search-hints sets the item's own status through the `plan_items` lane the hook grants it — the same shape search-records and search-images hold.
   - **Why birth, death and marriage too (lead, 2026-10-29).** The item first shipped for identity and parentage questions only. A death-date tester run (jakub-wojtczak-death, 2026-10-27) searched Poland, handed out external-site URLs and never opened the pending hint that settled the question. Two more record-hint e2e runs, a death date (jakub-wojtczak-death) and a marriage (victoriana-vasquez-marriage), spent their whole tool budget on nil searches and stopped at `tool_cap` with no source saved. In each, the record that answered the question was a hint already attached to the person. A one-fact question is exactly where an attached hint is most likely to be the answer, so the item now leads those plans too. Birth means a birth, baptism or christening date or place; death means a death or burial date or place; marriage means when or where the person married (review-ready, 2026-10-30: the goal table already treats baptism as birth evidence and burial as death evidence). A who-was-the-spouse question and an enumerative question (children, siblings) still get no item: the hints on one person do not enumerate a family.
 - **The death-record route to a pre-register birth.** When
   the birth predates the register of the parish where the subject was born or
@@ -127,6 +127,20 @@ that would replace it (probed 2026-10-02, §5):
   search asserts nothing, so a search keyed on a surname from a single marriage
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
+- **The dedicated parents'-marriage item, re-checked at return time.** The
+  body's parentage rule (a dedicated item for the candidate parents' marriage
+  to each other, Appendix B) slipped roughly one full run in seven by folding
+  the marriage into a generic church item — the 2026-10-29 full run's church
+  item carried "Thomas's marriage record would supply her maiden name" beside
+  sibling baptisms. Reinforcing the rule's prose was rejected (the measured
+  position behind the body's style rules), so the return contract carries a
+  matching line instead: for a parentage question whose plan was written this
+  turn (create or supersede), the `pli_` id of the dedicated item, appended
+  before returning when missing. The turn scoping is load-bearing — the
+  contract applies in every mode, and review and dispose modes may not touch
+  `plans[]` (their validators fail any appended item). This spec has no fuller
+  return-contract description; the agent body's "Return contract" section is
+  the source. The validator is in §7.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:
@@ -218,3 +232,14 @@ change; keep no local copy.
   `fs_hints` item. Either tag fails when no person the question names has an
   `ark`. Proven to fail in
   `eval/harness/tests/unit/test_research_plan_hints_review_validator.py`.
+- `test_research_plan_plans_parents_marriage`: on `parents-marriage-item`
+  tests, some sentence of a new plan item's rationale names the candidate
+  father together with a marriage word (marri*/wed*/bond*/licen*) and no
+  baptism, christening, sibling or child target in that sentence — sentence-scoped
+  because a dedicated marriage item may legitimately note what else the same
+  register holds. `child*` is an anti-word because the real v14 pli_009
+  rationale's last sentence searched "Thomas's marriage and … children bearing
+  the Flynn surname" (found in review, 2026-11-10). `record_type` is deliberately untested —
+  a church marriage register is a valid dedicated item (review decision,
+  2026-10-30). Proven to fail in
+  `eval/harness/tests/unit/test_research_plan_validator.py`.

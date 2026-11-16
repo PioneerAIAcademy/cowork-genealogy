@@ -72,12 +72,87 @@ export const HOSTED_LOGIN_UNAVAILABLE =
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "No OpenRouter API key is configured. Tell the user to get one at " +
   "https://openrouter.ai/keys and enter it in Claude Desktop under Settings → " +
-  "Extensions → Genealogy Research, or add it to " +
+  "Desktop app → Extensions → Genealogy Research → Configure, or add it to " +
   "~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. " +
   "Do not ask the user to paste the key into the chat.";
 
+// ── A CONNECTOR caller (self-hosted beta E3) ────────────────────────────────
+// A user in claude.ai or Desktop Chat, reaching this server through the
+// connector. Neither the worker's "Reconnect FamilySearch" button nor the
+// desktop's `login` tool exists for them: they sign in again on the web tier's
+// own page, and the connector itself stays connected.
+
+/** True for a request that came through the connector door. Not a type guard:
+ *  a worker's bearer is a bearer too, and must not be narrowed away by a false. */
+export function isConnector(principal: Principal): boolean {
+  return principal.kind === "bearer" && principal.surface === "connector";
+}
+
+/** The web tier's public origin for a connector caller, without a trailing
+ *  slash, or undefined: for any other caller, and when the server was given
+ *  none (`WEB_PUBLIC_URL`, checked at start-up to be a plain http(s) URL). */
+function connectorWebOrigin(principal: Principal): string | undefined {
+  if (principal.kind !== "bearer" || principal.surface !== "connector") return undefined;
+  return principal.config.webPublicUrl?.trim().replace(/\/+$/, "") || undefined;
+}
+
+/** The web tier's FamilySearch sign-in page for a connector caller, or
+ *  undefined (`connectorWebOrigin`). */
+export function connectorSignInUrl(principal: Principal): string | undefined {
+  const base = connectorWebOrigin(principal);
+  return base ? `${base}/auth/familysearch/login` : undefined;
+}
+
+/** Where the message sends the user: the link, or the site by name when the
+ *  server has no public URL to build one from. */
+function connectorSignInPlace(principal: Principal): string {
+  return connectorSignInUrl(principal) ?? "the Genealogy Research site";
+}
+
+/**
+ * What a connector caller is told when FamilySearch no longer accepts their
+ * session. This is the text measured live (issue #3529, item 10): it reached
+ * the user unchanged from the main thread, from an agent and in a new
+ * conversation, and "continue" then worked on the same connector token.
+ * Addressed to the user, with no order to stop: the model relays it and the
+ * conversation goes on once they have signed in.
+ */
+export function connectorReauthMessage(principal: Principal): string {
+  return (
+    `FamilySearch session not accepted. Sign in again at ${connectorSignInPlace(principal)}, ` +
+    `then come back here and say "continue". Nothing is lost.`
+  );
+}
+
+/** What `login` answers a connector caller. Like `HOSTED_LOGIN_UNAVAILABLE` it
+ *  must not claim the session was rejected: this answer checks nothing. */
+export function connectorLoginMessage(principal: Principal): string {
+  return (
+    "The login tool does not sign anyone in here, and this answer says nothing about " +
+    "whether the current FamilySearch session works. Only if a FamilySearch tool itself " +
+    `reported a sign-in problem, tell the user to sign in again at ${connectorSignInPlace(principal)}, ` +
+    "then say \"continue\". An image that fails with 403 is most likely restricted, not a sign-in problem."
+  );
+}
+
+/** What `logout` answers a connector caller: signing out happens on the web
+ *  tier, and it also ends this connector's connection. */
+export function connectorLogoutMessage(principal: Principal): string {
+  return (
+    `Signing out happens at ${connectorWebOrigin(principal) ?? "the Genealogy Research site"}: tell the user to sign out there. ` +
+    "That also disconnects Claude from Genealogy Research until they reconnect."
+  );
+}
+
+/** A connector caller has no settings page and no config file: on this beta
+ *  the key that reads images is put on an account by its administrator. */
+export const CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE =
+  "Reading images is not turned on for this account, so this image was not transcribed. " +
+  "Tell the user it is turned on per account by the beta's administrator, and carry on " +
+  "without this image. Do not ask the user to paste a key into the chat.";
+
 // The one variable the stdio entrypoint reads. manifest.json's `user_config`
-// asks for the key in Claude Desktop's extension install dialog, and its
+// asks for the key on the extension's Configure page in Claude Desktop, and its
 // `mcp_config.env` hands the answer over under this name — an environment
 // variable is the only channel `user_config` has.
 export const INSTALL_OPENROUTER_KEY_ENV = "GENEALOGY_OPENROUTER_API_KEY";
@@ -165,14 +240,26 @@ export const REJECTED_TOKEN_MESSAGE =
   "FamilySearch rejected the access token (401). The session may have " +
   "expired or been revoked — call the login tool to re-authenticate.";
 
-/** What a tool throws when FamilySearch answers 401: in hosted mode the app's
- *  Reconnect button, as for a missing session, since `login` is a dead end there;
- *  on the desktop, the tool's own `desktopText`. */
+/**
+ * What to tell the LLM when there is no FamilySearch session it can use, by
+ * who is calling: a connector caller gets the web tier's sign-in link; any
+ * other hosted caller (the worker, the alpha's sandbox) the app's Reconnect
+ * button, since `login` is a dead end there; the desktop, `desktopText`.
+ * The one place the three are told apart, for a missing session
+ * (`getValidToken`) and a rejected one (`rejectedTokenMessage`) alike.
+ */
+export async function reauthMessage(principal: Principal, desktopText: string): Promise<string> {
+  if (isConnector(principal)) return connectorReauthMessage(principal);
+  return (await isHostedMode(principal)) ? HOSTED_REAUTH_INSTRUCTION : desktopText;
+}
+
+/** What a tool throws when FamilySearch answers 401 (`reauthMessage`); on the
+ *  desktop, the tool's own `desktopText`. */
 export async function rejectedTokenMessage(
   principal: Principal,
   desktopText: string = REJECTED_TOKEN_MESSAGE,
 ): Promise<string> {
-  return (await isHostedMode(principal)) ? HOSTED_REAUTH_INSTRUCTION : desktopText;
+  return reauthMessage(principal, desktopText);
 }
 
 export async function getWikiApiUrl(principal: Principal): Promise<string> {
@@ -193,7 +280,9 @@ export async function getOpenRouterApiKey(principal: Principal): Promise<string>
   const config = await loadConfig(principal);
   const key = config.openRouterApiKey?.trim();
   if (!key) {
-    throw new Error(OPENROUTER_API_KEY_MISSING_MESSAGE);
+    throw new Error(
+      isConnector(principal) ? CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE : OPENROUTER_API_KEY_MISSING_MESSAGE,
+    );
   }
   return key;
 }

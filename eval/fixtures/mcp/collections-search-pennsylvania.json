@@ -5,9 +5,7 @@
     "standardPlace": "~Pennsylvania"
   },
   "response": {
-    "query": {
-      "standardPlace": "Pennsylvania, United States"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Pennsylvania",
     "totalForPlace": 6,
     "results": [
@@ -15,55 +13,37 @@
         "id": "SYNTH-PA-CHURCH",
         "title": "Pennsylvania, Schuylkill County Church Records (synthetic test fixture)",
         "dateRange": "1708-1985",
-        "recordCount": 1245830,
-        "personCount": 982415,
-        "imageCount": 607220,
-        "url": "https://www.familysearch.org/search/collection/SYNTH-PA-CHURCH"
+        "personCount": 982415
       },
       {
         "id": "1921317",
         "title": "Pennsylvania, County Marriages, 1885-1950",
         "dateRange": "1885-1950",
-        "recordCount": 524189,
-        "personCount": 1048378,
-        "imageCount": 312045,
-        "url": "https://www.familysearch.org/search/collection/1921317"
+        "personCount": 1048378
       },
       {
         "id": "1999196",
         "title": "Pennsylvania, Probate Records, 1683-1994",
         "dateRange": "1683-1994",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 3200560,
-        "url": "https://www.familysearch.org/search/collection/1999196"
+        "personCount": 0
       },
       {
         "id": "2255317",
         "title": "Pennsylvania, Death Certificates, 1906-1968",
         "dateRange": "1906-1968",
-        "recordCount": 4218763,
-        "personCount": 4218763,
-        "imageCount": 4218763,
-        "url": "https://www.familysearch.org/search/collection/2255317"
+        "personCount": 4218763
       },
       {
         "id": "1571957",
         "title": "Pennsylvania, Civil Marriages, 1677-1950",
         "dateRange": "1677-1950",
-        "recordCount": 312045,
-        "personCount": 624090,
-        "imageCount": 156023,
-        "url": "https://www.familysearch.org/search/collection/1571957"
+        "personCount": 624090
       },
       {
         "id": "1502909",
         "title": "Pennsylvania, Compiled Marriages, 1700-1900",
         "dateRange": "1700-1900",
-        "recordCount": 198765,
-        "personCount": 397530,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/1502909"
+        "personCount": 397530
       }
     ]
   }

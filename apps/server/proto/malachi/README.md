@@ -12,9 +12,11 @@ MinIO and an nginx edge. There is no worker, queue or shim.
 | `dml_role.py` | Creates the role web and tools connect as. Runs in the `migrate` one-shot. |
 | `project_export.py` | `make malachi-export`. Runs in the web image. |
 | `openrouter_seed.py` | `make malachi-openrouter`. Runs in the web image. |
+| `user_admin.py` | `make beta-block-user` and `make beta-delete-user`. Runs in the web image. |
 | `rehearsal.sh` | `make malachi-rehearsal`: all of this on a Mac, under its own name. |
 
-`tests/test_malachi_stack.py` and `tests/test_malachi_role_pg.py` pin the rules.
+`tests/test_malachi_stack.py`, `tests/test_malachi_role_pg.py` and
+`tests/test_malachi_user_admin_pg.py` pin the rules.
 
 ## What matters on this host
 
@@ -64,13 +66,17 @@ unless it is given `EDGE=off`, and `scripts/tailscale-services.sh check` fails w
 process holds the port, because that process is public.
 
 `compose.yml` sets the tool server's `WEB_PUBLIC_URL` from `PUBLIC_URL`, so the issuer and the
-links the tools offer cannot differ.
+links the tools offer cannot differ. It sets `OAUTH_ISSUER` from `PUBLIC_URL` on both tiers: on
+the web tier that turns on Claude's sign-in (`/authorize`, `/connect`, `/token`), and
+`malachi-check` fails unless both tiers print the same issuer.
+
+Signing out at the web tier ends that user's connector tokens, so Claude asks them to reconnect.
 
 Keep `UPLOADS_ENABLED=false` in the env file until a page serves the upload link
 `project_context` offers. It sets both tiers, and `make malachi-up` applies a change.
 
 OpenRouter linking is off and stays off in `compose.yml`, so nobody can transcribe until they are
-seeded. Put the key in `OPENROUTER_SEED_KEY` in the env file, have the person sign in once, then
+seeded. Put the key in `OPENROUTER_SEED_KEY` in the env file, have the person connect from Claude once, then
 run `make malachi-openrouter EMAIL=`. Seed one person at a time, on the lead's say.
 
 ## Day to day
@@ -83,7 +89,9 @@ run `make malachi-openrouter EMAIL=`. Seed one person at a time, on the lead's s
 | `make malachi-backup` | `pg_dump` and a mirror of MinIO to `DATA_DIR/backups/<UTC>/`, with the stack up. Keeps the newest `KEEP` (14), each a full copy. Under 14 needs `CONFIRM=yes`: pruning runs before any restore check. |
 | `make malachi-restore-check` | Restores the newest backup into a scratch database, then checks the ledger and every blob against the mirror. |
 | `make malachi-export EMAIL=` or `PROJECT=` | A project's files in `DATA_DIR/exports/<id>/`, what the web tier's download would give, with its `MISSING.txt`. |
-| `make malachi-openrouter EMAIL=` | Encrypts the env file's `OPENROUTER_SEED_KEY` onto that user's row. They must have signed in once. |
+| `make malachi-openrouter EMAIL=` | Encrypts the env file's `OPENROUTER_SEED_KEY` onto that user's row. They must have connected from Claude once. |
+| `make beta-block-user ACCOUNT=` | Blocks one user: their cookie and their connector token are refused from the next request. |
+| `make beta-delete-user ACCOUNT= CODE=` | Checks the deletion code, then prints the account, its projects and what would be deleted. `CONFIRM=yes` deletes. See below. |
 | `make malachi-prune` | Removes this stack's superseded images, and build cache older than a week. Build cache has no owner, so that half reaches everyone on the host. |
 | `make malachi-down` | Stops the stack and keeps the data. |
 
@@ -104,6 +112,23 @@ before it builds. `malachi-check` and `malachi-backup` want 20 GB free on `DATA_
 
 **Docker's root.** Each `malachi-up` removes the images it replaced, and only this stack's. Build
 cache keeps growing until `make malachi-prune`, which is what to run when `malachi-up` refuses.
+
+## Deleting a user
+
+A user asks by quoting their account id and deletion code, both from the account menu.
+
+```
+make beta-delete-user ACCOUNT=usr_... CODE=...
+make beta-delete-user ACCOUNT=usr_... CODE=... CONFIRM=yes
+```
+
+The first run checks the code and deletes nothing: compare what it prints with the request. The
+second blocks the user, deletes the objects under each of their projects and their feedback
+bundles, deletes every row in one transaction, then removes their folders under
+`DATA_DIR/exports/`. A wrong code changes nothing, and nothing prints the code.
+
+Backups taken before the delete still hold the user's data until they are pruned. Their email
+stays on the allowlist, so connecting from Claude again creates a new, empty account.
 
 ## Restoring after a loss
 

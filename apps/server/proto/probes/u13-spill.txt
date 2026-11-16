@@ -1,1 +1,1 @@
-Call collections_search with standardPlace "Italy" once, then read its complete result and answer in one line with the exact title of the last collection it listed.
+Call record_search once with surname "Johnson", fatherGivenName "John", motherGivenName "Mary", recordCountry "United States" and count 100, then read its complete result and answer in one line with the exact recordId of the last result it listed.

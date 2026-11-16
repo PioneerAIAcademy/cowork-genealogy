@@ -24,23 +24,18 @@ if errorlevel 1 (
 
 cd ..
 
-REM A warm pnpm store can skip electron's postinstall (the binary download +
-REM path.txt write), so a checkout can have every JS dep yet no launchable
-REM Electron -- electron-vite then dies with "Error: Electron uninstall".
-REM require('electron') throws when path.txt is missing, so this is a
-REM path-independent presence check. If it's missing, install it and retry.
-call pnpm --filter @genealogy/electron exec node -e "require('electron')" >nul 2>nul
+REM A checkout can have every JS dep yet no Electron binary (Electron 42+
+REM downloads it only through install-electron), and electron-vite then dies
+REM with "Error: Electron uninstall". install-electron exits at once when the
+REM binary is present and otherwise downloads it, so call it every launch.
+call pnpm --filter @genealogy/electron exec install-electron
 if errorlevel 1 (
-  echo Electron binary not found -- installing it now ^(one-time, ~30s^)...
-  call pnpm --filter @genealogy/electron rebuild electron
-  if errorlevel 1 (
-    echo.
-    echo ERROR: Could not install the Electron binary. Re-run Setup.bat, or
-    echo        from the repo root run:
-    echo          pnpm --filter @genealogy/electron rebuild electron
-    pause
-    exit /b 1
-  )
+  echo.
+  echo ERROR: Could not install the Electron binary. Re-run Setup.bat, or
+  echo        from the repo root run:
+  echo          pnpm --filter @genealogy/electron exec install-electron
+  pause
+  exit /b 1
 )
 
 call pnpm --filter @genealogy/electron dev

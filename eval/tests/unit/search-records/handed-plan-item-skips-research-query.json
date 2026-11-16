@@ -14,7 +14,7 @@
       "log-positive-record-search",
       "rank-search-matches",
       "pre-1880-census-household",
-      "topical-fixture-required",
+      "census-search",
       "direct-arm",
       "handed-plan-item",
       "handed-subject"
@@ -25,7 +25,6 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-1850-census-flynn",
     "rank-search-matches-execute-census",
     "record-read-patrick-flynn-mxhy-tp4",
@@ -40,8 +39,7 @@
     "Using the ranked matches as a review surface, the skill should triage the top match (a strong, unattached census hit — surfaced as new evidence to prioritize for extraction) rather than silently filtering it, and categorize any near-matches in `notes` instead of dropping them",
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable if made — do not penalize it, and do not reward it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "IMPORTANT — How file writes work: `research_log_append` writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files, so they never appear in the file-change diff — their absence from it is not evidence of anything.",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
   "judge_reads_files": true
 }

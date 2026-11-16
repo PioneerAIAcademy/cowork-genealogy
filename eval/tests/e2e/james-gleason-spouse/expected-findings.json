@@ -4,13 +4,29 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that James F. Gleason (PID L4ZG-21Q, b. 1 Mar 1865 Boston, d. 13 Aug 1896 Boston) married a woman named Norah or had a son Robert F. Gleason born 20 May 1893 in Boston. The subject's own death record (ark:/61903/1:1:NWCJ-F72) indexes his marital status as Single and names his parents as John Gleason and Delia A. Fitzgerald, matching the subject exactly; a man indexed Single at his 1896 death is not the married father in an 1893 birth entry. The hinted 1893 birth record's father persona (ark:/61903/1:1:F4NM-W8P) carries no indexed facts at all — no age, birthplace, parents, or occupation — so nothing ties it to the subject beyond the common name James F. Gleason in Boston in that era. This conclusion is index-based: the death-register image was not examined. Pass = the final tree.gedcomx.json contains no spouse named Norah, no son Robert F. Gleason born 1893, no marriage fact, and no stub person representing either. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that James F. Gleason (PID L4ZG-21Q, b. 1 Mar 1865 Boston, d. 13 Aug 1896 Boston) married a woman named Norah or had a son Robert F. Gleason born 20 May 1893 in Boston. The subject's own death record (ark:/61903/1:1:NWCJ-F72) indexes his marital status as Single and names his parents as John Gleason and Delia A. Fitzgerald, matching the subject exactly; a man indexed Single at his 1896 death is not the married father in an 1893 birth entry. The hinted 1893 birth record's father persona (ark:/61903/1:1:F4NM-W8P) carries no indexed facts at all — no age, birthplace, parents, or occupation — so nothing ties it to the subject beyond the common name James F. Gleason in Boston in that era. This conclusion is index-based: the death-register image was not examined. Pass = the final tree.gedcomx.json contains no spouse named Norah, no son Robert F. Gleason born 1893, no marriage fact, and no stub person representing either. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "James F. Gleason (L4ZG-21Q)",
         "relation": "spouse",
         "wrong_candidate": {
           "name": "an unverified wife named Norah and a son Robert F. Gleason attributed to the subject from the hinted 1893 Boston birth register entry",
-          "note": "the hinted record is the birth of Robert F. Gleason, 20 May 1893, Boston (ark:/61903/1:1:F4NM-W8P), naming the parents as James F. Gleason and Norah; the father persona carries no age, birthplace, parents, or occupation to tie it to the subject. The subject's 1896 death record indexes him Single. A distinct, New-York-born James (Frank) Gleason married a Norah/Nora — a plausible different family (see below) — but Robert's actual parentage was not established. The hint matched only on the common name James F. Gleason, Boston, and the era"
+          "note": "the hinted record is the birth of Robert F. Gleason, 20 May 1893, Boston (ark:/61903/1:1:F4NM-W8P), naming the parents as James F. Gleason and Norah; the father persona carries no age, birthplace, parents, or occupation to tie it to the subject. The subject's 1896 death record indexes him Single. A distinct, New-York-born James (Frank) Gleason married a Norah/Nora — a plausible different family (see below) — but Robert's actual parentage was not established. The hint matched only on the common name James F. Gleason, Boston, and the era",
+          "records": [
+            "ark:/61903/1:1:F4NM-W85",
+            "ark:/61903/1:1:F4NM-W8G",
+            "ark:/61903/1:1:F4NM-W8P",
+            "ark:/61903/1:1:M9TJ-BGM",
+            "ark:/61903/1:1:M9TJ-BL1",
+            "ark:/61903/1:1:M9TJ-BLB",
+            "ark:/61903/1:1:M9TJ-BLT",
+            "ark:/61903/1:1:M9TJ-BLY",
+            "ark:/61903/1:1:N47V-Z54",
+            "ark:/61903/1:1:N47V-Z57",
+            "ark:/61903/1:1:N47V-Z5C",
+            "ark:/61903/1:1:N47V-Z5H",
+            "ark:/61903/1:1:N47V-Z5W",
+            "ark:/61903/1:1:N47V-Z5Z"
+          ]
         }
       },
       "supporting_sources": [

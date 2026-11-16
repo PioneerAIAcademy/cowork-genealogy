@@ -22,7 +22,7 @@ TREE = ast.parse(SRC)
 
 #: The e2e Stop veto's names, deleted in step mode phase 2 (PR B). A step turn ends
 #: at its boundary on purpose and the host's reply continues the run, so nothing in
-#: the harness may veto a stop again (docs/plan/research-step-mode.md, section F).
+#: the harness may veto a stop again (docs/specs/research-step-mode-spec.md, section F).
 _VETO_NAMES = {
     "should_continue_run", "terminal_reason", "hand_back_key",
     "COUNTED_TERMINAL_REASONS", "max_continue_nudges", "stop_hook",

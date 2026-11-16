@@ -124,6 +124,12 @@ describe("research_append stamps locality collection counts from the catalog", (
     expect((await storedCollections())[0]).toMatchObject({ person_count: 380262, record_count: 95456 });
   });
 
+  it("fills record_count without a warning: collections_search no longer returns it, so locality-guide leaves it out", async () => {
+    const r = await appendLocality([{ id: "1803971", title: "Illinois, State Census, 1865", person_count: 380262 }]);
+    expect(warningsOf(r)).toEqual([]);
+    expect((await storedCollections())[0]).toMatchObject({ person_count: 380262, record_count: 95456 });
+  });
+
   it("nulls both counts of an id the catalog lacks, and warns", async () => {
     const r = await appendLocality([col("9999999", 12, 34), col("1803971", 380262, 95456)]);
     const warnings = warningsOf(r);

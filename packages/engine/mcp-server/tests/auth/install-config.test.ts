@@ -14,6 +14,7 @@ import {
   getWikiApiUrl,
   installConfigFromEnv,
   INSTALL_OPENROUTER_KEY_ENV,
+  OPENROUTER_API_KEY_MISSING_MESSAGE,
 } from "../../src/auth/config.js";
 import { LOCAL, localPrincipal } from "../../src/auth/principal.js";
 
@@ -49,5 +50,14 @@ describe("local principal with the install dialog's key", () => {
     const principal = localPrincipal(installConfigFromEnv({ [INSTALL_OPENROUTER_KEY_ENV]: "" }));
     expect(await getOpenRouterApiKey(principal)).toBe("sk-or-file");
     expect(await getOpenRouterApiKey(LOCAL)).toBe("sk-or-file");
+  });
+});
+
+describe("the no-key message", () => {
+  it("names the two places a key is set: the extension's Configure page and config.json", () => {
+    expect(OPENROUTER_API_KEY_MISSING_MESSAGE).toContain(
+      "Desktop app → Extensions → Genealogy Research → Configure",
+    );
+    expect(OPENROUTER_API_KEY_MISSING_MESSAGE).toContain("~/.familysearch-mcp/config.json");
   });
 });

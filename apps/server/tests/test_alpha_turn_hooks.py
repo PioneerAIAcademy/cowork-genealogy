@@ -229,8 +229,8 @@ def test_the_alpha_system_prompt_is_true_before_a_project_exists(tmp_path):
     assert "contains research.json" not in append
     assert "Once a project exists there it holds research.json" in append
     assert real_agent.NO_PROJECT_NOTE in append
-    assert "While no project exists yet" in real_agent.NO_PROJECT_NOTE
     assert "no_project" in real_agent.NO_PROJECT_NOTE
+    assert "starts a project first" in real_agent.NO_PROJECT_NOTE
     assert opts.env[real_agent.HOSTED_PLANE_ENV] == "1"
 
 
@@ -295,9 +295,9 @@ def _session(tmp_path, monkeypatch):
     return agent, _counting_hook(hooks)
 
 
-def test_the_providers_pass_auto_continue_and_not_the_deleted_cap():
-    """The Stop veto is gone (step mode phase 2), so no provider hands the sandbox
-    AUTONOMOUS_MAX_NUDGES; `auto_continue` still reaches it, for the runner's chain."""
+def test_the_providers_pass_neither_deleted_cap():
+    """The Stop veto is gone (step mode phase 2) and so is the runner's auto-continue
+    chain, so no provider hands the sandbox AUTONOMOUS_MAX_NUDGES or AUTO_CONTINUE."""
     import inspect
 
     from app.sandbox import e2b, local
@@ -305,7 +305,7 @@ def test_the_providers_pass_auto_continue_and_not_the_deleted_cap():
     for source in (inspect.getsource(e2b.E2BProvider._agent_env),
                    inspect.getsource(local.LocalProvider)):
         assert "AUTONOMOUS_MAX_NUDGES" not in source
-        assert '"AUTO_CONTINUE"' in source
+        assert "AUTO_CONTINUE" not in source
 
 
 def test_build_hooks_publishes_the_counter_to_the_turn_boundary(tmp_path, monkeypatch):

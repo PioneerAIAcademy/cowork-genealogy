@@ -22,11 +22,15 @@ from pathlib import Path
 import pytest
 
 from harness.mock_mcp import create_mock_server
+from harness.workspace import build_workspace
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SUITE = REPO_ROOT / "eval/tests/unit/record-structurer"
 VALIDATORS = REPO_ROOT / "eval/harness/validators"
 DOCS = json.loads((Path(__file__).parent / "data/record_structurer_documents.json").read_text(encoding="utf-8"))
+# The page pass (#4286) sends no document: what a correct agent sends is its
+# `pageReadings`, run through `attachWaitingPages` on the test's own scenario.
+PAGES = json.loads((Path(__file__).parent / "data/record_structurer_page_readings.json").read_text(encoding="utf-8"))
 
 
 def _module():
@@ -80,11 +84,82 @@ SUITE_VALIDATORS = [
     V.test_value_holds_no_derivation,
     V.test_census_households_are_kept_apart,
     V.test_a_batch_is_written_in_one_call,
+    V.test_a_confirming_page_is_kept_with_no_dispute,
+    V.test_a_disputed_reading_names_the_index_assertion,
 ]
 
 
 def test_every_suite_test_has_a_correct_document():
-    assert sorted(p.stem for p in SUITE.glob("*.json")) == sorted(DOCS)
+    assert sorted(p.stem for p in SUITE.glob("*.json")) == sorted([*DOCS, *PAGES])
+    assert not set(DOCS) & set(PAGES)
+
+
+def _run_page(name: str, page_readings, tmp_path: Path):
+    """A page-pass test, run as a correct agent's one `extraction_append` call,
+    on a workspace built the way the harness builds it (a staged page reads as
+    read just now)."""
+    test = json.loads((SUITE / f"{name}.json").read_text(encoding="utf-8"))
+    build_workspace(
+        test["input"]["scenario"],
+        REPO_ROOT / "eval/fixtures/scenarios",
+        REPO_ROOT / "packages/engine/plugin/skills",
+        tmp_path,
+        stage_skills=False,
+    )
+    read = lambda: {"research_json": json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))}  # noqa: E731
+    before = read()
+    _s, _c, tools = create_mock_server(test.get("mcp_fixtures", []), REPO_ROOT / "eval/fixtures/mcp", workspace=tmp_path)
+    args = {"projectPath": str(tmp_path), "attachWaitingPages": True, "pageReadings": page_readings}
+    out = json.loads(asyncio.run(tools["extraction_append"].handler(args))["content"][0]["text"])
+    assert out.get("ok"), out
+    return test, before, read(), out.get("summary") or ""
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize("name", sorted(PAGES))
+def test_a_correct_page_pass_passes_every_validator(name, tmp_path):
+    test, before, after, reply = _run_page(name, PAGES[name], tmp_path)
+    for fn in SUITE_VALIDATORS:
+        try:
+            _check(fn, test, before, after, reply)
+        except pytest.skip.Exception:
+            pass
+
+
+def _wrong_name(readings):
+    readings[0]["readings"][0]["value"] = "Patrick Flynne"
+
+
+PAGE_BREAKS = {
+    # A page that agrees with its index, reported as disputing it.
+    "page-pass-confirming-page": [
+        (lambda r: r[0]["readings"].append({"disputesAssertionId": "a_008", "type": "name", "value": "Patrick Flinn"}),
+         V.test_a_confirming_page_is_kept_with_no_dispute),
+    ],
+    "page-pass-disputed-name": [
+        # The difference left out: the page kept, nothing disputed.
+        (lambda r: r[0].__setitem__("readings", []), V.test_a_disputed_reading_names_the_index_assertion),
+        # The difference sent with a reading the page does not give.
+        (_wrong_name, V.test_a_disputed_reading_names_the_index_assertion),
+        # The age the page agrees on, sent as a difference too.
+        (lambda r: r[0]["readings"].append({"disputesAssertionId": "a_009", "type": "birth", "value": "age 15"}),
+         V.test_a_disputed_reading_names_the_index_assertion),
+    ],
+}
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize(
+    "name, i",
+    [(n, i) for n in sorted(PAGE_BREAKS) for i in range(len(PAGE_BREAKS[n]))],
+)
+def test_the_failure_each_page_pass_test_guards_against_is_caught(name, i, tmp_path):
+    breaker, validator = PAGE_BREAKS[name][i]
+    readings = copy.deepcopy(PAGES[name])
+    breaker(readings)
+    test, before, after, reply = _run_page(name, readings, tmp_path)
+    with pytest.raises(AssertionError):
+        _check(validator, test, before, after, reply)
 
 
 @pytest.mark.requires_engine_build

@@ -1,7 +1,7 @@
 """The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log),
 ``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration, and end the turn when a
 proof-conclusion call completes the project). No ``Stop`` hook: a step-mode turn ends at
-its boundary on purpose (docs/plan/research-step-mode.md, Phase 2).
+its boundary on purpose (docs/specs/research-step-mode-spec.md, Phase 2).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",
 D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:

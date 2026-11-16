@@ -1,4 +1,4 @@
-"""Phase 0 of `docs/plan/research-step-mode.md`: the premises a step boundary rests on.
+"""Phase 0 of `docs/specs/research-step-mode-spec.md`: the premises a step boundary rests on.
 
 Step mode ends every turn at a step boundary. This file pins facts about what
 the planes' hooks already do with the call that would start the next step, so

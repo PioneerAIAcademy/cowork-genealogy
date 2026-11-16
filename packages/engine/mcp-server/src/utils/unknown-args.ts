@@ -173,8 +173,8 @@ const HINTS: Readonly<Record<string, Hint>> = {
     if (alias === undefined) return null;
     return {
       message:
-        `collections_search has no record-type filter: it lists every collection for the ` +
-        `place, so ${alias} cannot narrow it. To filter by record type, use volume_search's ` +
+        `collections_search has no record-type filter: it lists the place's collections ` +
+        `by place and years only, so ${alias} cannot narrow it. To filter by record type, use volume_search's ` +
         `recordTypeGroups (an array of group names). ${groupsLine()}`,
       covers: [alias],
     };

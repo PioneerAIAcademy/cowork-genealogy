@@ -1,0 +1,36 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Ranking of the single Juanita Fenstermaker 1950 hit against I1 (Juanita Ruth Kimbrell) for ut_search_records_d33. Fenstermaker appears on no name of I1, her linked evidence, or any tree spouse, parent or child, so the row carries surnameNotOnSubject and the response carries surnameNote (rank-search-matches-tool-spec.md, surnameNotOnSubject). The surnameNote text equals the engine constant SURNAME_NOT_ON_SUBJECT_NOTE byte for byte; re-copy it when the wording changes. Predicate names givenName Juanita so it folds only into the Juanita searches (surname and surnameAlt); the Fenstermaker household search (Robert, 6XJ4-K2R) goes unranked in the mock. Hand-authored, no real person.",
+  "args": {
+    "subjectId": "~I1",
+    "givenName": "~Juanita"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "surnameNote": "Rows with `surnameNotOnSubject` carry a surname (`candidateSurname`) that this person bears nowhere in the project: not on the tree person, not in linked evidence, and not on a tree spouse, parent or child. The match score does not account for this. Each such row is `needs-review`: report it as consistent with that name, never as a confirmed match, as cleared, or as ready to extract as this person's record. That holds when the surname is the one the research is trying to establish: finding a same-named person under it is not evidence this person bore it. Name the record that would tie this person to that surname (a marriage, or a record giving both surnames for this person).",
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "6XJ4-K2F",
+        "primaryId": "P2",
+        "personName": "Juanita Fenstermaker",
+        "sex": "Female",
+        "birthDate": "about 1921",
+        "birthPlace": "Kansas, United States",
+        "collectionTitle": "United States Census, 1950",
+        "candidateFactCount": 2,
+        "recordArk": "https://www.familysearch.org/ark:/61903/1:1:6XJ4-K2F",
+        "matchScore": 0.7124,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "surnameNotOnSubject": true,
+        "candidateSurname": "Fenstermaker"
+      }
+    ]
+  }
+}

@@ -602,36 +602,14 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   connect and when that file changes, never on a `research.json` write. It is
 >   the frame the proto tier already sends for any root document other than the
 >   two above, so one client case serves both tiers.
-> - **Lay mode: the server answers the hand-back itself (lead
->   ruling 2026-09-18).** Every hand-back the prompts produce ends with the
->   literal `Next: <step>. Continue?` (terminal `Research complete.`).
->   Whether anyone has to click is a control-plane setting, not a prompt
->   rule: when a turn's final main-thread text ends with the literal, the
->   in-sandbox runner (`app/agent/runner.py`, `AutoContinue`) starts the next
->   turn with `Yes.` itself.
->   Two new `agent_event` kinds ride the socket and the replay buffer:
->   `{kind:"auto_continue", text:"Yes.", step, max_steps}` before each
->   synthetic turn, and `{kind:"auto_continue_paused", reason:"budget", step,
->   max_steps}` when the budget is spent. The web folds `auto_continue` as a
->   bubble boundary (`chatEvents.ts`), so each auto-continued step is its own
->   reply and no `Yes.` bubble ever appears; the web ignores `auto_continue_paused`.
->   The chain stops when: the turn ends with
->   anything but the literal (a real question, `Research complete.`, an error,
->   an interrupted turn); the budget of **consecutive auto steps since the last
->   real user message** is spent (`AUTO_CONTINUE_MAX_STEPS`, default 30 — it
->   bounds one unattended chain, not the session); or the user typed something
->   meanwhile, in which case their message runs next and no `Yes.` is injected.
->   Settings: `Settings.auto_continue` (default on) and
->   `Settings.auto_continue_max_steps`, passed to the sandbox as
->   `AUTO_CONTINUE` / `AUTO_CONTINUE_MAX_STEPS` by both providers. A `user_msg`
->   frame may carry `auto_continue: false` to opt its whole chain out. The
->   literal regex is `HAND_BACK_RE` in `app/agent/hand_back.py`, pinned by
->   `apps/server/tests/test_runner_auto_continue.py`. Since continuous work shipped
->   (2026-09-23) no plugin body emits the literal, so the chain does not start and
->   the web has no Continue button. Per-session on/off lands with
->   the experience-level user setting. Cowork desktop has no control plane we
->   own; the user clicks there.
-> - **Step mode replaces that chain (decision 25, 2026-10-21).** A turn runs one
+> - **Lay mode's auto-continue chain is deleted.** The alpha's runner used to
+>   answer the retired `Next: <step>. Continue?` line with `Yes.` itself
+>   (`AutoContinue`, `auto_continue` / `auto_continue_paused` events, the
+>   `AUTO_CONTINUE` settings; lead ruling 2026-09-18). No plugin body has emitted
+>   that line since continuous work shipped (2026-09-23), so the chain never
+>   started, and it was deleted after step mode's phase 2. Cowork desktop has no
+>   control plane we own; the user clicks there.
+> - **Step mode (decision 25, 2026-10-21).** A turn runs one
 >   step, reports it, and ends with `Continue with <label>?` — where `<label>` is
 >   the step's `STEP_LABELS` entry in `packages/engine/plugin/hooks/step_boundary.py`,
 >   so a host can read which step is offered (`offered_step` parses it back; the
@@ -664,11 +642,8 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   enforces `step` (`step_boundary.gate_mode`) while the turn records `job`.
 >
 >   `MAX_AUTO_REPLIES` (30) in `step_boundary.py` is the prototype's and the e2e
->   harness's reply cap. It does NOT replace `AUTO_CONTINUE_MAX_STEPS`
->   everywhere: the alpha still reads that setting
->   (`apps/server/app/agent/runner.py`), and neither the alpha nor Cowork loads
->   `step_boundary.py` at all (decision 25). The literal `Next: <step>.
->   Continue?` and `AutoContinue` stay until the alpha moves over.
+>   harness's reply cap. Neither the alpha nor Cowork loads `step_boundary.py`
+>   (decision 25), so neither gets the host's replies: there "keep going." is one bounded turn (research-step-mode-spec.md §A2).
 
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)

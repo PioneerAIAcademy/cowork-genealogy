@@ -19,8 +19,7 @@ const TREE_FILE = "tree.gedcomx.json";
 export function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
   const byId = persons.find((p) => p.id === personId);
   if (byId) return byId;
-  const wanted = personId.trim().toUpperCase();
-  const linked = persons.filter((p) => treePidOfArk(p.ark)?.toUpperCase() === wanted);
+  const linked = linkedPersons(persons, personId);
   if (linked.length === 1) return linked[0];
   if (linked.length > 1) {
     throw new Error(
@@ -29,6 +28,13 @@ export function findAnchor(persons: SimplifiedPerson[], personId: string): Simpl
     );
   }
   throw new Error(`Person '${personId}' not found in ${TREE_FILE}.`);
+}
+
+/** Every tree person whose FamilySearch link (`ark`, read by `treePidOfArk`)
+ *  names `familySearchId`, compared case-insensitively, in tree order. */
+export function linkedPersons<P extends { ark?: unknown }>(persons: P[], familySearchId: string): P[] {
+  const wanted = familySearchId.trim().toUpperCase();
+  return persons.filter((p) => treePidOfArk(p.ark)?.toUpperCase() === wanted);
 }
 
 /** The source refs on a person, its facts and its names, first-seen order,
@@ -55,6 +61,36 @@ export function collectSourceRefs(person: any): string[] {
  *  `tests/packaging/attachment-link-rationale-drift.test.ts`. */
 export const ATTACHMENT_LINK_RATIONALE =
   "Linked because FamilySearch has this record attached to this person; not verified.";
+
+/** The rationale `research_append` writes on a link it DERIVED from another:
+ *  the ruling that a link means the whole record entry, so every one-party fact
+ *  of that entry belongs to the same person (issue #4226). Only code writes it,
+ *  and it names the triggering ASSERTION and the entry key so a reader can tell
+ *  a derived row from an authored one and trace it back. The assertion, not the
+ *  triggering `pe_` id: in a batch that appends the trigger and its derived
+ *  rows together, no `pe_` id exists yet when this string is built, and
+ *  predicting one would couple this text to id-assignment order.
+ *
+ *  Deliberately NOT the attachment shape above. A derived row carries its
+ *  trigger's confidence and so can be `confident`; were it to match
+ *  `isAttachmentLink`, `countsForProofGate` and the linked-rung count would
+ *  read it as an unverified FamilySearch attachment, which is the opposite of
+ *  what it is. */
+export const DERIVED_ENTRY_LINK_PREFIX = "Derived from the link on ";
+
+export function derivedEntryLinkRationale(triggerAssertionId: string, entry: string): string {
+  return (
+    `${DERIVED_ENTRY_LINK_PREFIX}${triggerAssertionId}: the same record entry (${entry}), ` +
+    `which that link identified as this person.`
+  );
+}
+
+/** A link `research_append` derived from another rather than one the caller
+ *  wrote. Shape-tested like `isAttachmentLink`, on the rationale's fixed
+ *  prefix — the ids inside it vary per row. */
+export function isDerivedEntryLink(pe: any): boolean {
+  return typeof pe?.rationale === "string" && pe.rationale.startsWith(DERIVED_ENTRY_LINK_PREFIX);
+}
 
 /** A link made from a FamilySearch attachment, by its whole shape: the fixed
  *  rationale, `speculative`, and no score. The rationale alone is a string any

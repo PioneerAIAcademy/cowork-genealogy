@@ -535,7 +535,7 @@ the analytical work underneath is sound.
    source-quality / information-quality / evidence-type calls
    defensible? Common errors: marking a delayed birth certificate
    as "primary information" (the informant was not present at the
-   birth); marking a published genealogy as "original" (derivative
+   birth); marking a published genealogy as "original" (authored
    no matter how nicely typeset).
 
 5. **Geographic plausibility.** Where assertions involve travel or

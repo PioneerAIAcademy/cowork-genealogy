@@ -15,8 +15,8 @@ description: >-
   records in Pennsylvania). Also do not use for narrative historical context
   like migration or why an event happened (use historical-context), or a
   general Wikipedia summary of the place (use search-wikipedia).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5
+effort: low
 tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
@@ -70,7 +70,7 @@ tools:
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
-**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero or truncated results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it, never present a truncated `recordCount` as the verified total, never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it.
+**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A `collections_search` answer with `truncated: true` is not a coverage gap. Never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it.
 
 **A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
 
@@ -141,11 +141,11 @@ wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Record
 wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 ```
 
-`collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern).
+`collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern). Build a collection's link from the answer's `collectionUrl`, replacing `{id}` with the row's `id`.
 
 `volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. `summary` counts every matching volume by record-type group (`browseOnly`, `fulltextOnly`) — use it for how many volumes of each kind exist, never a count of the page. The page details only its own volumes: when `totalResults` exceeds them, say so with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." Fetch further pages only if the researcher asks. When the response has no `summary`, carries `summaryError`, or says `complete: false`, say the counts are missing or partial. Never count volumes yourself. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
 
-`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` (and each `filmNotes` entry's `copyLocation`) says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. **Report each catalog hit's start date exactly as its `title` or `subjects` give it — never substitute an approximation or a date from memory.** Name the catalog entry number (the numeric id in the hit) when citing a catalog result. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you fetched. Say it in the same sentence that first names the parish register as the source, in the Church records section and in `summary_for_user`, not only in the research tips. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
+`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. **Report each catalog hit's start date exactly as its `title` or `subjects` give it — never substitute an approximation or a date from memory.** Name the catalog entry number (the numeric id in the hit) when citing a catalog result. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you fetched. Say it in the same sentence that first names the parish register as the source, in the Church records section and in `summary_for_user`, not only in the research tips. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
 
 `external_links_search` returns FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages), deduplicated, and with `projectPath` stores the place's full list in the project. When `inlineCapped` is true, or to list one record type, read `research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })`. `totalForPlace === 0` means FS has no curated external links for this place. **Surface regional indexes by name in the guide** — if the results include a county or regional BMD or transcription site, name it and the URL the tool returned, not just "external links available".
 
@@ -158,6 +158,8 @@ For each record type, assign a digitization level using the **Digitization level
 - No match in `volume_search` → likely **microfilm or physical only** — cross-check the FamilySearch Wiki before classifying
 
 **Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
+
+**An unresolved place is a coverage gap, not a broken tool.** When `place_search` finds no match and every place-dependent call comes back empty or generic, compile the guide anyway: report what each tool did and did not return, cite whatever substantive page did resolve (a `wiki_read` on a constructed jurisdiction URL often still answers the question even when the place tools do not), and say plainly what could not be confirmed. Withholding the guide and telling the researcher to retry once a tool is "working" is never correct — the gap belongs in the guide, not in place of it.
 
 ### 5. Compile
 
@@ -180,7 +182,7 @@ research_append({
     for_place: "Schuylkill County, Pennsylvania",  // the specific place of interest, if narrower
     time_period: "1840-1880",
     jurisdictions: [ /* from place_search_all — EACH entry is exactly { name, date_range }, no other keys */ ],
-    collections: [ /* from collections_search: { id, title, date_range, person_count, record_count } — the counts are its personCount / recordCount */ ],
+    collections: [ /* from collections_search: { id, title, date_range, person_count } — person_count is its personCount */ ],
     quirks: [
       // short, actionable gotchas a searcher must know — distilled from the FamilySearch Wiki
       // research-tips / online-records pages. This is ALSO where any border/name
@@ -215,7 +217,7 @@ Do not put the applied per-search decision here; that goes in a plan item's
 
 **Stay inside the allowed fields — a stray key fails the whole write.** Each
 `jurisdictions[]` entry has exactly two keys, `name` and `date_range`; each
-`collections[]` entry only `id`, `title`, `date_range`, `person_count`, `record_count`. Do **not** add any
+`collections[]` entry only `id`, `title`, `date_range`, `person_count`. Do **not** add any
 other key (no `note`, `comment`, `records`, etc.) to these objects. When you have
 a sentence of searcher advice — a boundary/name succession like "records before
 1878 were filed under the predecessor county", an indexing gotcha, a language
@@ -457,7 +459,7 @@ is what tells the researcher where to route the search.
 ### Online repositories
 | Repository | Collections for this place | Gap it fills | Access |
 |---|---|---|---|
-| FamilySearch | [list with record counts] | [gap] | Free |
+| FamilySearch | [list with person counts] | [gap] | Free |
 | Ancestry | [list] | [gap] | Subscription |
 | [Others] | [list] | [gap] | [Access type] |
 
@@ -540,7 +542,14 @@ For each record type, classify its accessibility:
   or section of the guide anywhere in the return, even when the delegation asks
   for the guide.
 - **Step 6 did not run, or your last `research_append` call did not return
-  `ok: true`:** the guide in full, then `summary_for_user`.
+  `ok: true`:** the guide in full, then `summary_for_user`. "In full" means the
+  **Locality Guide Output Format** template verbatim — its three `##` headings
+  exactly as written (`## Jurisdiction overview`, `## Available record types`,
+  `## Research tips`), never `###`, a renamed heading, or a narrative answer to
+  the delegation's own wording in place of the template. A narrowly-phrased
+  delegation ("where would I find...", "how does the guide explain...") still
+  gets the full template — narrow the content to what it asked, not the
+  structure.
 - **A decision rule asks or hands back:** one line before `summary_for_user`
   giving the question or naming the owner who runs next. With no guide, that
   line replaces the guide and the `loc_` line.

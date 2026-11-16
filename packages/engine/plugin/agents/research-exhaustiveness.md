@@ -109,13 +109,13 @@ Upload them, or conclude without them."
 
 **Under `wrapUp: yes`** skip: the exhaustiveness-evaluation confirmation above,
 this active-plan check when the question has no plan, and Step 0's
-`person_evidence` and tentative-value blocks. Keep the already-declared stop.
-Write the stop as §"Wrap it up" says.
+`person_evidence`, tentative-value and open-conflict blocks. Keep the
+already-declared stop. Write the stop as §"Wrap it up" says.
 
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
 depends on have not been identified in the tree. Before assessing the stop
-criteria, run two checks over the assertions tied to this question
+criteria, run these checks over the assertions tied to this question
 (via `extracted_for_question_ids`):
 
 - **Classification (hard block, all assertions).** Every assertion must have
@@ -151,10 +151,15 @@ criteria, run two checks over the assertions tied to this question
 
 Do not declare exhaustive while a blocking check fails.
 
+**Open conflict (hard block).** If an `unresolved` conflict lists this question
+in `blocks_question_ids`, stop: write the `blocked_by_conflict` stop as Step 4
+says, with every plan's `log_entry_ids`, and route to `conflict-resolution`.
+
 ## 1. Gather evidence
 
 Reached only when Step 0 neither stopped nor refused. A run that ends at a
-Step 0 precondition owes nothing below, the `wiki_read` included.
+Step 0 precondition owes nothing below, the registration `wiki_read` included,
+except the `not_reached` a stop it writes carries (§"Build `not_reached`").
 
 Read:
 - The question and its `search_stop`
@@ -172,14 +177,13 @@ otherwise. Do not begin Step 2 until both have returned or failed.
 ## 2. Assess the 7-Point Stop Criteria
 
 **This is the gate.** Assess the seven in the order below. **The verdict stops
-at the first that fails — name it. The record does not.** Write all seven either
-way, each a 1-2 sentence assessment tied to project state: what was met, what
+at the first that fails — name it. The assessment does not:** assess all seven
+either way, each 1-2 sentences tied to project state: what was met, what
 failed, and what the evidence could not reach. Where a criterion turns on
-whether a civil registration record could exist for this event, state the start
-date Step 1 read and the page it came from; "registration had not begun" is an
-assessment only when it rests on that fetched date. Declaring requires all seven met,
-written only in the call's arguments. A decline carries the same seven, honestly
-assessed, with the blocking criterion named in `justification`.
+whether a civil registration record could exist for this event, state the start date Step 1 read and the page it came from;
+"registration had not begun" is an assessment only when it rests on that fetched
+date. Declaring requires all seven met, written only in the call's arguments. A
+decline names the blocking criterion and its assessment in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -441,10 +445,6 @@ the offending field — do not blindly retry the same payload.
 
 - **User wants to stop early:** §"Wrap it up". Do not inflate exhaustiveness
   to justify stopping.
-- **Plan items still in progress:** Refuse to declare when an **active**
-  plan item is `in_progress`; recommend completing the in-flight work first.
-  An item waiting only on an upload is not in-flight — it goes in
-  `not_reached` as `handed_to_user`.
 
 ## Re-invocation behavior
 

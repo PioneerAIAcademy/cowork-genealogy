@@ -479,8 +479,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // Reads text and writes it through extraction_append's `documents` input,
   // which classifies in code and refuses any classification field (spec §11.7).
   // No research_log_append: extraction_append writes the log entry itself.
+  // project_context (#4286): the waiting pages and each one's index, so the page
+  // pass names the assertion a reading disputes without a research_query grant.
   "record-structurer.md": {
-    tools: ["extraction_append", "sidecar_read"],
+    tools: ["extraction_append", "project_context", "sidecar_read"],
     denies: [],
   },
   // The only caller permitted to set `search_stop.stopped_because` to a stop-gate value;
@@ -530,8 +532,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "person-evidence.md": {
     tools: [
       "materialize_facts",
-      "merge_warnings",
-      "person_quality",
       "person_warnings",
       "place_distance",
       "place_search",
@@ -808,17 +808,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "catalog_search",
       "extraction_append",
       "project_context",
-      "rank_search_matches",
       "record_read",
       "record_search",
       "research_append",
       "research_log_append",
       "research_query",
-      "same_person",
-      "source_attachments",
       "tree_query",
-      "wiki_read",
-      "wiki_search",
     ],
     denies: [],
   },
@@ -886,11 +881,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // in `awaitingUser`. `Read` opens a capture in folder mode; with an
   // `uploadUrl`, `sidecar_read` reads an upload's text and `image_transcribe` an
   // upload with none (issue #3990). No wiki tools: the parish page arrives in the
-  // delegation as `baseUrl`.
+  // delegation as `baseUrl`. `catalog_search` (issue #4428) is step 2b's
+  // cross-check for archion/matricula: whether FamilySearch filmed the same
+  // church register, and whether that film is online.
   "search-external-sites.md": {
     tools: [
       "Read",
       "build_external_search_url",
+      "catalog_search",
       "collections_search",
       "external_links_search",
       "image_transcribe",

@@ -15,8 +15,8 @@ description: >-
   already found (extraction_append, or the record-structurer agent), or, after
   a search comes back empty, to judge whether research is done ("are we done",
   "what's the next step" → research-exhaustiveness).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5-5
+effort: low
 tools:
 
   - mcp__genealogy__collections_search
@@ -200,7 +200,7 @@ and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
 the subject and every other person in scope for this question, call
-`tree_query({ projectPath, personIds })` for the facts, relationships and cited
+`tree_query({ projectPath, personIds, includeSources: true })`, and again with `personIds: omittedPersonIds` if the answer is truncated, for the facts, relationships and cited
 sources it already records for them — **every fact, whether or not a
 source is attached to it.** For every one you find, **write down its date,
 place, and value (for a source, what it records) before deciding what to
@@ -878,6 +878,10 @@ the caller, in this order:
   rationale in one clause
 - when a baptism may not exist (Step 3), the `pli_` id of the item for the
   subject's own death or burial entry; if the plan has none, append it before
+  you return
+- for a parentage question whose plan you wrote this turn (create or
+  supersede), the `pli_` id of the dedicated item for the candidate parents'
+  marriage to each other; if the plan you wrote has none, append it before
   you return
 - for a review, the next item and why, then what follows it and why; when
   nothing was written, the one-line reason

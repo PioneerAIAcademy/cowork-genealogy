@@ -85,6 +85,15 @@ describe('CollectionsSection', () => {
     expect(screen.getByText('Fetched — nothing specific to this place')).toBeInTheDocument()
   })
 
+  it('labels a place too large to list, never as nothing for the place', () => {
+    mockCollections(parseExternalCollections({ places: { 'United States': { rows: [], too_large: true } } }))
+    render(<CollectionsSection />)
+    expect(
+      screen.getByText('Too large to list — look up a smaller place for its collections')
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Fetched — nothing specific to this place')).toBeNull()
+  })
+
   it('groups rows under their record type, with years, cost and content type', async () => {
     mockCollections(doc)
     render(<CollectionsSection />)

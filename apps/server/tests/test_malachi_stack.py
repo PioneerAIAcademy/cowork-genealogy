@@ -191,8 +191,11 @@ def shape_violations(doc: dict) -> list[str]:
     for key in ("FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE"):
         if web.get(key) != f"${{{key}:-}}":
             out.append(f"sign-in: web's {key} comes from the env file")
-    if tools.get("OAUTH_ISSUER", "").split(":")[0] != "${PUBLIC_URL":
-        out.append("issuer: tools' OAUTH_ISSUER must be PUBLIC_URL")
+    # Both tiers print the issuer, and a client compares the two; the web tier's is also
+    # what registers Claude's sign-in routes at all (#3997).
+    for name, env in (("tools", tools), ("web", web)):
+        if env.get("OAUTH_ISSUER", "").split(":")[0] != "${PUBLIC_URL":
+            out.append(f"issuer: {name}'s OAUTH_ISSUER must be PUBLIC_URL")
     if services["tools"].get("read_only") is not True or services["edge"].get("read_only") is not True:
         out.append("read_only: tools and edge run read-only")
     if not any("dml_role.py" in m for m in _mounts(services["migrate"])):
@@ -360,6 +363,10 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "a limit the env file cannot reach", _drop_env("tools", "GENEALOGY_MAX_TRANSCRIPTIONS")),
     ("shape", "links from a second setting", _set_env("tools", "WEB_PUBLIC_URL", "${WEB_PUBLIC_URL:-}")),
     ("shape", "no links", _drop_env("tools", "WEB_PUBLIC_URL")),
+    ("shape", "no sign-in routes on web", _drop_env("web", "OAUTH_ISSUER")),
+    ("shape", "web's issuer from a second setting", _set_env("web", "OAUTH_ISSUER", "${OAUTH_ISSUER:-}")),
+    ("shape", "no issuer on tools", _drop_env("tools", "OAUTH_ISSUER")),
+    ("shape", "tools' issuer from a second setting", _set_env("tools", "OAUTH_ISSUER", "${OAUTH_ISSUER:-}")),
     ("shape", "a redirect the env file cannot reach", _drop_env("web", "FS_REDIRECT_URI")),
     ("shape", "a sign-in budget the env file cannot reach", _drop_env("web", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")),
     ("shape", "owner DSN on web", _set_env("web", "MIGRATE_PG_DSN", "x")),
@@ -753,6 +760,20 @@ def test_up_refuses_a_populated_directory_it_does_not_own(first_run):
 
 
 @needs_bash
+def test_up_refuses_a_public_url_ending_in_a_slash(first_run):
+    """It is both tiers' OAUTH_ISSUER, and the web tier refuses one that is not its own
+    PUBLIC_URL without the slash: caught here, before compose replaces a running stack."""
+    path, env = first_run
+    text = path.read_text(encoding="utf-8")
+    assert "PUBLIC_URL=https://example.test\n" in text
+    path.write_text(text.replace("PUBLIC_URL=https://example.test\n", "PUBLIC_URL=https://example.test/\n"),
+                    encoding="utf-8")
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "EDGE": "off"})
+    assert result.returncode == 1 and "must not end in '/'" in result.stderr
+    assert "compose" not in result.stdout
+
+
+@needs_bash
 @pytest.mark.parametrize("edge", ["of", "OFF", "no"])
 def test_up_refuses_an_edge_value_it_does_not_know(first_run, edge):
     """Read before anything starts: a typo must not open the public port."""
@@ -900,8 +921,11 @@ def test_backup_at_or_over_the_default_keep_does_not_ask(first_run, given):
 
 GOOD_ROUTES: dict[tuple[str, str], tuple[int, dict[str, str], bytes]] = {
     ("GET", "/livez"): (200, {}, b'{"ok":true}'),
-    ("GET", "/.well-known/oauth-protected-resource/mcp"): (200, {}, b'{"resource":"http://x/mcp"}'),
-    ("POST", "/mcp"): (401, {"WWW-Authenticate": 'Bearer resource_metadata="http://x/m"'}, b"{}"),
+    ("GET", "/.well-known/oauth-protected-resource/mcp"): (
+        200, {}, b'{"resource":"http://x/mcp","authorization_servers":["http://x"],"scopes_supported":["genealogy"]}'),
+    ("GET", "/.well-known/oauth-authorization-server"): (
+        200, {}, b'{"issuer":"http://x","authorization_endpoint":"http://x/authorize"}'),
+    ("POST", "/mcp"): (401, {"WWW-Authenticate": 'Bearer resource_metadata="http://x/m", scope="genealogy"'}, b"{}"),
     ("GET", "/auth/config"): (200, {}, b'{"familysearch":true,"devLogin":false,"openrouter":false}'),
 }
 
@@ -944,6 +968,7 @@ def stub() -> Iterator[Callable[[dict], str]]:
 
 def _routes(**changes: Any) -> dict:
     keys = {"livez": ("GET", "/livez"), "metadata": ("GET", "/.well-known/oauth-protected-resource/mcp"),
+            "signin": ("GET", "/.well-known/oauth-authorization-server"),
             "mcp": ("POST", "/mcp"), "config": ("GET", "/auth/config"), "healthz": ("GET", "/healthz"),
             "health": ("GET", "/api/health"), "index": ("GET", "/index.html"), "sessions": ("GET", "/api/sessions")}
     return {**GOOD_ROUTES, **{keys[k]: v for k, v in changes.items()}}
@@ -964,6 +989,12 @@ FAULTS = [
     ("unauthenticated POST /mcp", {"mcp": (401, {}, b"{}")}),
     ("metadata", {"metadata": (200, {}, b'{"resource":"http://x/other"}')}),
     ("metadata", {"metadata": (404, {}, b"{}")}),
+    # The web tier started without OAUTH_ISSUER: Claude's discovery would end in a 404.
+    ("authorization server", {"signin": (404, {}, b"{}")}),
+    ("authorization server", {"signin": (200, {}, b'{"issuer":"http://other"}')}),
+    ("authorization server", {"signin": (200, {}, b'{"issuer":"http://x/"}')}),
+    ("authorization server", {"signin": (200, {}, b"{}")}),
+    ("authorization server", {"metadata": (200, {}, b'{"resource":"http://x/mcp"}')}),
     ("/index.html", {"index": (200, {}, b"<html>")}),
     ("/api/sessions", {"sessions": (200, {}, b"[]")}),
     ("/auth/config", {"config": (200, {}, b'{"familysearch":true,"devLogin":true,"openrouter":false}')}),
@@ -1284,3 +1315,134 @@ def test_malachi_export_needs_exactly_one_selector(first_run, given):
     _path, env = first_run
     result = _run(["export"], {**env, **given})
     assert result.returncode == 1 and "exactly one" in result.stderr
+
+
+# ── beta-block-user and beta-delete-user (user_admin.py; its pg half is test_malachi_user_admin_pg.py) ──
+
+# A docker that records its argv, stdin and environment, and writes FAKE_REPORT's project ids into
+# the folder mounted at /report, confirmed or not, so the shell's own CONFIRM gate is what a test
+# sees. FAKE_STATUS is its exit status.
+FAKE_ADMIN_DOCKER = """#!/bin/sh
+cat >"$FAKE_DIR/stdin"
+printf '%s\\n' "$*" >"$FAKE_DIR/argv"
+env >"$FAKE_DIR/env"
+for arg in "$@"; do
+  case $arg in
+    *:/report) printf '%s' "${FAKE_REPORT-}" >"${arg%:/report}/projects" ;;
+  esac
+done
+exit "${FAKE_STATUS:-0}"
+"""
+
+
+@pytest.fixture
+def admin_run(first_run, tmp_path):
+    """``(run, data)``: ``run(command, **env)`` runs malachi.sh with FAKE_ADMIN_DOCKER, and
+    ``data`` is DATA_DIR with two exports in it."""
+    path, env = first_run
+    bin_dir = tmp_path / "admin-bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "docker"
+    fake.write_text(FAKE_ADMIN_DOCKER, encoding="utf-8")
+    fake.chmod(0o755)
+    data = Path(env["DATA_DIR"])
+    for project in ("proj_gone", "proj_kept"):
+        (data / "exports" / project).mkdir(parents=True)
+        (data / "exports" / project / "research.json").write_text("{}", encoding="utf-8")
+    base = {**env, "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}", "FAKE_DIR": str(tmp_path)}
+
+    def run(command: str, **extra: str) -> subprocess.CompletedProcess:
+        return _run([command], {**base, **extra})
+
+    return run, data
+
+
+@needs_bash
+@pytest.mark.parametrize(("command", "given", "message"), [
+    ("block-user", {}, "ACCOUNT= is required"),
+    ("delete-user", {"CODE": "abc"}, "ACCOUNT= is required"),
+    ("delete-user", {"ACCOUNT": "usr_a"}, "CODE= is required"),
+])
+def test_a_user_command_needs_its_inputs(admin_run, tmp_path, command, given, message):
+    run, _data = admin_run
+    result = run(command, **given)
+    assert result.returncode == 1 and message in result.stderr
+    assert not (tmp_path / "argv").exists()
+
+
+@needs_bash
+def test_block_user_runs_the_block(admin_run, tmp_path):
+    run, _data = admin_run
+    assert run("block-user", ACCOUNT="usr_a").returncode == 0
+    argv = (tmp_path / "argv").read_text(encoding="utf-8")
+    assert "user_admin.py block --account=usr_a" in argv and "--confirm" not in argv
+
+
+@needs_bash
+def test_delete_user_sends_the_code_on_stdin_and_never_argv(admin_run, tmp_path):
+    run, data = admin_run
+    code = "0123456789abcdef0123"
+    result = run("delete-user", ACCOUNT="usr_a", CODE=code)
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "stdin").read_text(encoding="utf-8") == code
+    argv = (tmp_path / "argv").read_text(encoding="utf-8")
+    assert code not in argv + result.stdout + result.stderr
+    assert "user_admin.py delete --account=usr_a --report /report/projects" in argv
+
+
+@needs_bash
+@pytest.mark.parametrize("confirm", [None, "no", "YES"])
+def test_delete_user_without_confirm_yes_passes_no_confirm_and_removes_nothing(admin_run, tmp_path, confirm):
+    run, data = admin_run
+    extra = {"CONFIRM": confirm} if confirm is not None else {}
+    assert run("delete-user", ACCOUNT="usr_a", CODE="c", FAKE_REPORT="proj_gone\n", **extra).returncode == 0
+    assert "--confirm" not in (tmp_path / "argv").read_text(encoding="utf-8")
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_gone", "proj_kept"]
+
+
+@needs_bash
+def test_a_confirmed_delete_removes_the_reported_exports_and_no_other(admin_run, tmp_path):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT="proj_gone\nproj_none\n")
+    assert result.returncode == 0, result.stderr
+    assert " --confirm " in f" {(tmp_path / 'argv').read_text(encoding='utf-8')} "
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_kept"]
+    assert f"removed {data}/exports/proj_gone" in result.stdout and "proj_none" not in result.stdout
+
+
+@needs_bash
+@pytest.mark.parametrize("climbing", ["..", "../proj_kept", "proj_gone/../proj_kept", "."])
+def test_a_confirmed_delete_refuses_a_climbing_export_name(admin_run, climbing):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT=f"{climbing}\n")
+    assert result.returncode == 1 and "refusing to remove an export" in result.stderr
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_gone", "proj_kept"]
+    assert data.is_dir()
+
+
+@needs_bash
+def test_a_failed_delete_removes_no_export(admin_run):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT="proj_gone\n", FAKE_STATUS="1")
+    assert result.returncode != 0
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_gone", "proj_kept"]
+
+
+@needs_bash
+def test_the_code_reaches_no_child_environment_even_through_makeflags(admin_run, tmp_path):
+    """make copies its command-line variables into MAKEFLAGS for every recipe."""
+    run, _data = admin_run
+    code = "0123456789abcdef0123"
+    result = run("delete-user", ACCOUNT="usr_a", CODE=code, MAKEFLAGS=f" -- ACCOUNT=usr_a CODE={code}",
+                 MAKEOVERRIDES=f"ACCOUNT=usr_a CODE={code}")
+    assert result.returncode == 0, result.stderr
+    assert code not in (tmp_path / "env").read_text(encoding="utf-8")
+    assert (tmp_path / "stdin").read_text(encoding="utf-8") == code
+
+
+@needs_bash
+def test_rows_gone_with_objects_left_still_removes_the_exports_and_fails(admin_run):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT="proj_gone\n", FAKE_STATUS="3")
+    assert result.returncode == 1 and "objects may remain" in result.stderr
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_kept"]

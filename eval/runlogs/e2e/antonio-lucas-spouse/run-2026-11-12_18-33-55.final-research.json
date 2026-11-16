@@ -1,0 +1,4198 @@
+{
+  "project": {
+    "id": "rp_antonio_lucas_spouse",
+    "objective": "Did Antonio Fernandes Lucas of Funchal, Madeira have a wife named Antonia de Jesus, distinct from his tree-recorded wife Maria Joana (m. 1890), and a daughter named Maria who died young?",
+    "subject_person_ids": [
+      "GK89-82B"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-11-12"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did Antonio Fernandes Lucas (born 1838, Santo Ant\u00f3nio, Funchal, Madeira) marry, other than Maria Joana (married 8 February 1890)?",
+      "rationale": "The objective rests on a second wife, Antonia de Jesus, who is not on the tree. Antonio's marriage record set in Funchal, from his plausible marrying ages until his death, is where a prior or additional marriage would be stated. Naming the spouse without presuming Antonia de Jesus keeps the question open to whatever the records show.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "enumerative",
+      "priority": "high",
+      "date_window": "1855-1900",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-11-12",
+      "resolution_assertion_ids": [
+        "a_017",
+        "a_025",
+        "a_087",
+        "a_088",
+        "a_019",
+        "a_020",
+        "a_042",
+        "a_043",
+        "a_093",
+        "a_111",
+        "a_113",
+        "a_137",
+        "a_135",
+        "a_134"
+      ],
+      "search_stop": {
+        "stopped_because": "nothing_further_reachable",
+        "justification": "The original 1890 Santo Ant\u00f3nio marriage register image (viewed directly, not the index) states 'ambos solteiros' for both Antonio Fernandes Lucas and Maria Joana \u2014 Antonio was never a widower at that marriage, so no earlier wife existed for the actual subject. A broad 1858-1889 marriage search across all Funchal freguesias turned up only one other Antonio Fernandes Lucas marriage (20 Jul 1859, to Antonia de Jesus), which is conclusively a namesake: his stated parents (Manoel Fernandes Lucas/Luiza de Jesus) do not match the subject's parents (Jose Fernandes Lucas/Francisca Luisa), and his same_person score against the subject is 0.0000014. That namesake's children's baptisms, his 1895 burial, and his family cluster were all independently checked and consistently point to the same different man, never to the subject. No burial of an Antonia de Jesus naming Antonio Fernandes Lucas (the subject) as husband was found anywhere in the 1858-1911 window, and FAN-cluster records (the subject's own children's baptisms, his father Jose's 1871 burial) show no trace of a prior wife or half-sibling. Three remaining avenues were identified but not reached: the Arquivo Regional da Madeira's own marriage index (attempted but browse-only, not supported by the URL builder, requires a manual user capture), the diocesan pre-nuptial marriage proceedings (mostly undigitized, held only at the diocesan archive), and MyHeritage's parallel index (paywalled). Tombo.pt, named in the locality guide as a free browsable mirror of the same ARM parish-register originals, was never attempted; it holds no record type independent of what FamilySearch's own parish-level images and nationwide indexes already cover, so it is treated the same as the ABM index \u2014 a browse-only alternate access point to originals already searched, not a new record type. Civil registration proper did not begin in Madeira until 1911 (FamilySearch Wiki, Portugal Civil Registration), decades after this question's 1858-1890 window, so the Catholic parish register \u2014 which has been searched both as index and as original image \u2014 is the correct and complete record class for this period; there is no civil-registration gap. Overturn risk: low \u2014 the decisive record (the subject's own 1890 marriage entry) has been read as an original image and states no prior marriage, no conflicting record contradicts it, and the only unreached sources are alternate portals to, or less-authoritative substitutes for, records already searched, not a distinct unexamined record type.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 a convincing answer is obtained: the subject's own 1890 marriage record, read as an original image, states he was a bachelor ('ambos solteiros'), and no other marriage of his is found anywhere in the 1858-1911 window.",
+          "repository_breadth": "FamilySearch's full Madeira church-records collection, nationwide baptism/marriage/death indexes, and civil-records collection were searched across all Funchal freguesias (not just Santo Ant\u00f3nio) and the 1858-1911 window, with FAN-cluster research on the subject's children and father. The ARM marriage index and MyHeritage's parallel index were identified but are inaccessible (browse-only/paywalled) in this run; pre-nuptial proceedings are undigitized at the diocesan archive.",
+          "original_substitution": "The decisive record \u2014 the 1890 marriage entry \u2014 was upgraded from a derivative index hit to a read original parish-register image (log_008), which is where the bachelor status was actually found.",
+          "independent_verification": "Two independent lines agree: the subject's own 1890 marriage record (primary, self-informant, original image) stating no prior marriage, and an extensive, independent negative search across baptism, death, and FAN-cluster records for the 1858-1911 window that would have surfaced a prior wife or her burial had one existed, and did not.",
+          "evidence_class": "At least one original record with primary, self-reported information: the 1890 marriage register image itself (informant_proximity: self).",
+          "conflict_resolution": "The one apparent conflict \u2014 a same-named Antonio Fernandes Lucas married to Antonia de Jesus in 1859 \u2014 is resolved: his parents, same_person score (0.0000014), and family cluster all diverge from the subject's, and no conflicts entry or unregistered disagreement remains open for this question.",
+          "overturn_risk": "Low. The decisive record has been read as an original and is unambiguous. The unreached sources (ARM index, pre-nuptial proceedings, MyHeritage, Tombo.pt) are either browse-only/paywalled alternate portals to records already searched, or a record type (dispensations) that supplements rather than overturns a stated marital-status fact already obtained from the primary record."
+        },
+        "not_reached": [
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "FamilySearch pending hints on GK89-82B could not be triaged \u2014 person_record_matches was blocked by an e2e benchmark hook."
+          },
+          {
+            "kind": "browse_only",
+            "log_entry_id": "log_013",
+            "wiki_title": null,
+            "description": "Arquivo Regional da Madeira marriage index (https://abm.madeira.gov.pt/pesquisa/casamento/) \u2014 archipelago-wide, free, but browse-only and not supported by the URL builder; requires a manual user capture, which did not occur."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Diocesan pre-nuptial marriage proceedings (Processos de Casamento) and dispensations for Funchal, 1858-1889 \u2014 mostly undigitized, held only at the diocesan archive."
+          },
+          {
+            "kind": "paywalled",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "MyHeritage's Portugal, Madeira, Index of Marriages 1574-1940 and Index of Baptisms 1738-1910 \u2014 paid subscription, not accessible in this autonomous run; never handed to the user."
+          },
+          {
+            "kind": "browse_only",
+            "log_entry_id": null,
+            "wiki_title": "Portugal_Civil_Registration",
+            "description": "Tombo.pt's Madeira civil registration/church-records image mirror \u2014 free but browse-only, named in the locality guide as holding 'some [records] not on FamilySearch'; never attempted. Mirrors the same ARM parish-register originals already searched via FamilySearch's index and image collections, not an independent record type."
+          }
+        ]
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-12",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "fs_hints",
+          "jurisdiction": "Funchal, Madeira, Portugal",
+          "date_range": "1838-1911",
+          "repository": "FamilySearch",
+          "rationale": "Review pending FamilySearch hints on GK89-82B before searching \u2014 an attached hint may already answer the question.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "person_record_matches refused by an e2e benchmark hook on GK89-82B; the pending FamilySearch hints could not be read, so no triage was made."
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Funchal, Madeira, Portugal (all freguesias: Santo Ant\u00f3nio, S\u00e9, Santa Maria Maior, S\u00e3o Pedro, S\u00e3o Martinho, S\u00e3o Gon\u00e7alo, Monte, Santa Luzia)",
+          "date_range": "1858-1889",
+          "repository": "FamilySearch",
+          "rationale": "Tree records Antonio's christening 22 Apr 1838 and a marriage to Maria Joana (b. 1869) on 8 Feb 1890, when he was about 52; children born 1896 and 1899. A marriage to Antonia de Jesus most plausibly falls between about age 20 and 1889. loc_001: Madeira parish registers are the marriage record to 1911; collection 4426199 (Portugal, Madeira, Catholic Church Records) is name-searchable. Search groom Antonio Fernandes Lucas (variants Antonio Fernandes, Lucas/Lucas de, Antonio F. Lucas) and bride Antonia de Jesus; couples usually married in the bride's parish, so search island-wide, not only Santo Antonio.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Madeira, Portugal (archipelago-wide)",
+          "date_range": "1858-1911",
+          "repository": "other",
+          "rationale": "loc_001: Arquivo Regional da Madeira offers a free name-searchable marriage index covering the whole island through 1911 (https://abm.madeira.gov.pt/pesquisa/casamento/). Search Antonio Fernandes Lucas as groom and Antonia de Jesus as bride, to catch marriages filed in any parish and to cross-check FamilySearch. Also confirms the 1890 entry and whether it records Antonio as widower (estado viudo) and names a deceased prior wife.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Capture required and no user present to make one; site not supported by the URL builder."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+          "date_range": "1890",
+          "repository": "FamilySearch",
+          "rationale": "The 8 Feb 1890 marriage entry to Maria Joana is the best direct evidence: after the mid-1800s entries give marital status, parents and residences. View the image to see whether Antonio is stated as solteiro or viuvo and whether a deceased wife (possibly Antonia de Jesus) is named. Santo Ant\u00f3nio volume list was not retrieved in loc_001, so browse/pull its catalog entry (olib:3400418) for the 1890 volume.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Solteiro/viuvo status obtained via image_transcribe of the 1890 marriage entry (log_008): 'ambos solteiros' \u2014 Antonio was not a widower. Record located via pli_002 extraction. No prior wife named."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Funchal, Madeira, Portugal (Santo Ant\u00f3nio first, then other freguesias)",
+          "date_range": "1858-1895",
+          "repository": "FamilySearch",
+          "rationale": "Test the objective's claimed daughter Maria who died young: search baptisms (Batismos) with father Antonio Fernandes Lucas and mother Antonia de Jesus in collection 4426199 and Portugal Baptisms 1570-1910 (name-searchable). A baptism naming both parents places the child with the couple and would show Antonia de Jesus as a wife; also catches other children of a prior union.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal (and neighboring freguesias)",
+          "date_range": "1858-1911",
+          "repository": "FamilySearch",
+          "rationale": "Death/burial entries (Obitos) are FAN-style and direct evidence: a burial of Antonia de Jesus stating she was wife of Antonio Fernandes Lucas, a burial of a child Maria, and Antonio's own burial naming surviving or predeceased spouses. Collections 4426199 and Portugal Deaths 1640-1910 are name-searchable. Window runs past 1890 because the husband's death entry may name earlier wives.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Funchal, Madeira, Portugal",
+          "date_range": "1858-1889",
+          "repository": "other",
+          "rationale": "Pre-nuptial marriage proceedings (Processos de Casamento) and dispensations, held at the diocesan archive/ARM and mostly undigitized per loc_001, state prior marriages and deceased spouses of a widower. Check availability via the ARM catalog and FamilySearch catalog; lower priority than indexed searches.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Pre-nuptial proceedings (processos de casamento) for Madeira are mostly undigitized and held at the diocesan archive; not accessible in this autonomous run."
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+          "date_range": "1858-1911",
+          "repository": "FamilySearch",
+          "rationale": "FAN cluster: siblings and children of Antonio and godparents or witnesses. Search baptisms and marriages of his known children Antonio Fernandes de Lucas (b. 1896) and Julia do Espirito Santo Lucas (b. 1899), and any half-siblings, for entries naming a prior wife or a half-sibling relationship; also Maria Joana's own parish records for a note that she was a second wife. Tree-recorded father Jos\u00e9 Fernandes Lucas (d. 31 Jul 1871) burial may name heirs or a daughter-in-law Antonia.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "other",
+          "jurisdiction": "Funchal, Madeira, Portugal",
+          "date_range": "1858-1911",
+          "repository": "MyHeritage",
+          "rationale": "Alternate indexes of the same ARM material (Madeira Index of Marriages 1574-1940, Index of Baptisms 1738-1910) catch spelling variants missed in FamilySearch; paid, so after free sources. Use as cross-check if items 2, 3 and 5 are inconclusive.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "MyHeritage is a paid subscription site not accessible in this autonomous run. FamilySearch searches already found no additional marriage for GK89-82B."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T17:50:21.935Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Lucas",
+        "givenName": "Antonio Fernandes",
+        "spouseGivenName": "Antonia",
+        "spouseSurname": "de Jesus",
+        "marriageYearFrom": 1858,
+        "marriageYearTo": 1889,
+        "recordCountry": "Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1481,
+      "notes": "Groom Antonio Fernandes Lucas + spouse Antonia de Jesus, 1858-1889, Portugal. Found Madeira church marriage 20 Jul 1859 Santo Antonio (6BG7-MQ3D, coll 4426199): groom parents Manoel Fernandes Lucas and Luiza de Jesus, which differ from tree parents Jose Fernandes Lucas and Francisca Luisa; no age/birth year on index -> needs-review, possible namesake. Civil marriage 28 Nov 1885 (X91B-9GDZ, groom b.1861, birthYearConflict gap 23) is a different man. Many other hits are baptisms of children of an Antonio Fernandes Lucas + Antonia de Jesus (unattached), could be either man. Burial record 6YGS? (6YGB-P2V2) Antonio Fernandes Lucas b.1840 d.25 Nov 1895 spouse Antonia de Jesus, attached to other.",
+      "staged_ref": "results/.staging/93478709-00e5-4248-8f9f-42c80acb10ef.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-12T17:50:23.545Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Antonio Fernandes",
+        "surname": "Lucas",
+        "spouseGivenName": "Maria Joana",
+        "marriageYearFrom": 1888,
+        "marriageYearTo": 1892,
+        "marriagePlace": "Funchal, Madeira, Portugal",
+        "recordCountry": "Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 476,
+      "notes": "Top hit 1:1:6BG7-FC2X: 8 Feb 1890 marriage, Santo Ant\u00f3nio, Antonio Fernandes Lucas (b. ~1839, gap 1 yr from 1838) to Maria Joanna de Jesus; score 0.386, not yet attached. Role Groom, place and spouse consistent. Index entry only (derivative).",
+      "staged_ref": "results/.staging/720a9f87-1139-48bc-bedd-92515e1ab00f.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T17:50:30.984Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Antonio Fernandes",
+        "fatherSurname": "Lucas",
+        "motherGivenName": "Antonia de Jesus",
+        "birthYearFrom": 1858,
+        "birthYearTo": 1895,
+        "birthPlace": "Funchal, Madeira, Portugal",
+        "recordCountry": "Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 54,
+      "notes": "Father Antonio Fernandes Lucas + mother Antonia de Jesus, Funchal 1858-1895, no collection pin (hits in 1520601, 4426199, 4474701). 54 total; ranker scored all below 0.01 (it keys on subject's own birth, not children), so triaged by hand via relativeTerms. Children naming both parents (mother present): Maria Lucas bapt 13 Jun 1860 (1520601); Antonia Lucas bapt 26 Dec 1862; Virginia 1873/1874; Manuel 1889; Antonio 1890; Jose 1895; Maria Fernandes Lucas b.1887 buried 30 May 1889 aged ~2 Santo Antonio (civil 4474701) with mother Antonia de Jesus; another Maria bapt Oct 1886 and Maria bapt Dec 1892 (mother unknown). Variant mother names 'Antonia de Jesus Marques' (1868-1874 children) and 'Antonia de Jesus Fernandes Lucas'. CAUTION: the 1860-1895 span of births (1860 to 1895) plus 'sapateiro' 1868 entry suggests possibly two same-named Antonio Fernandes Lucas (one with Antonia de Jesus Marques); identity with subject b.1838 (parents Jose Fernandes Lucas, Francisca Luisa) unconfirmed - parents of father not named in these baptisms. Also Alfredo (d.1916) and Daniel (m.1924) and Manoel D'Agrella's bride Maria name Antonio Fernandes Lucas with Antonia de Jesus. Not extracted; Maria Joana not seen in this pool.",
+      "staged_ref": "results/.staging/7e3eb978-4fea-4529-9a8d-3a04f42dbcce.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T17:50:41.219Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Lucas",
+        "givenName": "Antonio Fernandes",
+        "recordCountry": "Portugal",
+        "deathYearFrom": 1858,
+        "deathYearTo": 1911,
+        "deathPlace": "Funchal, Madeira, Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 910,
+      "notes": "Antonio Fernandes Lucas death/burial Funchal 1858-1911. Candidates: burial 25 Nov 1895 b.1840 (civil, ark 6YGB-P2V2, attached to other tree person, gap 2 yrs); 6YG1-YNG4 b.1841 Santo Antonio burial (gap 3, birthYearConflict flag); 1879/1880 deaths b.1817-1819 are a different (older) man. needs-review, namesakes likely.",
+      "staged_ref": "results/.staging/de265975-542b-4b8a-8e0d-42efe5457985.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T17:50:41.229Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Antonia de Jesus",
+        "surname": "Lucas",
+        "recordCountry": "Portugal",
+        "deathYearFrom": 1858,
+        "deathYearTo": 1911,
+        "deathPlace": "Funchal, Madeira, Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 969,
+      "notes": "Antonia de Jesus Lucas death Funchal 1858-1911. No burial record of an Antonia de Jesus naming Antonio as husband found in top 50; hits are mostly mother roles in baptisms/civil. Antonia Fernandes Lucas d.1874 aged infant is not the wife.",
+      "staged_ref": "results/.staging/c105d45f-a4ce-4798-8777-5652d3d3d5d9.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T17:50:41.239Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Maria",
+        "surname": "Lucas",
+        "fatherGivenName": "Antonio",
+        "recordCountry": "Portugal",
+        "deathYearFrom": 1858,
+        "deathYearTo": 1911,
+        "deathPlace": "Funchal, Madeira, Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 489,
+      "notes": "Child Maria, father Antonio Fernandes Lucas, deaths Funchal. Candidates: Maria Fernandes Lucas b.1887 d.30 May 1889 Santo Antonio (civil 6YPM-36RZ and church 6B2L-FKDG, father present); Maria Lucas b.1893 d.5 Sep 1894 Santo Antonio (church 6BCT-KZMJ, father Antonio Fernandes Lucas). Ranker found no score above 0.01 (subject too thin); father name match only, identity of father unconfirmed.",
+      "staged_ref": "results/.staging/58a2a44f-a12f-4e5c-8066-1d6dd06aad5f.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-11-12T17:52:48.085Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "6BG7-FC2X"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "staged_ref": "results/.staging/88b1923c-d926-4e5a-afb7-37927b136f37.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-12T17:55:19.060Z",
+      "tool": "image_transcribe",
+      "query": {
+        "ark": "3:1:3QSQ-G9KP-6RR5"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "notes": "Image of the 8 Feb 1890 marriage entry of Antonio Fernandes Lucas and Maria Joanna de Jesus in Santo Ant\u00f3nio parish register. Key finding: 'ambos solteiros' \u2014 both parties recorded as single (not widowed). Antonio's parents confirmed as Jos\u00e9 Fernandes Lucas and Francisca Luiza (both deceased by 1890). Antonio signed the entry himself. No prior wife named. This contradicts the hypothesis that Antonio had been married to Antonia de Jesus before 1890.",
+      "staged_ref": "results/.staging/7259bc9b-f016-4180-a70c-a8e96da256cf.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-11-12T17:56:43.069Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "6BG7-MQ3D"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "staged_ref": "results/.staging/95451334-4c7f-4483-b5a7-d9778e69bc48.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-11-12T17:56:43.072Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "6YPM-36RZ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "staged_ref": "results/.staging/b7909fb5-f7b1-4c3a-9ff4-73e6b624b4d2.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-11-12T17:56:43.076Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "6B2L-FKDG"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "staged_ref": "results/.staging/927b5f58-fd44-46bc-ba89-47320c793b96.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-11-12T17:56:43.082Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "6BCT-KZMJ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "staged_ref": "results/.staging/154a7ccf-3b27-478f-ab29-b89a90e2d650.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T18:09:16.146Z",
+      "tool": "abm_madeira_marriage_index",
+      "query": {
+        "site": "Arquivo Regional da Madeira marriage index",
+        "groom": "Antonio Fernandes Lucas",
+        "bride": "Antonia de Jesus",
+        "window": "1858-1911"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Deferred: requires a user capture, which cannot happen while the run is working. The ABM site is not a supported site in build_external_search_url, so no pre-filled URL could be generated; the researcher can open the index landing page named in the plan (https://abm.madeira.gov.pt/pesquisa/casamento/) and enter the names manually. Nothing was searched; absence is not evidenced."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T18:09:52.441Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Antonio",
+        "surname": "Lucas",
+        "birthYearFrom": 1894,
+        "birthYearTo": 1898,
+        "fatherGivenName": "Antonio",
+        "motherGivenName": "Maria",
+        "recordCountry": "Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 1245,
+      "notes": "Search for child Antonio Fernandes Lucas b.c.1896 (parents Antonio / Maria). Candidates: christenings 6NRN-CHSY (5 Jun 1896, mother Maria Joanna de Nobrega) and 6NLB-35VW (Santo Antonio 1896, same parents); civil records 6YLB-VNG2 (mother Maria Joana de Jesus), 65VG-YW9D (b.1897). birthYearConflict flags are relative to the 1838 subject and expected, since these are his children, not him. Mother's surname varies (Nobrega / de Jesus), a point to reconcile. Parent names are consistent, not confirmed; not yet read. Also 6XSMS-3BWS marriage 1922 of Antonio Marques Lucas b.1896, parents Antonio Fernandes Lucas / Maria Joana (possible sibling). Derivative index only.",
+      "staged_ref": "results/.staging/b94dcfeb-ecf8-4381-a45a-64847f35aafb.json"
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T18:09:52.453Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jos\u00e9",
+        "surname": "Lucas",
+        "deathYearFrom": 1871,
+        "deathYearTo": 1871,
+        "recordCountry": "Portugal"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 4387,
+      "notes": "Search for burial of Jose Fernandes Lucas d.1871. Top hit 6BCY-7JKX: Madeira church records, b.1797, d. 31 Jul 1871 Santo Antonio Funchal, matches tree father's death. Ranker found no candidate above 0.01 because subject is the son; this is the father. Unread; heirs not yet seen. Remaining hits are other regions. Derivative index only.",
+      "staged_ref": "results/.staging/6efbbd69-34f4-4843-ad70-16b511f559a3.json"
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-11-12T18:10:33.487Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "6BCY-7JKX"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "staged_ref": "results/.staging/4de85680-5221-49e5-aeb5-9e432ed08652.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-11-12T18:10:33.491Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "6NRN-CHSY"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "staged_ref": "results/.staging/518fb8f1-91d8-49ad-ba3f-a3c8dfa08786.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BG7-FC2X : Wed Jul 16 09:44:56 UTC 2025), Entry for Antonio Fernandes Lucas and Maria Joanna de Jesus, 8 de fevereiro de 1890.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Antonio Fernandes Lucas e Maria Joanna de Jesus, \u201cPortugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\u201d",
+        "when_created": "1890",
+        "when_accessed": "2026-11-12",
+        "where": "Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990",
+        "where_within": "ark:/61903/1:1:6BG7-FC2X"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_007",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H4VM-KWF7",
+      "image_ark": "ark:/61903/3:1:3QSQ-G9KP-6RR5",
+      "gedcomx_source_description_id": "S1",
+      "transcription": "[Left Page]\n\nEra ut supra.\nMaria Augusta de Jesus\nHenrique Sebasti\u00e3o de Sousa\nO Cura Teodoro Jo\u00e3o Henriques.\n\n[Margin:]\nN.\u00ba 7.\nAntonio Frnz\nLucas e Maria\nJoanna de J.s\n\n[Body:]\nAos oito dias do mes de fevereiro do anno\nde mil oito centos e noventa, n'\u00e9sta Egre\nja Parochial de Santo Antonio do Conce_\nlho e Diocese do Funchal, na minha pre_\nsen\u00e7a compareceram os nubentes Anto_\nnio Fernandes Lucas e Maria Joanna de\nJesus, os quaes sei serem os proprios, com\ntodos os papeis do estylo correntes e sem\nimpedimento algum canonico ou civil pa_\nra o casamento dos mesmos nubentes, elle\nde cincoenta e um annos de edade e ella\nde vinte e um, ambos solteiros, baptisa_\ndos n'\u00e9sta Egreja, elle filho legitimo de Jos\u00e9\nFernandes Lucas e de Francisca Luiza falle_\ncidos, naturaes d'\u00e9sta freguezia, ella filha\nlegitima de Antonio de Nobrega natural\nda freguezia do Cani\u00e7o e de Luiza de Jesus\nnatural d'\u00e9sta freguezia, d'onde tambem\n\u00e9 natural a nubente, sendo todos mora_\ndores no sitio do Lombo dos Aguiares;\nos quaes nubentes se receberam por mari_\ndo e mulher, e os uni em matrimonio, pro_\ncedendo em todo este acto conforme o Rito\nda Santa Madre Egreja Catholica Apos_\ntolica Romana. Foram testemunhas\npresentes que sei serem os proprios Fran_\ncisco Pereira de Oliveira, morador no\nsitio dos Tres Paos e Manoel Nunes,\nmorador no sitio da Vianna, am_\nbos casados e lavradores. E, para\n\n---\n\n[Right Page]\n\n5\n6.\u00ba Vinto\n\nconstar laurei em duplicado este assento\nque, despois de ser lido e conferido peran_\nte os conjuges e as testemunhas s\u00f3 assi_\ngna comigo o conjuge por todos os outros\nn\u00e3o saberem escrever. Era ut supra.\nAntonio Fernandes Lucas.\nO Cura Theodoro Jo\u00e3o Henriques.\n\n[Margin:]\nN.\u00ba 8\nJos\u00e9 Nunez e\nAntonia do\nRozario\nDocum.to n.\u00ba 3.\nO Cura Henriq.\n\n[Body:]\nAos oito dias do mes de fevereiro do anno\nde mil oito centos e noventa, n'\u00e9sta Egreja\nParochial de Santo Antonio do Concelho e\nDiocese do Funchal, na minha presen\u00e7a\ncompareceram os nubentes Jos\u00e9 Nunes e\nAntonia do Rozario, os quaes sei serem os\nproprios, com todos os papeis do estylo\ncorrentes e sem impedimento algum canoni_\nco ou civil para o casamento dos mesmos\nnubentes, sendo dispensados do impedimen_\nto de quarto grao de consanguinidade\npor um s\u00f3 tronco, pelo Ex.mo e Rev.mo Prelado Di_\nocesano, por seu venerando Mandado de\nquatro do corrente mes, elle de dezoito an_\nnos de edade e ella de desesete, authorisa_\ndos por seus paes para casar, na presen\u00e7a\ndas testemunhas abaixo nomeadas, am_\nbos solteiros, baptisados n'\u00e9sta Egreja, elle\ntrabalhador, filho legitimo de Manoel Nunes\ne de Maria Clementina de Jesus, morado_\nres no sitio da Vianna e ella filha legitima\nde Francisco Pereira d'Oliveira e de Maria do\nRozario, fallecida, moradores no sitio dos\nTres Paos e todos naturaes d'\u00e9sta fregue_\nzia; os quaes nubentes se receberam por\nmarido e mulher e os uni em matrimo_\nnio procedendo em todo este acto conforme",
+      "image_filename": "images/3_1_3QSQ-G9KP-6RR5.jpg"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BG7-MQ3D : Wed Jul 16 08:21:21 UTC 2025), Entry for Antonio Fernandes Lucas and Manoel Fernandes Lucas, 20 de julho de 1859.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Antonio Fernandes Lucas e Antonia de Jesus, \u201cPortugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\u201d",
+        "when_created": "1859",
+        "when_accessed": "2026-11-12",
+        "where": "Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990",
+        "where_within": "ark:/61903/1:1:6BG7-MQ3D"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_009",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H4VM-2RST",
+      "image_ark": "ark:/61903/3:1:3QS7-89KP-8FZX",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YPM-36RZ : Fri Jan 09 13:21:46 UTC 2026), Entry for Maria Fernandes Lucas and Antonio Fernandes Lucas, 30 de maio de 1889.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Maria Fernandes Lucas, \u201cPortugal, Registro Civil, 1437-2023\u201d",
+        "when_created": "1889",
+        "when_accessed": "2026-11-12",
+        "where": "Portugal, Registro Civil, 1437-2023",
+        "where_within": "ark:/61903/1:1:6YPM-36RZ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_010",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H49N-LZ7B",
+      "image_ark": "ark:/61903/3:1:3Q9M-CSMG-4SVC-W",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6B2L-FKDG : Fri Jan 03 23:40:47 UTC 2025), Entry for Maria Fernandes Lucas and Antonio Fernandes Lucas, trinta dias do m\u00eas de Maio do anno de mil oitocentos oitenta e nove.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Maria Fernandes Lucas, \u201cPortugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\u201d",
+        "when_created": "1887",
+        "when_accessed": "2026-11-12",
+        "where": "Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990",
+        "where_within": "ark:/61903/1:1:6B2L-FKDG"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_011",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H4JL-7N2D",
+      "image_ark": "ark:/61903/3:1:3Q9M-CSFW-99VP-Q",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BCT-KZMJ : Fri Jan 03 23:26:42 UTC 2025), Entry for Maria Lucas and Antonio Fernandes Lucas, 5 de setembro de 1894.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Maria Lucas, \u201cPortugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\u201d",
+        "when_created": "1894",
+        "when_accessed": "2026-11-12",
+        "where": "Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990",
+        "where_within": "ark:/61903/1:1:6BCT-KZMJ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_012",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H482-D3YF",
+      "image_ark": "ark:/61903/3:1:3Q9M-CSFW-99VN-5",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BCY-7JKX : Fri Jan 03 20:48:26 UTC 2025), Entry for Jos\u00e9 Fernandes Lucas and Jos\u00e9 Fernandes Lucas, 31 de julho de 1871.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Jos\u00e9 Fernandes Lucas, \u201cPortugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\u201d",
+        "when_created": "1871",
+        "when_accessed": "2026-11-12",
+        "where": "Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990",
+        "where_within": "ark:/61903/1:1:6BCY-7JKX"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_016",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H48L-MRVY",
+      "image_ark": "ark:/61903/3:1:3Q9M-CSF7-12V8",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRN-CHSY : Mon Aug 10 02:54:53 UTC 2026), Entry for Theodoro Jo\u00e3o Henriques and Antonio Fernandes Lucas, 20 de agosto de 1896.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Antonio Fernandes Lucas, \u201cPortugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\u201d",
+        "when_created": "1896",
+        "when_accessed": "2026-11-12",
+        "where": "Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990",
+        "where_within": "ark:/61903/1:1:6NRN-CHSY"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_017",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H9L1-7BCH",
+      "image_ark": "ark:/61903/3:1:3Q9M-CSM5-JQM7-K",
+      "gedcomx_source_description_id": "S7"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Antonio Fernandes Lucas",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "age",
+      "value": "51 anos",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "1839",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "inferred",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1839",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Maria Joanna de Jesus",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Maria Joanna",
+        "surname": "de Jesus"
+      },
+      "record_persona_id": "p_305261063715",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063715",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "age",
+      "value": "21 anos",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063715",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "1869",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "inferred",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1869",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_305261063715",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Jose Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jose",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_305261063716",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063716",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Francisca Luisa Da Conceicao",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Francisca Luisa",
+        "surname": "Da Conceicao"
+      },
+      "record_persona_id": "p_305261063717",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063717",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Antonio de Nobrega",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "de Nobrega"
+      },
+      "record_persona_id": "p_305261063718",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063718",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Luisa de Jesus",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Luisa",
+        "surname": "de Jesus"
+      },
+      "record_persona_id": "p_305261063719",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305261063719",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "8 de fevereiro de 1890",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "8 de fevereiro de 1890",
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "8 de fevereiro de 1890",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "8 de fevereiro de 1890",
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_305261063715",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Jose Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Francisca Luisa Da Conceicao",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Luisa de Jesus",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "record_persona_id": "p_305261063715",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Antonio de Nobrega",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "record_persona_id": "p_305261063715",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "spouse of Francisca Luisa Da Conceicao",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_groom"
+      },
+      "record_persona_id": "p_305261063716",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "father_of_bride",
+      "fact_type": "relationship",
+      "value": "spouse of Luisa de Jesus",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_bride"
+      },
+      "record_persona_id": "p_305261063718",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Maria Joanna de Jesus",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_305261063714",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:H4VM-KWF7"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Antonio Fernandes Lucas",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_305260653702",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305260653702",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Manoel Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Manoel",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_305260653703",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305260653703",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Luiza de Jesus",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Luiza",
+        "surname": "de Jesus"
+      },
+      "record_persona_id": "p_305260653704",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305260653704",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Antonia de Jesus",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonia",
+        "surname": "de Jesus"
+      },
+      "record_persona_id": "p_305260653705",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305260653705",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Jose Marques",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jose",
+        "surname": "Marques"
+      },
+      "record_persona_id": "p_305260653706",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305260653706",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Joanna Felicia",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Joanna",
+        "surname": "Felicia"
+      },
+      "record_persona_id": "p_305260653707",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305260653707",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "20 de julho de 1859",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "20 de julho de 1859",
+      "place": "Santo Antonio",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_305260653702",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "20 de julho de 1859",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "20 de julho de 1859",
+      "place": "Santo Antonio",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_305260653705",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Joanna Felicia",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "record_persona_id": "p_305260653705",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Jose Marques",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "record_persona_id": "p_305260653705",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Luiza de Jesus",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "record_persona_id": "p_305260653702",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Manoel Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "record_persona_id": "p_305260653702",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "father_of_bride",
+      "fact_type": "relationship",
+      "value": "spouse of Joanna Felicia",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_bride"
+      },
+      "record_persona_id": "p_305260653706",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "spouse of Luiza de Jesus",
+      "information_quality": "secondary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_groom"
+      },
+      "record_persona_id": "p_305260653703",
+      "informant_bias_notes": "the parent's name as stated by their own child",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:6BG7-MQ3D",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Antonia de Jesus",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_305260653702",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:H4VM-2RST"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Maria Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Maria",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "dois annos d' idade",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1887",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1887",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "30 de maio de 1889",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "30 de maio de 1889",
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_304551993460",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_304551993461",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304551993461",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "father",
+      "fact_type": "birth",
+      "value": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_304551993461",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Antonia de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonia",
+        "surname": "de Jesus"
+      },
+      "record_persona_id": "p_304551993462",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304551993462",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "mother",
+      "fact_type": "birth",
+      "value": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_304551993462",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonia de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonio Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_304551993460",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:6YPM-36RZ",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Antonia de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_304551993461",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:H49N-LZ7B"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Maria Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Maria",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_305225432482",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305225432482",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "dois annos d' idade",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305225432482",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1887",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1887",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_305225432482",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "trinta dias do m\u00eas de Maio do anno de mil oitocentos oitenta e nove",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "trinta dias do m\u00eas de Maio do anno de mil oitocentos oitenta e nove",
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_305225432482",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_305225432483",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305225432483",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Antonia de Jesus de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonia de Jesus",
+        "surname": "de Jesus"
+      },
+      "record_persona_id": "p_305225432484",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_305225432484",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonia de Jesus de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_305225432482",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonio Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_305225432482",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:6B2L-FKDG",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Antonia de Jesus de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_305225432483",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H4JL-7N2D"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Maria Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Maria",
+        "surname": "Lucas"
+      },
+      "record_persona_id": "p_304962282017",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962282017",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "1 anos",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962282017",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1893",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1893",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_304962282017",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "5 de setembro de 1894",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "5 de setembro de 1894",
+      "place": "Santo Antonio",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_304962282017",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_304962282018",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962282018",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Antonia de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonia",
+        "surname": "de Jesus"
+      },
+      "record_persona_id": "p_304962282019",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962282019",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonio Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_304962282017",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonia de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_304962282017",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:6BCT-KZMJ",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Antonia de Jesus",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_304962282018",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:H482-D3YF"
+    },
+    {
+      "id": "a_087",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "solteiro",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Page reads 'ambos solteiros' (both single) for the groom; not in the index."
+    },
+    {
+      "id": "a_088",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6BG7-FC2X",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "solteiro",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Page reads 'ambos solteiros' (both single) for the bride; not in the index."
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jos\u00e9",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_304962720884",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962720884",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "74 anos",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962720884",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1797",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1797",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_304962720884",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "31 de julho de 1871",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "31 de julho de 1871",
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "record_persona_id": "p_304962720884",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY",
+      "standard_place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jos\u00e9",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_304962720885",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962720885",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Antonia de Freitas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonia",
+        "surname": "de Freitas"
+      },
+      "record_persona_id": "p_304962720886",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962720886",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "other_1",
+      "fact_type": "name",
+      "value": "Francisca Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Francisca",
+        "surname": "Lucas"
+      },
+      "record_persona_id": "p_304962720887",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "other_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_304962720887",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonia de Freitas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_304962720884",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Jos\u00e9 Fernandes Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_304962720884",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Francisca Lucas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "other_1"
+      },
+      "record_persona_id": "p_304962720884",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/1:1:6BCY-7JKX",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Antonia de Freitas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_304962720885",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:H48L-MRVY"
+    },
+    {
+      "id": "a_104",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_1",
+      "fact_type": "name",
+      "value": "Theodoro Jo\u00e3o Henriques",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Theodoro Jo\u00e3o",
+        "surname": "Henriques"
+      },
+      "record_persona_id": "p_296594710298",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_105",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710298",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_106",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_1",
+      "fact_type": "occupation",
+      "value": "Cura",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710298",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_107",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Antonio Fernandes Lucas",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_296594710287",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_108",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710287",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_109",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "5 de junho de 1896",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "5 de junho de 1896",
+      "record_persona_id": "p_296594710287",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_110",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "20 de agosto de 1896",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "20 de agosto de 1896",
+      "place": "Funchal, Madeira, Portugal",
+      "standard_place": "Funchal, Madeira, Portugal",
+      "record_persona_id": "p_296594710287",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_111",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Fernandes Lucas",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_296594710288",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_112",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710288",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_113",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Maria Joanna de Nobrega",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Maria Joanna",
+        "surname": "de Nobrega"
+      },
+      "record_persona_id": "p_296594710289",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_114",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710289",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_115",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_2",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Fernandes Lucas",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jos\u00e9",
+        "surname": "Fernandes Lucas"
+      },
+      "record_persona_id": "p_296594710290",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_116",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710290",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_117",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_3",
+      "fact_type": "name",
+      "value": "Francisca Luiza",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Francisca Luiza",
+        "surname": ""
+      },
+      "record_persona_id": "p_296594710291",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_118",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710291",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_119",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "grandfather",
+      "fact_type": "name",
+      "value": "Antonio de Nobrega",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "de Nobrega"
+      },
+      "record_persona_id": "p_296594710292",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_120",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "grandfather",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710292",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_121",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "grandmother",
+      "fact_type": "name",
+      "value": "Luiza de Jesus",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Luiza de Jesus",
+        "surname": ""
+      },
+      "record_persona_id": "p_296594710293",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_122",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "grandmother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710293",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_123",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_4",
+      "fact_type": "name",
+      "value": "Drinhos",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "",
+        "surname": "Drinhos"
+      },
+      "record_persona_id": "p_296594710294",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_124",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_5",
+      "fact_type": "name",
+      "value": "Julia Christina de Jesus",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Julia Christina de Jesus",
+        "surname": ""
+      },
+      "record_persona_id": "p_296594710295",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_125",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_5",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710295",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_126",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_6",
+      "fact_type": "name",
+      "value": "Jo\u00e3o",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jo\u00e3o",
+        "surname": ""
+      },
+      "record_persona_id": "p_296594710296",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_127",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_6",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710296",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_128",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_7",
+      "fact_type": "name",
+      "value": "Antonio",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio",
+        "surname": ""
+      },
+      "record_persona_id": "p_296594710297",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_129",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_7",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296594710297",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_130",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "child of Antonio de Nobrega",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "grandfather"
+      },
+      "record_persona_id": "p_296594710289",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_131",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "child of Luiza de Jesus",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "grandmother"
+      },
+      "record_persona_id": "p_296594710289",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_132",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "child of Antonio de Nobrega",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "grandfather"
+      },
+      "record_persona_id": "p_296594710288",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_133",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "child of Luiza de Jesus",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "grandmother"
+      },
+      "record_persona_id": "p_296594710288",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_134",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Antonio Fernandes Lucas",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_296594710287",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_135",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Maria Joanna de Nobrega",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_296594710287",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_136",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "grandfather",
+      "fact_type": "relationship",
+      "value": "spouse of Luiza de Jesus",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "grandmother"
+      },
+      "record_persona_id": "p_296594710292",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_137",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Maria Joanna de Nobrega",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_296594710288",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    },
+    {
+      "id": "a_138",
+      "record_id": "ark:/61903/1:1:6NRN-CHSY",
+      "record_role": "other_2",
+      "fact_type": "relationship",
+      "value": "spouse of Francisca Luiza",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "other_3"
+      },
+      "record_persona_id": "p_296594710290",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:H9L1-7BCH"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "1890 marriage register, groom. Name 'Antonio Fernandes Lucas' exact match; parents named in record (Jose Fernandes Lucas / Francisca Luisa Da Conceicao) match the subject's tree-recorded parents exactly. same_person score 0.93 (strong).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "Sex Male on groom persona, same persona as a_001 (score 0.93).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "Age 51 anos in 1890 (b. ~1839), consistent with subject's known birth c.1838. Same persona as a_001 (score 0.93).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "Inferred birth 1839, consistent with subject's known c.1838 birth. Same persona as a_001 (score 0.93).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_017",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "Marriage 8 Feb 1890, Santo Antonio \u2014 the tree's own recorded marriage date to Maria Joana. Scored directly, 0.93.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_019",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "Groom's own statement of being child of Jose Fernandes Lucas, matching tree parent. Scored directly, 0.93.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_019",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.64580613,
+      "rationale": "Names Jose Fernandes Lucas as father of groom; scored vs GK8S-ZDH with recordRole father_of_groom, 0.65 (moderate score reflects thin tree profile, not a mismatch \u2014 see thin-subject guidance). Name matches tree father exactly.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_020",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "Groom's own statement of being child of Francisca Luisa Da Conceicao, matching tree parent. Scored directly, 0.93.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_020",
+      "person_id": "GK8S-VV6",
+      "confidence": "confident",
+      "match_score": 0.030597534,
+      "rationale": "Names Francisca Luisa Da Conceicao as mother of groom; scored vs GK8S-VV6 with recordRole mother_of_groom, 0.03. Score is very low because the tree person has almost no recorded facts to compare against (thin-subject scoring), but the name is an exact match to the tree's already-established parent of the subject, so correlation is strong despite the low score.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_025",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.9265214,
+      "rationale": "Groom's own statement of marrying Maria Joanna de Jesus on 8 Feb 1890 \u2014 matches tree spouse and marriage date. Scored directly, 0.93.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_025",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "Names Maria Joanna de Jesus as the spouse; scored vs GK89-48Z with recordRole bride, 0.37 (moderate \u2014 thin tree profile). Name and marriage date (8 Feb 1890) match the tree's own recorded marriage exactly.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_005",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "1890 marriage register, bride, name 'Maria Joanna de Jesus' matches tree spouse 'Maria Joana' of the subject, married on the exact date the tree already records (8 Feb 1890). Score 0.37 reflects a thin tree profile for Maria Joana (few recorded facts), not a conflict \u2014 name and marriage date align exactly.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_006",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "Sex Female, bride persona, same persona as a_005 (score 0.37).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_007",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "Age 21 anos in 1890 (b. ~1869). Same persona as a_005 (score 0.37).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_008",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "Inferred birth 1869. Same persona as a_005 (score 0.37).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_018",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "Marriage 8 Feb 1890, matching tree's own recorded marriage. Scored directly, 0.37.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_021",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "Bride's own statement of being child of Luisa de Jesus. Scored directly, 0.37.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_022",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.36744642,
+      "rationale": "Bride's own statement of being child of Antonio de Nobrega. Scored directly, 0.37.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_009",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.64580613,
+      "rationale": "Groom's father named as Jose Fernandes Lucas, exact match to tree's already-established father of the subject. Score 0.65 (moderate, thin tree profile).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_010",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.64580613,
+      "rationale": "Sex Male, father_of_groom persona, same persona as a_009 (score 0.65).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_023",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.64580613,
+      "rationale": "Father's own statement of being spouse of Francisca Luisa Da Conceicao. Scored directly, 0.65.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_023",
+      "person_id": "GK8S-VV6",
+      "confidence": "confident",
+      "match_score": 0.030597534,
+      "rationale": "Names Francisca Luisa Da Conceicao as spouse of father_of_groom; scored vs GK8S-VV6 with recordRole mother_of_groom, 0.03 (thin-subject). Name is an exact match to the tree's established mother of the subject.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_011",
+      "person_id": "GK8S-VV6",
+      "confidence": "confident",
+      "match_score": 0.030597534,
+      "rationale": "Groom's mother named as Francisca Luisa Da Conceicao, exact match to tree's already-established mother of the subject. Score 0.03 reflects the tree person's very sparse profile (thin-subject scoring) \u2014 not a conflict, since name matches exactly and she is already the subject's tree-recorded mother.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_012",
+      "person_id": "GK8S-VV6",
+      "confidence": "confident",
+      "match_score": 0.030597534,
+      "rationale": "Sex Female, mother_of_groom persona, same persona as a_011 (score 0.03, thin-subject).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_110",
+      "assertion_id": "a_102",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.9188427,
+      "rationale": "Relationship assertion (deceased is spouse of Francisca Lucas) naming the deceased's own persona; scored directly (score 0.9188), consistent with a_089.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_111",
+      "assertion_id": "a_102",
+      "person_id": "GK8S-VV6",
+      "confidence": "confident",
+      "match_score": 0.8875392,
+      "rationale": "Second party of the deceased's spouse relationship assertion, scored directly against other_1 (score 0.8875), consistent with a_098.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_112",
+      "assertion_id": "a_089",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.9188427,
+      "rationale": "same_person score 0.9188 (strong). Name 'Jos\u00e9 Fernandes Lucas' matches tree person exactly; record is the 1871 burial of the deceased, and the tree person already carries diedByYear 1871, matching the record's death date 31 Jul 1871 exactly. This is the subject's father.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_113",
+      "assertion_id": "a_090",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.9188427,
+      "rationale": "Sex fact on the same deceased persona already linked via a_089 (score 0.9188); same record, same persona.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_114",
+      "assertion_id": "a_091",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.9188427,
+      "rationale": "Age-at-death fact on the same deceased persona already linked via a_089 (score 0.9188).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_115",
+      "assertion_id": "a_092",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.9188427,
+      "rationale": "Birth year inferred from stated age, on the same deceased persona already linked via a_089 (score 0.9188).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_116",
+      "assertion_id": "a_093",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.9188427,
+      "rationale": "Death fact (31 Jul 1871, Santo Ant\u00f3nio, Funchal) on the same deceased persona already linked via a_089 (score 0.9188); matches the tree person's existing diedByYear 1871.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_117",
+      "assertion_id": "a_098",
+      "person_id": "GK8S-VV6",
+      "confidence": "confident",
+      "match_score": 0.8875392,
+      "rationale": "same_person score 0.8875 (strong). Surname 'Lucas' here is husband's surname (married-name form) vs tree's 'Luisa/Luiza' (her own form); relationship fit as spouse of the deceased, confidently matched to GK8S-ZDH.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_118",
+      "assertion_id": "a_099",
+      "person_id": "GK8S-VV6",
+      "confidence": "confident",
+      "match_score": 0.8875392,
+      "rationale": "Sex fact on the same other_1 persona already linked via a_098 (score 0.8875).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_123",
+      "assertion_id": "a_100",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.8414914,
+      "rationale": "Relationship assertion (deceased child of mother Antonia de Freitas) scored directly against GK8S-ZDH (score 0.8414), consistent with a_089.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_125",
+      "assertion_id": "a_101",
+      "person_id": "GK8S-ZDH",
+      "confidence": "confident",
+      "match_score": 0.8414914,
+      "rationale": "Relationship assertion (deceased child of father Jos\u00e9 Fernandes Lucas sr.) scored directly against GK8S-ZDH (score 0.8414), consistent with a_089.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_129",
+      "assertion_id": "a_107",
+      "person_id": "GK8M-J38",
+      "confidence": "confident",
+      "match_score": 0.82723,
+      "rationale": "same_person score 0.8272 (strong). Name, birth date (5 Jun 1896) and parents (Antonio Fernandes Lucas / Maria Joanna de Nobrega) match the tree child already recorded as GK8M-J38, son of GK89-82B and GK89-48Z.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_130",
+      "assertion_id": "a_108",
+      "person_id": "GK8M-J38",
+      "confidence": "confident",
+      "match_score": 0.82723,
+      "rationale": "Sex fact on the same child persona already linked via a_107 (score 0.8272).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_131",
+      "assertion_id": "a_109",
+      "person_id": "GK8M-J38",
+      "confidence": "confident",
+      "match_score": 0.82723,
+      "rationale": "Birth fact on the same child persona already linked via a_107 (score 0.8272).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_132",
+      "assertion_id": "a_110",
+      "person_id": "GK8M-J38",
+      "confidence": "confident",
+      "match_score": 0.82723,
+      "rationale": "Christening fact on the same child persona already linked via a_107 (score 0.8272).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_133",
+      "assertion_id": "a_111",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.419714,
+      "rationale": "Obvious tier: this is the baptism of GK89-82B's own already-known son GK8M-J38 (linked via a_107); full name match 'Antonio Fernandes Lucas', spouse named is the already-known wife Maria Joana. Raw same_person score (0.4197) is modest, consistent with a thin tree profile for the subject scored against a full record mob, not a conflict -- read against the strong child-match (0.8272) and the established family context, which carries the identification.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_134",
+      "assertion_id": "a_112",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.419714,
+      "rationale": "Sex fact on the same father persona already linked via a_111.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_135",
+      "assertion_id": "a_113",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.5592374,
+      "rationale": "Obvious tier: this is the baptism of GK89-48Z's own already-known son GK8M-J38 (linked via a_107); name 'Maria Joanna de Nobrega' agrees with tree's 'Maria Joana' plus her maiden surname, spouse is the already-known husband Antonio Fernandes Lucas. Score 0.5592 (moderate) read against the strong child-match and established family context.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_136",
+      "assertion_id": "a_114",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.5592374,
+      "rationale": "Sex fact on the same mother persona already linked via a_113.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_137",
+      "assertion_id": "a_134",
+      "person_id": "GK8M-J38",
+      "confidence": "confident",
+      "match_score": 0.82723,
+      "rationale": "Relationship assertion (child is child of father) naming the child's own persona, already linked via a_107 (score 0.8272).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_138",
+      "assertion_id": "a_135",
+      "person_id": "GK8M-J38",
+      "confidence": "confident",
+      "match_score": 0.82723,
+      "rationale": "Relationship assertion (child is child of mother) naming the child's own persona, already linked via a_107 (score 0.8272).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_139",
+      "assertion_id": "a_135",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.5592374,
+      "rationale": "Second party (mother) of the child's parentage relationship assertion; scored directly against GK89-48Z (score 0.5592), same obvious-tier reasoning as a_113.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_140",
+      "assertion_id": "a_137",
+      "person_id": "GK89-82B",
+      "confidence": "confident",
+      "match_score": 0.419714,
+      "rationale": "Relationship assertion (father is spouse of mother) naming the father's own persona, already linked via a_111 (score 0.4197); records the already-known marriage of GK89-82B and GK89-48Z.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_141",
+      "assertion_id": "a_137",
+      "person_id": "GK89-48Z",
+      "confidence": "confident",
+      "match_score": 0.5592374,
+      "rationale": "Second party of the father-mother spouse relationship assertion; scored directly against GK89-48Z (score 0.5592), same already-known marriage.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_142",
+      "assertion_id": "a_134",
+      "person_id": "GK89-82B",
+      "confidence": "speculative",
+      "match_score": 0.419714,
+      "rationale": "Second party (father) of the child's parentage relationship assertion. GK89-82B has a recorded namesake (ns_001, an unrelated Antonio Fernandes Lucas b.1861) and this record's own ties cannot distinguish GK89-82B from his own child GK8M-J38, who shares the given name 'Antonio' and is tied to the same mother GK89-48Z in this record -- per the writer's namesake cap, capped at speculative. The identification is nonetheless supported by a_111 (same father persona, confident, score 0.4197) and the established family (GK89-82B/GK89-48Z already parents of GK8M-J38 in the tree).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_147",
+      "assertion_id": "a_130",
+      "person_id": "GK89-48Z",
+      "confidence": "probable",
+      "match_score": 0.2528567,
+      "rationale": "Relationship assertion (mother is child of grandfather), scored directly against GK89-48Z (score 0.2528, modest -- the mother's established baptism-level correlation (a_113, score 0.5592) still carries the core identity; the lower score here likely reflects a thinner comparison mob for this specific relationship fact).",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_149",
+      "assertion_id": "a_131",
+      "person_id": "GK89-48Z",
+      "confidence": "probable",
+      "match_score": 0.2528567,
+      "rationale": "Relationship assertion (mother is child of grandmother), scored directly against GK89-48Z (score 0.2528); same reasoning as a_130.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_151",
+      "assertion_id": "a_132",
+      "person_id": "GK89-82B",
+      "confidence": "probable",
+      "match_score": 0.3532207,
+      "rationale": "Relationship assertion (father is child of grandfather), scored directly against GK89-82B (score 0.3532). Note: this assertion unusually attaches the maternal grandparents (Antonio de Nobrega/Luiza de Jesus, GK89-48Z's parents) to the FATHER role too, likely an extraction/record-reading artifact rather than an actual claim that GK89-82B is their son -- flagged for review; keeping confidence at probable given the modest score and the ambiguity.",
+      "created": "2026-11-12"
+    },
+    {
+      "id": "pe_153",
+      "assertion_id": "a_133",
+      "person_id": "GK89-82B",
+      "confidence": "probable",
+      "match_score": 0.3532207,
+      "rationale": "Relationship assertion (father is child of grandmother), scored directly against GK89-82B (score 0.3532). Same likely extraction artifact noted on a_132 applies here.",
+      "created": "2026-11-12"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "argument",
+      "shortfall": "gap",
+      "supporting_assertion_ids": [
+        "a_017",
+        "a_025",
+        "a_087",
+        "a_088",
+        "a_019",
+        "a_020",
+        "a_042",
+        "a_043",
+        "a_093",
+        "a_111",
+        "a_113",
+        "a_137",
+        "a_135",
+        "a_134"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched: FamilySearch 'Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990', nationwide Portugal marriage/baptism/death indexes and the civil-records collection across all Funchal freguesias for 1858-1911. The subject's 1890 Santo Ant\u00f3nio marriage entry was read as an original register image, not only the index. Also read: the subject's father's 1871 burial, the 1896 baptism of the subject's son, the 1859 marriage of a namesake Antonio Fernandes Lucas to Antonia de Jesus, and the death records (1889, 1894) of that namesake's two daughters. Only one other Antonio Fernandes Lucas marriage turned up (20 Jul 1859) and it belongs to the namesake. Not reached: FamilySearch pending hints on the subject (blocked), the Arquivo Regional da Madeira marriage index (browse-only, needs a manual user capture), Funchal diocesan pre-nuptial proceedings 1858-1889 (undigitized), MyHeritage's Madeira marriage and baptism indexes (paywalled), and Tombo.pt's image mirror (never attempted). These would corroborate the negative rather than narrow it; none is known to hold a record type absent from the parish registers already searched.",
+      "narrative_markdown": "## Question\n\nWhom did Antonio Fernandes Lucas (born about 1838-1839, Santo Ant\u00f3nio, Funchal, Madeira; son of Jos\u00e9 Fernandes Lucas and Francisca Luisa) marry, other than Maria Joana (married 8 February 1890)?\n\n## Conclusion\n\nThe evidence indicates that Antonio Fernandes Lucas married once only, to Maria Joanna de Jesus on 8 February 1890, and that he was a bachelor at that marriage. No earlier or additional marriage of this man was found. The 1859 marriage of an Antonio Fernandes Lucas to Antonia de Jesus belongs to a different man of the same name. Tier: probable.\n\n## Evidence\n\n**1. The subject's own marriage entry states he was single.** The Santo Ant\u00f3nio parish register for 8 February 1890 records the marriage of Antonio Fernandes Lucas, aged 51, and Maria Joanna de Jesus, aged 21, \"ambos solteiros\" (both single), the groom being the legitimate son of Jos\u00e9 Fernandes Lucas and Francisca Luiza, both deceased. The priest recorded that they came with all papers in order and \"sem impedimento algum canonico ou civil\", and the groom signed the entry. This was read from the original register image, not only the index. It is original, primary information on marital status (the party himself presented it and signed), direct evidence that no earlier wife existed. Citation: \"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6BG7-FC2X : Wed Jul 16 09:44:56 UTC 2025), Entry for Antonio Fernandes Lucas and Maria Joanna de Jesus, 8 de fevereiro de 1890. The parents named match the tree parents (Jos\u00e9 Fernandes Lucas, Francisca Luisa), so the entry is the subject's.\n\n**2. The apparent earlier marriage is a namesake's.** On 20 July 1859 at Santo Ant\u00f3nio an Antonio Fernandes Lucas married Antonia de Jesus (daughter of Jos\u00e9 Marques and Joanna Felicia). His stated parents are Manoel Fernandes Lucas and Luiza de Jesus, not Jos\u00e9 Fernandes Lucas and Francisca Luisa, so he is a different man. The record-linking score against the subject is about 0.0000014. Citation: \"Portugal, Madeira, Registros da Igreja Cat\u00f3lica, 1044-1990\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6BG7-MQ3D : Wed Jul 16 08:21:21 UTC 2025), Entry for Antonio Fernandes Lucas and Manoel Fernandes Lucas, 20 de julho de 1859. The information about parentage is secondary (given by the parties about their parents) but it is internally consistent and is contradicted by nothing. The couple's two daughters named Maria, who died aged two on 30 May 1889 and aged one on 5 September 1894, name this Antonio and Antonia de Jesus as parents; those entries are tied to the namesake, not to the subject, and the second death (1894) postdates the subject's 1890 marriage while the subject's own family was then being raised with Maria Joanna, which is consistent with two separate households.\n\n**3. Family-cluster records show no earlier wife.** The 31 July 1871 burial of Jos\u00e9 Fernandes Lucas (aged 74, wife recorded as Francisca Lucas, informant not present, official register) names no daughter-in-law. The 20 August 1896 baptism of the subject's son Antonio, a primary record with the parent as presenter, names the father Antonio Fernandes Lucas and mother Maria Joanna de Nobrega, with no hint of a previous wife. The mother's surname appears as de Jesus in 1890 and de Nobrega in 1896; her parents (Antonio de Nobrega, Luiza de Jesus) are the same in both entries, so this is the same woman. (Two relationship assertions in the 1896 entry also attach her parents to the father's persona; this is an extraction artifact, not a claim, and is disregarded.)\n\n## Conflicts and limits\n\nNo conflict is registered. The only apparent contradiction, the 1859 marriage, is accounted for above by differing parentage. The conclusion rests on one original statement of bachelorhood plus a negative search: no marriage or burial of a wife naming this Antonio's parents was found in Funchal parish registers for 1858-1911. Negative evidence is weaker than a positive record. A marriage in an unindexed register or under a bride's home parish (couples usually married in the bride's parish) could have escaped the index, although the 1890 bachelor statement makes a pre-1890 marriage unlikely, and a widower after 1890 would still have to appear in the searched 1890-1911 window. The unreached sources (Arquivo Regional da Madeira marriage index, diocesan pre-nuptial proceedings, Tombo.pt image mirror, MyHeritage index) would corroborate rather than narrow the answer. Because research is not exhausted and the finding is partly negative, the tier is probable, not proved.\n\n## Tier\n\nProbable. Stated as a conclusion that no marriage other than that to Maria Joanna de Jesus is recorded for this man, pending the unsearched alternate indexes named above.",
+      "updated": "2026-11-12T18:32:12.986Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Madeira, Portugal",
+      "for_place": "Funchal, Madeira, Portugal (parish of Santo Ant\u00f3nio)",
+      "time_period": "1830-1910",
+      "jurisdictions": [
+        {
+          "name": "Funchal, Madeira, Portugal",
+          "date_range": "+1518/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4426199",
+          "title": "Portugal, Madeira, Catholic Church Records, 1044-1990",
+          "date_range": "1044-1990",
+          "person_count": 17724441,
+          "record_count": 1329527
+        },
+        {
+          "id": "1520601",
+          "title": "Portugal Baptisms, 1570-1910",
+          "date_range": "1569-1910",
+          "person_count": 1199036,
+          "record_count": 302869
+        },
+        {
+          "id": "1520605",
+          "title": "Portugal Marriages, 1670-1910",
+          "date_range": "1670-1910",
+          "person_count": 320323,
+          "record_count": 44760
+        },
+        {
+          "id": "1520606",
+          "title": "Portugal Deaths, 1640-1910",
+          "date_range": "1640-1910",
+          "person_count": 247105,
+          "record_count": 98347
+        },
+        {
+          "id": "4474701",
+          "title": "Portugal, Civil Records, 1437-2023",
+          "date_range": "1231-2023",
+          "person_count": 33916026,
+          "record_count": 11196
+        }
+      ],
+      "quirks": [
+        "Funchal city is divided into several freguesias (church parishes), each with its own register series: S\u00e9, Santa Maria Maior, S\u00e3o Pedro, S\u00e3o Martinho, S\u00e3o Gon\u00e7alo, Monte, Santa Luzia, and Santo Ant\u00f3nio \u2014 search the Santo Ant\u00f3nio parish register specifically, not a generic 'Funchal' register, per FamilySearch Catalog entries from the Arquivo Regional e Biblioteca P\u00fablica da Madeira (ARM, catalog hit olib:3400418).",
+        "In Madeira, priests continued acting as civil registrars until 1911, later than the 1878 date FamilySearch gives for the mainland transition, so for events before 1911 the Catholic parish register, not a civil registry office, is the record to search (FamilySearch Wiki, Madeira Islands Genealogy: https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy).",
+        "Couples usually married in the bride's parish per FamilySearch Wiki Portugal Church Records (https://www.familysearch.org/en/wiki/Portugal_Church_Records) \u2014 a second marriage for Antonio Fernandes Lucas besides the known 1890 one may be filed under the bride's home parish rather than Santo Ant\u00f3nio.",
+        "Record naming: Batismos = baptisms (birth info), Casamentos/Matrim\u00f4nios = marriages, \u00d3bitos = deaths, \u00cdndice = index \u2014 per the FamilySearch Wiki Madeira Islands Genealogy page.",
+        "place_population returned 'Place not found' for Funchal, Madeira, Portugal in this survey \u2014 population figures for this locality were not available from that tool."
+      ],
+      "guide_markdown": "# Locality Guide: Funchal, Madeira, Portugal (1830-1910)\n\n## Jurisdiction overview\n- **Formed:** City status since 1514; capital of the Madeira Islands, settled 1424 (Wikipedia: https://en.wikipedia.org/wiki/Funchal).\n- **County seat / administrative center:** Funchal, divided into parishes (freguesias) including S\u00e9, Santa Maria Maior, S\u00e3o Pedro, S\u00e3o Martinho, S\u00e3o Gon\u00e7alo, Monte, Santa Luzia, and Santo Ant\u00f3nio.\n- **Parent jurisdiction:** Madeira Islands, Portugal.\n- **Population during period:** not available from the place_population tool for this survey (query returned 'Place not found'); Wikipedia gives a modern population of ~105,795-112,000, not period-specific.\n- **Religious denominations:** Overwhelmingly Roman Catholic; also a British/Anglican expatriate community (wine trade) with its own chaplaincy and registers in Funchal.\n- **Key historical events:** British wine merchants settled from the 17th century; Funchal was the administrative/ecclesiastical center for the whole archipelago during this period.\n\n## Boundary changes\nNo boundary changes to Funchal itself are indicated by the records surveyed. Funchal city has long been subdivided into multiple parishes (freguesias), each of which generated its OWN baptism/marriage/death register series \u2014 this is a parish-level split within one stable municipality, not a jurisdictional boundary change.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date / level:** Civil registration (Registros civis) in Portugal began in 1832 for non-Catholics (national level), became universal in 1878 with priests acting as civil registrars for Catholics, and became fully obligatory with priests removed from that role in 1911 (FamilySearch Wiki, Madeira Islands Genealogy: https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy). For MADEIRA specifically, priests continued as civil registrars through 1911 \u2014 later than the mainland transition \u2014 so almost the entire 1830-1910 target window for Antonio Fernandes Lucas is covered by CHURCH, not civil, registers.\n- **What exists:** Civil registration records proper begin at the national/municipal level; for Madeira the practical equivalent for 1830-1910 is the Catholic parish register.\n- **Where held:** Conservat\u00f3ria do Registo Civil de Funchal (two addresses given on the FamilySearch Wiki Funchal page) for civil-era records; municipal level, moving to district office after 100 years.\n- **Gaps:** No 19th-century civil registration series distinct from church registers was found for Funchal in this survey.\n\n### Church records\n- **Denominations present:** Roman Catholic (parishes above); also a small Anglican/British chaplaincy community.\n- **Record types:** Batismos (baptisms), Casamentos (marriages), \u00d3bitos (deaths/burials), plus Processos de Casamento (pre-nuptial marriage proceedings) and Dispensa\u00e7\u00e3o (marriage dispensations, held at diocesan archives, mostly undigitized) (FamilySearch Wiki, Portugal Church Records: https://www.familysearch.org/en/wiki/Portugal_Church_Records).\n- **Where held:** Original registers at the Arquivo Regional e Biblioteca P\u00fablica da Madeira (ARM) in Funchal; images for several Funchal parishes are on FamilySearch as browsable (catalog entries olib:3400414 Monte, olib:3400415 civil registros, olib:3400416 Santa Luzia [fully detailed below], olib:3400417 Santa Maria Maior, olib:3400418 Santo Ant\u00f3nio, olib:3400419 S\u00e3o Gon\u00e7alo, olib:3400420 S\u00e3o Martinho, olib:3400421 S\u00e3o Pedro, olib:3400423 S\u00e9).\n- **Santa Luzia parish detail (as a model of what the series looks like; catalog hit olib:3400416):** Casamentos (marriage) volumes run PT-ARM-PFUN03-2-160 (1681-1774), -161 (1774-1797), -162 (1797-1810), -164 (1828-1845), -165 (1845-1857), -1239 (1857-1859), then annual volumes 1886-1911 (-1526 through -6505). Batismos run from 1680 through 1911 in similarly numbered volumes. The Santo Ant\u00f3nio parish register (olib:3400418) was found in the Catalog but not hydrated with its own volume list in this survey \u2014 the researcher should pull its filmNotes directly.\n- **Gaps:** The Santo Ant\u00f3nio parish's own volume inventory was not retrieved in this pass (catalog hit returned un-hydrated); a follow-up catalog_search with hydration targeted at that single hit is needed before assuming coverage dates.\n- **Language:** Portuguese (Anglican register content noted as English for the British chaplaincy volumes).\n\n### Civil/parish combined collection\n- FamilySearch: **Portugal, Madeira, Catholic Church Records, 1044-1990** (collection 4426199; index & images; 17,724,441 persons) \u2014 primary FamilySearch collection for Madeiran baptisms, marriages, deaths across this period.\n- FamilySearch: **Portugal Baptisms, 1570-1910** (1520601), **Portugal Marriages, 1670-1910** (1520605), **Portugal Deaths, 1640-1910** (1520606) \u2014 nationwide indexes (index only, no images) that include Madeiran localities; useful as a secondary/cross-check index.\n- FamilySearch: **Portugal, Civil Records, 1437-2023** (4474701) \u2014 index & images, 33,916,026 persons, spans into the civil-registration era.\n- MyHeritage ($): Portugal, Madeira, Index of Baptisms, 1738-1910; Portugal, Madeira, Index of Marriages, 1574-1940.\n- Arquivo Regional da Madeira (ABM) online: Baptisms 1860-1911 (incomplete for all parishes) and Marriages \"early to 1911\" (stated by the FamilySearch Wiki Madeira Islands Genealogy page to include all marriages for the entire archipelago) \u2014 https://abm.madeira.gov.pt/pesquisa/casamento/.\n- Tombo.pt: Portugal, Madeira, Civil Registration Records \u2014 free, browsable images, incomplete for all localities \u2014 https://tombo.pt/en/d/madeira.\n\n### Probate and court records\n- Wills (Testamentos) exist per the general Portugal Church Records pattern but no Madeira-specific probate collection was returned by collections_search or catalog_search in this survey; treat as held at ARM/district archive pending confirmation.\n\n### Immigration/emigration records\n- FamilySearch Catalog: **Portugal, Madeira, Funchal, registros de imigra\u00e7\u00e3o** (multiple parts, e.g. olib:3714413 covering 1846-1878), at ARM; online per catalog listing.\n- Passport applications: Applications for Passport volumes for Funchal 1851-1863 appear in volume_search (imageGroupNumbers 008038197_001/002/003), 0% name-indexed but full-text searchable.\n- FamilySearch collection: Portugal Passport Registers and Application Files, 1800-1946 (1925427, index only).\n\n### Other record types\n- British/Anglican chaplaincy records: Parish registers of the Church of England in Portugal, Anglican Chaplaincy (Funchal, Madeira), 1848-1851 \u2014 baptisms and burials for British subjects, catalog hit koha:155172, microfilm 574493; related index koha:603804 (christenings 1848-1851, extracted in English).\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Portugal, Madeira, Catholic Church Records 1044-1990 (4426199); Portugal Baptisms/Marriages/Deaths indexes; parish-level browsable image sets for each Funchal freguesia | Primary index+image source for Madeiran church records | Free |\n| Arquivo Regional da Madeira (ABM) | Baptisms 1860-1911 (incomplete); Marriages early-1911 (archipelago-wide) | ABM's own online search by name, directly from the original custodian | Free, https://abm.madeira.gov.pt/pesquisa/casamento/ |\n| Tombo.pt | Portugal, Madeira, Civil Registration, Catholic Church Records, and Passports | Browsable images including some not on FamilySearch | Free, https://tombo.pt/en/d/madeira |\n| MyHeritage | Portugal, Madeira, Index of Baptisms 1738-1910; Index of Marriages 1574-1940 | Alternate index of the same ARM material | Subscription |\n| Ancestry | Portugal Select Marriages 1670-1910; Portugal, Madeira Passports 1872-1910 | Alternate index access | Subscription |\n\n**Coverage of this survey:** volume_search matched 22,003 volumes for this place/period; only the first 10 were detailed above (a mix of passport, religious marriage, and baptism volumes), and the summary count of volumes by record-type group could not be computed (request to the FamilySearch group-service timed out) \u2014 treat the record-type volume counts as unknown, not zero. catalog_search returned 59 total hits; 25 were examined, 10 hydrated with full detail.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Arquivo Regional e Biblioteca P\u00fablica da Madeira (ARM), Funchal | Original parish registers for all Funchal freguesias, ARM reference codes PT-ARM-PFUN0x-... | In-person, or via ABM's online database/catalog |\n| Conservat\u00f3ria do Registo Civil de Funchal | Civil registration post-1911 (and any earlier civil-only acts) | In-person / mail; two listed addresses on the FamilySearch Wiki Funchal page |\n| Funchal Portugal FamilySearch Center | Access to digitized/microfilmed holdings | In-person, Rua Tenente Coronel Sarmento 25, Funchal |\n\n## Records NOT online\n- Marriage dispensations (Dispensa\u00e7\u00e3o), held at diocesan archives, are stated by the FamilySearch Wiki Portugal Church Records page to be mostly undigitized.\n- The Santo Ant\u00f3nio parish's own ARM volume list (image group numbers / date spans) was not retrieved in this survey (catalog hit olib:3400418 not hydrated) \u2014 its existence is confirmed by the Catalog, but specific volumes and dates are not yet in hand.\n\n## Known record losses\nNo record loss specific to Funchal or Madeira was stated by any tool result in this survey. The general transfer of Portuguese parish vital records to the state in 1910 is noted by the FamilySearch Wiki (Portugal Church Records, Madeira Islands Genealogy) as having resulted in some records being lost nationally during that transfer, but no Madeira-specific loss was named.\n\n## Research tips\n- Civil registrars did not take over from priests in Madeira until 1911 (later than the mainland's 1878 date) \u2014 search the Catholic parish register, not a civil office, for a c.1838 birth and any pre-1911 marriage (FamilySearch Wiki, Madeira Islands Genealogy: https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy).\n- Couples usually married in the bride's parish (FamilySearch Wiki, Portugal Church Records: https://www.familysearch.org/en/wiki/Portugal_Church_Records) \u2014 if Antonio Fernandes Lucas married a second time, check neighboring Funchal freguesias (S\u00e9, Santa Maria Maior, S\u00e3o Pedro, S\u00e3o Martinho, S\u00e3o Gon\u00e7alo, Monte, Santa Luzia) as well as Santo Ant\u00f3nio, since the bride may have been from a different parish.\n- After the mid-1800s, Catholic marriage records typically add marital status, parents' names and residences for both bride and groom \u2014 useful for distinguishing a same-named man in multiple marriage entries (FamilySearch Wiki, Portugal Church Records).\n- Use ARM's own name-search database (https://abm.madeira.gov.pt/pesquisa/casamento/) alongside FamilySearch's browsable images, since ARM's marriage index is stated to cover the whole archipelago to 1911, while FamilySearch's parish-level images must be browsed by freguesia and year.\n- Women in Portugal traditionally retained their maiden surname; adoption of a husband's surname became briefly common only in the late 19th century, fading again by century's end (FamilySearch Wiki, Portugal Naming Customs) \u2014 do not expect a wife to appear under her husband's surname in later records.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Funchal,_Madeira_Islands,_Portugal_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Portugal_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Portugal_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Portugal_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "national",
+          "year": 1832,
+          "source_url": "https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy"
+        },
+        {
+          "event": "marriage",
+          "level": "national",
+          "year": 1878,
+          "source_url": "https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy"
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-11-12"
+    }
+  ],
+  "namesakes": [
+    {
+      "id": "ns_001",
+      "person_id": "GK89-82B",
+      "name": "Antonio Fernandes Lucas",
+      "place": "Santo Ant\u00f3nio, Funchal, Madeira, Portugal",
+      "time_period": "b. 1861; married 1885",
+      "record_ids": [
+        "ark:/61903/1:1:X91B-9GDZ"
+      ],
+      "log_entry_ids": [
+        "log_001"
+      ],
+      "notes": "Civil marriage 28 Nov 1885 to Antonia de Jesus de Jesus, groom b. 1861 (tool birthYearConflict, gap 23 years from subject b. 1838), solteiro, ferreiro; not the subject.",
+      "created": "2026-11-12",
+      "record_persona_ids": {
+        "ark:/61903/1:1:X91B-9GDZ": "p_307636427170"
+      },
+      "birth_year": 1861
+    }
+  ]
+}

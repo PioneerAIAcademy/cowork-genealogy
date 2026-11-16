@@ -48,16 +48,22 @@ if errorlevel 1 (
 echo.
 echo === Built. Now install BOTH, then fully quit and reopen Claude Desktop ===
 echo.
-echo 1. MCP server ^(.mcpb^): Claude Desktop -^> Settings -^> Extensions -^>
-echo    Advanced Settings -^> Install extension -^> releases\genealogy-mcp.mcpb
-echo    Install straight over the old copy -- no uninstall needed.
+echo 1. MCP server ^(.mcpb^): Claude Desktop -^> Settings ^(Ctrl+,^) -^>
+echo    Desktop app -^> Extensions: Manage -^> Advanced settings -^>
+echo    Install extension -^> pick this file:
+echo      %CD%\releases\genealogy-mcp.mcpb
+echo    -^> Install, then Install again. Old copy installed? The window
+echo    offers only Uninstall: click it, confirm, then Install. That clears
+echo    a key saved under Configure ^(a key in .familysearch-mcp\config.json
+echo    stays^); paste it again there.
 echo.
-echo 2. Plugin ^(.zip^): Claude Desktop -^> COWORK tab -^> Customize -^>
-echo    REMOVE any existing Genealogy Research plugin, then
-echo    Add -^> Upload Plugin -^> releases\genealogy-plugin.zip
-echo    Upload from the COWORK tab, not the Code tab -- they keep separate
-echo    plugin lists, and a plugin added in Code will not appear in Cowork.
+echo 2. Plugin ^(.zip^): Claude Desktop -^> Customize -^> Plugins -^> Yours -^>
+echo    REMOVE any existing Genealogy Research plugin ^(... -^> Remove^),
+echo    then + Add -^> Upload plugin -^> pick this file:
+echo      %CD%\releases\genealogy-plugin.zip
+echo    -^> Upload
 echo.
-echo 3. Fully QUIT and reopen Claude Desktop.
+echo 3. Fully QUIT Claude Desktop ^(right-click its tray icon -^> Exit^), then
+echo    reopen it.
 echo.
 pause

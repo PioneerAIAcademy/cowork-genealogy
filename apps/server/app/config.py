@@ -27,16 +27,6 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     # The main thread's model and effort are not settings here: they come from the
     # plugin's main-thread.json (`agent.main_thread`), and each agent's from its file.
-    # Lay mode's auto-continue (issue #2653): the in-sandbox runner answers the
-    # hand-back literal `Next: <step>. Continue?` with `Yes.` itself, so a stated
-    # objective runs step by step with no click. Both reach the runner as
-    # AUTO_CONTINUE / AUTO_CONTINUE_MAX_STEPS in the sandbox env. The budget
-    # bounds one unattended chain (consecutive auto turns since the last real
-    # user message), not the session. A frame may opt out with
-    # `auto_continue: false` regardless of this setting. Per-session on/off lands
-    # with the experience-level user setting (PR #2649).
-    auto_continue: bool = True
-    auto_continue_max_steps: int = 30
     # The main thread's prompt-cache lifetime, stamped into a NEW sandbox as
     # CLAUDE_CODE_PROMPT_CACHE_TTL (CLI >= 2.1.294 reads it for the main thread only;
     # helpers and the compaction call keep 5 minutes). UNSET BY DEFAULT = stamp nothing,

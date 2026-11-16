@@ -29,6 +29,9 @@ ENGINE = Path(__file__).resolve().parents[3] / "packages" / "engine" / "mcp-serv
 HTTP_JS = ENGINE / "build" / "http.js"
 BUILD_HINT = "npm --prefix packages/engine/mcp-server run build"
 LISTENING = re.compile(r"listening on http://[^:]+:(\d+)/mcp")
+# The settings src/http.ts reads with no GENEALOGY_ prefix; the engine's own suite strips
+# the same three (tests/http/http-entrypoint-exit.test.ts).
+UNPREFIXED_ENTRYPOINT_ENV = ("FS_TOKEN_ENC_KEY", "OAUTH_ISSUER", "WEB_PUBLIC_URL")
 START_S = 30.0
 
 
@@ -74,12 +77,18 @@ class ToolServer:
 
 
 @contextlib.contextmanager
-def spawn_tool_server(dsn: str, home: Path) -> Iterator[ToolServer]:
+def spawn_tool_server(dsn: str, home: Path, env: dict[str, str] | None = None) -> Iterator[ToolServer]:
     """The tool server over ``dsn``. It needs no S3 for the documents these tests write
     (the backend connects lazily), so the endpoint is a closed port. Every inherited
-    ``GENEALOGY_*`` variable is dropped, so a developer's shell cannot point it elsewhere."""
+    ``GENEALOGY_*`` variable is dropped, so a developer's shell cannot point it elsewhere,
+    and so are the three un-prefixed settings the entrypoint reads (``UNPREFIXED_ENTRYPOINT_ENV``):
+    an inherited issuer changes the door's 401 and metadata, and with the default key a
+    non-loopback one makes the process exit before it listens. ``env`` sets them for a test
+    that needs them (the connector path: the web tier's issuer and its Fernet key)."""
     node = require_tool_server_build()
-    env = {k: v for k, v in os.environ.items() if not k.startswith("GENEALOGY_")}
+    inherited = {k: v for k, v in os.environ.items()
+                 if not k.startswith("GENEALOGY_") and k not in UNPREFIXED_ENTRYPOINT_ENV}
+    env = {**inherited, **(env or {})}
     env.update({
         "GENEALOGY_PG_DSN": dsn_uri(dsn),
         "GENEALOGY_S3_BUCKET": "projects",

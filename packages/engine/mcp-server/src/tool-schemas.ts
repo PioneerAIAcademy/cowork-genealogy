@@ -1,9 +1,10 @@
-// Single source of truth for the tool schemas advertised by the MCP
-// server. `index.ts` spreads this into its ListTools handler, and the
-// packaging drift test (tests/packaging/manifest.test.ts) imports it to
-// assert manifest.tools stays in sync with what's registered. Keeping it
-// in its own module means the test can read the list without importing
-// index.ts, which connects the stdio transport as a side effect.
+// The tool schemas every surface advertises, and the list manifest.tools must
+// equal. `server.ts` lists this in its ListTools handler, adding the two
+// connector-only tools (tools/project-view.ts) for a connector caller, so this
+// list binds the manifest and that handler does not. The packaging drift test
+// (tests/packaging/manifest.test.ts) imports it to assert manifest.tools stays
+// in sync. Keeping it in its own module means the test can read the list without
+// importing index.ts, which connects the stdio transport as a side effect.
 import { volumeBisectSchema } from "./tools/volume-bisect.js";
 import { catalogSearchSchema } from "./tools/catalog-search.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
@@ -74,7 +75,7 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "project_list", // the router's first call in every conversation that names no projectPath
   "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
   "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
-  "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
+  "record_read", // 3.5 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
 ]);
 
 // Tools Claude Code may run side by side (annotations.readOnlyHint): concurrent calls cannot corrupt

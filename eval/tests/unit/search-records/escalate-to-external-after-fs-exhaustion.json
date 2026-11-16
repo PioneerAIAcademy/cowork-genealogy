@@ -15,8 +15,9 @@
       "nil-exhaustion",
       "familysearch-exhausted",
       "sidecar-nil",
-      "topical-fixture-required",
-      "direct-arm"
+      "census-search",
+      "direct-arm",
+      "outside-holding-claim"
     ]
   },
   "input": {
@@ -24,7 +25,6 @@
     "scenario": "flynn-census-nil"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-patrick-flynn-no-results",
     "record-search-patrick-flinn-no-results",
     "record-search-patrick-flyn-no-results",
@@ -45,8 +45,7 @@
     "The agent holds no Task or Agent tool and must not try to spawn search-external-sites, and it must not generate Ancestry URLs itself; neither is graded here beyond that. Do not deduct for the absence of URLs.",
     "The plan item pli_001 must NOT be marked 'completed' as if the search succeeded — it should remain in_progress or be logged as a nil result awaiting external follow-up, because the external search has not yet been run.",
     "The nil log entry must be written (research_log_append called) with outcome 'negative', results_examined 0, and notes that FamilySearch variants were exhausted and external sites should be checked.",
-    "Tool Arguments: score 3 if any drop of givenName comes only after variants were tried. Score 2 if a primary search drops givenName without having first tried givenName variants. Score 1 if multiple primary calls systematically omit givenName without any variants having been tried first.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+    "Tool Arguments: score 3 if any drop of givenName comes only after variants were tried. Score 2 if a primary search drops givenName without having first tried givenName variants. Score 1 if multiple primary calls systematically omit givenName without any variants having been tried first."
   ],
   "judge_reads_files": true
 }
