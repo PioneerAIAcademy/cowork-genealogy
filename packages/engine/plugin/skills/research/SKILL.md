@@ -62,8 +62,7 @@ one in prose you then act on.
 
 **Link what you name**: each page or record, as a markdown link to the https
 URL its tool result gave (`viewerUrl`, `recordUrl`); never a bare ARK, image id
-or hand-built URL. An image group is "image group <number>", unlinked, a
-Catalog item only when `catalog_search` returned it.
+or hand-built URL. An image group is "image group <number>", unlinked.
 
 | Next step | `<label>` |
 |---|---|
