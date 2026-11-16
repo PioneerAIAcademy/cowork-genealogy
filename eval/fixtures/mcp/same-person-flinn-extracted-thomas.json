@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the father on the variant-surname 1850 census record VRNT-7M3 (Thomas Flinn, VP2) against the tree's Thomas Flynn (I2). List before a test's catch-all same_person fixture. Measured live on 2026-11-15 with same_person's project arm on flynn-record-matching-extracted (FamilySearch matcher).",
+  "args": {
+    "treePersonId": "I2"
+  },
+  "response": {
+    "score": 0.26364696,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "VP2",
+      "name": "Thomas Flinn",
+      "role": "father"
+    },
+    "treePerson": {
+      "id": "I2",
+      "name": "Thomas Flynn"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_person_evidence_q6d",
+    "skill": "person-evidence",
+    "name": "Both parents named differently is a conflict on the person: nothing from the record is written",
+    "type": "positive",
+    "description": "The counterpart to ut_person_evidence_p4m. The Kilrush baptism offered for Patrick Flynn (I1) agrees with him on name, date and place, but names his parents Thomas Flynn and Bridget Doyle where the tree holds Michael Flynn (I2) and Mary Doyle (I3). A child of the same name baptised the same year to a different couple is another child, so both parents differing is a conflict on Patrick himself (lead ruling 2026-11-15): no link, and nothing else from the record enters the project.",
+    "tags": [
+      "person-evidence",
+      "no-link",
+      "both-parents-differ",
+      "declined-record-adds-nothing"
+    ]
+  },
+  "input": {
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003, a_004, a_005. They are a Kilrush baptism found for Patrick Flynn (I1).\n\nprojectPath: <workspace>",
+    "scenario": "flynn-baptism-both-parents-differ"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-baptism-bapt-k1q",
+    "same-person-flynn-baptism-differently-relatives",
+    "same-person-flynn-baptism-differently-child",
+    "same-person-flynn-baptism-differently-mother",
+    "same-person-flynn-baptism-both-differ-father"
+  ],
+  "judge_context": [
+    "The baptism agrees with Patrick (I1) on name, christening date and place, but names his parents Thomas Flynn and Bridget Doyle. The tree holds his parents as Michael Flynn (I2) and Mary Doyle (I3). Both parents differ, and neither is a spelling variant or an abbreviation.",
+    "Decided rule (lead, 2026-11-15): one parent named differently, while the person's own facts and the other parent agree, does not count against the person. Both parents named differently is a conflict on the person: a child of the same name baptised the same year to a different couple is another child. The correct result here is that nothing from this record is written: no pe_ link to I1, I2 or I3, no person added, no relationship written. The reply names both pairs of parents and says why nothing was linked.",
+    "A `confident` or `probable` link of a_001 or a_003 to Patrick (I1) that PERSISTS is a FAIL on Correctness and on Confidence calibration. A refused attempt at one followed by no link is a PARTIAL (2) on Confidence calibration. A `speculative` link to Patrick, or to either parent, with the difference named is a PARTIAL (2) on Confidence calibration. Adding a Thomas Flynn or a Bridget Doyle to the tree is a FAIL on Correctness. A reply that asks the user whether to link is a PARTIAL (2) on Completeness.",
+    "Multi-person awareness, and Person minting and connecting edges: nothing is owed to the record's other persons when the focus person gets no link. Mark both N/A when the run wrote nothing.",
+    "Completeness is the reply: both pairs of parents and the decision. A run that makes no research_append and no materialize_facts call is correct here and is not incomplete. Do not grade the value of any score."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}

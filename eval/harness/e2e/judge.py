@@ -36,7 +36,7 @@ from typing import Any
 
 import anthropic
 
-from e2e.validate_fixture import check_stripping
+from e2e.avoid_guard import guard_hits
 
 
 DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
@@ -468,52 +468,52 @@ def apply_avoid_guard(
     *,
     expected_findings: dict[str, Any],
     final_tree: dict[str, Any] | None,
+    final_research: dict[str, Any] | None = None,
+    starting_tree: dict[str, Any] | None = None,
+    starting_research: dict[str, Any] | None = None,
     subject_person_ids: "set[str] | frozenset[str] | list[str] | None" = None,
 ) -> dict[str, Any]:
     """Deterministic backstop for ``polarity: "avoid"`` findings (spec §3.4.1).
 
     The judge grades an ``avoid`` finding ``matched: "true"`` when the agent
-    correctly declined to assert it. The judge is a model, and the failure
-    mode this genre exists to catch — a confidently over-claimed wrong
-    person — is exactly the one a model grader is most likely to excuse. So
-    the objective half is re-checked mechanically: when an avoided claim's
-    target is present in the agent's final tree (``check_stripping``'s
-    matcher — given+surname token overlap, plus fact type for ``fact``
-    findings), that finding is forced to ``matched: "false"``, the recall
-    fractions are recomputed, and the verdict is recomputed downgrade-only.
-    Non-``avoid`` findings are untouched, and the guard never upgrades
-    anything. What it forced is recorded under ``judge_output["avoid_guard"]``
-    and in the affected findings' ``notes``. Returns the input unchanged
-    (same object) when there is nothing to do — including when the judge was
-    skipped or errored (no ``per_finding``).
+    correctly declined to assert it. The failure mode this genre exists to
+    catch, a confidently over-claimed wrong person, is exactly the one a model
+    grader is most likely to excuse, so the objective half is re-checked
+    mechanically by ``e2e.avoid_guard``: a tree object citing a rejected
+    candidate's record, a new edge joining the subject to the candidate in the
+    forbidden role, or the avoided fact value on any person. Whatever the
+    starting tree (and starting research) already carried is subtracted, so
+    nothing the run was handed is held against it.
 
-    ``subject_person_ids`` (the fixture's own subject) are exempt from the
-    match. The subject legitimately stays in the tree, and in a same-name
-    ("look-alike") fixture the avoided namesake shares the subject's name by
-    construction — so a name-token hit on the subject is a false positive, not
-    an over-claim. A real over-claim attaches a *different* person id, which is
-    still caught.
+    A finding with a hit is forced to ``matched: "false"``, the recall
+    fractions are recomputed, and the verdict is recomputed downgrade-only.
+    Non-``avoid`` findings are untouched and nothing is upgraded. What was
+    forced is recorded under ``judge_output["avoid_guard"]`` (finding id,
+    branch, the tree person ids involved, and the evidence) and in the
+    finding's ``notes``. Returns the input unchanged (same object) when there
+    is nothing to do, including when the judge was skipped or errored (no
+    ``per_finding``).
     """
     findings = expected_findings.get("findings") or []
     avoid = [f for f in findings if str(f.get("polarity", "recover")) == "avoid"]
     if not avoid or "per_finding" not in judge_output:
         return judge_output
 
-    suspects = check_stripping({"findings": avoid}, final_tree or {})
-    exempt = {str(pid) for pid in (subject_person_ids or ())}
-    if exempt:
-        suspects = [s for s in suspects if s.person_id not in exempt]
-    if not suspects:
+    found = guard_hits(
+        expected_findings,
+        final_tree=final_tree,
+        final_research=final_research,
+        starting_tree=starting_tree,
+        starting_research=starting_research,
+        subject_person_ids=subject_person_ids or (),
+    )
+    if not found:
         return judge_output
-
-    hits: dict[str, list[str]] = {}
-    for s in suspects:
-        hits.setdefault(s.finding_id, []).append(s.person_id)
 
     out = copy.deepcopy(judge_output)
     graded = {str(e.get("finding_id")): e for e in out["per_finding"]}
     forced: list[dict[str, Any]] = []
-    for fid, person_ids in sorted(hits.items()):
+    for fid, result in sorted(found.items()):
         entry = graded.get(fid)
         if entry is None:
             # Judge-contract violation (a finding it never graded) — the guard
@@ -522,13 +522,14 @@ def apply_avoid_guard(
             out["per_finding"].append(entry)
         if entry.get("matched") == "false":
             continue  # already failed by the judge; nothing to force
-        note = (
-            f"[avoid-guard] the final tree still contains {', '.join(person_ids)}, "
-            f"which matches this avoid finding's target — forced to false"
-        )
+        person_ids = sorted({pid for hit in result.hits.values() for pid in hit.person_ids})
+        evidence = sorted({hit.evidence for hit in result.hits.values()})
+        note = f"[avoid-guard] {result.branch}: {'; '.join(evidence)} — forced to false"
         entry["matched"] = "false"
         entry["notes"] = f"{entry.get('notes', '')} {note}".strip()
-        forced.append({"finding_id": fid, "person_ids": person_ids})
+        forced.append(
+            {"finding_id": fid, "branch": result.branch, "person_ids": person_ids, "evidence": evidence}
+        )
 
     if not forced:
         return judge_output

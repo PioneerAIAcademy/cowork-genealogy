@@ -85,8 +85,8 @@ Otherwise → proceed.
    names someone else. One `tree_query({ projectPath, personIds: [target, ...spouseIds, ...parentIds, ...childIds] })`,
    with no `factTypes`.
 4. **The verdict.** Find who in the hit could be the target. Weigh every fact
-   on both sides (names, dates, places, residences, occupations), the
-   relatives, and the titles of the sources the tree cites.
+   on both sides (names, dates, places, residences, occupations) and the
+   relatives.
    - `match`: the name fits, at least one more point ties the hit's person to
      the target (a relative the hit names in the same relationship as on the
      target's edges, or a point independent of time and place, such as an

@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the will's heir persona (a_004, no recordRole) against Thomas (I2). Near zero for the same reason as the heir's own pairing. Measured on 2026-11-15 with same_person's project arm on flynn-record-matching (FamilySearch matcher).",
+  "args": {
+    "assertionId": "a_004",
+    "treePersonId": "I2"
+  },
+  "response": {
+    "score": 0.00011187519,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "",
+      "role": "heir_1"
+    },
+    "treePerson": {
+      "id": "I2",
+      "name": "Thomas Flynn"
+    }
+  }
+}

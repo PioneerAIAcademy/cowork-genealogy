@@ -1,0 +1,12 @@
+{
+  "tool": "same_person",
+  "description": "same_person, matchRelatives — the baptism's Patrick against I1. The matcher pairs no relatives here. Score measured on 2026-11-15 with the FamilySearch matcher: the canned Kilrush baptism (record-read-flynn-baptism-bapt-k1q) against flynn-baptism-mother-named-differently's tree.",
+  "args": {
+    "treePersonId": "I1",
+    "matchRelatives": true
+  },
+  "response": {
+    "matchRelatives": true,
+    "matches": []
+  }
+}
