@@ -360,9 +360,13 @@ choice. The alpha sends no `options`.
   - Any other offer gets "Keep going.".
   - **It returns no reply, ending the run,** when the outcome is not `ok` or `completed`;
     the turn has no offer; the offer is `wrap-up`; the turn ran proof-conclusion and the
-    current question already has a proof summary (or `research` could not be read); the
+    question it worked already has a proof summary (or `research` could not be read) --
+    found by `_last_question_id` (creation order), deliberately **not** `current_question`:
+    a successful conclusion resolves its own question in the same batch as the summary, so
+    by the time this reads `research.json` back, `current_question` has already moved past
+    it (known gap for a question re-concluded out of creation order, issue #4601); the
     (`turn_step`, `offered_step`) pair was already answered since the last planning round
-    or since the current question's active-plan items last grew in count; or
+    or since the CURRENT question's active-plan items last grew in count; or
     `MAX_AUTO_REPLIES` (30) replies were sent.
 - **In a "Keep going." turn** the router runs the step the last turn offered and passes
   person-evidence `userPresent: no`.
