@@ -70,6 +70,17 @@ export function importBaseline(tree: any, startingTree: any | null): ImportBasel
   }
 
   const allBaselineFacts = [...baselineFacts.values()].flat();
+  /** The facts `holderIds` carries in the current tree (a person's, or a Couple's). */
+  const holderFacts = (holderIds: readonly string[]): any[] => {
+    if (holderIds.length === 1) {
+      return (Array.isArray(tree?.persons) ? tree.persons : []).find((p: any) => p?.id === holderIds[0])?.facts ?? [];
+    }
+    const key = [...holderIds].sort().join("+");
+    const edge = (Array.isArray(tree?.relationships) ? tree.relationships : []).find(
+      (r: any) => r?.type === "Couple" && ends(r).join("+") === key,
+    );
+    return Array.isArray(edge?.facts) ? edge.facts : [];
+  };
   return {
     isImportEdge(edge) {
       if (baselineEdges.has(edgeKey(edge))) return true;
@@ -80,25 +91,29 @@ export function importBaseline(tree: any, startingTree: any | null): ImportBasel
       return fsRef(edge);
     },
     isImportFact(holderIds, fact) {
+      // Strict equality on type, date, place and value (Decision 31), never an id
+      // alone: an added "Birth 25 Nov 1879" beside an imported "Birth 1879", a
+      // dated Residence beside an undated import, and an import edited in place
+      // are not the import.
       const holder = [...holderIds].sort().join("+");
       if (!holderIds.every((p) => baselinePersons.has(p))) return fsRef(fact);
-      // A merge moves the absorbed person's facts onto the survivor unchanged,
-      // id and all: a fact with a baseline fact's id and strictly equal value,
-      // on any baseline person, is that import wherever it now sits. The id
-      // keeps a new fact that merely repeats another person's value out.
-      if (
-        typeof fact?.id === "string" &&
-        allBaselineFacts.some((f) => f?.id === fact.id && sameFactValue(f as SimplifiedFact, fact as SimplifiedFact))
-      ) {
-        return true;
-      }
       const facts = baselineFacts.get(holder) ?? [];
-      // Strict equality on type, date, place and value, not the merge tools'
-      // compatibility test (Decision 31), and never an id alone: an added "Birth
-      // 25 Nov 1879" beside an imported "Birth 1879", a dated Residence beside an
-      // undated import, and an import this project edited in place (update_fact
-      // keeps the id) are not the import.
-      return facts.some((f) => sameFactValue(f as SimplifiedFact, fact as SimplifiedFact));
+      if (facts.some((f) => sameFactValue(f as SimplifiedFact, fact as SimplifiedFact))) return true;
+      // A merge moves the absorbed person's facts onto the survivor, re-numbering
+      // any id the survivor already uses (FamilySearch reuses fact ids across
+      // persons), so the id says nothing. A fact still carrying the
+      // FamilySearch-tree ref and strictly equal to some baseline person's fact is
+      // that moved import, but only when the holder still has every baseline fact
+      // of its own of that type: when one has gone, this value is the project's
+      // in-place edit of it (update_fact keeps refs), not an import.
+      const own = facts.filter((f) => f?.type === fact?.type);
+      const current = holderFacts(holderIds);
+      const ownIntact = own.every((f) => current.some((c) => sameFactValue(f as SimplifiedFact, c as SimplifiedFact)));
+      return (
+        ownIntact &&
+        fsRef(fact) &&
+        allBaselineFacts.some((f) => sameFactValue(f as SimplifiedFact, fact as SimplifiedFact))
+      );
     },
   };
 }

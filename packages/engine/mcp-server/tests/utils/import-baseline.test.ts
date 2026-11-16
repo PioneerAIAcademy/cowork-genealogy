@@ -70,4 +70,29 @@ describe("import-baseline (Decision 7)", () => {
     // A new fact that repeats another baseline person's value is not an import.
     expect(b.isImportFact(["I9"], { id: "F77", type: "Birth", date: "1850" })).toBe(false);
   });
+
+  it("a merge that re-numbers a clashing fact id keeps the moved import, and an in-place edit to a sibling's value is not one", () => {
+    const fs = [{ ref: "S1", quality: 1 }];
+    const place = "Coshocton, Ohio, United States";
+    const start = {
+      persons: [
+        person("A", [{ id: "U1", type: "Birth", date: "1809", place, sources: fs }]),
+        person("B", [{ id: "U1", type: "Birth", date: "1807", place, sources: fs }]),
+      ],
+      relationships: [],
+      sources: [FS],
+    };
+    const merged = {
+      persons: [person("A", [{ id: "U1", type: "Birth", date: "1809", place, sources: fs }, { id: "F1", type: "Birth", date: "1807", place, sources: fs }])],
+      relationships: [],
+      sources: [FS],
+    };
+    expect(importBaseline(merged, start).isImportFact(["A"], merged.persons[0].facts[1])).toBe(true);
+    const edited = {
+      persons: [person("A", [{ id: "U1", type: "Birth", date: "1807", place, sources: fs }]), start.persons[1]],
+      relationships: [],
+      sources: [FS],
+    };
+    expect(importBaseline(edited, start).isImportFact(["A"], edited.persons[0].facts[0])).toBe(false);
+  });
 });
