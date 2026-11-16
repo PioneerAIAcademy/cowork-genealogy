@@ -59,6 +59,7 @@ from harness.context_policy import (
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
+    route_note_hook,  # single-ask only: the SHIPPED hook's decision(), not a copy
     sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
@@ -769,8 +770,10 @@ class Fixture:
     judge_model: str
     caps: FixtureCaps
     expected_findings: dict[str, Any]
-    starting_research_path: Path
-    starting_tree_path: Path
+    # None for a single-ask empty-folder fixture (e2e-test-spec §16.2): both or
+    # neither. `load_fixture` (autonomous e2e) always sets both.
+    starting_research_path: Path | None
+    starting_tree_path: Path | None
     # Extra tools denied for THIS fixture's runs, beyond the universal
     # BLOCKED_TREE_TOOLS — bare advertised names (e.g. "wiki_search").
     # For fixtures whose ground truth derives from a source an MCP tool
@@ -893,13 +896,16 @@ def build_workspace(
     setting_sources=["project"].
     """
     target = Path(target)
-    shutil.copy(fixture.starting_research_path, target / "research.json")
-    shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
-    # Also seed the write-once baseline the tree-encoding gate diffs against
-    # (issue #1490), matching what project_create writes in production. Without
-    # it the gate treats every seeded fact as new and manufactures the very
-    # mismatch it measures.
-    shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
+    # An empty-folder single-ask fixture has neither path and copies nothing.
+    if fixture.starting_research_path is not None:
+        shutil.copy(fixture.starting_research_path, target / "research.json")
+    if fixture.starting_tree_path is not None:
+        shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
+        # Also seed the write-once baseline the tree-encoding gate diffs against
+        # (issue #1490), matching what project_create writes in production. Without
+        # it the gate treats every seeded fact as new and manufactures the very
+        # mismatch it measures.
+        shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
 
     skills_target = target / ".claude" / "skills"
     skills_target.mkdir(parents=True, exist_ok=True)
@@ -1868,7 +1874,8 @@ async def _run_agent(
     blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
 
-    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn, and
+    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn with
+    Cowork's routing sentence beside ``SOURCES_NOTE`` (``route_note_hook``), and
     the universal live-tree block is lifted, since
     a single-ask fixture has no answer key to hide. ``user_message`` defaults
     to the autonomous ``/research --autonomous`` rendering.
@@ -2450,7 +2457,13 @@ async def _run_agent(
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             # Issue #4011: the sentence every production path carries, added as Cowork does.
-            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
+            # A single ask gets all of what Cowork sends, the routing sentence too (spec §16.3).
+            "UserPromptSubmit": [
+                HookMatcher(
+                    matcher=None,
+                    hooks=[route_note_hook if single_ask else sources_note_hook],
+                )
+            ],
         },
     )
 

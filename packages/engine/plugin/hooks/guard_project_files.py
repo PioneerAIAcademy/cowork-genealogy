@@ -157,9 +157,9 @@ AGENT_ONLY_TOOLS = {
     "image_search": ("search-images",),
     "materialize_facts": ("person-evidence",),
     "merge_tree_persons": ("proof-conclusion", "tree-edit"),
-    "merge_warnings": ("person-evidence", "proof-conclusion"),
+    "merge_warnings": ("proof-conclusion",),
     "person_person_matches": ("tree-edit",),
-    "person_quality": ("person-evidence", "source-evaluation"),
+    "person_quality": ("source-evaluation",),
     "person_record_matches": ("search-hints", "tree-edit"),
     "person_warnings": (
         "check-warnings",

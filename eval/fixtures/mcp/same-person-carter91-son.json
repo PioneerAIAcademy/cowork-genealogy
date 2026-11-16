@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1891 son Albert Carter against the tree's Albert Carter (I4) (carter-census-late-child). Score measured on 2026-11-15 with the FamilySearch matcher, through the compiled same_person project arm on a copy of the scenario. The mock adds `warningsIfLinked` itself, from the compiled function, so it is not canned here.",
+  "args": {
+    "treePersonId": "I4"
+  },
+  "response": {
+    "score": 0.81539077,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "Albert Carter",
+      "role": "son"
+    },
+    "treePerson": {
+      "id": "I4",
+      "name": "Albert Carter"
+    }
+  }
+}

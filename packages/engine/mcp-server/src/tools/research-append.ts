@@ -59,6 +59,15 @@ import {
   type ScoredPersona,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
+import {
+  birthPlacesAgree,
+  recordIdOf,
+  recordParties,
+  resolvedAgainstIds,
+  YEAR_PATTERN,
+  yearOf,
+  type ResolvedAgainst,
+} from "../utils/settled-birth-disputes.js";
 import { normalizeString } from "../utils/string-similarity.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import {
@@ -1453,16 +1462,6 @@ const BIRTH_DATE_FACT_TYPES: ReadonlySet<string> = new Set([
  *  would read every `~1845` as a contradiction. */
 const MAX_BIRTH_YEAR_GAP = 5;
 
-const YEAR_PATTERN = /\b(1[0-9]{3}|20[0-9]{2})\b/;
-
-/** First 4-digit year in a date string, tolerating `~1845`, `11Jan1758`,
- *  `1858-03-12` and `about 1832`. Null when none is present -- an unparseable
- *  date states nothing to compare, which must not read as a contradiction. */
-function yearOf(value: unknown): number | null {
-  const m = YEAR_PATTERN.exec(String(value ?? ""));
-  return m ? Number(m[1]) : null;
-}
-
 /** A core identifier the RECORD states, contradicted by what the tree person
  *  already attests, caps the link at `speculative` — detected, not self-reported.
  *
@@ -1501,24 +1500,6 @@ function yearOf(value: unknown): number | null {
  *  birth closely, so its date IS comparable. */
 const BIRTH_PLACE_FACT_TYPES: ReadonlySet<string> = new Set(["birth"]);
 
-/** Whether a record's birth place and the tree's agree, on their text or, when
- *  both carry one, on their resolved `standard_place` -- either agreeing is
- *  enough, since two resolutions of the same text can differ. Agreement is
- *  `compatiblePlace`, which lets "Staffordshire, England" agree with "West
- *  Bromwich, Staffordshire, England, United Kingdom" and "Georgia" with
- *  "Georgia, United States". Lining the two up from the country instead refused
- *  1,067 committed confident/probable links on place, almost all that shape. */
-function birthPlacesAgree(assertion: any, birth: any): boolean {
-  if (compatiblePlace(String(assertion.place), String(birth.place))) return true;
-  const sa = assertion?.standard_place;
-  const sb = birth?.standard_place;
-  return (
-    typeof sa === "string" && placeSegments(sa).length > 0 &&
-    typeof sb === "string" && placeSegments(sb).length > 0 &&
-    compatiblePlace(sa, sb)
-  );
-}
-
 /** An informant with no proximity to the birth cannot contradict it. Senior
  *  genealogist ruling 2026-09-23 (John Mark Peter-Brown): "A baptismal record
  *  carries weight of birth assertion than a death record with a secondary
@@ -1553,97 +1534,6 @@ function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<st
   );
 }
 
-/** `disputed_attribute` values that settle each arm, matched exactly after
- *  lower-casing and folding spaces and hyphens to underscores. The field is free
- *  text, so anything else ("birth year of John Laurie (GPZR-3X2)") settles
- *  neither arm and the assertion still caps, which fails safe. */
-const BIRTH_PLACE_DISPUTES: ReadonlySet<string> = new Set([
-  "birthplace", "birth_place", "place_of_birth",
-]);
-const BIRTH_DATE_DISPUTES: ReadonlySet<string> = new Set([
-  "birth_year", "birth_date", "birthdate", "date_of_birth", "year_of_birth",
-  "christening_date", "baptism_date",
-]);
-
-export interface ResolvedAgainst {
-  place: ReadonlySet<string>;
-  date: ReadonlySet<string>;
-}
-
-/** Assertions a settled FACT conflict set aside, per arm, released only on the
- *  arm its `disputed_attribute` names: every competitor but its
- *  `preferred_assertion_id`. A `resolved` conflict settles when it names a
- *  preferred assertion. A `moot` one settles only when it carries non-blank
- *  `independence_analysis` and `weighing_analysis`, the bar `resolved` meets:
- *  `moot` itself owes only a `resolution_rationale`, and one sentence must not
- *  lift the cap. Issue #4255: a late group baptism, 12 years after the birth,
- *  found to be two events and marked moot, left every link capped with no way
- *  out. A contradiction the project has already weighed and set aside is not a
- *  live one, so it cannot cap the link; one it did not weigh (a birthplace
- *  dispute says nothing about the same record's christening date) still does.
- *
- *  An identity conflict releases nothing: its loser was judged to be a
- *  different person, so a link through it to the rejected identity is exactly
- *  what must stay capped. For the same reason a moot conflict releases nothing
- *  while an identity conflict still doubts the record person behind one of its
- *  competitors: `moot` is also how a fact conflict ends when its record turns
- *  out to be someone else (#2475), and that must not lift the cap onto the
- *  wrong person. The doubt is read by record person (`recordParties`), not by
- *  assertion id, because an identity conflict usually names the persona's name
- *  assertion rather than its christening. It holds at any status: a `resolved`
- *  identity conflict does not say which way it settled (the corpus holds one
- *  whose rationale rejects the person its preferred assertion names). A moot
- *  meaning "someone else" written with no identity conflict beside it cannot be
- *  told apart from the documents, and releases.
- *
- *  Read from the document as this op sees it, so a conflict settled LATER in the
- *  same batch still refuses, which fails safe. Figures:
- *  `dev/measure-core-identifier-gate.ts`. */
-function resolvedAgainstIds(research: any, assertionById: Map<string, any>): ResolvedAgainst {
-  const place = new Set<string>();
-  const date = new Set<string>();
-  const conflicts: any[] = Array.isArray(research?.conflicts) ? research.conflicts : [];
-  const competingIds = (c: any): string[] =>
-    Array.isArray(c?.competing_assertion_ids)
-      ? c.competing_assertion_ids.filter((id: unknown): id is string => typeof id === "string")
-      : [];
-  // The record person an assertion is about, or the assertion itself when its
-  // record or party cannot be read.
-  const keyers = new Map<string, (a: any) => string | null>();
-  const personOf = (id: string): string => {
-    const a = assertionById.get(id);
-    const recordId = a ? recordIdOf(a) : null;
-    if (recordId == null) return `assertion ${id}`;
-    let keyOf = keyers.get(recordId);
-    if (!keyOf) keyers.set(recordId, (keyOf = recordParties(assertionById.values(), recordId).partyKey));
-    const party = keyOf(a);
-    return party == null ? `assertion ${id}` : `${recordId} ${party}`;
-  };
-  const doubted = new Set(
-    conflicts
-      .filter((c) => c?.conflict_type === "identity")
-      .flatMap(competingIds)
-      .map(personOf),
-  );
-  for (const c of conflicts) {
-    if (c?.conflict_type !== "fact") continue;
-    const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
-    const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
-    if (!into) continue;
-    const ids = competingIds(c);
-    const settled =
-      c.status === "resolved"
-        ? typeof c.preferred_assertion_id === "string"
-        : c.status === "moot" &&
-          !isBlank(c.independence_analysis) &&
-          !isBlank(c.weighing_analysis) &&
-          !ids.some((id) => doubted.has(personOf(id)));
-    if (!settled) continue;
-    for (const id of ids) if (id !== c.preferred_assertion_id) into.add(id);
-  }
-  return { place, date };
-}
-
 /** A person_evidence link as the contradiction gate needs it: which assertion,
  *  to which person, at what tier. `id` is absent on a link this call appends;
  *  `fromBatch` marks a link an op of this call wrote, which the gate checks on
@@ -1656,22 +1546,8 @@ export interface PersonLink {
   fromBatch?: boolean;
 }
 
-/** The record an assertion belongs to, for grouping a record's assertions. */
-function recordIdOf(a: any): string | null {
-  return a?.record_id ?? a?.source_id ?? null;
-}
-
 function isRelational(a: any): boolean {
   return RELATIONAL_FACT_TYPES.has(String(a?.fact_type ?? "").toLowerCase());
-}
-
-/** Every assertion of `recordId` among `assertions`, and the party key over
- *  them (`recordPartyKeyer`: the persona id, else the role, read across the
- *  whole record). The contradiction gate, its two-party arm and the move gate
- *  all key parties through here so they cannot drift apart. */
-function recordParties(assertions: Iterable<any>, recordId: string) {
-  const onRecord = [...assertions].filter((a) => isLiveAssertion(a) && recordIdOf(a) === recordId);
-  return { onRecord, partyKey: recordPartyKeyer(onRecord) };
 }
 
 /** Links the gate can see for this call: the project's live person_evidence
@@ -1957,6 +1833,16 @@ function contradictionScope(
   // already refuses in the same document (Maine vs New Brunswick, North Carolina
   // vs Kentucky, a 9-year birth gap). No new class; it closes the side door
   // round refusals that already stand.
+  //
+  // What stays open: a two-party assertion linked `confident` with no one-party
+  // link beside it (ut_person_evidence_k2b, 2026-11-15, 1 run in 20). Reading
+  // the party from the link's own recorded `same_person` score does not close
+  // it. Replayed 2026-11-15 over 244 saved runs with the party taken from each
+  // run's same_person calls, it added 24 refusals and every one was a correct
+  // link: a "child of X" assertion linked to the parent X after a call that
+  // passed no `recordRole`, so the score names the child and the child's
+  // christening is compared with the parent's birth. A score's party is the
+  // call's default, not evidence of which side the link is about.
   const own = partyKey(linked);
   const parties = isRelational(linked)
     ? partiesLinkedTo(linked, entry.person_id, onRecord, partyKey, personLinks)
@@ -2095,14 +1981,15 @@ export function coreIdentifierContradictionInvariants(
   if (findings.length === 0) return [];
   return [
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
-      `A contradicted core identifier caps the link at 'speculative' regardless of the match ` +
-      `score, and the user is asked before it stands. Use 'speculative' and name the ` +
-      `contradiction in the rationale, or have conflict-resolution settle it first in a fact ` +
+      `A link past a contradicted core identifier is accepted only at 'speculative', whatever ` +
+      `the match score. When you are deciding a new link for the person the request is about, ` +
+      `it is a no-link: write no person_evidence entry for this pairing and name the ` +
+      `contradiction in your return, without asking the user. Or have conflict-resolution settle it first in a fact ` +
       `conflict whose disputed_attribute is 'birth_place' (or 'birth_date' for a date): ` +
       `'resolved' preferring another assertion, or 'moot' carrying independence_analysis and ` +
       `weighing_analysis (a moot still caps with only a resolution_rationale, or while any ` +
       `identity conflict names that record's person). A confident wrong identity is worse ` +
-      `than a flagged uncertain one.`,
+      `than an unlinked one.`,
   ];
 }
 
@@ -2369,10 +2256,13 @@ function coreIdentifierConflictInvariants(entry: any): string[] {
   if (entry.confidence === "speculative") return [];
   return [
     `confidence '${entry.confidence}' is not available on a link that declares a core-identifier ` +
-      `conflict (core_identifier_conflict: ${JSON.stringify(declared)}). A contradicted core ` +
-      `identifier caps the link at 'speculative' regardless of the match score, and the user is ` +
-      `asked before it stands. Either set confidence to 'speculative', or — if the conflict is ` +
-      `explained and does not bear on identity — say so in the rationale and clear ` +
+      `conflict (core_identifier_conflict: ${JSON.stringify(declared)}). Such a link is ` +
+      `accepted only at 'speculative', and that tier is for a parent of a linked person whom ` +
+      `the record names differently: write that link at 'speculative' and keep ` +
+      `core_identifier_conflict. For the person the request is about, a contradicted core ` +
+      `identifier is a no-link regardless of the match score: write no person_evidence entry ` +
+      `for this pairing and name the conflict in your return, without asking the user. If the ` +
+      `conflict is explained and does not bear on identity, say so in the rationale and clear ` +
       `core_identifier_conflict to null rather than keeping both.`,
   ];
 }
