@@ -43,7 +43,9 @@
     "place-search-all-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "Recognize disasters (fires, floods, hurricanes) affected record survival in New Orleans and mention parish registers, notarial records, land deeds, and reconstructed records. Highlight repositories like Louisiana State Archives, Archdiocese archives, and notarial offices. Note that some records were lost but later reconstructed. Avoid modern databases as if they existed in the early 1800s.",
