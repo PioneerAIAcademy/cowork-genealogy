@@ -1848,27 +1848,32 @@ def test_naturalization_shortfall_stated(after_state, test, agent_returns=None, 
 
 
 _SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
-_LINK_WORD = r"(?:\bpe_\w*|\blinks?\b|\blinking\b|\bentry\b)"
+_LINK_NOUN = r"(?:\bpe_\w*\s+(?:entry|entries|link|links|record)\b|\blinks?\b|\blinking\b|\bentry\b|\bentries\b)"
+_NOT_A_GAP_WORD = r"(?:conflicts?|contradict\w*|problems?|issues?|edits?|changes?|writes?|further|more|additional|other|new|need)"
+_BETWEEN = r"(?:(?!\b" + _NOT_A_GAP_WORD + r"\b)[^.\n]){0,40}?"
 _MISSING_LINK = re.compile(
-    r"(?:\bno\b|\bmissing\b|\blacks?\b|\bwithout\b|\bnot\s+linked\b|\bunlinked\b)[^.\n]{0,40}?"
-    + _LINK_WORD
-    + r"|" + _LINK_WORD
-    + r"[^.\n]{0,60}?(?:\bis\s+missing\b|\bdon['’]t\s+see\b|\bdo\s+not\s+see\b|\bis\s+absent\b)",
+    r"(?:\bno\b|\bmissing\b|\blacks?\b|\bwithout\b)" + _BETWEEN + _LINK_NOUN
+    + r"|\bnot\s+(?:yet\s+)?(?:been\s+)?(?:linked|connected)\b|\bunlinked\b|\bnothing\s+links\b"
+    + r"|" + _LINK_NOUN + r"[^.\n]{0,60}?\b(?:is\s+missing|is\s+absent|don['’]t\s+see|do\s+not\s+see"
+    + r"|(?:has|have)\s+not\s+(?:yet\s+)?been\s+(?:created|made|written|added))\b",
     re.IGNORECASE,
 )
-_SCORE_WORD = re.compile(
-    r"\bmatch_score\b|\bmatch\s+score\b|\bsame_person`?\s+score\b|\bscore\b", re.IGNORECASE
+_I2_NAMES = re.compile(r"\ba_013\b|\bI2\b|\bThomas\b")
+_SCORE_TERM = r"(?:`?match_score`?|\bmatch\s+score|`?same_person`?\s+score|\bscore)"
+_UNEXPLAINED = (
+    r"(?:\bunexplained\b|\bno\s+explanation\b|\bnever\s+says\s+why\b|\bno\s+(?:stated\s+|given\s+)?reason\b"
+    r"|\bnot\s+disclosed\b|\bdoes\s+not\s+(?:say|explain)\b|\bdoesn['’]t\s+(?:say|explain)\b"
+    r"|\bnot\s+(?:recorded|obtained|stated|explained|computed)\b|\bno\s+disclosure\b"
+    r"|\bmentions\s+no\b|\bnever\s+computed\b|\bno\s+account\b)"
 )
 _SCORE_UNEXPLAINED = re.compile(
-    r"\bunexplained\b|\bno\s+explanation\b|\bnever\s+says\s+why\b|\bno\s+reason\b"
-    r"|\bnot\s+disclosed\b|\bdoes\s+not\s+(?:say|explain)\b|\bdoesn['’]t\s+(?:say|explain)\b"
-    r"|\bnot\s+(?:recorded|obtained|stated|explained)\b|\bno\s+disclosure\b|\bmentions\s+no\b"
-    r"|\bsilent\b|\bwithout\s+(?:a|any)\b|\bis\s+missing\b|\bnever\s+computed\b|\bwas\s+never\b",
+    _SCORE_TERM + r"[^\n]{0,80}?" + _UNEXPLAINED
+    + r"|" + _UNEXPLAINED + r"[^\n]{0,80}?" + _SCORE_TERM
+    + r"|\bno\s+(?:`?same_person`?\s+score|match\s+score|`?match_score`?)\b"
+    + r"|" + _SCORE_TERM + r"\s+is\s+missing\b",
     re.IGNORECASE,
 )
-_NO_SCORE = re.compile(
-    r"\bno\s+(?:`?same_person`?\s+score|match\s+score|`?match_score`?)\b", re.IGNORECASE
-)
+_NUMERIC_SCORE = re.compile(r"\b[01]?\.\d+\b")
 
 
 def _sentences(text):
@@ -1876,20 +1881,27 @@ def _sentences(text):
 
 
 def _names_missing_i2_link(text):
-    """One sentence names a_013, names Thomas / I2, and says the link is absent."""
-    return any(
-        re.search(r"\ba_013\b", s)
-        and re.search(r"\bI2\b|\bThomas\b", s)
-        and _MISSING_LINK.search(s)
-        for s in _sentences(text)
-    )
+    """Two adjacent sentences name a_013 and Thomas / I2, and one of them says
+    the link is absent. A negation tied to something else ("no edits to
+    pe_005", "no conflict against the links", "no further link is needed")
+    does not count."""
+    sents = _sentences(text)
+    for i in range(len(sents)):
+        pair = sents[i:i + 2]
+        joined = " ".join(pair)
+        if not (re.search(r"\ba_013\b", joined) and re.search(r"\bI2\b|\bThomas\b", joined)):
+            continue
+        if any(_MISSING_LINK.search(s) and (j > 0 or _I2_NAMES.search(s)) for j, s in enumerate(pair)):
+            return True
+    return False
 
 
 def _names_unexplained_score(text):
-    """One sentence says pe_005's match score is absent or left unexplained;
+    """One sentence says the match score is absent or left unexplained, within
+    80 characters of the score term and with no numeric score in the sentence;
     a bare `match_score null` field listing does not count."""
     return any(
-        (_SCORE_WORD.search(s) and _SCORE_UNEXPLAINED.search(s)) or _NO_SCORE.search(s)
+        _SCORE_UNEXPLAINED.search(s) and not _NUMERIC_SCORE.search(s)
         for s in _sentences(text)
     )
 

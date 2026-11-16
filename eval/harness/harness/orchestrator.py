@@ -1868,7 +1868,7 @@ def coerce_review_dimensions_to_na(
 
     The warning is appended BEFORE the mutation and is the only place the
     judge's original score and rationale survive intact. Base dimensions are
-    never touched; the runnability gate refuses a base name in the first place.
+    never touched, and the runnability gate refuses a base name outright.
     """
     names = set(spec.na_dimensions or ())
     if not dimensions or not names:

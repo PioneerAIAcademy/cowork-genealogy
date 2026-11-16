@@ -59,10 +59,11 @@ export type DimensionSource = 'base' | 'rubric';
 /**
  * 1 = fail, 2 = partial, 3 = pass, null = N/A.
  *
- * N/A comes from three places: Tool Arguments on a run with zero MCP tool
- * calls, any rubric dimension the fixture never exercised, and
+ * N/A comes from four places: Tool Arguments on a run with zero MCP tool
+ * calls, any rubric dimension the fixture never exercised,
  * Correctness/Completeness coerced by the harness on a correctly-routed
- * negative test (`coerced_routing_negative_to_na`).
+ * negative test (`coerced_routing_negative_to_na`), and a rubric dimension
+ * the test names in `na_dimensions` (`coerced_review_dimension_to_na`).
  */
 export type Score = 1 | 2 | 3 | null;
 

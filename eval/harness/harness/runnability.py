@@ -35,6 +35,7 @@ from harness.allowed_tools import (
 )
 from harness.fixtures import InvalidFixtureError, build_manifest, load_fixtures
 from harness.gate_tags import file_gate_tags
+from harness.judge import _REQUIRED_BASE_DIMENSIONS
 from harness.loader import TestSpec
 from harness.rubric import InvalidRubricError, parse_rubric_or_empty
 from harness.schema_validator import (
@@ -399,6 +400,13 @@ def check_runnable(
                 False,
                 "na_dimensions is set on a negative test, which is judged "
                 "without its suite's rubric, so it would coerce nothing",
+            )
+        base = [n for n in spec.na_dimensions if n in _REQUIRED_BASE_DIMENSIONS]
+        if base:
+            return RunnabilityResult(
+                False,
+                f"na_dimensions names base dimension(s) {base}; only rubric "
+                "dimensions can be marked N/A",
             )
         valid = [d.name for d in rubric.dimensions]
         unknown = [n for n in spec.na_dimensions if n not in valid]

@@ -2432,9 +2432,26 @@ def test_review_gaps_passes_a_review_naming_both():
     "Missing link: a_013 (father Thomas Flynn) is not linked to I2 by any pe_ entry.\n"
     "Score: no `match_score` is recorded, and nothing explains it.",
     "I2 (Thomas) lacks a pe_ link for a_013. pe_005's match score is not disclosed.",
+    # The I2 point split across two sentences.
+    "a_013 names Thomas Flynn as father, so it bears on I2. There is no pe_ entry "
+    "for that link yet. The match_score is null and the rationale never says why.",
+    # Plain wordings of the link gap with no "no ... entry".
+    "a_013 is not linked to Thomas (I2). No same_person comparison was run, so "
+    "match_score is null with no stated reason.",
+    "Gap: a_013 → I2 (Thomas Flynn) is unlinked. The score is not recorded.",
+    "a_013 names Thomas Flynn (I2) as father, yet nothing links a_013 to I2. "
+    "pe_005's match score is not disclosed.",
+    "A second link, a_013 to I2 (Thomas Flynn), has not been created. "
+    "pe_005's match score is not disclosed.",
+    "Thomas Flynn is named in a_013, but I2 is not yet connected to a_013 by any "
+    "pe_ entry. pe_005's match score is not disclosed.",
 ])
 def test_review_gaps_accepts_other_wordings(text):
     _gaps(text)
+
+
+_I2_OK = "a_013 names Thomas Flynn as father, but no pe_ entry links it to I2. "
+_SCORE_OK = "The match_score is null and the rationale never says why."
 
 
 @pytest.mark.parametrize("text, missing", [
@@ -2450,6 +2467,30 @@ def test_review_gaps_accepts_other_wordings(text):
      "The match_score is null and the rationale never says why.", "I2"),
     # Bare "I2" and "null" in unrelated sentences.
     ("pe_003 links a_004 to I2. The birth date on a_012 is null.", "I2"),
+    # A negation tied to something other than the a_013 -> I2 link.
+    ("I made no edits to pe_005, a_013, or Thomas Flynn's record (I2). " + _SCORE_OK, "I2"),
+    ("No pe_ write was made; a_013's father, Thomas Flynn (I2), is consistent with "
+     "the tree. " + _SCORE_OK, "I2"),
+    ("No other entry contradicts a_013's naming of Thomas Flynn (I2). " + _SCORE_OK, "I2"),
+    ("a_013 names Thomas Flynn (I2) as father, with no conflict against the tree's "
+     "links. " + _SCORE_OK, "I2"),
+    ("No problems: a_013 has a link to Thomas (I2). " + _SCORE_OK, "I2"),
+    # "No further link" says the opposite of a missing link.
+    ("a_013 names Thomas Flynn (I2) and pe_007 links it; no further link is needed. "
+     "The match_score is null and the rationale never says why.", "I2"),
+    # A score sentence that names no gap: a number, or a generic phrase.
+    (_I2_OK + "pe_003 for Thomas carries a score of 0.82, and the tier fits without any change.",
+     "match_score"),
+    (_I2_OK + "The match score was never a concern here.", "match_score"),
+    (_I2_OK + "The match_score is 0.91 and was never questioned.", "match_score"),
+    (_I2_OK + "pe_005 has match_score 0.88; the rationale is silent on c_001.", "match_score"),
+    (_I2_OK + "The confidence score is fine.", "match_score"),
+    (_I2_OK + "The score was never in doubt.", "match_score"),
+    # A score that exists, with a number, is not the null-score gap.
+    (_I2_OK + "pe_005's match_score of 0.88 is not explained in the rationale.",
+     "match_score"),
+    (_I2_OK + "The rationale is silent on competing candidates; the score is 0.91.",
+     "match_score"),
 ])
 def test_review_gaps_fails_a_review_missing_a_point(text, missing):
     with pytest.raises(AssertionError, match=missing):

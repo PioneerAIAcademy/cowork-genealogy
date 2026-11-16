@@ -1425,7 +1425,8 @@ the judge, so the score is dropped in code.
 
 - **Rubric names only, matched exactly.** A name that is not a `## ` heading in
   the suite's `rubric.md` makes the test `not_runnable`, so a typo cannot coerce
-  nothing and exit green. A base dimension is refused by the same check:
+  nothing and exit green. A base dimension (Correctness, Completeness, Tool
+  Arguments) is refused by name, even if a rubric reused the heading:
   Correctness and Completeness are what `_compute_outcome` gates on.
 - **Positive tests only.** A negative test is judged against an empty rubric, so
   the runnability gate refuses the field there.
