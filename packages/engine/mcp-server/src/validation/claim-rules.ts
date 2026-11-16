@@ -16,7 +16,7 @@ import { countsForProofGate } from "../utils/tree-person.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { stdDate } from "../utils/date-standardize.js";
 import { getDayRange } from "../utils/date-helpers.js";
-import { claimKind, factSubjectIds, isBiologicalClaim, sameClaimObject, setAsideRival } from "../utils/claim-join.js";
+import { claimCoversEdge, claimKind, factSubjectIds, isBiologicalClaim, sameClaimObject, setAsideRival } from "../utils/claim-join.js";
 import { PROOF_TIER_RANK } from "./validator.js";
 
 export const CLAIM_RULE_IDS = [
@@ -47,6 +47,18 @@ const TREE_OBJECT_KINDS = new Set(["relationship", "fact", "identity", "name"]);
 const VITAL_TYPES = new Set(["Birth", "Christening", "Death", "Burial"]);
 const COUPLE_EVENT_TYPES = new Set(["Marriage", "Divorce"]);
 const CHILD_ROLE_TOKENS = new Set(["child", "son", "daughter"]);
+
+const isSlotGender = (g: unknown): g is "Male" | "Female" => g === "Male" || g === "Female";
+
+/** A role naming the record's child ("child", "son", "baptized_child"), not a
+ *  role naming someone by their relation to the child ("father_of_child"), an
+ *  in-law, or a step-relation. */
+function isChildRole(role: unknown): boolean {
+  const r = String(role ?? "").toLowerCase();
+  const tokens = r.split(/[_\s]+/).filter(Boolean);
+  if (tokens.includes("of") || r.includes("in_law") || tokens[0] === "step") return false;
+  return tokens.some((t) => CHILD_ROLE_TOKENS.has(t));
+}
 
 const rank = (tier: unknown) => (typeof tier === "string" ? PROOF_TIER_RANK.get(tier) ?? -1 : -1);
 const atLeast = (tier: unknown, floor: string) => rank(tier) >= (PROOF_TIER_RANK.get(floor) ?? 99);
@@ -184,8 +196,11 @@ class Tree {
     }
   }
   genderOf = (id: string) => this.gender.get(id);
+  /** A child's biological parents of one gender. Only Male and Female form a
+   *  slot: two parents of unknown gender are not rivals. */
   sameGenderParents(child: string, gender: string | undefined): string[] {
-    return [...(this.parentsByChild.get(child) ?? [])].filter((p) => gender !== undefined && this.genderOf(p) === gender);
+    if (!isSlotGender(gender)) return [];
+    return [...(this.parentsByChild.get(child) ?? [])].filter((p) => this.genderOf(p) === gender);
   }
 }
 
@@ -253,9 +268,7 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
     ]);
     const children = new Set<string>();
     for (const id of cited) {
-      const a = ev.assertions.get(id);
-      const role = String(a?.record_role ?? "").toLowerCase().split("_");
-      if (!role.some((t) => CHILD_ROLE_TOKENS.has(t))) continue;
+      if (!isChildRole(ev.assertions.get(id)?.record_role)) continue;
       for (const p of ev.linkedFrom([id])) children.add(p);
     }
     for (const child of children) {
@@ -337,7 +350,7 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
             o.relationship?.type === "Couple" &&
             isAffirmed(o) &&
             rank(o.proof_tier) >= rank(c.proof_tier) &&
-            factSubjectIds(o.relationship).join("+") === pair.join("+"),
+            claimCoversEdge(o, { type: "Couple", person1: pair[0], person2: pair[1] }),
         );
         if (!couple) {
           push("claims-couple-first", `claim '${label}' affirms a ${type} of ${pair.join(" and ")} at '${c.proof_tier}' with no affirmed Couple claim on that pair at the same tier or better.`);
@@ -350,9 +363,7 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
       const { parent, child } = c.relationship;
       const rivals = tree.sameGenderParents(child, tree.genderOf(parent)).filter((p) => p !== parent);
       for (const rival of rivals) {
-        const verdict = allClaims.some(
-          ({ c: o }) => o.relationship?.type === "ParentChild" && o.relationship.parent === rival && o.relationship.child === child,
-        );
+        const verdict = allClaims.some(({ c: o }) => claimCoversEdge(o, { type: "ParentChild", parent: rival, child }));
         if (!verdict) {
           push("claims-rival-verdicts", `claim '${label}' concludes ${parent} as a parent of ${child} while rival parent ${rival} has no claim at any tier; record a verdict on ${rival} (Decision 8).`);
         }
@@ -375,12 +386,16 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
   for (const c of claims) {
     const idn = c.identity;
     if (typeof idn?.record_id !== "string" || !isAffirmed(c) || !atLeast(c.proof_tier, "probable")) continue;
-    for (const { c: o } of personaClaims) {
-      if (o !== c && o.identity.record_id === idn.record_id && o.identity.party === idn.party && o.identity.person !== idn.person) {
+    for (const { c: o, summary: s } of personaClaims) {
+      const pairOnce = s !== summary || claims.indexOf(o) > claims.indexOf(c);
+      if (o !== c && pairOnce && o.identity.record_id === idn.record_id && o.identity.party === idn.party && o.identity.person !== idn.person) {
         push("claims-polarity", `claim '${c.claim}' affirms record persona ${idn.record_id} (${idn.party}) as ${idn.person}, and claim '${o.claim}' affirms it as ${o.identity.person}.`);
       }
     }
   }
+
+  // A pair inside this summary is reported once, from its earlier claim.
+  const laterOrElsewhere = (c: any, o: any, s: any) => s !== summary || claims.indexOf(o) > claims.indexOf(c);
 
   // Rule 2: one answer per slot.
   for (const c of claims) {
@@ -388,9 +403,9 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
     if (isBiologicalClaim(c.relationship)) {
       const { parent, child } = c.relationship;
       const gender = tree.genderOf(parent);
-      for (const { c: o } of allClaims) {
-        if (o === c || !isBiologicalClaim(o.relationship) || !isAffirmed(o) || !atLeast(o.proof_tier, "probable")) continue;
-        if (o.relationship.child === child && o.relationship.parent !== parent && gender !== undefined && tree.genderOf(o.relationship.parent) === gender) {
+      for (const { c: o, summary: s } of allClaims) {
+        if (o === c || !laterOrElsewhere(c, o, s) || !isBiologicalClaim(o.relationship) || !isAffirmed(o) || !atLeast(o.proof_tier, "probable")) continue;
+        if (o.relationship.child === child && o.relationship.parent !== parent && isSlotGender(gender) && tree.genderOf(o.relationship.parent) === gender) {
           push("claims-one-per-slot", `claim '${c.claim}' and claim '${o.claim}' both affirm a ${gender === "Male" ? "father" : "mother"} of ${child} at probable or better (${parent}, ${o.relationship.parent}).`);
         }
       }
@@ -399,8 +414,8 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
       const type = toTreeFactType(String(c.fact.fact_type ?? ""));
       const subject = factSubjectIds(c.fact.subject);
       if (!VITAL_TYPES.has(type) || subject.length !== 1) continue;
-      for (const { c: o } of allClaims) {
-        if (o === c || claimKind(o) !== "fact" || !isAffirmed(o) || !atLeast(o.proof_tier, "probable")) continue;
+      for (const { c: o, summary: s } of allClaims) {
+        if (o === c || !laterOrElsewhere(c, o, s) || claimKind(o) !== "fact" || !isAffirmed(o) || !atLeast(o.proof_tier, "probable")) continue;
         if (toTreeFactType(String(o.fact.fact_type ?? "")) !== type || factSubjectIds(o.fact.subject).join("+") !== subject[0]) continue;
         if (!oneValue(c.fact.date, o.fact.date)) {
           push("claims-one-per-slot", `claim '${c.claim}' (${c.fact.date}) and claim '${o.claim}' (${o.fact.date}) both affirm a ${type} of ${subject[0]} at probable or better, and neither date contains the other.`);
@@ -414,10 +429,22 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
 /** Two vital dates count as one value when one's unfudged day range contains the
  *  other's (Decision 3). An undated or unreadable value never conflicts. */
 function oneValue(a: unknown, b: unknown): boolean {
-  const ra = typeof a === "string" ? getDayRange(stdDate(a), 0, false) : null;
-  const rb = typeof b === "string" ? getDayRange(stdDate(b), 0, false) : null;
+  const ra = unfudgedRange(a);
+  const rb = unfudgedRange(b);
   if (!ra || !rb) return true;
   return (ra.min <= rb.min && rb.max <= ra.max) || (rb.min <= ra.min && ra.max <= rb.max);
+}
+
+/** A date's unfudged day range: "Abt 1879" reads as 1879, while "Bef" and "Aft"
+ *  are open-ended on their far side ("Aft 1898" is any day from 1898 on). */
+function unfudgedRange(date: unknown): { min: number; max: number } | null {
+  if (typeof date !== "string") return null;
+  const std = stdDate(date);
+  const range = getDayRange(std, 0, false);
+  if (!range) return null;
+  if (/^bef\b/i.test(std)) return { min: -Infinity, max: range.max };
+  if (/^aft\b/i.test(std)) return { min: range.min, max: Infinity };
+  return range;
 }
 
 /** Rule 11: a question set resolved while its summary holds an affirmed

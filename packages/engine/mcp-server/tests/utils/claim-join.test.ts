@@ -54,7 +54,7 @@ describe("claim-join: Decision 31's one join", () => {
     const step = rel({ type: "ParentChild", parent: "I2", child: "I1", subtype: "Step" });
     const bio = rel({ type: "ParentChild", parent: "I2", child: "I1", subtype: "Biological" });
     expect(sameClaimObject(step, bio)).toBe(false);
-    expect(sameClaimObject(step, rel({ type: "ParentChild", parent: "I2", child: "I1" }))).toBe(true);
+    expect(sameClaimObject(step, rel({ type: "ParentChild", parent: "I2", child: "I1" }))).toBe(false);
     expect(claimCoversEdge(step, { type: "ParentChild", parent: "I2", child: "I1", subtype: "Biological" })).toBe(true);
   });
 

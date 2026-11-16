@@ -5,8 +5,12 @@
 // mother I5, a sibling I6, a spouse I7. A baptism (rec_bap) names child, father
 // and mother; a census (rec_cen) names I1 and I2; a marriage (rec_mar) names a
 // groom and a bride; rec_abs is a negative search.
-import { describe, expect, it } from "vitest";
-import { claimRuleFindings, questionCapFindings, type ClaimRuleId } from "../../src/validation/claim-rules.js";
+import { afterAll, describe, expect, it } from "vitest";
+import { CLAIM_RULE_IDS, claimRuleFindings, questionCapFindings, type ClaimRuleId } from "../../src/validation/claim-rules.js";
+
+/** Every rule id some case in this file made fire, so the registry check at the
+ *  end proves each staged rule is one the module actually emits. */
+const fired = new Set<string>();
 
 const A = (id: string, record_id: string, record_role: string, fact_type: string, extra: Record<string, unknown> = {}) => ({
   id, record_id, source_id: `src_${record_id}`, record_role, fact_type, value: "x", record_basis: "stated", ...extra,
@@ -62,11 +66,13 @@ const summary = (id: string, claims: any[], tier = "probable", extra: Record<str
 });
 
 function findings(s: any, opts: { others?: any[]; links?: any[]; t?: any; extra?: any[] } = {}) {
-  return claimRuleFindings(s, {
+  const out = claimRuleFindings(s, {
     summaries: [s, ...(opts.others ?? [])],
     preCallResearch: research(opts.links, opts.extra),
     tree: opts.t ?? tree(),
   });
+  for (const [id, messages] of out) if (messages.length > 0) fired.add(id);
+  return out;
 }
 const fires = (out: Map<ClaimRuleId, string[]>, id: ClaimRuleId) => (out.get(id) ?? []).length > 0;
 
@@ -148,6 +154,37 @@ describe("rule 4, no empty escape on rivals", () => {
   });
 });
 
+describe("code-review cases", () => {
+  it("rule 4 does not read a father_of_child role as the cited child", () => {
+    const extra = [A("a_fc", "rec_bap", "father_of_child", "name")];
+    const links = [...BASE_LINKS, L("a_fc", "I2")];
+    const t = tree([PC("I2", "I1"), PC("I3", "I1"), PC("I4", "I2"), PC("I6", "I2")]);
+    const s = summary("ps_1", [claim({ finding: { finding_type: "record_content", statement: "s" } }, "probable", ["a_fc"])], "probable", { supporting_assertion_ids: ["a_fc"] });
+    expect(fires(findings(s, { t, extra, links }), "claims-no-empty-escape")).toBe(false);
+  });
+  it("two parents of unknown gender are not rivals for one slot", () => {
+    const t = { persons: [P("I1", "Male"), { ...P("I2", "Unknown") }, { ...P("I3", "Unknown") }], relationships: [PC("I2", "I1"), PC("I3", "I1")] };
+    const s = summary("ps_1", [claim(father()), claim(father("I3"), "probable", ["a_bc", "a_bm"])]);
+    const out = findings(s, { t });
+    expect(fires(out, "claims-rival-verdicts")).toBe(false);
+    expect(fires(out, "claims-one-per-slot")).toBe(false);
+  });
+  it("rule 2 reads Aft and Bef as open-ended: a 1901 death and one after 1898 are one value", () => {
+    const s = summary("ps_1", [claim(fact("I1", "Death", { date: "1901" }), "probable", ["a_bc"]), claim(fact("I1", "Death", { date: "after 1898" }), "probable", ["a_bc"])]);
+    expect(fires(findings(s), "claims-one-per-slot")).toBe(false);
+    const late = summary("ps_1", [claim(fact("I1", "Death", { date: "1905" }), "probable", ["a_bc"]), claim(fact("I1", "Death", { date: "before 1903" }), "probable", ["a_bc"])]);
+    expect(fires(findings(late), "claims-one-per-slot")).toBe(true);
+  });
+  it("affirming an untyped father and denying him as a stepfather is not a contradiction", () => {
+    const s = summary("ps_1", [claim(father()), claim(father("I2", "I1", "Step"), "possible", ["a_bc"], { polarity: "denied" })]);
+    expect(fires(findings(s), "claims-polarity")).toBe(false);
+  });
+  it("a conflicting pair inside one summary is reported once", () => {
+    const s = summary("ps_1", [claim(fact("I1", "Birth", { date: "1879" }), "probable", ["a_bc"]), claim(fact("I1", "Birth", { date: "1885" }), "probable", ["a_bc"])]);
+    expect(findings(s).get("claims-one-per-slot")).toHaveLength(1);
+  });
+});
+
 describe("rule 5, claims present", () => {
   it("a probable proof with no claims warns", () => {
     expect(findings(summary("ps_1", [])).get("claims-present")?.[0]).toMatch(/carries no claims/);
@@ -203,6 +240,10 @@ describe("rule 7, grounding", () => {
   it("a probable denial whose only linked cited assertion links the denied father, not the child, warns", () => {
     const c = claim(father("I2"), "probable", ["a_bf"], { polarity: "denied" });
     expect(fires(findings(summary("ps_1", [c])), "claims-grounding")).toBe(true);
+  });
+  it("a probable denial of a Birth whose only cited contrary birth persona is tied to a sibling, while a census links the subject, warns", () => {
+    const c = claim(fact("I1", "Birth", { date: "1879" }), "probable", ["a_cc", "a_sib"], { polarity: "denied" });
+    expect(findings(summary("ps_1", [c])).get("claims-grounding")?.[0]).toMatch(/no cited Birth assertion \(a_sib\) comes from a record persona tied to I1/);
   });
   it("a probable claim whose only link runs through a persona a live denied identity claim covers warns", () => {
     const denial = claim({ identity: { person: "I2", record_id: "rec_bap", party: "father" } }, "probable", ["a_bc"], { polarity: "denied" });
@@ -300,6 +341,7 @@ describe("rule 11, capped claims keep the question open", () => {
   it("resolving a question whose summary holds a claim held at possible by grounding warns", () => {
     const s = summary("ps_1", [claim(father(), "possible", ["a_bc", "a_cc"])], "possible");
     const [hit] = questionCapFindings({ id: "q_ps_1", status: "resolved" }, ctx([s]));
+    fired.add("claims-capped-open");
     expect(hit.summaryId).toBe("ps_1");
     expect(hit.messages[0]).toMatch(/stands at possible because no assertion it cites is linked to I2/);
   });
@@ -328,4 +370,10 @@ describe("rule 12, proved needs confident identity", () => {
     const out = findings(summary("ps_1", [claim(father(), "proved", ["a_bc", "a_bf"]), idn], "proved"), { links: links2, extra });
     expect(fires(out, "claims-proved-identity")).toBe(false);
   });
+});
+
+afterAll(() => {
+  // Every staged claim rule fired on some case above: a rule id registered in
+  // rule-modes.ts that the module never emits would pass every other check.
+  expect([...fired].sort()).toEqual([...CLAIM_RULE_IDS].sort());
 });

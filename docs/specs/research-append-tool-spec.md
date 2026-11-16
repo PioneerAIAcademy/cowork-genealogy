@@ -2420,9 +2420,9 @@ spend it in the same call, as every proof gate reads), and the pre-call tree.
 
 | Rule id | Fires when |
 |---|---|
-| `claims-rival-verdicts` (1) | an affirmed biological ParentChild claim at `probable`+ while a same-gender untyped or Biological rival parent of that child in the tree has no claim, at any tier or polarity |
-| `claims-one-per-slot` (2) | two affirmed claims at `probable`+ fill one biological parent slot, or one person's Birth, Christening, Death or Burial with values neither of whose unfudged day ranges contains the other's (couple events exempt) |
-| `claims-no-empty-escape` (4) | a summary at `possible`+ or `disproved` with no tree-object claim, while a child a cited child-role assertion links has two or more same-gender untyped/Biological parents |
+| `claims-rival-verdicts` (1) | an affirmed biological ParentChild claim at `probable`+ while a same-gender untyped or Biological rival parent of that child in the tree has no claim, at any tier or polarity. Only Male and Female form a slot |
+| `claims-one-per-slot` (2) | two affirmed claims at `probable`+ fill one biological parent slot, or one person's Birth, Christening, Death or Burial with values neither of whose unfudged day ranges contains the other's ("Abt" reads as the bare date; "Bef" and "Aft" are open-ended; couple events exempt) |
+| `claims-no-empty-escape` (4) | a summary at `possible`+ or `disproved` with no tree-object claim, while a child a cited child-role assertion links (a role naming the child, not `*_of_child`, an in-law or a step-relation) has two or more same-gender untyped/Biological parents |
 | `claims-present` (5) | a summary at `possible`+ or `disproved` with no claims (a `not_proved` decline may carry none) |
 | `claims-cite` (6) | a claim at `possible`+, a denial or a `disproved` claim cites no assertion (an `absence` or `completeness` finding may cite `log_entry_ids` instead) |
 | `claims-grounding` (7) | an affirmed tree-object claim at `probable`+ names a person no cited assertion links (live, `confident`/`probable`), or a fact's cited value assertions come from no record persona tied to its subject (each spouse, for a couple fact); a denial at `probable` needs only its anchor linked. A link from a persona a live denied identity claim covers does not count |
@@ -2432,8 +2432,8 @@ spend it in the same call, as every proof gate reads), and the pre-call tree.
 | `claims-capped-open` (11) | a question set resolved while its summary holds an affirmed tree-object claim that grounding holds at `possible`, other than a rival set aside beside a winner |
 | `claims-proved-identity` (12) | a `proved` claim names a person not linked at `confident` from a cited assertion, nor covered by a `proved` identity claim whose persona it cites |
 
-Two ParentChild claims are one object for rule 9 only when their subtypes agree or one is absent, so "affirm Step,
-deny Biological" does not collide; for coverage of a tree edge the subtype is ignored (Decision 32). Rule 7 over the
+Two ParentChild claims are one object for rule 9 only when their subtypes agree, untyped and Biological agreeing, so
+"affirm Step, deny the (biological) father" does not collide; for coverage of a tree edge the subtype is ignored (Decision 32). Rule 7 over the
 claims study's 45 hand-labelled proofs holds at `possible` 8 of 89 relationships, 0 of 25 facts and 1 of 11 couple
 facts (`tests/tools/research-append-claim-grounding.test.ts`, vectors built by
 `dev/build-claim-grounding-vectors.ts`).

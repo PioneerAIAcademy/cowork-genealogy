@@ -4,8 +4,9 @@
 //
 // - Relationships: same type and endpoints; a Couple's pair is unordered. A
 //   claim covers a tree edge whatever its subtype (Decision 32: an untyped claim
-//   covers its pair); two claims are one object only when their subtypes agree
-//   or one is absent, so a Step claim and a Biological denial do not collide.
+//   covers its pair); two claims are one object only when their subtypes agree,
+//   untyped and Biological agreeing, so a Step claim and a denial of the
+//   (biological) father do not collide.
 // - Facts: same subject and type; dates by exact equality after `stdDate`
 //   (written and ISO forms alike; the normalized text when `stdDate` returns
 //   nothing); places compared most-specific-first, where one side may omit higher
@@ -84,17 +85,18 @@ function relationshipKey(r: any): string | null {
 }
 
 /** Two claims on one ParentChild pair are about the same relationship when their
- *  subtypes agree, one is absent, or one is untyped and the other Biological. A
- *  Step and a Biological claim are different claims ("his stepfather, not his
- *  father"). Only the claim-to-claim form reads subtype: for status, rival
- *  verdicts and encoding an untyped claim covers its pair (Decision 32). */
+ *  subtypes agree, untyped and Biological agreeing. A Step and an untyped or
+ *  Biological claim are different claims ("his stepfather, not his father"), so
+ *  affirming one and denying the other is not a contradiction. Only the
+ *  claim-to-claim form reads subtype: for status, rival verdicts and encoding an
+ *  untyped claim covers its pair (Decision 32). */
 function sameSubtype(a: any, b: any): boolean {
   if (a?.type !== "ParentChild") return true;
-  const norm = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim().toLowerCase() : null);
-  const sa = norm(a.subtype);
-  const sb = norm(b.subtype);
-  if (sa === null || sb === null) return true;
-  return sa === sb;
+  const norm = (v: unknown) => {
+    const t = typeof v === "string" ? v.trim().toLowerCase() : "";
+    return t === "" ? "biological" : t;
+  };
+  return norm(a.subtype) === norm(b.subtype);
 }
 
 /** A ParentChild claim reads biological: untyped or `Biological`. */
@@ -199,6 +201,7 @@ export function setAsideRival(
   const r = claim?.relationship;
   if (!isBiologicalClaim(r) || claim.proof_tier !== "possible" || claim.polarity === "denied") return false;
   const gender = genderOf(r.parent);
+  if (gender !== "Male" && gender !== "Female") return false;
   return allClaims.some((other) => {
     const o = other?.relationship;
     return (
