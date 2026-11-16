@@ -661,17 +661,257 @@ export function shapeAnswer(
   return result;
 }
 
+/** Throws the LLM-framed error for a non-2xx Catalog answer, from either the
+ *  search or a `catalogId` lookup. The body is drained before every throw: an
+ *  unconsumed undici body holds its socket until GC. It is parsed too, because
+ *  the Catalog says WHICH parameter it rejected ({"detail":"Validation
+ *  failure",...}) and discarding that left the agent retrying the same query
+ *  against nine candidates. */
+async function throwCatalogHttpError(
+  res: Response,
+  principal: Principal,
+  leg: "search" | "lookup",
+): Promise<never> {
+  const raw = await res.text().catch(() => "");
+  let parsed: unknown = null;
+  try {
+    parsed = raw ? JSON.parse(raw) : null;
+  } catch {
+    parsed = null;
+  }
+  const detail = parseUpstreamErrorBody(parsed);
+
+  if (res.status === 401) {
+    // fsFetch has already re-read tokens.json once; a 401 still here means
+    // the session is genuinely not accepted, which is the user's to fix.
+    throw new Error(
+      (await rejectedTokenMessage(
+        principal,
+        "FamilySearch session not accepted; call the login tool to re-authenticate.",
+      )) + (detail ? ` Upstream said: ${detail}` : ""),
+    );
+  }
+  if (res.status === 403) {
+    throw new Error(
+      `FamilySearch Catalog ${leg} was refused (403) by the edge, not by ` +
+        "permissions as far as this tool can tell. The browser User-Agent " +
+        "it requires is already sent, so this is USUALLY rate limiting or " +
+        "IP reputation, where waiting and retrying is the fix — but a 403 " +
+        "alone cannot be told from a missing Catalog entitlement, which " +
+        "waiting will never clear. Check any upstream detail below before " +
+        "retrying." +
+        (detail ? ` Upstream said: ${detail}` : ""),
+    );
+  }
+  throw new Error(
+    `FamilySearch Catalog ${leg} failed: ${res.status} ${res.statusText}`.trim() +
+      (detail ? ` — ${detail}` : ""),
+  );
+}
+
+/** The JSON object of a 2xx Catalog answer, or the LLM-framed error.
+ *
+ *  Guarded: every non-2xx path in this file is framed for the LLM and the
+ *  2xx-but-unparseable one was not. Imperva fronts this host, and answering
+ *  200 with a challenge page is its ordinary behaviour — the exact thing the
+ *  `Accept` header exists to prevent, with no fallback if it is ignored. A
+ *  raw `SyntaxError: Unexpected token '<'` names neither the Catalog nor an
+ *  action. A body of literal `null` parses fine and then fails on property
+ *  access, so the shape is checked too.
+ *
+ *  `typeof [] === "object"`, so an ARRAY body walked through the guard that
+ *  exists to catch exactly this and answered `{ totalHits: 0, returned: 0,
+ *  hits: [] }` — a clean, authoritative "the Catalog holds nothing for this
+ *  place", which the agent records as negative evidence it never obtained.
+ *  That is the worst output this tool can produce, so the top-level body is
+ *  unwrapped like every container below it rather than merely type-tested. */
+async function readCatalogBody(res: Response): Promise<Record<string, unknown>> {
+  try {
+    const parsed: unknown = await res.json();
+    const unwrapped = Array.isArray(parsed) ? firstObject(parsed) : parsed;
+    if (!unwrapped || typeof unwrapped !== "object") {
+      throw new Error("not an object");
+    }
+    return unwrapped as Record<string, unknown>;
+  } catch {
+    throw new Error(
+      "FamilySearch Catalog answered 200 with a body that is not JSON. This " +
+        "is usually an edge challenge or interstitial page rather than the " +
+        "Catalog itself, so retrying shortly is the fix; the query was not " +
+        "refused and does not need changing.",
+    );
+  }
+}
+
+/** A Catalog entry id: the namespace and the digits. The item URL is built
+ *  from this alone, and only after the whole id matched it. */
+const CATALOG_ID_RE = /^(koha|olib):(\d+)$/i;
+
+/** The path of a Catalog entry link: an optional language segment (`/en/`,
+ *  `/pt-br/`), then `/search/catalog/` and the id, namespaced or bare. */
+const CATALOG_LINK_PATH_RE =
+  /^\/(?:[a-z]{2}(?:-[a-z]{2,4})?\/)?search\/catalog\/((?:koha|olib):\d+|\d+)\/?$/i;
+
+const CATALOG_LINK_HOSTS = new Set(["familysearch.org", "www.familysearch.org"]);
+
+/** Whole digits, or a namespaced id, normalised to `koha:` / `olib:` in lower
+ *  case. Bare digits are `koha:`: the item endpoint serves the same entry for
+ *  `36984`, `koha:36984` and `olib:36984` (measured 2026-11-16), so the prefix
+ *  only labels the id. */
+function normaliseId(text: string): string | undefined {
+  if (/^\d+$/.test(text)) return `koha:${text}`;
+  const m = CATALOG_ID_RE.exec(text);
+  return m ? `${m[1].toLowerCase()}:${m[2]}` : undefined;
+}
+
+/**
+ * The Catalog entry id in a `catalogId` input, or an LLM-instruction error.
+ *
+ * Strict, because the user's bearer is attached to a URL built from it: only a
+ * namespaced id, bare digits, or a link on familysearch.org whose path is a
+ * Catalog entry. Anything else is refused before any request is made.
+ */
+export function parseCatalogId(raw: unknown): string {
+  const refuse = (): never => {
+    throw new Error(
+      `catalogId is ${show(raw)}; give koha:<digits>, olib:<digits>, the ` +
+        "number alone, or a Catalog link such as " +
+        "https://www.familysearch.org/en/search/catalog/koha:36984. No request " +
+        "was made.",
+    );
+  };
+  let id: string | undefined;
+  if (typeof raw === "number") {
+    // The MCP boundary checks names, not types, and a number is what an
+    // unquoted "36984" arrives as — the same as an unquoted film number.
+    id = Number.isSafeInteger(raw) && raw >= 0 ? `koha:${raw}` : undefined;
+  } else if (typeof raw === "string") {
+    const text = raw.trim();
+    if (/^https?:\/\//i.test(text)) {
+      let url: URL | undefined;
+      try {
+        url = new URL(text);
+      } catch {
+        url = undefined;
+      }
+      const path =
+        url &&
+        (url.protocol === "https:" || url.protocol === "http:") &&
+        CATALOG_LINK_HOSTS.has(url.hostname) &&
+        url.port === "" &&
+        url.username === "" &&
+        url.password === ""
+          ? CATALOG_LINK_PATH_RE.exec(url.pathname)
+          : null;
+      id = path ? normaliseId(path[1]) : undefined;
+    } else {
+      id = normaliseId(text);
+    }
+  }
+  if (id === undefined || !CATALOG_ID_RE.test(id)) return refuse();
+  return id;
+}
+
+/** The first `author` entry of type "Author". An "Added Author" is a
+ *  contributor, not the item's creator. */
+function creatorOf(sources: Collapsed[]): string | undefined {
+  const main = sources
+    .flatMap((s) => asArray(s?.author))
+    .find((a) => (scalarOf(a?.type) ?? "").toLowerCase() === "author");
+  return scalarOf(main?.fullname) ?? scalarOf(main?.display_text);
+}
+
+/**
+ * One Catalog entry, by id, as a one-hit answer in the search's own shape.
+ *
+ * The item endpoint carries no `repositoryCalls`, so this hit's is built from
+ * what the item does say: "Online" first when it is available online, then
+ * the copy locations of its film notes. A digitized book with no film notes
+ * gets "Online" alone, or nothing.
+ */
+async function lookupCatalogItem(
+  id: string,
+  principal: Principal,
+): Promise<CatalogSearchResult> {
+  // One request, so it keeps fsFetch's default retries; the `attempts: 1` of
+  // hydration exists to bound 25 parallel calls, which this is not.
+  const res = await fsFetch(
+    principal,
+    `${ITEM_URL_PREFIX}${id}`,
+    { headers: HEADERS },
+    TOTAL_BUDGET_MS,
+  );
+  if (res.status === 404) {
+    // The item endpoint answers an unknown id with 404 and an empty body. An
+    // empty hit list here would read as "the Catalog holds nothing".
+    await res.text().catch(() => "");
+    throw new Error(
+      `No Catalog entry ${id}; check the ID, or search by title or film number.`,
+    );
+  }
+  if (!res.ok) await throwCatalogHttpError(res, principal, "lookup");
+  const item = await readCatalogBody(res);
+  const sources = objectsIn(item.source);
+  if (sources.length === 0) {
+    throw new Error(
+      `FamilySearch Catalog answered 200 for ${id} with no entry in it. ` +
+        "Retry shortly; if it persists, search by title or film number.",
+    );
+  }
+
+  const title = sources.map((s) => scalarOf(s.title) ?? scalarOf(s.display_title)).find(Boolean);
+  const creator = creatorOf(sources);
+  const hit: CatalogHit = {
+    id,
+    title: title ?? "(untitled)",
+    ...(creator ? { creator } : {}),
+    repositoryCalls: [],
+    hydrated: false,
+  };
+  hydrateFromSource(hit, sources);
+  const places = sources
+    .flatMap((s) => asArray(s?.film_note))
+    .map((f) => scalarOf(f?.copy_location))
+    .filter((p): p is string => p !== undefined);
+  hit.repositoryCalls = [
+    ...new Set([...(hit.availableOnline === true ? ["Online"] : []), ...places]),
+  ];
+
+  return shapeAnswer({
+    totalHits: 1,
+    returned: 1,
+    placeResolved: true,
+    hydrationTimedOut: false,
+    hydrateRequested: 1,
+    hits: [hit],
+  });
+}
+
 export async function catalogSearchTool(
   input: CatalogSearchInput,
   principal: Principal,
 ): Promise<CatalogSearchResult> {
   const deadline = Date.now() + TOTAL_BUDGET_MS;
 
-  if (!SEARCHABLE.some((f) => searchableValue(input[f]) !== undefined)) {
+  // A lookup, not a search: any filter beside it is refused, because it could
+  // only be dropped, and a dropped field silently changes the answer.
+  const catalogId =
+    input.catalogId === undefined ? undefined : parseCatalogId(input.catalogId);
+  if (catalogId !== undefined) {
+    const filters = [...QUERY_FIELDS, "exactPlace", "year"].filter(
+      (f) => input[f as keyof CatalogSearchInput] !== undefined,
+    );
+    if (filters.length > 0) {
+      throw new Error(
+        `catalogId opens one Catalog entry and takes no search filter; drop ` +
+          `${filters.join(", ")}, or drop catalogId to search.`,
+      );
+    }
+  } else if (!SEARCHABLE.some((f) => searchableValue(input[f]) !== undefined)) {
     throw new Error(
       "catalog_search needs at least one of standardPlace, keywords, surname, " +
-        "title, author, subject, filmNumber or callNumber — an empty query " +
-        "returns millions of hits.",
+        "title, author, subject, filmNumber, callNumber or catalogId (a " +
+        "Catalog entry id or link) — an empty query returns millions of hits.",
     );
   }
   // Both bounds, and whole numbers. A one-sided `> MAX` check let `hydrate:
@@ -758,6 +998,9 @@ export async function catalogSearchTool(
         "service degrades on volume.",
     );
   }
+  // count and hydrate are still checked above, so a bad value is refused the
+  // same way on both paths; past that they do nothing to a lookup.
+  if (catalogId !== undefined) return lookupCatalogItem(catalogId, principal);
 
   // The REP id, never the place id: standardPlaceToPlaceId("Maine, United
   // States") is 16, which the Catalog reads as Timor-Leste and answers.
@@ -790,78 +1033,9 @@ export async function catalogSearchTool(
     { headers: HEADERS },
     Math.max(0, deadline - Date.now()),
   );
-  if (!res.ok) {
-    // Drained before every throw below: an unconsumed undici body holds its
-    // socket until GC. Parsed too, because the Catalog says WHICH parameter
-    // it rejected ({"detail":"Validation failure",...}) and discarding that
-    // left the agent retrying the same query against nine candidates.
-    const raw = await res.text().catch(() => "");
-    let parsed: unknown = null;
-    try {
-      parsed = raw ? JSON.parse(raw) : null;
-    } catch {
-      parsed = null;
-    }
-    const detail = parseUpstreamErrorBody(parsed);
+  if (!res.ok) await throwCatalogHttpError(res, principal, "search");
 
-    if (res.status === 401) {
-      // fsFetch has already re-read tokens.json once; a 401 still here means
-      // the session is genuinely not accepted, which is the user's to fix.
-      throw new Error(
-        (await rejectedTokenMessage(
-          principal,
-          "FamilySearch session not accepted; call the login tool to re-authenticate.",
-        )) + (detail ? ` Upstream said: ${detail}` : ""),
-      );
-    }
-    if (res.status === 403) {
-      throw new Error(
-        "FamilySearch Catalog search was refused (403) by the edge, not by " +
-          "permissions as far as this tool can tell. The browser User-Agent " +
-          "it requires is already sent, so this is USUALLY rate limiting or " +
-          "IP reputation, where waiting and retrying is the fix — but a 403 " +
-          "alone cannot be told from a missing Catalog entitlement, which " +
-          "waiting will never clear. Check any upstream detail below before " +
-          "retrying." +
-          (detail ? ` Upstream said: ${detail}` : ""),
-      );
-    }
-    throw new Error(
-      `FamilySearch Catalog search failed: ${res.status} ${res.statusText}`.trim() +
-        (detail ? ` — ${detail}` : ""),
-    );
-  }
-
-  // Guarded: every non-2xx path in this file is framed for the LLM and the
-  // 2xx-but-unparseable one was not. Imperva fronts this host, and answering
-  // 200 with a challenge page is its ordinary behaviour — the exact thing the
-  // `Accept` header exists to prevent, with no fallback if it is ignored. A
-  // raw `SyntaxError: Unexpected token '<'` names neither the Catalog nor an
-  // action. A body of literal `null` parses fine and then fails on property
-  // access, so the shape is checked too.
-  let body: SearchBody;
-  try {
-    const parsed: unknown = await res.json();
-    // `typeof [] === "object"`, so an ARRAY body walked through the guard
-    // that exists to catch exactly this and answered
-    // `{ totalHits: 0, returned: 0, hits: [] }` — a clean, authoritative
-    // "the Catalog holds nothing for this place", which the agent records as
-    // negative evidence it never obtained. That is the worst output this
-    // tool can produce, so the top-level body is unwrapped like every
-    // container below it rather than merely type-tested.
-    const unwrapped = Array.isArray(parsed) ? firstObject(parsed) : parsed;
-    if (!unwrapped || typeof unwrapped !== "object") {
-      throw new Error("not an object");
-    }
-    body = unwrapped as SearchBody;
-  } catch {
-    throw new Error(
-      "FamilySearch Catalog answered 200 with a body that is not JSON. This " +
-        "is usually an edge challenge or interstitial page rather than the " +
-        "Catalog itself, so retrying shortly is the fix; the query was not " +
-        "refused and does not need changing.",
-    );
-  }
+  const body = (await readCatalogBody(res)) as SearchBody;
   // The item url of each hit that has one. Kept off the hit: it is the Catalog's
   // item record, which answers 401 without a sign-in token, so it is used only
   // to hydrate the hit and never returned.
@@ -1046,13 +1220,23 @@ export const catalogSearchSchema = {
     "original records are held and whether they can be seen, and to get an " +
     "imageGroupNumber for image_search or fulltext_search from a film note. " +
     "A hit's id (e.g. 'koha:3308785') is its catalog entry number, for " +
-    "citation. " +
+    "citation. When the researcher pastes a Catalog link or names an entry " +
+    "id, pass it as catalogId to open that one entry with all its detail. " +
     "Give at least one of standardPlace, keywords, surname, title, author, " +
-    "subject, filmNumber or callNumber. Requires FamilySearch auth (call " +
-    "login).",
+    "subject, filmNumber, callNumber or catalogId. Requires FamilySearch auth " +
+    "(call login).",
   inputSchema: {
     type: "object" as const,
     properties: {
+      catalogId: {
+        type: "string",
+        description:
+          "One Catalog entry to open: 'koha:36984', 'olib:2333650', the " +
+          "number alone, or a link such as " +
+          "'https://www.familysearch.org/en/search/catalog/koha:36984'. Returns " +
+          "that entry alone, with its film notes and access detail. No other " +
+          "search field may be given with it.",
+      },
       standardPlace: {
         type: "string",
         description:
@@ -1093,7 +1277,8 @@ export const catalogSearchSchema = {
         type: "integer",
         minimum: 1,
         maximum: 200,
-        description: "Hits to return. Default 25, max 200.",
+        description:
+          "Hits to return. Default 25, max 200. Has no effect with catalogId.",
       },
       hydrate: {
         type: "integer",
@@ -1102,7 +1287,8 @@ export const catalogSearchSchema = {
         description:
           "How many of those hits to fetch holdings detail for. Default 10, " +
           "max 25 — each one is an extra request, and the service degrades " +
-          "on volume. 0 skips hydration.",
+          "on volume. 0 skips hydration. Has no effect with catalogId, which " +
+          "always returns its entry's detail.",
       },
     },
   },

@@ -24,6 +24,7 @@ import {
   filmNotesHint,
   fitFilmNotes,
   mergeFilmNotes,
+  parseCatalogId,
   REEL_TEXT_CAP,
   shapeAnswer,
 } from "../../src/tools/catalog-search.js";
@@ -78,9 +79,10 @@ afterEach(() => {
   // Trap 2 holds for every search this suite makes, not just the one test
   // that names it: without the flag the service ORs the terms and answers
   // 2,046,826 hits where the same query should answer 12,344. calls[0] is
-  // always the search; a test that refuses before fetching makes none.
+  // always the search; a test that refuses before fetching makes none, and a
+  // catalogId lookup makes no search, only its one item call.
   const search = mockFetch.mock.calls[0];
-  if (search) {
+  if (search && !String(search[0]).startsWith(ITEM)) {
     const p = new URL(String(search[0])).searchParams;
     expect(p.get("m.queryRequireDefault")).toBe("on");
   }
@@ -3093,5 +3095,295 @@ describe("catalog_search — the recorded eval fixtures", () => {
       off.returned = 120;
       expect(cutFieldProblems(off)).toEqual([expect.stringContaining("returned is not the number of hits listed")]);
     });
+  });
+});
+
+describe("catalog_search — catalogId opens one entry (#4586)", () => {
+  /** The item response for koha:36984, trimmed from the live answer of 2026-11-16. */
+  function marylebone(overrides: Record<string, unknown> = {}): unknown {
+    return {
+      source: {
+        note: [
+          { text: "C-3524-7.", type: "SUMM", seq: 1 },
+          { text: "Offically in Middlesex, and known as Marylebone.", type: "SUMM", seq: 3 },
+        ],
+        film_note: {
+          digital_film_no: "9113284",
+          filmno: "883645",
+          copy_location: "FamilySearch Library",
+          text: "Parish register printouts of St. Marylebone, London, England, (Saint Mary) christenings, 1821-1827",
+        },
+        author: {
+          fullname: "Church of Jesus Christ of Latter-day Saints. Genealogical Department",
+          type: "Author",
+        },
+        subject: { text: "England, Middlesex, Marylebone - Church records - Indexes", type: "TRACE" },
+        display_title: "Parish register printouts of St. Marylebone (display)",
+        title: "Parish register printouts of St. Marylebone, London, England, (Saint Mary) christenings, 1821-1827",
+        titleno: 36984,
+        available_online: "N",
+        ...overrides,
+      },
+    };
+  }
+
+  function itemAnswers(body: unknown, status = 200): void {
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () =>
+      status === 200 ? json(body) : new Response(body === undefined ? "" : JSON.stringify(body), { status }),
+    );
+  }
+
+  describe("accepted forms fetch exactly the item URL", () => {
+    const cases: [unknown, string][] = [
+      ["koha:36984", "koha:36984"],
+      ["olib:2333650", "olib:2333650"],
+      ["KOHA:36984", "koha:36984"],
+      ["  koha:36984  ", "koha:36984"],
+      ["36984", "koha:36984"],
+      [36984, "koha:36984"],
+      ["https://www.familysearch.org/en/search/catalog/koha:36984", "koha:36984"],
+      ["https://www.familysearch.org/search/catalog/olib:2333650", "olib:2333650"],
+      ["http://familysearch.org/search/catalog/koha:36984", "koha:36984"],
+      ["https://www.familysearch.org/pt-br/search/catalog/koha:36984/", "koha:36984"],
+      ["https://www.familysearch.org/search/catalog/36984", "koha:36984"],
+      ["https://www.familysearch.org/search/catalog/koha:36984?availability=Online#x", "koha:36984"],
+      ["HTTPS://WWW.FamilySearch.org/search/catalog/koha:36984", "koha:36984"],
+    ];
+    for (const [given, id] of cases) {
+      it(`${JSON.stringify(given)} -> ${id}`, async () => {
+        itemAnswers(marylebone());
+        const r = await catalogSearchTool({ catalogId: given as string }, LOCAL);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        expect(String(mockFetch.mock.calls[0][0])).toBe(`${ITEM}${id}`);
+        expect(r.hits[0].id).toBe(id);
+      });
+    }
+  });
+
+  it("returns the entry as a one-hit answer with all its detail", async () => {
+    itemAnswers(marylebone());
+    const r = await catalogSearchTool({ catalogId: "koha:36984" }, LOCAL);
+    expect(r).toMatchObject({
+      totalHits: 1,
+      returned: 1,
+      placeResolved: true,
+      hydrationTimedOut: false,
+      hydrateRequested: 1,
+    });
+    expect(r.hits).toHaveLength(1);
+    const h = r.hits[0];
+    expect(h.title).toBe(
+      "Parish register printouts of St. Marylebone, London, England, (Saint Mary) christenings, 1821-1827",
+    );
+    expect(h.creator).toBe("Church of Jesus Christ of Latter-day Saints. Genealogical Department");
+    expect(h.hydrated).toBe(true);
+    expect(h.availableOnline).toBe(false);
+    expect(h.repositoryCalls).toEqual(["FamilySearch Library"]);
+    expect(h.filmNotes).toEqual([
+      expect.objectContaining({ filmNumber: "883645", imageGroupNumber: "9113284" }),
+    ]);
+    expect(h.notes).toContain("C-3524-7.");
+    expect(h.subjects).toEqual(["England, Middlesex, Marylebone - Church records - Indexes"]);
+    // The request carried the user's bearer and the browser UA, like every leg.
+    const init = mockFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init.headers);
+    expect(headers.get("Authorization")).toBe("Bearer tok");
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+    expect(headers.get("Accept")).toBe("application/json");
+  });
+
+  it("puts Online first when the item is available online, and dedupes copy locations", async () => {
+    itemAnswers(
+      marylebone({
+        available_online: "Y",
+        film_note: [
+          { filmno: "1", copy_location: "FamilySearch Library" },
+          { filmno: "2", copy_location: "Granite Mountain Record Vault" },
+          { filmno: "3", copy_location: "FamilySearch Library" },
+        ],
+      }),
+    );
+    const r = await catalogSearchTool({ catalogId: "koha:745492" }, LOCAL);
+    expect(r.hits[0].repositoryCalls).toEqual([
+      "Online",
+      "FamilySearch Library",
+      "Granite Mountain Record Vault",
+    ]);
+  });
+
+  it("gives a digitized book with no film notes Online alone", async () => {
+    itemAnswers(marylebone({ available_online: "Y", film_note: undefined }));
+    const r = await catalogSearchTool({ catalogId: "koha:3308785" }, LOCAL);
+    expect(r.hits[0].repositoryCalls).toEqual(["Online"]);
+  });
+
+  it("skips an Added Author when naming the creator", async () => {
+    itemAnswers(
+      marylebone({
+        author: [
+          { fullname: "Maine Ulster Scots Project", type: "Added Author" },
+          { fullname: "Smith, John", type: "Author" },
+        ],
+      }),
+    );
+    const r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
+    expect(r.hits[0].creator).toBe("Smith, John");
+  });
+
+  it("names no creator when every author is an Added Author", async () => {
+    itemAnswers(marylebone({ author: { fullname: "Maine Ulster Scots Project", type: "Added Author" } }));
+    const r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
+    expect(r.hits[0]).not.toHaveProperty("creator");
+  });
+
+  it("falls back to display_title, then (untitled)", async () => {
+    itemAnswers(marylebone({ title: undefined }));
+    let r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
+    expect(r.hits[0].title).toBe("Parish register printouts of St. Marylebone (display)");
+    itemAnswers(marylebone({ title: undefined, display_title: undefined }));
+    r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
+    expect(r.hits[0].title).toBe("(untitled)");
+  });
+
+  describe("refused before any request", () => {
+    const refused: unknown[] = [
+      "https://evil.example/search/catalog/koha:1",
+      "https://www.familysearch.org.evil.com/search/catalog/koha:1",
+      "https://evil.com/?x=https://www.familysearch.org/search/catalog/koha:1",
+      "https://user:pw@www.familysearch.org/search/catalog/koha:1",
+      "https://www.familysearch.org:8443/search/catalog/koha:1",
+      "ftp://www.familysearch.org/search/catalog/koha:1",
+      "https://www.familysearch.org/search/catalog/koha:1/extra",
+      "https://www.familysearch.org/search/catalog/koha:1/../../platform/users/current",
+      "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9S9-1234",
+      "https://www.familysearch.org/search/film/009113284",
+      "koha:1/../x",
+      "koha:12?x=1",
+      "koha:",
+      "koha:12a",
+      "isbn:12345",
+      "123abc",
+      "",
+      "   ",
+      -1,
+      1.5,
+      Number.NaN,
+      {},
+      [],
+      null,
+    ];
+    for (const given of refused) {
+      it(String(JSON.stringify(given) ?? given), async () => {
+        mockFetch.mockReset();
+        await expect(
+          catalogSearchTool({ catalogId: given as string }, LOCAL),
+        ).rejects.toThrow(/catalogId is .*koha:<digits>.*No request was made/s);
+        expect(mockFetch).toHaveBeenCalledTimes(0);
+      });
+    }
+  });
+
+  it("parseCatalogId only ever returns a namespaced id of digits", () => {
+    expect(parseCatalogId("https://familysearch.org/en/search/catalog/OLIB:77")).toBe("olib:77");
+    expect(() => parseCatalogId("koha:1 koha:2")).toThrow(/catalogId is/);
+  });
+
+  describe("refuses a search filter beside it", () => {
+    const filters: [string, unknown][] = [
+      ["standardPlace", "London, England"],
+      ["keywords", "christenings"],
+      ["filmNumber", "883645"],
+      ["availability", "Online"],
+      ["year", 1821],
+      ["exactPlace", false],
+    ];
+    for (const [field, value] of filters) {
+      it(field, async () => {
+        mockFetch.mockReset();
+        await expect(
+          catalogSearchTool({ catalogId: "koha:36984", [field]: value }, LOCAL),
+        ).rejects.toThrow(new RegExp(`takes no search filter; drop ${field}`));
+        expect(mockFetch).toHaveBeenCalledTimes(0);
+      });
+    }
+  });
+
+  it("accepts count and hydrate beside it, and they change nothing", async () => {
+    itemAnswers(marylebone());
+    const r = await catalogSearchTool({ catalogId: "koha:36984", count: 5, hydrate: 0 }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(r.hits[0].hydrated).toBe(true);
+    expect(r.hydrateRequested).toBe(1);
+  });
+
+  it("still refuses a count out of range beside it", async () => {
+    mockFetch.mockReset();
+    await expect(
+      catalogSearchTool({ catalogId: "koha:36984", count: 0 }, LOCAL),
+    ).rejects.toThrow(/count is 0/);
+    expect(mockFetch).toHaveBeenCalledTimes(0);
+  });
+
+  it("says an unknown id is not found, never an empty hit list", async () => {
+    itemAnswers(undefined, 404);
+    await expect(
+      catalogSearchTool({ catalogId: "koha:99999999999" }, LOCAL),
+    ).rejects.toThrow(
+      "No Catalog entry koha:99999999999; check the ID, or search by title or film number.",
+    );
+  });
+
+  it("gives the shared re-auth instruction on a 401", async () => {
+    itemAnswers({}, 401);
+    await expect(catalogSearchTool({ catalogId: "koha:1" }, LOCAL)).rejects.toThrow(
+      /session not accepted; call the login tool/,
+    );
+  });
+
+  it("names the lookup and the user-agent requirement on a 403", async () => {
+    itemAnswers(undefined, 403);
+    await expect(catalogSearchTool({ catalogId: "koha:1" }, LOCAL)).rejects.toThrow(
+      /Catalog lookup was refused \(403\).*browser User-Agent/s,
+    );
+  });
+
+  it("names the lookup and carries the detail on another failure", async () => {
+    itemAnswers({ detail: "Validation failure", status: 400 }, 400);
+    await expect(catalogSearchTool({ catalogId: "koha:1" }, LOCAL)).rejects.toThrow(
+      /FamilySearch Catalog lookup failed: 400.*Validation failure/s,
+    );
+  });
+
+  it("frames a 200 that is not JSON", async () => {
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () => new Response("<html>challenge</html>", { status: 200 }));
+    await expect(catalogSearchTool({ catalogId: "koha:1" }, LOCAL)).rejects.toThrow(
+      /answered 200 with a body that is not JSON/,
+    );
+  });
+
+  for (const body of [{}, { source: "x" }, { source: [] }, [{}]]) {
+    it(`frames a 200 with no entry in it: ${JSON.stringify(body)}`, async () => {
+      itemAnswers(body);
+      await expect(catalogSearchTool({ catalogId: "koha:1" }, LOCAL)).rejects.toThrow(
+        /answered 200 for koha:1 with no entry in it/,
+      );
+    });
+  }
+
+  it("frames a 200 whose body is an empty array as not JSON", async () => {
+    itemAnswers([]);
+    await expect(catalogSearchTool({ catalogId: "koha:1" }, LOCAL)).rejects.toThrow(
+      /answered 200 with a body that is not JSON/,
+    );
+  });
+
+  it("leaves search-hit hydration fetching identifier.value verbatim", async () => {
+    // Only the catalogId path builds a URL; a search hit's item url is still
+    // the one the response gave, never rebuilt from its id.
+    respond({ totalHits: 1, searchHits: [hit("olib:2333650")] }, marylebone());
+    await catalogSearchTool({ keywords: "Alberta" }, LOCAL);
+    expect(String(mockFetch.mock.calls[1][0])).toBe(`${ITEM}olib:2333650`);
   });
 });
