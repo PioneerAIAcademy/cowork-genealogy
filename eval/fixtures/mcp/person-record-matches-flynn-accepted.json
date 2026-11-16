@@ -1,0 +1,30 @@
+{
+  "tool": "person_record_matches",
+  "description": "Record matches for Patrick Flynn tree person (LZNY-BRF) filtered to status accepted: the 1 accepted match only, as FamilySearch answers a status filter. Listed before person-record-matches-flynn so an accepted-only call does not see the pending matches.",
+  "args": {
+    "id": "LZNY-BRF",
+    "status": [
+      "accepted"
+    ]
+  },
+  "response": {
+    "queryArk": "ark:/61903/4:1:LZNY-BRF",
+    "resultCount": 1,
+    "returned": 1,
+    "title": "Matches for ark:/61903/4:1:LZNY-BRF",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": [
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:MXYZ",
+        "pid": "MXYZ",
+        "arkType": "1:1:",
+        "confidence": 5,
+        "score": 0.97,
+        "title": "1850 United States Federal Census",
+        "status": "accepted",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      }
+    ]
+  }
+}

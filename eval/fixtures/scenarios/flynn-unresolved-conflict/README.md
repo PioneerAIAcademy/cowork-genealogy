@@ -13,4 +13,4 @@ evidence consistently supports Thomas Flynn as Patrick's father. But the
 unresolved birthplace discrepancy should block an exhaustive declaration
 under the `conflict_resolution` stop criterion.
 
-Used by: ut_research_exhaustiveness_009 (unresolved conflict blocks declaration).
+Used by: ut_research_exhaustiveness_d3c (unresolved conflict blocks declaration).

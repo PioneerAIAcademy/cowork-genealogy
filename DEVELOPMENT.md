@@ -165,6 +165,11 @@ Example: adding a "list providers" feature.
    - Add its name to `tools` in `packages/engine/mcp-server/manifest.json` — the packaging
      test (`tests/packaging/manifest.test.ts`) fails if the manifest and
      the registry drift apart
+   - A tool only a connector caller sees stays out of `allToolSchemas` and the manifest:
+     its schema stays in its own file (`packages/engine/mcp-server/src/tools/project-view.ts`
+     is the example), `createServer` adds it for a connector principal, its
+     `dev/smoke-calls.ts` row carries `connectorOnly: true`, and the dispatch chain holds no
+     string literal of its name
    - Run `npm run build` in `packages/engine/mcp-server/`
    - Create `packages/engine/mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows
@@ -775,3 +780,15 @@ cd eval/harness && uv run pytest
 See [`eval/README.md`](./eval/README.md) for the full guide including
 prerequisites, useful flags, and Windows `.bat` shortcuts for
 non-technical users.
+
+**PRs that owe a single-ask panel run.** A PR that changes
+`packages/engine/plugin/skills/research/SKILL.md`, any agent's `description:`,
+`packages/engine/plugin/hooks/no_project_route.py` or
+`packages/engine/plugin/main-thread.json` runs `make e2e-single-ask` and pastes the
+printed block into the PR. Those files decide which unit answers a message, and the
+panel is how production routing is measured (`docs/specs/e2e-test-spec.md` §16). It
+is live and billed: each fixture's README records its cost
+(`grep -h Measured eval/tests/e2e-single-ask/*/README.md`). A KNOWN-FAIL line is a
+fixture whose `known_issue` names the open issue that owns it, and does not fail the
+run; a plain FAIL is new, and the PR says why. When the owning issue is fixed, remove
+the fixture's `known_issue`.

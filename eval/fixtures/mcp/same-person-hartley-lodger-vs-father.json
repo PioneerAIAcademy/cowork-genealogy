@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1881 lodger William Hartley against the tree's Joseph Hartley (I2) (hartley-census-after-burial). Score measured on 2026-11-15 with the FamilySearch matcher, through the compiled same_person project arm on a copy of the scenario. The mock adds `warningsIfLinked` itself, from the compiled function, so it is not canned here.",
+  "args": {
+    "treePersonId": "I2"
+  },
+  "response": {
+    "score": 0.0004876458,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "William Hartley",
+      "role": "lodger"
+    },
+    "treePerson": {
+      "id": "I2",
+      "name": "Joseph Hartley"
+    }
+  }
+}

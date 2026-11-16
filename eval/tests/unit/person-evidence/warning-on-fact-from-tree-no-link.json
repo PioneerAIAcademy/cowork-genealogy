@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_person_evidence_w2t",
+    "skill": "person-evidence",
+    "name": "An impossible warning against a fact that came with the tree: the tree fact stands, no link",
+    "type": "positive",
+    "description": "The 1881 census household of John Carter agrees with the tree on John's age, birthplace and trade and on his wife and son, and same_person scores the head against John (I1) at 0.76. It also lists an impossible warning: the entry would put an event more than a year after I1's burial, and that 1870 burial came with the tree. Tree facts are taken as correct while researching (lead, 2026-11-16), so the head is not linked and the household is withheld with him. The reply names the warning and the tree fact, and says the matching wife and son make the burial worth checking. The counterpart of ut_person_evidence_w7k, where the same burial was added by this project on one `probable` link and loses.",
+    "tags": [
+      "person-evidence",
+      "no-link",
+      "link-warning-no-link"
+    ]
+  },
+  "input": {
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003, a_004, a_005, a_006, a_007, a_008, a_009, a_010. They are an 1881 census household in Leeds found for John Carter (I1): the head John Carter, his wife Ann and his son Thomas.\n\nprojectPath: <workspace>",
+    "scenario": "carter-census-burial-from-tree"
+  },
+  "mcp_fixtures": [
+    "same-person-carter-head-relatives",
+    "same-person-carter-head",
+    "same-person-carter-wife",
+    "same-person-carter-son"
+  ],
+  "judge_context": [
+    "The tree's John Carter (I1) carries a burial of 3 March 1870 that came with the tree: it was there when the project began, no record in this project backs it, and no link was written for it. The 1881 census household agrees with the tree on John's age, birthplace and trade, and lists a wife Ann, 43, and a son Thomas, 19, who match I2 and I3.",
+    "`same_person` returns a score of about 0.76 for the head against I1 and a `warningsIfLinked` entry marked impossible: the census would put an event more than a year after I1's burial, which came with the tree.",
+    "Tree facts are taken as correct while researching (lead, 2026-11-16). The correct result is that nothing from this record is written: no pe_ link for the head (a_001-a_004), and none for the wife or son, since a no-link for the person the request is about withholds the whole record. The reply names the warning and the tree's burial, says the head was not linked for that reason, and says the wife and son agree with the tree, so the burial is worth checking.",
+    "A `confident` or `probable` link of the head to I1 that PERSISTS is a FAIL on Correctness and on Confidence calibration: the run linked past a tree fact that stands. A refused attempt followed by no link is a PARTIAL (2) on Confidence calibration. A `speculative` link to I1 with the warning named is a PARTIAL (2) on Confidence calibration. A reply that asks the user whether to link is a PARTIAL (2) on Completeness.",
+    "Linking the wife to I2 or the son to I3 while the head is not linked is a PARTIAL (2) on Correctness: the record was withheld for its focus person.",
+    "Removing, changing or doubting the burial in the tree is not this agent's to do. A reply that recommends checking it is correct; a run that edits or removes it is a FAIL on Correctness.",
+    "A no-link that never mentions the warning or the burial is a PARTIAL (2) on Rationale quality.",
+    "Multi-person awareness, and Person minting and connecting edges: nothing is owed when the record is withheld. Mark both N/A when the run wrote nothing.",
+    "Completeness is the reply: the warning, the tree fact, the decision, and the note that the household otherwise fits. A run that makes no research_append and no materialize_facts call is correct here and is not incomplete.",
+    "Calling same_person is correct and expected. The canned scores are not the subject of this test: do not grade their values."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}

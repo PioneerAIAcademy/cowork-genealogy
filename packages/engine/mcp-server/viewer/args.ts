@@ -1,6 +1,5 @@
-// The command lines of the viewer's two entries. A bad value refuses to start
-// with a message naming the flag. No message echoes a value: a misplaced one may
-// be the secret.
+// The viewer's command line. A bad value refuses to start with a message naming
+// the flag. No message echoes a value: a misplaced one may be the secret.
 import { parseArgs } from "node:util";
 
 /** A refusal to start: the entry prints it and exits 2. */
@@ -13,26 +12,24 @@ export type CliArgs =
   | { local: true; root: string; port: number; open: boolean }
   | { local: false; root: string; port: number; secret: string; publicUrl: string };
 
-export interface StdioArgs {
-  root: string;
-}
-
 /** `parseArgs` with its own errors turned into a refusal to start. */
-function refuseBadFlags<T>(parse: () => T): T {
+function readFlags(argv: string[]) {
   try {
-    return parse();
+    return parseArgs({
+      args: argv,
+      allowPositionals: true,
+      options: {
+        secret: { type: "string" },
+        root: { type: "string" },
+        "public-url": { type: "string" },
+        port: { type: "string" },
+        local: { type: "boolean" },
+        "no-open": { type: "boolean" },
+      },
+    });
   } catch (error) {
     throw new UsageError(error instanceof Error ? error.message : String(error));
   }
-}
-
-function requireNoPositionals(positionals: string[]): void {
-  if (positionals.length > 0) throw new UsageError("This command takes flags only, no bare arguments.");
-}
-
-function requireRoot(root: string | undefined): string {
-  if (!root) throw new UsageError("--root is required.");
-  return root;
 }
 
 function parsePort(raw: string | undefined): number {
@@ -59,22 +56,10 @@ function parsePublicUrl(raw: string): string {
 }
 
 export function parseCliArgs(argv: string[]): CliArgs {
-  const { values, positionals } = refuseBadFlags(() =>
-    parseArgs({
-      args: argv,
-      allowPositionals: true,
-      options: {
-        secret: { type: "string" },
-        root: { type: "string" },
-        "public-url": { type: "string" },
-        port: { type: "string" },
-        local: { type: "boolean" },
-        "no-open": { type: "boolean" },
-      },
-    }),
-  );
-  requireNoPositionals(positionals);
-  const root = requireRoot(values.root);
+  const { values, positionals } = readFlags(argv);
+  if (positionals.length > 0) throw new UsageError("This command takes flags only, no bare arguments.");
+  const { root } = values;
+  if (!root) throw new UsageError("--root is required.");
   const port = parsePort(values.port);
   const publicUrl = values["public-url"];
   const { secret } = values;
@@ -91,12 +76,4 @@ export function parseCliArgs(argv: string[]): CliArgs {
   }
   if (publicUrl === undefined) throw new UsageError("--public-url is required without --local.");
   return { local: false, root, port, secret, publicUrl: parsePublicUrl(publicUrl) };
-}
-
-export function parseStdioArgs(argv: string[]): StdioArgs {
-  const { values, positionals } = refuseBadFlags(() =>
-    parseArgs({ args: argv, allowPositionals: true, options: { root: { type: "string" } } }),
-  );
-  requireNoPositionals(positionals);
-  return { root: requireRoot(values.root) };
 }
