@@ -2397,10 +2397,12 @@ nobody will). `search-hints` decides hints itself on every run. Each has eval fi
 each side. The mode difference survives in the router, which sets that field from the
 flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
 where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
-never to reach its `yes` side, but no check makes the router send the field to
-search-external-sites (the research unit suite checks it only on person-evidence's spawn): one
-committed step-mode run spawned search-external-sites without it, and its capture item
-stayed waiting (`docs/specs/e2e-test-spec.md` §5).
+never to reach its `yes` side, and `ut_research_ue1` (tag `delegates-user-present-no-external`)
+checks that the router sends the field on the opening turn of an autonomous run.
+That is narrower than the miss it was written for: one committed step-mode run
+spawned search-external-sites without the field 166 tool calls in, and its capture
+item stayed waiting (`docs/specs/e2e-test-spec.md` §5). No check covers a spawn
+later in a run, or an attended run's `yes`.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months. The first is fixed; the second stands:
