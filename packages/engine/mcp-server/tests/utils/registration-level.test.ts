@@ -26,6 +26,9 @@ describe("normalizeRegistrationStart", () => {
     ["county and town", [["county", undefined], ["town", undefined]]],
     ["State level", [["state", undefined]]],
     ["colony/province (optional licence)", [["province", "colony/province (optional licence)"]]],
+    ["provincial (licence procedure, optional)", [["province", "provincial (licence procedure, optional)"]]],
+    ["municipal/civil registry (non-Catholics only)", [["municipality", "municipal/civil registry (non-Catholics only)"]]],
+    ["Provincial", [["province", undefined]]],
   ])("reads %j", (level, expected) => {
     expect(read(level)).toEqual(expected);
   });

@@ -378,6 +378,50 @@ describe("research_append stamps locality collection counts from the catalog", (
     expect((await storedCollections()).map((c: any) => c.id)).toEqual(["1803969"]);
   });
 
+  describe("a title that names another part of the scope is not added", () => {
+    const PORTUGAL: FSCollectionsResponse = {
+      results: 6,
+      index: 0,
+      entries: [
+        catalogEntry("1", "Portugal, Madeira, Catholic Church Records, 1044-1990", 1, 1),
+        catalogEntry("2", "Portugal, Aveiro, Catholic Church Records, 1550-1957", 1, 1),
+        catalogEntry("3", "Portugal, Azores, Catholic Church Records, 1542-2019", 1, 1),
+        catalogEntry("4", "Portugal Baptisms, 1570-1910", 1, 1),
+        catalogEntry("5", "Portugal, Civil Records, 1437-2023", 1, 1),
+        catalogEntry("6", "Portugal, Passport Registers and Passenger Lists, 1800-1946", 1, 1),
+      ],
+    };
+    const madeira = (collections: unknown[]) =>
+      appendIn("Madeira, Portugal", collections, { for_place: "Funchal, Madeira, Portugal", jurisdictions: [{ name: "Funchal, Madeira, Portugal", date_range: "1835-" }] });
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(PORTUGAL), { status: 200 }));
+    });
+
+    it("adds the place's own and the country-wide collections, and says how many it left out", async () => {
+      const r = await madeira([]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["1", "4", "5", "6"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 4 other FamilySearch collections for "Portugal" from the catalog, after the 0 sent; ' +
+          '2 that name another part of "Portugal" were left out',
+      ]);
+    });
+
+    it("keeps a collection for another part when the entry itself sent it", async () => {
+      await madeira([{ id: "3", title: "Portugal, Azores, Catholic Church Records, 1542-2019" }]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["3", "1", "4", "5", "6"]);
+    });
+
+    it("reads a place part with a type in brackets as the part alone", async () => {
+      await appendIn("Portugal", [], { jurisdictions: [{ name: "Madeira, Portugal (Autonomous Region)", date_range: "1835-" }] });
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["1", "4", "5", "6"]);
+    });
+
+    it("with no part below the scope, adds only what names no part", async () => {
+      await appendIn("Portugal", []);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["4", "5", "6"]);
+    });
+  });
+
   it("leaves a collections value that is not a list for the validator to refuse", async () => {
     const r = await appendIn(ILLINOIS, "all of them");
     expect(r.ok).toBe(false);

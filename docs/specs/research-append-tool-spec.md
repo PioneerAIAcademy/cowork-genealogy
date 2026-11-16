@@ -2195,7 +2195,21 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   else from the first `jurisdictions[].name` whose scope matches a title. At most
   `LOCALITY_COLLECTIONS_FILL_MAX` (150) rows in all; the largest list in 18
   surveyed places was 65. One warning says what was added:
-  > `localities collections: added the <n> other FamilySearch collections for "<scope>" from the catalog, after the <m> sent`
+  > `localities collections: added the <n> other FamilySearch collections for "<scope>" from the catalog, after the <m> sent[; <k> that name another part of "<scope>" were left out]`
+
+  **A title that names another part of the scope is not added**
+  (`titleNamesElsewhere`): for a Madeira guide, 33 of Portugal's 39 collections
+  name another district (`Portugal, Aveiro, Catholic Church Records, 1550-1957`).
+  A title names the entry's own place when it holds, as a whole word, a part of
+  the entry's `place`, `for_place` or a jurisdiction name below the scope (a type
+  in brackets dropped). Otherwise it names somewhere else when, with the scope and
+  the years taken out, its first comma-separated part holds no record-type word
+  (`COLLECTION_TITLE_TYPE_WORD`) and more of the title follows. Over the 331 rows
+  `collections_search` returned for 18 real places, 16 name the place, 165 name no
+  part of the scope, and 150 name another part. The rule reads titles only, so a
+  collection for one county whose title runs the place and the type together
+  (`Pennsylvania, Philadelphia City Death Certificates`) counts as naming no part
+  and is added. A collection the entry itself sent is always kept.
 
   Nothing is added, and nothing is said, on an update, when the catalog cannot be
   read, when no title holds the scope, or when the entry already holds them all.
@@ -2427,7 +2441,8 @@ four one-turn runs on real places. So before validation, on an append's `entry` 
 an update's `fields` (`normalizeRegistrationStart`, `utils/registration-level.ts`):
 
 - The levels a value names are the list words in its text outside brackets;
-  `statewide` reads as `state` and `nationwide` as `national`.
+  `statewide` reads as `state`, `nationwide` as `national`, `provincial` as
+  `province` and `municipal` as `municipality`.
 - A value naming one or more becomes one row per level, each a copy of the row.
 - The value as written is kept in the row's `note` when it said more than the
   levels, unless the row already has a note.

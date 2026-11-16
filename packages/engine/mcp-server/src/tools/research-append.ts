@@ -11134,8 +11134,46 @@ function hasLocalityAppend(ops: readonly unknown[]): boolean {
   return ops.some((op: any) => op && typeof op === "object" && op.section === "localities" && op.op === "append");
 }
 
+/** A word of a record type or a record-keeping body. A title segment holding none,
+ *  with more of the title after it, is read as a place: `Aveiro` in `Portugal,
+ *  Aveiro, Catholic Church Records, 1550-1957`. */
+const COLLECTION_TITLE_TYPE_WORD =
+  /\b(records?|census|births?|baptisms?|christenings?|marriages?|deaths?|burials?|church|civil|index|indexes|registers?|registration|passenger|immigration|emigration|naturali[sz]ation|military|probate|estate|wills?|land|deeds?|tax|court|cemeter\w*|obituar\w*|newspapers?|directories|school|voter|vital|pension|draft|service|lists?|files?|books?|cards?|papers|collections?|genealog\w*|find a grave|billiongraves|miscellaneous|select|state|county|city|parish|diocese|district|national|federal)\b/i;
+
 /**
- * Add to a `localities` append's `collections` every FamilySearch collection for
+ * Whether a catalog title in the place's scope names somewhere else: a part of the
+ * scope that is not one of the entry's own places. For a Madeira guide 33 of
+ * Portugal's 39 collections do (Aveiro, Azores, Beja). Over 331 rows from 18 real
+ * places the titles sort as 16 naming the place, 165 naming no part of the scope,
+ * and 150 naming another part.
+ */
+function titleNamesElsewhere(title: string, scope: string, ownTerms: readonly RegExp[]): boolean {
+  if (ownTerms.some((re) => re.test(title))) return false;
+  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  const rest = title
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) => p !== "" && !scopeParts.has(p.toLowerCase()) && !/^[\d\s–-]+$/.test(p));
+  return rest.length >= 2 && !COLLECTION_TITLE_TYPE_WORD.test(rest[0]);
+}
+
+/** One whole-word matcher per part of the entry's places below `scope`. */
+function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
+  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  const terms = new Set<string>();
+  for (const name of names) {
+    if (typeof name !== "string") continue;
+    for (const raw of name.split(",")) {
+      const part = raw.replace(/\([^()]*\)/g, " ").trim();
+      if (part.length < 3 || scopeParts.has(part.toLowerCase()) || part === "United States") continue;
+      terms.add(part);
+    }
+  }
+  return [...terms].map((t) => new RegExp(`(?<![\\p{L}\\p{N}])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "iu"));
+}
+
+/**
+ * Add to a `localities` append's `collections` the FamilySearch collections for
  * the place that the entry did not send, from the catalog (spec §5.12, "The whole
  * list"). Runs after the count stamp, so the rows the entry sent stay first, as
  * stamped.
@@ -11144,7 +11182,8 @@ function hasLocalityAppend(ops: readonly unknown[]): boolean {
  * 331 over 17 real places), and research-plan plans from this list without its own
  * search, so a collection left out was hidden from the plan. The scope is the one
  * `collections_search` derives: the entry's `place`, else the first jurisdiction
- * name whose scope matches a title.
+ * name whose scope matches a title. A title that names another part of the scope
+ * is not added (`titleNamesElsewhere`).
  */
 function fillLocalityCollections(
   ops: ResearchAppendOp[],
@@ -11166,9 +11205,11 @@ function fillLocalityCollections(
       if (needle === "") continue;
       const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
       if (inScope.length === 0) continue;
+      const own = ownPlaceTerms([...names, entry.for_place], scope);
       const sent: unknown[] = entry.collections ?? [];
       const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
-      const missing = inScope.filter(([id]) => !sentIds.has(id));
+      const missing = inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own));
+      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, scope, own)).length;
       const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
       const added = missing.slice(0, room).map(([id, c]) => ({
         id,
@@ -11177,13 +11218,14 @@ function fillLocalityCollections(
         person_count: c.personCount,
         record_count: c.recordCount,
       }));
-      if (added.length === 0 && missing.length === 0) return;
+      if (missing.length === 0) return;
       entry.collections = [...sent, ...added];
       warnings.push(
         fmt(
           i,
           `localities collections: added ${added.length === missing.length ? `the ${added.length}` : `${added.length} of the ${missing.length}`} ` +
-            `other FamilySearch collections for "${scope}" from the catalog, after the ${sent.length} sent`,
+            `other FamilySearch collections for "${scope}" from the catalog, after the ${sent.length} sent` +
+            (elsewhere > 0 ? `; ${elsewhere} that name another part of "${scope}" were left out` : ""),
         ),
       );
       return;

@@ -12,9 +12,14 @@ const WIDE: Record<string, string> = { nation: "national" };
 /** Words that say nothing beyond the level itself, so they earn no note. */
 const FILLER = new Set(["level", "and", "or", "the"]);
 
+/** An adjective the model writes for a level. Both were refused in runs on real places. */
+const ADJECTIVE: Record<string, string> = { provincial: "province", municipal: "municipality" };
+
 /** The list word a word stands for (`statewide` is `state`), or null. */
 function levelWord(word: string, allowed: ReadonlySet<string>): string | null {
   if (allowed.has(word)) return word;
+  const noun = ADJECTIVE[word];
+  if (noun && allowed.has(noun)) return noun;
   const wide = /^([a-z]+)wide$/.exec(word);
   if (!wide) return null;
   const stem = WIDE[wide[1]] ?? wide[1];
