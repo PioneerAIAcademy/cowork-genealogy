@@ -140,6 +140,16 @@ export interface SamePersonProjectResult {
   recordPersona: ScoredRecordPersona;
   /** The tree person it was scored against. */
   treePerson: ScoredTreePerson;
+  /** One sentence per birth place or birth date of the scored record person
+   *  that a settled fact conflict set aside (`settledBirthDisputes`). Absent
+   *  when there is none. */
+  settledConflicts?: string[];
+  /** One sentence per genealogical warning that copying the scored record
+   *  person's facts onto this tree person would introduce (`warningsIfLinked`):
+   *  the person it stands on, the message, whether `materialize_facts` would
+   *  refuse the copy for it, and the tree facts it depends on. Absent when
+   *  there is none. */
+  warningsIfLinked?: string[];
 }
 
 /** One scored relative pairing returned by `matchRelatives: true` mode. */

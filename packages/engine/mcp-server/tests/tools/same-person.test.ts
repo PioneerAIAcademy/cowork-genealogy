@@ -791,6 +791,174 @@ describe("samePerson — project-relative arm", () => {
     expect(file.scores["a_005|I1"]).not.toHaveProperty("confidence");
   });
 
+  describe("settledConflicts", () => {
+    const BIRTH = {
+      id: "a_007", record_id: RECORD, record_role: "principal",
+      fact_type: "birth", value: "Born in Pennsylvania", place: "Pennsylvania",
+      record_persona_id: null, record_basis: "stated", log_entry_id: "log_1",
+    };
+    const OTHER = {
+      id: "a_020", record_id: "https://www.familysearch.org/ark:/61903/1:1:CENS-1", record_role: "head",
+      fact_type: "birth", value: "Born in Ireland", place: "Ireland",
+      record_persona_id: null, record_basis: "stated", log_entry_id: "log_1",
+    };
+    const withBirth = (conflicts: any[]) => {
+      const base = research();
+      return { ...base, assertions: [...base.assertions, BIRTH, OTHER], conflicts };
+    };
+    const conflict = (status: string, preferred: string | null) => ({
+      id: "c_001", conflict_type: "fact", disputed_attribute: "birthplace",
+      competing_assertion_ids: ["a_020", "a_007"], status, preferred_assertion_id: preferred,
+    });
+    const IRISH_TREE = {
+      ...TREE,
+      persons: [
+        { ...TREE.persons[0], facts: [{ type: "Birth", date: "1820", place: "Ireland" }] },
+        TREE.persons[1],
+      ],
+    };
+
+    it("names the record's birth place that a resolved conflict set aside", async () => {
+      await project(withBirth([conflict("resolved", "a_020")]), IRISH_TREE);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+      );
+      expect(result.settledConflicts).toHaveLength(1);
+      expect(result.settledConflicts![0]).toContain("'c_001'");
+      expect(result.settledConflicts![0]).toContain('"Pennsylvania"');
+    });
+
+    it("is absent while that conflict is unresolved", async () => {
+      await project(withBirth([conflict("unresolved", null)]), IRISH_TREE);
+      okScore();
+      const result = await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1" },
+        LOCAL,
+      );
+      expect(result).not.toHaveProperty("settledConflicts");
+    });
+
+    it("is absent on a pairing with nothing set aside", async () => {
+      await project();
+      okScore();
+      const result = await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1" },
+        LOCAL,
+      );
+      expect(result).not.toHaveProperty("settledConflicts");
+    });
+  });
+
+  describe("warningsIfLinked", () => {
+    const SOURCES = [{ id: "src_1", gedcomx_source_description_id: "S1" }];
+    /** The record's principal living somewhere in `date`, and the bride too. */
+    const withFacts = (extra: any[]) => {
+      const base = research();
+      return {
+        ...base,
+        sources: SOURCES,
+        assertions: [
+          ...base.assertions.map((a: any) => ({ ...a, source_id: "src_1" })),
+          ...extra.map((a) => ({
+            record_id: RECORD, record_persona_id: null, record_basis: "stated",
+            log_entry_id: "log_1", source_id: "src_1", ...a,
+          })),
+        ],
+      };
+    };
+    const residence = (id: string, role: string, date: string) => ({
+      id, record_role: role, fact_type: "residence", value: "Boston", date, place: "Boston, Massachusetts",
+    });
+    const treeWith = (thomasFacts: any[]) => ({
+      ...TREE,
+      sources: [{ id: "S1", title: "Marriage register" }],
+      persons: [{ ...TREE.persons[0], facts: thomasFacts }, TREE.persons[1]],
+    });
+    const DEAD_1850 = treeWith([
+      { id: "F1", type: "Birth", date: "1820" },
+      { id: "F2", type: "Death", date: "1850" },
+    ]);
+    const score = async (args: Record<string, unknown> = {}) =>
+      projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1", ...args }, LOCAL),
+      );
+
+    it("names the warning the record's facts would put on the tree person, with no link written", async () => {
+      await project(withFacts([residence("a_030", "principal", "1880")]), DEAD_1850);
+      okScore();
+      const result = await score();
+      expect(result.score).toBeCloseTo(0.99983513);
+      expect(result.warningsIfLinked).toHaveLength(1);
+      expect(result.warningsIfLinked![0]).toContain("Thomas Flynn (I1)");
+      expect(result.warningsIfLinked![0]).toMatch(/death/i);
+    });
+
+    it("leaves the tree as it was", async () => {
+      await project(withFacts([residence("a_030", "principal", "1880")]), DEAD_1850);
+      okScore();
+      await score();
+      const tree = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf8"));
+      expect(tree).toEqual(DEAD_1850);
+    });
+
+    it("is absent when the record's facts fit the tree person", async () => {
+      await project(withFacts([residence("a_030", "principal", "1845")]), DEAD_1850);
+      okScore();
+      expect(await score()).not.toHaveProperty("warningsIfLinked");
+    });
+
+    it("lists a warning the save allows, marked so", async () => {
+      await project(withFacts([residence("a_031", "principal", "1810")]), DEAD_1850);
+      okScore();
+      const result = await score();
+      expect(result.warningsIfLinked?.length).toBeGreaterThan(0);
+      expect(result.warningsIfLinked!.every((s) => s.includes("; allowed at save."))).toBe(true);
+    });
+
+    it("is absent for a second birth year: the birth comparison owns that", async () => {
+      await project(
+        withFacts([{ id: "a_031", record_role: "principal", fact_type: "birth", value: "born 1823", date: "1823" }]),
+        DEAD_1850,
+      );
+      okScore();
+      expect(await score()).not.toHaveProperty("warningsIfLinked");
+    });
+
+    it("says a fact the project's starting tree held came with the tree", async () => {
+      await project(withFacts([residence("a_030", "principal", "1880")]), DEAD_1850);
+      await writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(DEAD_1850), "utf8");
+      okScore();
+      const result = await score();
+      expect(result.warningsIfLinked![0]).toContain("Impossible; refused at save. It depends on the record's Residence of 1880; and on the tree's Death of 1850 (F2), which came with the tree.");
+    });
+
+    it("reads the party that was scored, not the assertion's own", async () => {
+      // The bride's 1880 residence is no warning on Mary, who has no death.
+      await project(withFacts([residence("a_030", "principal", "1880"), residence("a_032", "bride", "1880")]), DEAD_1850);
+      okScore();
+      const bride = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_005", treePersonId: "I2", recordRole: "bride" },
+          LOCAL,
+        ),
+      );
+      expect(bride.recordPersona.role).toBe("bride");
+      expect(bride).not.toHaveProperty("warningsIfLinked");
+    });
+
+    it("is absent, and the score stands, when the record's source has no tree entry", async () => {
+      await project(
+        { ...withFacts([residence("a_030", "principal", "1880")]), sources: [] },
+        DEAD_1850,
+      );
+      okScore();
+      const result = await score();
+      expect(result.score).toBeCloseTo(0.99983513);
+      expect(result).not.toHaveProperty("warningsIfLinked");
+    });
+  });
+
   it("asks FamilySearch once, and rethrows its failure rather than retrying it", async () => {
     await project();
     mockFetch.mockResolvedValueOnce({

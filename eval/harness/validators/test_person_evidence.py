@@ -1507,6 +1507,103 @@ def test_corridor_move_links_confident(before_state, after_state, test):
     )
 
 
+# --- Warnings a link would introduce (same_person's warningsIfLinked) ---
+
+_DEATH_WORDS = re.compile(r"\b(buri\w*|inter\w+|death|died|dead|deceased)\b", re.IGNORECASE)
+
+
+def _new_strong_links_to_subject(before: dict, after: dict) -> list[dict]:
+    subjects = _subject_ids(before)
+    return [
+        e for e in _new_person_evidence(before, after)
+        if e.get("person_id") in subjects
+        and e.get("confidence") in ("confident", "probable")
+        and not e.get("superseded_by")
+    ]
+
+
+def test_link_warning_no_link(before_state, after_state, test):
+    """Tag-gated (`link-warning-no-link`): `same_person` listed an impossible
+    warning the link would introduce, and the tree fact behind it stands (it
+    came with the tree, or records back it at `confident`), so the record is a
+    different person. No new `confident` or `probable` link to the subject may
+    stand, and no link the project already held may be lowered to make room for
+    the record."""
+    if "link-warning-no-link" not in (test.get("tags") or []):
+        pytest.skip("not a link-warning-no-link test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    strong = _new_strong_links_to_subject(before, after)
+    assert not strong, (
+        "the link would introduce an impossible warning against a tree fact that "
+        "stands, so the record is a different person; these new links to the subject stand: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in strong]}"
+    )
+    was = {e.get("id"): e.get("confidence") for e in (before.get("person_evidence") or [])}
+    moved = [
+        (e.get("id"), was[e.get("id")], e.get("confidence"))
+        for e in (after.get("person_evidence") or [])
+        if e.get("id") in was and (e.get("confidence") != was[e.get("id")] or e.get("superseded_by"))
+    ]
+    assert not moved, (
+        "the tree fact stands; the links the project held must stay as they "
+        f"were, but these changed (id, before, after): {moved}"
+    )
+
+
+def test_link_warning_explained_links_and_names_it(before_state, after_state, test):
+    """Tag-gated (`link-warning-explained`): the mirror arm. The warning comes
+    from a thinly supported fact already on the tree person and the record is
+    the well-supported side, so the subject is linked at `probable` or
+    `confident` and a rationale names the death-like fact in doubt. No link is
+    the warning rule over-firing."""
+    if "link-warning-explained" not in (test.get("tags") or []):
+        pytest.skip("not a link-warning-explained test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    strong = _new_strong_links_to_subject(before, after)
+    assert strong, (
+        "the record is the well-supported side of the warning, so the subject is "
+        "linked at `probable` or `confident`; new links to the subject: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in _new_person_evidence(before, after)] or 'none'}"
+    )
+    assert any(_DEATH_WORDS.search(e.get("rationale") or "") for e in strong), (
+        "a link written past a listed warning names the warning and the tree fact "
+        "in doubt; no new link to the subject mentions the burial: "
+        f"{[(e.get('id'), (e.get('rationale') or '')[:120]) for e in strong]}"
+    )
+
+
+
+def test_link_warning_implausible_still_links(before_state, after_state, test):
+    """Tag-gated (`link-warning-implausible-links`): the listed warning is
+    implausible, not impossible, and the rest of the record fits, so the person
+    it stands against is still linked. In `carter-census-late-child` that is the
+    census wife and the tree's Ann (I2). No `confident` or `probable` link to
+    her is the warning rule over-firing."""
+    if "link-warning-implausible-links" not in (test.get("tags") or []):
+        pytest.skip("not a link-warning-implausible-links test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    strong = [
+        e for e in _new_person_evidence(before, after)
+        if e.get("person_id") == "I2"
+        and e.get("confidence") in ("confident", "probable")
+        and not e.get("superseded_by")
+    ]
+    assert strong, (
+        "an implausible warning is unlikely, not excluded: the wife is linked to "
+        "I2 at `probable` or `confident`; new links written: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('person_id'), e.get('confidence')) for e in _new_person_evidence(before, after)] or 'none'}"
+    )
+
+
 # --- Arrival to naturalization interval (issue #3969) -----------------
 
 # The Gaetjen scenarios: a_007 is the 13 Aug 1875 naturalization, a_014 the
@@ -1535,7 +1632,7 @@ _SHORTFALL = re.compile(
 # A negator up to two words before the match, in the same clause: "no
 # shortfall", "no residence shortfall", "does not fall short".
 _NEGATED = re.compile(r"\b(?:no|not|without|never|nor)\b(?:\s+\S+){0,2}\s*$", re.IGNORECASE)
-_CLAUSE_BREAK = re.compile(r"[,.;:!?\n]")
+_CLAUSE_BREAK = re.compile(r"[,.;:!?\n()]")
 # A negator anywhere earlier in the clause: "there is no evidence that this was
 # a return trip", "nothing here is impossible".
 _CLAUSE_NEGATOR = re.compile(
