@@ -957,7 +957,7 @@ def rule2b_judge_prompt(
     gh_error(
         f"{header} Satisfy by running `make judge-regrade` and committing the "
         f"refreshed run log in this PR. (A regrade stamps the new hash + judge "
-        f"model and costs ~$0.25/skill of judge-only spend; it leaves the "
+        f"model and costs ~$0.70/skill of judge-only spend; it leaves the "
         f"skill output and the `.ann.json` alone.)",
     )
     return 1

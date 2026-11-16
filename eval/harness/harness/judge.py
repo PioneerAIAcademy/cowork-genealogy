@@ -251,11 +251,13 @@ def _summarize_response(
 #
 # Each needle gets one excerpt, at its first hit, and none if that hit is in
 # the first _RESPONSE_STRING_MAX chars the judge already sees:
-# `www.familysearch.org` recurs every ~100 chars of a wiki page. On the Ireland
-# church-records page, the v7h guides in locality-guide v5.json and
-# v5_2026-10-26_16-22-37.json cite 24 and 21 URLs found past the cut; radius
-# 150 with 16 slots shows 22 and 21 of them, where 300 with 6 showed 11 and 13,
-# for about the same chars.
+# `www.familysearch.org` recurs every ~100 chars of a wiki page. Radius 150
+# with 16 slots shows nearly every cited URL past the cut, where 300 with 6
+# shows about half, for about the same chars. Recounted 2026-11-16 with these
+# helpers over the agent's reply in the v7h runs of locality-guide v5.json and
+# v5_2026-10-26_16-22-37.json, against the current Ireland church-records
+# fixture: 19 of 19 and 15 of 15, against 9 and 6. The counts move with which
+# text the needles are taken from; the comparison has held in every count.
 # Excerpts are left out of the size guard's drop budget (see
 # `_render_tool_calls_with_size_guard`): the motivating locality-guide runs sit
 # at 47-50K already, and counting excerpts dropped the very page they came from.
@@ -543,7 +545,8 @@ _SLOT_RE = re.compile(r"\{([a-z_]+)\}")
 # Size guard for the tool_calls slot. Even with per-response summarization,
 # many calls × moderate sizes can blow past the judge's context. The budget is
 # spent on evidence: once the block exceeds _TOOL_CALLS_MAX_CHARS the harness
-# drops the oldest tool calls and prepends a "_dropped_for_size" marker so
+# drops the oldest tool calls (a call that carries a harness excerpt goes last;
+# see `_render_tool_calls_with_size_guard`) and prepends a "_dropped_for_size" marker so
 # reviewers can see truncation happened. That budget is measured with the args
 # of every live call (matched.kind == "live": the mock answered it from the
 # real implementation, which is how every writer runs) stood in by a short
@@ -675,12 +678,14 @@ def _render_tool_calls_with_size_guard(
 
     The drop budget is measured on a view in which each live call's args are
     replaced by `_live_args_omitted`: while that view exceeds
-    _TOOL_CALLS_MAX_CHARS, drop the oldest call, and prepend a marker that
+    _TOOL_CALLS_MAX_CHARS, drop the oldest call that carries no excerpt (the
+    oldest call once every remaining one carries one), and prepend a marker that
     records how many were dropped. The kept calls are then rendered with their
     real args. If that render exceeds _TOOL_CALLS_HARD_MAX_CHARS, live args
     are rendered with their strings cut to the per-string cap, and if it still
     does, as in the measured view. Worst case (single call still too large),
-    keep the most recent one and accept the overage.
+    keep one call and accept the overage: the newest that carries an excerpt
+    if any does, else the newest.
 
     `needles` (from `_citation_needles`) adds excerpts to every cut string that
     hides one. Like live args, excerpts are left out of the measured view, so
@@ -708,7 +713,7 @@ def _render_tool_calls_with_size_guard(
                     # grounding rubric marks a correct citation of result 4+ as
                     # fabricated when the judge can only see results 1-3 (#1902).
                     # The prompt-size bound is the guard below, which drops
-                    # whole oldest calls with a stated marker.
+                    # whole calls, oldest uncited first, with a stated marker.
                     "response_summary": _with_excerpts(
                         c.get("response"),
                         _summarize_response(c.get("response"), array_sample=None),

@@ -2089,7 +2089,8 @@ def test_size_guard_drops_uncited_calls_before_the_cited_page():
     assert '"tool": "mcp__genealogy__tool_0"' not in rendered
 
 
-def test_size_guard_does_not_protect_a_call_that_only_mentions_a_cited_host():
+@pytest.mark.parametrize("data_len", [1_500, judge._RESPONSE_STRING_MAX + 500])
+def test_size_guard_does_not_protect_a_call_that_only_mentions_a_cited_host(data_len):
     """Every guide cites familysearch.org and nearly every wiki page names it
     in the first 2,000 chars the judge already sees. Protecting those calls
     dropped three more from v7h and bought no excerpt."""
@@ -2099,7 +2100,7 @@ def test_size_guard_does_not_protect_a_call_that_only_mentions_a_cited_host():
             "args": {"q": f"call-{i}"},
             "matched": {"kind": "predicate", "index": None},
             "response": {
-                "data": ("see www.familysearch.org " if i % 2 else "") + "x" * 1_500
+                "data": ("see www.familysearch.org " if i % 2 else "") + "x" * data_len
             },
         }
         for i in range(40)
