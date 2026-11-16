@@ -5,10 +5,10 @@ Patrick Flynn parentage research — the father (Thomas Flynn) has been confirme
 ## State
 
 - **Objective:** Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA
-- **Questions:** q_001 (Who was Patrick Flynn's father? — resolved: Thomas Flynn), q_002 (1850 census placement — resolved)
+- **Questions:** q_001 (Who was Patrick Flynn's father? — resolved: Thomas Flynn), q_002 (Patrick's 1850 residence — resolved)
 - **Plans:** pl_001 (1850 census, completed), pl_002 (paternity evidence, completed)
 - **Project status:** active — mother not yet identified
-- **Proof summary:** ps_001 tier `proved` for the paternity sub-question
+- **Proof summaries:** ps_001 tier `proved` for the paternity sub-question; ps_002 tier `proved` for q_002 (1850 residence)
 
 ## Differs from `mid-research-flynn`
 
@@ -16,6 +16,7 @@ Patrick Flynn parentage research — the father (Thomas Flynn) has been confirme
 - **`plans[pl_002]`:** `status: "completed"`, probate item (`pli_006`) added and completed (negative result)
 - **`log`:** Adds `log_006` — probate search, negative outcome
 - **`proof_summaries[ps_001].tier`:** `proved` (three independent sources, conflict resolved, probate searched)
+- **`proof_summaries[ps_002]`:** added for q_002. `research_append` refuses `resolved` on a question no proof summary cites, so a resolved q_002 without one could not occur in a real project; without it, question-selection waited on q_002's write-up instead of writing the mother question
 
 ## Used by
 
