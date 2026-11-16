@@ -121,7 +121,7 @@ Once `place_search` (step 2) has returned the `standardPlace`, issue the survey 
 
 On `No wiki page found`, or a page that returns only generic content, record and report the gap; do not fill it from memory, and do not drop an instruction that does not depend on the page. Only a `wiki_read` on a URL `wiki_search` returned waits for that call.
 
-**When a page you read, or a `collectionNotices` entry in a `wiki_read` answer, states how a collection was indexed (for example a Legacy or partial-index notice), or how names were spelled in that place's records, save it as a `quirks[]` entry for this locality and cite the page.**
+**When a page you read, or a `collectionNotices` entry in a `wiki_read` answer, states how a collection was indexed (for example a Legacy or partial-index notice), or how names were spelled in that place's records, save it as a `quirks[]` entry for this locality and cite the page.** A collectionNotices entry is always saved as a quirks[] entry, even when you also mention it elsewhere in the guide.
 
 **An error naming wiki-query-api (`Could not reach wiki-query-api`, `wiki-query-api error: <status>`) is an outage, not a missing page.** Retry each failed call once. If it fails again: record that section `found: false`, `outcome: "unreachable"`, `url: null`; in the guide, say the FamilySearch Wiki could not be reached, never that it has no page; add the quirk `"FamilySearch Wiki unreachable during this survey (<sections>); these pages may exist — re-run locality-guide before relying on their absence."`; and say in `summary_for_user` that the guide was built without the FamilySearch Wiki.
 
