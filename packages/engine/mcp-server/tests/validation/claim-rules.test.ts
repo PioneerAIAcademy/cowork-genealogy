@@ -6,7 +6,7 @@
 // and mother; a census (rec_cen) names I1 and I2; a marriage (rec_mar) names a
 // groom and a bride; rec_abs is a negative search.
 import { afterAll, describe, expect, it } from "vitest";
-import { CLAIM_RULE_IDS, claimRuleFindings, questionCapFindings, type ClaimRuleId } from "../../src/validation/claim-rules.js";
+import { CLAIM_RULE_IDS, claimRuleFindings, questionCapFindings, __isChildRoleForTests, type ClaimRuleId } from "../../src/validation/claim-rules.js";
 
 /** Every rule id some case in this file made fire, so the registry check at the
  *  end proves each staged rule is one the module actually emits. */
@@ -161,6 +161,15 @@ describe("code-review cases", () => {
     const t = tree([PC("I2", "I1"), PC("I3", "I1"), PC("I4", "I2"), PC("I6", "I2")]);
     const s = summary("ps_1", [claim({ finding: { finding_type: "record_content", statement: "s" } }, "probable", ["a_fc"])], "probable", { supporting_assertion_ids: ["a_fc"] });
     expect(fires(findings(s, { t, extra, links }), "claims-no-empty-escape")).toBe(false);
+  });
+  it.each([
+    ["child", true], ["son_2", true], ["daughter_1", true], ["baptized_child", true], ["child_being_baptized", true],
+    ["daughter_of_deceased", true], ["son_of_decedent", true], ["informant (son of decedent)", true],
+    ["father_of_child", false], ["mother_of_child_1", false], ["son_in_law_1", false], ["daughter in law", false],
+    ["son-in-law", false], ["step_daughter", false], ["grand_child", false], ["grandchild_2", false],
+    ["god_child", false], ["head", false],
+  ])("rule 4 reads role %s as the child: %s", (role, expected) => {
+    expect(__isChildRoleForTests(role)).toBe(expected);
   });
   it("two parents of unknown gender are not rivals for one slot", () => {
     const t = { persons: [P("I1", "Male"), { ...P("I2", "Unknown") }, { ...P("I3", "Unknown") }], relationships: [PC("I2", "I1"), PC("I3", "I1")] };

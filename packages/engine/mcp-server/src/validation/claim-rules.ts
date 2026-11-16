@@ -50,15 +50,20 @@ const CHILD_ROLE_TOKENS = new Set(["child", "son", "daughter"]);
 
 const isSlotGender = (g: unknown): g is "Male" | "Female" => g === "Male" || g === "Female";
 
-/** A role naming the record's child ("child", "son", "baptized_child"), not a
- *  role naming someone by their relation to the child ("father_of_child"), an
- *  in-law, or a step-relation. */
+/** A role naming the record's child. Only the part before "of" names who the
+ *  party is ("daughter_of_deceased" is a daughter; "father_of_child" is a father),
+ *  and an in-law, step-, grand- or god-relation is not the child, however the
+ *  role is written ("son_in_law", "daughter in law", "grand_child"). */
 function isChildRole(role: unknown): boolean {
-  const r = String(role ?? "").toLowerCase();
-  const tokens = r.split(/[_\s]+/).filter(Boolean);
-  if (tokens.includes("of") || r.includes("in_law") || tokens[0] === "step") return false;
-  return tokens.some((t) => CHILD_ROLE_TOKENS.has(t));
+  const tokens = String(role ?? "").toLowerCase().split(/[_\s()\-]+/).filter(Boolean);
+  const ofAt = tokens.indexOf("of");
+  const head = ofAt === -1 ? tokens : tokens.slice(0, ofAt);
+  if (head.some((t, i) => t === "in" && head[i + 1] === "law")) return false;
+  if (head.some((t) => t === "step" || t === "grand" || t === "god")) return false;
+  return head.some((t) => CHILD_ROLE_TOKENS.has(t));
 }
+
+export const __isChildRoleForTests = isChildRole;
 
 const rank = (tier: unknown) => (typeof tier === "string" ? PROOF_TIER_RANK.get(tier) ?? -1 : -1);
 const atLeast = (tier: unknown, floor: string) => rank(tier) >= (PROOF_TIER_RANK.get(floor) ?? 99);
