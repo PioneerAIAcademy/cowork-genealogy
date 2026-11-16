@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
+  coreIdentifierContradictionInvariants,
   gatedSummary,
   namesakeTieInvariants,
   planItemCompletionRecordTypeInvariants,
@@ -37,6 +38,17 @@ const WRITER_GUARDS: Record<
   namesakeTieInvariants: (entry, research, tree, startingTree) =>
     namesakeTieInvariants(entry, research, tree, startingTree ? startingPersonIdsOf(startingTree) : undefined, startingTree),
   planItemCompletionRecordTypeInvariants,
+  // The gate reads which links stand beside the one written: every live
+  // person_evidence entry of the case's document, as `batchPersonLinks` gives it.
+  coreIdentifierContradictionInvariants: (entry, research, tree) =>
+    coreIdentifierContradictionInvariants(
+      entry,
+      research,
+      tree,
+      ((research.person_evidence ?? []) as any[])
+        .filter((pe: any) => pe && pe.superseded_by == null)
+        .map((pe: any) => ({ id: pe.id, assertion_id: pe.assertion_id, person_id: pe.person_id, confidence: pe.confidence })),
+    ),
   // #4431 takes its answer from outside the document, so the case carries it as
   // `searchable` rather than the guard reading it from `research`. A wrapper,
   // not a bare name: bound bare, the replay's third positional argument (the

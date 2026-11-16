@@ -65,6 +65,15 @@
         "file": "packages/engine/mcp-server/src/tools/research-append.ts",
         "function": "planItemVoidSearchInvariants"
       }
+    },
+    {
+      "name": "core-identifier-contradiction",
+      "status": "enforcing",
+      "case_file": "core-identifier-contradiction.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "coreIdentifierContradictionInvariants"
+      }
     }
   ],
   "owes_case_file": [

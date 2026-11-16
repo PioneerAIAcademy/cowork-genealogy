@@ -293,7 +293,11 @@ Sequence inside each tool:
    asked for one; a scored link needs a `same_person` score recorded for the
    survivor. One difference from a direct write: a birth place the coordinate
    lookup does not resolve is not a contradiction here, so a slow lookup cannot
-   refuse a correct merge; a different country still is. Any finding writes
+   refuse a correct merge; a different country still is. The cap's attached-births
+   arm judges a moved link against the survivor's combined attachments, so a
+   merge that brings a contradicting attachment onto a person caps the links it
+   moves; it reads an unresolved place as near too, so it fires less here than
+   on a direct write, and the survivor's own links are not re-judged. Any finding writes
    nothing and returns `{ ok: false, errors }` with no `reason`, before the
    warning gate.
 

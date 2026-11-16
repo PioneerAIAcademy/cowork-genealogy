@@ -57,6 +57,9 @@ const keyer = (rp as any).recordPartyKeyer as ((list: any[]) => (a: any) => stri
 let links = 0, linksRelational = 0;
 let refused = 0, refusedRelational = 0, refusedPlace = 0, refusedDate = 0;
 let refusedWithoutConflicts = 0;
+let refusedAttached = 0;
+const judgedAttached = new Set<string>();
+const attachedOf = (ra as any).attachedBirthsOf as ((p: string, r: any, l?: any) => any[]) | undefined;
 let recheckRefusals = 0;
 let conflictsChecked = 0, conflictsRefused = 0;
 let mixedGroups = 0, sharedPids = 0, keyerMoves = 0;
@@ -117,10 +120,24 @@ for (const { label, research, tree } of docs) {
   let coords: any = undefined;
   if (COORDS) {
     const names = new Set<string>();
+    const withNames = new Set<string>();
     for (const e of live) for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
-    coords = names.size ? await lookupWithin([...names], (n) => standardPlaceToCoords(n), 60_000) : new Map();
+    const attachedNames = (ra as any).attachedBirthPlaceNames as ((e: any, r: any, t: any, l?: any) => string[]) | undefined;
+    if (attachedNames) for (const e of live) for (const n of attachedNames(e, research, tree, personLinks)) withNames.add(n);
+    const info = (ra as any).birthPlaceInfo as ((n: string, w: boolean) => Promise<any>) | undefined;
+    coords = names.size
+      ? await lookupWithin([...names], (n) => (info ? info(n, withNames.has(n)) : standardPlaceToCoords(n)), 60_000)
+      : new Map();
   }
   const noConflicts = { ...research, conflicts: [] };
+
+  // #4444: people whose readable attached births (live or ruled out) number two
+  // or more -- the population the attached-births arm can judge at all.
+  if (attachedOf) {
+    for (const p of new Set(live.map((e) => e.person_id))) {
+      if (attachedOf(p, research, personLinks).length >= 2) judgedAttached.add(`${label}#${p}`);
+    }
+  }
 
   for (const e of live) {
     if (e.confidence !== "confident" && e.confidence !== "probable") continue;
@@ -135,6 +152,10 @@ for (const { label, research, tree } of docs) {
     const text = errs.join(" ");
     if (/the record states '/.test(text)) refusedPlace += 1;
     if (/-year gap/.test(text)) refusedDate += 1;
+    if (/own attached records disagree|ruled is not this person/.test(text)) {
+      refusedAttached += 1;
+      if (LIST) lines.push(`ATTACHED\t${label}\t${e.id}\t${e.person_id}\t${text.slice(0, 260)}`);
+    }
     if (LIST) lines.push(`REFUSE\t${label}\t${e.id}\t${relational ? "relational" : "one-party"}\t${text.slice(0, 220)}`);
   }
 
@@ -167,9 +188,17 @@ console.log(`documents read                              : ${docs.length}${COORD
 console.log(`confident/probable links                    : ${links} (${linksRelational} on a two-party assertion)`);
 console.log(`  refused by the gate                       : ${refused} (${refusedRelational} two-party; ${refusedPlace} place, ${refusedDate} date)`);
 console.log(`  refused with every conflict removed       : ${refusedWithoutConflicts}`);
+console.log(`  refused by the attached-births arm (#4444): ${attachedOf ? refusedAttached : "-"}${absent(attachedOf)}`);
+console.log(`people with two or more attached births    : ${attachedOf ? judgedAttached.size : "-"}${absent(attachedOf)}`);
 console.log(`one-party links the re-check refuses        : ${recheck ? recheckRefusals : "-"}${absent(recheck)}`);
 console.log(`fact conflicts / refused as one place       : ${containment ? `${conflictsChecked} / ${conflictsRefused}` : "-"}${absent(containment)}`);
 console.log(`record+role groups with mixed persona ids   : ${mixedGroups}`);
 console.log(`persona ids worn by >1 role in a record     : ${sharedPids}`);
 console.log(`assertions the record-wide party key re-keys: ${keyer ? keyerMoves : "-"}${absent(keyer)}`);
 if (LIST) for (const l of lines.sort()) console.log(l);
+// A floor, so the attached-births figures cannot read as a clean zero when the
+// arm judged nobody: thomas-hanrahan-marriage's 2026-11-09 run must stay in view.
+if (attachedOf && (judgedAttached.size === 0 || refusedAttached === 0)) {
+  console.error("attached-births arm judged no person or refused nothing: the corpus or the arm is broken");
+  process.exit(2);
+}
