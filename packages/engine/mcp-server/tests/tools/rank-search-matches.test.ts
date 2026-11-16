@@ -532,6 +532,11 @@ describe("rank_search_matches", () => {
         ["Vanderlinde", "Van der Linde"],
         ["StClair", "St. Clair"],
         ["De La Cruz", "Delacruz"],
+        ["McAndrew", "Mc Andrews"],
+        ["Vanderlinden", "Van der Linde"],
+        ["St.Clair", "St Claire"],
+        ["Van-Buren", "VanBuran"],
+        ["O'Brien", "O Brien"],
       ])("does not flag %s vs %s", async (tree, record) => {
         expect(await flagged(tree, record)).not.toHaveProperty("surnameNotOnSubject");
       });
@@ -542,6 +547,15 @@ describe("rank_search_matches", () => {
         ["McWilliams", "Mc Lean"],
         ["VanBuren", "Van Bergen"],
       ])("still flags %s vs %s (joined tokens are not compared by Soundex)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it.each([
+        ["da Silva", "da Costa"],
+        ["dos Santos", "dos Reis"],
+        ["Garcia y Lopez", "Martinez y Ruiz"],
+        ["van 't Hof", "van 't Veer"],
+      ])("still flags %s vs %s (a shared word of three letters or fewer is not a match)", async (tree, record) => {
         expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
       });
 

@@ -681,22 +681,26 @@ const SURNAME_PARTICLES = new Set([
  *  particles joined onto the word after it ("van der linde" → "vanderlinde",
  *  "mc williams" → "mcwilliams"; a trailing "." is dropped before the particle
  *  check), and "." and "'" removed. A trailing run with no word after it stays
- *  a token of its own. */
+ *  a token of its own. As in `surnameTokens`, a joined word whose own word has
+ *  three letters or fewer is dropped while a longer one remains, so "da costa"
+ *  gives "costa" and "van 't veer" gives "veer". */
 function joinedSurnameTokens(surname: string): string[] {
   const words = normalizeString(surname).split(/[\s-]+/).filter(Boolean);
-  const out: string[] = [];
+  const out: { joined: string; word: string }[] = [];
   let run = "";
   for (const w of words) {
     const bare = w.replace(/\.$/, "");
     if (SURNAME_PARTICLES.has(bare)) {
       run += bare;
     } else {
-      out.push((run + w).replace(/[.']/g, ""));
+      const word = w.replace(/[.']/g, "");
+      out.push({ joined: run + word, word });
       run = "";
     }
   }
-  if (run) out.push(run);
-  return out;
+  if (run) out.push({ joined: run, word: run });
+  const long = out.filter((t) => t.word.length > 3);
+  return (long.length > 0 ? long : out).map((t) => t.joined);
 }
 
 const SOUNDEX_CODES: Record<string, string> = {
