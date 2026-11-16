@@ -15,7 +15,7 @@ Row B1 of Issue #3571's adjudication on issue #3527 (2026-11-02): alpha feedback
 
 ## Expected result today
 
-FAIL on `no_research_job`, as before. Re-measured 2026-11-16 in the eight-fixture panel run ($4.80,
+**FAIL on `no_research_job`, as before. Issue #2813 owns it.** Re-measured 2026-11-16 in the eight-fixture panel run ($4.80,
 `claude-sonnet-4-6` at effort `medium`): units `source-evaluation > research-plan > question-selection >
 research-plan > locality-guide > locality-guide > research-plan`, the same research job. Measured 2026-11-02:
 
