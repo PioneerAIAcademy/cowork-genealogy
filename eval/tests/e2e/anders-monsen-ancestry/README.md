@@ -163,10 +163,11 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   isPrincipal=true spouseGivenName=Urna spouseSurname=Halsteinsdr
   collectionId=1468080`. **So an `f2` miss from 2026-09-30 onward is about the
   agent.** Confirm the index first — if that query still returns the record, the
-  miss is the run's. What makes it hard is the spelling: the bride is indexed
-  `Urna Halsteinsdr`, `Unna` and the expanded `Halsteinsdatter` do not return
-  the record, and she is not indexed as a principal at all, so searching her as
-  one returns zero. **No run since the reload has used `Urna`** — the
+  miss is the run's. What makes it hard is the given-name spelling: the bride is
+  indexed `Urna Halsteinsdr`. A live check on 2026-11-16 (collection 1468080,
+  1770-1800) found her with `givenName=Urna` and either `surname=Halsteinsdatter`
+  or `surname=Halsteinsdr`, and with neither surname under `givenName=Unna`; the
+  abbreviated surname is not needed. **No run since the reload has used `Urna`** — the
   2026-09-30 re-run made twelve searches in the collection without it. Earlier
   runs did use it: run 3 (2026-07-13) tried it extensively with the full
   surname, and the 2026-09-29 run used it in 13 of its 59 `record_search`
