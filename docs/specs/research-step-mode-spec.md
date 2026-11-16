@@ -553,7 +553,13 @@ router sentence: plan at most one extra round, then wrap up.
   search to research-plan, not question-selection. The conflict step names the record
   that could settle it and ends "Continue with planning the searches?".
 - **Given more than one fact to research,** question-selection writes no question and asks
-  the researcher to pick one.
+  the researcher to pick one. With `userPresent: no`, which the router sends only on an
+  autonomous run, it writes one question, for the fact the objective names first, and
+  says so in that question's `rationale`. Nobody is there to answer, and the objective's
+  order is a basis the agent can state and the same project picks the same way every
+  run; "the highest-value fact" is neither. One question, not one per fact:
+  `newQuestionWhileAnotherIsOpenInvariants` refuses a second open question. A "Keep
+  going." turn leaves the field out, because a researcher is there to answer.
 - **The objective row.** When every question is resolved, the router names any uncovered
   part of the objective as a suggested next question and offers setup.
 - **Ladder: a conflict's evidence round.** When every conflict in `openConflictIds`

@@ -721,15 +721,19 @@ rules in `research/SKILL.md` branch on it; find them with
   state, one step per turn, rather than handed straight to the step that owns a
   single deliverable.
 - **No researcher present.** On an autonomous run the router hands `userPresent: no`
-  to two agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
   run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
   otherwise `yes`". `@plugin:person-evidence` gets
   it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
   run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". The rules are there so an e2e run never waits on an
+  and in an autonomous run". `@plugin:question-selection` gets it only in an autonomous
+  run, so an objective holding several facts gets a question for the first one instead
+  of an ask nobody answers. The rules are there so an e2e run never waits on an
   external-site capture nobody will upload. The research unit suite checks that the router sends
   the field to search-external-sites on the opening turn of an autonomous run
-  (`ut_research_ue1`, tag `delegates-user-present-no-external`). A spawn later in a
+  (`ut_research_ue1`, tag `delegates-user-present-no-external`), and to question-selection
+  on the opening turn of an autonomous run with an objective and no questions
+  (`ut_research_uq1`, tag `delegates-qs-user-present-no`). A spawn later in a
   run is checked by nothing, and an agent reads a missing field as `yes`:
   `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
   search-external-sites without it, and that plan item stayed `in_progress` waiting

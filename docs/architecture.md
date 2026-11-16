@@ -2389,11 +2389,12 @@ decides, not what the run can reach.** `question-selection` applies the same sha
 with nobody waiting to answer, skip the ask and take the action.
 
 Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
-"can a human act on this right now?". Two bodies keep a genuine two-sided answer because
+"can a human act on this right now?". Three bodies keep a genuine two-sided answer because
 a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
 `agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
-can) and `search-external-sites` (a user who named the plan item will capture it; mid-run
-nobody will). `search-hints` decides hints itself on every run. Each has eval fixtures on
+can), `search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will) and `agents/question-selection.md` (a user can pick which fact of the
+objective first; mid-run nobody can). `search-hints` decides hints itself on every run. Each has eval fixtures on
 each side. The mode difference survives in the router, which sets that field from the
 flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
 where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
@@ -2459,8 +2460,8 @@ CI covered you (§9.4).
 things it removes: a pause, or a capability (§9.5). Note that no agent reads
 `--autonomous`: key an agent's rule on the `userPresent` field of its delegation, not on a
 string in the message. The router sets that field per agent: in its spawn-fields paragraph
-(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-hints, in its
-routing-table row; a new agent that needs it also needs its own line in the router.
+(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-external-sites
+and question-selection, at the routing rows that reach them; a new agent that needs it also needs its own line in the router.
 Removing the pause is the established shape and is fine: decide instead of asking, and
 log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
