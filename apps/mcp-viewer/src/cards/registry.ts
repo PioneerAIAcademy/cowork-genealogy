@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from 'react'
 import { ConclusionCard } from './ConclusionCard'
 import { latestKind, type CardKind, type CardView } from './kit/view'
+import { LinkCard } from './LinkCard'
 import { SearchCard } from './SearchCard'
 import { SetupCard } from './SetupCard'
 import { StubCard } from './StubCard'
@@ -20,7 +21,7 @@ export const CARDS: Record<CardKind, ComponentType<CardProps>> = {
   setup: SetupCard,
   plan: StubCard,
   search: SearchCard,
-  link: StubCard,
+  link: LinkCard,
   conflict: StubCard,
   hypothesis: StubCard,
   assess: StubCard,
