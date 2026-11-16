@@ -1,0 +1,73 @@
+{
+  "test": {
+    "id": "ut_research_lk2",
+    "skill": "research",
+    "name": "With no project, the original behind an index card is cited by viewerUrl links, and its image group is not called a Catalog item",
+    "type": "positive",
+    "description": "Issue #4582, feedback #4561 session 2, the tester's message verbatim. The index card points at Ashford Vital Records Vol. 4 page 5; the original is image group 113551215 ('Second Copy Vol 4'), which only volume_search returns (the catalog_search fixtures are empty, as the session's own catalog searches never returned it). The session's reply called it '**Catalog item:** FamilySearch imageGroupNumber 113551215' and gave a hand-built, scheme-less viewer URL. search-images runs live (execution.run_agents) so its real return is graded, not a stub's. Page text is live from the bundle; the volume_search fixture is edited so the group is browsable (its description says how).",
+    "tags": [
+      "no-project",
+      "links-sources",
+      "browse"
+    ]
+  },
+  "input": {
+    "user_message": "/research FamilySearch digitized the early vital records of Ashford, Connecticut as well as published indexes of the same. Locate (in the FamilySearch Catalog) and transcribe the image of the original record referenced by the index card in this image: https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS56-DQGC-1.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-ashford-index-card-phebe-eastman",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title",
+    "catalog-search-empty",
+    "volume-search-ashford-connecticut",
+    "volume-search-any",
+    "image-search-ashford-second-copy-vol-4",
+    "image-search-any",
+    "volume-bisect-any",
+    "image-transcribe-ashford-second-copy-vol-4-00002",
+    "image-transcribe-ashford-second-copy-vol-4-00003",
+    "image-transcribe-ashford-second-copy-vol-4-00004",
+    "image-transcribe-ashford-second-copy-vol-4-00005",
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 900,
+    "run_agents": [
+      "search-images"
+    ],
+    "stub_skills": [
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-familysearch-wiki",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "The folder is empty and there is no project. The card (3:1:3Q9M-CS56-DQGC-1) reads EASTMAN, Phebe; d. Philip & Elesabeth; Ashford Vital Records Vol. 4 Page 5. Finding the original is a browse, so it goes to @plugin:search-images with no projectPath; reading the card first is fine.",
+    "search-images runs live. catalog_search returns nothing; volume_search for Ashford returns image group 113551215 ('Ashford Vital Records', 'Second Copy Vol 4', 1763-1840). Page [5] begins on 113551215_00003 (Philip Eastman Jur & Elisabeth Hodges; daughters Mary, Phebe and Esther, every date torn) and continues on 113551215_00004.",
+    "Whether pages are named only as links, and whether the group is called a Catalog item without a catalog_search result, is asserted deterministically by test_reply_links_named_sources (tag links-sources). Do not re-grade those yourself. Saying the volume was not found in the Catalog, or calling it an image group, is correct.",
+    "PASS requires Phebe's entry from page 5 reported with her parents as the page gives them, her birth date reported as torn rather than supplied, and the source page identified. Inventing a date, or attributing the card's entry to another volume, is a fail."
+  ]
+}

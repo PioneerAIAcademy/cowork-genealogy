@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "Captured live in feedback #4561 (feedback-2026-11-13T20-21-42-415568Z.zip, issue #4582): image 113551215_00005 of Ashford 'Second Copy Vol 4' — the next page (Robbins entries). `found` dropped (it depends on lookingFor); `viewerUrl` is the live one.",
+  "args": {
+    "imageId": "~113551215_00005"
+  },
+  "response": {
+    "transcription": "19\n\n[       ] Robbins Born to him by Syntha his wife June 25: 1773\n[       ] bbins Born to him by Syntha his wife June 23. 1775\n[       ] bins Born to him by Syntha his wife May 6th 1777\n[       ] ob Robbins born to him by Syntha his wife Aug.t 1 1771\n[       ] bins Born to him by Syntha his wife 20th May 1779\n[  ] Libea Daughter of Adonijah Bickens Born to him by\nAnna his wife March 4. [torn]\nLevi Carpenter and Hannah Keyes Joined in mar-\nraige January 13th 17[torn]\nRoxey Daughter to Levi Carpenter by Hannah his\nwife Born Nov.br 27th [torn]\nEphraim Keyes son to Levi Carpenter by Hannah his\nwife Born Oct.r 1st [torn]\nVine son of Stephen Coy Born to him by Anna his\nwife Feb.ry 16. 17[torn]\nBetty Daughter of Stephen Coy Born to him by Anna\nhis wife [torn]\nHannah Daughter of Stephen Coy Born to him by\nAnna his wife [torn]\nStephen son of Stephen Coy Born to him by Anna\nhis wife Septem.br 21. [torn]\nJohn son to Stephen Coy Born to him by Anna his\nwife 12th Aug.t 17[torn]\nSamuel Robbins and Miriam James Joined in mar-\nraige [torn] 9: 1797",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=4"
+  }
+}

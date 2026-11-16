@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "Captured live in feedback #4561 (feedback-2026-11-13T20-21-42-415568Z.zip, issue #4582): image 113551215_00002 of Ashford 'Second Copy Vol 4' — page 4's tail (page [3] and [4] entries). `found` dropped (it depends on lookingFor); `viewerUrl` is the live one.",
+  "args": {
+    "imageId": "~113551215_00002"
+  },
+  "response": {
+    "transcription": "19\n\n[3] Silvinus son of Silvinus Shurtleff Born to him [       ]\nSusanah Daughter of Silvinus Shurtleff Born to [       ]\nPhebe Daughter of Thos Wing Born to h[       ]\nJohn Welch and Elanah Cummings [       ]\nElanah Daughter to John Welch By [       ]\nElinah wife of John Welch Depart[       ]\nBetsy Daughter to Abel Avery By+\nTurner son of Thomas Wing Born to him By [       ]\nDesire Daughter of Thomas Wing Born to him By [       ]\nJohn son of Thomas Wing Born to him by Judah++ [       ]\nPhebe daughter of Thos Wing by Judah++ his [       ]\nDavid son to Eleazer Heath By [       ]\nEbenezer son to Eleazer Heath By [       ]\n[4]                   ] Born to him By Elisabeth his wife Nov= 10. 1763\n[                      ] him by Elisabeth his wife March 6. 1765\n[                      ] Elisabeth his wife February 5. 1767\n[                      ] November ye. 9: 1767\n[                      ] Life April ye. 9th. 1787\n[   The names of Benjamin       ] Joyned in Mariage Nov= 22ᵈ. 1764\n[   Hutcherson, James Smith     ] By Rebeckah his wife April 25th: 1765\n[   and Henry Storrs are\n    given to this page in the\n[   original index of page 4.   ] him by Rachal his wife May 2d 1766\n[                      ] him by Rebeckah his wife Sept= 25: 1767\n[                      ] by Polly his wife born\n[                      ] Fitch Son to Henry Storrs\n[                      ]ember 23° 1791\n\n+ Entry not completed    ++ Judah over written Phebe",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=1"
+  }
+}

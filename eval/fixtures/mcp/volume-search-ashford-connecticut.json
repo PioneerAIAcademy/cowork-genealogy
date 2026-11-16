@@ -1,0 +1,121 @@
+{
+  "tool": "volume_search",
+  "description": "Captured live in feedback #4561 (feedback-2026-11-13T20-21-42-415568Z.zip, issue #4582), trimmed to three of the 71 Ashford, Windham, Connecticut groups: the two indexed volumes of film 7730715 and image group 113551215, 'Ashford Vital Records', volume 'Second Copy Vol 4', 1763-1840, 246 images, 0% indexed. EDITED: 113551215 is fulltextSearchable true live; it is false here so omitSearchable keeps it in results and search-images browses it, as the session's agent did (it searched without omitSearchable). Volume 4 is reachable only through this tool: the session's catalog_search calls never returned 113551215.",
+  "args": {
+    "standardPlace": "~Ashford"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Ashford, Windham, Connecticut, United States",
+      "pageSize": 50
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "007730715_002_M99R-WFK",
+        "imageCount": 87,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": true,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1770-1851",
+            "recordTypeConceptId": 104727
+          },
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1855-1871",
+            "recordTypeConceptId": 127026
+          },
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1771-1851",
+            "recordTypeConceptId": 103979
+          },
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1775-1884",
+            "recordTypeConceptId": 104898
+          }
+        ],
+        "title": "Record of Vital Statistics",
+        "volumes": [
+          "5"
+        ]
+      },
+      {
+        "imageGroupNumber": "007730715_001_M99R-WFV",
+        "imageCount": 186,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": true,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1675-1849",
+            "recordType": "births, marriages"
+          },
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1675-1849",
+            "recordType": "Death Records"
+          }
+        ],
+        "title": "Records, Births, Marriages, Deaths"
+      },
+      {
+        "imageGroupNumber": "113551215",
+        "imageCount": 246,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1763-1840",
+            "recordTypeConceptId": 130656
+          },
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1763-1840",
+            "recordTypeConceptId": 126374
+          },
+          {
+            "places": [
+              "Ashford, Windham, Connecticut, United States"
+            ],
+            "dateRange": "1763-1840",
+            "recordTypeConceptId": 126811
+          }
+        ],
+        "title": "Ashford Vital Records",
+        "volumes": [
+          "Second Copy Vol 4"
+        ]
+      }
+    ]
+  }
+}

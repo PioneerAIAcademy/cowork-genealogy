@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "Index card ARK 3:1:3Q9M-CS56-DQGC-1 from feedback #4561 (issue #4582). The session read it with image_read, so no OCR text was captured: the transcription is the card's reading as the main thread stated it (EASTMAN, Phebe; d. Philip & Elesabeth; Ashford Vital Records Vol. 4 p. 5, birth date cut off). `viewerUrl` is the live one image_read returned.",
+  "args": {
+    "ark": "~3Q9M-CS56-DQGC-1"
+  },
+  "response": {
+    "transcription": "EASTMAN, Phebe\nd. Philip & Elesabeth\nb. [cut off]\nASHFORD VITAL RECORDS Vol. 4 Page 5",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS56-DQGC-1"
+  }
+}

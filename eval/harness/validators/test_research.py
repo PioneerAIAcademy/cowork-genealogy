@@ -1498,7 +1498,7 @@ _EXTRACT_COUNT_RE = re.compile(
     r"match(?P<plural>es)?\b",
     re.IGNORECASE,
 )
-_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_MD_LINK = re.compile(r"\[([^\]]*)\]\(([^)]*)\)")
 _SEGMENT_BREAK = re.compile(r"\n|(?<=[.:;!?])\s+|[\"“”()\[\]]")
 _YEAR_RANGE = re.compile(r"\d{4}\s*[-–—]\s*\d{4}(?!\d)")
 _RECORD_WORD = re.compile(
@@ -1785,6 +1785,93 @@ def test_names_collections_only_from_search(text_response, tool_calls, test):
         f"the reply names FamilySearch collection title(s) no collections_search result "
         f"returned: {unreturned}. Returned titles: {returned or 'none'}. Name a collection "
         "only from a collections_search result, or say it is unconfirmed."
+    )
+
+
+_BARE_ARK = re.compile(r"(?<!https://www\.familysearch\.org/)(?<!https://familysearch\.org/)\bark:/61903/[^\s)\]|,;]+")
+_BARE_IMAGE_ID = re.compile(r"\b\d{9}_\d{5}\b")
+_SHORT_PAGE = re.compile(r"\(\d{5}\)|\bimages? \d{5}(?:\s*[-–]\s*\d{5})?\b", re.IGNORECASE)
+_SCHEMELESS_FS = re.compile(r"(?<!https://)(?<!https://www\.)(?<![\w.])(?:www\.)?familysearch\.org/[^\s)\]]*")
+_CATALOG_ITEM = re.compile(r"\bcatalog item\b", re.IGNORECASE)
+_NOT_CATALOG_ITEM = re.compile(r"\bnot\b[^.\n]{0,20}\bcatalog item\b", re.IGNORECASE)
+_CATALOG_ID = re.compile(r"koha:\d+|\d{6,}", re.IGNORECASE)
+
+
+def _strip_www(url: str) -> str:
+    return url.replace("://www.", "://")
+
+
+def _catalog_id(token: str) -> str:
+    return token.lower().removeprefix("koha:").lstrip("0") or "0"
+
+
+def _tool_responses(tool_calls, tool: str) -> list:
+    responses = []
+    for call in tool_calls or []:
+        if bare_tool_name(str(call.get("tool", ""))) != tool:
+            continue
+        response = call.get("response")
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except ValueError:
+                pass
+        responses.append(response)
+    return responses
+
+
+def test_reply_links_named_sources(text_response, tool_calls, test):
+    """Tag-gated (``links-sources``), issue #4582: a reply names a page or record only
+    as a link to the https URL a tool result gave, and calls an image group a Catalog
+    item only when ``catalog_search`` returned it. Feedback #4561 ended with four bare
+    ``ark:/61903/3:1:…`` lines, each of whose ``image_transcribe`` calls had returned a
+    ``viewerUrl``, and with "**Catalog item:** FamilySearch imageGroupNumber 113551215"
+    for a group only ``volume_search`` had returned.
+
+    The page must also be linked: at least one ``image_transcribe`` ``viewerUrl`` from
+    the session appears in the reply, so a run that read nothing, or dropped every
+    citation, fails rather than passing for want of a bare identifier. A relayed stub
+    or agent return is not evidence for a Catalog item: the relayed text is what is
+    being graded. Proven both ways in
+    ``tests/unit/test_research_links_sources_validator.py``.
+    """
+    if "links-sources" not in test.get("tags", []):
+        pytest.skip("not a links-sources test")
+    reply = text_response or ""
+    targets = _MD_LINK.sub(r"\2", reply)
+    labels = _MD_LINK.sub(r"\1", reply)
+    problems = [f"bare ARK {m.group(0)!r}" for m in _BARE_ARK.finditer(targets)]
+    problems += [f"bare image id {m.group(0)!r}" for m in _BARE_IMAGE_ID.finditer(targets)]
+    problems += [f"short page id {m.group(0)!r}" for m in _SHORT_PAGE.finditer(targets)]
+    problems += [f"URL without https:// {m.group(0)!r}" for m in _SCHEMELESS_FS.finditer(targets)]
+
+    catalog_ids = {
+        _catalog_id(token)
+        for response in _tool_responses(tool_calls, "catalog_search")
+        for token in _CATALOG_ID.findall(json.dumps(response))
+    }
+    for line in labels.splitlines():
+        if not _CATALOG_ITEM.search(line) or _NOT_CATALOG_ITEM.search(line):
+            continue
+        unreturned = sorted({t for t in _CATALOG_ID.findall(line) if _catalog_id(t) not in catalog_ids})
+        if unreturned:
+            problems.append(f"Catalog item {unreturned} no catalog_search returned: {line.strip()!r}")
+
+    viewer_urls = sorted(
+        {
+            _strip_www(r["viewerUrl"])
+            for r in _tool_responses(tool_calls, "image_transcribe")
+            if isinstance(r, dict) and isinstance(r.get("viewerUrl"), str)
+        }
+    )
+    if not any(url in _strip_www(targets) for url in viewer_urls):
+        problems.append(f"no page read is linked; expected one of {viewer_urls or 'a viewerUrl, but none was returned'}")
+
+    assert not problems, (
+        "the reply names sources without the link a tool returned: "
+        + "; ".join(problems)
+        + ". Link each page or record to its viewerUrl/recordUrl, and call an image group "
+        "a Catalog item only when catalog_search returned it."
     )
 
 

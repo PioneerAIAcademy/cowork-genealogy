@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "Captured live in feedback #4561 (feedback-2026-11-13T20-21-42-415568Z.zip, issue #4582): image 113551215_00004 of Ashford 'Second Copy Vol 4' — page 5 continues: Timothy Eastman Jr.'s children. `found` dropped (it depends on lookingFor); `viewerUrl` is the live one.",
+  "args": {
+    "imageId": "~113551215_00004"
+  },
+  "response": {
+    "transcription": "19\n___\n\nLevina Daughter of Tim:o Eastman Jur Born to him\nby Susannah [torn]\nSusannah Daughter of Tim:o Eastman Jur Born to\nhim by Susannah [torn]\nMehitable Daughter of Tim:o Eastman Jur Born to\nhim by Susannah [torn] and Departed this Life Au-\ngust y.e 27. 1775\nViole Daughter of Tim:o Eastman Jur Born to him\nby Susannah his [torn]\nOtis son to Justin Eastman by         his wife bor[torn]\n[b] [      ] of Ephraim Dennis Born to him by\nMary his wife August 18. 1766\n[      ]in Born to him by Mary his wife Nov:er 21: 1769\n[      ] Watkins & Lois Jenners Joined in Marriage\nAugust 18th 1788\n[      ] to William Watkins by Lois his wife Born\nJanuary 6th 1789\n[      ] son to William Watkins by Lois his wife\nBorn March 27. 1791\n[      ]n to William Watkins by Lois his wife\nBorn October 10. 1793\n[      ] Amasa Daughter and son to William Watkins\nby Lois [torn] Born March 12th 1797\n[      ]man Joined in Marriage April 2d 1767\n[      ] to him by Cynthia his wife January y.e 7th 1768",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=3"
+  }
+}

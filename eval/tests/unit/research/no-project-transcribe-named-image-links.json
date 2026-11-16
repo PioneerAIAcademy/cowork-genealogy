@@ -1,0 +1,61 @@
+{
+  "test": {
+    "id": "ut_research_lk1",
+    "skill": "research",
+    "name": "With no project, a named image the router transcribes itself is cited by its viewerUrl link, never the bare ARK",
+    "type": "positive",
+    "description": "Issue #4582, from feedback #4561 session 1: the main thread transcribed image ARKs itself and listed them under 'Sources consulted' as bare `ark:/61903/3:1:…` values, though each image_transcribe had returned a full viewerUrl. Empty folder; one named image ARK, given bare. The router reads it itself (one named image, no projectPath) and must name it only as a link to the returned viewerUrl. The page text is live from the feedback bundle.",
+    "tags": [
+      "no-project",
+      "links-sources"
+    ]
+  },
+  "input": {
+    "user_message": "/research Transcribe this image of the Ashford, Connecticut vital records and tell me which children of Philip Eastman it records: ark:/61903/3:1:3QHN-BQ8C-33BG",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-ashford-eastman-3qhn-bq8c",
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-familysearch-wiki",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "The folder is empty and there is no project. The message names ONE image ARK and asks for its transcription: the router reads it itself with image_transcribe and no projectPath. Spawning init-project, tree-survey or search-images is wrong here.",
+    "Whether the reply names the page only as a link is asserted deterministically by test_reply_links_named_sources (tag links-sources): a bare `ark:/61903/…`, a bare image id or a URL without https:// fails it. Do not re-grade linking yourself.",
+    "The page gives Philip Eastman jun. and Elizabeth Hodges's marriage and three daughters, Mary, Pheba and Esther; every date is illegible. PASS requires those three named, the dates reported as illegible rather than supplied, and no other child attributed to Philip.",
+    "A separate, earlier Philip Eastman is not on this page. Calling any man on it Philip's father is a fault."
+  ]
+}

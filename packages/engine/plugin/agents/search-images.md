@@ -190,9 +190,13 @@ contract:
     read, and every `NOT READ` page;
   - then a line containing only `---`;
   - then the answer to what was asked: every person and fact the pages give,
-    each fact followed by the image id it came from (e.g. `004567123_00058`).
-    State which pages were read and which were not. No other line in it is
-    only `---`. This block replaces `summary_for_user` and may carry image ids.
+    each fact followed by its page as a markdown link to that page's
+    `viewerUrl`, the image id as link text (e.g.
+    `[004567123_00058](https://www.familysearch.org/search/film/004567123?i=57)`);
+    never a bare or shortened image id. The volume is "image group <number>",
+    a Catalog item only when `catalog_search` returned it. State which pages
+    were read and which were not. No other line in it is only `---`. This
+    block replaces `summary_for_user`.
 - Never state a name, rank or date that is not in a `transcription` you
   received.
 
@@ -223,10 +227,8 @@ it asserted the films are unindexed. A `searchableOmitted` line's label says
 the route: an `indexed | …` line means search-records, a `full-text | …` line
 means search-full-text. Say which, and stop. **No browse happened, so there
 is nothing to log**: do not call `research_log_append`, and never record a
-`negative` entry with `resultsExamined: 0` to show willingness. A log entry
-describing a browse you correctly refused to perform is a false audit trail, and
-it is worse than no entry because a later exhaustiveness audit reads it as a
-search that came back empty. Declining IS completing the delegation here.
+`negative` entry with `resultsExamined: 0` to show willingness. Declining IS
+completing the delegation here.
 
 ```
 volume_search({ standardPlace: "Luzerne, Pennsylvania, United States", omitSearchable: true })

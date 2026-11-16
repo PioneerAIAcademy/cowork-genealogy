@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "Captured live in feedback #4561 (feedback-2026-11-13T20-21-42-415568Z.zip, issue #4582): the main thread's own read of image ARK 3:1:3QHN-BQ8C-33BG, page 5 of the Ashford, Connecticut vital records (Philip Eastman Jr. and Elizabeth Hodges, daughters Mary, Pheba and Esther). One page, matched on the ARK tail so a bare, canonical or full-URL ark all match. `found` dropped (it depends on lookingFor). `viewerUrl` is what the tool returned; the reply must link it, not name the bare ARK (ut_research_lk1).",
+  "args": {
+    "ark": "~3QHN-BQ8C-33BG"
+  },
+  "response": {
+    "transcription": "5\n\nPhilip Eastman jun & Elizabeth Hodges Joyned in Marriage [illegible]\nMary Daughter of Philip Eastman born to him by Elizabeth his wife [illegible]\nPheba Daughter of Philip Eastman Born to him by Elizabeth his w[illegible]\nEsther Daughter of Philip Eastman Born to him by Elizabeth his wife [illegible]\n\nNancy Daughter to Jedidiah Fay Junr. by Martha his wife Born [illegible]\nNahum Son to Jedidiah Fay Junr. by Martha his wife Born Decr 14 [illegible]\nNahum Son to Jedidiah Fay Junr. by Martha his wife born Sept [illegible]\nPatty Daughter to Jedidiah Fay by Martha his wife born May 3 [illegible]\nHannah Daughter to Jedidiah Fay Junr. by Martha his wife [illegible]\n\nTimothy Eastman Jun and Susannah Curtess Joyned in Marriage Feby [illegible]\nJemima Daughter of Timothy Eastman Jun Born to him by Susannah [illegible]\nLevina Daughter of Timo Eastman Jun Born to him by Susannah [illegible]\nSusannah Daughter of Timo Eastman Jun Born to him by Susanna [illegible]\nMehetable Daughter of Timo Eastman Jun Born to him by Susannah [illegible]\nand Departed this Life August ye. 29. 1775\nMoli Daughter of Timo Eastman Jun Born to him by Susannah hi[illegible]\n\nOtis Son to Justin Eastman by       his wife bo[illegible]",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QHN-BQ8C-33BG"
+  }
+}

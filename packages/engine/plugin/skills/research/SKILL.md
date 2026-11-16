@@ -31,7 +31,7 @@ allowed-tools:
 
 **If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
 
-**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report: add no summary, table or question of your own to it, only the turn's closing line. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report: add no summary, table or question of your own to it, only the turn's closing line. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
 You drive the full Genealogical Proof Standard (GPS) workflow on the
 user's research objective. Rather than the user invoking each
@@ -59,6 +59,11 @@ first message with no project runs init-project first, then its deliverable
 
 Nothing runs after that line. Do not start the next step, and do not promise
 one in prose you then act on.
+
+**Link what you name.** Every page or record you name is a markdown link to
+the https URL its tool result gave (`viewerUrl`, `recordUrl`); never a bare ARK,
+image id or hand-built URL. An image group is "image group <number>", a Catalog
+item only when `catalog_search` returned it. A relayed block stays verbatim.
 
 | Next step | `<label>` |
 |---|---|
@@ -194,15 +199,13 @@ children-born and children-living counts — "are any missing?" with no counts i
 of two persons already confirmed identical; a "should these be merged?" never goes
 to `@plugin:tree-edit`. The names and details in a record set, or a named title's catalog item or DGS numbers, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
-`projectPath`, even when the message names no images; relay everything after
-its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
+`projectPath`, even when the message names no images, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
 and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. A transcription you deliver yourself: call
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
 `projectPath` when a project exists, however new or empty — show the page from
-`sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
-link. Only when `project_context` returns `reason: "no_project"`: one named image, called
+`sidecar_read({ projectPath, ref: staged.resultsRef })`. Only when `project_context` returns `reason: "no_project"`: one named image, called
 without `projectPath`, its `transcription` shown inline; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
@@ -281,12 +284,10 @@ message.
    eyeball it.** For every `log[]` entry with `outcome: "positive"` or
    `"partial"`, check whether at least one `assertions[]` entry's
    `log_entry_id` points back to it. A search you logged and then set
-   aside — often because a *later* search turned up a more exciting
-   find and pulled focus — still needs its own extraction pass; finding
+   aside still needs its own extraction pass; finding
    new evidence elsewhere does not retroactively excuse an earlier
    entry. This applies even to log entries that re-examine an
-   already-attached source (e.g. re-reading a census previously flagged
-   as "possibly misattached") — a re-examination that surfaces new
+   already-attached source — a re-examination that surfaces new
    facts (household composition, a corrected identification) is exactly
    as extraction-worthy as a fresh search hit, and citing its findings
    in a conflict's `weighing_analysis` or a proof's narrative later
@@ -542,7 +543,7 @@ message.
 3. **Offer the next step.** The step is done; report it and end the turn
    with its "Continue with …?" line (§"One step per turn"). Work out the
    next step now, from the sub-skill's compact return plus the state you
-   hold, because that is what the line names.
+   hold.
 
    **Before offering `research-exhaustiveness`, re-run the log-vs-assertion
    cross-check from Step 1 across the *whole* log,** not just the entries

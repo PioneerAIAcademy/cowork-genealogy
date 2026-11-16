@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "Captured live in feedback #4561 (feedback-2026-11-13T20-21-42-415568Z.zip, issue #4582): image 113551215_00003 of Ashford 'Second Copy Vol 4' — page [5] begins: Philip Eastman Jr. & Elisabeth Hodges, daughters Mary, Phebe, Esther. `found` dropped (it depends on lookingFor); `viewerUrl` is the live one.",
+  "args": {
+    "imageId": "~113551215_00003"
+  },
+  "response": {
+    "transcription": "```text\n                                                            19\n___\n\n[                ] Henry Storrs by Polly his\n[                ] 1800 Bezaleel Son to Henry\n[                ] Born July 4th 1803.\n    [5] Philip Eastman Jur & Elisabeth Hodges Joyned\nin Mariage [torn]\n    Mary Daughter of Philip Eastman Born to him by\nElisabeth his Wife [torn]\n    Phebe Daughter of Philip Eastman Born to him by\nElisabeth his [torn]\n    Esther Daughter of Philip Eastman Born to him by\nElisabeth his Wife [torn]\n    Nancy Daughter to Jedidiah Fay Jur. by Martha\nhis wife Born Feby 18 [torn]\n    Nathan Son to Jedidiah Fay Junr. by Martha his wife\nBorn Feby 15 [torn]\n    Nathan Son to Jedidiah Fay Junr. by Martha his wife\nBorn Septr. 5 [torn]\n    Pattey Daughter to Jedidiah Fay by Martha his wife\nborn May 3 [torn]\n    Hannah Daughter to Jedidiah Fay Junr. by Martha\nhis wife Born [torn]\n    Timothy Eastman jr and Susannah Curtiss Joyned\nin Mariage Feby [torn]\n    Jemima Daughter of Timothy Eastman Jur. Born to\nhim by Susanna [torn]\n```",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=2"
+  }
+}
