@@ -868,39 +868,15 @@ async def _execute_single_run(
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
-    # Deterministic-validator deference: a passing expected_classifications
-    # check floors the classification judge-dimensions so a fuzzy re-grade can't
-    # override verified ground truth (the dominant flap source). Runs before the
-    # outcome is computed so the floored scores drive pass/partial/fail.
-    apply_deterministic_deference(
-        judge_result.dimensions,
-        validator_results,
-        has_expected_classifications=bool(spec.raw.get("expected_classifications")),
-    )
-
-    # A judge FAIL on a correctly-routed negative test is COERCED to N/A (#2196):
-    # routing already decided the outcome, so these dimensions never gated it,
-    # and the judge was grading a transcript the harness usually truncated at
-    # the hand-off. NOT floored to 2 - that shipped once and the corpus refuted
-    # it (20 of 24 cells human-confirmed at 1). The original score and rationale
-    # survive in output.warnings, which is what keeps the 1 trendable.
-    #
-    # Runs unconditionally, OUTSIDE the judge gate above, and before #2057 that
-    # was invisible: a validator-failing run had no dimensions, so this
-    # no-opped on the whole class. It now fires there too.
-    flag_routing_negative_judge_fail(
+    # The judge-dimension rewrites that run before the outcome: deterministic
+    # deference, the routing-negative coercion (#2196) and `na_dimensions`
+    # (#4548). One helper, so `judge_regrade` applies exactly the same steps.
+    apply_post_judge_pipeline(
         judge_result.dimensions,
         spec=spec,
+        validator_results=validator_results,
         activated=activated,
         skills_invoked=result.skills_invoked,
-        warnings=judge_dimension_warnings,
-    )
-
-    # Dimensions the test names N/A (#4548). After the judge returns and before
-    # the outcome, so the coerced nulls are what gates it.
-    coerce_review_dimensions_to_na(
-        judge_result.dimensions,
-        spec=spec,
         warnings=judge_dimension_warnings,
     )
 
@@ -1649,6 +1625,45 @@ _CLASSIFICATION_DIMENSIONS = frozenset(
 # own Skills-invoked block names an accepted skill, across 9 tests in 5 skills.
 # Prose was tried twice (PRs #589 and #1564) and it recurs, so defer instead.
 _ROUTING_DIAGNOSTIC_DIMENSIONS = frozenset({"Correctness", "Completeness"})
+
+
+def apply_post_judge_pipeline(
+    dimensions, *, spec: TestSpec, validator_results, activated, skills_invoked, warnings
+):
+    """Every rewrite of the judge's dimensions that runs before the outcome is
+    computed, in order. A fresh run (`_execute_single_run`) and a regrade
+    (`judge_regrade.regrade_run_log`) both call this, so a step added here
+    cannot be missing from one of them.
+
+    1. Deterministic deference: a passing `test_expected_classifications`
+       floors a classification dimension's judge 1 to 2, so a fuzzy re-grade
+       cannot override verified ground truth (the dominant flap source).
+    2. A judge 1 on a correctly-routed negative test is coerced to N/A (#2196):
+       routing already decided the outcome, and the judge was grading a
+       transcript the harness usually truncated at the hand-off. NOT floored to
+       2 - that shipped once and the corpus refuted it (20 of 24 cells
+       human-confirmed at 1). The original score and rationale survive in
+       `warnings`, which keeps the 1 trendable. Runs even when a failing
+       validator left no dimensions (#2057).
+    3. Dimensions the test names in `na_dimensions` are coerced to null (#4548).
+
+    `validator_results` items need `.name` and `.passed`. Mutates and returns
+    `dimensions`.
+    """
+    apply_deterministic_deference(
+        dimensions,
+        validator_results,
+        has_expected_classifications=bool(spec.raw.get("expected_classifications")),
+    )
+    flag_routing_negative_judge_fail(
+        dimensions,
+        spec=spec,
+        activated=activated,
+        skills_invoked=skills_invoked,
+        warnings=warnings,
+    )
+    coerce_review_dimensions_to_na(dimensions, spec=spec, warnings=warnings)
+    return dimensions
 
 
 def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):

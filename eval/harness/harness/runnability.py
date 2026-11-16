@@ -416,6 +416,22 @@ def check_runnable(
                 f"na_dimensions names {unknown}, which are not `## ` headings "
                 f"in {rubric_path}. Rubric dimensions: {valid or 'none'}",
             )
+        # Nulling a dimension removes its coverage; the spec's authoring rule
+        # is that a tag-gated validator grades what it held. Without one the
+        # field only deletes signal, the grade_on_invariant failure mode.
+        gate_tags = tag_gated_validator_tags(
+            validators_dir, spec.skill
+        ) | tag_gated_validator_tags(validators_dir, "universal")
+        if not set(spec.tags or []) & gate_tags:
+            return RunnabilityResult(
+                False,
+                "na_dimensions is set but no validator gates on any of this "
+                f"test's tags {sorted(spec.tags or [])}, so nulling "
+                f"{list(spec.na_dimensions)} would only delete coverage. Add a "
+                f"tag-gated validator to {validators_dir}/test_"
+                f"{spec.skill.replace('-', '_')}.py that grades what those "
+                "dimensions held, then tag the test with it.",
+            )
 
     # A positive test in a ROUTING suite must list its stubs (#3568). Every agent
     # it spawns is denied by default, but the ownership validators skip only on a

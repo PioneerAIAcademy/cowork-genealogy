@@ -61,9 +61,8 @@ from harness.orchestrator import (
     DEFAULT_SKILLS,
     _compute_outcome,
     _run_judge,
+    apply_post_judge_pipeline,
     build_judge_grade_kwargs,
-    flag_routing_negative_judge_fail,
-    coerce_review_dimensions_to_na,
     gating_validator_failures,
 )
 from harness.scenario_brief import (
@@ -631,6 +630,16 @@ def regrade_run_log(
             # Test file deleted since the log was written; skip.
             continue
         rub = _load_rubric(result.skill)
+        # A fresh run refuses this at the runnability gate; a regrade skips that
+        # gate, and an unmatched name would coerce nothing and let the judge's
+        # fresh score gate the outcome.
+        unmatched = [n for n in spec.na_dimensions if n not in rub.dimension_names()]
+        if unmatched:
+            result.error = (
+                f"test {test_id}: na_dimensions names {unmatched}, which are not "
+                f"headings in {result.skill}/rubric.md; fix the test before regrading"
+            )
+            return result
         scenario = spec.scenario if hasattr(spec, "scenario") else None
         brief = _load_scenario_brief(scenario, force_readme=force_readme)
         scenario_readme = brief.text
@@ -692,18 +701,17 @@ def regrade_run_log(
 
             # Overwrite the judge block and refresh outcome.
             fresh_dimensions = judge_out.dimensions
-            # Re-run post-judge pipeline.
-            flag_routing_negative_judge_fail(
+            # Re-run the post-judge pipeline a fresh run applies.
+            apply_post_judge_pipeline(
                 fresh_dimensions,
                 spec=spec,
+                validator_results=[
+                    SimpleNamespace(name=r.get("name"), passed=bool(r.get("passed")))
+                    for r in validators_block.get("results") or []
+                ],
                 activated=activated,
                 skills_invoked=skills_invoked,
                 warnings=warnings,
-            )
-            # Re-applied here too, or a regrade would hand the outcome the
-            # judge's fresh scores on the dimensions the test names N/A.
-            coerce_review_dimensions_to_na(
-                fresh_dimensions, spec=spec, warnings=warnings
             )
             run_entry.setdefault("output", {})["warnings"] = warnings
 

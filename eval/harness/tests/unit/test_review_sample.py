@@ -3,6 +3,7 @@
 import math
 
 from harness.review_sample import (
+    _has_rubric_null_on_positive,
     is_gradeable,
     is_mandatory,
     review_dimensions,
@@ -560,6 +561,23 @@ def test_the_targeted_degradation_skips_a_test_the_mandatory_slot_takes():
     assert "ut_003" in got, "the mandatory slot must still take it"
     assert "ut_004" in got, "the degraded slot must spend on a non-mandatory test"
     assert len(got) == 6
+
+
+# --- na_dimensions: a declared N/A is not a suspect null (#4548) -------------
+
+
+def _declared_na_entry(test_id, *, warned):
+    entry = _test_entry(test_id, dims=[_dim(), _dim("Score discipline", score=None, source="rubric")])
+    warnings = [{"kind": "coerced_review_dimension_to_na", "name": "Score discipline",
+                 "score": 2, "rationale": "r"}] if warned else []
+    entry["runs"] = [{"validators": {"passed": True, "results": []},
+                      "output": {"warnings": warnings}}]
+    return entry
+
+
+def test_a_declared_na_dimension_does_not_take_the_targeted_slot():
+    assert _has_rubric_null_on_positive(_declared_na_entry("ut_a", warned=True)) is False
+    assert _has_rubric_null_on_positive(_declared_na_entry("ut_b", warned=False)) is True
 
 
 # --- Third mandatory trigger: a coerced routing-negative cell (#2196) --------

@@ -980,7 +980,7 @@ def test_no_committed_test_trips_the_run_agents_or_routing_suite_rules():
 # --- na_dimensions (#4548) ---------------------------------------------------
 
 
-def _na_check(tmp_path, na, *, negative=False, extra_heading=""):
+def _na_check(tmp_path, na, *, negative=False, extra_heading="", tags=("no-harm",)):
     fake_tests = tmp_path / "tests"
     (fake_tests / "research").mkdir(parents=True)
     (fake_tests / "research" / "rubric.md").write_text(
@@ -992,6 +992,7 @@ def _na_check(tmp_path, na, *, negative=False, extra_heading=""):
     )
     d = _runnable_test_dict()
     d["na_dimensions"] = na
+    d["test"]["tags"] = list(tags)
     if negative:
         d["test"]["type"] = "negative"
         d["negative"] = {"correct_skill": [], "explanation": "x"}
@@ -1000,6 +1001,7 @@ def _na_check(tmp_path, na, *, negative=False, extra_heading=""):
     return check_runnable(
         spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
         skills_dir=SKILLS, tests_dir=fake_tests,
+        validators_dir=_validators_dir(tmp_path, OPT_IN_VALIDATOR),
     )
 
 
@@ -1023,6 +1025,12 @@ def test_na_dimensions_refuses_a_base_name_even_when_a_rubric_reuses_it(tmp_path
     result = _na_check(tmp_path, ["Correctness"], extra_heading="Correctness")
     assert result.runnable is False
     assert "base dimension" in result.reason
+
+
+def test_na_dimensions_without_a_gating_validator_is_refused(tmp_path):
+    result = _na_check(tmp_path, ["Score discipline"], tags=("unrelated",))
+    assert result.runnable is False
+    assert "no validator gates" in result.reason
 
 
 def test_na_dimensions_on_a_negative_test_is_refused(tmp_path):

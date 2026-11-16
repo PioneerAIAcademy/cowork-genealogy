@@ -2398,19 +2398,11 @@ def test_exception_fails_a_stub_taken_on_the_residence(assertion_id, rationale, 
 
 # --- test_review_names_gaps (#4548) -----------------------------------------
 
-_PE_RUNLOGS = Path(__file__).resolve().parents[4] / "eval" / "runlogs" / "unit" / "person-evidence"
 _GAPS_TEST = {"tags": ["review-names-gaps"], "delegation": "Review pe_005"}
 _GOOD_REVIEW = (
     "pe_005 is well supported. a_013 names Thomas Flynn as father, but there is no pe_ "
     "entry linking a_013 to I2. The match_score is null and the rationale never says why."
 )
-
-
-def _logged_001_reply(log_name, run_index=0):
-    log = json.loads((_PE_RUNLOGS / f"{log_name}.json").read_text(encoding="utf-8"))
-    entry = next(t for t in log["tests"] if t["test_id"] == "ut_person_evidence_001")
-    output = entry["runs"][run_index]["output"]
-    return output.get("agent_returns"), output.get("text_response")
 
 
 def _gaps(text):
@@ -2445,6 +2437,11 @@ def test_review_gaps_passes_a_review_naming_both():
     "pe_005's match score is not disclosed.",
     "Thomas Flynn is named in a_013, but I2 is not yet connected to a_013 by any "
     "pe_ entry. pe_005's match score is not disclosed.",
+    # Contractions, and other ways to say the null is unexplained.
+    "a_013 names Thomas Flynn (I2) as father, but it isn't linked to I2. "
+    "pe_005 has a null match_score and the rationale does not mention why.",
+    "A link from a_013 to Thomas (I2) hasn't been created. "
+    "The match_score field is empty, with no rationale for it.",
 ])
 def test_review_gaps_accepts_other_wordings(text):
     _gaps(text)
@@ -2475,6 +2472,10 @@ _SCORE_OK = "The match_score is null and the rationale never says why."
     ("a_013 names Thomas Flynn (I2) as father, with no conflict against the tree's "
      "links. " + _SCORE_OK, "I2"),
     ("No problems: a_013 has a link to Thomas (I2). " + _SCORE_OK, "I2"),
+    # The second sentence's "no ... link" is about someone else.
+    ("a_013 names Thomas Flynn (I2). The tree has no links for I7. " + _SCORE_OK, "I2"),
+    ("a_013 names Thomas Flynn (I2) as his father. Note: pe_009 for Mary has no entry "
+     "date. " + _SCORE_OK, "I2"),
     # "No further link" says the opposite of a missing link.
     ("a_013 names Thomas Flynn (I2) and pe_007 links it; no further link is needed. "
      "The match_score is null and the rationale never says why.", "I2"),
@@ -2503,30 +2504,42 @@ def test_review_gaps_grades_the_agent_not_the_dispatcher():
         check_review_gaps(test=_GAPS_TEST, agent_returns=[], text_response=_GOOD_REVIEW)
 
 
-@pytest.mark.parametrize("log_name, run_index", [
-    # Annotation raised Multi-person awareness (and on 18-53-38 Score
-    # discipline) from 2 to 3 on these two.
-    ("v10", 0),
-    ("v11_2026-11-12_18-53-38", 0),
+
+
+# Every committed 001 reply (v2-v11), frozen so candidate rotation
+# (DEFAULT_KEEP_CANDIDATES) cannot delete a run log out from under the test.
+# Each was read by hand for whether it names the a_013 -> I2 gap.
+_PE_001_REPLIES = json.loads(
+    (Path(__file__).parent / "person_evidence_001_replies.json").read_text(encoding="utf-8")
+)
+_NAMES_I2_GAP = {
+    "v7_run0", "v8_run0", "v10_run0",
+    # Annotation raised Multi-person awareness (and on 18-53-38 Score discipline) to 3.
+    "v11_2026-11-12_18-53-38_run0",
+    "v11_2026-11-15_18-11-50_run0",
     # Human-held 3 on both dimensions.
-    ("v11_2026-11-15_18-32-11", 0),
-    ("v11_2026-11-16_06-41-17", 0),
-])
-def test_review_gaps_passes_committed_reviews_a_human_accepted(log_name, run_index):
-    returns, text = _logged_001_reply(log_name, run_index)
-    check_review_gaps(test=_GAPS_TEST, agent_returns=returns, text_response=text)
+    "v11_2026-11-15_18-32-11_run0", "v11_2026-11-16_06-41-17_run0",
+    "v11_2026-11-15_21-52-22_run1", "v11_2026-11-15_21-52-22_run2",
+}
+# v2 and v6: Score discipline raised to 3, but Multi-person awareness was N/A
+# under the rubric of the day, and neither reply names the gap.
+_OMITS_I2_GAP = {
+    "v2_run0", "v3_run0", "v5_run0", "v6_run0", "v9_run0",
+    "v11_2026-11-15_21-52-22_run0", "v11_2026-11-15_21-52-22_run3",
+}
 
 
-@pytest.mark.parametrize("log_name, run_index", [
-    # Score discipline raised to 3, but Multi-person awareness was N/A under
-    # the rubric of the day, and neither reply names the a_013 -> I2 gap.
-    ("v2", 0),
-    ("v6", 0),
-    # Haiku runs whose reply never names the gap (read by hand).
-    ("v11_2026-11-15_21-52-22", 0),
-    ("v11_2026-11-15_21-52-22", 3),
-])
-def test_review_gaps_fails_committed_reviews_that_omit_the_i2_gap(log_name, run_index):
-    returns, text = _logged_001_reply(log_name, run_index)
+def test_review_gaps_frozen_replies_are_all_labelled():
+    assert set(_PE_001_REPLIES) == _NAMES_I2_GAP | _OMITS_I2_GAP
+    assert all(_PE_001_REPLIES.values())
+
+
+@pytest.mark.parametrize("key", sorted(_NAMES_I2_GAP))
+def test_review_gaps_passes_committed_reviews_that_name_both(key):
+    check_review_gaps(test=_GAPS_TEST, agent_returns=_PE_001_REPLIES[key], text_response=None)
+
+
+@pytest.mark.parametrize("key", sorted(_OMITS_I2_GAP))
+def test_review_gaps_fails_committed_reviews_that_omit_the_i2_gap(key):
     with pytest.raises(AssertionError, match="I2"):
-        check_review_gaps(test=_GAPS_TEST, agent_returns=returns, text_response=text)
+        check_review_gaps(test=_GAPS_TEST, agent_returns=_PE_001_REPLIES[key], text_response=None)

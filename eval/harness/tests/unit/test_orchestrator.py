@@ -2807,7 +2807,12 @@ def test_na_dimensions_reach_the_recorded_run(tmp_path, monkeypatch):
     `warning_kinds` row deleted; this one does not (#4548)."""
     import dataclasses
 
-    spec = dataclasses.replace(load_test(WIKI_TEST_PATH), na_dimensions=("Reply economy",))
+    base = load_test(WIKI_TEST_PATH)
+    # The runnability gate wants a tag-gated validator beside `na_dimensions`;
+    # `no-project` gates one in test_search_wikipedia.py.
+    spec = dataclasses.replace(
+        base, na_dimensions=("Reply economy",), tags=[*base.tags, "no-project"]
+    )
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 

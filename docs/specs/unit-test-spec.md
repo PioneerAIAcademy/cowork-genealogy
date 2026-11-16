@@ -1435,12 +1435,18 @@ the judge, so the score is dropped in code.
   aggregate depend on which way the judge fell.
 - **Never in what the judge is sent.** The coercion runs after the judge, so it
   does not move `judge_render_hash` and no suite owes `make judge-regrade`.
-- **Authoring rule: a test that uses it carries a tag-gated validator** that
-  checks what the coerced dimensions held. On 001 that is
+- **A test that uses it carries a tag-gated validator** that checks what the
+  coerced dimensions held; the runnability gate refuses the field when none of
+  the test's tags gates a validator in the skill's file or `test_universal.py`.
+  On 001 that is
   `test_review_names_gaps` (tag `review-names-gaps`): the reply must say that
   a_013 has no pe_ link to Thomas Flynn (I2) and that `pe_005`'s null
-  `match_score` is unexplained. Without such a validator the field only removes
-  coverage.
+  `match_score` is unexplained.
+- **Not a suspect null.** The review sample's targeted slot looks for rubric
+  nulls on positive tests; a dimension named in a
+  `coerced_review_dimension_to_na` warning is skipped there
+  (`review_sample._has_rubric_null_on_positive`). No mandatory-review trigger
+  keys on the warning (decided in #4548).
 
 It is a real (non-cosmetic) field, so it is snapshot-tracked: editing it
 invalidates the content hash and forces a re-run.

@@ -1853,16 +1853,18 @@ _NOT_A_GAP_WORD = r"(?:conflicts?|contradict\w*|problems?|issues?|edits?|changes
 _BETWEEN = r"(?:(?!\b" + _NOT_A_GAP_WORD + r"\b)[^.\n]){0,40}?"
 _MISSING_LINK = re.compile(
     r"(?:\bno\b|\bmissing\b|\blacks?\b|\bwithout\b)" + _BETWEEN + _LINK_NOUN
-    + r"|\bnot\s+(?:yet\s+)?(?:been\s+)?(?:linked|connected)\b|\bunlinked\b|\bnothing\s+links\b"
+    + r"|(?:\bnot|n['’]t)\s+(?:yet\s+)?(?:been\s+)?(?:linked|connected)\b|\bunlinked\b|\bnothing\s+links\b"
     + r"|" + _LINK_NOUN + r"[^.\n]{0,60}?\b(?:is\s+missing|is\s+absent|don['’]t\s+see|do\s+not\s+see"
-    + r"|(?:has|have)\s+not\s+(?:yet\s+)?been\s+(?:created|made|written|added))\b",
+    + r"|(?:has|have)(?:\s+not|n['’]t)\s+(?:yet\s+)?been\s+(?:created|made|written|added))\b",
     re.IGNORECASE,
 )
 _I2_NAMES = re.compile(r"\ba_013\b|\bI2\b|\bThomas\b")
+_OTHER_ID = re.compile(r"\bI(?!2\b)\d+\b|\bpe_\d+|\ba_(?!013\b)\d+|\bentry\s+date\b")
 _SCORE_TERM = r"(?:`?match_score`?|\bmatch\s+score|`?same_person`?\s+score|\bscore)"
 _UNEXPLAINED = (
     r"(?:\bunexplained\b|\bno\s+explanation\b|\bnever\s+says\s+why\b|\bno\s+(?:stated\s+|given\s+)?reason\b"
-    r"|\bnot\s+disclosed\b|\bdoes\s+not\s+(?:say|explain)\b|\bdoesn['’]t\s+(?:say|explain)\b"
+    r"|\bnot\s+disclosed\b|\b(?:does\s+not|doesn['’]t)\s+(?:say|explain|mention\s+why)\b"
+    r"|\bno\s+rationale\s+for\b"
     r"|\bnot\s+(?:recorded|obtained|stated|explained|computed)\b|\bno\s+disclosure\b"
     r"|\bmentions\s+no\b|\bnever\s+computed\b|\bno\s+account\b)"
 )
@@ -1883,15 +1885,19 @@ def _sentences(text):
 def _names_missing_i2_link(text):
     """Two adjacent sentences name a_013 and Thomas / I2, and one of them says
     the link is absent. A negation tied to something else ("no edits to
-    pe_005", "no conflict against the links", "no further link is needed")
-    does not count."""
+    pe_005", "no conflict against the links", "no further link is needed"),
+    or a second sentence about another person or entry, does not count."""
     sents = _sentences(text)
     for i in range(len(sents)):
         pair = sents[i:i + 2]
         joined = " ".join(pair)
         if not (re.search(r"\ba_013\b", joined) and re.search(r"\bI2\b|\bThomas\b", joined)):
             continue
-        if any(_MISSING_LINK.search(s) and (j > 0 or _I2_NAMES.search(s)) for j, s in enumerate(pair)):
+        if any(
+            _MISSING_LINK.search(s)
+            and (_I2_NAMES.search(s) or (j > 0 and not _OTHER_ID.search(s)))
+            for j, s in enumerate(pair)
+        ):
             return True
     return False
 

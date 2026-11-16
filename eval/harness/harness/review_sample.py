@@ -136,10 +136,19 @@ def zero_dimension_test_ids(tests: list[dict[str, Any]]) -> list[str]:
 
 
 def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
+    """A rubric dimension the test itself declared N/A (`na_dimensions`, #4548)
+    is a deliberate null, not a null standing in for a 1, so it does not count;
+    the `coerced_review_dimension_to_na` warning names each one."""
     if entry.get("test_type") == "negative":
         return False
+    declared_na = {
+        w.get("name")
+        for w in iter_run_warnings(entry)
+        if w.get("kind") == "coerced_review_dimension_to_na"
+    }
     return any(
         d.get("source") != "base" and d.get("score") is None
+        and d.get("name") not in declared_na
         for d in review_dimensions(entry)
     )
 
