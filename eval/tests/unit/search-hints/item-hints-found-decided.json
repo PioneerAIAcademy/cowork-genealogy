@@ -29,7 +29,7 @@
     "person-read-flynn"
   ],
   "judge_context": [
-    "The three pending hints are the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2) and the 1908 death certificate (MDEF, confidence 2). The death certificate is already linked: extracted as src_004 and linked to Patrick by pe_005",
+    "The three pending hints are the 1870 census (M70C, confidence 5), the 1880 census (M80C, confidence 4) and the 1908 death certificate (MDEF, confidence 4). The death certificate is already linked: extracted as src_004 and linked to Patrick by pe_005",
     "The 1880 census index has the surname as 'Glynn'; its image reads 'Flynn, Patrick', so that hint is not rejected",
     "Each new accept and reject is logged as a person_record_matches entry naming pli_007; the death certificate, already linked, is not logged. pli_007 is then set completed through research_append on plan_items",
     "The return does not ask the researcher to decide; the researcher-facing text says what was decided and what happens next"
