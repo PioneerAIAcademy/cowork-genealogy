@@ -60,11 +60,10 @@ first message with no project runs init-project first, then its deliverable
 Nothing runs after that line. Do not start the next step, and do not promise
 one in prose you then act on.
 
-**Link what you name.** Every page or record you name is a markdown link to
-the https URL its tool result gave (`viewerUrl`, `recordUrl`); never a bare ARK,
-image id or hand-built URL. An image group is "image group <number>" with no
-link, a Catalog item only when `catalog_search` returned it. A relayed block
-stays verbatim.
+**Link what you name**: each page or record, as a markdown link to the https
+URL its tool result gave (`viewerUrl`, `recordUrl`); never a bare ARK, image id
+or hand-built URL. An image group is "image group <number>", unlinked, a
+Catalog item only when `catalog_search` returned it.
 
 | Next step | `<label>` |
 |---|---|
@@ -200,7 +199,8 @@ children-born and children-living counts — "are any missing?" with no counts i
 of two persons already confirmed identical; a "should these be merged?" never goes
 to `@plugin:tree-edit`. The names and details in a record set, or a named title's catalog item or DGS numbers, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
-`projectPath`, even when the message names no images, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
+`projectPath`, even when the message names no images; relay everything after
+its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
 and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. A transcription you deliver yourself: call

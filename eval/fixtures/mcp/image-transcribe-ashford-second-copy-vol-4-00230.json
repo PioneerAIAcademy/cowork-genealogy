@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC page 113551215_00230 of Ashford 'Second Copy Vol 4' (issue #4582). One of the pages search-images samples while locating Vol. 4 in lk2 scratch runs; each sampled page has its own text, because one catch-all text on every sampled page made the agent conclude the page reader was broken. No Eastman entry. Listed before the group catch-all.",
+  "args": {
+    "imageId": "~113551215_00230"
+  },
+  "response": {
+    "transcription": "Deaths\nLemuel Knowlton Died Jan.ry 17. 1834 aged 81\nSarah Snow Died Sept.r 2. 1835 aged 76\nAmos Chaffee Died March 30. 1837 aged 58\nPolly wife of Chester Bosworth Died July 11. 1839",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=229"
+  }
+}

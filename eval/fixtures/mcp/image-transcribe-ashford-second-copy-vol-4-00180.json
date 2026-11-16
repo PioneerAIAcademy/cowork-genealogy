@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC page 113551215_00180 of Ashford 'Second Copy Vol 4' (issue #4582). One of the pages search-images samples while locating Vol. 4 in lk2 scratch runs; each sampled page has its own text, because one catch-all text on every sampled page made the agent conclude the page reader was broken. No Eastman entry. Listed before the group catch-all.",
+  "args": {
+    "imageId": "~113551215_00180"
+  },
+  "response": {
+    "transcription": "Alfred Tiffany and Sophia Bicknell Joined in Marriage Sept.r 26. 1813\nSophia Daughter of Alfred Tiffany Born to him by Sophia his wife June 5. 1814\nLeonard Son of Alfred Tiffany Born to him by Sophia his wife April 28. 1817",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=179"
+  }
+}

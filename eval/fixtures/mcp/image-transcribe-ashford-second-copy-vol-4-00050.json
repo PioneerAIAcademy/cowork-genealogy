@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC page 113551215_00050 of Ashford 'Second Copy Vol 4' (issue #4582). One of the pages search-images samples while locating Vol. 4 in lk2 scratch runs; each sampled page has its own text, because one catch-all text on every sampled page made the agent conclude the page reader was broken. No Eastman entry. Listed before the group catch-all.",
+  "args": {
+    "imageId": "~113551215_00050"
+  },
+  "response": {
+    "transcription": "Nathaniel Kendall and Esther Abbot Joined in Marriage June 2. 1784\nEsther Daughter of Nathaniel Kendall Born to him by Esther his wife March 11. 1785\nCalvin Son of Nathaniel Kendall Born to him by Esther his wife Sept.r 30. 1787\nWilliam Preston Died Jan.ry 5. 1785 in the 72d year of his age",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=49"
+  }
+}

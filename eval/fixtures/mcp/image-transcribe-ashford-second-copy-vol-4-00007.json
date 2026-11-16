@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC page 113551215_00007 of Ashford 'Second Copy Vol 4' (issue #4582). One of the pages search-images samples while locating Vol. 4 in lk2 scratch runs; each sampled page has its own text, because one catch-all text on every sampled page made the agent conclude the page reader was broken. No Eastman entry. Listed before the group catch-all.",
+  "args": {
+    "imageId": "~113551215_00007"
+  },
+  "response": {
+    "transcription": "Benjamin Russel and Hannah Dimmock Joined in Mariage April 21. 1769\nHannah Daughter of Benjamin Russel Born to him by Hannah his wife Feb.ry 2 [torn]\nThomas Son of Benjamin Russel Born to him by Hannah [torn]\nDavid Bolles and Abigail Snow Joyned in Mariage Dec.r 7. 1769\nAbigail Daughter of David Bolles Born to him by Abigail his wife [torn]",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=6"
+  }
+}
