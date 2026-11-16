@@ -36,9 +36,10 @@ export const LOCALITY_GUIDE_OUTLINE: ReadonlyArray<readonly [string, readonly st
   ["Research tips", []],
 ];
 
-/** The most one `guideSection` may carry. 4 of the 6,716 blocks in the 428 guides
- *  saved in committed runs are longer; a whole guide is 12,000 and up. */
-export const GUIDE_SECTION_MAX_CHARS = 4000;
+/** The most guide text one call may carry. On Sonnet 5 at low effort, all 68 calls of
+ *  4,000 to 9,000 characters arrived as valid JSON; 8 of the 15 whole-guide calls of
+ *  9,000 to 12,000 did not. */
+export const GUIDE_SECTION_MAX_CHARS = 9000;
 
 /** The section a `### ` block goes under when the call names none and the
  *  template does not place it. */

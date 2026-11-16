@@ -2336,7 +2336,7 @@ The wiring is `expandGuideSections` and `localityGuideWholeRefusals` in
 to 18,000 characters of prose inside one JSON string. One unescaped character loses
 the call: Claude Code refuses it before this tool sees it, and the agent writes the
 whole entry again, 70 to 150 seconds each time. In the locality-guide unit suite,
-2 of 31 save attempts failed that way on Sonnet 4.6 at high effort and 17 of 35 on
+2 of 29 calls that carried a guide failed that way on Sonnet 4.6 at high effort and 17 of 29 on
 Sonnet 5 at low (run logs `v7_2026-11-06_11-18-01` and `v8_2026-11-11_13-24-50`).
 A section is 577 bytes at the median over the 428 guides saved in
 committed files, so a failed call costs one section and the rest of the guide stays
@@ -2359,10 +2359,11 @@ saved.
 - **The title line.** The guide's `# Locality Guide: <for_place or place> (<time_period>)`
   line is written by the tool, unless the stored guide already has text before its
   first heading or the call sends a `# ` line above its first block.
-- **The limit.** One call carries at most `GUIDE_SECTION_MAX_CHARS` (4,000)
+- **The limit.** One call carries at most `GUIDE_SECTION_MAX_CHARS` (9,000)
   characters of guide: a `guideSection` over it is refused, and so is every
-  `guideSection` op of a batch whose sections together pass it. 4 of the 6,716 blocks
-  in those 428 guides are longer.
+  `guideSection` op of a batch whose sections together pass it. On Sonnet 5 at low
+  effort, all 68 calls of 4,000 to 9,000 characters arrived as valid JSON, and 8 of
+  the 15 whole-guide calls of 9,000 to 12,000 did not.
 - **Several at once.** Calls for one entry may arrive together; each is placed under
   the project lock on the guide the one before it left. In a batch, each op is placed
   on the guide the earlier op left.

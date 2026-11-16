@@ -19122,7 +19122,7 @@ describe("research_append: a localities guide is saved one section per call (#45
   it("refuses a section over the size limit, says to split it, and saves nothing of it", async () => {
     await writeProject();
     await append();
-    const long = `## Research tips\n${"- A tip that runs on.\n".repeat(200)}`;
+    const long = `## Research tips\n${"- A tip that runs on.\n".repeat(Math.ceil(GUIDE_SECTION_MAX_CHARS / 22) + 1)}`;
     expect(long.length).toBeGreaterThan(GUIDE_SECTION_MAX_CHARS);
     const r = await section(long);
     expect(r.ok).toBe(false);
@@ -19230,7 +19230,7 @@ describe("research_append: a localities guide is saved one section per call (#45
   it("refuses a batch whose sections together pass the size limit, and says to send each alone", async () => {
     await writeProject();
     await append();
-    const big = (title: string) => `## ${title}\n${"- A line of the guide.\n".repeat(70)}`;
+    const big = (title: string) => `## ${title}\n${"- A line of the guide.\n".repeat(Math.floor(GUIDE_SECTION_MAX_CHARS / 46))}`;
     const ops = ["Jurisdiction overview", "Boundary changes", "Research tips"].map((t) => ({
       section: "localities", op: "update", entryId: "loc_001", guideSection: big(t),
     }));
