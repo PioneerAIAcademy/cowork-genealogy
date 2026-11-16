@@ -190,29 +190,13 @@ That was legal and unremarkable in 1880s Liguria, so age never could have
 disproved the hint on its own — and in the event the call turned on her marriage,
 not her age.
 
-**On the avoid guard and the two WARNs.** `f1` carries `polarity: "avoid"`, which
-is what switches `apply_avoid_guard` on for this fixture — before adjudication it
-had no polarity and the guard returned early, so the exposure below **arrives
-with this fixture's resolution**, it is not pre-existing.
-
-`make e2e-validate` emits a name-overlap WARN on `f2` against `G4Z4-RJ1`. It is
-harmless: the guard exempts `subject_person_ids`, which is `["G4Z4-RJ1"]` in
-`starting-research.json`, and nothing was stripped in this genre so the subject
-legitimately stays in the tree. **That exemption is keyed on PID and spares her
-alone.**
-
-`f1`'s `wrong_candidate.name` is deliberately the bare string `"Pietro Dondero"`.
-`finding_name_tokens` harvests *every* word of a `name` leaf, so a descriptive
-value such as "Pietro Dondero, husband of a Carmela Cavagnaro at Genova" would
-put `carmela` and `cavagnaro` into the avoid bag — and since the exemption
-covers only `G4Z4-RJ1`, a good run that stubs the *other* Carmela Cavagnaro as a
-distinct woman (a reasonable thing to do when the question is whether the two are
-the same, and the agent never sees this file) would be force-failed for it.
-Measured against the shipped guard: with the bare name, a tree stubbing the other
-Carmela returns `f1=true`, a tree over-claiming Dondero onto the subject still
-returns `f1=false`, and a clean tree returns `f1=true`. **Do not re-expand that
-leaf into a description.** Put descriptive text in the sibling `note`, which the
-matcher does not collect.
+**On the avoid guard.** `f1` carries `polarity: "avoid"` and lists Pietro
+Dondero's records, so `apply_avoid_guard` (`eval/harness/e2e/avoid_guard.py`)
+fails it when a tree object cites one of them, or when a new Couple joins the
+subject `G4Z4-RJ1` to a person named Pietro Dondero. A good run that stubs the
+*other* Carmela Cavagnaro as a distinct woman trips neither. Keep
+`wrong_candidate.name` the bare name "Pietro Dondero": the edge check matches a
+new spouse against it, and descriptive text belongs in the sibling `note`.
 
 Note for the corpus: the batch CSV labels this row Peru because she was born in
 Lima; every record involved is Genovese.

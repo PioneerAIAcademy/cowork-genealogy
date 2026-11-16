@@ -4,10 +4,10 @@
     "f2": "false"
   },
   "notes": {
-    "f1": "Hint (ark:/61903/1:1:7975-85ZM) is entirely absent from the tree — pass by omission; agent never encountered or evaluated the hint record.",
-    "f2": "f2 grades the documented conclusion, not the searches. No proof summary was written, the question was left open, and the hint was never identified or rejected as a different woman. The search entries in the research log are a prerequisite, not the finding itself. Full miss."
+    "f1": "No 14 November 1910 death, or any 1910 death, on Umbelina (GXSQ-V3L); she has no death fact in the final tree, and the 1910 record 7975-85ZM is not cited anywhere.",
+    "f2": "Substantial, relevant searches are logged (Rio de Janeiro civil 1920-1990, RJ Catholic, two cemetery collections, Espirito Santo civil, under both Azevedo and Pariz), but the 1910 death is never rejected as a different woman, no conclusion states her death remains unknown, q_001 is still open and there is no proof summary. Reporting unsuccessful searches is not a conclusion. The RJ search began in 1920, leaving 1911-1919 unexamined, and the external searches were never completed."
   },
-  "annotator": "mercyokum",
-  "findings_hash": "f072d899580ce705c84ac072d8015e6879ec7cddfa07a4a3c59ca90ab62c571f",
-  "blind_bundle_digest": "a956d621115cf5c3e11c25cc7753b1b3fe897e624ea01b8a8343563105812fd8"
+  "annotator": "benter-070",
+  "findings_hash": "e6a7e9b77f1535e60e6c7b6711d8e1ea5cfc8eae2599e57a2ed6475537e9b9ed",
+  "blind_bundle_digest": "80b2c3dc5ba6c223b61ae557f96c654a5eb937bf48a82a734d4a09807724fdab"
 }
