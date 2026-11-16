@@ -548,8 +548,16 @@
     },
     {
       "test_id": "ut_search_external_sites_ulf",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The run did read the upload with Read, and the validator for that passed. The judge only sees MCP tool calls, so it missed the Read."
+    },
+    {
+      "test_id": "ut_search_external_sites_ulf",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -564,19 +572,11 @@
     },
     {
       "test_id": "ut_search_external_sites_ulf",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_ulf",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
     }
   ]
 }
