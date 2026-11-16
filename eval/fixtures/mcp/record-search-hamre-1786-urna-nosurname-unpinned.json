@@ -1,0 +1,320 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-16, engine recordSearchTool) of a surname-free record_search: givenName Urna, recordCountry Norway, no collectionId, marriage 1770-1800, subjectId KZHH-VTX -- the shape ut_search_records_023 sent in v16_2026-11-16_12-25-11. 36852 matches; the first row is the bride NW44-PMK, Urna Halsteinsdr, in the 25 Jun 1786 Hamre marriage (record MY3L-FH3). Used by ut_search_records_023. The predicate cannot require surname to be absent, so it is listed after every surname-specific fixture and after the collection-1468080 fixtures; a call with a surname no earlier fixture covers also gets this answer.",
+  "args": {
+    "givenName": "Urna"
+  },
+  "response": {
+    "query": {
+      "givenName": "Urna",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "subjectId": "KZHH-VTX"
+    },
+    "totalMatches": 36852,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NW44-PMK",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Jun 1786",
+            "place": "Hamre, Hordaland, Norway"
+          }
+        ],
+        "personName": "Urna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Monsen",
+        "recordArk": "ark:/61903/1:2:MY3L-FH3",
+        "batchNumber": "M42039-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWM4-ZYW",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "16 Nov 1798",
+            "place": "Domkirken, Vår Frelsers, Kristiania, Norway"
+          }
+        ],
+        "personName": "Urian Ellefsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSG-6KF",
+        "batchNumber": "M42465-3",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWM8-KZX",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jun 1775",
+            "place": "Vestre Slidre, Oppland, Norway"
+          }
+        ],
+        "personName": "Urian Iversen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSG-HHH",
+        "batchNumber": "M42511-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW68-MJX",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "22 Aug 1784",
+            "place": "Glemmen, Smaalenene, Norway"
+          }
+        ],
+        "personName": "Urians Engebrethsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQZ-QFT",
+        "batchNumber": "M42614-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6837-YN6V",
+        "personName": "Urian Nielsen Svervig",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Anders Uriansen",
+        "recordArk": "ark:/61903/1:2:4BXC-97H4",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW98-Z4M",
+        "personName": "Urian Iversen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Engebretsen",
+        "recordArk": "ark:/61903/1:2:MYSL-KGR",
+        "batchNumber": "M42496-4",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6836-Z156",
+        "personName": "Urne Olsen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Anders Jensen",
+        "recordArk": "ark:/61903/1:2:4BX8-PY3X",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68WM-4YYD",
+        "personName": "Urkanus Jensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Jens Erik Angel",
+        "recordArk": "ark:/61903/1:2:4BFC-GT5S",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68WM-NRXK",
+        "personName": "Urkanus Jensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Peder Elling",
+        "recordArk": "ark:/61903/1:2:4BFZ-MD52",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:683J-F82B",
+        "personName": "Urians Jensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Ole Engbritsen",
+        "recordArk": "ark:/61903/1:2:4BX6-VWS5",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68W3-VZCD",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "4 Sep 1866",
+            "place": "Hammerfest, Finnmark, Norge"
+          }
+        ],
+        "personName": "Mikkel Urling Grundtr Agta",
+        "birthDate": "1865",
+        "deathDate": "August 0030",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BF8-DBP2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:683H-JQ6J",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "22 Aug 1833",
+            "place": "Oslo, Norge"
+          }
+        ],
+        "personName": "Urian Ellefsen",
+        "sex": "Male",
+        "birthDate": "1750",
+        "deathDate": "15 August 1833",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXZ-916C",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6834-328M",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "22 Aug 1833",
+            "place": "Oslo, Norge"
+          }
+        ],
+        "personName": "Urian Ellefsen",
+        "sex": "Male",
+        "birthDate": "1750",
+        "deathDate": "August 0015",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXC-LKSY",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8TB5-FN2M",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Oslo, Norge"
+          }
+        ],
+        "personName": "Urian Elefsen",
+        "sex": "Male",
+        "birthDate": "1747",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Urian Elefsen",
+        "recordArk": "ark:/61903/1:2:4HDB-41W2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q23Q-94F8",
+        "events": [
+          {
+            "type": "Probate",
+            "date": "04 Apr 1789",
+            "place": "Hippe, Ulnes Nord Aurdal, Valdres, Oppland, Norway"
+          }
+        ],
+        "personName": "Urians Iversen",
+        "sex": "Male",
+        "collectionId": "1661306",
+        "recordArk": "ark:/61903/1:2:QLMV-K9D3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:V65K-RHM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1875",
+            "place": "Forrestraae Øvre, Vestre Slidre, Oppland, Norway"
+          }
+        ],
+        "personName": "Urian Iversen",
+        "collectionId": "1529106",
+        "recordTitle": "Household of Iver Uriansen",
+        "recordArk": "ark:/61903/1:2:9M3P-FZJ7",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:683T-9ZQ9",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "27 Mar 1848",
+            "place": "Skien, Bratsberg, Norge"
+          }
+        ],
+        "personName": "Idunna Urania Tygesen",
+        "birthDate": "1846",
+        "deathDate": "March 0017",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXN-P2KH",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8TBY-TQZM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Langestrand, Larvik, Vestfold, Norge"
+          }
+        ],
+        "personName": "Urine Bentzdaatter",
+        "sex": "Female",
+        "birthDate": "1777",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Urine Bentzdaatter",
+        "recordArk": "ark:/61903/1:2:4H69-XRPZ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWF3-1ZZ",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "7 Nov 1882",
+            "place": "Oslo, Norway"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "Yrten Jorstad",
+        "sex": "Male",
+        "birthDate": "1794",
+        "deathDate": "1 November 1882",
+        "deathPlace": "Oslo, Norway",
+        "collectionId": "1468081",
+        "recordArk": "ark:/61903/1:2:MX9Z-BRQ",
+        "batchNumber": "B03937-4",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68SY-JXRQ",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "16 Oct 1831",
+            "place": "Fredrikstad, Smaalenenes, Norge"
+          }
+        ],
+        "personName": "Urian Ingebrigtsen",
+        "sex": "Male",
+        "birthDate": "1749",
+        "deathDate": "11 October 1831",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BX7-JW6L",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926",
+      "1468081": "Norway, Burials, 1666-1927",
+      "1529106": "Norway, Census, 1875",
+      "1661306": "Norway, Probate Index Cards, 1640-1903",
+      "3733603": "Norway, Census, 1801",
+      "4237104": "Norway, Church Books, 1797-1958"
+    }
+  }
+}

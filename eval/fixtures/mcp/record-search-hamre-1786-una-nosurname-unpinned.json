@@ -1,0 +1,338 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-16, engine recordSearchTool) of a surname-free record_search: givenName Una, recordCountry Norway, no collectionId, marriage 1770-1800, subjectId KZHH-VTX -- the shape ut_search_records_023 sent in v16_2026-11-16_12-25-11. 38089 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023. The predicate cannot require surname to be absent, so it is listed after every surname-specific fixture and after the collection-1468080 fixtures; a call with a surname no earlier fixture covers also gets this answer.",
+  "args": {
+    "givenName": "Una"
+  },
+  "response": {
+    "query": {
+      "givenName": "Una",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "subjectId": "KZHH-VTX"
+    },
+    "totalMatches": 38089,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NW43-RZ8",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Jun 1785",
+            "place": "Fedje, Hordaland, Norway"
+          }
+        ],
+        "personName": "Una Andersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hans Christiansen",
+        "recordArk": "ark:/61903/1:2:MY3L-M51",
+        "batchNumber": "M42059-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VW2V-VJC",
+        "personName": "Una",
+        "sex": "Female",
+        "birthDate": "1734",
+        "birthPlace": "Finnås Prestegard, Bømlo, Hordaland, Norway",
+        "deathDate": "18 November 1736",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJCL-F59",
+        "batchNumber": "C42896-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWW5-4V4",
+        "events": [
+          {
+            "type": "Christening",
+            "place": "Finnås, Hordaland, Norway"
+          }
+        ],
+        "personName": "Una",
+        "sex": "Female",
+        "birthDate": "1734",
+        "birthPlace": "Finnås, Hordaland, Norway",
+        "deathDate": "18 November 1736",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSH-2FY",
+        "batchNumber": "C42896-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH73-BYJ",
+        "personName": "Una Andersdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Marthe Bessesen",
+        "recordArk": "ark:/61903/1:2:MJSC-BHG",
+        "batchNumber": "C42143-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH9N-MZV",
+        "personName": "Una Johanesdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Johanes Johanesen",
+        "recordArk": "ark:/61903/1:2:MJ92-QWX",
+        "batchNumber": "C42938-3",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWXS-HSF",
+        "personName": "Una Arnesdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Arne Arnulfsen",
+        "recordArk": "ark:/61903/1:2:MJ9G-Q64",
+        "batchNumber": "C39711-0",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68Q4-R2HB",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Maathun"
+          }
+        ],
+        "personName": "Una Hansdr",
+        "sex": "Female",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Marthe",
+        "recordArk": "ark:/61903/1:2:4BXL-G5GY",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68Q4-YDQ5",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Vieg"
+          }
+        ],
+        "personName": "Una Thorsdt",
+        "sex": "Female",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Vier Knudsen Vieg",
+        "recordArk": "ark:/61903/1:2:4BXL-YYGM",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-9M9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "21 Jun 1787",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Ols Dr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jens Anfindsen",
+        "recordArk": "ark:/61903/1:2:MYST-SJ7",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZH-D59",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "31 Jan 1774",
+            "place": "Norum, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Andersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Tollach Larsen",
+        "recordArk": "ark:/61903/1:2:MYQ7-G69",
+        "batchNumber": "M42307-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-3WL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "27 Jun 1798",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Andersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Tosten Hansen",
+        "recordArk": "ark:/61903/1:2:MYST-SJL",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ7-SMJ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "10 May 1793",
+            "place": "Hafslo, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Erichsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jorgen Pedersen",
+        "recordArk": "ark:/61903/1:2:MYQW-VQ6",
+        "batchNumber": "M42288-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4L-P74",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Jun 1799",
+            "place": "Uppheim, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unni Iversdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Ingebrigtsen",
+        "recordArk": "ark:/61903/1:2:MY32-M47",
+        "batchNumber": "M42333-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZC-6F3",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Oct 1778",
+            "place": "Sogndal, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Iversdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Nielsen",
+        "recordArk": "ark:/61903/1:2:MYQ7-GD4",
+        "batchNumber": "M42308-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWHH-54L",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "16 Nov 1785",
+            "place": "Veøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Unni Rasmusdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Boy Larsen",
+        "recordArk": "ark:/61903/1:2:MYQG-HGN",
+        "batchNumber": "M42224-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW9Q-BTP",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Jun 1785",
+            "place": "Etne, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Rasmusdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torbjorn Abramssen",
+        "recordArk": "ark:/61903/1:2:MYSJ-W74",
+        "batchNumber": "M42907-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-9P6",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Jun 1791",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Johannisdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erich Endresen",
+        "recordArk": "ark:/61903/1:2:MYST-SJB",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7Y6-T27",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "10 May 1795",
+            "place": "Nes, Buskerud, Norway"
+          }
+        ],
+        "personName": "Und Arnesdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Arnesen",
+        "recordArk": "ark:/61903/1:2:MYSX-NRV",
+        "batchNumber": "M42852-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7BH-GNL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "15 Dec 1793",
+            "place": "Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Unni Anfindsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Halvor Findsen",
+        "recordArk": "ark:/61903/1:2:MYST-7GW",
+        "batchNumber": "M73983-0",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWC8-B61",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Apr 1771",
+            "place": "Nord-Aurdal, Oppland, Norway"
+          }
+        ],
+        "personName": "Unia Engebretsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Even Trondsen",
+        "recordArk": "ark:/61903/1:2:MYQK-JDX",
+        "batchNumber": "M42496-2",
+        "role": "Bride"
+      }
+    ],
+    "collections": {
+      "1467014": "Norway, Baptisms, 1634-1927",
+      "1468080": "Norway, Marriages, 1660-1926",
+      "4237104": "Norway, Church Books, 1797-1958"
+    }
+  }
+}

@@ -1,0 +1,367 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-16, engine recordSearchTool) of a surname-free record_search: givenName Unna, recordCountry Norway, collection 1468080, marriage 1770-1800, subjectId KZHH-VTX -- the shape ut_search_records_023 sent in v16_2026-11-16_12-25-11. 2313 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023. The predicate cannot require surname to be absent, so it is listed after every surname-specific fixture; a call with a surname no earlier fixture covers also gets this answer.",
+  "args": {
+    "givenName": "Unna",
+    "collectionId": "1468080"
+  },
+  "response": {
+    "query": {
+      "givenName": "Unna",
+      "recordCountry": "Norway",
+      "collectionId": "1468080",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "subjectId": "KZHH-VTX"
+    },
+    "totalMatches": 2313,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NW9Q-BTP",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Jun 1785",
+            "place": "Etne, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Rasmusdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torbjorn Abramssen",
+        "recordArk": "ark:/61903/1:2:MYSJ-W74",
+        "batchNumber": "M42907-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4F-JH9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20 Jul 1783",
+            "place": "Myking, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Magnesen",
+        "recordArk": "ark:/61903/1:2:MY3L-M49",
+        "batchNumber": "M42071-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4S-K6K",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20 Jun 1770",
+            "place": "Eidfjord, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Siursdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Rasmus Asbiornsen",
+        "recordArk": "ark:/61903/1:2:MY32-9PY",
+        "batchNumber": "M42338-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-9M9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "21 Jun 1787",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Ols Dr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jens Anfindsen",
+        "recordArk": "ark:/61903/1:2:MYST-SJ7",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW43-RZ8",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Jun 1785",
+            "place": "Fedje, Hordaland, Norway"
+          }
+        ],
+        "personName": "Una Andersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hans Christiansen",
+        "recordArk": "ark:/61903/1:2:MY3L-M51",
+        "batchNumber": "M42059-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZH-D59",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "31 Jan 1774",
+            "place": "Norum, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Andersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Tollach Larsen",
+        "recordArk": "ark:/61903/1:2:MYQ7-G69",
+        "batchNumber": "M42307-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-3WL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "27 Jun 1798",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Andersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Tosten Hansen",
+        "recordArk": "ark:/61903/1:2:MYST-SJL",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ7-SMJ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "10 May 1793",
+            "place": "Hafslo, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Erichsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jorgen Pedersen",
+        "recordArk": "ark:/61903/1:2:MYQW-VQ6",
+        "batchNumber": "M42288-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4L-P74",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Jun 1799",
+            "place": "Uppheim, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unni Iversdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Ingebrigtsen",
+        "recordArk": "ark:/61903/1:2:MY32-M47",
+        "batchNumber": "M42333-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZC-6F3",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Oct 1778",
+            "place": "Sogndal, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Iversdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Nielsen",
+        "recordArk": "ark:/61903/1:2:MYQ7-GD4",
+        "batchNumber": "M42308-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWHH-54L",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "16 Nov 1785",
+            "place": "Veøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Unni Rasmusdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Boy Larsen",
+        "recordArk": "ark:/61903/1:2:MYQG-HGN",
+        "batchNumber": "M42224-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-9P6",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Jun 1791",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Johannisdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erich Endresen",
+        "recordArk": "ark:/61903/1:2:MYST-SJB",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7Y6-T27",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "10 May 1795",
+            "place": "Nes, Buskerud, Norway"
+          }
+        ],
+        "personName": "Und Arnesdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Arnesen",
+        "recordArk": "ark:/61903/1:2:MYSX-NRV",
+        "batchNumber": "M42852-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7BH-GNL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "15 Dec 1793",
+            "place": "Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Unni Anfindsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Halvor Findsen",
+        "recordArk": "ark:/61903/1:2:MYST-7GW",
+        "batchNumber": "M73983-0",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWC8-B61",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Apr 1771",
+            "place": "Nord-Aurdal, Oppland, Norway"
+          }
+        ],
+        "personName": "Unia Engebretsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Even Trondsen",
+        "recordArk": "ark:/61903/1:2:MYQK-JDX",
+        "batchNumber": "M42496-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N71B-B38",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jun 1770",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Baarsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torgier Larsen",
+        "recordArk": "ark:/61903/1:2:MYST-97N",
+        "batchNumber": "M42302-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ4-R4P",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jun 1781",
+            "place": "Luster, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Olsen",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erich Johansen",
+        "recordArk": "ark:/61903/1:2:MYQW-WL6",
+        "batchNumber": "M42303-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW37-S29",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "15 Jul 1798",
+            "place": "Korskirken, Bergen, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unje Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Christiansen",
+        "recordArk": "ark:/61903/1:2:MYSX-WY3",
+        "batchNumber": "M42939-5",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZH-DPL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jun 1777",
+            "place": "Norum, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Jensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torkild Monsen",
+        "recordArk": "ark:/61903/1:2:MYQ7-GDT",
+        "batchNumber": "M42307-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4G-3K9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "14 Jun 1779",
+            "place": "Vinje, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unia Larsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Michelsen",
+        "recordArk": "ark:/61903/1:2:MY32-MFX",
+        "batchNumber": "M42334-1",
+        "role": "Bride"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926"
+    }
+  }
+}
