@@ -1,0 +1,10 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC catch-all for image group 113551215 (Ashford 'Second Copy Vol 4', issue #4582): matches any page of the group not covered by an exact-page fixture, which must be listed before it. Without it a read of another page fell through to image-transcribe-any's Schuylkill will, and search-images concluded the group was misfiled. The page is an unremarkable Ashford register page with no Eastman entry, so stepping through the volume costs a read and finds nothing, as a real browse does. No viewerUrl: one fixed URL cannot be right for every page this predicate matches.",
+  "args": {
+    "imageId": "~113551215_"
+  },
+  "response": {
+    "transcription": "Ashford Vital Records, Second Copy\n\nJohn Knowlton & Sarah Snow Joyned in Mariage [torn]\nSarah Daughter of John Knowlton Born to him by Sarah his Wife [torn]\nAmos Son of John Knowlton Born to him by Sarah his Wife [torn]\nEbenezer Bugbee & Mary Works Joyned in Mariage [torn]\nLucy Daughter of Ebenezer Bugbee Born to him by Mary his Wife [torn]"
+  }
+}

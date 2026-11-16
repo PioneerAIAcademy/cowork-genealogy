@@ -62,8 +62,9 @@ one in prose you then act on.
 
 **Link what you name.** Every page or record you name is a markdown link to
 the https URL its tool result gave (`viewerUrl`, `recordUrl`); never a bare ARK,
-image id or hand-built URL. An image group is "image group <number>", a Catalog
-item only when `catalog_search` returned it. A relayed block stays verbatim.
+image id or hand-built URL. An image group is "image group <number>" with no
+link, a Catalog item only when `catalog_search` returned it. A relayed block
+stays verbatim.
 
 | Next step | `<label>` |
 |---|---|
@@ -206,8 +207,9 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
 `projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`. Only when `project_context` returns `reason: "no_project"`: one named image, called
-without `projectPath`, its `transcription` shown inline; finding or reading more
-pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
+without `projectPath`, its `transcription` shown inline; a Catalog search, or finding or reading
+more pages, goes to `@plugin:search-images`: never call `catalog_search`,
+`volume_search` or `image_search`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
 already holds, as `researcherReadings`, each `{ sourceId, assertionId, words }`, the user's words exactly. An image
 dropped into the chat cannot reach the tools. When `project_context` returned an `uploadUrl`,
@@ -216,8 +218,7 @@ read it by `file`. Do not walk the routing table from the top for one: that tabl
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver this turn's deliverable, and stop: at least one hand-off
-for it, since one deliverable can need two (a record found goes on through
-extraction), except a transcription, a records-request letter, a timeline for a
+for it, except a transcription, a records-request letter, a timeline for a
 person on an existing project and a status question (answered from
 `project_context`), which take no hand-off at all.
 

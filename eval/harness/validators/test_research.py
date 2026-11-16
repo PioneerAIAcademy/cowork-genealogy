@@ -1792,6 +1792,9 @@ _BARE_ARK = re.compile(r"(?<!https://www\.familysearch\.org/)(?<!https://familys
 _BARE_IMAGE_ID = re.compile(r"\b\d{9}_\d{5}\b")
 _SHORT_PAGE = re.compile(r"\(\d{5}\)|\bimages? \d{5}(?:\s*[-–]\s*\d{5})?\b", re.IGNORECASE)
 _SCHEMELESS_FS = re.compile(r"(?<!https://)(?<!https://www\.)(?<![\w.])(?:www\.)?familysearch\.org/[^\s)\]]*")
+_FS_RECORD_URL = re.compile(
+    r"https?://(?:www\.)?familysearch\.org/(?:ark:/|search/film/|search/catalog/)[^\s)\]>\"'`]*"
+)
 _CATALOG_ITEM = re.compile(r"\bcatalog item\b", re.IGNORECASE)
 _NOT_CATALOG_ITEM = re.compile(r"\bnot\b[^.\n]{0,20}\bcatalog item\b", re.IGNORECASE)
 _CATALOG_ID = re.compile(r"koha:\d+|\d{6,}", re.IGNORECASE)
@@ -1828,7 +1831,10 @@ def test_reply_links_named_sources(text_response, tool_calls, test):
     ``viewerUrl``, and with "**Catalog item:** FamilySearch imageGroupNumber 113551215"
     for a group only ``volume_search`` had returned.
 
-    The page must also be linked: at least one ``image_transcribe`` ``viewerUrl`` from
+    A FamilySearch record URL (``/ark:/``, ``/search/film/``, ``/search/catalog/``) must
+    be one a tool call used or returned: a group link built by hand, such as
+    ``…/search/film/113551215``, names a URL nothing gave (review-ready ruling
+    2026-11-16). The page must also be linked: at least one ``image_transcribe`` ``viewerUrl`` from
     the session appears in the reply, so a run that read nothing, or dropped every
     citation, fails rather than passing for want of a bare identifier. A relayed stub
     or agent return is not evidence for a Catalog item: the relayed text is what is
@@ -1844,6 +1850,15 @@ def test_reply_links_named_sources(text_response, tool_calls, test):
     problems += [f"bare image id {m.group(0)!r}" for m in _BARE_IMAGE_ID.finditer(targets)]
     problems += [f"short page id {m.group(0)!r}" for m in _SHORT_PAGE.finditer(targets)]
     problems += [f"URL without https:// {m.group(0)!r}" for m in _SCHEMELESS_FS.finditer(targets)]
+
+    returned = {
+        _strip_www(m.group(0).rstrip(".,;:!?*_"))
+        for m in _FS_RECORD_URL.finditer(json.dumps([[c.get("args"), c.get("response")] for c in tool_calls or []]))
+    }
+    for match in _FS_RECORD_URL.finditer(targets):
+        url = match.group(0).rstrip(".,;:!?*_")
+        if _strip_www(url) not in returned:
+            problems.append(f"URL no tool call used or returned {url!r}")
 
     catalog_ids = {
         _catalog_id(token)

@@ -193,10 +193,10 @@ contract:
     each fact followed by its page as a markdown link to that page's
     `viewerUrl`, the image id as link text (e.g.
     `[004567123_00058](https://www.familysearch.org/search/film/004567123?i=57)`);
-    never a bare or shortened image id. The volume is "image group <number>",
-    a Catalog item only when `catalog_search` returned it. State which pages
-    were read and which were not. No other line in it is only `---`. This
-    block replaces `summary_for_user`.
+    never a bare or shortened image id. The volume is "image group <number>"
+    with no link, a Catalog item only when `catalog_search` returned it.
+    State which pages were read and which were not. No other line in it is
+    only `---`. This block replaces `summary_for_user`.
 - Never state a name, rank or date that is not in a `transcription` you
   received.
 

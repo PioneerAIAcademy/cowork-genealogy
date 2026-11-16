@@ -77,6 +77,11 @@ CATALOG_ITEM = (
         (f"Open it at www.familysearch.org/search/film/113551215?i=2 ([Page 5]({ARK_URL}))", READ, ""),
         ("Mary, Phebe and Esther are the daughters recorded on page 5.", READ, ""),
         ("I could not read the page.", [], ""),
+        (
+            f"Image group [113551215](https://www.familysearch.org/search/film/113551215); page [5]({FILM_URL}).",
+            [_transcribe(FILM_URL)],
+            "",
+        ),
     ],
     ids=[
         "a-feedback-sources-consulted",
@@ -92,6 +97,7 @@ CATALOG_ITEM = (
         "j-schemeless-url",
         "k-no-citation-at-all",
         "l-nothing-read",
+        "m-hand-built-group-link",
     ],
 )
 def test_an_unlinked_source_fires(reply, calls, agent_text):
@@ -116,6 +122,11 @@ def test_an_unlinked_source_fires(reply, calls, agent_text):
             "Page 5: [link](https://www.familysearch.org/ark:/61903/3:1:3QHN-BQ8C-33BG)",
             [_transcribe("https://familysearch.org/ark:/61903/3:1:3QHN-BQ8C-33BG")],
         ),
+        (f"See page 5 at {FILM_URL}.", [_transcribe(FILM_URL)]),
+        (
+            f"You sent https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS56-DQGC-1. Page 5: {ARK_URL}",
+            [*READ, {"tool": "mcp__genealogy__image_transcribe", "args": {"ark": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS56-DQGC-1"}, "response": {}}],
+        ),
     ],
     ids=[
         "a-link-texted-ark",
@@ -128,6 +139,8 @@ def test_an_unlinked_source_fires(reply, calls, agent_text):
         "h-years-in-parentheses",
         "i-census-year-in-parentheses",
         "j-www-differs-from-viewer-url",
+        "k-url-before-a-full-stop",
+        "l-url-the-user-gave-and-a-tool-read",
     ],
 )
 def test_a_linked_source_passes(reply, calls):
