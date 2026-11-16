@@ -53,9 +53,12 @@ export interface LoginResult {
 
 export interface AuthStatusResult {
   loggedIn: boolean;
+  buildId: string;          // the engine build, on every branch
   expiresAt?: string;       // ISO 8601
   expiresInMinutes?: number;
   hasRefreshToken?: boolean;
+  accountId?: string;       // a connector caller's account id on the web tier
+  signInUrl?: string;       // a connector caller whose session has ended: where to sign in again
 }
 
 export interface FSTokenResponse {
@@ -168,6 +171,19 @@ app's Reconnect button only for a sign-in problem a FamilySearch tool itself rep
 and carries no anchor the prototype counts as an auth failure. `isHostedMode(principal)` gates both; the desktop
 `.mcpb` never sets the flag, so its behavior is unchanged.
 
+**Connector override.** A bearer principal with `surface: "connector"` (claude.ai or
+Desktop Chat, self-hosted beta E3) gets `connectorReauthMessage` instead of
+`HOSTED_REAUTH_INSTRUCTION`: "FamilySearch session not accepted. Sign in again at
+`<webPublicUrl>/auth/familysearch/login`, then come back here and say "continue".
+Nothing is lost." With no `webPublicUrl` it names "the Genealogy Research site".
+`reauthMessage(principal, desktopText)` is the one place the three surfaces are told
+apart. `login` answers `connectorLoginMessage`, `logout` `connectorLogoutMessage`, and
+a missing OpenRouter key `CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE`. `auth_status`
+answers `{ loggedIn, buildId, accountId }`, and adds `signInUrl` with `loggedIn: false`
+when one `GET /platform/users/current` answers 401 (`src/utils/session-check.ts`, the
+same check as `project_context` §2.8). Any other answer, a timeout or a failed request
+leaves it as it was. Nothing ends the connector token on a FamilySearch 401.
+
 **401 re-read.** `fsFetch` and `fsFetchWithTimeout`
 (`src/utils/fs-fetch.ts`) wrap `getValidToken` + the fetch layer. On a 401 under
 `LOCAL`, they call `getValidToken` once more — re-reading `tokens.json` from
@@ -216,7 +232,7 @@ Three thin tools following the existing pattern (function + schema + input type)
 
 **`src/tools/logout.ts`** — Calls `clearTokens()`, returns success message
 
-**`src/tools/auth-status.ts`** — Calls `loadTokens()` + `isExpired()`, returns `AuthStatusResult` with loggedIn, expiresAt, expiresInMinutes, hasRefreshToken
+**`src/tools/auth-status.ts`** — Calls `loadTokens()` + `isExpired()`, returns `AuthStatusResult` with loggedIn, buildId, expiresAt, expiresInMinutes, hasRefreshToken. A connector caller gets the answer in "Connector override" above.
 
 ---
 

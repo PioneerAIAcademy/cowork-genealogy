@@ -4,8 +4,8 @@ import type http from "node:http";
 import { createServer, type AddressInfo } from "node:net";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_PORT, parseCliArgs, parseStdioArgs, UsageError } from "../../viewer/args.js";
-import { startHttp, startStdio } from "../../viewer/start.js";
+import { DEFAULT_PORT, parseCliArgs, UsageError } from "../../viewer/args.js";
+import { startHttp } from "../../viewer/start.js";
 import { ENGINE_ROOT, realFoldersOnly, SECRET, STUB_PAGE, tempFolders, writeProject } from "./harness.js";
 
 realFoldersOnly();
@@ -104,15 +104,6 @@ describe("parseCliArgs", () => {
       }
       expect(message).not.toBe("");
       expect(message).not.toContain("sentinel");
-    }
-  });
-});
-
-describe("parseStdioArgs", () => {
-  it("takes --root only", () => {
-    expect(parseStdioArgs(["--root", "/r"])).toEqual({ root: "/r" });
-    for (const argv of [[], ["--root"], ["--root", "/r", "--local"], ["--root", "/r", "--port", "1"], ["--root", "/r", "x"]]) {
-      expect(() => parseStdioArgs(argv)).toThrow(UsageError);
     }
   });
 });
@@ -244,17 +235,10 @@ describe("startHttp", () => {
   });
 });
 
-describe("startStdio", () => {
-  it("refuses a missing page file before touching stdin or stdout", async () => {
-    const deps = { pagePath: join(base(), "no-such-page.html"), log: () => {} };
-    await expect(startStdio(["--root", root()], deps)).rejects.toThrow(/make mcp-viewer-build/);
-  });
-});
-
-/** Runs a real entry and resolves with how it exited. */
-function runEntry(entry: string, argv: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
+/** Runs the real entry and resolves with how it exited. */
+function runEntry(argv: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ["--import", "tsx", entry, ...argv], {
+    const child = spawn(process.execPath, ["--import", "tsx", "viewer/cli.ts", ...argv], {
       cwd: ENGINE_ROOT,
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -271,18 +255,11 @@ function runEntry(entry: string, argv: string[]): Promise<{ code: number | null;
   });
 }
 
-describe("the real entries", () => {
+describe("the real entry", () => {
   it("viewer/cli.ts exits 2 on a bad value, saying so", async () => {
-    const result = await runEntry("viewer/cli.ts", ["--local", "--root", root(), "--port", "0"]);
+    const result = await runEntry(["--local", "--root", root(), "--port", "0"]);
     expect(result.code, result.stderr).toBe(2);
     expect(result.stderr).toMatch(/^viewer: --port must be/);
-    expect(result.stdout).toBe("");
-  });
-
-  it("viewer/stdio.ts exits 2 on a bad value, saying so, and keeps stdout empty", async () => {
-    const result = await runEntry("viewer/stdio.ts", ["--port", "8090"]);
-    expect(result.code, result.stderr).toBe(2);
-    expect(result.stderr).toMatch(/^viewer: .*--port/);
     expect(result.stdout).toBe("");
   });
 });

@@ -881,7 +881,10 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
     }
     for (const c of readJsonIf(join(dir, "quality.json"))?.detail?.conflicts ?? []) {
       for (const s of c.sources ?? []) {
-        const ark = typeof s.uri === "string" ? toArk(s.uri) : "";
+        // A conflict's source is its link, a string. A snapshot taken before issue #4420
+        // holds { title, uri, agrees } objects, which are still read.
+        const link = typeof s === "string" ? s : s?.uri;
+        const ark = typeof link === "string" ? toArk(link) : "";
         if (!byKey.has(ark)) {
           unmatchedConflictUris += 1;
           continue;

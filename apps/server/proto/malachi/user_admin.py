@@ -214,7 +214,8 @@ def run_delete(dsn: str, s3: Any, bucket: str, account: str, submitted: str, *, 
     print(f"rows: {_counts_line(counts)}")
     print(f"objects: {_counts_line(objects)}")
     print("Backups taken before now still hold this user's data, until they are pruned.")
-    print(f"{user[1]} stays on the allowlist if it is there: a new sign-in would create a new, empty account.")
+    print(f"{user[1]} stays on the allowlist if it is there: connecting from Claude again would create a new, "
+          "empty account.")
     return 0
 
 

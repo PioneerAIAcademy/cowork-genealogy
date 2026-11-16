@@ -231,6 +231,30 @@ def _fixture(tool: str, args: dict[str, Any], body: Any) -> dict[str, Any]:
     return {"tool": tool, "args": args, "response": body}
 
 
+def _quality_for_model(q: Any) -> Any:
+    """A person_quality snapshot in the shape the tool now returns (issue #4420).
+
+    Older snapshots carry detail.facts, issues[].conclusionId and conflict sources as
+    {title, uri, agrees} objects; the tool now returns no facts, no conclusionId and each
+    conflict source as its link string. A snapshot already in the new shape passes through.
+    """
+    if not isinstance(q, dict):
+        return q
+    out = dict(q)
+    out["issues"] = [
+        {k: v for k, v in i.items() if k != "conclusionId"} if isinstance(i, dict) else i
+        for i in q.get("issues") or []
+    ]
+    detail = q.get("detail")
+    if isinstance(detail, dict):
+        conflicts = []
+        for c in detail.get("conflicts") or []:
+            sources = [s.get("uri") if isinstance(s, dict) else s for s in c.get("sources") or []]
+            conflicts.append({**c, "sources": [s for s in sources if isinstance(s, str)]})
+        out["detail"] = {"conflicts": conflicts}
+    return out
+
+
 def _safe(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", name)
 
@@ -299,7 +323,7 @@ def generate_fixtures(
         q = _read_json(quality_path)
         # The mock's person_quality handler ignores is_error: a stored error
         # reaches the agent as an ordinary {"error": ...} result.
-        body = {"error": q["error"]} if isinstance(q, dict) and q.get("is_error") else q
+        body = {"error": q["error"]} if isinstance(q, dict) and q.get("is_error") else _quality_for_model(q)
         out.append(("person-quality", {"tool": "person_quality", "args": {"personId": sid, "detail": True}, "response": body}))
 
     fixtures_dir.mkdir(parents=True, exist_ok=True)

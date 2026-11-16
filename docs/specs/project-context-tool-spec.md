@@ -154,6 +154,7 @@ can drop:
     hasText: boolean,                    // uploads/<name>.txt exists
   }],
   uploadUrl?: string,                    // upload page; only with webPublicUrl, uploadsEnabled and a store id — §2.7
+  signInUrl?: string,                    // FamilySearch sign-in page; only for a connector caller whose session has ended — §2.8
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -621,6 +622,28 @@ to a viewer page. On the hosted tool server the settings arrive as `WEB_PUBLIC_U
 with exit 2. The tool takes the principal as its last parameter because the
 link reads the per-user config.
 
+### 2.8 `signInUrl` — a connector caller whose FamilySearch session has ended
+
+```typescript
+signInUrl?: string    // `${webPublicUrl}/auth/familysearch/login`
+```
+
+Present only when the caller came through the connector, the per-user config has
+`webPublicUrl`, and FamilySearch answers **401** to one
+`GET /platform/users/current` made with the caller's token
+(`connectorSession`, `src/utils/session-check.ts`). It puts the sign-in link in
+front of the model at the start of the next turn, so it reaches the user even when
+an agent's summary dropped the tool error that first carried it.
+
+- Any other answer learns nothing and adds no key: a 200, another status, a
+  timeout (5 s), a spent FamilySearch budget or a network failure. An outage never
+  sends a signed-in user to sign in again, and the check never fails the call.
+- The answer is remembered per user for 60 s, and a new token is a new question at
+  once, so signing in again shows on the next call.
+- With no link to give (the worker, the desktop, or no `webPublicUrl`) FamilySearch
+  is not asked.
+- Only the status is read; the response body is discarded.
+
 What nothing checks: that the web tier writes the text layer under the name
 this side reads. Each side is tested against its own fixture.
 
@@ -730,7 +753,7 @@ untouched.
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
@@ -773,6 +796,10 @@ untouched.
   With a project-id store: `uploadUrl` with both settings, none while uploads are
   off or unset, none without `webPublicUrl` or without a store id, and never a
   `projectUrl`; a failing listing omits `uploads` and still answers.
+  `signInUrl`: present on a 401, absent on a 200, a 503 and a failed request, and
+  no FamilySearch request for the worker or with no `webPublicUrl`
+  (`tests/tools/project-context.test.ts`); `tests/http/http-server.test.ts` 3b
+  drives it through the door, with `auth_status` beside it.
   `tests/http/http-server.test.ts` 2d drives the link, with both settings on,
   through `startHttpServer`'s `baseConfig`.
 - **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan

@@ -4666,7 +4666,7 @@ def test_the_prompt_routes_a_first_message_with_no_project_and_names_no_deleted_
     """#3768's routing sentence lived in DELIVERY_GUIDANCE; it moved to the project note
     when `research_delivered` was deleted (step mode phase 2) rather than going with it."""
     prompt = _options(config_dir=str(tmp_path)).system_prompt["append"]
-    assert "a request to research a person is not a single lookup" in prompt
+    assert "starts a project first" in prompt
     assert "research_delivered" not in prompt
 
 
