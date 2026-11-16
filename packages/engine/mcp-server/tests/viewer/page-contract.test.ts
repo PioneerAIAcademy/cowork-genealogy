@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PROJECT_META_KEY, READ_PROJECT_VIEW, SHOW_PROJECT, toolSchemas } from "../../viewer/tools.js";
+import { PROJECT_META_KEY, READ_PROJECT_VIEW, SHOW_PROJECT } from "../../src/tools/project-view.js";
+import { toolSchemas } from "../../viewer/tools.js";
 import { ENGINE_ROOT } from "./harness.js";
 
 // The page may not depend on the engine, so its contract.ts repeats these names.

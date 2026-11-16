@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_mcc",
+    "skill": "search-external-sites",
+    "name": "Matricula hand-off: the place-search route, and FamilySearch's center-only film of the same register",
+    "type": "positive",
+    "description": "Issue #4428, from the alpha-feedback report of 2026-11-07. The researcher asks for a Catholic marriage of 1836 in Ochtrup on Matricula, and no parish page is on file. The agent must build the matricula URL (with projectPath, so the hand-off is logged once). It must relay the tool's place-search route to the parish rather than a diocese-first route from memory, and it must call catalog_search itself (step 2b). The Catalog shows FamilySearch filmed the same register as film 876540, marked availableOnline: false. The reply names that film as viewable only at a FamilySearch Center or affiliate library, never offers to read it, and keeps the Matricula link. Gated by test_browse_site_catalog_cross_check.",
+    "tags": [
+      "matricula",
+      "external-site",
+      "church",
+      "url-generation",
+      "browse-catalog",
+      "collections-cross-check",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Wilhelm Kuhlmann married in 1836 in Ochtrup. Wilhelm was Catholic so the record will be in Matricula. Find the record or give an outline of how to search.\n\nuserPresent: yes\nprojectPath: <workspace>",
+    "scenario": "matricula-ochtrup"
+  },
+  "mcp_fixtures": [
+    "place-search-ochtrup",
+    "external-links-search-ochtrup",
+    "collections-search-ochtrup",
+    "catalog-search-ochtrup"
+  ],
+  "judge_context": [
+    "Matricula is a browse site, not a search: with no parish page on file, the correct URL is Matricula's site root, and the tool's notes give the route from there: Matricula's place search (Suchen, Ortssuche), the town as Ort, then confirm the diocese. The reply must relay that route. A route the tool did not give, such as 'choose the Diocese of Münster, then find Ochtrup in the parish list', fails, because it is a route from memory that the researcher in the original report could not follow.",
+    "The catalog_search fixture shows FamilySearch filmed the Catholic registers of Ochtrup (koha:202974, 'Kirchenbuch, 1667-1875'), and film 876540 covers 'Taufen, Heiraten, Tote 1804-1865', which includes 1836. The hit is availableOnline: false. The reply must name that filmed copy (film 876540) as viewable only at a FamilySearch Center or an affiliate library. Offering to read or transcribe those images, or sending the researcher to search-images for them, is a failure: the film cannot be opened online.",
+    "The Matricula link stays in the reply either way. The FamilySearch film is an additional route, not a replacement for the search the researcher asked for.",
+    "No FamilySearch indexed collection in this scenario's collections_search result is for Ochtrup or the Diocese of Münster. Saying FamilySearch has the marriage indexed, or that a named collection covers it, is ungrounded."
+  ]
+}
