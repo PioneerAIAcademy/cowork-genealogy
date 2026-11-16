@@ -17,7 +17,6 @@
     "scenario": "search-records-thin-subject"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-brown-1900-thin-subject",
     "rank-search-matches-brown-1900-thin-subject",
     "record-read-brown-1900-m9tb-7qx",
@@ -27,8 +26,7 @@
   "judge_context": [
     "CORE: `ranked.subjectTooThin` is true on the search response — the tree holds only a birth year and no relatives, so nothing separates this William Brown from any other William Brown in Bedford County. The hit must be presented as needs-review, whatever its matchScore. Extraction is not graded: it records what the record says and claims no identity.",
     "Score Result triage 1 if the reply calls the hit a confirmed match, 'our William', 'almost certainly him', or otherwise presents it as clearing identity, or reports a relative from the record as the subject's. A high score on a too-thin subject measures only that nothing disagrees, not that anything agrees.",
-    "Score Completeness 3 when the hit is reported and flagged needs-review, the search is logged, and the reply names what would confirm identity (e.g. a named spouse, child or parent, or a more precise birth date) and the record most likely to state it. Wording is free.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments. The census fixture's predicate matches any URL containing `United_States_Census`, so a per-year page is answered by the same country page; that is the shape of the fixture set, not a wrong call."
+    "Score Completeness 3 when the hit is reported and flagged needs-review, the search is logged, and the reply names what would confirm identity (e.g. a named spouse, child or parent, or a more precise birth date) and the record most likely to state it. Wording is free."
   ],
   "judge_reads_files": true,
   "execution": {

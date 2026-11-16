@@ -1,0 +1,16 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Tree adds I4 Hinrich, christened 29 Jul 1687 (S1, the hinted baptism), as a child of G8CJ-7VL and Liesbeth (R10, R11).",
+    "f2": "Liesbeth Oldenburg (GV6M-YN8) carries the name Elsch Burmeister sourced to the 1687 baptism: the alias reading.",
+    "f3": "ps_001 concludes the opposite: the 1687 son is G8CJ-7VL's and Elsch is Liesbeth, on a name variant and chronology. The 1690 Hinrich and Elsche baptism and the 1683 Liesebeth entry are never cited."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "c9194118b3f25d0109a39b7dc06b6be3c9b24c599bc9ce7b9d48598d5e4f835e",
+  "blind_bundle_digest": "06e27588a2a4479a45c6b6fc1d25d4b0dd0eb40568603c6596564569af2f0b22"
+}

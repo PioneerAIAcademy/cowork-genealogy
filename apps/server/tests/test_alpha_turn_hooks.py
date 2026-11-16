@@ -229,8 +229,8 @@ def test_the_alpha_system_prompt_is_true_before_a_project_exists(tmp_path):
     assert "contains research.json" not in append
     assert "Once a project exists there it holds research.json" in append
     assert real_agent.NO_PROJECT_NOTE in append
-    assert "While no project exists yet" in real_agent.NO_PROJECT_NOTE
     assert "no_project" in real_agent.NO_PROJECT_NOTE
+    assert "starts a project first" in real_agent.NO_PROJECT_NOTE
     assert opts.env[real_agent.HOSTED_PLANE_ENV] == "1"
 
 

@@ -43,6 +43,7 @@ from test_locality_guide import (  # noqa: E402
     test_persisted_guide_is_the_guide as check_guide,
     test_in_project_return_follows_the_contract as check_return_contract,
     test_no_project_return_carries_guide as check_no_project_guide,
+    _heading,
 )
 
 from harness.mock_mcp import create_mock_server  # noqa: E402
@@ -466,6 +467,49 @@ def test_guide_fires_when_guide_markdown_is_not_a_non_empty_string(value):
 
 def test_guide_fires_when_guide_markdown_is_absent():
     expect_fires(_check_guide(_entry()), r"loc_001.*guide_markdown")
+
+
+# The engine refuses a guide on the same rule (research_append, research-append-tool-spec
+# section 5.14), and its twin of this table is in
+# packages/engine/mcp-server/tests/tools/research-append.test.ts. Change _heading() and
+# both tables, and the engine's missingGuideHeadings, move together.
+_HEADING_BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n"
+
+
+@pytest.mark.parametrize(
+    "tail, found",
+    [
+        ("## Research tips\nx", True),
+        ("x\n## Research tips", True),
+        ("x\r\n## Research tips", True),
+        ("x\r## Research tips", False),
+        ("x\u2028## Research tips", False),
+        ("x\u2029## Research tips", False),
+        ("## Re\u017fearch tips", True),
+        ("## RESEARCH TIPS (1840)", True),
+        ("### Research tips", False),
+        ("Notes: ## Research tips", False),
+        (" ## Research tips", False),
+        ("##\tResearch tips", True),
+        ("##Research tips", False),
+        ("## research tipsy", True),
+        ("", False),
+        ("##  Research tips", True),
+        ("# Research tips", False),
+        ("Research tips", False),
+        ("##\nResearch tips", False),
+        ("##\u00a0Research tips", False),
+        ("> ## Research tips", False),
+        ("- ## Research tips", False),
+        ("## Research tips and tricks", True),
+    ],
+)
+def test_heading_rule_matches_the_engine_twin_table(tail, found):
+    assert bool(_heading("Research tips").search(_HEADING_BEFORE + tail)) is found
+
+
+def test_heading_rule_ignores_a_heading_behind_a_byte_order_mark():
+    assert not _heading("Research tips").search("\ufeff## Research tips")
 
 
 def test_guide_fires_on_an_in_place_update_that_stubs_the_guide():

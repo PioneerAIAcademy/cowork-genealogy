@@ -1,0 +1,25 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Wilhelm",
+          "surname": "Kuhlmann"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "1836",
+          "place": "Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

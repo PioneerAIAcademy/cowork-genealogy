@@ -304,6 +304,9 @@ refusal, which moved to it from issue #2256 on 2026-09-27.
 > Measuring a model floor against unreduced payloads or a partly-converted skill set
 > gives a number that expires the moment the other work lands.
 
+**To floor one agent, use the `/floor-agent` skill** (`.claude/skills/floor-agent/`): the
+procedure, the order of fixes, and `floor.py` for reading the run logs.
+
 **Set everything to Haiku with no reasoning effort, see what fails loudly, and raise
 carefully.** *Everything* includes **the research orchestrator itself**, not just the
 agents — and that is the larger half of the lever, because the main thread is 77–80% of

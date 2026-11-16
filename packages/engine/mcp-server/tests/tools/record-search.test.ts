@@ -2496,6 +2496,37 @@ describe("#2367/#2336 role on results", () => {
   });
 });
 
+// The rule for each part is unit-tested in tests/utils/search-advice.test.ts and
+// census-note.test.ts. This is the tool-level half: the response carries them.
+describe("recordSearchTool — search advice is attached to the response", () => {
+  it("carries patronymicSearch, childrenSearch and census, in that order, before results", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const out = await recordSearchTool(
+      { surname: "Moen", fatherGivenName: "Hans", recordCountry: "Norway", collectionId: "1401638" },
+      LOCAL,
+    );
+    expect(out.patronymicSearch?.searched).toBe("Moen");
+    expect(out.childrenSearch?.heldBy).toEqual(["collectionId"]);
+    expect(out.census?.schedules[0].year).toBe(1850);
+    const keys = Object.keys(out);
+    const at = (k: string) => keys.indexOf(k);
+    expect(at("patronymicSearch")).toBeGreaterThan(-1);
+    expect([at("patronymicSearch"), at("childrenSearch"), at("census")]).toEqual([
+      at("results") - 3,
+      at("results") - 2,
+      at("results") - 1,
+    ]);
+  });
+
+  it("adds none of them to a search they do not apply to", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const out = await recordSearchTool({ surname: "Lincoln", givenName: "Abraham" }, LOCAL);
+    expect(out.patronymicSearch).toBeUndefined();
+    expect(out.childrenSearch).toBeUndefined();
+    expect(out.census).toBeUndefined();
+  });
+});
+
 // Issue #3054. The tool-level half of the proof the issue asks for: the hint is
 // emitted for ut_search_records_023's exact inputs, and not for nils that do not
 // qualify. The rule itself is unit-tested in tests/utils/surname-variant-hints.test.ts.

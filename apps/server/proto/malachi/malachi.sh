@@ -157,6 +157,11 @@ load_env() {
   EDGE_PORT_VALUE=$(env_get EDGE_PORT)
   EDGE_PORT_VALUE=${EDGE_PORT_VALUE:-8006}
   PUBLIC_URL_VALUE=$(env_get PUBLIC_URL)
+  # It is also both tiers' OAUTH_ISSUER, which the web tier requires to equal its own
+  # PUBLIC_URL without a trailing slash; refused here, before a running stack is replaced.
+  case $PUBLIC_URL_VALUE in
+    */) die "PUBLIC_URL in $ENV_FILE must not end in '/'" ;;
+  esac
   local key
   for key in $(env_keys "$ENV_FILE") EDGE_PORT; do
     unset "$key"
@@ -295,7 +300,7 @@ expect_code() { # label want url [curl args]
 }
 
 check_http() { # base url
-  local base=${1%/} out code headers
+  local base=${1%/} out code headers named issuer
   printf 'checking %s\n' "$base"
   expect_code "/livez" 200 "$base/livez"
 
@@ -305,6 +310,18 @@ check_http() { # base url
     ok "metadata names /mcp"
   else
     bad "metadata: got $code and no resource ending /mcp"
+  fi
+  # The web tier's half of sign-in: without it Claude's discovery ends in a 404. Its issuer
+  # must be the one the tool server just named, byte for byte (never this base URL, which
+  # is the loopback port when the check runs on the host).
+  named=$(printf '%s' "$out" | sed -n 's/.*"authorization_servers" *: *\[ *"\([^"]*\)".*/\1/p' | head -n 1)
+  out=$(curl -s -w '\n%{http_code}' --max-time 15 "$base/.well-known/oauth-authorization-server" || true)
+  code=${out##*$'\n'}
+  issuer=$(printf '%s' "$out" | sed -n 's/.*"issuer" *: *"\([^"]*\)".*/\1/p' | head -n 1)
+  if [ "$code" = 200 ] && [ -n "$issuer" ] && [ "$issuer" = "$named" ]; then
+    ok "authorization server: issuer matches the tool server's"
+  else
+    bad "authorization server: got $code with issuer '$issuer'; the tool server names '$named'"
   fi
 
   headers=$(curl -s -D - -o /dev/null --max-time 15 -X POST -H 'Content-Type: application/json' \

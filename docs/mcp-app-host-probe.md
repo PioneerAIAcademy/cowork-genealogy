@@ -9,8 +9,10 @@ has an answer, and a failure is an answer.
 
 ## Run sheet
 
-Work top to bottom on the Mac that holds the project folders, from the root of a
-checkout of `main`. Terminal 1 holds the server, terminal 2 everything
+Work top to bottom on the Mac that holds the project folders, from a checkout of
+commit `37db83f35`: the page there still draws M0's hello card, its report block and the
+probe buttons the steps tap, which the step cards replaced. Terminal 1 holds the server,
+terminal 2 everything
 else. A `text` block is what you type. Wherever a step says a Cowork task or a new task,
 use a new conversation in Desktop Chat or claude.ai chat, because Cowork is not tested
 further. A new conversation means exactly that: an earlier result in the same one spoils

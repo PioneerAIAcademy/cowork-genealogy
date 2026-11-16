@@ -16,6 +16,10 @@ export interface AuthStatusResult {
   expiresAt?: string;
   expiresInMinutes?: number;
   hasRefreshToken?: boolean;
+  /** A connector caller's account id on the web tier (self-hosted beta E3). */
+  accountId?: string;
+  /** For a connector caller whose FamilySearch session has ended: where they sign in again. */
+  signInUrl?: string;
 }
 
 export interface FSTokenResponse {
@@ -42,7 +46,9 @@ export interface AppConfig {
   openRouterModel?: string;
   /** The web tier's public origin. Set with `uploadsEnabled`, `project_context`
    *  returns `uploadUrl` (`<origin>/upload/<id>`) for a store that knows its
-   *  project id (src/utils/project-links.ts). */
+   *  project id (src/utils/project-links.ts). It is also the origin of the connector's
+   *  page image links and the page's `resourceDomains` (src/tools/project-view.ts);
+   *  unset, the connector signs no image link. */
   webPublicUrl?: string;
   /** On, with `webPublicUrl`, `project_context` returns `uploadUrl`. */
   uploadsEnabled?: boolean;
