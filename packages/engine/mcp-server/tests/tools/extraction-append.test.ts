@@ -64,7 +64,7 @@ const validSource = (id: string) => ({
   gedcomx_source_description_id: "SD-001",
   citation: "1850 U.S. Census, Schuylkill County, PA",
   citation_detail: citationDetail,
-  source_classification: "original",
+  source_classification: "derivative",
   repository: "NARA",
   access_date: "2026-01-01",
 });

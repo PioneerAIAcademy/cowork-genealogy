@@ -45,6 +45,9 @@ from test_person_evidence import (  # noqa: E402
     test_naming_system_read_from_wiki as check_naming,
     test_unexplained_move_not_confident as check_unexplained,
     test_corridor_move_links_confident as check_corridor_link,
+    test_link_warning_no_link as check_warning_different,
+    test_link_warning_implausible_still_links as check_warning_implausible,
+    test_link_warning_explained_links_and_names_it as check_warning_explained,
     test_identity_links_follow_their_persona as check_identity,
     test_naturalization_shortfall_stated as check_shortfall,
     test_naturalization_exception_not_flagged as check_exception,
@@ -900,6 +903,83 @@ def test_chrono_fires_when_record_persona_id_is_null():
     assert "1858" in str(exc.value)
 
 
+# The ut_person_evidence_021 shape: a household with no persona ids. Bridget's
+# relationship fact (a_007, child_2, born ~1844) is linked to Thomas (I2, born
+# 1818), the head it names, and the only same_person call scored the head.
+
+_HOUSEHOLD_REC = "ark:/61903/1:1:MQ7X-8KP"
+_HOUSEHOLD = {
+    "assertions": [
+        {"id": "a_001", "record_id": _HOUSEHOLD_REC, "record_role": "head_of_household",
+         "record_persona_id": None, "fact_type": "name"},
+        {"id": "a_004", "record_id": _HOUSEHOLD_REC, "record_role": "child_1",
+         "record_persona_id": None, "fact_type": "relationship", "date": "1850"},
+        {"id": "a_005", "record_id": _HOUSEHOLD_REC, "record_role": "child_2",
+         "record_persona_id": None, "fact_type": "name"},
+        {"id": "a_006", "record_id": _HOUSEHOLD_REC, "record_role": "child_2",
+         "record_persona_id": None, "fact_type": "birth", "date": "~1844"},
+        {"id": "a_007", "record_id": _HOUSEHOLD_REC, "record_role": "child_2",
+         "record_persona_id": None, "fact_type": "relationship", "date": "1850"},
+    ],
+    "person_evidence": [],
+}
+_HOUSEHOLD_TREE = _tree_with_birth("I2", 1818)
+
+
+def _household_link(assertion_id: str) -> dict:
+    return {
+        "assertions": _HOUSEHOLD["assertions"],
+        "person_evidence": [
+            {"id": "pe_009", "assertion_id": assertion_id, "person_id": "I2",
+             "confidence": "probable", "rationale": "Head of the household."}
+        ],
+    }
+
+
+def _sp(assertion_id: str, **named) -> dict:
+    return {
+        "tool": "mcp__genealogy__same_person",
+        "args": {"projectPath": "/p", "assertionId": assertion_id, "treePersonId": "I2", **named},
+    }
+
+
+def test_chrono_passes_when_the_only_call_scored_another_party():
+    """The link is about the head the fact names, so the child's birth year is
+    not the linked person's. Fired before: the fallback took the head's call and
+    then read the child's facts."""
+    check_chrono(
+        _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+        _state(_household_link("a_007"), _HOUSEHOLD_TREE),
+        [_sp("a_004", recordRole="head_of_household")],
+    )
+    check_chrono(
+        _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+        _state(_household_link("a_007"), _HOUSEHOLD_TREE),
+        [_sp("a_001")],
+    )
+
+
+def test_chrono_fires_when_a_call_scored_the_facts_own_party():
+    """A call on another fact of the same party still answers for it."""
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+            _state(_household_link("a_006"), _HOUSEHOLD_TREE),
+            [_sp("a_005")],
+        )
+    assert "1844" in str(exc.value) and "1818" in str(exc.value)
+
+
+def test_chrono_prefers_the_own_party_call_over_an_earlier_other_party_one():
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_HOUSEHOLD, _HOUSEHOLD_TREE),
+            _state(_household_link("a_006"), _HOUSEHOLD_TREE),
+            [_sp("a_004", recordRole="head_of_household"), _sp("a_005")],
+        )
+    assert "pe_009" in str(exc.value)
+
+
 def test_chrono_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
         check_chrono(_state(None), _state(None), [])
@@ -1476,6 +1556,114 @@ def test_outcome_checks_stand_down_without_their_tags():
         check_unexplained(b, a, _LINK)
     with pytest.raises(pytest.skip.Exception):
         check_corridor_link(b, a, _CAP)
+
+
+_DIFFERENT = {"tags": ["person-evidence", "link-warning-no-link"]}
+_IMPLAUSIBLE = {"tags": ["person-evidence", "link-warning-implausible-links"]}
+_EXPLAINED = {"tags": ["person-evidence", "link-warning-explained"]}
+
+
+def _warn_states(before_pe, after_pe):
+    project = {"subject_person_ids": ["I1"]}
+    before = {"project": project, "person_evidence": before_pe}
+    after = {"project": project, "person_evidence": after_pe}
+    return _state(before, _tree("I1", "I2")), _state(after, _tree("I1", "I2"))
+
+
+def _burial(conf="confident", **over):
+    return {"id": "pe_005", "assertion_id": "a_021", "person_id": "I1", "confidence": conf, **over}
+
+
+def _why(i, conf, rationale):
+    return {**_pe(i, "I1", conf), "rationale": rationale}
+
+
+@pytest.mark.parametrize("conf", ["confident", "probable"])
+def test_different_person_fires_on_a_link_that_stands(conf):
+    b, a = _warn_states([_burial()], [_burial(), _pe(1, "I1", conf)])
+    with pytest.raises(AssertionError, match="different person"):
+        check_warning_different(b, a, _DIFFERENT)
+
+
+def test_different_person_fires_when_the_tree_fact_is_lowered_to_make_room():
+    b, a = _warn_states([_burial()], [_burial("speculative")])
+    with pytest.raises(AssertionError, match="must stay"):
+        check_warning_different(b, a, _DIFFERENT)
+
+
+def test_different_person_fires_when_the_tree_fact_is_superseded():
+    b, a = _warn_states([_burial()], [_burial(superseded_by="pe_009")])
+    with pytest.raises(AssertionError, match="must stay"):
+        check_warning_different(b, a, _DIFFERENT)
+
+
+def test_different_person_passes_on_no_link_a_speculative_one_or_a_relative():
+    for new in ([], [_pe(1, "I1", "speculative")], [_pe(1, "I2", "confident")]):
+        b, a = _warn_states([_burial()], [_burial(), *new])
+        check_warning_different(b, a, _DIFFERENT)
+
+
+def test_explained_fires_when_nothing_is_linked_or_only_speculatively():
+    for new in ([], [_why(1, "speculative", "after the 1870 burial")], [{**_pe(1, "I2", "confident"), "rationale": "burial"}]):
+        b, a = _warn_states([_burial("probable")], [_burial("probable"), *new])
+        with pytest.raises(AssertionError, match="well-supported side"):
+            check_warning_explained(b, a, _EXPLAINED)
+
+
+def test_explained_fires_when_the_link_never_names_the_fact_in_doubt():
+    b, a = _warn_states([_burial("probable")], [_burial("probable"), _why(1, "confident", "Name, age and trade agree.")])
+    with pytest.raises(AssertionError, match="names the warning"):
+        check_warning_explained(b, a, _EXPLAINED)
+
+
+@pytest.mark.parametrize("words", [
+    "The 1870 burial rests on a name alone and is the fact in doubt.",
+    "Census is eleven years after he was buried; that entry is doubtful.",
+    "Warning: event after the latest death-like fact; the interment link needs review.",
+])
+def test_explained_passes_on_a_link_that_names_it_at_either_tier(words):
+    for conf in ("confident", "probable"):
+        b, a = _warn_states([_burial("probable")], [_burial("probable"), _why(1, conf, words)])
+        check_warning_explained(b, a, _EXPLAINED)
+
+
+def test_explained_passes_when_the_doubtful_link_is_lowered_too():
+    b, a = _warn_states([_burial("probable")], [_burial("speculative"), _why(1, "confident", "burial in doubt")])
+    check_warning_explained(b, a, _EXPLAINED)
+
+
+def _to(i, person, conf, **over):
+    return {**_pe(i, person, conf), **over}
+
+
+def test_implausible_fires_when_the_wife_is_not_linked_or_only_speculatively():
+    for new in ([], [_to(1, "I1", "confident")], [_to(1, "I2", "speculative")], [_to(1, "I2", "confident", superseded_by="pe_009")]):
+        b, a = _warn_states([], new)
+        with pytest.raises(AssertionError, match="not excluded"):
+            check_warning_implausible(b, a, _IMPLAUSIBLE)
+
+
+@pytest.mark.parametrize("conf", ["confident", "probable"])
+def test_implausible_passes_when_the_wife_is_linked(conf):
+    b, a = _warn_states([], [_to(1, "I1", "confident"), _to(2, "I2", conf)])
+    check_warning_implausible(b, a, _IMPLAUSIBLE)
+
+
+def test_implausible_ignores_a_link_the_project_already_held():
+    held = [_to(1, "I2", "confident")]
+    b, a = _warn_states(held, held)
+    with pytest.raises(AssertionError):
+        check_warning_implausible(b, a, _IMPLAUSIBLE)
+
+
+def test_warning_checks_stand_down_without_their_tags():
+    b, a = _warn_states([_burial()], [_burial(), _pe(1, "I1", "confident")])
+    with pytest.raises(pytest.skip.Exception):
+        check_warning_different(b, a, _EXPLAINED)
+    with pytest.raises(pytest.skip.Exception):
+        check_warning_explained(b, a, _DIFFERENT)
+    with pytest.raises(pytest.skip.Exception):
+        check_warning_implausible(b, a, _DIFFERENT)
 
 
 def _son_of_states():
@@ -2108,6 +2296,10 @@ def test_exception_fails_an_inversion(assertion_id, rationale, conflict):
     ("a_014", _RES_1869 + _NAT + "short. The 1869 directory shows he was already resident, so the "
               "1871 arrival is a return trip."),
     ("a_007", _RES_1869 + _NAT + "met, counting residence from 1869 (src_003)."),
+    ("a_007", _RES_1869 + _NAT + "short, but the 1869 San Francisco directory (U.S. residence before the "
+              "arrival, linked to I1, and the arrival record does not say he was never in the country "
+              "before) makes the 1871 landing a return trip; counted from 1869 that is 6 years: met, "
+              "1869 San Francisco directory."),
     ("a_010", "The 1869 directory shows residence before the June 1871 arrival, so the arrival is a "
               "return trip, not a contradiction."),
     ("a_010", "The apparent timeline conflict between the 1869 directory and the June 1871 arrival "

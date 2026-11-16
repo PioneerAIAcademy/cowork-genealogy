@@ -38,7 +38,7 @@ const EXAMPLES: Record<string, string> = {
     "where": "Harrisburg, Pennsylvania",
     "where_within": "certificate no. 24601"
   },
-  "source_classification": "original",
+  "source_classification": "derivative",
   "repository": "FamilySearch",
   "access_date": "2026-07-18",
   "url": "https://www.familysearch.org/ark:/61903/1:1:MDEF",

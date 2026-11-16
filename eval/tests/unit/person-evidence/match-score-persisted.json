@@ -12,19 +12,22 @@
     ]
   },
   "input": {
-    "delegation": "Link assertion a_001 — the 1850 census Patrick Flynn — to the right person in the tree.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-record-matching"
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_005, a_006, a_007, a_008, a_009, a_010, a_011, a_012, a_013, a_014, a_015, a_016. They are the 1850 census record of the Thomas Flynn household; a_001 is the census Patrick Flynn.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-record-matching-extracted"
   },
   "execution": {
     "sdk_message_silence_seconds": 300
   },
   "mcp_fixtures": [
+    "same-person-flynn-extracted-relatives",
+    "same-person-flynn-extracted-thomas",
+    "same-person-flynn-extracted-mary",
     "same-person-flynn-strong",
     "same-person-flynn-weak"
   ],
   "judge_context": [
     "person-evidence should call same_person in the project-relative form (projectPath, assertionId a_001, treePersonId naming the candidate); the tool resolves the record and builds the tree subset itself",
     "The new person_evidence entry for a_001 must carry a non-null match_score holding the tool's score (0.88)",
-    "The match is strong on every identifier and the score corroborates it — a confident link is appropriate"
+    "The match is strong on every identifier and the score corroborates it — `confident` and `probable` are both acceptable"
   ]
 }

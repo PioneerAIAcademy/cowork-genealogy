@@ -1,0 +1,12 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the will's testator named as the second party of a_004. The projected record holds no persona for that role, and the tool says so: the link to Thomas carries a null match_score and the reason. Measured on 2026-11-15 with same_person's project arm on flynn-record-matching (FamilySearch matcher).",
+  "args": {
+    "assertionId": "a_004",
+    "recordRole": "testator"
+  },
+  "is_error": true,
+  "response": {
+    "error": "same_person: record 'https://www.familysearch.org/ark:/61903/3:1:FTXT-Q88' holds no persona for role 'testator'. Available roles: heir_1. If the record holds no persona for the party this link is about, leave match_score null and say so."
+  }
+}
