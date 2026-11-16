@@ -1,10 +1,11 @@
 """Suite-specific validators for the search-hints agent (issue #2029).
 
-search-hints reviews the FamilySearch hints on one tree person. Triage asks
+search-hints reviews the FamilySearch hints on one tree person. Review asks
 `person_record_matches` for the PENDING matches only, reads each hint, reads the
-record image before recommending against a hint, and writes nothing but the
-status of its plan item (issue #3153). Record mode logs one `research_log_append`
-entry per verdict the researcher stated, then completes the item.
+record image before deciding against a hint, decides each hint itself, logs each
+accept and reject, and completes its plan item. Record mode logs one
+`research_log_append` entry per verdict the researcher stated, then completes
+the item.
 
 These are the mechanical checks; whether a recommendation is genealogically
 sound lives in the rubric. Each check reads a deterministic artifact — the call
@@ -106,13 +107,13 @@ def test_hint_list_asks_for_pending_only(tool_calls, test):
 # --- Triage -------------------------------------------------------------
 
 def test_triage_writes_only_item_status(before_state, after_state, tool_calls, test):
-    """Triage recommends; the researcher decides. Its only writes are the plan
-    item's status, through `research_append` on `plan_items`, and — on no hints
-    — one `negative` log entry naming the item (issue #3153). No evidence write,
-    no tree edit, and no positive log entry (that would read as evidence awaiting
-    extraction)."""
+    """A review with no hint to decide — none pending, hints unreadable, or a
+    sign-in message — writes only the plan item's status, through
+    `research_append` on `plan_items`, and on no hints one `negative` log entry
+    naming the item. No evidence write, no tree edit, and no positive log entry
+    (that would read as evidence awaiting extraction)."""
     if "writes-nothing" not in test.get("tags", []):
-        pytest.skip("not a triage test")
+        pytest.skip("not a writes-nothing test")
     if not _held_item(test):
         writes = _calls(tool_calls, "research_log_append") + _calls(tool_calls, "research_append")
         new_logs = (
@@ -140,6 +141,60 @@ def test_triage_writes_only_item_status(before_state, after_state, tool_calls, t
             assert e.get("outcome") == "negative", (
                 "triage's only log entry is the no-hints negative entry; a positive entry reads "
                 "as evidence awaiting extraction"
+            )
+
+
+def _pid(ark: str) -> str:
+    """The record id an ark ends in: `M70C` from `.../ark:/61903/1:1:M70C`."""
+    return re.sub(r"[^A-Za-z0-9-]", "", re.split(r"[:/]", ark.strip("*_`/ "))[-1]).upper()
+
+
+def test_review_logs_its_decisions(before_state, after_state, tool_calls, agent_returns, text_response, test):
+    """Review decides each hint and logs it: an accept is one positive
+    `person_record_matches` entry naming the hint, a reject one negative entry.
+    An accepted hint whose record the project already extracted logs nothing
+    (its source already carries the evidence), and a `not enough information
+    to judge` or `already linked` hint logs nothing. Each entry names the held
+    plan item, or none when no item was handed over. The only other write is the
+    item's status."""
+    if "records-decisions" not in test.get("tags", []):
+        pytest.skip("not a review-records test")
+    verdicts = _verdicts(_reply(agent_returns, text_response, test))
+    assert verdicts, "the review's return carries no `Hint <ark>: <verdict>` line"
+    for c in _calls(tool_calls, "research_append"):
+        section = ((c.get("args") or {}).get("section")) or ""
+        assert section == "plan_items", (
+            f"review called research_append on section '{section}'; its only research_append "
+            f"write is the plan item's status (plan_items)"
+        )
+    held = _held_item(test)
+    entries = _new_log_entries(before_state, after_state)
+    assertions = ((before_state or {}).get("research_json") or {}).get("assertions") or []
+    for ark, verdict in verdicts.items():
+        pid = _pid(ark)
+        naming = [e for e in entries if pid in str((e.get("query") or {}).get("recordId", "")).upper()]
+        extracted = any(pid in str(a.get("record_id", "")).upper() for a in assertions)
+        if verdict == "reject" or (verdict == "accept" and not extracted):
+            assert len(naming) == 1, (
+                f"{pid}: the review decided {verdict} but logged {len(naming)} entries naming it; "
+                f"expected one"
+            )
+            entry = naming[0]
+            assert entry.get("tool") == "person_record_matches", (
+                f"{pid}: tool is {entry.get('tool')!r}, not 'person_record_matches'"
+            )
+            want = "positive" if verdict == "accept" else "negative"
+            assert entry.get("outcome") == want, (
+                f"{pid}: outcome {entry.get('outcome')!r} does not follow the review's {verdict} ({want})"
+            )
+            assert entry.get("plan_item_id") == held, (
+                f"{pid}: the entry names plan item {entry.get('plan_item_id')!r}; expected {held!r}"
+            )
+        else:
+            assert not naming, (
+                f"{pid}: a hint decided '{verdict}'"
+                f"{' whose record the project already extracted' if extracted else ''} was logged; "
+                f"only a new accept or a reject is"
             )
 
 
@@ -220,17 +275,16 @@ def test_thin_hint_is_not_enough_information(agent_returns, text_response, test)
 
 # --- How triage leaves the hints item -------------------------------------
 
-_ENDING = re.compile(r"item-ends:(completed|in_progress|skipped|untouched)")
+_ENDING = re.compile(r"item-ends:(completed|skipped|untouched)")
 
 
 def test_hints_item_ends_as_tagged(before_state, after_state, test):
-    """Triage sets the hints item by how it went (issue #3153): no hints →
-    one negative log entry naming the item, then `completed`; hints found with
-    the researcher present → `in_progress`, nothing logged, waiting on verdicts;
-    hints unreadable, or nobody present to decide → `skipped` /
-    `inaccessible`; a sign-in message → `untouched`, the item exactly as it
-    was with nothing logged, so a lapsed session is not recorded as an
-    inaccessible source. The tag names the ending the fixture forces."""
+    """Review sets the hints item by how it went: hints reviewed, or none →
+    `completed`, through at least one log entry naming the item (with no hints,
+    exactly one negative entry); hints unreadable → `skipped` / `inaccessible`;
+    a sign-in message → `untouched`, the item exactly as it was with nothing
+    logged, so a lapsed session is not recorded as an inaccessible source. The
+    tag names the ending the fixture forces."""
     endings = [m.group(1) for t in test.get("tags", []) if (m := _ENDING.fullmatch(t))]
     if not endings:
         pytest.skip("not a hints-item ending test")
@@ -256,15 +310,12 @@ def test_hints_item_ends_as_tagged(before_state, after_state, test):
         f"the hints item {held} ended {item.get('status')!r}; this fixture forces {expected!r}"
     )
     if expected == "completed":
-        assert len(naming) == 1 and naming[0].get("outcome") == "negative", (
-            f"no hints completes the item through one negative log entry naming it; got "
-            f"{[(e.get('id'), e.get('outcome')) for e in naming]}"
-        )
-    elif expected == "in_progress":
-        assert not naming, (
-            f"hints found leaves the item waiting on verdicts with nothing logged; got "
-            f"{[e.get('id') for e in naming]} naming it, which the router reads as the item executed"
-        )
+        assert naming, f"completing the hints item {held} needs a log entry naming it; got none"
+        if "no-hints" in test.get("tags", []):
+            assert len(naming) == 1 and naming[0].get("outcome") == "negative", (
+                f"no hints completes the item through one negative log entry naming it; got "
+                f"{[(e.get('id'), e.get('outcome')) for e in naming]}"
+            )
     else:
         assert item.get("skip_category") == "inaccessible", (
             f"a hints item that could not be reviewed is skipped as inaccessible; got "

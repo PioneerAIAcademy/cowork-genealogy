@@ -46,6 +46,8 @@ export interface SessionState {
   heightLimit: number | null
   /** The search whose results the case file opens in its side panel. */
   fileLogId: string | null
+  /** The page a card's button asked the case file to open on, or null. */
+  filePage: string | null
   /** The newest document the case file has: the card's snapshot, then what opening the file read. */
   fileDocument: ProjectDocument | null
 }
@@ -62,8 +64,8 @@ export interface Session {
   subscribe(listener: () => void): () => void
   start(): Promise<void>
   requestMode(mode: DisplayMode): Promise<void>
-  /** Opens the case file on today's documents, with `logId`'s results in its side panel. */
-  openFile(logId?: string): Promise<void>
+  /** Opens the case file on today's documents, with `logId`'s results in its side panel, on `page`. */
+  openFile(logId?: string, page?: string): Promise<void>
   /** The case file's data, one per mount. */
   readonly transport: McpAppResearchTransport
   /** Tells the model, in words, what the researcher has open. Posts nothing; silent where the host cannot. */
@@ -89,6 +91,7 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     modeRequests: [],
     heightLimit: null,
     fileLogId: null,
+    filePage: null,
     fileDocument: null
   }
   let fileOpenTried = false
@@ -226,8 +229,8 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
 
     requestMode: (mode) => askForMode(mode, 'button'),
 
-    async openFile(logId) {
-      update({ fileLogId: logId ?? null })
+    async openFile(logId, page) {
+      update({ fileLogId: logId ?? null, filePage: page ?? null })
       void askForMode('fullscreen', 'button')
       try {
         const document = await readDocument(projectArgs())

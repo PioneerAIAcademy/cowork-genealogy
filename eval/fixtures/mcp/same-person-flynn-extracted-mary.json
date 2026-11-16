@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the mother on the 1850 census record MXHY-TP4 (Mary Flynn, P3) against the tree's Mary Flynn (I3). List before a test's catch-all same_person fixture. Measured live on 2026-11-15 with same_person's project arm on flynn-record-matching-extracted (FamilySearch matcher).",
+  "args": {
+    "treePersonId": "I3"
+  },
+  "response": {
+    "score": 0.8880235,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "P3",
+      "name": "Mary Flynn",
+      "role": "mother"
+    },
+    "treePerson": {
+      "id": "I3",
+      "name": "Mary Flynn"
+    }
+  }
+}

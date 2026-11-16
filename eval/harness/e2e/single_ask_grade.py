@@ -4,7 +4,8 @@ Pure: every function here reads its arguments and nothing else, so the grade can
 be tested on synthetic records with no network and no workspace. The spawn
 predicate is the orchestrator's own, so there is one definition of an Agent call.
 
-PASS needs all six checks (five bullets; the tool checks share one):
+PASS needs all seven checks (six bullets; the tool checks share one), the last
+only when the fixture asks for it:
 
 - ``owner`` — the first main-thread unit is the fixture's ``expected_owner``, or
   one of them when it is a list (``None`` there means no unit ran: the main
@@ -14,11 +15,15 @@ PASS needs all six checks (five bullets; the tool checks share one):
 - ``no_research_job`` — no ``question-selection`` spawn and no ``research-plan``
   spawn (unless the ask is a plan) on any thread, and no new ``questions`` (or,
   unless a plan ask, ``plans``) entry. The persisted half catches a research job
-  the spawn half misses.
+  the spawn half misses. In an empty-folder fixture (no starting research.json), a
+  missing final research.json is no reason: nothing was created.
 - ``save`` — any one of the ``expected_save`` alternatives holds: a new
   ``sources`` entry, a new ``log`` entry whose ``tool`` (and ``outcome``, when
   given) is the expected value, or, with ``absent``, no new entry in the section.
-  New = id in the final ``research.json`` and absent from the starting one.
+  New = id in the final ``research.json`` and absent from the starting one. With no
+  research.json at the end, the empty-folder rule holds: an ``absent`` save passes
+  and any other fails; from a seeded project it is a failure, and so is a
+  research.json that exists but does not parse (``research_json_exists``).
 - ``forbidden_tools`` / ``required_tools`` — none of the first, and every one of
   the second, was called on any thread (bare tool names); a required call that
   errored does not count. Beside a background spawn, a forbidden-tool or
@@ -27,6 +32,10 @@ PASS needs all six checks (five bullets; the tool checks share one):
 - ``stop`` — the turn ended on its own. A turn a cap or watchdog cut off fails
   here: what it saved before the cut is not an answer the patron got. The cost
   cap is not a cut-off (it only labels a finished run), so it does not fail this.
+- ``ends_on_offer`` — graded only when the fixture sets it: the turn's last
+  main-thread assistant text ends on a "Continue with …?" line naming a step,
+  read with the step boundary's own ``offered_step``. An invented label is no
+  offer. The caller extracts the text (``last_main_text``).
 """
 
 from __future__ import annotations
@@ -35,10 +44,14 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from e2e.orchestrator import _is_agent_tool
+from harness.skill_runner import load_step_boundary
 
 ROUTER_UNIT = "research"
 SAVE_SECTIONS = ("log", "sources")
-CHECKS = ("owner", "no_research_job", "save", "forbidden_tools", "required_tools", "stop")
+CHECKS = (
+    "owner", "no_research_job", "save", "forbidden_tools", "required_tools", "stop",
+    "ends_on_offer",
+)
 # Set after the fact from the final ResultMessage; the turn was not cut off.
 LABEL_ONLY_STOPS = ("cost_cap",)
 ASYNC_LAUNCH = "Async agent launched"
@@ -55,6 +68,18 @@ class SingleAskSpec:
     must_not: str = ""
     forbidden_tools: tuple[str, ...] = ()
     required_tools: tuple[str, ...] = ()
+    ends_on_offer: bool = False
+
+
+_BOUNDARY = load_step_boundary()
+
+
+def last_main_text(narration: list[dict[str, Any]] | None) -> str | None:
+    """The turn's last main-thread assistant text: never a subagent's or a harness line."""
+    for entry in reversed(narration or []):
+        if entry.get("kind") == "assistant" and entry.get("thread") == "main":
+            return str(entry.get("text") or "")
+    return None
 
 
 def owners(spec: SingleAskSpec) -> tuple[str | None, ...]:
@@ -172,6 +197,8 @@ def grade(
     starting_research: dict[str, Any] | None,
     final_research: dict[str, Any] | None,
     aborted_reason: str | None = None,
+    last_text: str | None = None,
+    research_json_exists: bool | None = None,
 ) -> SingleAskGrade:
     units = spawned_units(tool_calls)
     expected = owners(spec)
@@ -185,8 +212,15 @@ def grade(
 
     forbidden = {"question-selection"} | (set() if spec.is_plan_ask else {"research-plan"})
     job_reasons = sorted({u["unit"] for u in units if u["unit"] in forbidden})
+    # Empty folder in, empty folder out: nothing was created, which is no failure.
+    # A research.json that exists but did not parse is not an untouched folder.
+    empty_folder_untouched = (
+        starting_research is None and final_research is None and research_json_exists is not True
+    )
+    missing = "research.json unreadable" if research_json_exists else "no research.json"
     if final_research is None:
-        job_reasons.append("no research.json")
+        if not empty_folder_untouched:
+            job_reasons.append(missing)
     else:
         if _new_rows(starting_research, final_research, "questions"):
             job_reasons.append("new questions entry")
@@ -197,10 +231,10 @@ def grade(
         ", ".join(job_reasons) if job_reasons else "none started",
     )
 
-    if final_research is None:
-        checks["save"] = (False, "no research.json")
+    if final_research is None and not empty_folder_untouched:
+        checks["save"] = (False, missing)
     else:
-        results = [_save_check(alt, starting_research, final_research) for alt in saves(spec)]
+        results = [_save_check(alt, starting_research, final_research or {}) for alt in saves(spec)]
         hit = next((d for ok, d in results if ok), None)
         checks["save"] = (hit is not None, hit or " or ".join(d for _, d in results))
 
@@ -244,7 +278,15 @@ def grade(
             checks["forbidden_tools"] = (False, "background spawn: an absence cannot be confirmed")
         if any(alt.get("absent") for alt in saves(spec)) and checks["save"][0]:
             checks["save"] = (False, "background spawn: an absence cannot be confirmed")
-    failed = [name for name in CHECKS if not checks[name][0]]
+    if spec.ends_on_offer:
+        offered = _BOUNDARY.offered_step(last_text)
+        checks["ends_on_offer"] = (
+            offered is not None,
+            f"offers {offered}" if offered
+            else f"no offer at the end: {str(last_text).strip()[-120:]!r}" if last_text
+            else "no main-thread text",
+        )
+    failed = [name for name in CHECKS if name in checks and not checks[name][0]]
     return SingleAskGrade(
         passed=not failed,
         checks=checks,
@@ -279,8 +321,8 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
         )
     if not g.checks["no_research_job"][0]:
         line += f"\n    research job: {g.checks['no_research_job'][1]}"
-    for name in ("forbidden_tools", "required_tools"):
-        if not g.checks[name][0]:
+    for name in ("forbidden_tools", "required_tools", "ends_on_offer"):
+        if name in g.checks and not g.checks[name][0]:
             line += f"\n    {name}: {g.checks[name][1]}"
     if spec.must_not:
         line += f"\n    must not (not graded): {spec.must_not}"

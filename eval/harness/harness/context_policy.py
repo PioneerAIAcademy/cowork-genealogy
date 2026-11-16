@@ -313,6 +313,13 @@ async def sources_note_hook(input_data, tool_use_id, context):
         }
     }
 
+
+async def route_note_hook(input_data, tool_use_id, context):
+    """UserPromptSubmit for the single-ask panel only (e2e-test-spec §16.3): what Cowork
+    sends on every message, the routing sentence and `SOURCES_NOTE`, from the shipped
+    hook's own `decision()` with no hosted-plane flag."""
+    return _route.decision(input_data or {}, {})
+
 #: Tools the main thread may not call: the harness-only `image_read` deny plus
 #: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as
 #: OWNED_SECTIONS below.

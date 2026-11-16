@@ -234,12 +234,20 @@ export function resultsView(file: unknown): ResultsView {
   }
 }
 
-export type PageKey = 'case' | 'sources' | 'log'
+export type PageKey = 'case' | 'compare' | 'people' | 'sources' | 'log'
 
-export function pagesWithContent(research: ResearchDocument, collections: unknown): PageKey[] {
+/** The pages with something to show, in the file's order. `compare` is Compare's view, null without a starting tree. */
+export function pagesWithContent(
+  research: ResearchDocument,
+  collections: unknown,
+  compare?: { people: Array<{ findings: unknown[]; added: boolean }>; possibleRelatives: unknown[] } | null,
+  tree?: unknown
+): PageKey[] {
   const pages: PageKey[] = []
   const questions = list(research.questions)
   if (questions.length > 0 || research.project?.objective) pages.push('case')
+  if (compare && (compare.possibleRelatives.length > 0 || compare.people.some((p) => p.added || p.findings.length > 0))) pages.push('compare')
+  if (list((tree as { persons?: unknown[] } | null | undefined)?.persons).length > 0) pages.push('people')
   const leads = questions.some((q) => list(q.search_stop?.not_reached).length > 0)
   const places = (collections as { places?: Record<string, unknown> } | null | undefined)?.places
   if (list(research.sources).length > 0 || leads || list(research.localities).length > 0 || (places && Object.keys(places).length > 0)) {

@@ -30,3 +30,5 @@ the register entry.
 
 Everything else is as in `gaetjen-naturalization-interval`: `namesakes` is
 empty, and `same_person` scores the register 0.43 and the arrival 0.006.
+
+The 1871 arrival (`src_002`, assertions `a_010` to `a_014`) is linked to I1 before the run, by `pe_003` to `pe_007`, and I1 carries it as Immigration fact `F4`. That link is part of the fixture: it stands for an identification the researcher made, so the arrival and the naturalization are one person's records. It is not under review in this test.

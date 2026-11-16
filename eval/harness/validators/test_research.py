@@ -377,29 +377,28 @@ def test_no_browse_executed_on_indexed_search(
     )
 
 
-def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_tool_calls, tool_calls, test):
-    """After a hint triage the router relays it and stops: whether to accept a
-    hint is the researcher's call (research/SKILL.md, "Hint review"). Spawning
-    search-hints a second time in the same run can only carry verdicts the
-    researcher never stated, and logging the hints itself skips the agent.
+def test_hint_review_runs_once(skills_invoked, builtin_tool_calls, tool_calls, test):
+    """A hint review is one step (research/SKILL.md, "Hint review"): search-hints
+    decides and logs the hints itself, and the router relays it and ends the
+    turn. A second spawn in the same run could only carry verdicts the researcher
+    never stated, and the router logging the hints itself skips the agent.
 
-    Tag-gated on ``stops-for-verdicts``. The test's search-hints stub returns a
-    realistic triage ending in "Awaiting verdicts", so the pull toward a second
-    spawn is real (issue #2029).
+    Tag-gated on ``hint-review-once``. The test's search-hints stub returns a
+    realistic review with its decisions logged.
     """
     from harness.skill_runner import handoffs
 
-    if "stops-for-verdicts" not in test.get("tags", []):
-        pytest.skip("not a hint-review stop test")
+    if "hint-review-once" not in test.get("tags", []):
+        pytest.skip("not a hint-review test")
     spawns = [h for h in handoffs(skills_invoked, builtin_tool_calls) if h == "search-hints"]
     assert len(spawns) == 1, (
-        f"search-hints was handed off {len(spawns)} time(s); the router spawns it once for "
-        "triage and then stops for the researcher's verdicts"
+        f"search-hints was handed off {len(spawns)} time(s); the router spawns it once and "
+        "ends the turn on its report"
     )
     logs = [c for c in (tool_calls or []) if str(c.get("tool", "")).endswith("__research_log_append")]
     assert not logs, (
-        f"the router logged {len(logs)} entry/entries itself after a hint triage; verdicts are "
-        "the researcher's, and recording them is search-hints' second spawn"
+        f"the router logged {len(logs)} entry/entries itself after a hint review; search-hints "
+        "logs its own decisions"
     )
 
 
@@ -801,7 +800,6 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
 _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
     "delegates-user-present-no-external": (("search-external-sites", "userPresent", r"no"),),
-    "delegates-user-present-no-hints": (("search-hints", "userPresent", r"no"),),
     "delegates-wrap-up": (
         ("research-plan", "planItemIds", r".*pli_\w+"),
         ("research-exhaustiveness", "wrapUp", r"yes"),
