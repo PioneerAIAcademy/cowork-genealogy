@@ -1,0 +1,137 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "John",
+          "surname": "Carter",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "~1836",
+          "place": "Leeds, Yorkshire, England",
+          "assertion_id": "a_021",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1861",
+          "place": "Leeds, Yorkshire, England",
+          "assertion_id": "a_022",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Ann",
+          "surname": "Carter",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "~1838",
+          "place": "Leeds, Yorkshire, England",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Carter",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "~1862",
+          "place": "Leeds, Yorkshire, England",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "1861 England Census, Leeds, Yorkshire — John Carter household"
+    },
+    {
+      "id": "S2",
+      "title": "Leeds St Peter, Yorkshire — burial register, 1870"
+    },
+    {
+      "id": "S3",
+      "title": "1881 England Census, Leeds, Yorkshire — John Carter household"
+    },
+    {
+      "id": "S4",
+      "title": "Leeds St Peter, Yorkshire — baptism register, 1862"
+    }
+  ]
+}

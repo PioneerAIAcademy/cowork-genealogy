@@ -536,7 +536,10 @@ not a different name. A spouse or child named differently is a different
 person (Step 5). A contradiction that is explained and does not
 bear on identity is not one: link on the rest, leave
 `core_identifier_conflict` null, and say why in the `rationale`. The
-score never promotes a contradiction.
+score never promotes a contradiction. A death, a burial or any other
+tree fact the record's dates collide with is not a core identifier: it
+comes back from `same_person` as a `warningsIfLinked` entry, decided
+by the rule for those entries below.
 
 The comparison runs on every row of the table below, **Obvious included**:
 a person minted from this record, or found by searching for it, still has
@@ -619,6 +622,23 @@ demote a Strong match: write the link and state the score. But:
   or a relationship that cannot hold does **not** authorize a link —
   the conflict makes it a no-link. A high score never links past a
   conflict.
+- **`warningsIfLinked` on the `same_person` answer** lists what the tree
+  would report if this record person's facts were put on that tree
+  person, whatever the score. Each warning is marked impossible or
+  implausible and names the facts it depends on and where each tree fact
+  comes from. Tree facts are taken as correct: a fact that came with the
+  tree, or that records back at `confident`, stands. An impossible
+  warning against a fact that stands means a different person: no link.
+  An implausible one is unlikely, not excluded: when the rest of the
+  correlation is Strong, link at the tier it supports and say in the
+  `rationale` why the warning does not change who this is. The one tree
+  fact that can lose is a fact this project added on one record linked
+  below `confident`. It loses when the record you are linking names
+  relatives who match the tree's: link at the tier the rest supports,
+  and name the warning and that fact with its `pe_` ids in the
+  `rationale` and in your return.
+  When `materialize_facts` refuses the copy for a warning you linked
+  past, give the same reason as its justification.
 - A **patronymic mismatch or an unaccounted-for name element is a
   core-identifier conflict**, not a spelling variant: a differing
   patronymic names a *different father*, unless the naming page Step 2

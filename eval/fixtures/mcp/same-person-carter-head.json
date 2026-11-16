@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1881 head John Carter against the tree's John Carter (I1) (carter-census-stray-burial). Score measured on 2026-11-15 with the FamilySearch matcher, through the compiled same_person project arm on a copy of the scenario. The mock adds `warningsIfLinked` itself, from the compiled function, so it is not canned here.",
+  "args": {
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.7562866,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "John Carter",
+      "role": "head"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "John Carter"
+    }
+  }
+}
