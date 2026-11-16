@@ -308,7 +308,7 @@ calling a secondary-name search a genuine negative, work this order:
    secondary surname, then both together in the same call.
 2. **A query-shape change is not a name variant.** Switching which party holds
    `spouseGivenName`, dropping the surname filter, dropping the place filter —
-   while re-typing the same spelling — will not surface a transcription-variant
+   while re-typing the same spelling — will not surface a spelling-variant
    record. Confirm you can point to at least one search where a **letter in the
    secondary given name itself** changed.
 3. **Then drop the secondary filter rather than switching repositories.** Run at
@@ -776,6 +776,14 @@ Quirks affect how queries should be constructed for that collection.
   principal* and *dropped surname/place filters*, but neither run
   varied the *spelling of the given name itself* — so a real, findable
   record was missed twice in a row.
+- The patronymic **surname** is independently abbreviated in the same
+  index: the target bride's marriage entry indexes her surname as
+  **Halsteinsdr**, not the full **Halsteinsdatter** — confirmed from a
+  third live run where the given name WAS correctly varied to "Urna"
+  but the surname was left at the full "Halsteinsdatter" (or varied
+  separately, in a different search, back with the given name at
+  "Unna"/"Inna") — the two variants were never tried *together in the
+  same call*, and the record was missed a third time as a result.
 - **Compensation — do this explicitly, not just structural query
   changes:** for any Norwegian patronymic given name, run the exact
   name AND at least these vowel-substituted spellings before widening
@@ -783,7 +791,13 @@ Quirks affect how queries should be constructed for that collection.
   Anna), and try the single-letter-doubled/undoubled form (Unna → Una).
   Treat "I varied the query structure" and "I varied the name spelling"
   as two separate, both-required steps — doing one is not a substitute
-  for the other.
+  for the other. **When both the given name and the surname of a
+  Norwegian patronymic are uncertain, vary them TOGETHER in the same
+  search** — e.g. `givenName: "Urna"` + `surname: "Halsteinsdr"` in one
+  call — not just one part at a time across separate searches. Also try
+  the abbreviated patronymic ending directly: `-datter` → `-dr` (e.g.
+  Halsteinsdatter → Halsteinsdr), the mirror of the vowel-substitution
+  rule above for given names.
 
 ### Luxembourg, Church and Civil Registration (5000012)
 
