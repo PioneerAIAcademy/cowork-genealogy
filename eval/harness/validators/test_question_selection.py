@@ -241,6 +241,48 @@ def _names_existing_question(snippet: str, match: re.Match, pattern: str, questi
     return False
 
 
+_RECORD_KEYWORDS = {
+    r"\bcensus\b": r"\bcensus(?:es)?\b",
+    r"\bcertificates?\b": r"\bcertificates?\b",
+    r"\bregisters?\b": r"\bregisters?\b",
+    _RECORD_SCOPED_PATTERNS[3]: r"(?:'s|\b(?:a|the|his|her|their))\s+wills?\b",
+    r"\bprobate\b": r"\bprobate\b",
+    r"\bdeeds?\b": r"\bdeeds?\b",
+    r"\bmuster\s+roll\b": r"\bmuster\s+roll\b",
+    r"\blægdsrulle\w*\b": r"\blægdsrulle\w*\b",
+    r"\blaegdsrulle\w*\b": r"\blaegdsrulle\w*\b",
+}
+assert set(_RECORD_KEYWORDS) == set(_RECORD_SCOPED_PATTERNS), (
+    "every _RECORD_SCOPED_PATTERNS entry needs its _RECORD_KEYWORDS twin"
+)
+_GAP_SENTENCE = re.compile(
+    r"not yet|unsearched|\bnot (?:been )?(?:searched|located|found)\b|remaining gaps?|would (?:advance|strengthen)",
+    re.IGNORECASE,
+)
+
+
+def _conclusion_gap_patterns(before: dict) -> set[str]:
+    """The record patterns a proof summary already names as research still to
+    do: a sentence of any proof-summary text that says a record is not yet
+    searched, not located, a remaining gap, or would advance the tier. Relaying
+    that list is reading the project, not choosing a record -- the same footing
+    as naming an existing plan item. A record named only as work already done
+    ("Searched 1850 census …") is not on it, so it never switches a word off."""
+    gaps = [
+        sentence
+        for summary in before.get("proof_summaries") or []
+        for value in summary.values()
+        if isinstance(value, str)
+        for sentence in re.split(r"(?<=[.!?])\s+|\n+", value)
+        if _GAP_SENTENCE.search(sentence)
+    ]
+    return {
+        pattern
+        for pattern, keyword in _RECORD_KEYWORDS.items()
+        if any(re.search(keyword, sentence, re.IGNORECASE) for sentence in gaps)
+    }
+
+
 def test_handback_not_record_scoped(before_state, text_response, test, agent_returns=None):
     """The hand-back (caller lines + `summary_for_user`) must not name a
     record type, collection, repository, jurisdiction-as-record-source or
@@ -255,7 +297,8 @@ def test_handback_not_record_scoped(before_state, text_response, test, agent_ret
     weighed by research-plan, and `stay-inside-objective-scope.json` (plus
     its `direct-` twin) expect the hand-back to describe that item as the
     plan already states it. A record word that is part of naming an existing
-    question is not a match (`_names_existing_question`).
+    question is not a match (`_names_existing_question`), nor is a record a
+    proof summary already lists as still to search (`_conclusion_gap_patterns`).
     """
     before = before_state.get("research_json")
     if before is None:
@@ -268,9 +311,12 @@ def test_handback_not_record_scoped(before_state, text_response, test, agent_ret
     caller_line = _last_nonblank_line(_head_before_final_rule(reply))
     summary_tail = _last_sentence(tail_after_final_rule(reply))
     questions = before.get("questions") or []
+    listed_gaps = _conclusion_gap_patterns(before)
     offenders: list[str] = []
     for label, snippet in (("next-step hint", caller_line), ("summary_for_user", summary_tail)):
         for pattern in _RECORD_SCOPED_PATTERNS:
+            if pattern in listed_gaps:
+                continue
             if any(
                 not _names_existing_question(snippet, m, pattern, questions)
                 for m in re.finditer(pattern, snippet, re.IGNORECASE)

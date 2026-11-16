@@ -641,3 +641,61 @@ def test_the_census_question_fails_where_no_question_carries_census():
 def test_a_question_id_whose_text_has_no_census_does_not_cover_it():
     with pytest.raises(AssertionError, match="names a record"):
         _check([_PARENTS_Q001, _CENSUS_Q002], "q_001 (search the 1870 census) comes next.")
+
+
+# --- test_handback_not_record_scoped: relaying a proof summary's own gap list ---
+#
+# A proof summary that says which records are not yet searched has already
+# named them; relaying that list is reading the project, the same footing as
+# naming an existing plan item. A record the summary names only as work done
+# ("Searched 1850 census …") is not on the list and stays a violation.
+
+_GAP_SUMMARY = {
+    "id": "ps_001",
+    "question_id": "q_001",
+    "exhaustive_search_summary": (
+        "Searched 1850 census (FamilySearch, Ancestry, MyHeritage) and the death certificate. "
+        "1870, 1880, and 1900 censuses and Thomas Flynn's probate records not yet searched."
+    ),
+    "narrative_markdown": "If Thomas Flynn's will names Patrick as a son, the conclusion would advance to **Proved**.",
+}
+_DONE_ONLY_SUMMARY = {
+    "id": "ps_001",
+    "question_id": "q_001",
+    "exhaustive_search_summary": (
+        "Searched 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census and the death "
+        "certificate. Thomas Flynn probate search (pli_006) completed."
+    ),
+}
+
+
+def _before_with_summary(summary):
+    return {"research_json": {"plans": [], "questions": [_PARENTS_Q001], "proof_summaries": [summary]}}
+
+
+def _check_summary(summary, sentence):
+    check_handback(
+        before_state=_before_with_summary(summary),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": _reply(
+            "**Next step:** plan research for this question.", sentence)}],
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "Further checks, such as the 1870 to 1900 censuses or Thomas Flynn's probate records, would only strengthen an answer already in place.",
+    "Later searches of additional census years or a will would only strengthen that answer.",
+])
+def test_relaying_the_summarys_own_gap_list_passes(sentence):
+    _check_summary(_GAP_SUMMARY, sentence)
+
+
+@pytest.mark.parametrize("summary,sentence", [
+    (_GAP_SUMMARY, "Search his land deeds next."),
+    (_DONE_ONLY_SUMMARY, "Search the 1870 census next."),
+    (_DONE_ONLY_SUMMARY, "Search Thomas Flynn's probate records next."),
+])
+def test_a_record_the_summary_does_not_list_as_a_gap_still_fails(summary, sentence):
+    with pytest.raises(AssertionError, match="names a record"):
+        _check_summary(summary, sentence)
