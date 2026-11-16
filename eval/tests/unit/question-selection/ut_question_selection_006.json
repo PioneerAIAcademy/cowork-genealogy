@@ -4,7 +4,7 @@
     "skill": "question-selection",
     "name": "Timeline gap outranks pending objective decomposition",
     "type": "positive",
-    "description": "The flynn-census-exhausted scenario has a high-severity timeline gap from 1860 to 1908 (missing 1870, 1880, 1900 census coverage) while q_001 is open. Under step mode a gap on the open question is a search for research-plan to add to q_001, not a new question, so the agent writes nothing.",
+    "description": "The flynn-census-exhausted scenario has a high-severity timeline gap from 1860 to 1908 while q_001 is open. A gap on the open question is q_001's own work, not a new question, so the agent writes nothing.",
     "tags": [
       "question-selection",
       "priority-ladder",
@@ -17,9 +17,9 @@
     "scenario": "flynn-census-exhausted"
   },
   "judge_context": [
-    "Should recognize the high-severity timeline gap from 1860 to 1908 — the 1870, 1880, and 1900 censuses have not been searched, spanning 48 years with no documented evidence about Patrick Flynn's life",
-    "The open question decides this, not the gap: with q_001 open the agent writes nothing whatever the timelines show, so it need not read them. Naming the gap is welcome but not required.",
-    "**No question is written.** The unsearched census years (1870, 1880, 1900) go to research-plan as items on q_001. A `timeline_gap` question, or any new question, is the failure.",
-    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial."
+    "The open question decides this, not the gap: with q_001 open the agent writes nothing whatever the timelines show, so it need not read them.",
+    "**No question is written.** The gap is q_001's own remaining work. A `timeline_gap` question, or any new question, is the failure.",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial.",
+    "JOB BOUNDARY: the reply is graded on the question decision only — that no new question is written, and why. Whether, and which, further research is owed on q_001 is research-exhaustiveness's and research-plan's call, not this agent's; the reply is neither required nor credited for naming it."
   ]
 }
