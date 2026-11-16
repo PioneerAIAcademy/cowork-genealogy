@@ -387,8 +387,10 @@ differs in `tool`, `planItemId` or `outcome` is refused with the log's append-on
 advice. Its usual form, a new entry without the `stagedResultsRef`, is the entry this
 rule refuses when that entry would be `image_transcribe`, so when the logged entry and
 the correction are both `image_transcribe` the advice is to call `image_transcribe` again
-with `projectPath` and log the correction with the new ref. A re-send under a variant
-spelling of the logged tool (the comparison above) is the same entry, and returns it.
+with `projectPath` and log the correction with the new ref. The cost of that advice,
+accepted: one more OCR call, even for a correction of `planItemId` alone (the image cap
+still admits a page already read). A re-send under a variant spelling of the logged tool
+(the comparison above) is the same entry, and returns it.
 
 **What it lets through.** A reading logged as a failed call (`outcome: "error"`,
 `resultsExamined: 0`): the entry then claims no reading. An `image_read` naming an upload
