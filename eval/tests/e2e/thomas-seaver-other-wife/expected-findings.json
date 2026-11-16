@@ -10,6 +10,7 @@
         "relation": "spouse",
         "wrong_candidate": {
           "name": "an unidentified second wife of Thomas Seaver, married after Rachel Wilkins and before his 1837 death",
+          "any_new": true,
           "note": "no marriage record for a matching Thomas Seaver (b. ~1789, Hingham, Plymouth, MA) to anyone but Rachel Wilkins appears in Massachusetts vital or town clerk records 1811-1837; Rachel is independently documented alive until 1880, ruling out widowhood as the route to a second marriage"
         }
       },
