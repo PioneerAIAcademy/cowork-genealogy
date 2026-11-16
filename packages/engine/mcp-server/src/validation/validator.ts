@@ -110,7 +110,7 @@ const CLOSED_ENUMS = {
   ]),
   locality_page_outcome: new Set(["unreachable"]),
   registration_event: new Set(["birth", "marriage", "death"]),
-  registration_level: new Set(["town", "parish", "county", "state", "national"]),
+  registration_level: new Set(["town", "municipality", "parish", "district", "county", "state", "province", "national"]),
   hit_verdict: new Set(["match", "possible_match", "not_a_match"]),
 };
 
@@ -2425,6 +2425,9 @@ function validateLocalities(
       if ("level" in rs) checkEnum(rs.level, "registration_level", rp, report);
       if ("year" in rs && !Number.isInteger(rs.year)) {
         addError(report, rp, `year must be an integer; got ${JSON.stringify(rs.year)}`);
+      }
+      if ("note" in rs && typeof rs.note !== "string") {
+        addError(report, rp, `note must be a string; got ${JSON.stringify(rs.note)}`);
       }
     }
     const vs = loc.volume_summary;
