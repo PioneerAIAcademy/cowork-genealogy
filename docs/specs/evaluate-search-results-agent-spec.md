@@ -44,8 +44,8 @@ extracts each Match from the hit's own transcript.
    `factTypes`**, on every hit and before any verdict, even when the hit plainly
    names someone else. A verdict needs residences and other place facts, which a
    vital-only filter drops.
-5. **The verdict**, from every fact on both sides, the relatives, and the
-   titles of the sources the tree cites:
+5. **The verdict**, from every fact on both sides and the relatives (the read
+   carries `sourceRefs` ids, not source titles):
    - `match`: the name fits, at least one more point ties the hit's person to
      the target (a relative named in the same relationship as on the target's
      edges, or a point independent of time and place, such as an occupation or

@@ -5,11 +5,11 @@
     "f3": "false"
   },
   "notes": {
-    "f1": "Run ended after 2 minutes with no search; the tree is the starting tree, so the wrong son is absent by inaction.",
-    "f2": "Absent by inaction, as f1: spouses are Liesbeth Oldenburg and Anna Meyborg only.",
-    "f3": "No proof summary, no log entries, q_001 still open: question-selection asked the user which fact to research first, the main thread resumed it with SendMessage and ended its turn awaiting a notification, and the job-mode run ended."
+    "f1": "No 1687 son was added to G8CJ-7VL, and nothing from the rejected 29 Jul 1687 baptism's records is in the tree; it is unchanged from the start.",
+    "f2": "No Elsch Burmeister was added as a spouse or as an alias for Liesbeth Oldenburg, and none of the Hinrich-and-Elsch couple's records are used.",
+    "f3": "No documented negative conclusion: q_001 remains open, with no log entries, assertions, hypotheses or proof summary."
   },
-  "annotator": "EdmondOware",
-  "findings_hash": "c9194118b3f25d0109a39b7dc06b6be3c9b24c599bc9ce7b9d48598d5e4f835e",
-  "blind_bundle_digest": "acad18ba7c5df0fe34ff250501407b4fbe11227f955f6b584013d21f903c92ce"
+  "annotator": "benter-070",
+  "findings_hash": "07c258c73c01670f2ca45951ad71b91977029b77d64cb36e441a169dcb1a87d9",
+  "blind_bundle_digest": "06df4d4d3d4a7f12c012e1cfbc1520bd3352608fcb75e53b4b533815c0628c5c"
 }
