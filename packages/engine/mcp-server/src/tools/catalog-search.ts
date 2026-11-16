@@ -822,15 +822,13 @@ export function parseCatalogId(raw: unknown): string {
   return id;
 }
 
-/** The first `author` of type "Author", else the first author of any type —
- *  what a search hit names as `creator`: koha:3308785's search creator is
- *  "Maine Ulster Scots Project", an "Added Author" on the item (2026-11-16). */
+/** The item's first `author`, whatever its type: a search hit's `creator` is
+ *  the item's authors in their own order, so koha:3308785's is its "Added
+ *  Author" "Maine Ulster Scots Project" ahead of its "Author" (5 items compared
+ *  with their search hits, 2026-11-16). */
 function creatorOf(sources: Collapsed[]): string | undefined {
-  const authors = sources.flatMap((s) => asArray(s?.author));
-  const main =
-    authors.find((a) => (scalarOf(a?.type) ?? "").toLowerCase() === "author") ??
-    authors[0];
-  return scalarOf(main?.fullname) ?? scalarOf(main?.display_text);
+  const first = sources.flatMap((s) => asArray(s?.author))[0];
+  return scalarOf(first?.fullname) ?? scalarOf(first?.display_text);
 }
 
 /**

@@ -431,9 +431,11 @@ sampled); the entry fetched is still the right one.
   `display_title` is what a search hit carries; `title` stops before the
   subtitle (`koha:3308785`: `title` "1718-2018 :", `display_title` and search
   "1718-2018 : reflections on 300 years of the Scots Irish in Maine");
-- `creator` from the `fullname` of the first `author` whose `type` is `Author`,
-  else of the first author of any type, else none. That is what a search hit
-  names: `koha:3308785`'s search creator is its first `Added Author`;
+- `creator` from the `fullname` of the item's first `author`, whatever its
+  `type`, else none. That is what a search hit names: its `creator` is the
+  item's authors in their own order, so `koha:3308785`'s is its `Added Author`
+  "Maine Ulster Scots Project" ahead of its `Author` (five items compared,
+  2026-11-16);
 - `repositoryCalls` as `"Online"` first when the item reads available online,
   then the distinct `copy_location` (else `location`) of its film notes and of
   its `copy` blocks, in order. A printed book carries no film notes and one
@@ -878,7 +880,7 @@ readers and every access uses one of them:
 | `catalogId`: `koha:`, `olib:`, upper case, padded, bare digits as a string and a number, and links (`/en/`, `/pt-br/`, `http://` without www, upper-case host, `/search/catalog/<digits>`, query and fragment, `%3A`, no scheme) each make exactly one request, to `ITEM_URL_PREFIX + id`, and come back with that `id` | the accepted forms, and the legitimate variants a strict parser must not refuse |
 | `catalogId`: an off-host, lookalike-host, userinfo, port, `ftp:`, extra-path and traversal link, `koha:1/../x`, `koha:12?x=1`, `koha:`, `koha:12a`, another namespace, blank, negative, fractional, `NaN`, object, array and `null` are refused with **no** request | the bearer reaches only a URL built from a validated id |
 | `catalogId` with every other schema property (looped from the schema), and with `standardPlace`, `keywords`, `filmNumber`, `availability`, `year` or `exactPlace: false`, is refused with no request; with `count`/`hydrate` it is accepted and they change nothing; a `count` out of range is still refused | a filter beside a lookup could only be dropped |
-| a `catalogId` answer is one hydrated hit with `totalHits`, `returned` and `hydrateRequested` 1, its `display_title` (then `title`, then `(untitled)`), its Author (else its first author), its film note's DGS, and `repositoryCalls` from film-note and `copy` locations with `Online` first when online; `display_title` and `(untitled)` are the title fallbacks | the item endpoint has no `repositoryCalls` or `creator` of its own |
+| a `catalogId` answer is one hydrated hit with `totalHits`, `returned` and `hydrateRequested` 1, its `display_title` (then `title`, then `(untitled)`), its first author whatever its type, its film note's DGS, and `repositoryCalls` from film-note and `copy` locations with `Online` first when online; `display_title` and `(untitled)` are the title fallbacks | the item endpoint has no `repositoryCalls` or `creator` of its own |
 | a `catalogId` 404 throws the not-found error; a 401, 403, other failure, non-JSON 200 and 200 with no entry each give their framed error | an empty hit list would read as "the Catalog holds nothing" |
 | a search hit's item call still uses `identifier.value` after `catalogId` exists | only the `catalogId` path builds a URL |
 | a first entry too big to fit beside another hit does not push the answer over the budget, and a lone 38,000-character entry beside a 15,000-character hit ends under the spill line by cutting the hit | the first entry of a hit was kept whatever it cost, and a second pass then cut the hit the first had listed whole |

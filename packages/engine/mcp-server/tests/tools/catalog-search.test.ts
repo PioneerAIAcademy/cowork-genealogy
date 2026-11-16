@@ -3243,27 +3243,14 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
     expect(r.hits[0].repositoryCalls).toEqual(["Online"]);
   });
 
-  it("prefers an Author to an Added Author listed before it", async () => {
+  it("names the first author whatever its type, as a search hit does", async () => {
+    // koha:3308785, live 2026-11-16: an Added Author at seq 1 and an Author at
+    // seq 2; its search hit's creator is the Added Author.
     itemAnswers(
       marylebone({
         author: [
-          { fullname: "Maine Ulster Scots Project", type: "Added Author" },
-          { fullname: "Smith, John", type: "Author" },
-        ],
-      }),
-    );
-    const r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
-    expect(r.hits[0].creator).toBe("Smith, John");
-  });
-
-  it("names the first Added Author when there is no Author, as a search hit does", async () => {
-    // koha:3308785, live 2026-11-16: the search hit's creator is the first of
-    // two Added Authors.
-    itemAnswers(
-      marylebone({
-        author: [
-          { fullname: "Maine Ulster Scots Project", type: "Added Author" },
-          { fullname: "Ulster-Scots agency", type: "Added Author" },
+          { fullname: "Maine Ulster Scots Project", type: "Added Author", seq: 1 },
+          { fullname: "Ulster-Scots agency", type: "Author", seq: 2 },
         ],
       }),
     );
