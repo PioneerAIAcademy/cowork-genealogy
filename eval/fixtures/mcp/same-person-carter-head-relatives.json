@@ -1,0 +1,13 @@
+{
+  "tool": "same_person",
+  "description": "same_person, matchRelatives: the 1881 head John Carter against I1. The record side is projected from assertions, so the tool pairs no relatives and says why; this is the tool's own answer on a copy of the scenario, 2026-11-15.",
+  "args": {
+    "treePersonId": "I1",
+    "matchRelatives": true
+  },
+  "response": {
+    "matchRelatives": true,
+    "matches": [],
+    "note": "The record side for 'https://www.familysearch.org/ark:/61903/1:1:CENS-81L' was projected from assertions, which carry no relationships, so there are no record relatives to pair. Score the focus person on its own (omit matchRelatives), or pass the record's gedcomx explicitly if you have it."
+  }
+}

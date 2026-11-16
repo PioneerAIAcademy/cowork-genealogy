@@ -532,8 +532,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "person-evidence.md": {
     tools: [
       "materialize_facts",
-      "merge_warnings",
-      "person_quality",
       "person_warnings",
       "place_distance",
       "place_search",

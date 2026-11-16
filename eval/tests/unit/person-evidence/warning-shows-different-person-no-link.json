@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_person_evidence_w4d",
+    "skill": "person-evidence",
+    "name": "A warning the link would introduce shows a different person: no link, whatever the score",
+    "type": "positive",
+    "description": "The 1881 census lodger William Hartley agrees with the tree's William Hartley (I1) on name, age, birthplace, trade and town, and same_person scores the pair 0.52. But I1 was buried in 1870, and two independent records give that burial, each tying him to his father. same_person lists the warning the link would introduce (an event more than a year after the burial). The tree fact stands, so the lodger is a different William Hartley and gets no link (lead, 2026-11-15: the agent reviews the warnings and decides whether the two are the same person).",
+    "tags": [
+      "person-evidence",
+      "no-link",
+      "link-warning-no-link"
+    ]
+  },
+  "input": {
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003, a_004, a_005. They are an 1881 census entry in Halifax, found by a name search for William Hartley (I1): a lodger William Hartley in the household of Samuel Greenwood.\n\nprojectPath: <workspace>",
+    "scenario": "hartley-census-after-burial"
+  },
+  "mcp_fixtures": [
+    "same-person-hartley-lodger-relatives",
+    "same-person-hartley-lodger",
+    "same-person-hartley-lodger-vs-father"
+  ],
+  "judge_context": [
+    "The tree's William Hartley (I1) was buried in Halifax on 16 February 1870. Two records give the burial, both linked to him at `confident`: the parish register (aged 25, son of Joseph Hartley of Gibbet Street, the family's 1861 address) and the cemetery's interment register (grave of Joseph Hartley). The 1881 census lodger agrees with I1 on name, age, birthplace, trade and town and names no relative.",
+    "`same_person` returns a score of about 0.52 for the lodger against I1 and a `warningsIfLinked` entry marked impossible: the entry would put an event more than a year after I1's burial, a fact this project added that two records back, linked `confident`. A tree fact that records back at `confident` stands, so the census entry is a different William Hartley.",
+    "The correct result is that nothing from this record is written: no pe_ link for a_001-a_004, Samuel Greenwood (a_005) not added or linked. The reply names the warning, says the 1870 burial is given by two records tied to his father, and says the entry was not linked for that reason.",
+    "A `confident` or `probable` link to I1 that PERSISTS is a FAIL on Correctness and on Confidence calibration: the run linked past a listed warning. A refused `confident` or `probable` attempt followed by no link is a PARTIAL (2) on Confidence calibration. A `speculative` link to I1 with the warning named is a PARTIAL (2) on Confidence calibration. A reply that asks the user whether to link is a PARTIAL (2) on Completeness.",
+    "Lowering or doubting the burial links (pe_005-pe_008) to make room for the census entry is WRONG here and a FAIL on Correctness: the burial is the well-supported fact.",
+    "A no-link that never mentions the warning or the burial, for instance one reasoned from the score alone, is a PARTIAL (2) on Rationale quality: the right outcome without the review that justifies it.",
+    "Multi-person awareness, and Person minting and connecting edges: nothing is owed to the record's other persons when the focus person gets no link. Mark both N/A when the run wrote nothing.",
+    "Completeness is the reply: the warning, the burial evidence, and the decision. A run that makes no research_append and no materialize_facts call is correct here and is not incomplete.",
+    "Calling same_person for the pairing is correct and expected. The canned score is not the subject of this test: do not grade its value."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}

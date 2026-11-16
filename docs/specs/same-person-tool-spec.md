@@ -532,6 +532,113 @@ It says what was scored and whom.
 | `recorded` | boolean | yes | `true` when the score was written to the attestation. |
 | `recordPersona` | `{ id, name, role }` | yes | The record persona that was scored. `id` is the fetched `persons[].id` on route 1 and the projected group's persona id on route 2, and `null` when the record names none. `name` is the record's name for it, `""` when it gives none. `role` is the `record_role` the record's assertions give that persona, `null` when no assertion names it. |
 | `treePerson` | `{ id, name }` | yes | The tree person it was scored against: the `treePersonId` passed, and that person's preferred name (`""` when it has none). |
+| `settledConflicts` | string[] | no | One sentence per birth place or birth date of the scored record person that a settled fact conflict set aside and that differs from the tree person's Birth fact. Each names the conflict id, the value and its assertion, and says it is not a reason to lower or withhold the link. Absent when there is none. |
+| `warningsIfLinked` | string[] | no | One sentence per genealogical warning that copying the scored record person's facts onto this tree person would introduce: the person the warning stands on, its message, whether it is impossible or implausible and whether `materialize_facts` would refuse the copy for it, then the facts it depends on and where each tree fact comes from. Absent when there is none. |
+
+#### `warningsIfLinked`
+
+The matcher scores names, dates and places. It does not ask whether the tree
+would still make sense with the record's facts on the person, so it can score a
+pair high that `person_warnings` would then flag: a census entry for someone the
+tree says was already buried, a child born to a mother of 46. `person-evidence`
+is there to review exactly that (lead, 2026-11-15), and the field hands it the
+warnings on the call it already makes for the link, before any link is written.
+
+One entry reads, for example:
+
+> John Carter (I1): An event is dated more than 1 year after this person's
+> latest death-like fact. Impossible; refused at save. It depends on the tree's
+> Burial of 3 March 1870 (F3), which this project added: 1 record backs it,
+> linked probable (pe_005, pe_006).
+
+- **Computed by** `warningsIfLinked` (`src/utils/persona-copy.ts`, a module that
+  writes nothing) from the project documents alone. It runs the copy
+  `materialize_facts` makes for a persona (`copyPersonaFacts`) on a clone of the
+  tree, with no link required and nothing saved, then the write gate's delta
+  (`introducedWarnings`).
+- **Which warnings.** Every type the copy introduces, the write gate's exempt
+  ones included, except:
+  - `LINK_REVIEW_NOISE_TYPES`: blank name, non-standard place, non-standard
+    date, no gender, missing facts, place standardised to another country and
+    the two different-surname types, which fire about as often on a right link
+    as on a wrong one or restate what the caller already compares; and the two
+    two-birth-dates types.
+  - "An event before birth" when the event is the record's own birth or
+    christening. Two birth dates that disagree are the birth comparison's: the
+    caller checks the gap, and `research_append` refuses a link past a wide one.
+- **Impossible or implausible** is the warning's own severity (`contradiction`
+  or `implausible`). Impossible entries come first.
+- **Refused or allowed at save** says whether `materialize_facts` will refuse
+  the copy for this warning until it is given a justification (the write gate's
+  `GATE_EXEMPT_TYPES`). What it refuses is exactly the refused entries here;
+  `tests/tools/warnings-if-linked.test.ts` holds the two to the same answer.
+- **The facts it depends on**, three of the record's and three of the tree's at
+  most: a fact whose removal clears the warning, on the warning's own person or
+  its related person. A warning two of the record's facts each cause names
+  neither, and one that depends only on a relationship names none.
+- **Where each tree fact comes from.** Tree facts are taken as correct while
+  researching (lead, 2026-11-16):
+  - "which came with the tree": the fact is in `starting-tree.gedcomx.json`,
+    whatever links it has gained since; or the project has no starting tree on
+    file and no live link backs the fact.
+  - "which this project added: N records back it, linked T (ids)": the live
+    `person_evidence` links to that person whose assertion comes from a source
+    the fact cites, counted by record.
+  - "which this project added and no live link backs".
+- **For the persona that was scored:** `recordPersona.role`, else the
+  `recordRole` passed, else the assertion's own. A call that scores the second
+  party of a relationship gets that party's warnings.
+- **Empty, and never an error,** when the tree person does not exist, the
+  persona has no live assertion, a source of the record has no tree entry yet,
+  or the record's facts are already on the person.
+- **It reports and decides nothing.** What `person-evidence` does with an entry
+  is in its body: an impossible warning against a fact that came with the tree
+  or that records back at `confident` is a no-link; an implausible one is
+  weighed; a fact the project added on one record linked below `confident` can
+  lose to a record whose relatives match the tree's.
+- **The unit harness** serves canned `same_person` scores, and its mock adds
+  this field by running the same compiled function, with the workspace's
+  starting tree (`_record_match_score` in `eval/harness/harness/mock_mcp.py`).
+
+Measured 2026-11-15 and 2026-11-16 over the 244 saved e2e runs, each replayed on
+its fixture's starting tree. "Kept" is the 1,292 `confident` or `probable` links
+the runs kept to a person the tree already held; "wrong" is the same record
+person against the next three persons of that tree (3,760 pairings, family
+members, so easy negatives).
+
+| List | Kept links with a warning | Wrong pairings with a warning |
+|---|---|---|
+| The write gate's refusals only | 2.3% | 22.9% |
+| This field | 3.3% (1.6% impossible) | 31.9% (12.2% impossible) |
+| Every type | 18.3% | 59.9% |
+
+With the warning alone and no rule for it, `person-evidence` on Haiku 5.5 low
+refused every link that carried one (0 of 5 on a record whose wife and son
+matched the tree against a burial one `probable` link backed). The backing
+text and the rule for it are what moved that case to 5 of 5.
+
+#### `settledConflicts`
+
+`person-evidence` writes no link when a core fact of the record person
+contradicts the tree person. A birth place or date that `conflict-resolution`
+has already weighed and set aside still differs from the tree, and would be
+read as that contradiction on every later record carrying it. The field tells
+the caller which differences are settled, on the call it already makes for the
+link.
+
+- Computed by `settledBirthDisputes` (`src/utils/settled-birth-disputes.ts`)
+  from the project documents alone, by the rule `research_append`'s
+  contradiction gate applies (`resolvedAgainstIds`): a `resolved` fact conflict
+  with a `preferred_assertion_id`, or a `moot` one carrying both analyses whose
+  record person no identity conflict doubts, sets aside every competitor but
+  the preferred one, on the arm its `disputed_attribute` names.
+- Only for the assertion's own record person. A call whose `recordRole` or
+  `recordPersonaId` names the second party of a relationship returns none.
+- Only a value that differs from the tree person's Birth fact is named. With no
+  Birth fact, nothing is.
+- The unit harness serves canned `same_person` scores, and its mock adds this
+  field by running the same compiled function (`_record_match_score` in
+  `eval/harness/harness/mock_mcp.py`).
 
 It returns none of `queryArk`, `candidateArk`, `apiTitle` or `updated`. Those are
 the API's framing of the request: the ARKs are the ones the request carried,
