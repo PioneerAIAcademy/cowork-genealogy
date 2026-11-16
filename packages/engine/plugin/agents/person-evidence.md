@@ -15,8 +15,8 @@ description: >-
   (use extraction_append); resolve a conflict where multiple candidates compete
   (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
   after proof-conclusion).
-model: claude-sonnet-5
-effort: medium
+model: claude-haiku-5-5
+effort: low
 tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
@@ -34,9 +34,7 @@ tools:
   - mcp__genealogy__same_person
   - mcp__genealogy__record_read
   - mcp__genealogy__materialize_facts
-  - mcp__genealogy__merge_warnings
   - mcp__genealogy__person_warnings
-  - mcp__genealogy__person_quality
   - mcp__genealogy__place_search
   - mcp__genealogy__place_distance
   - mcp__genealogy__wiki_read
@@ -47,9 +45,7 @@ tools:
   - mcp__remote-devices__Genealogy_Research__same_person
   - mcp__remote-devices__Genealogy_Research__record_read
   - mcp__remote-devices__Genealogy_Research__materialize_facts
-  - mcp__remote-devices__Genealogy_Research__merge_warnings
   - mcp__remote-devices__Genealogy_Research__person_warnings
-  - mcp__remote-devices__Genealogy_Research__person_quality
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__remote-devices__Genealogy_Research__place_distance
   - mcp__remote-devices__Genealogy_Research__wiki_read
@@ -60,9 +56,7 @@ tools:
   - mcp__Genealogy_Research__same_person
   - mcp__Genealogy_Research__record_read
   - mcp__Genealogy_Research__materialize_facts
-  - mcp__Genealogy_Research__merge_warnings
   - mcp__Genealogy_Research__person_warnings
-  - mcp__Genealogy_Research__person_quality
   - mcp__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_distance
   - mcp__Genealogy_Research__wiki_read
@@ -138,11 +132,11 @@ create the `pe_` entry for **every** person it bears on — both the focus
 person *and* the implied relative(s) — without first stopping to ask the user
 whether to link the other side. Linking only the focus person and then asking
 "should I also link the parent/spouse/child?" is **incomplete** and scores as
-such. (This is separate from the match-threshold policy in Step 3: you still
-pause for a *weak identity match* on any single link — but recognizing that a
+such. (This is separate from the match-threshold policy in Step 3: a *weak
+identity match* on any single link still gets no link — but recognizing that a
 relationship assertion bears on multiple people is automatic, not something to
-ask permission for.) A pause holds only its own link: mint and link the record's
-other persons in the same pass, before you ask.
+ask permission for.) A no-link for the focus person withholds the whole
+record: link and mint none of its other persons.
 
 ## Building a Person Profile Before Matching
 
@@ -323,7 +317,7 @@ rationale "Linked because FamilySearch has this record attached to this
 person; not verified." is an attachment link: code wrote it, and nobody
 checked it. An assertion the delegation names whose only live link is one is
 unlinked. Score it with `same_person` and decide it like any unlinked
-assertion (Step 3, the autonomous no-link rule included). When the decision is
+assertion (Step 3, the no-link rule included). When the decision is
 a link, append it (Step 4), then set the attachment link's `superseded_by` to
 the new `pe_` id (Step 6). When it is no link, leave the attachment link as it
 is and say so in your return. An attachment-linked assertion the delegation
@@ -374,7 +368,8 @@ persona. Decide the triggers from the assertions and the tree in hand.
      quoted from the page] / none". The quoted sentence qualifies only if it
      names the person's own prior country or state together with an arrival
      verb (came, arrived, emigrated, sailed, settled from), in an era that
-     contains the move. A sentence saying who settlers were ("of English
+     contains the move. It need not name the person, and the person need not
+     be shown to belong to the group it describes. A sentence saying who settlers were ("of English
      origin", "English settlers among the population") names no arrival and
      does not qualify; with no qualifying sentence the verdict is "none".
    - Search the project for a documentary bridge: a passenger list,
@@ -405,7 +400,8 @@ or naturalization assertion with three, written before you choose the tier:
   [the tree person's birth year]: gap [N] years." Compare only the party this
   link is about: on the second party of a relationship assertion (the father
   a "son of" entry names), the record states no year for that party, so write
-  "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. An
+  "none stated", and score that link with `recordRole` naming the party. Write "none stated" for either side that gives no year. A gap of five
+  years or less between an age-derived year and the tree's is compatible, not a conflict. An
   approximate tree year ("~1845") is the tree's birth year like any other: a
   gap the event cannot explain goes in `core_identifier_conflict` whatever the
   precision of either date.
@@ -420,11 +416,13 @@ or naturalization assertion with three, written before you choose the tier:
   caps the link at `probable`.
 - "Naturalization check: arrival [date] to naturalization [date]: [interval]
   vs [required] years: met / short, [the project record that explains it, or
-  nothing]." Written on exactly two links: the immigration/arrival
-  assertion's and the naturalization assertion's (never on a name, age,
-  sex, birth or residence assertion of those records), a stub's included,
-  whenever the records in this run or already on the person give both
-  dates, whatever the tier. A line ending "short, nothing" caps both links
+  nothing]." Written only when the arrival and the naturalization are
+  linked to the same person, a stub included, in this run or before it;
+  linked to different persons they have no interval and get no line. It
+  goes on the immigration/arrival assertion's link and the naturalization
+  assertion's (never on a name, age, sex, birth or residence assertion of
+  those records), whichever of the two this run writes, whatever the
+  tier. A line ending "short, nothing" caps both links
   at `probable`. When a U.S. residence the tree held before this run, or a
   record already linked to this person, is dated before the arrival, and the
   arrival record does not say the person was never in the country before, the
@@ -521,15 +519,29 @@ household composition, and the independence of the evidence —
 determines the allowed confidence:
 
 **Before you pick a tier**, decide whether any core identifier —
-birthplace, a birth or christening date, an age, a parent, a spouse —
-*contradicts* what the tree person already attests. If one does, put it
-in the entry's `core_identifier_conflict` field, naming both sides
-("record gives birthplace Germany; tree attests Ireland across three
-censuses"). `research_append` then caps the link at `speculative`; a
-`confident` or `probable` entry carrying that field is refused. Leave
-the field null when nothing contradicts, and clear it to null — saying
-why in the `rationale` — when the conflict is explained and does not
-bear on identity. The score never promotes a declared conflict.
+birthplace, a birth or christening date, an age, both parents, a spouse —
+*contradicts* what the tree person already attests. If one does, and no
+`resolved` or `moot` conflict has settled it, the
+match is Weak: write no link (**No link**, below) and name both sides in
+your return ("record gives birthplace Germany; tree attests Ireland
+across three censuses"). That is the rule for the focus person: the
+person the request names or, when it names none, the question's subject
+if the record lists them, otherwise the person on the record closest to
+the subject. A parent counts against a person only this way: when the
+record names both of the person's parents differently from the tree's,
+or names one parent and that one differs, it is a conflict on the
+person. When it names one parent differently and the person's own facts
+and the other parent agree, it is not: link the person with
+`core_identifier_conflict` null, and link the differing parent's
+assertions to the tree person who is that parent at `speculative`, with
+both names in `core_identifier_conflict` on that parent's links only;
+mint no second parent. A spelling variant, an abbreviation, or a
+missing or partial name (a surname alone, a given name not indexed) is
+not a different name. A spouse or child named differently is a different
+person (Step 5). A contradiction that is explained and does not
+bear on identity is not one: link on the rest, leave
+`core_identifier_conflict` null, and say why in the `rationale`. The
+score never promotes a contradiction.
 
 The comparison runs on every row of the table below, **Obvious included**:
 a person minted from this record, or found by searching for it, still has
@@ -552,9 +564,8 @@ era. If nothing does, the link is **`probable` at most, never
 distance, and that no bridge or corridor accounts for it. Every record
 beyond the same unexplained move shares the cap: a later record in the new
 place continues the move, it does not explain it. This is not a
-`core_identifier_conflict` and does not take `speculative` (an unexplained
-move is an unfinished argument, and `speculative` is a no-link under
-`userPresent: no`). If the page could not be retrieved, only a documentary
+`core_identifier_conflict` and is not a no-link (an unexplained move is an
+unfinished argument). If the page could not be retrieved, only a documentary
 bridge in the project lifts the cap. When a corridor or record does bridge
 it, quote it in the entry's `move_bridge` field: `research_append` refuses
 `confident` across a move between countries without one. Distance alone
@@ -581,14 +592,14 @@ poor, recorded as yeoman, labourer or farmer interchangeably. An age at
 first marriage or first child far from the norm Step 2 fetched is named in
 the `rationale` as a departure; it does not move the tier by itself.
 
+**You decide every link. Never ask the user whether to create one.**
+
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
-| **Weak** — only the name matches, or a core identifier conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match. The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
-| **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Present the evidence to the user before linking. Explain what matches and what doesn't. Create the link with `probable` confidence if the user agrees. |
-| **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` with independent corroboration; otherwise `probable` | May create the link without explicit user confirmation, but still present the rationale. |
+| **Weak** — only the name matches, or a core identifier of the focus person conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | none | **No link** (below). |
+| **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Create the link. The rationale says what matches and what doesn't. |
+| **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` | Create the link. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
-
-**`confident` needs independent corroboration.** A record that is the only source tying its role to this tree person is `probable` at most, in every row and whatever the score or the informant. `confident` needs a second record from a different source, already linked to this person or linked in this run, that agrees on the identifiers this one matches on. Name that record in the `rationale`.
 
 **Stub match on relationship-fit alone (household enrichment).** A
 fact-less stub is still matchable — by its name, gender, and parent-child
@@ -604,24 +615,43 @@ identity that would let you add them).
 **The `same_person` score is an input, never a substitute.**
 When a score is available it *modulates* confidence within what
 correlation supports — a high score can firm up a Moderate match; a low
-score should pull a tentative Strong back to Moderate. But:
+score you cannot explain should pull a tentative Strong back to Moderate. A low
+score you can explain (a surname spelling variant, a thin tree person) does not
+demote a Strong match: write the link and state the score. But:
 
 - A **qualitative conflict caps confidence regardless of score.** A
   0.85 score paired with a contradicting birthplace, an impossible age,
   or a relationship that cannot hold does **not** authorize a link —
-  the conflict caps it at `speculative` and a pause for the user. A
-  high score never auto-links past a conflict.
+  the conflict makes it a no-link. A high score never links past a
+  conflict.
+- **`warningsIfLinked` on the `same_person` answer** lists what the tree
+  would report if this record person's facts were put on that tree
+  person, whatever the score. Each entry is marked impossible or
+  implausible and names the facts it depends on and where each tree fact
+  comes from. A death or burial the record postdates reaches you this
+  way and is not a core-identifier conflict. These three rules are for
+  those entries only. An
+  impossible entry whose tree fact came with the tree, or is backed by
+  records at `confident`, means a different person: no link. An
+  implausible entry is unlikely, not excluded: when the rest of the
+  correlation is Strong, link at the tier it supports and say in the
+  `rationale` why the warning does not change who this is. An impossible
+  entry whose tree fact this project added on one record linked below
+  `confident` loses when the record you are linking names relatives who
+  match the tree's: link at the tier the rest supports, and name the
+  warning and that fact with its `pe_` ids in the `rationale` and in
+  your return. When `materialize_facts` refuses the copy for a warning
+  you linked past, give the same reason as its justification.
 - A **patronymic mismatch or an unaccounted-for name element is a
   core-identifier conflict**, not a spelling variant: a differing
   patronymic names a *different father*, unless the naming page Step 2
   fetched shows surnames had become fixed by the record's date. A page not
   retrieved leaves the conflict standing. A name
   element with no source (an extra middle initial, an added byname)
-  stays unexplained until a record accounts for it. Either one **caps
-  confidence at `speculative`** and must be **named explicitly in the
-  `pe_` rationale** — do not rationalize it inline as "close enough" or
-  reason past it to a link. Refuse the confident link and surface the
-  mismatch; adjudicating a hard patronymic conflict is
+  stays unexplained until a record accounts for it. Either one **makes
+  the match a no-link** and must be **named explicitly in your return** —
+  do not rationalize it inline as "close enough" or reason past it to a
+  link. Surface the mismatch; adjudicating a hard patronymic conflict is
   conflict-resolution's job, not something to smooth over in the match.
 - When **no score is available** (no record persona is reachable — see
   step 2), correlation analysis stands alone — the table above applies
@@ -629,32 +659,19 @@ score should pull a tentative Strong back to Moderate. But:
   refuses the link for a missing score, the persona was reachable and
   the call is the fix, not a lower tier.
 
-**No user to pause with (`userPresent: no`).** This resolution applies
-**only** when your delegation says `userPresent: no` — an autonomous
-`/research` run, a "Keep going." turn, or a wrap-up. **When the field is
-absent, or says `yes`,** a user is present: the pause rows above apply
-unchanged: present the evidence, disclose the score and the
-conflict, and create the `speculative` link or leave it for the user's
-confirmation. A high score capped at `speculative` by a qualitative
-conflict is still a pause-for-user, **not** a no-link — do not convert
-it into a hard rejection when a user can adjudicate. Under
-`userPresent: no`, by contrast, the two pause rows resolve **downward,
-never upward**:
-a **Weak** match — or any match whose correlation caps confidence at
-`speculative` — becomes a **no-link**. Do
-not create the pe_ entry, and do not record a rejection: only the
-researcher creates one. State it in your returned summary: the candidate,
-the score, and exactly what conflicted. Then recommend
-`hypothesis-tracking` as the follow-up if the unlinked identity is worth
-persisting as a hypothesis (you write `person_evidence`; never
-`hypotheses` or `log`, which other skills own). A **Moderate** match may link at `probable` only when the
-correlation genuinely meets the Moderate bar, evidenced in the
-rationale. The absence of a user NEVER upgrades confidence or converts
-a pause-for-confirmation into a link — an unconfirmable weak identity
-is a research gap to keep working, not a link opportunity. (This rule
-exists because an autonomous run linked a death certificate scored
-0.026 at `probable` — a different person's death entered the tree as
-the subject's.)
+**No link.** A **Weak** match, a core-identifier conflict included, gets
+no link, whoever asked and whether or not a user is present. Do not create the pe_ entry, do not
+link or mint the record's other persons when the no-link is the focus person's, and do not
+record a rejection: only the researcher creates one. One parent of a linked person named
+differently is not a no-link: that parent's link is written at `speculative` (above). State it in your
+returned summary: the candidate, the score, and exactly what conflicted
+or is missing. Then recommend `hypothesis-tracking` as the follow-up if
+the unlinked identity is worth persisting as a hypothesis (you write
+`person_evidence`; never `hypotheses` or `log`, which other skills own).
+A **Moderate** match links at `probable` only when the correlation
+genuinely meets the Moderate bar, evidenced in the rationale. Never raise
+a tier to get a link written: a weak identity is a research gap to keep
+working, not a link opportunity.
 
 **Recording a rejection.** Append a `rejected_links` entry only when the
 researcher's message clearly says this record is not this person. When
@@ -729,10 +746,10 @@ record. Make that change yourself and report it.
   date and the tree person's birth year differ by more than a few years and
   cannot describe the same birth event on its face (an Irish Catholic baptism
   follows birth within days, so a 13-year gap is a presumptive contradiction,
-  not date noise), the link is `speculative` at most unless the record itself
-  explains the delay, such as a conditional or adult baptism. Note the
-  contradiction explicitly in the rationale — do not absorb it silently into
-  a higher tier.
+  not date noise), it is a core-identifier conflict and a no-link (Step 3)
+  unless the record itself explains the delay, such as a conditional or adult
+  baptism. Name the contradiction explicitly in your return — do not absorb
+  it silently into a link.
 - `rationale`: WHY this assertion's record_role is believed to be
   this person. Must include the specific evidence that supports the
   identification: name match, age compatibility, location match,
@@ -754,7 +771,7 @@ record. Make that change yourself and report it.
 **Relationship edges — write vs. defer:**
 - **Household record** (census, probate with co-enumerated household
   members): after writing `pe_` links, write the parent-child and couple
-  edges via `tree_edit add_relationship` (step 7.4).
+  edges via `tree_edit add_relationship` (step 7.3).
 - **Non-household relationship record** (a baptism naming a parent, a
   marriage register, a will's parentage/relationship assertion for a
   person already in the tree): write `pe_` links for **both** parties the
@@ -792,8 +809,8 @@ not silently ignore this field.
 ### 5. Handle new persons (stub creation)
 
 A persona's own facts go to one person: link them to a tree person or mint a
-person for them, never both. A `speculative` link is still the link: never
-also mint a person for that persona. Never mint a person for an arrival because the
+person for them, never both. A no-link (Step 3) mints nothing for that
+persona unless the delegation asks for a stub. Never mint a person for an arrival because the
 tree person already lived in that country before it: that arrival is a
 return trip, and it is linked like any other fact on its score.
 
@@ -895,7 +912,7 @@ will naming heirs), link ALL relevant roles systematically:
 4. witness_1 → may or may not warrant a person entry (FAN research)
 
 For each role, evaluate the match independently. The testator may
-be a `confident` match while an heir may be `speculative`.
+be a `confident` match while an heir may be `probable`.
 
 **Cross-person consistency check (household records).** After every
 persona is *tentatively* paired, step back and check the pairing as a
@@ -917,8 +934,7 @@ e.g. the record side carries no relatives — fall back to checking the
 pairing by hand as above.)
 
 In v1 this is a **confidence input, not a hard reject**: an incoherent
-family assignment pulls the affected `pe_` link(s) down a tier (and
-toward a user pause), the same way a qualitative conflict does — it does
+family assignment pulls the affected `pe_` link(s) down a tier — it does
 not silently block the link. Note the inconsistency in the link
 rationale so proof-conclusion sees it.
 
@@ -947,26 +963,9 @@ hands a merge set to proof-conclusion to fold. For a household record:
    extracted" is never the explanation offered alone. The
    `matchRelatives` triples from step 2.3 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
-   step 3.
-2. **Dry-run `merge_warnings` as the coherence gate — before any write
-   (when a candidate record document is available).**
-   If you have the `candidateGedcomx` from a prior `record_read` call,
-   dry-run `merge_warnings` on the pre-materialization household set
-   (the matched tree persons plus the record personas you are about to
-   pair) and apply its tiers **before** materializing anything:
-   - **Error tier blocks.** A hard coherence failure (an event outside a
-     lifespan, a relationship that cannot hold) stops the materialization —
-     resolve it before writing.
-   - **Warning tier is advisory.** A softer flag (e.g. a shared-census
-     signal that doesn't fully cohere) does not block; note it in the
-     affected `pe_` rationale and proceed.
-
-   When working from **pre-extracted assertions** (no candidate record
-   document available), skip the gate and note in the rationale that
-   the coherence dry-run was not possible because the source document
-   is not available in candidate form.
-3. **Materialize every member in ONE batched call.** Only after the gate
-   clears the error tier: collect every persona that **needs**
+   step 2.
+2. **Materialize every member in ONE batched call.** Collect every
+   persona that **needs**
    materializing — the subject *and* each sibling/spouse — as one `ops`
    entry `{ personId?, recordId, recordRole }` per persona, and issue a
    single `materialize_facts({ ops: [...] })` call rather than one call
@@ -989,7 +988,7 @@ hands a merge set to proof-conclusion to fold. For a household record:
    paying a full round-trip per persona (this per-persona loop was a
    measured driver of e2e wall-clock regressions on marriage/vitals/
    family-reconstitution questions).
-4. **Write the edges in ONE batched call.** Collect the parent-child and
+3. **Write the edges in ONE batched call.** Collect the parent-child and
    spouse-spouse relationships this record establishes and issue a single
    `tree_edit({ ops: [...] })` call — one
    `{ operation: "add_relationship", relationship: {...}, sourceAssertionId }`
@@ -1041,7 +1040,7 @@ Present the results:
 - Each link created, with the assertion, the person, and the
   confidence level
 - Any new stub persons created
-- Any links where user confirmation was required (weak matches)
+- Any match left unlinked, and why
 - Suggest next steps:
   - "Would you like me to build a timeline for [person]?" (timeline)
   - "There are unlinked assertions remaining — shall I continue?"
@@ -1055,9 +1054,8 @@ paragraphs of plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which records were
    matched to which family members, how sure each match is in plain words
-   ("very likely", "probably", "only possibly"), and why any match was held
-   back or left for them to confirm, including a move nothing on file
-   explains. No identifiers, file names, tool names or field names; a record
+   ("very likely", "probably", "only possibly"), and why any match was left
+   unlinked or lowered, including a move nothing on file explains. No identifiers, file names, tool names or field names; a record
    is what it is ("the 1870 census of the Weller household"), a person is
    their name.
 2. One sentence: what happens next, in plain language, or the one question
@@ -1079,8 +1077,8 @@ and "my daughter Margaret Flynn." Three assertions were extracted:
 
 | Assertion | Person | Confidence | Rationale |
 |-----------|--------|-----------|-----------|
-| a_020 → I2 | Thomas Flynn | probable | Same name, same county, death date matches — strong match on all identifiers, but the will is the only record linked to I2. |
-| a_021 → I1 | Patrick Flynn | confident | Will explicitly names "my son Patrick." Patrick is known to reside in same county, and the 1860 census already linked to I1 places him in Thomas's household. |
+| a_020 → I2 | Thomas Flynn | confident | Same name, same county, death date matches — strong match on all identifiers. |
+| a_021 → I1 | Patrick Flynn | confident | Will explicitly names "my son Patrick." Patrick is known to reside in same county. |
 | a_022 → I7 (new stub) | Margaret Flynn | probable | New person — no Margaret Flynn in tree. Created stub with gender Female. Will context ("my daughter") establishes relationship. |
 
 **Person evidence entries created:** pe_007, pe_008, pe_009
@@ -1097,8 +1095,8 @@ When multiple candidates share the same name in the same area:
    associates)
 3. **Assign each new record** to the correct profile based on which
    data points match
-4. **Flag ambiguous records** — mark as `speculative` and present
-   evidence to the user when a record matches multiple profiles or
+4. **Leave ambiguous records unlinked** — name the candidates and the
+   evidence in your return when a record matches multiple profiles or
    none clearly
 5. If candidates need chronological testing, hand off to **timeline**
    or **hypothesis-tracking**
@@ -1133,8 +1131,8 @@ When multiple candidates share the same name in the same area:
 
 - **Never auto-merge.** Links are provisional. Merging is a
   conclusion (proof-conclusion) and a data operation (tree-edit).
-- **Enforce the threshold policy.** Weak matches require user
-  confirmation. No exceptions.
+- **Enforce the threshold policy.** A Weak match gets no link. No
+  exceptions.
 - **The match score is an input, not a verdict** — record it in
   `match_score` when one was obtained; the full rule is in Step 3.
 - **You do not own `conflicts`.** A contradiction you find while

@@ -51,6 +51,19 @@
               "quality": 2
             }
           ]
+        },
+        {
+          "id": "F4",
+          "type": "Immigration",
+          "date": "2 Jun 1871",
+          "place": "New York, New York",
+          "assertion_id": "a_014",
+          "sources": [
+            {
+              "ref": "S51",
+              "quality": 2
+            }
+          ]
         }
       ],
       "sources": [
@@ -68,6 +81,9 @@
         },
         {
           "ref": "S52"
+        },
+        {
+          "ref": "S51"
         }
       ]
     },
