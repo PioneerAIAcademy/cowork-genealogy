@@ -8,7 +8,8 @@ fixture's starting state (or into an empty folder, when it has neither starting
 file), and graded deterministically by ``single_ask_grade``:
 no judge, no ``expected-findings.json``. Live and billed (FamilySearch + model).
 
-Exit 0 when every fixture passes, 1 when any fails, 2 when a run never happened
+Exit 0 when every fixture passes or fails with its ``known_issue`` set, 1 when any
+other fails or goes ungraded, 2 when a run never happened
 (bad fixture, no server build, the genealogy MCP server unavailable).
 """
 
@@ -17,6 +18,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import sys
 import tempfile
 from functools import lru_cache
@@ -53,7 +55,9 @@ REQUIRED_KEYS = ("id", "message", "expected_owner", "expected_save")
 FIXTURE_KEYS = frozenset({
     *REQUIRED_KEYS, "is_plan_ask", "setup_units", "must_not", "forbidden_tools",
     "required_tools", "model", "caps", "tags", "blocked_tools", "ends_on_offer",
+    "known_issue",
 })
+KNOWN_ISSUE_RE = re.compile(r"^#[1-9]\d*$")
 STARTING_FILES = ("starting-research.json", "starting-tree.gedcomx.json")
 MANIFEST = REPO_ROOT / "packages" / "engine" / "mcp-server" / "manifest.json"
 # Built-in tools a fixture may name beside the MCP server's.
@@ -141,6 +145,9 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
             f"{fixture_dir.name}: a fixture with an `absent` expected_save alternative needs "
             "required_tools, or an empty turn passes"
         )
+    known_issue = raw.get("known_issue", "")
+    if not isinstance(known_issue, str) or (known_issue and not KNOWN_ISSUE_RE.match(known_issue)):
+        raise FixtureError(f"{fixture_dir.name}: known_issue must be an issue number like \"#2813\"")
     for key in ("is_plan_ask", "ends_on_offer"):
         if not isinstance(raw.get(key, False), bool):
             raise FixtureError(f"{fixture_dir.name}: {key} must be true or false")
@@ -195,6 +202,7 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         setup_units=tuple(setup),
         must_not=str(raw.get("must_not") or ""),
         ends_on_offer=raw.get("ends_on_offer", False),
+        known_issue=known_issue,
         **tool_lists,
     )
     return fixture, spec
@@ -319,7 +327,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No single-ask fixtures under {args.fixtures_root}", file=sys.stderr)
         return 2
 
-    failures = 0
+    failures = known = passes = 0
     for fixture, spec in loaded:
         try:
             spec, record, g = asyncio.run(
@@ -343,10 +351,16 @@ def main(argv: list[str] | None = None) -> int:
             failures += 1
             print(f"UNGRADED {spec.id}  stop={record['aborted_reason']}")
         else:
-            failures += 0 if g.passed else 1
+            if g.passed:
+                passes += 1
+            elif spec.known_issue:
+                known += 1
+            else:
+                failures += 1
             print(format_line(spec, g))
         shown = f"{cost:.2f}" if isinstance(cost, (int, float)) else "?"
         print(f"    cost~${shown}  runlog: {record['runlog']}")
+    print(f"\n{len(loaded)} fixtures: {passes} pass, {known} known fail, {failures} fail or ungraded")
     return 1 if failures else 0
 
 

@@ -123,8 +123,10 @@ folder — `scaffold`'s two templates live in the harness instead).
 - `polarity`: omit for a normal recover-this finding. `"avoid"` marks a
   claim the agent must **NOT** assert (spec §3.4.1) — the judge passes
   it when the claim is absent from the final tree, and the harness
-  re-checks that mechanically (a matching person in the final tree
-  forces the finding to fail). Pair a `required` avoid guard with a
+  re-checks that mechanically against what the finding states: a
+  wrong person's `wrong_candidate.records` (every persona ARK of their
+  records), a fact's avoided date or place, or a `relation` plus the
+  candidate's name. `make e2e-validate` names a missing field. Pair a `required` avoid guard with a
   `required` recover finding that the agent documented the negative
   conclusion, so a run that does nothing does not pass by default.
 

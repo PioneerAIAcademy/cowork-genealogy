@@ -788,5 +788,7 @@ non-technical users.
 printed block into the PR. Those files decide which unit answers a message, and the
 panel is how production routing is measured (`docs/specs/e2e-test-spec.md` §16). It
 is live and billed: each fixture's README records its cost
-(`grep -h Measured eval/tests/e2e-single-ask/*/README.md`). A FAIL is fine when that
-fixture's README names the issue that owns it.
+(`grep -h Measured eval/tests/e2e-single-ask/*/README.md`). A KNOWN-FAIL line is a
+fixture whose `known_issue` names the open issue that owns it, and does not fail the
+run; a plain FAIL is new, and the PR says why. When the owning issue is fixed, remove
+the fixture's `known_issue`.
