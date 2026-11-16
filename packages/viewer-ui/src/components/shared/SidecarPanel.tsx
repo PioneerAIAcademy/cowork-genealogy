@@ -107,7 +107,7 @@ function LoadedBody({
     <div ref={bodyRef} className={styles.body}>
       {isFulltext && hitVerdictsByHitId && hitVerdictsByHitId.size > 0 && (
         <p className={styles.evaluateProgress}>
-          {hitVerdictsByHitId.size} of {results.length} hits evaluated
+          {hitVerdictsByHitId.size} of {results.length} search results evaluated
         </p>
       )}
       {isFulltext && sendPrompt && (
@@ -117,7 +117,7 @@ function LoadedBody({
             className={styles.evaluateButton}
             onClick={() => sendPrompt(`Evaluate the hits from ${logId} against the tree.`)}
           >
-            Evaluate hits
+            Evaluate search results
           </button>
         </div>
       )}
