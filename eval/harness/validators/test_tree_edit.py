@@ -339,10 +339,7 @@ def test_namesake_citation_refused_and_handed_back(before_state, after_state, te
     added = [f.get("type") for f in _facts_of(after_state, "I1") if f not in _facts_of(before_state, "I1")]
     assert not added, f"facts were added to I1 although the census is untied to him: {added}"
     from harness.skill_runner import subject_reply_text
-    # A failed spawn is recorded under the agent's name with `is_error`, and its
-    # runtime text ("Available agents: ...") names every owner (issue #3935).
-    own_returns = [r for r in (agent_returns or []) if not r.get("is_error")]
-    text_response = subject_reply_text(own_returns, text_response, "tree-edit", test)
+    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test, skip_failed_spawns=True)
     assert "person-evidence" in (text_response or "").lower(), (
         f"the reply does not name person-evidence as the owner of the census link: {(text_response or '')[:600]!r}"
     )
