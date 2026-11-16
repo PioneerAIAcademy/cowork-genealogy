@@ -51,7 +51,7 @@
     },
     {
       "id": "q_002",
-      "question": "Where was Patrick Flynn in the 1850 census?",
+      "question": "Where did Patrick Flynn live in 1850?",
       "rationale": "The 1850 census is the earliest enumeration where Patrick would appear by name (age ~5). Locating him in a household identifies candidate parents.",
       "selection_basis": "objective_decomposition",
       "priority": "high",

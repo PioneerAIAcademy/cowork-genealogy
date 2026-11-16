@@ -574,3 +574,70 @@ def test_will_pattern_still_flags_the_document_noun(sentence):
             test=_test_dict(),
             agent_returns=[{"subagent_type": "question-selection", "text": reply}],
         )
+
+
+# --- test_handback_not_record_scoped: naming an existing question is not a record pick ---
+#
+# The Return contract tells the agent to name other questions by their text; the
+# Flynn fixtures' q_002 is "Where was Patrick Flynn in the 1850 census?", and a
+# user can type a question like it. Lead, 2026-11-16: "a line that refers to
+# q_002 is this case. Any other line that names a record is a real failure."
+# The 1870-census case is the one that separates "the word is part of naming
+# the question" from "the word appears in some question" -- the latter would
+# switch `census` off in every Flynn project.
+
+_CENSUS_Q002 = {"id": "q_002", "question": "Where was Patrick Flynn in the 1850 census?", "status": "resolved"}
+_PARENTS_Q001 = {"id": "q_001", "question": "Who were the parents of Patrick Flynn?", "status": "in_progress"}
+
+
+def _before_with(questions):
+    return {"research_json": {"plans": [], "questions": questions}}
+
+
+def _check(questions, summary_tail, caller="**Next step:** plan research for this question."):
+    check_handback(
+        before_state=_before_with(questions),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": _reply(caller, summary_tail)}],
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "The census question is resolved.",
+    "The 1850 census question still needs its own write-up.",
+    "The q_002 census question is resolved.",
+    "The second question, q_002 (where Patrick was in the 1850 census), is marked resolved.",
+])
+def test_naming_an_existing_census_question_passes(sentence):
+    _check([_PARENTS_Q001, _CENSUS_Q002], sentence)
+
+
+def test_naming_an_existing_census_question_passes_in_the_caller_line():
+    _check(
+        [_PARENTS_Q001, _CENSUS_Q002],
+        "The next step is to plan the search for his mother.",
+        caller="- **Depends on:** q_001; q_002 (the 1850 census question) is resolved.",
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "Search the probate records next.",
+    "Search the 1870 census next.",
+    "The next step is adding searches for the later census years.",
+    "The 1850 census question is resolved; search the 1870 census next.",
+    "The tree and the census evidence give Ireland.",
+])
+def test_a_record_suggestion_still_fails_beside_a_census_question(sentence):
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001, _CENSUS_Q002], sentence)
+
+
+def test_the_census_question_fails_where_no_question_carries_census():
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001], "The census question is resolved.")
+
+
+def test_a_question_id_whose_text_has_no_census_does_not_cover_it():
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001, _CENSUS_Q002], "q_001 (search the 1870 census) comes next.")

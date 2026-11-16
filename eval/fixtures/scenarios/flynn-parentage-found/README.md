@@ -5,7 +5,7 @@ Patrick Flynn parentage research — the father (Thomas Flynn) has been confirme
 ## State
 
 - **Objective:** Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA
-- **Questions:** q_001 (Who was Patrick Flynn's father? — resolved: Thomas Flynn), q_002 (1850 census placement — resolved)
+- **Questions:** q_001 (Who was Patrick Flynn's father? — resolved: Thomas Flynn), q_002 (Patrick's 1850 residence — resolved)
 - **Plans:** pl_001 (1850 census, completed), pl_002 (paternity evidence, completed)
 - **Project status:** active — mother not yet identified
 - **Proof summary:** ps_001 tier `proved` for the paternity sub-question

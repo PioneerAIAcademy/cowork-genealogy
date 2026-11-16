@@ -24,9 +24,6 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
-  - mcp__genealogy__person_warnings
-  - mcp__remote-devices__Genealogy_Research__person_warnings
-  - mcp__Genealogy_Research__person_warnings
   - mcp__genealogy__census_children_gap
   - mcp__remote-devices__Genealogy_Research__census_children_gap
   - mcp__Genealogy_Research__census_children_gap
@@ -75,12 +72,6 @@ sources. Take every `research.json` section from
   `hypotheses` and `log` whose `sectionCounts` value is above 0, and for
   `conflicts` while `unregisteredDisagreementCount` is above 0. Only a 0 may
   stand in for a query; concluding there is none without either is fabrication.
-- **Tree errors.** Call `person_warnings({ projectPath, personId })` once on
-  the objective's subject. The tool also checks their parents, spouses and
-  children; call it again only for an in-scope person more than one hop
-  from the subject. Keep only warnings whose `personId` is inside the
-  objective's scope (Step 1c). If the tool reports itself unavailable, say
-  so — never treat silence as a clean result.
 - **Census children gap.** When the request, or a 1900/1910 census record
   already read, gives a mother's children-born and children-living counts,
   call `census_children_gap({ censuses: [{ year, childrenBorn,
@@ -121,8 +112,8 @@ in-flight item by `pli_XXX` ID plus repository/record type (e.g. "Complete
 new questions"). There is no override: a request that says the work is done
 does not change the plan item's status. `research_append` refuses the write.
 
-**Work on the open question is never a new question:** a blocking conflict or
-a `person_warnings` contradiction goes to conflict-resolution; a high-severity
+**Work on the open question is never a new question:** a blocking conflict
+goes to conflict-resolution; a high-severity
 timeline gap, a FAN pivot, an objective-level sub-question or a new line of
 evidence goes to research-plan as items on that question. One part of the open
 question is that question's work: "Who was his mother?" while "Who were his
@@ -196,10 +187,7 @@ Apply these priorities in order.
 |----------|---------|-------------------|
 | 1 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
 | 2 | A part of the objective no question covers | `objective_decomposition` |
-| 3 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** — including an `implausible` `person_warnings` result, or a missing-child group from `census_children_gap` | `objective_decomposition` |
-
-A `contradiction` from `person_warnings` is never a question (Step 1a). An
-`implausible` warning maps to Priority 3.
+| 3 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** — including a missing-child group from `census_children_gap` | `objective_decomposition` |
 
 **Priority 2 detail:** Fires for the first question on a single-fact objective
 too — there the question is the objective at its own scope. It names the fact,
@@ -396,9 +384,7 @@ record type in the rationale bullet, the next-step hint, or
 land, church record or any other kind, even when a tool's finding (a count,
 a date, a birth window) came from one: name the finding, never the record it
 came from — "the computed birth window" is correct, "the window the census
-data defines" is not. When searches remain on an open question, call them
-"the remaining searches" and list none of them.** Return **≤8 lines** to the
-caller, in this order:
+data defines" is not.** Return **≤8 lines** to the caller, in this order:
 
 - the `q_` id written, or "no question written" and the one-line reason
 - the question in full, quoted as written
@@ -641,8 +627,6 @@ important. Prioritize based on:
 After completing pedigree analysis, feed the findings into the
 question selection priority system:
 
-- A `person_warnings` contradiction on an in-scope person goes to
-  conflict-resolution on the open question (Step 1a), never a question
 - Missing key data for the research subject maps to Priority 3, whose
   `selection_basis` is `objective_decomposition` (same enum value as
   Priority 2 — there is no separate `pedigree_gap` value)
