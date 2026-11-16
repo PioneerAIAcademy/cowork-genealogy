@@ -1,9 +1,17 @@
 {
-  "run_log": "v2_2026-10-19_10-31-16.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v6_2026-11-15_22-40-31.json",
+  "annotator": "dallan@quass.org",
   "corrections": [
     {
-      "test_id": "ut_search_hints_002",
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "need to investigate sometime"
+    },
+    {
+      "test_id": "ut_search_hints_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -11,15 +19,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_002",
+      "test_id": "ut_search_hints_006",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_002",
+      "test_id": "ut_search_hints_006",
       "dimension_source": "rubric",
       "dimension_name": "Hint scope",
       "llm_score": 3,
@@ -27,15 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_002",
+      "test_id": "ut_search_hints_006",
       "dimension_source": "rubric",
       "dimension_name": "Recommendation soundness",
       "llm_score": 3,
@@ -43,31 +43,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_002",
+      "test_id": "ut_search_hints_006",
       "dimension_source": "rubric",
       "dimension_name": "Verdict recording",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_005",
+      "test_id": "ut_search_hints_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -75,15 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_004",
+      "test_id": "ut_search_hints_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_004",
+      "test_id": "ut_search_hints_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -99,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_004",
+      "test_id": "ut_search_hints_008",
       "dimension_source": "rubric",
       "dimension_name": "Hint scope",
       "llm_score": 3,
@@ -107,31 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Recommendation soundness",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Verdict recording",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Verdict recording",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_003",
+      "test_id": "ut_search_hints_008",
       "dimension_source": "rubric",
       "dimension_name": "Recommendation soundness",
       "llm_score": 3,
@@ -139,23 +91,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_003",
+      "test_id": "ut_search_hints_008",
       "dimension_source": "rubric",
-      "dimension_name": "Hint scope",
+      "dimension_name": "Verdict recording",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_003",
+      "test_id": "ut_search_hints_009",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_003",
+      "test_id": "ut_search_hints_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -163,7 +115,87 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_hints_003",
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -173,14 +205,6 @@
     {
       "test_id": "ut_search_hints_001",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_hints_001",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -214,8 +238,8 @@
       "test_id": "ut_search_hints_001",
       "dimension_source": "rubric",
       "dimension_name": "Verdict recording",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     }
   ]
