@@ -23,6 +23,9 @@ import {
 } from "../utils/project-io.js";
 import { getProjectStore, type ProjectStore } from "../store/project-store.js";
 import { recordReadTool } from "./record-read.js";
+import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
+import { warningsIfLinked } from "../utils/persona-copy.js";
+import { readStartingTree } from "../utils/starting-tree.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 import {
   NAME_TYPES,
@@ -437,12 +440,27 @@ async function samePersonFromProject(
     id: treePersonId,
     name: displayName((tree.persons ?? []).find((p) => p.id === treePersonId)),
   };
+  // Only for the assertion's own record person: a call naming the second party
+  // of a relationship scores someone the settled dispute is not about.
+  const ownParty =
+    (input.recordRole === undefined || input.recordRole === assertion.record_role) &&
+    (input.recordPersonaId === undefined || input.recordPersonaId === assertion.record_persona_id);
+  const settledConflicts = ownParty
+    ? settledBirthDisputes(research, tree, assertionId, treePersonId)
+    : [];
+  // For the persona that was scored, whichever party it is: its facts are what
+  // a link to this tree person would copy onto them.
+  const linkWarnings = warningsIfLinked(
+    research, tree, recordId, recordPersona.role ?? role, treePersonId, await readStartingTree(projectPath),
+  );
   return {
     score,
     recordSource,
     recorded,
     recordPersona,
     treePerson,
+    ...(settledConflicts.length > 0 ? { settledConflicts } : {}),
+    ...(linkWarnings.length > 0 ? { warningsIfLinked: linkWarnings } : {}),
   };
 }
 

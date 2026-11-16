@@ -1,0 +1,148 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Confirm the parents of Patrick Flynn (b. ~1845, Clare, Ireland; son of Thomas Flynn and Mary Doyle) from his parish baptismal register.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-05-06",
+    "updated": "2026-05-06"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does Patrick Flynn's baptismal register confirm his parents?",
+      "rationale": "Patrick is in the tree with his father Thomas (I2) and his mother Mary Doyle (I3). His Kilrush baptismal register names his mother by surname only.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_read",
+      "query": {
+        "collection": "Ireland, Catholic Parish Registers",
+        "record": "Kilrush baptisms, Patrick Flynn"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Kilrush RC baptismal register: Patrick Flynn, mother Doyle. The entry gives the mother's surname and no given name, and names no father.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Kilrush parish (Diocese of Killaloe, Ireland), baptismal register, entry for Patrick Flynn, mother Doyle; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Officiating priest",
+        "what": "Catholic parish baptismal register entry",
+        "when_created": "1845",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "Patrick Flynn baptism entry"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+      "url_archived": null,
+      "notes": "Register names the mother by surname only (Doyle). No father is entered.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+      "record_role": "child",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Patrick Flynn, baptized at Kilrush; mother entered as Doyle, no given name; no father entered",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother",
+        "related_person_name": "Doyle"
+      },
+      "information_quality": "primary",
+      "informant": "Officiating priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+      "record_role": "mother",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Doyle",
+      "structured_value": {
+        "surname": "Doyle"
+      },
+      "information_quality": "primary",
+      "informant": "Officiating priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+      "record_role": "child",
+      "record_persona_id": null,
+      "fact_type": "christening",
+      "value": "Christened 12 March 1845 at Kilrush",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother",
+        "related_person_name": "Doyle"
+      },
+      "information_quality": "primary",
+      "informant": "Officiating priest",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "12 March 1845",
+      "place": "Kilrush, Clare, Ireland"
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

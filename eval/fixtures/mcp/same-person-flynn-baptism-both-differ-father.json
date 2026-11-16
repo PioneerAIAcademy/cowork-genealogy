@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the baptism's father, Thomas Flynn, against the tree's father, Michael Flynn (I2). Near zero on the differing given name. Score measured on 2026-11-15 with the FamilySearch matcher: the canned Kilrush baptism (record-read-flynn-baptism-bapt-k1q) against flynn-baptism-both-parents-differ's tree.",
+  "args": {
+    "treePersonId": "I2"
+  },
+  "response": {
+    "score": 0.00014334568,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "BP2",
+      "name": "Thomas Flynn",
+      "role": "father"
+    },
+    "treePerson": {
+      "id": "I2",
+      "name": "Michael Flynn"
+    }
+  }
+}
