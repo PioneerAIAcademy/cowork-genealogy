@@ -14517,7 +14517,12 @@ describe("research_append — worked examples are themselves valid", () => {
       for (const q of fixture.questions) q.status = "resolved";
     }
     await writeFile(join(dir, "research.json"), JSON.stringify(fixture, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    // The proof_summaries example's claim names Thomas Flynn (I2) as Patrick's (I1) father.
+    const exampleTree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] }],
+    };
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(exampleTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
     await writeFile(join(dir, "results", "log_005.json"), JSON.stringify(fulltextSidecar, null, 2));

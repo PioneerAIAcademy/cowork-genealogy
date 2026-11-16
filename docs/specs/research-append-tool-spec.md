@@ -2403,6 +2403,41 @@ headings. The body is where Sonnet 5 already ignores the template, prose is the 
 resort, and that edit would owe a paid locality-guide eval run. Step 6 of the agent
 already says to fix a refused entry and call again.
 
+### 5.15 The claim rules (warn mode until Stage 1c)
+
+Rules 1, 2 and 4-12 of `docs/plan/conclusion-tree.md` § "Stage 1b". Each is decided from the
+documents alone, lives in `src/validation/claim-rules.ts`, and reads which tree object a claim is about through
+`src/utils/claim-join.ts` (Decision 31's one join). Each is staged in `src/validation/rule-modes.ts` at `"warn"`: a
+finding comes back as a warning prefixed `Will be refused: proof_summaries <id>: `, and nothing is refused until a
+rule's line there flips to `"refuse"` (Stage 1c), when the same finding refuses the whole batch.
+
+**When they run.** Once per call, after every op has applied and the batch's other refusals have run, before
+anything is written: for each summary an op appended or whose `tier`, `claims` or `supporting_assertion_ids` it set
+(a narrative-only edit of a legacy summary never runs them), and, for rule 11, each question an op set
+`status: "resolved"` or `resolved: true`. They read the final in-batch summaries (so a later op that adds a Couple
+claim or revises a disproved one is seen), the pre-call assertions and links (a batch may not supply a link and
+spend it in the same call, as every proof gate reads), and the pre-call tree.
+
+| Rule id | Fires when |
+|---|---|
+| `claims-rival-verdicts` (1) | an affirmed biological ParentChild claim at `probable`+ while a same-gender untyped or Biological rival parent of that child in the tree has no claim, at any tier or polarity |
+| `claims-one-per-slot` (2) | two affirmed claims at `probable`+ fill one biological parent slot, or one person's Birth, Christening, Death or Burial with values neither of whose unfudged day ranges contains the other's (couple events exempt) |
+| `claims-no-empty-escape` (4) | a summary at `possible`+ or `disproved` with no tree-object claim, while a child a cited child-role assertion links has two or more same-gender untyped/Biological parents |
+| `claims-present` (5) | a summary at `possible`+ or `disproved` with no claims (a `not_proved` decline may carry none) |
+| `claims-cite` (6) | a claim at `possible`+, a denial or a `disproved` claim cites no assertion (an `absence` or `completeness` finding may cite `log_entry_ids` instead) |
+| `claims-grounding` (7) | an affirmed tree-object claim at `probable`+ names a person no cited assertion links (live, `confident`/`probable`), or a fact's cited value assertions come from no record persona tied to its subject (each spouse, for a couple fact); a denial at `probable` needs only its anchor linked. A link from a persona a live denied identity claim covers does not count |
+| `claims-absence` (8) | an affirmed tree-object claim at `probable`+ whose cited assertions are all absence evidence |
+| `claims-polarity` (9) | an object both affirmed and denied, or affirmed and covered by a `disproved` claim, across all summaries; or one record persona affirmed at `probable`+ as two persons |
+| `claims-couple-first` (10) | an affirmed Marriage or Divorce claim at `probable`+ with no affirmed Couple claim on the pair at the same tier or better |
+| `claims-capped-open` (11) | a question set resolved while its summary holds an affirmed tree-object claim that grounding holds at `possible`, other than a rival set aside beside a winner |
+| `claims-proved-identity` (12) | a `proved` claim names a person not linked at `confident` from a cited assertion, nor covered by a `proved` identity claim whose persona it cites |
+
+Two ParentChild claims are one object for rule 9 only when their subtypes agree or one is absent, so "affirm Step,
+deny Biological" does not collide; for coverage of a tree edge the subtype is ignored (Decision 32). Rule 7 over the
+claims study's 45 hand-labelled proofs holds at `possible` 8 of 89 relationships, 0 of 25 facts and 1 of 11 couple
+facts (`tests/tools/research-append-claim-grounding.test.ts`, vectors built by
+`dev/build-claim-grounding-vectors.ts`).
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
