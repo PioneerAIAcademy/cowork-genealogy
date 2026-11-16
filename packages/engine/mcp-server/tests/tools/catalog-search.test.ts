@@ -19,6 +19,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import {
   ANSWER_CHAR_BUDGET,
+  catalogSearchSchema,
   catalogSearchTool,
   FILM_FIELDS,
   filmNotesHint,
@@ -3149,6 +3150,10 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
       ["https://www.familysearch.org/search/catalog/36984", "koha:36984"],
       ["https://www.familysearch.org/search/catalog/koha:36984?availability=Online#x", "koha:36984"],
       ["HTTPS://WWW.FamilySearch.org/search/catalog/koha:36984", "koha:36984"],
+      ["https://www.familysearch.org/en/search/catalog/koha%3A36984", "koha:36984"],
+      ["https://www.familysearch.org/en/search/catalog/olib%3a2333650", "olib:2333650"],
+      ["www.familysearch.org/en/search/catalog/koha:36984", "koha:36984"],
+      ["familysearch.org/search/catalog/36984", "koha:36984"],
     ];
     for (const [given, id] of cases) {
       it(`${JSON.stringify(given)} -> ${id}`, async () => {
@@ -3212,6 +3217,25 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
     ]);
   });
 
+  it("names where a book is shelved from its copy block", async () => {
+    // koha:3308785, live 2026-11-16: not online, no film notes, one copy at the
+    // FamilySearch Library — which its search hit names in repositoryCalls.
+    itemAnswers(
+      marylebone({
+        available_online: "N",
+        film_note: undefined,
+        copy: {
+          call_number: "974.1 W2u",
+          copy_location_ex: { copy_location_id: 1547178, copy_location_name: "FamilySearch Library" },
+          location: "FamilySearch Library",
+          availability: "Available",
+        },
+      }),
+    );
+    const r = await catalogSearchTool({ catalogId: "koha:3308785" }, LOCAL);
+    expect(r.hits[0].repositoryCalls).toEqual(["FamilySearch Library"]);
+  });
+
   it("gives a digitized book with no film notes Online alone", async () => {
     itemAnswers(marylebone({ available_online: "Y", film_note: undefined }));
     const r = await catalogSearchTool({ catalogId: "koha:3308785" }, LOCAL);
@@ -3258,6 +3282,12 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
       "https://www.familysearch.org/search/catalog/koha:1/../../platform/users/current",
       "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9S9-1234",
       "https://www.familysearch.org/search/film/009113284",
+      "https://www.familysearch.org/search/catalog/koha%2F1",
+      "https://www.familysearch.org/search/catalog/koha%3A1%2F..",
+      "koha%3A1",
+      "www.evil.com/search/catalog/koha:1",
+      "familysearch.org.evil.com/search/catalog/koha:1",
+      "www.familysearch.org/search/catalog/koha:1/extra",
       "koha:1/../x",
       "koha:12?x=1",
       "koha:",
@@ -3287,6 +3317,22 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
   it("parseCatalogId only ever returns a namespaced id of digits", () => {
     expect(parseCatalogId("https://familysearch.org/en/search/catalog/OLIB:77")).toBe("olib:77");
     expect(() => parseCatalogId("koha:1 koha:2")).toThrow(/catalogId is/);
+  });
+
+  it("refuses beside it every advertised input but count and hydrate", async () => {
+    // Derived from the schema, so a filter added later is refused too.
+    const fields = Object.keys(catalogSearchSchema.inputSchema.properties).filter(
+      (k) => !["catalogId", "count", "hydrate"].includes(k),
+    );
+    expect(fields.length).toBeGreaterThanOrEqual(11);
+    for (const field of fields) {
+      mockFetch.mockReset();
+      await expect(
+        catalogSearchTool({ catalogId: "koha:36984", [field]: "x" }, LOCAL),
+        field,
+      ).rejects.toThrow(new RegExp(`takes no search filter; drop ${field}`));
+      expect(mockFetch).toHaveBeenCalledTimes(0);
+    }
   });
 
   describe("refuses a search filter beside it", () => {

@@ -750,7 +750,7 @@ const CATALOG_ID_RE = /^(koha|olib):(\d+)$/i;
 /** The path of a Catalog entry link: an optional language segment (`/en/`,
  *  `/pt-br/`), then `/search/catalog/` and the id, namespaced or bare. */
 const CATALOG_LINK_PATH_RE =
-  /^\/(?:[a-z]{2}(?:-[a-z]{2,4})?\/)?search\/catalog\/((?:koha|olib):\d+|\d+)\/?$/i;
+  /^\/(?:[a-z]{2}(?:-[a-z]{2,4})?\/)?search\/catalog\/((?:koha|olib)(?::|%3A)\d+|\d+)\/?$/i;
 
 const CATALOG_LINK_HOSTS = new Set(["familysearch.org", "www.familysearch.org"]);
 
@@ -786,7 +786,12 @@ export function parseCatalogId(raw: unknown): string {
     // unquoted "36984" arrives as — the same as an unquoted film number.
     id = Number.isSafeInteger(raw) && raw >= 0 ? `koha:${raw}` : undefined;
   } else if (typeof raw === "string") {
-    const text = raw.trim();
+    // A link copied from the address bar often has no scheme. Given one, it
+    // goes through the same host and path checks as any other link.
+    const trimmed = raw.trim();
+    const text = /^(?:www\.)?familysearch\.org\//i.test(trimmed)
+      ? `https://${trimmed}`
+      : trimmed;
     if (/^https?:\/\//i.test(text)) {
       let url: URL | undefined;
       try {
@@ -803,7 +808,9 @@ export function parseCatalogId(raw: unknown): string {
         url.password === ""
           ? CATALOG_LINK_PATH_RE.exec(url.pathname)
           : null;
-      id = path ? normaliseId(path[1]) : undefined;
+      // `%3A` is a colon a mail or chat client encoded; the path is not
+      // otherwise decoded, so no other escape can reach the id.
+      id = path ? normaliseId(path[1].replace(/%3A/i, ":")) : undefined;
     } else {
       id = normaliseId(text);
     }
@@ -829,20 +836,22 @@ function creatorOf(sources: Collapsed[]): string | undefined {
  *
  * The item endpoint carries no `repositoryCalls`, so this hit's is built from
  * what the item does say: "Online" first when it is available online, then
- * the copy locations of its film notes. A digitized book with no film notes
- * gets "Online" alone, or nothing.
+ * the copy locations of its film notes and its `copy` blocks.
  */
 async function lookupCatalogItem(
   id: string,
   principal: Principal,
+  deadline: number,
 ): Promise<CatalogSearchResult> {
   // One request, so it keeps fsFetch's default retries; the `attempts: 1` of
-  // hydration exists to bound 25 parallel calls, which this is not.
+  // hydration exists to bound 25 parallel calls, which this is not. Timed
+  // from the tool's entry, as the search leg is, so the whole call stays
+  // under Cowork's 60s bridge abort.
   const res = await fsFetch(
     principal,
     `${ITEM_URL_PREFIX}${id}`,
     { headers: HEADERS },
-    TOTAL_BUDGET_MS,
+    Math.max(0, deadline - Date.now()),
   );
   if (res.status === 404) {
     // The item endpoint answers an unknown id with 404 and an empty body. An
@@ -872,9 +881,13 @@ async function lookupCatalogItem(
     hydrated: false,
   };
   hydrateFromSource(hit, sources);
+  // Film notes name the copy of each reel; a book's `copy` block names where
+  // the book is shelved. A book not online with no film notes would otherwise
+  // answer `[]`, "held nowhere", where its search hit says "FamilySearch
+  // Library" (koha:3308785, measured 2026-11-16).
   const places = sources
-    .flatMap((s) => asArray(s?.film_note))
-    .map((f) => scalarOf(f?.copy_location))
+    .flatMap((s) => [...asArray(s?.film_note), ...asArray(s?.copy)])
+    .map((c) => scalarOf(c?.copy_location) ?? scalarOf(c?.location))
     .filter((p): p is string => p !== undefined);
   hit.repositoryCalls = [
     ...new Set([...(hit.availableOnline === true ? ["Online"] : []), ...places]),
@@ -890,6 +903,17 @@ async function lookupCatalogItem(
   });
 }
 
+/** Every advertised input but the lookup itself and the two that do nothing
+ *  to it. Derived from the schema, so a filter added there is refused beside
+ *  `catalogId` with no second edit; read at call time, after the schema below
+ *  is defined. */
+const LOOKUP_ALLOWS = new Set(["catalogId", "count", "hydrate"]);
+function lookupRefuses(): (keyof CatalogSearchInput)[] {
+  return Object.keys(catalogSearchSchema.inputSchema.properties).filter(
+    (k) => !LOOKUP_ALLOWS.has(k),
+  ) as (keyof CatalogSearchInput)[];
+}
+
 export async function catalogSearchTool(
   input: CatalogSearchInput,
   principal: Principal,
@@ -901,9 +925,7 @@ export async function catalogSearchTool(
   const catalogId =
     input.catalogId === undefined ? undefined : parseCatalogId(input.catalogId);
   if (catalogId !== undefined) {
-    const filters = [...QUERY_FIELDS, "exactPlace", "year"].filter(
-      (f) => input[f as keyof CatalogSearchInput] !== undefined,
-    );
+    const filters = lookupRefuses().filter((f) => input[f] !== undefined);
     if (filters.length > 0) {
       throw new Error(
         `catalogId opens one Catalog entry and takes no search filter; drop ` +
@@ -1003,7 +1025,7 @@ export async function catalogSearchTool(
   }
   // count and hydrate are still checked above, so a bad value is refused the
   // same way on both paths; past that they do nothing to a lookup.
-  if (catalogId !== undefined) return lookupCatalogItem(catalogId, principal);
+  if (catalogId !== undefined) return lookupCatalogItem(catalogId, principal, deadline);
 
   // The REP id, never the place id: standardPlaceToPlaceId("Maine, United
   // States") is 16, which the Catalog reads as Timor-Leste and answers.
@@ -1148,15 +1170,10 @@ export async function catalogSearchTool(
           await r.text().catch(() => "");
           return;
         }
-        // Shape-guarded like the search leg: an Imperva 200-with-HTML on the
-        // item endpoint used to land in the catch below and report
-        // `hydrated: false`, which the contract reads as "this item has no
-        // detail". Unwrapped for the same array collapse as the search body.
-        const rawItem: unknown = await r.json();
-        const item = (Array.isArray(rawItem) ? firstObject(rawItem) : rawItem) as
-          | { source?: unknown }
-          | undefined;
-        if (!item || typeof item !== "object") return;
+        // Shape-guarded and unwrapped by the same reader as the search body
+        // and the catalogId lookup. A body that is not an object throws into
+        // the catch below, which leaves this one hit unhydrated.
+        const item = await readCatalogBody(r);
         // A task abandoned by the race keeps running. Without this check its
         // late result still lands on the hit AFTER the deadline, so the same
         // call returns different data depending on how the event loop was
