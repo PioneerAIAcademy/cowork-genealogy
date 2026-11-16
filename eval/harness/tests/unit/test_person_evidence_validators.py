@@ -51,6 +51,7 @@ from test_person_evidence import (  # noqa: E402
     test_identity_links_follow_their_persona as check_identity,
     test_naturalization_shortfall_stated as check_shortfall,
     test_naturalization_exception_not_flagged as check_exception,
+    test_review_names_gaps as check_review_gaps,
 )
 
 
@@ -2392,3 +2393,99 @@ def test_exception_fails_a_stub_taken_on_the_residence(assertion_id, rationale, 
         check_exception(_interval_state(
             _interval_pe(assertion_id, rationale, person_id=person_id),
         ), _EXCEPTION_TAGS)
+
+
+
+# --- test_review_names_gaps (#4548) -----------------------------------------
+
+_PE_RUNLOGS = Path(__file__).resolve().parents[4] / "eval" / "runlogs" / "unit" / "person-evidence"
+_GAPS_TEST = {"tags": ["review-names-gaps"], "delegation": "Review pe_005"}
+_GOOD_REVIEW = (
+    "pe_005 is well supported. a_013 names Thomas Flynn as father, but there is no pe_ "
+    "entry linking a_013 to I2. The match_score is null and the rationale never says why."
+)
+
+
+def _logged_001_reply(log_name, run_index=0):
+    log = json.loads((_PE_RUNLOGS / f"{log_name}.json").read_text(encoding="utf-8"))
+    entry = next(t for t in log["tests"] if t["test_id"] == "ut_person_evidence_001")
+    output = entry["runs"][run_index]["output"]
+    return output.get("agent_returns"), output.get("text_response")
+
+
+def _gaps(text):
+    returns = [{"subagent_type": "person-evidence", "text": text}]
+    check_review_gaps(test=_GAPS_TEST, agent_returns=returns, text_response=None)
+
+
+def test_review_gaps_skips_without_its_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_review_gaps(test={"tags": []}, agent_returns=None, text_response="")
+
+
+def test_review_gaps_passes_a_review_naming_both():
+    _gaps(_GOOD_REVIEW)
+
+
+@pytest.mark.parametrize("text", [
+    # Reflowed and reworded, still both points.
+    "Missing link: a_013 (father Thomas Flynn) is not linked to I2 by any pe_ entry.\n"
+    "Score: no `match_score` is recorded, and nothing explains it.",
+    "I2 (Thomas) lacks a pe_ link for a_013. pe_005's match score is not disclosed.",
+])
+def test_review_gaps_accepts_other_wordings(text):
+    _gaps(text)
+
+
+@pytest.mark.parametrize("text, missing", [
+    ("", "I2"),
+    ("The match_score is null and the rationale never says why.", "I2"),
+    ("a_013 names Thomas Flynn as father, but there is no pe_ entry linking a_013 to I2.",
+     "match_score"),
+    # A bare field listing of the null score is a restatement, not a finding.
+    ("a_013 has no pe_ link to I2. pe_005: confidence `confident`, match_score null. "
+     "No change needed.", "match_score"),
+    # "No edits" in a sentence that names I2 is not a missing-link finding.
+    ("I made no edits to pe_005 or to Thomas Flynn's record (I2). "
+     "The match_score is null and the rationale never says why.", "I2"),
+    # Bare "I2" and "null" in unrelated sentences.
+    ("pe_003 links a_004 to I2. The birth date on a_012 is null.", "I2"),
+])
+def test_review_gaps_fails_a_review_missing_a_point(text, missing):
+    with pytest.raises(AssertionError, match=missing):
+        _gaps(text)
+
+
+def test_review_gaps_grades_the_agent_not_the_dispatcher():
+    """On a direct test a silent agent grades as silent, whatever the relay says."""
+    with pytest.raises(AssertionError):
+        check_review_gaps(test=_GAPS_TEST, agent_returns=[], text_response=_GOOD_REVIEW)
+
+
+@pytest.mark.parametrize("log_name, run_index", [
+    # Annotation raised Multi-person awareness (and on 18-53-38 Score
+    # discipline) from 2 to 3 on these two.
+    ("v10", 0),
+    ("v11_2026-11-12_18-53-38", 0),
+    # Human-held 3 on both dimensions.
+    ("v11_2026-11-15_18-32-11", 0),
+    ("v11_2026-11-16_06-41-17", 0),
+])
+def test_review_gaps_passes_committed_reviews_a_human_accepted(log_name, run_index):
+    returns, text = _logged_001_reply(log_name, run_index)
+    check_review_gaps(test=_GAPS_TEST, agent_returns=returns, text_response=text)
+
+
+@pytest.mark.parametrize("log_name, run_index", [
+    # Score discipline raised to 3, but Multi-person awareness was N/A under
+    # the rubric of the day, and neither reply names the a_013 -> I2 gap.
+    ("v2", 0),
+    ("v6", 0),
+    # Haiku runs whose reply never names the gap (read by hand).
+    ("v11_2026-11-15_21-52-22", 0),
+    ("v11_2026-11-15_21-52-22", 3),
+])
+def test_review_gaps_fails_committed_reviews_that_omit_the_i2_gap(log_name, run_index):
+    returns, text = _logged_001_reply(log_name, run_index)
+    with pytest.raises(AssertionError, match="I2"):
+        check_review_gaps(test=_GAPS_TEST, agent_returns=returns, text_response=text)

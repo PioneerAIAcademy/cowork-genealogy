@@ -422,10 +422,11 @@ def test_judge_was_skipped_reads_dotted_field_and_aborted():
     assert judge_regrade._judge_was_skipped({"judge_skipped": True}) is False
 
 
-def test_strip_prior_coerced_warnings_removes_only_that_kind():
+def test_strip_prior_coerced_warnings_removes_only_the_coercion_kinds():
     warnings = [
         {"kind": "prose_observation", "observation": "keep"},
         {"kind": "coerced_routing_negative_to_na", "score_was": 1},
+        {"kind": "coerced_review_dimension_to_na", "score": 2},
         {"kind": "prose_observation", "observation": "also keep"},
     ]
     out = judge_regrade._strip_prior_coerced_warnings(warnings)
@@ -1248,3 +1249,44 @@ def test_regrade_without_a_review_sample_adds_no_key(disk_tree, monkeypatch):
 
     written = json.loads(path.read_text(encoding="utf-8"))
     assert "review_sample" not in written
+
+
+def test_regrade_reapplies_na_dimensions_once(disk_tree, monkeypatch):
+    """A regrade re-judges, so it must coerce the test's `na_dimensions` again
+    (#4548): otherwise the judge's fresh 2 gates the regraded outcome. The
+    prior run's warning is stripped first, so the regraded log carries exactly
+    one, holding the fresh score."""
+    spec = _minimal_test_spec(scenario="demo-scenario")
+    spec["na_dimensions"] = ["Demo dimension"]
+    _write(disk_tree["tests_unit"] / "test-001.json", json.dumps(spec))
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    monkeypatch.setattr(
+        judge_regrade, "_run_judge",
+        lambda **kw: SimpleNamespace(
+            dimensions=[
+                {"source": "base", "name": "Correctness", "score": 3, "rationale": "ok"},
+                {"source": "rubric", "name": "Demo dimension", "score": 2,
+                 "rationale": "fresh judge reasoning"},
+            ],
+            cost_usd=0.0, input_tokens=0, cached_input_tokens=0, output_tokens=0,
+        ),
+    )
+    log = _mandatory_log()
+    entry = log["tests"][0]
+    entry["test_id"] = "ut_demo_001"
+    entry["runs"][0]["output"]["warnings"] = [
+        {"kind": "coerced_review_dimension_to_na", "advisory": "old", "name": "Demo dimension",
+         "score": 3, "rationale": "stale"},
+    ]
+    path = _write_log(disk_tree, log)
+
+    judge_regrade.regrade_run_log(path)
+
+    run = json.loads(path.read_text(encoding="utf-8"))["tests"][0]["runs"][0]
+    demo = [d for d in run["judge"]["dimensions"] if d["name"] == "Demo dimension"][0]
+    assert demo["score"] is None
+    assert demo["rationale"].startswith("[coerced-to-na]")
+    coerced = [w for w in run["output"]["warnings"]
+               if w["kind"] == "coerced_review_dimension_to_na"]
+    assert [(w["score"], w["rationale"]) for w in coerced] == [(2, "fresh judge reasoning")]
+    assert run["outcome"] == "pass"

@@ -1847,6 +1847,71 @@ def test_naturalization_shortfall_stated(after_state, test, agent_returns=None, 
     )
 
 
+_SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+_LINK_WORD = r"(?:\bpe_\w*|\blinks?\b|\blinking\b|\bentry\b)"
+_MISSING_LINK = re.compile(
+    r"(?:\bno\b|\bmissing\b|\blacks?\b|\bwithout\b|\bnot\s+linked\b|\bunlinked\b)[^.\n]{0,40}?"
+    + _LINK_WORD
+    + r"|" + _LINK_WORD
+    + r"[^.\n]{0,60}?(?:\bis\s+missing\b|\bdon['’]t\s+see\b|\bdo\s+not\s+see\b|\bis\s+absent\b)",
+    re.IGNORECASE,
+)
+_SCORE_WORD = re.compile(
+    r"\bmatch_score\b|\bmatch\s+score\b|\bsame_person`?\s+score\b|\bscore\b", re.IGNORECASE
+)
+_SCORE_UNEXPLAINED = re.compile(
+    r"\bunexplained\b|\bno\s+explanation\b|\bnever\s+says\s+why\b|\bno\s+reason\b"
+    r"|\bnot\s+disclosed\b|\bdoes\s+not\s+(?:say|explain)\b|\bdoesn['’]t\s+(?:say|explain)\b"
+    r"|\bnot\s+(?:recorded|obtained|stated|explained)\b|\bno\s+disclosure\b|\bmentions\s+no\b"
+    r"|\bsilent\b|\bwithout\s+(?:a|any)\b|\bis\s+missing\b|\bnever\s+computed\b|\bwas\s+never\b",
+    re.IGNORECASE,
+)
+_NO_SCORE = re.compile(
+    r"\bno\s+(?:`?same_person`?\s+score|match\s+score|`?match_score`?)\b", re.IGNORECASE
+)
+
+
+def _sentences(text):
+    return [s for s in _SENTENCE.split(text or "") if s.strip()]
+
+
+def _names_missing_i2_link(text):
+    """One sentence names a_013, names Thomas / I2, and says the link is absent."""
+    return any(
+        re.search(r"\ba_013\b", s)
+        and re.search(r"\bI2\b|\bThomas\b", s)
+        and _MISSING_LINK.search(s)
+        for s in _sentences(text)
+    )
+
+
+def _names_unexplained_score(text):
+    """One sentence says pe_005's match score is absent or left unexplained;
+    a bare `match_score null` field listing does not count."""
+    return any(
+        (_SCORE_WORD.search(s) and _SCORE_UNEXPLAINED.search(s)) or _NO_SCORE.search(s)
+        for s in _sentences(text)
+    )
+
+
+def test_review_names_gaps(test, agent_returns=None, text_response=None):
+    """Tag-gated (`review-names-gaps`): a review of pe_005 names both gaps a
+    review owes, because the test marks the linking dimensions N/A
+    (`na_dimensions`, #4548): a_013 names Thomas Flynn (I2) as father but no
+    pe_ entry links it to I2, and pe_005's null match_score is unexplained."""
+    if "review-names-gaps" not in (test.get("tags") or []):
+        pytest.skip("not a review-names-gaps test")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "person-evidence", test)
+    assert _names_missing_i2_link(reply), (
+        "the review does not say that a_013 has no pe_ link to Thomas Flynn (I2)"
+    )
+    assert _names_unexplained_score(reply), (
+        "the review does not say that pe_005's match_score is null and unexplained"
+    )
+
+
 def test_naturalization_exception_not_flagged(after_state, test):
     """Tag-gated (`naturalization-exception`): an 1869 directory in the project
     shows residence before the 1871 arrival, so the arrival is a return trip

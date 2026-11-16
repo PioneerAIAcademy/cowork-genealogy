@@ -18,6 +18,8 @@ Block a test from executing when:
   on a direct-arm test, or leaves one of the agent's fixture-backed tools with
   no fixture
 - a positive test in a routing suite lists no `execution.stub_skills`
+- `na_dimensions` names a dimension that is not a heading in the suite's
+  rubric.md, or is set on a negative test
 """
 
 from __future__ import annotations
@@ -379,12 +381,33 @@ def check_runnable(
     # file is a runnability failure (it's a typo, not an opt-out), and so
     # is a blank one — opting out means deleting the file.
     try:
-        parse_rubric_or_empty(
+        rubric = parse_rubric_or_empty(
             spec.skill,
             rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
         )
     except InvalidRubricError as e:
         return RunnabilityResult(False, f"rubric.md is malformed: {e}")
+
+    # `na_dimensions` (#4548) must name rubric headings exactly. A typo would
+    # coerce nothing and still exit green, and a base dimension (Correctness,
+    # Completeness) is what `_compute_outcome` gates on, so both are refused.
+    # A negative test is judged against an empty rubric, where the field could
+    # only do nothing.
+    if spec.na_dimensions:
+        if spec.type == "negative":
+            return RunnabilityResult(
+                False,
+                "na_dimensions is set on a negative test, which is judged "
+                "without its suite's rubric, so it would coerce nothing",
+            )
+        valid = [d.name for d in rubric.dimensions]
+        unknown = [n for n in spec.na_dimensions if n not in valid]
+        if unknown:
+            return RunnabilityResult(
+                False,
+                f"na_dimensions names {unknown}, which are not `## ` headings "
+                f"in {rubric_path}. Rubric dimensions: {valid or 'none'}",
+            )
 
     # A positive test in a ROUTING suite must list its stubs (#3568). Every agent
     # it spawns is denied by default, but the ownership validators skip only on a

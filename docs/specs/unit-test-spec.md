@@ -359,6 +359,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `variant_names` | optional (see Section 5.13) | omit (a declined skill produces no audit) |
+| `na_dimensions` | optional (see Section 5.14) | omit (refused: a negative test is judged without the suite's rubric) |
 | `negative` | omit | required |
 
 ### How a negative test is graded
@@ -544,6 +545,13 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "type": "boolean",
       "default": false,
       "description": "Opt-in. When true, the harness includes the actual (truncated) content of the entries this run wrote to research.json / tree.gedcomx.json in what the LLM judge sees, instead of only change counts. Use for skills whose graded deliverable is written to a file rather than echoed in the chat reply. See Section 5.9."
+    },
+    "na_dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1},
+      "description": "Opt-in. Rubric dimension names that are N/A for this test; the harness coerces their scores to null after judging. See Section 5.14."
     },
     "execution": {
       "type": "object",
@@ -1393,6 +1401,48 @@ backstop for both.
 Like § 5.12's field, this is top-level and reaches the validator only through
 `orchestrator.py`'s whitelist;
 `test_orchestrator_threads_variant_names_into_validators` pins it.
+
+### 5.14 `na_dimensions`
+
+Optional array of rubric dimension names, at least one, no repeats. After the
+judge returns and before the outcome is computed, the harness sets every
+non-null score on those dimensions to `null`
+(`orchestrator.coerce_review_dimensions_to_na`). The judge's original score and
+rationale go into an `output.warnings[]` entry of kind
+`coerced_review_dimension_to_na`, and the rationale is rewritten with a
+`[coerced-to-na]` prefix, as the routing-negative coercion does (§5.10).
+`judge_regrade.py` strips and re-applies it, so a regrade keeps it.
+
+**What it is for.** A review or audit test whose rubric has dimensions that
+grade linking work the test does not ask for. `ut_person_evidence_001` asks for
+a review of `pe_005` without writing. The rubric line and a `judge_context`
+line both said that flagging the missing I2 link is the full answer in a review,
+and the judge still docked Multi-person awareness, Score discipline and
+Rationale quality for not doing the linking (issue #4548). Prose did not hold
+the judge, so the score is dropped in code.
+
+**Rules.**
+
+- **Rubric names only, matched exactly.** A name that is not a `## ` heading in
+  the suite's `rubric.md` makes the test `not_runnable`, so a typo cannot coerce
+  nothing and exit green. A base dimension is refused by the same check:
+  Correctness and Completeness are what `_compute_outcome` gates on.
+- **Positive tests only.** A negative test is judged against an empty rubric, so
+  the runnability gate refuses the field there.
+- **Every non-null score is coerced,** a `3` as well as a `2`. N/A is a property
+  of the test, not of the score; coercing only the low scores would make the
+  aggregate depend on which way the judge fell.
+- **Never in what the judge is sent.** The coercion runs after the judge, so it
+  does not move `judge_render_hash` and no suite owes `make judge-regrade`.
+- **Authoring rule: a test that uses it carries a tag-gated validator** that
+  checks what the coerced dimensions held. On 001 that is
+  `test_review_names_gaps` (tag `review-names-gaps`): the reply must say that
+  a_013 has no pe_ link to Thomas Flynn (I2) and that `pe_005`'s null
+  `match_score` is unexplained. Without such a validator the field only removes
+  coverage.
+
+It is a real (non-cosmetic) field, so it is snapshot-tracked: editing it
+invalidates the content hash and forces a re-run.
 
 ---
 

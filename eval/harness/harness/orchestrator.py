@@ -896,6 +896,14 @@ async def _execute_single_run(
         warnings=judge_dimension_warnings,
     )
 
+    # Dimensions the test names N/A (#4548). After the judge returns and before
+    # the outcome, so the coerced nulls are what gates it.
+    coerce_review_dimensions_to_na(
+        judge_result.dimensions,
+        spec=spec,
+        warnings=judge_dimension_warnings,
+    )
+
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
@@ -1839,6 +1847,57 @@ def flag_routing_negative_judge_fail(
                 f"Original judge rationale: {orig}"
             )
             dd["score"] = None
+    return dimensions
+
+
+def coerce_review_dimensions_to_na(
+    dimensions: list[dict[str, Any]] | None,
+    *,
+    spec: TestSpec,
+    warnings: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]] | None:
+    """Coerce the rubric dimensions a test names in `na_dimensions` to null (#4548).
+
+    For a review or audit test whose rubric dimensions grade linking work the
+    test does not ask for. Prose in the rubric and in judge_context did not hold
+    the judge there, so the harness drops those scores after judging, never in
+    what the judge is sent (that would move `judge_render_hash`). Every non-null
+    score is coerced, a 3 as well as a 2: N/A is a property of the test, and
+    coercing only the low scores would make the aggregate depend on which way
+    the judge fell. A gating validator on the test owns what the dimension held.
+
+    The warning is appended BEFORE the mutation and is the only place the
+    judge's original score and rationale survive intact. Base dimensions are
+    never touched; the runnability gate refuses a base name in the first place.
+    """
+    names = set(spec.na_dimensions or ())
+    if not dimensions or not names:
+        return dimensions
+    for dd in dimensions:
+        if dd.get("source") == "base" or dd.get("name") not in names:
+            continue
+        if dd.get("score") is None:
+            continue
+        if warnings is not None:
+            warnings.append({
+                "kind": "coerced_review_dimension_to_na",
+                "advisory": (
+                    f"the test names {dd['name']} in na_dimensions, so the "
+                    f"judge's {dd.get('score')} was coerced to null; a gating "
+                    f"validator on the test grades what this dimension held."
+                ),
+                "name": dd["name"],
+                "score": dd.get("score"),
+                # `or ""`: the only durable record of the judge's reasoning.
+                "rationale": dd.get("rationale") or "",
+            })
+        orig = dd.get("rationale") or ""
+        dd["rationale"] = (
+            f"[coerced-to-na] the test names {dd['name']} in na_dimensions, so "
+            f"the judge's {dd.get('score')} was coerced to null. "
+            f"Original judge rationale: {orig}"
+        )
+        dd["score"] = None
     return dimensions
 
 

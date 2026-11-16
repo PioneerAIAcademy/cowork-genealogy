@@ -51,6 +51,8 @@ export interface UnitTestFile {
     max_input_tokens_per_turn?: number;
   };
   judge_reads_files?: boolean;
+  /** Rubric dimensions coerced to N/A after judging (#4548). */
+  na_dimensions?: string[];
 }
 
 export type DimensionSource = 'base' | 'rubric';

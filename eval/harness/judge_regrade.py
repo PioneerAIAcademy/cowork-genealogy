@@ -63,6 +63,7 @@ from harness.orchestrator import (
     _run_judge,
     build_judge_grade_kwargs,
     flag_routing_negative_judge_fail,
+    coerce_review_dimensions_to_na,
     gating_validator_failures,
 )
 from harness.scenario_brief import (
@@ -547,14 +548,21 @@ def hash_rendered_prompt(prompt_text: str) -> str:
 # ---- Live regrade ---------------------------------------------------------
 
 
-def _strip_prior_coerced_warnings(warnings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Remove `coerced_routing_negative_to_na` entries before re-flagging.
+_RE_FLAGGED_KINDS = frozenset({
+    "coerced_routing_negative_to_na",
+    "coerced_review_dimension_to_na",
+})
 
-    `flag_routing_negative_judge_fail` appends unconditionally; without this
-    strip a regrade would double-append on every pass. The function is
-    idempotent given a cleaned input.
+
+def _strip_prior_coerced_warnings(warnings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Remove the post-judge coercion entries before re-flagging.
+
+    `flag_routing_negative_judge_fail` and `coerce_review_dimensions_to_na`
+    both append unconditionally; without this strip a regrade would
+    double-append on every pass. The function is idempotent given a cleaned
+    input.
     """
-    return [w for w in (warnings or []) if (w or {}).get("kind") != "coerced_routing_negative_to_na"]
+    return [w for w in (warnings or []) if (w or {}).get("kind") not in _RE_FLAGGED_KINDS]
 
 
 _NO_BRIEF_KINDS = frozenset({"scenario_readme_fallback", "scenario_brief_missing"})
@@ -691,6 +699,11 @@ def regrade_run_log(
                 activated=activated,
                 skills_invoked=skills_invoked,
                 warnings=warnings,
+            )
+            # Re-applied here too, or a regrade would hand the outcome the
+            # judge's fresh scores on the dimensions the test names N/A.
+            coerce_review_dimensions_to_na(
+                fresh_dimensions, spec=spec, warnings=warnings
             )
             run_entry.setdefault("output", {})["warnings"] = warnings
 

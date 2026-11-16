@@ -18,6 +18,7 @@ from harness.orchestrator import (
     _handed_off_to_a_stub,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
+    coerce_review_dimensions_to_na,
     flag_routing_negative_judge_fail,
 )
 from harness.warning_kinds import (
@@ -2800,6 +2801,55 @@ def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):
     )
 
 
+def test_na_dimensions_reach_the_recorded_run(tmp_path, monkeypatch):
+    """The coercion is CALLED in the live pipeline, before the outcome, and its
+    kind is registered. The direct tests above stay green with the call or the
+    `warning_kinds` row deleted; this one does not (#4548)."""
+    import dataclasses
+
+    spec = dataclasses.replace(load_test(WIKI_TEST_PATH), na_dimensions=("Reply economy",))
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done", skills_invoked=["search-wikipedia"],
+            tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    monkeypatch.setattr(orchestrator, "_run_judge", _judge_returning([
+        {"source": "base", "name": "Correctness", "score": 3, "rationale": "ok"},
+        {"source": "base", "name": "Completeness", "score": 3, "rationale": "ok"},
+        {"source": "rubric", "name": "Reply economy", "score": 2, "rationale": "long"},
+    ]))
+    # What the outcome is computed FROM: the coercion must run before it.
+    seen: list = []
+    real_compute = orchestrator._compute_outcome
+
+    def recording_compute(**kw):
+        seen.append({d["name"]: d["score"] for d in kw["judge_dimensions"]})
+        return real_compute(**kw)
+
+    monkeypatch.setattr(orchestrator, "_compute_outcome", recording_compute)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-11-16_00-00-00",
+    ))
+
+    run = entry["runs"][0]
+    scores = {d["name"]: d["score"] for d in run["judge"]["dimensions"]}
+    assert scores["Reply economy"] is None
+    kinds = [w["kind"] for w in run["output"]["warnings"]]
+    assert kinds.count("coerced_review_dimension_to_na") == 1, kinds
+    assert seen and seen[0]["Reply economy"] is None, seen
+
+
 # A record-extraction fixture that declares expected_classifications.
 # record-extraction is the only skill that declares them, so it is the only
 # skill on which apply_deterministic_deference can fire at all.
@@ -3328,3 +3378,81 @@ def test_an_unparsed_call_with_no_usable_size_still_counts(marker):
     call = {"tool": "mcp__genealogy__research_append", "args": {"__unparsedToolInput": marker}}
     w = next(w for w in _build_warnings([], attempted_mcp_calls=[call]) if w["kind"] == "unparsed_tool_input")
     assert (w["count"], w["bytes"]) == (1, [0])
+
+
+# --- na_dimensions (#4548) ---------------------------------------------------
+
+
+def _na_spec(na=None):
+    raw = {
+        "test": {"id": "ut_o_na", "skill": "person-evidence", "name": "n",
+                 "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    }
+    if na is not None:
+        raw["na_dimensions"] = na
+    return load_test_from_dict(raw)
+
+
+def _review_dims():
+    return [
+        {"source": "base", "name": "Correctness", "score": 2, "rationale": "base"},
+        {"source": "rubric", "name": "Score discipline", "score": 2,
+         "rationale": "flagged the null score but did not call same_person"},
+        {"source": "rubric", "name": "Rationale quality", "score": 3, "rationale": "good"},
+        {"source": "rubric", "name": "Confidence calibration", "score": 2, "rationale": "cc"},
+        {"source": "rubric", "name": "Multi-person awareness", "score": None, "rationale": "n/a"},
+    ]
+
+
+def test_na_dimensions_coerce_every_non_null_score_and_keep_the_original():
+    """A 2 and a 3 both become null: N/A is a property of the test, not of the
+    score. The warning is the only place the judge's grade survives."""
+    dims = _review_dims()
+    warnings: list = []
+    coerce_review_dimensions_to_na(
+        dims,
+        spec=_na_spec(["Score discipline", "Rationale quality", "Multi-person awareness"]),
+        warnings=warnings,
+    )
+    by = {d["name"]: d for d in dims}
+    assert by["Score discipline"]["score"] is None
+    assert by["Rationale quality"]["score"] is None
+    assert by["Score discipline"]["rationale"].startswith("[coerced-to-na]")
+    assert "did not call same_person" in by["Score discipline"]["rationale"]
+    assert [(w["kind"], w["name"], w["score"], w["rationale"]) for w in warnings] == [
+        ("coerced_review_dimension_to_na", "Score discipline", 2,
+         "flagged the null score but did not call same_person"),
+        ("coerced_review_dimension_to_na", "Rationale quality", 3, "good"),
+    ]
+    validate_warning_kinds(warnings)
+
+
+def test_na_dimensions_leave_unnamed_null_and_base_dimensions_alone():
+    dims = _review_dims()
+    base = dict(dims[0])
+    warnings: list = []
+    coerce_review_dimensions_to_na(
+        dims,
+        spec=_na_spec(["Score discipline", "Multi-person awareness", "Correctness"]),
+        warnings=warnings,
+    )
+    by = {d["name"]: d for d in dims}
+    # A base dimension is never coerced, even when named (the gate refuses it).
+    assert by["Correctness"] == base
+    # Unnamed rubric dimensions keep the judge's score.
+    assert by["Confidence calibration"]["score"] == 2
+    assert by["Rationale quality"]["score"] == 3
+    # Already null: no warning, rationale untouched.
+    assert by["Multi-person awareness"]["rationale"] == "n/a"
+    assert [w["name"] for w in warnings] == ["Score discipline"]
+
+
+def test_a_test_without_na_dimensions_is_untouched():
+    dims = _review_dims()
+    before = [dict(d) for d in dims]
+    warnings: list = []
+    coerce_review_dimensions_to_na(dims, spec=_na_spec(), warnings=warnings)
+    assert dims == before
+    assert warnings == []

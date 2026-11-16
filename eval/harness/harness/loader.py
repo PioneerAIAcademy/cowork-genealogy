@@ -44,6 +44,7 @@ class TestSpec:
     execution: dict[str, Any]
     intentionally_invalid: bool = False
     judge_reads_files: bool = False
+    na_dimensions: tuple[str, ...] = ()
     source_path: Path | None = None
     raw: dict[str, Any] = field(default_factory=dict)
     # Direct-agent arm: the exact text handed to the pair's agent, in place of a
@@ -124,6 +125,7 @@ def load_test_from_dict(raw: dict[str, Any]) -> TestSpec:
         execution=dict(raw.get("execution", {})),
         intentionally_invalid=bool(raw.get("intentionally_invalid", False)),
         judge_reads_files=bool(raw.get("judge_reads_files", False)),
+        na_dimensions=tuple(raw.get("na_dimensions", ())),
         delegation=input_block.get("delegation"),
         raw=raw,
     )
