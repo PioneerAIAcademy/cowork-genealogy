@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_research_hts",
     "skill": "research",
-    "name": "Hosted: a no-project, no-objective request reads newProjectPath and routes to the tree-survey agent",
+    "name": "Hosted: a no-project, no-objective request reads no path other than newProjectPath and routes to the tree-survey agent",
     "type": "positive",
-    "description": "The hosted pair of ut_research_tsv, with the same message. project_list answers hosted with no projects and a fresh newProjectPath. The router reads project state at newProjectPath, finds no project, and, because the message states no person or question, spawns @plugin:tree-survey (no projectPath), relays its suggestions, and stops for the researcher's pick (issue #4246).",
+    "description": "The hosted pair of ut_research_tsv, with the same message. project_list answers hosted with no projects and a fresh newProjectPath. The empty listing already says there is no project, so the router reads project state at newProjectPath or not at all, never at another path, and, because the message states no person or question, spawns @plugin:tree-survey (no projectPath), relays its suggestions, and stops for the researcher's pick (issue #4246).",
     "tags": [
       "routing",
       "routes-to:tree-survey",
