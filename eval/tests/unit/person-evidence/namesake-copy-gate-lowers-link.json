@@ -14,7 +14,7 @@
     "delegation": "pe_001 links the head of the 1860 Cumru Township census household (src_001, assertion a_001) to I1 George Ackerman. Copy the census facts for him onto I1, including his 1860 residence (a_008).\n\nprojectPath: <workspace>",
     "scenario": "namesake-planted-absent-spouse"
   },
-  "mcp_fixtures": [],
+  "mcp_fixtures": ["same-person-ackerman-1860-head-a001"],
   "execution": {
     "max_wall_clock_seconds": 1200,
     "sdk_message_silence_seconds": 600

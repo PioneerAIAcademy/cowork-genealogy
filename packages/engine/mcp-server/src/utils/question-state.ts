@@ -113,11 +113,10 @@ function searchStepFor(item: any): string {
 }
 
 /** The lowest-sequence `planned`/`in_progress` item on a plan that is still
- *  active, **skipping one that waits only on the researcher's upload**, and a
- *  `fs_hints` item (issue #3153) that is `in_progress` with no `log[]` entry
- *  naming it: that one is waiting on the researcher's verdicts, so it never
- *  pins `nextStep` and the router moves to the next search. (A `planned`
- *  `fs_hints` item is still returned: that is the one search-hints executes.)
+ *  active, **skipping one that waits only on the researcher's upload**. A
+ *  `fs_hints` item is returned like any other: search-hints decides its hints
+ *  and completes it in one spawn, so one left `in_progress` by the old
+ *  verdict-waiting flow goes back to search-hints to finish.
  *
  *  `hasOpenWork` decides WHETHER a search is due from the set without the
  *  upload-waiting items; this picks WHICH one. Reading different sets let the
@@ -126,18 +125,8 @@ function searchStepFor(item: any): string {
  *  arrived. */
 function nextUnexecutedItem(research: any, plans: any[]): any | null {
   const waitingOnUpload = awaitingUploadItemIds(research?.log);
-  const itemsNamedByLog = new Set(
-    arr(research?.log)
-      .map((l: any) => l?.plan_item_id)
-      .filter((id: any): id is string => typeof id === "string"),
-  );
-  const isWaitingHints = (i: any) =>
-    i?.record_type === "fs_hints" &&
-    i?.status === "in_progress" &&
-    !itemsNamedByLog.has(i?.id);
   const items = openItems(plans)
     .filter((i) => !waitingOnUpload.has(i?.id))
-    .filter((i) => !isWaitingHints(i))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
 }
@@ -755,9 +744,7 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
       : item
         ? searchStepFor(item)
-        // Reached when the only open item is a `fs_hints` item waiting on
-        // verdicts: `hasOpenWork` counts it and the picker skips it. Otherwise
-        // unreachable — `hasOpenWork`'s items are a subset of the picker's and
+        // Unreachable — `hasOpenWork`'s items are a subset of the picker's and
         // both apply the same upload skip.
         : "research-exhaustiveness, then proof-conclusion";
   } else if (openConflictIds.length > 0) {

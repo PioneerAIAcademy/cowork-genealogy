@@ -148,7 +148,7 @@ describe("write serialization under concurrency (issue #1715)", () => {
         entry: {
           citation: "1860 U.S. Census, Provo, Utah",
           citation_detail: { who: "Enumerator", what: "1860 Census", when_created: "1860", when_accessed: "2026-01-01", where: "Provo, Utah", where_within: "dwelling 5" },
-          source_classification: "original",
+          source_classification: "derivative",
           repository: "NARA",
           access_date: "2026-01-01",
         },

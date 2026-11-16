@@ -1,0 +1,620 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Trace John Carter (b. ~1836, Leeds, Yorkshire), husband of Ann, in the Leeds census and parish records.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-05-06",
+    "updated": "2026-05-06"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Which Leeds records are of John Carter?",
+      "rationale": "John is in the tree with his wife Ann (I2) and son Thomas (I3). The 1881 census lists a John Carter household in Leeds.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "John",
+        "surname": "Carter",
+        "residencePlace": "Leeds, Yorkshire, England",
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "1881 England census, Leeds: John Carter, 45, cloth dresser, born Leeds; wife Ann, 43; son Thomas, 19.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:CENS-61L"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "1861 England census, Leeds: John Carter, 25, cloth dresser; wife Ann, 23.",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": null,
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:BUR-70LD"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Leeds St Peter burials: John Carter, buried 3 March 1870. No age or abode entered.",
+      "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": null,
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:BAPT-62L"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Leeds St Peter baptisms: Thomas, son of John and Ann Carter, 1862.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S3",
+      "citation": "1881 England Census, Leeds, Yorkshire, John Carter household; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Recording official",
+        "what": "1881 England and Wales census, enumerator's book",
+        "when_created": "1881",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "Leeds, John Carter household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1861 England Census, Leeds, Yorkshire, John Carter household; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Recording official",
+        "what": "1861 England and Wales census, enumerator's book",
+        "when_created": "1861",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "Leeds, John Carter household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:CENS-61L",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Leeds St Peter (Yorkshire, England), burial register, entry for John Carter, 3 March 1870; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Recording official",
+        "what": "Parish burial register",
+        "when_created": "1870",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "John Carter burial entry"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:BUR-70LD",
+      "url_archived": null,
+      "notes": "The entry gives a name and a date only.",
+      "transcription": null,
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S4",
+      "citation": "Leeds St Peter (Yorkshire, England), baptism register, entry for Thomas Carter, 1862; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Recording official",
+        "what": "Parish baptism register",
+        "when_created": "1862",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "Thomas Carter baptism entry"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:BAPT-62L",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_004"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "head",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "John Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "John",
+        "surname": "Carter"
+      }
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "head",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 45, born Leeds",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "~1836",
+      "place": "Leeds, Yorkshire, England",
+      "structured_value": {
+        "year": 1836,
+        "place": "Leeds, Yorkshire, England"
+      }
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "head",
+      "record_persona_id": null,
+      "fact_type": "residence",
+      "value": "12 Marsh Lane, Leeds",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1881",
+      "place": "Leeds, Yorkshire, England"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "head",
+      "record_persona_id": null,
+      "fact_type": "occupation",
+      "value": "Cloth dresser",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1881",
+      "place": "Leeds, Yorkshire, England"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "wife",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Ann Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ann",
+        "surname": "Carter"
+      }
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "wife",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 43, born Leeds",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "~1838",
+      "place": "Leeds, Yorkshire, England",
+      "structured_value": {
+        "year": 1838,
+        "place": "Leeds, Yorkshire, England"
+      }
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "wife",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Wife of the head, John Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1881",
+      "place": "Leeds, Yorkshire, England",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head",
+        "related_person_name": "John Carter"
+      }
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "son",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Thomas Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Carter"
+      }
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "son",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 19, born Leeds",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "~1862",
+      "place": "Leeds, Yorkshire, England",
+      "structured_value": {
+        "year": 1862,
+        "place": "Leeds, Yorkshire, England"
+      }
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-81L",
+      "record_role": "son",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Son of the head, John Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1881",
+      "place": "Leeds, Yorkshire, England",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head",
+        "related_person_name": "John Carter"
+      }
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-61L",
+      "record_role": "head",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "John Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "John",
+        "surname": "Carter"
+      }
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-61L",
+      "record_role": "head",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 25, born Leeds",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "inferred",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "~1836",
+      "place": "Leeds, Yorkshire, England",
+      "structured_value": {
+        "year": 1836,
+        "place": "Leeds, Yorkshire, England"
+      }
+    },
+    {
+      "id": "a_022",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-61L",
+      "record_role": "head",
+      "record_persona_id": null,
+      "fact_type": "residence",
+      "value": "Marsh Lane, Leeds",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "place": "Leeds, Yorkshire, England"
+    },
+    {
+      "id": "a_023",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CENS-61L",
+      "record_role": "wife",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Ann Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ann",
+        "surname": "Carter"
+      }
+    },
+    {
+      "id": "a_030",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BUR-70LD",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "John Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "John",
+        "surname": "Carter"
+      }
+    },
+    {
+      "id": "a_031",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BUR-70LD",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "burial",
+      "value": "Buried 3 March 1870",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "3 March 1870",
+      "place": "Leeds, Yorkshire, England"
+    },
+    {
+      "id": "a_040",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BAPT-62L",
+      "record_role": "child",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Thomas Carter",
+      "information_quality": "primary",
+      "informant": "Recording official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Carter"
+      }
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Head of the 1861 Leeds household with wife Ann; name, age and trade agree.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Head of the 1861 Leeds household with wife Ann; name, age and trade agree.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Head of the 1861 Leeds household with wife Ann; name, age and trade agree.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_023",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Wife of the head in the 1861 Leeds household.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name and parish only. The register gives no age, abode, occupation or relative for this John Carter.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name and parish only. The register gives no age, abode, occupation or relative for this John Carter.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_040",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Baptised 1862 as son of John and Ann Carter.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

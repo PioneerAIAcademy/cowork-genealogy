@@ -53,6 +53,8 @@ export interface Host {
   call(tool: ToolName, args: ToolInput): Promise<unknown>
   openLink(url: string): Promise<void>
   requestDisplayMode(mode: DisplayMode): Promise<DisplayMode>
+  /** Tells the model what the researcher is looking at. Posts no message. Absent where the host has no such call. */
+  tellModel?(text: string): Promise<void>
 }
 
 /** Both modes, for a host where the page lays itself out. */

@@ -255,6 +255,8 @@ The `narrative_markdown` is the **authoritative GPS conclusion** — if structur
 
 ### 5. Write the proof_summaries entry
 
+Write only proof_summaries, questions and project in research.json — never update an assertion, not even its informant_bias_notes; if an assertion looks wrong to you, say so in your reply so the caller can route it to record-extraction.
+
 **One `research_append` call, one `ops[]` batch, carrying BOTH the summary and the question resolve — in that order.** The summary op comes first because the tool refuses a `resolved` question that no proof summary references, and it evaluates that against the project as the batch applies, so an earlier op in the same batch satisfies it. A batch is all-or-nothing: either the conclusion and its resolution both land, or neither does, and a question is never left resolved with no conclusion behind it.
 
 ```

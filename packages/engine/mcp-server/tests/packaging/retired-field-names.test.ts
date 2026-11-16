@@ -103,6 +103,11 @@ const ALLOWED: Record<string, string> = {
     "reads the frozen run-log corpus, which still carries the retired spelling",
   "packages/engine/mcp-server/src/utils/record-basis.ts":
     "the engine's back-compat reader for research.json documents written before the rename",
+  "apps/mcp-viewer/src/file/record-basis.ts":
+    "the MCP App page's back-compat reader: Compare and the person page must not show an " +
+    "absent assertion from a document written before the rename as something the record said",
+  "apps/mcp-viewer/src/file/compare-fixture.ts":
+    "the page's planted test project, with one assertion in the legacy spelling to test that reader",
   "packages/engine/mcp-server/tests/utils/record-basis.test.ts":
     "tests the back-compat reader, so it must name the retired spelling",
   "packages/engine/mcp-server/tests/tools/research-append.test.ts":
@@ -310,6 +315,8 @@ const ALLOWED2: Record<string, string> = {
     "one test function name (test_new_question_exhaustive_declaration_unstarted) retains the old name for attribution",
   "eval/harness/validators/test_research_exhaustiveness.py":
     "one test function name (test_no_exhaustive_declaration) retains the old name for attribution",
+  "eval/harness/tests/unit/test_research_exhaustiveness_wiki_fetch_validator.py":
+    "imports the validator function test_no_exhaustive_declaration by name to pin d3c's tag (#4323)",
 
   // ── Rename attribution comments — cite the old name to document the rename ──
   "eval/harness/e2e/guardrail_shadow_report.py":

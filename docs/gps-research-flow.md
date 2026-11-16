@@ -327,9 +327,11 @@ not define exhaustiveness. One of the seven stop criteria,
 plausibly overturn the conclusion? If yes, the gap is unsearched, not
 unobtainable, and the plan returns.
 
-Two things are verified before the criteria: every assertion on the question
-carries real, reasoned classifications, and every person the judgment depends
-on has had their identity resolved.
+Four things are verified before the criteria: every assertion on the question
+carries real, reasoned classifications; every person the judgment depends on
+has had their identity resolved; no value is still tentative where a different
+record could settle it; and no unresolved conflict lists the question, which
+stops the check with a `blocked_by_conflict` stop.
 
 The default when in doubt is to go back and search more — a gap is usually
 unsearched rather than unobtainable.
