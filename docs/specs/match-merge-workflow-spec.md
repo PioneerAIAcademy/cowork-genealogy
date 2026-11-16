@@ -13,9 +13,10 @@
 > the candidate document" step is **rewired to the per-persona
 > `materialize_facts` flow** (`tree-materialization-spec.md` §3-§4, §9). **No
 > agent dry-runs the coherence gate before materialization** (2026-11-15):
-> `person-evidence` does not hold `merge_warnings`; `materialize_facts`' own
-> warning refusal and a `person_warnings` call after its last link cover the
-> write (§5.4). The tool itself
+> `person-evidence` does not hold `merge_warnings`; `same_person`'s
+> `warningsIfLinked`, `materialize_facts`' own warning refusal and a
+> `person_warnings` call after its last link stand in its place (§5.4). The
+> tool itself
 > (`merge_warnings` / the `hasSameCensus` MobWarnings port) is unchanged and
 > stays available as a preview. Any passage below that still describes a
 > `merge_record_into_tree` fold is historical unless updated inline.
@@ -205,10 +206,25 @@ evidence — it never folds a candidate document.
 household, and does not hold the tool. The dry-run needs the record as a
 candidate document, which a hand-off of extracted assertions does not carry; in
 the 16 `person-evidence` spawns of the e2e runs from 2026-11-01 to 2026-11-15 it
-was never called. Two checks cover the write instead: `materialize_facts`
-refuses a write that introduces an unjustified warning, and after its last link
-the agent calls `person_warnings` once on every person it linked to that already
-existed in the tree, and reports what that returns. `merge_warnings` (§7) stays
+was never called. Three checks stand in its place:
+
+- **Before the link.** `same_person` returns `warningsIfLinked`: the warnings
+  that copying the scored record person's facts onto the tree person would
+  introduce, each marked impossible or implausible (`same-person-tool-spec.md`).
+  Tree facts are taken as correct: an impossible warning against a fact that
+  came with the tree, or that records back at `confident`, is a no-link. An
+  implausible one is weighed with the rest of the evidence. A fact the project
+  added on one record linked below `confident` can lose to a record whose
+  relatives match the tree's, and the link then names it.
+- **At the write.** `materialize_facts` refuses a write that introduces an
+  unjustified warning. It is the same computation, so it refuses exactly what
+  `warningsIfLinked` listed.
+- **After the last link.** The agent calls `person_warnings` once on every
+  person it linked to that already existed in the tree, and reports what that
+  returns.
+
+The merge-only checks, chiefly `hasSameCensus` (two people of one census page
+put on one tree person), run in none of the three. `merge_warnings` (§7) stays
 available to any caller as a preview, with the tiers in §6.
 
 ### 5.5 person-evidence — materialization *(replaces the document fold)*

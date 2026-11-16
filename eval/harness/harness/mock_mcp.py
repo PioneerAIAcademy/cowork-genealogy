@@ -839,11 +839,14 @@ def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[s
 
 def _record_match_score(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
-) -> tuple[bool, dict[str, Any] | None, list[str]]:
+) -> tuple[bool, dict[str, Any] | None, list[str], list[str]]:
     """Write the attestation a real `same_person` call would have written, and
-    work out whom the call is about and which of the record person's birth
+    work out whom the call is about, which of the record person's birth
     disputes a settled conflict set aside (production's `settledConflicts`,
-    from the compiled `settledBirthDisputes`, for the assertion's own party).
+    from the compiled `settledBirthDisputes`, for the assertion's own party),
+    and which warnings the link would introduce (production's
+    `warningsIfLinked`, from the compiled function of that name, for the party
+    that was scored).
 
     `same_person` is not in LIVE_TOOLS -- it calls FamilySearch -- so the
     compiled tool never executes here and `recordMatchScore` never runs. That
@@ -876,16 +879,17 @@ def _record_match_score(
         and `recordMatchScore` no-ops when persona id and role are both empty,
         so both cases simply write nothing and the caller stays silent.
 
-    Returns `(attested, parties, settled)`: whether an attestation was written,
-    the `recordPersona`/`treePerson` the documents give for this call (None when
-    there are none, or the tree could not be read: that costs the overlay only,
-    never the attestation), and the `settledConflicts` sentences. Never raises: a harness that fails the run over its
+    Returns `(attested, parties, settled, link_warnings)`: whether an attestation
+    was written, the `recordPersona`/`treePerson` the documents give for this call
+    (None when there are none, or the tree could not be read: that costs the
+    overlay only, never the attestation), the `settledConflicts` sentences and
+    the `warningsIfLinked` sentences. Never raises: a harness that fails the run over its
     own bookkeeping is worse than one that does not attest, and the writer-side
     gate failing loudly is the signal we want.
     """
     score = response.get("score")
     if not isinstance(score, (int, float)):
-        return False, None, []
+        return False, None, [], []
     assertion_id = args.get("assertionId")
     tree_person_id = args.get("treePersonId")
     if not isinstance(assertion_id, str) or not isinstance(tree_person_id, str):
@@ -894,14 +898,17 @@ def _record_match_score(
         # absent assertion, so the write would not happen anyway (confirmed by
         # mutation: removing this changes no test). It is an early-out that
         # avoids spawning a node process per two-document call.
-        return False, None, []
+        return False, None, [], []
 
     sp_js = _MCP_BUILD / "tools" / "same-person.js"
     ms_js = _MCP_BUILD / "utils" / "match-scores.js"
     pio_js = _MCP_BUILD / "utils" / "project-io.js"
     ra_js = _MCP_BUILD / "utils" / "settled-birth-disputes.js"
-    if not (sp_js.exists() and ms_js.exists() and pio_js.exists() and ra_js.exists()):
-        return False, None, []
+    mf_js = _MCP_BUILD / "utils" / "persona-copy.js"
+    if not (
+        sp_js.exists() and ms_js.exists() and pio_js.exists() and ra_js.exists() and mf_js.exists()
+    ):
+        return False, None, [], []
 
     _url = _node_module_url
 
@@ -923,6 +930,7 @@ def _record_match_score(
         f"import {{ recordMatchScore }} from '{_url(ms_js)}';"
         f"import {{ readProjectJson, withProjectLock }} from '{_url(pio_js)}';"
         f"import * as ra from '{_url(ra_js)}';"
+        f"import * as mf from '{_url(mf_js)}';"
         "let raw='';for await (const c of process.stdin) raw+=c;"
         "const i=JSON.parse(raw);"
         "const research=await readProjectJson(i.projectPath,'research.json');"
@@ -940,20 +948,30 @@ def _record_match_score(
         "if (rec!==null) await withProjectLock(i.projectPath, async () => {"
         "  await recordMatchScore(i.projectPath,rec); });"
         "let parties=null;"
+        "let linkWarnings=[];"
+        # The warnings are for the persona production scored: `recordPersona.role`,
+        # else the role asked for, else the assertion's own.
         "try { const tree=await readProjectJson(i.projectPath,'tree.gedcomx.json');"
         "  parties=describeScoredPair(research,tree,i.assertionId,i.treePersonId,"
-        "    i.role ?? undefined,i.recordPersonaId ?? undefined); } catch {}"
-        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties, settled}));"
+        "    i.role ?? undefined,i.recordPersonaId ?? undefined);"
+        "  if (scored && typeof mf.warningsIfLinked==='function') {"
+        "    let starting=null;"
+        "    try { starting=await readProjectJson(i.projectPath,'starting-tree.gedcomx.json'); } catch {}"
+        "    linkWarnings=mf.warningsIfLinked(research,tree,scored.record_id,"
+        "      parties?.recordPersona?.role ?? i.role ?? scored.record_role,i.treePersonId,starting); }"
+        "} catch {}"
+        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties, settled, linkWarnings}));"
     )
     try:
         proc = _run_node_eval(
             script, input_str=json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG
         )
         if proc.returncode != 0:
-            return False, None, []
+            return False, None, [], []
         out = json.loads(proc.stdout or "{}")
         settled = [s for s in out.get("settled") or [] if isinstance(s, str)]
-        return bool(out.get("wrote")), out.get("parties"), settled
+        link_warnings = [s for s in out.get("linkWarnings") or [] if isinstance(s, str)]
+        return bool(out.get("wrote")), out.get("parties"), settled, link_warnings
     except subprocess.TimeoutExpired:
         # Never raises, by contract -- but a swallowed timeout is indistinguishable
         # from "no score", and the writer-side gate turns that into a refusal of a
@@ -964,9 +982,9 @@ def _record_match_score(
             f"for assertion {assertion_id}; the link will be refused as unattested",
             stacklevel=2,
         )
-        return False, None, []
+        return False, None, [], []
     except Exception:
-        return False, None, []
+        return False, None, [], []
 
 
 def _overlay_parties(
@@ -1830,10 +1848,14 @@ def create_mock_server(
                 and _workspace is not None
                 and "error" not in response
             ):
-                entry["attested"], parties, settled = _record_match_score(_workspace, args, response)
+                entry["attested"], parties, settled, link_warnings = _record_match_score(
+                    _workspace, args, response
+                )
                 response = _overlay_parties(response, parties)
                 if settled:
                     response = {**response, "settledConflicts": settled}
+                if link_warnings:
+                    response = {**response, "warningsIfLinked": link_warnings}
 
             # Production's external_links_search stores the place's full list in
             # external-collections.json whenever it is given a projectPath (#2995).

@@ -24,6 +24,8 @@ import {
 import { getProjectStore, type ProjectStore } from "../store/project-store.js";
 import { recordReadTool } from "./record-read.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
+import { warningsIfLinked } from "../utils/persona-copy.js";
+import { readStartingTree } from "../utils/starting-tree.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 import {
   NAME_TYPES,
@@ -446,6 +448,11 @@ async function samePersonFromProject(
   const settledConflicts = ownParty
     ? settledBirthDisputes(research, tree, assertionId, treePersonId)
     : [];
+  // For the persona that was scored, whichever party it is: its facts are what
+  // a link to this tree person would copy onto them.
+  const linkWarnings = warningsIfLinked(
+    research, tree, recordId, recordPersona.role ?? role, treePersonId, await readStartingTree(projectPath),
+  );
   return {
     score,
     recordSource,
@@ -453,6 +460,7 @@ async function samePersonFromProject(
     recordPersona,
     treePerson,
     ...(settledConflicts.length > 0 ? { settledConflicts } : {}),
+    ...(linkWarnings.length > 0 ? { warningsIfLinked: linkWarnings } : {}),
   };
 }
 

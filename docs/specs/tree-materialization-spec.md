@@ -1400,9 +1400,10 @@ carried by that phase.
 
 **Changed 2026-11-15:** no agent runs the `merge_warnings` dry-run before
 materializing, here or in §12 phase 3. `person-evidence` no longer holds the
-tool; `materialize_facts`' own warning refusal and a `person_warnings` call
-after its last link cover the write (`match-merge-workflow-spec.md` §5.4). The
-tool and its integration test are unchanged.
+tool; `same_person`'s `warningsIfLinked` before the link, `materialize_facts`'
+own warning refusal at the write and a `person_warnings` call after the last
+link stand in its place (`match-merge-workflow-spec.md` §5.4). The tool and its
+integration test are unchanged.
 
 **Verification gate for the phase:** `grep` for any surviving
 `merge_record_into_tree` / `mergeRecordIntoTree` reference returns nothing
