@@ -76,6 +76,7 @@ from harness.workspace import (
     build_workspace,
     cleanup_session_store,
     snapshot_files,
+    workspace_parent,
 )
 
 
@@ -1196,6 +1197,7 @@ async def _execute_skill_with_retry(
         try:
             with tempfile.TemporaryDirectory(
                 prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
+                dir=workspace_parent(),
                 ignore_cleanup_errors=True,
             ) as tmp:
                 workspace = Path(tmp)
