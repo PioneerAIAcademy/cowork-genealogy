@@ -5,11 +5,7 @@
     "standardPlace": "~Vermont"
   },
   "response": {
-    "query": {
-      "standardPlace": "Vermont, United States",
-      "startYear": 1760,
-      "endYear": 1860
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Vermont",
     "totalForPlace": 22,
     "results": [
@@ -17,145 +13,97 @@
         "id": "1879935",
         "title": "Vermont, Addison County and District Probate Files, 1845-1915",
         "dateRange": "1845-1915",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 54451,
-        "url": "https://www.familysearch.org/search/collection/1879935"
+        "personCount": 0
       },
       {
         "id": "1935045",
         "title": "Vermont, Bennington County, Manchester District Estate Files, 1779-1935",
         "dateRange": "1779-1935",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 119038,
-        "url": "https://www.familysearch.org/search/collection/1935045"
+        "personCount": 0
       },
       {
         "id": "1675544",
         "title": "Vermont, Births and Christenings, 1765-1908",
         "dateRange": "1765-1908",
-        "recordCount": 210358,
-        "personCount": 585280,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/1675544"
+        "personCount": 585280
       },
       {
         "id": "1921463",
         "title": "Vermont, Franklin County Probate Records, 1796-1921",
         "dateRange": "1796-1921",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 235834,
-        "url": "https://www.familysearch.org/search/collection/1921463"
+        "personCount": 0
       },
       {
         "id": "1409123",
         "title": "Vermont, Land Records, Early to 1900",
         "dateRange": "1600-1900",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 169270,
-        "url": "https://www.familysearch.org/search/collection/1409123"
+        "personCount": 0
       },
       {
         "id": "1675550",
         "title": "Vermont, Marriages, 1791-1974",
         "dateRange": "1791-1974",
-        "recordCount": 11502,
-        "personCount": 35623,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/1675550"
+        "personCount": 35623
       },
       {
         "id": "1807377",
         "title": "Vermont, Orange County, Bradford District Estate Files, 1780-1915",
         "dateRange": "1780-1915",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 75694,
-        "url": "https://www.familysearch.org/search/collection/1807377"
+        "personCount": 0
       },
       {
         "id": "1453983",
         "title": "Vermont, Orange County, Randolph District Probate Records, 1790-1935",
         "dateRange": "1790-1935",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 65929,
-        "url": "https://www.familysearch.org/search/collection/1453983"
+        "personCount": 0
       },
       {
         "id": "1435692",
         "title": "Vermont, Probate Files, 1800-1921",
         "dateRange": "1800-1921",
-        "recordCount": 10225,
-        "personCount": 10214,
-        "imageCount": 204359,
-        "url": "https://www.familysearch.org/search/collection/1435692"
+        "personCount": 10214
       },
       {
         "id": "1987653",
         "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
         "dateRange": "1699-2005",
-        "recordCount": 2385813,
-        "personCount": 5248430,
-        "imageCount": 1386297,
-        "url": "https://www.familysearch.org/search/collection/1987653"
+        "personCount": 5248430
       },
       {
         "id": "1627819",
         "title": "Vermont, Town Records, 1850-2005",
         "dateRange": "1850-2005",
-        "recordCount": 55144,
-        "personCount": 136019,
-        "imageCount": 75597,
-        "url": "https://www.familysearch.org/search/collection/1627819"
+        "personCount": 136019
       },
       {
         "id": "5000152",
         "title": "Vermont, U.S. District Court, Naturalization Records, 1790-1954",
         "dateRange": "1790-1954",
-        "recordCount": 15872,
-        "personCount": 20745,
-        "imageCount": 10209,
-        "url": "https://www.familysearch.org/search/collection/5000152"
+        "personCount": 20745
       },
       {
         "id": "1784223",
         "title": "Vermont, Vital Records, 1760-1954",
         "dateRange": "1760-1954",
-        "recordCount": 2328328,
-        "personCount": 7076740,
-        "imageCount": 3087354,
-        "url": "https://www.familysearch.org/search/collection/1784223"
+        "personCount": 7076740
       },
       {
         "id": "2075288",
         "title": "Vermont, Vital Records, 1760-2008",
         "dateRange": "1760-2008",
-        "recordCount": 1974168,
-        "personCount": 7457505,
-        "imageCount": 1162117,
-        "url": "https://www.familysearch.org/search/collection/2075288"
+        "personCount": 7457505
       },
       {
         "id": "3158875",
         "title": "Vermont, Wills and Deeds, ca. 1700s-2017",
         "dateRange": "1700-2017",
-        "recordCount": 1,
-        "personCount": 25792,
-        "imageCount": 3335,
-        "url": "https://www.familysearch.org/search/collection/3158875"
+        "personCount": 25792
       },
       {
         "id": "1879202",
         "title": "Vermont, Windham County, Westminster District, Probate Records, 1781-1921",
         "dateRange": "1781-1921",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 21168,
-        "url": "https://www.familysearch.org/search/collection/1879202"
+        "personCount": 0
       }
     ]
   }

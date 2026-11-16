@@ -127,7 +127,7 @@ that would replace it (probed 2026-10-02, §5):
   search asserts nothing, so a search keyed on a surname from a single marriage
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
-- **A pre-1850 US federal census names only the head (issue #4163).** The
+- **A pre-1850 US federal census names only the head.** The
   federal schedules of 1790–1840 name the head of household and count everyone
   else in age brackets; 1850–1870 name every member without stating a
   relationship; 1880 adds relationship to the head; birthplace first appears in
@@ -147,7 +147,7 @@ that would replace it (probed 2026-10-02, §5):
   `test_pre1850_parentage_plan_puts_child_naming_record_first`; the framing
   stays with the judge, since a phrase match over the 18 replayed runs flagged
   sound placement lines ("confirm I1's residence") and caught no real claim.
-- **Any personCount above 0 is name-searchable (issue #4163).** Collection
+- **Any personCount above 0 is name-searchable.** Collection
   2106411 (Massachusetts Land Records) returns personCount 18 beside 5.7
   million images. In 3 of 9 runs the agent judged that effectively zero and
   wrote `browse-only (personCount 0)`, a number the response never returned.

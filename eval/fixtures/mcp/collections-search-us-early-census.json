@@ -5,11 +5,7 @@
     "standardPlace": "~United States"
   },
   "response": {
-    "query": {
-      "standardPlace": "United States",
-      "startYear": 1760,
-      "endYear": 1860
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "United States",
     "totalForPlace": 176,
     "results": [
@@ -17,505 +13,337 @@
         "id": "2613134",
         "title": "Maine, United States Naturalization Records, 1790-1991",
         "dateRange": "1790-1991",
-        "recordCount": 85306,
-        "personCount": 100821,
-        "imageCount": 29001,
-        "url": "https://www.familysearch.org/search/collection/2613134"
+        "personCount": 100821
       },
       {
         "id": "2632082",
         "title": "Massachusetts, United States Naturalization Records, 1790-1991",
         "dateRange": "1790-1991",
-        "recordCount": 1325927,
-        "personCount": 1645959,
-        "imageCount": 1389230,
-        "url": "https://www.familysearch.org/search/collection/2632082"
+        "personCount": 1645959
       },
       {
         "id": "1420441",
         "title": "United States Census (Mortality Schedule), 1850-1880",
         "dateRange": "1850-1880",
-        "recordCount": 1356791,
-        "personCount": 1356791,
-        "imageCount": 8724,
-        "url": "https://www.familysearch.org/search/collection/1420441"
+        "personCount": 1356791
       },
       {
         "id": "3754697",
         "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
         "dateRange": "1748-1991",
-        "recordCount": 67418133,
-        "personCount": 233239068,
-        "imageCount": 1285932,
-        "url": "https://www.familysearch.org/search/collection/3754697"
+        "personCount": 233239068
       },
       {
         "id": "4109619",
         "title": "United States Virgin Islands, Census Records, 1841-1911",
         "dateRange": "1841-1911",
-        "recordCount": 363365,
-        "personCount": 363365,
-        "imageCount": 28297,
-        "url": "https://www.familysearch.org/search/collection/4109619"
+        "personCount": 363365
       },
       {
         "id": "2074276",
         "title": "United States, Bureau of Land Management Tract Books, 1800-c. 1955",
         "dateRange": "1799-1956",
-        "recordCount": 7213160,
-        "personCount": 7493415,
-        "imageCount": 942374,
-        "url": "https://www.familysearch.org/search/collection/2074276"
+        "personCount": 7493415
       },
       {
         "id": "2250027",
         "title": "United States, Burial Registers for Military Posts, Camps, and Stations,1768-1921",
         "dateRange": "1768-1921",
-        "recordCount": 16152,
-        "personCount": 16153,
-        "imageCount": 474,
-        "url": "https://www.familysearch.org/search/collection/2250027"
+        "personCount": 16153
       },
       {
         "id": "4163575",
         "title": "United States, California, Indexes to Private Land Claims Dockets, 1849-1895",
         "dateRange": "1849-1895",
-        "recordCount": 1341,
-        "personCount": 1341,
-        "imageCount": 437,
-        "url": "https://www.familysearch.org/search/collection/4163575"
+        "personCount": 1341
       },
       {
         "id": "1420440",
         "title": "United States Census (Slave Schedule), 1850",
         "dateRange": "1850-1850",
-        "recordCount": 3587571,
-        "personCount": 3587571,
-        "imageCount": 39376,
-        "url": "https://www.familysearch.org/search/collection/1420440"
+        "personCount": 3587571
       },
       {
         "id": "3161105",
         "title": "United States Census (Slave Schedule), 1860",
         "dateRange": "1860-1860",
-        "recordCount": 4429408,
-        "personCount": 4429408,
-        "imageCount": 49346,
-        "url": "https://www.familysearch.org/search/collection/3161105"
+        "personCount": 4429408
       },
       {
         "id": "1803959",
         "title": "United States Census, 1790",
         "dateRange": "1790-1790",
-        "recordCount": 408495,
-        "personCount": 408783,
-        "imageCount": 6244,
-        "url": "https://www.familysearch.org/search/collection/1803959"
+        "personCount": 408783
       },
       {
         "id": "1804228",
         "title": "United States Census, 1800",
         "dateRange": "1800-1800",
-        "recordCount": 540398,
-        "personCount": 540398,
-        "imageCount": 18454,
-        "url": "https://www.familysearch.org/search/collection/1804228"
+        "personCount": 540398
       },
       {
         "id": "1803765",
         "title": "United States Census, 1810",
         "dateRange": "1810-1810",
-        "recordCount": 827020,
-        "personCount": 827020,
-        "imageCount": 27366,
-        "url": "https://www.familysearch.org/search/collection/1803765"
+        "personCount": 827020
       },
       {
         "id": "1803955",
         "title": "United States Census, 1820",
         "dateRange": "1820-1820",
-        "recordCount": 1226220,
-        "personCount": 1226220,
-        "imageCount": 37482,
-        "url": "https://www.familysearch.org/search/collection/1803955"
+        "personCount": 1226220
       },
       {
         "id": "1803958",
         "title": "United States Census, 1830",
         "dateRange": "1830-1830",
-        "recordCount": 1824437,
-        "personCount": 1825827,
-        "imageCount": 151929,
-        "url": "https://www.familysearch.org/search/collection/1803958"
+        "personCount": 1825827
       },
       {
         "id": "1786457",
         "title": "United States, Census, 1840",
         "dateRange": "1840-1840",
-        "recordCount": 2566652,
-        "personCount": 2567892,
-        "imageCount": 196897,
-        "url": "https://www.familysearch.org/search/collection/1786457"
+        "personCount": 2567892
       },
       {
         "id": "1401638",
         "title": "United States Census, 1850",
         "dateRange": "1850-1850",
-        "recordCount": 20224571,
-        "personCount": 20224571,
-        "imageCount": 489683,
-        "url": "https://www.familysearch.org/search/collection/1401638"
+        "personCount": 20224571
       },
       {
         "id": "1473181",
         "title": "United States Census, 1860",
         "dateRange": "1860-1860",
-        "recordCount": 27518891,
-        "personCount": 27518891,
-        "imageCount": 1192232,
-        "url": "https://www.familysearch.org/search/collection/1473181"
+        "personCount": 27518891
       },
       {
         "id": "2363041",
         "title": "United States, Evangelical Lutheran Church in America records, ca. 1800-1900",
         "dateRange": "1800-1900",
-        "recordCount": 3205217,
-        "personCount": 7848369,
-        "imageCount": 528493,
-        "url": "https://www.familysearch.org/search/collection/2363041"
+        "personCount": 7848369
       },
       {
         "id": "2110821",
         "title": "United States, Famine Irish Passenger Index, 1846-1851",
         "dateRange": "1846-1851",
-        "recordCount": 604596,
-        "personCount": 604596,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/2110821"
+        "personCount": 604596
       },
       {
         "id": "1414908",
         "title": "United States, Freedmen's Bureau Marriages, 1859-1873",
         "dateRange": "1859-1873",
-        "recordCount": 20133,
-        "personCount": 40347,
-        "imageCount": 3564,
-        "url": "https://www.familysearch.org/search/collection/1414908"
+        "personCount": 40347
       },
       {
         "id": "2608510",
         "title": "United States, GenealogyBank Historic Newspaper Births, 1815-2014",
         "dateRange": "1815-2014",
-        "recordCount": 320776,
-        "personCount": 820218,
-        "imageCount": 44122,
-        "url": "https://www.familysearch.org/search/collection/2608510"
+        "personCount": 820218
       },
       {
         "id": "2603807",
         "title": "United States, GenealogyBank Historic Newspaper Marriages, 1815-2011",
         "dateRange": "1815-2011",
-        "recordCount": 303599,
-        "personCount": 606896,
-        "imageCount": 43136,
-        "url": "https://www.familysearch.org/search/collection/2603807"
+        "personCount": 606896
       },
       {
         "id": "2860782",
         "title": "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013",
         "dateRange": "1815-2013",
-        "recordCount": 37170919,
-        "personCount": 191521772,
-        "imageCount": 4918255,
-        "url": "https://www.familysearch.org/search/collection/2860782"
+        "personCount": 191521772
       },
       {
         "id": "2110801",
         "title": "United States, Germans to America Index, 1850-1897",
         "dateRange": "1850-1897",
-        "recordCount": 4068907,
-        "personCount": 4068910,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/2110801"
+        "personCount": 4068910
       },
       {
         "id": "5000136",
         "title": "United States, Google, United States Inventors Index",
         "dateRange": "1750-1950",
-        "recordCount": 1048575,
-        "personCount": 1048575,
-        "imageCount": 1048575,
-        "url": "https://www.familysearch.org/search/collection/5000136"
+        "personCount": 1048575
       },
       {
         "id": "3460246",
         "title": "United States, Indenture and Manumission Records, 1780-1939",
         "dateRange": "1780-1939",
-        "recordCount": 29731,
-        "personCount": 60527,
-        "imageCount": 25955,
-        "url": "https://www.familysearch.org/search/collection/3460246"
+        "personCount": 60527
       },
       {
         "id": "1921756",
         "title": "United States, Index to Passenger Arrivals, Atlantic and Gulf Ports, 1820-1874",
         "dateRange": "1820-1874",
-        "recordCount": 1023459,
-        "personCount": 1023497,
-        "imageCount": 1030430,
-        "url": "https://www.familysearch.org/search/collection/1921756"
+        "personCount": 1023497
       },
       {
         "id": "2120733",
         "title": "United States, Indexes to Service Records of Volunteer Soldiers (NARA M629, M694, M872), 1784-1858, 1899-1901",
         "dateRange": "1784-1901",
-        "recordCount": 222576,
-        "personCount": 222578,
-        "imageCount": 204549,
-        "url": "https://www.familysearch.org/search/collection/2120733"
+        "personCount": 222578
       },
       {
         "id": "2110811",
         "title": "United States, Italians to America Index, 1855-1900",
         "dateRange": "1855-1900",
-        "recordCount": 845287,
-        "personCount": 845287,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/2110811"
+        "personCount": 845287
       },
       {
         "id": "4231101",
         "title": "United States, Kentucky, Agricultural Schedules, 1850-1880",
         "dateRange": "1850-1880",
-        "recordCount": 480007,
-        "personCount": 480007,
-        "imageCount": 17639,
-        "url": "https://www.familysearch.org/search/collection/4231101"
+        "personCount": 480007
       },
       {
         "id": "1675543",
         "title": "United States, Marriages, 1733-1990",
         "dateRange": "1733-1990",
-        "recordCount": 17301,
-        "personCount": 45306,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/1675543"
+        "personCount": 45306
       },
       {
         "id": "1987567",
         "title": "United States, Mexican War Index and Service Records, 1846-1848",
         "dateRange": "1846-1848",
-        "recordCount": 202106,
-        "personCount": 202106,
-        "imageCount": 211909,
-        "url": "https://www.familysearch.org/search/collection/1987567"
+        "personCount": 202106
       },
       {
         "id": "4279962",
         "title": "United States, Missouri, Naturalization Records, 1843-1991",
         "dateRange": "1843-1991",
-        "recordCount": 490676,
-        "personCount": 622484,
-        "imageCount": 467168,
-        "url": "https://www.familysearch.org/search/collection/4279962"
+        "personCount": 622484
       },
       {
         "id": "1852758",
         "title": "United States, Mormon Battalion Pension Applications, 1846-1923",
         "dateRange": "1846-1923",
-        "recordCount": 26830,
-        "personCount": 53421,
-        "imageCount": 26830,
-        "url": "https://www.familysearch.org/search/collection/1852758"
+        "personCount": 53421
       },
       {
         "id": "1916228",
         "title": "United States, Muster Rolls of the Marine Corps, 1798-1937",
         "dateRange": "1798-1937",
-        "recordCount": 5794949,
-        "personCount": 6954461,
-        "imageCount": 269148,
-        "url": "https://www.familysearch.org/search/collection/1916228"
+        "personCount": 6954461
       },
       {
         "id": "2796818",
         "title": "United States, Native American, Eastern Cherokee Indian Reservation Rolls, 1848-1970",
         "dateRange": "1848-1970",
-        "recordCount": 48812,
-        "personCount": 48851,
-        "imageCount": 684,
-        "url": "https://www.familysearch.org/search/collection/2796818"
+        "personCount": 48851
       },
       {
         "id": "1825347",
         "title": "United States, Naval Enlistment Rendezvous, 1855-1891",
         "dateRange": "1855-1891",
-        "recordCount": 262742,
-        "personCount": 262742,
-        "imageCount": 34965,
-        "url": "https://www.familysearch.org/search/collection/1825347"
+        "personCount": 262742
       },
       {
         "id": "1840474",
         "title": "United States, New England Petitions for Naturalization Index, 1791-1906",
         "dateRange": "1791-1906",
-        "recordCount": 615903,
-        "personCount": 605290,
-        "imageCount": 635867,
-        "url": "https://www.familysearch.org/search/collection/1840474"
+        "personCount": 605290
       },
       {
         "id": "5000341",
         "title": "United States, New England Seamen Records, 1790-1947",
         "dateRange": "1790-1947",
-        "recordCount": 104551,
-        "personCount": 104553,
-        "imageCount": 27268,
-        "url": "https://www.familysearch.org/search/collection/5000341"
+        "personCount": 104553
       },
       {
         "id": "2064580",
         "title": "United States, New England, Petitions for Naturalization, 1787-1906",
         "dateRange": "1787-1931",
-        "recordCount": 851733,
-        "personCount": 851746,
-        "imageCount": 954378,
-        "url": "https://www.familysearch.org/search/collection/2064580"
+        "personCount": 851746
       },
       {
         "id": "1979425",
         "title": "United States, Old War Pension Index, 1815-1926",
         "dateRange": "1815-1926",
-        "recordCount": 28286,
-        "personCount": 37905,
-        "imageCount": 28984,
-        "url": "https://www.familysearch.org/search/collection/1979425"
+        "personCount": 37905
       },
       {
         "id": "2185145",
         "title": "United States, Passport Applications, 1795-1925",
         "dateRange": "1795-1925",
-        "recordCount": 1326771,
-        "personCount": 1960897,
-        "imageCount": 3038874,
-        "url": "https://www.familysearch.org/search/collection/2185145"
+        "personCount": 1960897
       },
       {
         "id": "1880762",
         "title": "United States, Registers of Enlistments in the U.S. Army, 1798-1914",
         "dateRange": "1798-1914",
-        "recordCount": 1390566,
-        "personCount": 1401594,
-        "imageCount": 47266,
-        "url": "https://www.familysearch.org/search/collection/1880762"
+        "personCount": 1401594
       },
       {
         "id": "1849623",
         "title": "United States, Revolutionary War Compiled Service Records, 1775-1783",
         "dateRange": "1775-1783",
-        "recordCount": 1997022,
-        "personCount": 1997022,
-        "imageCount": 1997022,
-        "url": "https://www.familysearch.org/search/collection/1849623"
+        "personCount": 1997022
       },
       {
         "id": "2069831",
         "title": "United States, Revolutionary War Pension Payment Ledgers, 1818-1872",
         "dateRange": "1818-1872",
-        "recordCount": 156667,
-        "personCount": 201477,
-        "imageCount": 8955,
-        "url": "https://www.familysearch.org/search/collection/2069831"
+        "personCount": 201477
       },
       {
         "id": "1417475",
         "title": "United States, Revolutionary War Pension and Bounty Land Warrant Applications, 1800-1900",
         "dateRange": "1800-1900",
-        "recordCount": 6959032,
-        "personCount": 24749726,
-        "imageCount": 6959035,
-        "url": "https://www.familysearch.org/search/collection/1417475"
+        "personCount": 24749726
       },
       {
         "id": "2068326",
         "title": "United States, Revolutionary War Rolls, 1775-1783",
         "dateRange": "1775-1783",
-        "recordCount": 1557656,
-        "personCount": 1557680,
-        "imageCount": 93048,
-        "url": "https://www.familysearch.org/search/collection/2068326"
+        "personCount": 1557680
       },
       {
         "id": "2070137",
         "title": "United States, Revolutionary War, Virginia Pension Application Files, 1830-1875",
         "dateRange": "1830-1875",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 10771,
-        "url": "https://www.familysearch.org/search/collection/2070137"
+        "personCount": 0
       },
       {
         "id": "2546162",
         "title": "United States, Rosters of Revolutionary War Soldiers and Sailors, 1775-1966",
         "dateRange": "1775-1966",
-        "recordCount": 1252372,
-        "personCount": 1324460,
-        "imageCount": 48993,
-        "url": "https://www.familysearch.org/search/collection/2546162"
+        "personCount": 1324460
       },
       {
         "id": "2110813",
         "title": "United States, Russians to America Index, 1834-1897",
         "dateRange": "1834-1897",
-        "recordCount": 527394,
-        "personCount": 527392,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/2110813"
+        "personCount": 527392
       },
       {
         "id": "3418453",
         "title": "United States, Slave Birth Records, 1780-1846",
         "dateRange": "1780-1846",
-        "recordCount": 3035,
-        "personCount": 5933,
-        "imageCount": 1505,
-        "url": "https://www.familysearch.org/search/collection/3418453"
+        "personCount": 5933
       },
       {
         "id": "1834325",
         "title": "United States, War of 1812 Index to Pension Application Files, 1812-1910",
         "dateRange": "1812-1910",
-        "recordCount": 91259,
-        "personCount": 145028,
-        "imageCount": 91832,
-        "url": "https://www.familysearch.org/search/collection/1834325"
+        "personCount": 145028
       },
       {
         "id": "1916219",
         "title": "United States, War of 1812 Index to Service Records, 1812-1815",
         "dateRange": "1812-1815",
-        "recordCount": 614465,
-        "personCount": 611694,
-        "imageCount": 622984,
-        "url": "https://www.familysearch.org/search/collection/1916219"
+        "personCount": 611694
       },
       {
         "id": "1854302",
         "title": "United States, Western States Marriage Index",
         "dateRange": "1846-2008",
-        "recordCount": 914500,
-        "personCount": 1828958,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/1854302"
+        "personCount": 1828958
       },
       {
         "id": "5000137",
         "title": "United States, Wikipedia, Prominent Persons Index, 1500-2022",
         "dateRange": "1500-2022",
-        "recordCount": 167346,
-        "personCount": 167346,
-        "imageCount": 167346,
-        "url": "https://www.familysearch.org/search/collection/5000137"
+        "personCount": 167346
       }
     ]
   }
