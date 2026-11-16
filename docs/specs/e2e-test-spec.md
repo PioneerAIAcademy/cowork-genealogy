@@ -2727,9 +2727,10 @@ research job. Single-ask mode covers that use: it sends one
 message as one ordinary turn and checks which unit answered and what was saved.
 
 `make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
-the whole panel. It prints a short block per fixture (a PASS/FAIL line, then the
-units in order and any reason), exits 0 when all pass, 1 when
-any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
+the whole panel. It prints a short block per fixture (a PASS, FAIL or KNOWN-FAIL
+line, then the units in order and any reason) and a closing count. It exits 0 when
+every fixture passes or fails with its `known_issue` set, 1 when any other fails or
+goes ungraded, and 2 when a run never happened (bad fixture, no build, the genealogy
 MCP server unavailable — §6).
 
 ### 16.1 Directories
@@ -2739,8 +2740,8 @@ MCP server unavailable — §6).
   committed; a PR that changes a fixture's result pastes the printed block instead.
 - **Which PRs owe a run:** one that changes the research skill's `SKILL.md`, any
   agent's `description:`, `plugin/hooks/no_project_route.py` or
-  `plugin/main-thread.json` runs the whole panel and pastes the printed block. A FAIL
-  is fine when that fixture's README names the issue that owns it.
+  `plugin/main-thread.json` runs the whole panel and pastes the printed block. A
+  KNOWN-FAIL is fine; a plain FAIL is new and the PR says why.
 
 Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
 them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
@@ -2764,6 +2765,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
+| `known_issue` | no | the open issue that owns this fixture's FAIL, as `"#N"`. The line prints KNOWN-FAIL and the panel's exit code ignores it, so a new FAIL stands out. The README names it ("Issue #N owns it"; a unit test checks). A known-issue fixture that passes prints a note to remove the field |
 | `ends_on_offer` | no (false) | also requires the turn to end on a "Continue with …?" offer (§16.4, check 7). Not set on a turn whose right ending is a question for the researcher, which writes no offer line |
 | `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
 | `blocked_tools` | no | as for autonomous fixtures (§6.1) |
