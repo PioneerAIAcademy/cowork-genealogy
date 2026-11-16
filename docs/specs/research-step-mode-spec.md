@@ -364,7 +364,8 @@ choice. The alpha sends no `options`.
     found by `_last_question_id` (creation order), deliberately **not** `current_question`:
     a successful conclusion resolves its own question in the same batch as the summary, so
     by the time this reads `research.json` back, `current_question` has already moved past
-    it (known gap for a question re-concluded out of creation order, issue #4601); the
+    it. Known gap: creation order no longer names the right question when an EARLIER
+    question is re-concluded in place while a LATER one sits open and unresolved; the
     (`turn_step`, `offered_step`) pair was already answered since the last planning round
     or since the CURRENT question's active-plan items last grew in count; or
     `MAX_AUTO_REPLIES` (30) replies were sent.
