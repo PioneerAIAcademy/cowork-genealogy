@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the baptism's mother, entered as 'Doyle' with no given name, against the tree's mother, Mary Doyle (I3). Low because the record gives her a surname and nothing else. Score measured on 2026-11-15 with the FamilySearch matcher: the canned record (record-read-flynn-baptism-mother-surname-only) against flynn-baptism-mother-surname-only's tree.",
+  "args": {
+    "treePersonId": "I3"
+  },
+  "response": {
+    "score": 0.0011901769,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "BP3",
+      "name": "Doyle",
+      "role": "mother"
+    },
+    "treePerson": {
+      "id": "I3",
+      "name": "Mary Doyle"
+    }
+  }
+}

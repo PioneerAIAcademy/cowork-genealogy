@@ -413,6 +413,10 @@ def test_both_guards_pass_on_every_committed_positive_run():
             if entry.get("test_type") != "positive":
                 continue
             for run in entry.get("runs") or []:
+                # A fail-retried run the guard itself failed stays in the log; replaying it
+                # would flag the guard for doing its job.
+                if run.get("outcome") == "fail":
+                    continue
                 output = run.get("output") or {}
                 # GRADE WHAT THE VALIDATOR GRADES. `subject_reply_text` returns
                 # the agent's OWN return whenever it is non-empty, and on all 53

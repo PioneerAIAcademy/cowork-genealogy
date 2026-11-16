@@ -699,16 +699,14 @@ rules in `research/SKILL.md` branch on it; find them with
   state, one step per turn, rather than handed straight to the step that owns a
   single deliverable.
 - **No researcher present.** On an autonomous run the router hands `userPresent: no`
-  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  to two agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
   run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
-  otherwise `yes`". `@plugin:search-hints` gets it from its routing-table row:
-  "`userPresent: no` ONLY on an `--autonomous` run". `@plugin:person-evidence` gets
+  otherwise `yes`". `@plugin:person-evidence` gets
   it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
   run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". The rules are there so an e2e run neither waits on an
-  external-site capture nobody will upload nor asks for hint verdicts nobody will
-  give. No check makes the router send the field to search-external-sites or
-  search-hints (the research unit suite checks it only on person-evidence's spawn),
+  and in an autonomous run". The rules are there so an e2e run never waits on an
+  external-site capture nobody will upload. No check makes the router send the field
+  to search-external-sites (the research unit suite checks it only on person-evidence's spawn),
   and an agent reads a missing field as `yes`:
   `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
   search-external-sites without it, and that plan item stayed `in_progress` waiting
@@ -2729,9 +2727,10 @@ research job. Single-ask mode covers that use: it sends one
 message as one ordinary turn and checks which unit answered and what was saved.
 
 `make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
-the whole panel. It prints a short block per fixture (a PASS/FAIL line, then the
-units in order and any reason), exits 0 when all pass, 1 when
-any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
+the whole panel. It prints a short block per fixture (a PASS, FAIL or KNOWN-FAIL
+line, then the units in order and any reason) and a closing count. It exits 0 when
+every fixture passes or fails with its `known_issue` set, 1 when any other fails or
+goes ungraded, and 2 when a run never happened (bad fixture, no build, the genealogy
 MCP server unavailable — §6).
 
 ### 16.1 Directories
@@ -2739,6 +2738,10 @@ MCP server unavailable — §6).
 - Fixtures: `eval/tests/e2e-single-ask/<slug>/`.
 - Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`. They are not
   committed; a PR that changes a fixture's result pastes the printed block instead.
+- **Which PRs owe a run:** one that changes the research skill's `SKILL.md`, any
+  agent's `description:`, `plugin/hooks/no_project_route.py` or
+  `plugin/main-thread.json` runs the whole panel and pastes the printed block. A
+  KNOWN-FAIL is fine; a plain FAIL is new and the PR says why.
 
 Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
 them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
@@ -2762,6 +2765,8 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
+| `known_issue` | no | the open issue that owns this fixture's FAIL, as `"#N"`. The line prints KNOWN-FAIL and the panel's exit code ignores it, so a new FAIL stands out. The README names it ("Issue #N owns it"; a unit test checks). A known-issue fixture that passes prints a note to remove the field |
+| `ends_on_offer` | no (false) | also requires the turn to end on a "Continue with …?" offer (§16.4, check 7). Not set on a turn whose right ending is a question for the researcher, which writes no offer line |
 | `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
 | `blocked_tools` | no | as for autonomous fixtures (§6.1) |
 
@@ -2770,15 +2775,24 @@ name that is not a bare name from `manifest.json` or a built-in, and a save list
 names one section both `absent` and present (it could never fail).
 
 Plus `starting-research.json` and `starting-tree.gedcomx.json`, named as for
-autonomous fixtures. Every fixture starts from an existing project: with no
-project and no PID, `init-project` creates nothing and asks for an ID, so the turn
-would grade as "no unit ran" for a reason that has nothing to do with routing.
-There is no `expected-findings.json` and no judge.
+autonomous fixtures, **or neither**: a fixture with neither runs in an empty
+folder, the shape of most first messages. The loader refuses a fixture with one
+and not the other (partial seeding is an authoring mistake). An empty-folder
+fixture with a FamilySearch person ID lists `init-project` in `setup_units`; one
+with no ID expects `init-project` to ask for it and create nothing. Its save
+cannot be `sources` when init-project runs: `project_create` imports the person's
+Memories as sources, so a new source shows nothing about the deliverable
+(the loader refuses a `sources` save on any empty-folder fixture). There is no `expected-findings.json` and no judge.
 
 ### 16.3 How the turn runs
 
 - The message is sent **verbatim**: no `/research` prefix, no `--autonomous`, no
   provided-documents suffix. The system prompt is the autonomous mode's.
+- **Cowork's routing sentence.** Each message gets what Cowork's plugin hook sends:
+  `no_project_route.decision()`'s routing sentence and `SOURCES_NOTE`, called from
+  the shipped hook, not copied (`context_policy.route_note_hook`). This holds for
+  every fixture, seeded or not, because Cowork sends it whether or not a project
+  exists. The autonomous run and the unit harness add `SOURCES_NOTE` alone.
 - **No continue nudges.** No harness run binds a Stop hook (step mode phase 2), and
   there is no stall resume (it sends a second message). This matches Cowork today and step
   mode's cap 0 (`docs/specs/research-step-mode-spec.md`, decision 1).
@@ -2793,7 +2807,8 @@ There is no `expected-findings.json` and no judge.
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all six hold (`expected_owner` and `setup_units` may carry a plugin
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all seven hold, the
+seventh only when the fixture asks for it (`expected_owner` and `setup_units` may carry a plugin
 namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
@@ -2807,13 +2822,24 @@ namespace; it is stripped, as it is from spawned names):
 3. **`save`** — any one `expected_save` alternative holds: a new `sources` entry,
    a new `log` entry whose `tool` (and `outcome`, when given) is the expected
    value, or, with `absent`, no new entry in that section. "New" means its id is
-   in the final `research.json` and not in `starting-research.json`.
+   in the final `research.json` and not in `starting-research.json`; in an
+   empty-folder fixture every row is new.
 4. **`forbidden_tools`** — no call to any of them, on any thread, matched by
    bare name.
 5. **`required_tools`** — at least one call to each that did not error.
 6. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
    here even if it saved: the patron never got the answer. `cost_cap` is not a
    cut-off (§6: it only labels a finished run), so it does not fail this check.
+7. **`ends_on_offer`** — only with `ends_on_offer: true`: the last line of the
+   turn's last **main-thread** assistant text is a "Continue with …?" offer, read
+   with the step boundary's own `offered_step` (`plugin/hooks/step_boundary.py`).
+   Never a subagent's text or a harness line. An invented label is no offer.
+
+**A missing final `research.json`.** From a seeded project it fails `save` and
+`no_research_job`. In an empty-folder fixture it means no new rows: it adds no
+`no_research_job` reason, an `absent` save passes, and any other save fails. A
+`research.json` that exists but does not parse is not "missing": it fails both, as
+unreadable.
 
 Printed, not graded: every unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
@@ -2825,7 +2851,9 @@ A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 ### 16.5 What a pass does not show
 
 A pass here is **not** a pass on today's hosted alpha, whose system prompt
-(`apps/server/app/agent/real_agent.py`) differs from the harness's. Since step mode's
+(`apps/server/app/agent/real_agent.py`) differs from the harness's. The panel sends
+Cowork's routing sentence, which the hosted planes do not, so a pass on a
+first-message fixture does not show the hosted route fixed either. Since step mode's
 phase 2 neither plane nudges a stop or halts on a delivery signal: a single ask ends
 where the model ends it.
 

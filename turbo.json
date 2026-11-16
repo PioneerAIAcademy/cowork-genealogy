@@ -35,6 +35,16 @@
         "$TURBO_ROOT$/eval/Setup.bat"
       ]
     },
+    "mcp-viewer#test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/captures/2026-09-29-mcandrew-children/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/compound-objective-fully-covered/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/compound-objective-fully-covered/results/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/flynn-prior-craft-verdict/*.json"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true

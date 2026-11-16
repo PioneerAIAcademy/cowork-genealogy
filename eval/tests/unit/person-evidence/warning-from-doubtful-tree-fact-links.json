@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_person_evidence_w7k",
+    "skill": "person-evidence",
+    "name": "A warning that comes from a doubtful fact already on the tree person: link, and name the fact in doubt",
+    "type": "positive",
+    "description": "The 1881 census household of John Carter agrees with the tree on John's age, birthplace and trade and on his wife Ann and son Thomas. same_person scores the head against John (I1) at 0.76 and lists the warning the link would introduce: an event more than a year after I1's burial. That 1870 burial rests on a register entry with a name and a date only, linked at `probable`. The census stands and the burial is the fact in doubt, so the head is linked to I1 and the rationale names the warning and the burial (lead, 2026-11-15). The mirror of ut_person_evidence_w4d and ut_person_evidence_w2t: the same warning, the opposite answer, decided by where the tree fact comes from and what backs it.",
+    "tags": [
+      "person-evidence",
+      "link-warning-explained"
+    ]
+  },
+  "input": {
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_002, a_003, a_004, a_005, a_006, a_007, a_008, a_009, a_010. They are an 1881 census household in Leeds found for John Carter (I1): the head John Carter, his wife Ann and his son Thomas.\n\nprojectPath: <workspace>",
+    "scenario": "carter-census-stray-burial"
+  },
+  "mcp_fixtures": [
+    "same-person-carter-head-relatives",
+    "same-person-carter-head",
+    "same-person-carter-wife",
+    "same-person-carter-son"
+  ],
+  "judge_context": [
+    "The tree's John Carter (I1) carries a burial of 3 March 1870 from a register entry that gives a name and a date and nothing else; it is linked to him at `probable` as pe_005 and pe_006 with the rationale 'Name and parish only'. The 1881 census household agrees with the tree on John's age (45, born about 1836), birthplace (Leeds) and trade (cloth dresser, as in 1861), and lists a wife Ann, 43, and a son Thomas, 19, who match I2 and I3 by name and age.",
+    "`same_person` returns a score of about 0.76 for the head against I1 and a `warningsIfLinked` entry marked impossible: the entry would put an event more than a year after I1's burial, a fact this project added that one record backs, linked `probable`. That is the one kind of tree fact that can lose (lead, 2026-11-16): one this project added on a single record linked below `confident`, against a record whose relatives match the tree's. The census is John (his wife and son agree) and the 1870 burial, which rests on a name alone, is the fact in doubt.",
+    "The correct result is a pe_ link for the head's assertions (a_001-a_004) to I1 at `probable` or `confident` (both pass). The rationale names the warning and says the 1870 burial is the fact in doubt, and the reply says the burial link (pe_005, pe_006) needs review.",
+    "Writing NO link to I1 is a FAIL on Correctness: the warning rule over-firing on a record three family members tie to him. A `speculative` link to I1 is a PARTIAL (2) on Confidence calibration.",
+    "A link to I1 whose rationale and reply never mention the warning or the burial is a PARTIAL (2) on Rationale quality: it linked past a listed warning without reviewing it.",
+    "Lowering pe_005 and pe_006 to `speculative` with that reason is acceptable and not required. Leaving them as they are and flagging the burial for review passes equally. Do not mark either down.",
+    "materialize_facts refuses to copy the head's facts onto I1 for the same warning until the call carries a justification. A re-call with the justification that lands the facts is correct. Stopping after the refusal, with the link written and the refusal reported, is acceptable: do not mark it down. Tool Arguments is not marked down for the refused first call.",
+    "The request names the whole household, as the research skill's hand-off does. The wife's assertions (a_005-a_007) are linked to I2 and the son's (a_008-a_010) to I3, at `probable` or `confident`. Leaving them unlinked while the head is linked is a PARTIAL (2) on Completeness. Grade Multi-person awareness by the rubric on the two relationship assertions (a_007, a_010).",
+    "No person is minted and no edge is written: the tree already holds I2, I3 and the three relationships. Mark Person minting and connecting edges N/A unless the run minted a person or wrote an edge, which would be wrong.",
+    "The canned scores are not the subject of this test: do not grade their values."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}

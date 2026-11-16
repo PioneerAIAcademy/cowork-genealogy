@@ -1,5 +1,5 @@
 import type { Principal } from "../auth/principal.js";
-import { fetchFulltextSearchable } from "./fulltext-searchable.js";
+import { fetchFulltextSearchableBatched } from "./fulltext-searchable.js";
 import { mapWithConcurrency } from "./place-resolver.js";
 import { RECORD_TYPE_GROUP_NAMES, conceptIdsForGroups } from "./record-type-groups.js";
 import type {
@@ -106,15 +106,11 @@ function dedupe(pages: MetadataRmsGroup[][]): MetadataRmsGroup[] {
   return [...seen.values()];
 }
 
-/** Which names are full-text searchable, in parallel batches; null if any batch failed. */
+/** Which names are full-text searchable, in parallel batches; null if any batch
+ *  failed. The batching moved to `fulltext-searchable.ts` when `research_append`
+ *  needed the same thing (#4431); this stays as the local name. */
 async function fulltextFor(names: string[], principal: Principal): Promise<Set<string> | null> {
-  const batches: string[][] = [];
-  for (let i = 0; i < names.length; i += FULLTEXT_BATCH) batches.push(names.slice(i, i + FULLTEXT_BATCH));
-  const sets = await mapWithConcurrency(batches, FULLTEXT_CONCURRENCY, (batch) =>
-    fetchFulltextSearchable(batch, principal),
-  );
-  if (sets.some((s) => s === null)) return null;
-  return new Set(sets.flatMap((s) => [...(s as Set<string>)]));
+  return fetchFulltextSearchableBatched(names, principal);
 }
 
 /**

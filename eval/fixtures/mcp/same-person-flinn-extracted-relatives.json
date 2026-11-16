@@ -1,0 +1,20 @@
+{
+  "tool": "same_person",
+  "description": "same_person with matchRelatives on Patrick Flinn's persona of VRNT-7M3 against I1: the father paired. List before the test's own I1 fixture, which the same call would otherwise match. Measured live on 2026-11-15 with same_person's project arm on flynn-record-matching-extracted (FamilySearch matcher).",
+  "args": {
+    "treePersonId": "I1",
+    "matchRelatives": true
+  },
+  "response": {
+    "matchRelatives": true,
+    "matches": [
+      {
+        "role": "parent",
+        "targetId": "VP2",
+        "candidateId": "I2",
+        "score": 0.26364696,
+        "preScore": 0.75
+      }
+    ]
+  }
+}

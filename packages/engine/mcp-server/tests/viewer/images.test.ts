@@ -2,7 +2,7 @@ import { mkdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { IMAGE_TOKEN_TTL_MS, imageTokens } from "../../viewer/tokens.js";
+import { IMAGE_TOKEN_TTL_MS, imageTokens } from "../../src/utils/image-tokens.js";
 import { PUBLIC_URL, realFoldersOnly, startViewer, tempFolders, writeProject, type RunningViewer } from "./harness.js";
 
 realFoldersOnly();
@@ -93,7 +93,7 @@ describe("every bad link is the same 404", () => {
     expect((await get(viewer, path)).status).toBe(200);
     const [payload, signature] = path.slice("/img/".length).split(".");
     const flip = (s: string) => (s.endsWith("A") ? `${s.slice(0, -1)}B` : `${s.slice(0, -1)}A`);
-    const longer = Buffer.from(JSON.stringify({ rel: "", ref: "images/page.jpg", expiresAt: Date.now() + 1e9 }));
+    const longer = Buffer.from(JSON.stringify({ project: "", ref: "images/page.jpg", expiresAt: Date.now() + 1e9 }));
     for (const token of [
       `${payload}.${flip(signature)}`,
       `${flip(payload)}.${signature}`,
