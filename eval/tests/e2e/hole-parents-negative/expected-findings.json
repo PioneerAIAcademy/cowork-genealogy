@@ -46,6 +46,7 @@
         "relation": "parents",
         "wrong_candidate": {
           "name": "the parents of a same-name 'Kristian/Christian Hole' from a different family",
+          "any_new": true,
           "note": "surfaced by searching the American surname 'Hole' in Norway; the true parents are under patronymics (Christophersen / Pedersdatter), so a father surnamed 'Hole' is a tell that the wrong family was attached"
         }
       },
