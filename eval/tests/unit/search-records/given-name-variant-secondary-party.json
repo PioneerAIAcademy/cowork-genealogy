@@ -48,7 +48,8 @@
     "Tool Arguments: expect at least two record_search calls against collectionId '1468080' — one with givenName 'Unna' (zero results) and at least one with a different givenName spelling (positive) — each carrying subjectId 'LKFW-9XH' so the pool is ranked inline (attachments folded in).",
     "Log quality: research_log_append entries should record both the negative (exact-spelling) and positive (variant-spelling) queries as distinct log entries — not overwrite or omit the negative one.",
     "It is acceptable for the skill to also try a query-structure change (e.g. searching under the groom's name, or without a place filter) as one of its attempts — that is good practice. What must NOT happen is stopping after query-structure changes alone, without ever touching the letters of the given name.",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
+    "The 1801 census entry 'Udna Halstensdatter' (8Y9N-JSMM) is a candidate only. Noting it as a possible match for further research is correct. Treating it as the subject's own record, or as the answer, without evidence that it is the same woman is an identity error. The target is the marriage record."
   ],
   "judge_reads_files": true
 }

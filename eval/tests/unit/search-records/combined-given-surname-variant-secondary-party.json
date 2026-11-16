@@ -69,7 +69,8 @@
     "Do not score down a search that sends the abbreviated surname 'Halsteinsdr' or 'Halsteinsdtr', and do not require one: the live index finds her under the full surname once the given name is 'Urna'.",
     "Tool Arguments: expect record_search calls against collectionId '1468080' carrying subjectId 'KZHH-VTX'. A call that hits fixture_not_found because no fixture covers that spelling or query shape is a fixture gap, not a Tool Arguments defect, when its arguments are otherwise correct.",
     "Log quality: each nil search and the positive search should each produce their own research_log_append entry, not be collapsed into one.",
-    "record_read is stocked but OPTIONAL for both personas (NW44-PM2, NW44-PMK). The search response already carries the record, so the skill may report from the hit or read the record first; score neither path down."
+    "record_read is stocked but OPTIONAL for both personas (NW44-PM2, NW44-PMK). The search response already carries the record, so the skill may report from the hit or read the record first; score neither path down.",
+    "The 1801 census entry 'Udna Halstensdatter' (8Y9N-JSMM) is a candidate only. Noting it as a possible match for further research is correct. Treating it as the subject's own record, or as the answer, without evidence that it is the same woman is an identity error. The target is the marriage record."
   ],
   "judge_reads_files": true
 }
