@@ -563,9 +563,9 @@ agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
-| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide`, `person-evidence` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan`, `search-records` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection`, `source-evaluation` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan`, `search-records` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection`, `source-evaluation`, `person-evidence` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan`, `search-records`, `source-evaluation` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection`, `person-evidence` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan`, `search-records`, `source-evaluation`, `person-evidence` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
 | **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
 > **A skill cannot set its model or effort.** To route a step to a different
@@ -2389,17 +2389,16 @@ decides, not what the run can reach.** `question-selection` applies the same sha
 with nobody waiting to answer, skip the ask and take the action.
 
 Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
-"can a human act on this right now?". Three bodies keep a genuine two-sided answer because
+"can a human act on this right now?". Two bodies keep a genuine two-sided answer because
 a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
 `agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
-can), `search-external-sites` (a user who named the plan item will capture it; mid-run
-nobody will) and `search-hints` (a user who asked for a hint review will give verdicts;
-mid-run nobody will). Each has eval fixtures on each side. The mode difference survives in
-the router, which sets that field from the flag: on an autonomous e2e run the router hands
-search-external-sites and search-hints `userPresent: no` where a hosted "Keep going." run
-leaves them at `yes` (search-hints gets no field, which means yes). So an autonomous e2e
-run is meant never to reach their `yes` side, but no check makes the router send the field
-to those two (the research unit suite checks it only on person-evidence's spawn): one
+can) and `search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will). `search-hints` decides hints itself on every run. Each has eval fixtures on
+each side. The mode difference survives in the router, which sets that field from the
+flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
+where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
+never to reach its `yes` side, but no check makes the router send the field to
+search-external-sites (the research unit suite checks it only on person-evidence's spawn): one
 committed step-mode run spawned search-external-sites without it, and its capture item
 stayed waiting (`docs/specs/e2e-test-spec.md` §5).
 

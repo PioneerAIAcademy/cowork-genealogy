@@ -21,7 +21,8 @@
     "This is an audit/review request — the agent must produce a written analysis only and must NOT modify research.json or tree.gedcomx.json; it flags issues and asks the user before making any change",
     "The agent should identify that the 1860-census relationship assertion a_010 (Patrick 'consistent with son' in Thomas Flynn's household) is linked to Patrick (I1, via pe_004) but has NO companion link to Thomas (I2)",
     "The reasoning should note that a relationship assertion bears on both persons and that the 1850 equivalent a_004 already has both sides (pe_002 and pe_006), which makes the missing 1860 Thomas-side link a genuine gap",
-    "Having surfaced the gap, the agent should note the observation and ask whether to add the missing Thomas-side link — not silently create it in this review"
+    "Having surfaced the gap, the agent should note the observation and ask whether to add the missing Thomas-side link — not silently create it in this review",
+    "Confidence calibration: the request asks which roles are unlinked, not whether any tier is right. pe_004's `confident` is acceptable as it stands (one record whose name, age, place and household position agree is enough; lead, 2026-11-15). The audit owes no verdict on any link's tier, so giving none, or noting a missing score without ruling on the tier, lowers no score. Mark the dimension down only when the audit states that a tier is wrong and it is not."
   ],
   "execution": {
     "sdk_message_silence_seconds": 300

@@ -114,6 +114,21 @@ def test_verification_reads_the_tree(tool_calls, builtin_tool_calls, test):
     )
 
 
+def test_record_matches_ask_every_confidence(tool_calls, test):
+    """Tag-gated (person-record-matches): the tool's default floor of 2 leaves
+    out matches at confidence 1, so every listing call passes minConfidence 1."""
+    if "person-record-matches" not in test.get("tags", []):
+        pytest.skip("not a person-record-matches scenario")
+    calls = [
+        c.get("args") or {}
+        for c in tool_calls or []
+        if bare_tool_name(c.get("tool")) == "person_record_matches"
+    ]
+    assert calls, "The agent listed record matches without calling person_record_matches"
+    low = [a for a in calls if a.get("minConfidence") != 1]
+    assert not low, f"person_record_matches called without minConfidence 1: {low}"
+
+
 def test_tree_edit_noop(before_state, after_state, test):
     """Tag-gated: when the requested edit is already satisfied by the
     existing tree, tree-edit must make NO modifications. Touching a
