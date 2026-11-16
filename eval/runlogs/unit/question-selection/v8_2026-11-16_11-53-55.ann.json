@@ -1,0 +1,198 @@
+{
+  "run_log": "v8_2026-11-16_11-53-55.json",
+  "annotator": "taiwoadedotunxx1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree 2, different reason. The judge says the return mentions \"the FAN pivot\" in passing under \"Open item for the caller\". It doesn't: that line is about re-concluding ps_001, and the return never names FAN research or research-plan anywhere. Its next step is \"route to proof-conclusion to close q_001, then to completion\". That is exactly the case the judge notes score 2: \"A reply that routes to proof-conclusion and never names the FAN pivot or research-plan at all is Completeness 2.\" The rest is complete: it declines a new question correctly, sees all plan items done and the proof at \"probable\", and handles the person_warnings result."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Override to 3. The judge notes list \"When did Patrick Flynn's family arrive…\" as one example and say \"do not require a particular one\". The test is that the question asks one fact the reason rests on, not the reason itself. \"When did Patrick Flynn … first arrive in Schuylkill County?\" does that: it asks for the arrival, not \"why\", and the objective names Patrick with his family. The window is used correctly. The rationale says it bounds the question (\"with a 1850–1880 window\"), and the question doesn't limit its evidence to those years. The reply says the reason \"can be explained from the history of the county and that period once the arrival date is known, so the reason itself is not asked as a question\", which is what the notes require. The judge marked it down only for naming Patrick instead of \"the family\", which the notes don't require."
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Override to 3. The judge itself says \"The specificity itself is sound\": one named person, one place, one unknown (when he arrived). The judge notes mark specificity down for more than one unknown (\"When and from where…\"), which this isn't. Patrick versus the family is the same point as under Correctness, and the notes don't require \"family\" wording."
+    }
+  ]
+}
