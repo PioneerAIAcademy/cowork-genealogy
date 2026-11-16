@@ -30,6 +30,8 @@
     "catalog-search-empty-keywords",
     "record-search-halsteinsdatter-unpinned-zero-results",
     "record-search-unna-halsteinsdr-unpinned-zero-results",
+    "record-search-urna-halsteinsdr-unpinned-marriage-match",
+    "record-search-unna-halsteinsdtr-unpinned-no-match",
     "record-search-unna-unpinned-given-name-only"
   ],
   "execution": {
