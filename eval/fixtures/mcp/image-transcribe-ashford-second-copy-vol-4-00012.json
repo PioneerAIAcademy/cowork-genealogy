@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC page 113551215_00012 of Ashford 'Second Copy Vol 4' (issue #4582). search-images steps page by page past the Eastman entry in lk2 scratch runs; each stepped page has its own text, because one catch-all text on every page made the agent conclude the page reader was broken. No Eastman entry. Listed before the group catch-all.",
+  "args": {
+    "imageId": "~113551215_00012"
+  },
+  "response": {
+    "transcription": "Nehemiah Holt and Jerusha Abbot Joyned in Mariage Oct.r 6. 1774\nLevi Son of Nehemiah Holt Born to him by Jerusha his wife [torn]\nEunice Daughter of Nehemiah Holt Born to him by Jerusha his wife Dec.r 13 [torn]",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=11"
+  }
+}

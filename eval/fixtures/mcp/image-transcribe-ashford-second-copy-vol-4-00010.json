@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC page 113551215_00010 of Ashford 'Second Copy Vol 4' (issue #4582). search-images steps page by page past the Eastman entry in lk2 scratch runs; each stepped page has its own text, because one catch-all text on every page made the agent conclude the page reader was broken. No Eastman entry. Listed before the group catch-all.",
+  "args": {
+    "imageId": "~113551215_00010"
+  },
+  "response": {
+    "transcription": "Joseph Dimmock and Rachel Chaffee Joyned in Mariage March 4. 1772\nAsa Son of Joseph Dimmock Born to him by Rachel his wife [torn]\nHannah Daughter of Joseph Dimmock Born to him by Rachel his wife Feb.ry 11 [torn]",
+    "viewerUrl": "https://www.familysearch.org/search/film/113551215?i=9"
+  }
+}
