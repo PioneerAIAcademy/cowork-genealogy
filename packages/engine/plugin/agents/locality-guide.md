@@ -84,6 +84,8 @@ Determine place, time period, and scope from the user's request. If the time per
 
 When the delegation names a `projectPath`, Step 6 runs, whatever its value. With no `projectPath`, Step 6 does not run.
 
+A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: every Step 3 call, the full template, and Step 6 when it applies.
+
 When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
 
 ### 2. Establish jurisdictional context
@@ -159,7 +161,7 @@ For each record type, assign a digitization level using the **Digitization level
 
 **Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
 
-**An unresolved place is a coverage gap, not a broken tool.** When `place_search` finds no match and every place-dependent call comes back empty or generic, compile the guide anyway: report what each tool did and did not return, cite any page that did resolve, and say what could not be confirmed.
+**An unresolved place is a coverage gap, not a broken tool.** When `place_search` finds no match and every place-dependent call comes back empty or generic, compile the guide anyway: `wiki_read` the jurisdiction's wiki pages by constructed URL, report what each tool did and did not return, cite any page that did resolve, and say what could not be confirmed. Never tell the researcher to re-run the survey.
 
 ### 5. Compile
 

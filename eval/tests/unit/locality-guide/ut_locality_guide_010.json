@@ -19,7 +19,7 @@
   },
   "input": {
     "delegation": "I'm researching ancestors in New Orleans during the early 1800s. How does the locality guide explain what records survived floods, fires, or other disasters and where researchers should look for copies or substitutes?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "scenario": "empty-project-new-orleans-objective",
     "scenario_notes": null
   },
   "execution": {
