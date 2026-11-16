@@ -387,6 +387,25 @@ def test_question_selection_no_new_question(before_state, after_state, test):
     )
 
 
+# --- Tag-gated: exactly one new question --------------------------------
+
+def test_question_selection_one_new_question(before_state, after_state, test):
+    """Tag-gated: the run must add exactly one `q_` entry. With
+    `userPresent: no` and an objective holding several facts, the agent
+    writes one question rather than asking which first (issue #4531);
+    asking writes none, which is the failure this catches."""
+    if "question-selection-one-new-question" not in test.get("tags", []):
+        pytest.skip("not a question-selection-one-new-question scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new_ids = [q.get("id") for q in _new_questions(before, after)]
+    assert len(new_ids) == 1, (
+        f"expected exactly one new question, got {len(new_ids)}: {new_ids}"
+    )
+
+
 # --- Tag-gated: new question's selection_basis ------------------------
 
 def test_selection_basis_objective_decomposition(before_state, after_state, test):

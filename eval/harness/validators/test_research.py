@@ -800,6 +800,7 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
 _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
     "delegates-user-present-no-external": (("search-external-sites", "userPresent", r"no"),),
+    "delegates-qs-user-present-no": (("question-selection", "userPresent", r"no"),),
     "delegates-wrap-up": (
         ("research-plan", "planItemIds", r".*pli_\w+"),
         ("research-exhaustiveness", "wrapUp", r"yes"),
