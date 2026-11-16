@@ -404,7 +404,10 @@ from this input, so parsing is strict and a refusal makes no request:
 - the digits alone, as a string or a non-negative whole number — normalised to `koha:<digits>`;
 - an `http(s)://` link on `familysearch.org` or `www.familysearch.org` (no port,
   no user info) whose path is `/[<lang>/]search/catalog/<id>[/]`, `<id>` being
-  either form above. The query string and fragment are ignored.
+  either form above, its colon optionally encoded as `%3A` (as a mail or chat
+  client may send it; no other escape is decoded). The query string and fragment
+  are ignored. The same link with no scheme (`www.familysearch.org/…`, as copied
+  from an address bar) is read as `https://` and then checked the same way.
 
 Anything else — another host, a lookalike host, `koha:1/../x`, `koha:12?x=1`,
 `koha:`, a fraction, a negative number, a blank — is refused with an error that
@@ -424,13 +427,19 @@ sampled); the entry fetched is still the right one.
 **What the hit carries.** The item endpoint has no `repositoryCalls` and no
 `creator`, so a `catalogId` hit takes:
 
-- `title` from the item's `title`, else `display_title`, else `"(untitled)"`;
-- `creator` from the `fullname` of the first `author` whose `type` is `Author`
-  (an `Added Author` is a contributor, not the creator), else none;
+- `title` from the item's `display_title`, else `title`, else `"(untitled)"`.
+  `display_title` is what a search hit carries; `title` stops before the
+  subtitle (`koha:3308785`: `title` "1718-2018 :", `display_title` and search
+  "1718-2018 : reflections on 300 years of the Scots Irish in Maine");
+- `creator` from the `fullname` of the first `author` whose `type` is `Author`,
+  else of the first author of any type, else none. That is what a search hit
+  names: `koha:3308785`'s search creator is its first `Added Author`;
 - `repositoryCalls` as `"Online"` first when the item reads available online,
-  then the distinct `copy_location` of its film notes, in order. A digitized book
-  with no film notes has `["Online"]`; one with neither has `[]`. The item's
-  `copy` block (books) is not read: its shape was not measured.
+  then the distinct `copy_location` (else `location`) of its film notes and of
+  its `copy` blocks, in order. A printed book carries no film notes and one
+  `copy` block naming where it is shelved: `koha:3308785`, not online, gives
+  `["FamilySearch Library"]`, as its search hit does (measured 2026-11-16). A
+  digitized book with neither has `["Online"]`.
 
 Search hits are unchanged by all of this.
 
@@ -740,7 +749,7 @@ result set rather than as another page.
 |---|---|
 | `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` or `recordTypeGroups` supplied | refused by `server.ts`'s unknown-argument guard before the handler runs: `"catalog_search has no record-type filter, so drop {field} and search by place. To list record volumes by type, use volume_search's recordTypeGroups (an array of group names). Valid groups: {RECORD_TYPE_GROUP_NAMES}."` |
 | `catalogId` not one of the accepted forms | names the forms and says no request was made; nothing is fetched |
-| `catalogId` with any of the query fields, `exactPlace` or `year` | refused, naming the fields, before any request: a filter beside a lookup could only be dropped, and a dropped field silently changes the answer |
+| `catalogId` with any other advertised input but `count` and `hydrate` | refused, naming the fields, before any request: a filter beside a lookup could only be dropped, and a dropped field silently changes the answer. The list is every schema property but those three, so a filter added later is refused with no second edit. A blank or `null` filter is refused too, as the search refuses it |
 | `catalogId` answers 404 | `No Catalog entry <id>; check the ID, or search by title or film number.` — never `hits: []` |
 | `catalogId` answers 200 with no `source` object | names the id and says to retry, then search by title or film number; never an empty hit |
 | `catalogId` answers 401, 403, another non-2xx, or a 200 that is not JSON | the same messages as the search, from the same helpers, naming the Catalog **lookup** where the search's say search |
@@ -866,10 +875,10 @@ readers and every access uses one of them:
 | a Norway-sized page (ten hydrated items of 3 to 1,804 entries) is within the budget at the defaults, lists all 25 hits, and cuts each giant to a prefix of its own entries (they are equal-sized, so skipping lists the same); 25 giants at `hydrate: 25` are within it too; one giant alone gets far more entries than when ten share the room | the 1,476,812-character case is bounded by the shaping, not by the default |
 | a hit that needs less than an equal share is listed whole and what it leaves goes to the giant; a giant at rank 1 does not starve the small hits behind it, and the room they leave is used; what a cut hit leaves unused goes on to the hits after it | smallest demand first with the hand-down. They bound the size above and below, so an equal share for every hit goes red, and so does charging a cut hit its whole offer |
 | a hit that fits its offer exactly is listed whole, and one a character short is cut | the edge is "no more than", not "less than" |
-| `catalogId`: `koha:`, `olib:`, upper case, padded, bare digits as a string and a number, and links (`/en/`, `/pt-br/`, `http://` without www, upper-case host, `/search/catalog/<digits>`, query and fragment) each make exactly one request, to `ITEM_URL_PREFIX + id`, and come back with that `id` | the accepted forms, and the legitimate variants a strict parser must not refuse |
+| `catalogId`: `koha:`, `olib:`, upper case, padded, bare digits as a string and a number, and links (`/en/`, `/pt-br/`, `http://` without www, upper-case host, `/search/catalog/<digits>`, query and fragment, `%3A`, no scheme) each make exactly one request, to `ITEM_URL_PREFIX + id`, and come back with that `id` | the accepted forms, and the legitimate variants a strict parser must not refuse |
 | `catalogId`: an off-host, lookalike-host, userinfo, port, `ftp:`, extra-path and traversal link, `koha:1/../x`, `koha:12?x=1`, `koha:`, `koha:12a`, another namespace, blank, negative, fractional, `NaN`, object, array and `null` are refused with **no** request | the bearer reaches only a URL built from a validated id |
-| `catalogId` with `standardPlace`, `keywords`, `filmNumber`, `availability`, `year` or `exactPlace: false` is refused with no request; with `count`/`hydrate` it is accepted and they change nothing; a `count` out of range is still refused | a filter beside a lookup could only be dropped |
-| a `catalogId` answer is one hydrated hit with `totalHits`, `returned` and `hydrateRequested` 1, its title, its Author (not an Added Author), its film note's DGS, and `repositoryCalls` from `copy_location` with `Online` first when online; `display_title` and `(untitled)` are the title fallbacks | the item endpoint has no `repositoryCalls` or `creator` of its own |
+| `catalogId` with every other schema property (looped from the schema), and with `standardPlace`, `keywords`, `filmNumber`, `availability`, `year` or `exactPlace: false`, is refused with no request; with `count`/`hydrate` it is accepted and they change nothing; a `count` out of range is still refused | a filter beside a lookup could only be dropped |
+| a `catalogId` answer is one hydrated hit with `totalHits`, `returned` and `hydrateRequested` 1, its `display_title` (then `title`, then `(untitled)`), its Author (else its first author), its film note's DGS, and `repositoryCalls` from film-note and `copy` locations with `Online` first when online; `display_title` and `(untitled)` are the title fallbacks | the item endpoint has no `repositoryCalls` or `creator` of its own |
 | a `catalogId` 404 throws the not-found error; a 401, 403, other failure, non-JSON 200 and 200 with no entry each give their framed error | an empty hit list would read as "the Catalog holds nothing" |
 | a search hit's item call still uses `identifier.value` after `catalogId` exists | only the `catalogId` path builds a URL |
 | a first entry too big to fit beside another hit does not push the answer over the budget, and a lone 38,000-character entry beside a 15,000-character hit ends under the spill line by cutting the hit | the first entry of a hit was kept whatever it cost, and a second pass then cut the hit the first had listed whole |

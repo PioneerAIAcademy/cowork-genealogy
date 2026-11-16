@@ -822,12 +822,14 @@ export function parseCatalogId(raw: unknown): string {
   return id;
 }
 
-/** The first `author` entry of type "Author". An "Added Author" is a
- *  contributor, not the item's creator. */
+/** The first `author` of type "Author", else the first author of any type —
+ *  what a search hit names as `creator`: koha:3308785's search creator is
+ *  "Maine Ulster Scots Project", an "Added Author" on the item (2026-11-16). */
 function creatorOf(sources: Collapsed[]): string | undefined {
-  const main = sources
-    .flatMap((s) => asArray(s?.author))
-    .find((a) => (scalarOf(a?.type) ?? "").toLowerCase() === "author");
+  const authors = sources.flatMap((s) => asArray(s?.author));
+  const main =
+    authors.find((a) => (scalarOf(a?.type) ?? "").toLowerCase() === "author") ??
+    authors[0];
   return scalarOf(main?.fullname) ?? scalarOf(main?.display_text);
 }
 
@@ -871,7 +873,9 @@ async function lookupCatalogItem(
     );
   }
 
-  const title = sources.map((s) => scalarOf(s.title) ?? scalarOf(s.display_title)).find(Boolean);
+  // `display_title` first: it is the title a search hit carries. `title` alone
+  // stops before the subtitle ("1718-2018 :" for koha:3308785, 2026-11-16).
+  const title = sources.map((s) => scalarOf(s.display_title) ?? scalarOf(s.title)).find(Boolean);
   const creator = creatorOf(sources);
   const hit: CatalogHit = {
     id,

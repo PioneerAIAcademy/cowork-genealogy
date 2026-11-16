@@ -3119,7 +3119,8 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
           type: "Author",
         },
         subject: { text: "England, Middlesex, Marylebone - Church records - Indexes", type: "TRACE" },
-        display_title: "Parish register printouts of St. Marylebone (display)",
+        display_title:
+          "Parish register printouts of St. Marylebone, London, England, (Saint Mary) christenings, 1821-1827",
         title: "Parish register printouts of St. Marylebone, London, England, (Saint Mary) christenings, 1821-1827",
         titleno: 36984,
         available_online: "N",
@@ -3242,7 +3243,7 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
     expect(r.hits[0].repositoryCalls).toEqual(["Online"]);
   });
 
-  it("skips an Added Author when naming the creator", async () => {
+  it("prefers an Author to an Added Author listed before it", async () => {
     itemAnswers(
       marylebone({
         author: [
@@ -3255,16 +3256,42 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
     expect(r.hits[0].creator).toBe("Smith, John");
   });
 
-  it("names no creator when every author is an Added Author", async () => {
-    itemAnswers(marylebone({ author: { fullname: "Maine Ulster Scots Project", type: "Added Author" } }));
+  it("names the first Added Author when there is no Author, as a search hit does", async () => {
+    // koha:3308785, live 2026-11-16: the search hit's creator is the first of
+    // two Added Authors.
+    itemAnswers(
+      marylebone({
+        author: [
+          { fullname: "Maine Ulster Scots Project", type: "Added Author" },
+          { fullname: "Ulster-Scots agency", type: "Added Author" },
+        ],
+      }),
+    );
+    const r = await catalogSearchTool({ catalogId: "koha:3308785" }, LOCAL);
+    expect(r.hits[0].creator).toBe("Maine Ulster Scots Project");
+  });
+
+  it("names no creator when the item has no author", async () => {
+    itemAnswers(marylebone({ author: undefined }));
     const r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
     expect(r.hits[0]).not.toHaveProperty("creator");
   });
 
-  it("falls back to display_title, then (untitled)", async () => {
-    itemAnswers(marylebone({ title: undefined }));
-    let r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
-    expect(r.hits[0].title).toBe("Parish register printouts of St. Marylebone (display)");
+  it("takes display_title, which carries the subtitle, then title, then (untitled)", async () => {
+    // koha:3308785, live 2026-11-16: title "1718-2018 :", display_title and the
+    // search hit's title both "1718-2018 : reflections on 300 years of the
+    // Scots Irish in Maine".
+    itemAnswers(
+      marylebone({
+        title: "1718-2018 :",
+        display_title: "1718-2018 : reflections on 300 years of the Scots Irish in Maine",
+      }),
+    );
+    let r = await catalogSearchTool({ catalogId: "koha:3308785" }, LOCAL);
+    expect(r.hits[0].title).toBe("1718-2018 : reflections on 300 years of the Scots Irish in Maine");
+    itemAnswers(marylebone({ title: "Marriage records, 1864-1931", display_title: undefined }));
+    r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
+    expect(r.hits[0].title).toBe("Marriage records, 1864-1931");
     itemAnswers(marylebone({ title: undefined, display_title: undefined }));
     r = await catalogSearchTool({ catalogId: "koha:1" }, LOCAL);
     expect(r.hits[0].title).toBe("(untitled)");
