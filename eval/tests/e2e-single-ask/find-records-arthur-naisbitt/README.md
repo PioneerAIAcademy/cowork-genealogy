@@ -17,10 +17,8 @@ says: init-project, then search-records in the same turn, never question-selecti
 This fixture is the new-folder "find records for <PID>" check issue #2813's step 2 asks for, run on the harness.
 
 The save is a `record_search` log entry of any outcome, not "a new source or a negative log entry" as
-issue #4509 first set it. In an empty folder `project_create` imports the person's FamilySearch Memories as
-sources, so a new source passes before the search runs (the first authoring run of
-`find-records-arthur-naisbitt` passed on three imported Memories). A `record_search` row is written only
-by a search, and a search that finds candidates logs `positive`, which `negative` alone would fail.
+issue #4509 first set it: in an empty folder a new source can be an imported Memory (spec §16.2), and a
+search that finds candidates logs `positive`.
 
 Not graded: "no search for a record already attached to KWCF-S1C" (printed as `must_not`).
 
@@ -35,6 +33,7 @@ PASS find-records-arthur-naisbitt  expected=search-records  first=search-records
 
 The save passed on `record_search` log entries and the offer on "Continue with `running the searches`?".
 The authoring run (`TEST=`, same day) also passed: 10 `record_search` log entries, 27 tool calls, 4 minutes.
+Under the issue's first save it passed on three Memories `project_create` imported, before any search.
 
 ## Starting state
 

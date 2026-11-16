@@ -19,10 +19,8 @@ turn on the deliverable's offer, hence `ends_on_offer`. `required_tools: ["proje
 router-skip check: the failing session never created a project.
 
 The save is a `record_search` log entry of any outcome, not "a new source or a negative log entry" as
-issue #4509 first set it. In an empty folder `project_create` imports the person's FamilySearch Memories as
-sources, so a new source passes before the search runs (the first authoring run of
-`find-records-arthur-naisbitt` passed on three imported Memories). A `record_search` row is written only
-by a search, and a search that finds candidates logs `positive`, which `negative` alone would fail.
+issue #4509 first set it: in an empty folder a new source can be an imported Memory (spec §16.2), and a
+search that finds candidates logs `positive`.
 
 Not graded: whether the 1885 Павел (a different family, per the tester) is kept out of the tree.
 

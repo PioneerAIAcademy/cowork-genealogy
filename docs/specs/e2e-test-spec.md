@@ -2780,7 +2780,7 @@ fixture with a FamilySearch person ID lists `init-project` in `setup_units`; one
 with no ID expects `init-project` to ask for it and create nothing. Its save
 cannot be `sources` when init-project runs: `project_create` imports the person's
 Memories as sources, so a new source shows nothing about the deliverable
-(a unit test refuses it). There is no `expected-findings.json` and no judge.
+(the loader refuses a `sources` save on any empty-folder fixture). There is no `expected-findings.json` and no judge.
 
 ### 16.3 How the turn runs
 
@@ -2835,7 +2835,9 @@ namespace; it is stripped, as it is from spawned names):
 
 **A missing final `research.json`.** From a seeded project it fails `save` and
 `no_research_job`. In an empty-folder fixture it means no new rows: it adds no
-`no_research_job` reason, an `absent` save passes, and any other save fails.
+`no_research_job` reason, an `absent` save passes, and any other save fails. A
+`research.json` that exists but does not parse is not "missing": it fails both, as
+unreadable.
 
 Printed, not graded: every unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and

@@ -161,6 +161,11 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
             "files or neither (an empty folder)"
         )
     empty_folder = not present
+    if empty_folder and any(alt["section"] == "sources" for alt in alternatives):
+        raise FixtureError(
+            f"{fixture_dir.name}: an empty-folder fixture cannot save `sources`: project_create "
+            "imports the person's Memories as sources, so one passes before the deliverable runs"
+        )
     if not empty_folder:
         try:
             starting = json.loads((fixture_dir / "starting-research.json").read_text(encoding="utf-8"))
@@ -228,6 +233,7 @@ async def run_one(
             effort=effort_level,
         )
         final_research = read_research_json(workspace)
+        research_json_exists = (workspace / "research.json").exists()
 
     aborted = record["aborted_reason"]
     if aborted in NEVER_HAPPENED:
@@ -241,6 +247,7 @@ async def run_one(
             final_research=final_research,
             aborted_reason=aborted,
             last_text=last_main_text(record.get("narration")),
+            research_json_exists=research_json_exists,
         )
     out_dir = runlog_root / fixture.id
     out_dir.mkdir(parents=True, exist_ok=True)

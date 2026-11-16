@@ -22,7 +22,8 @@ only when the fixture asks for it:
   given) is the expected value, or, with ``absent``, no new entry in the section.
   New = id in the final ``research.json`` and absent from the starting one. With no
   research.json at the end, the empty-folder rule holds: an ``absent`` save passes
-  and any other fails; from a seeded project it is a failure.
+  and any other fails; from a seeded project it is a failure, and so is a
+  research.json that exists but does not parse (``research_json_exists``).
 - ``forbidden_tools`` / ``required_tools`` — none of the first, and every one of
   the second, was called on any thread (bare tool names); a required call that
   errored does not count. Beside a background spawn, a forbidden-tool or
@@ -70,14 +71,7 @@ class SingleAskSpec:
     ends_on_offer: bool = False
 
 
-_BOUNDARY = None
-
-
-def _offered_step(text: str | None) -> str | None:
-    global _BOUNDARY
-    if _BOUNDARY is None:
-        _BOUNDARY = load_step_boundary()
-    return _BOUNDARY.offered_step(text)
+_BOUNDARY = load_step_boundary()
 
 
 def last_main_text(narration: list[dict[str, Any]] | None) -> str | None:
@@ -204,6 +198,7 @@ def grade(
     final_research: dict[str, Any] | None,
     aborted_reason: str | None = None,
     last_text: str | None = None,
+    research_json_exists: bool | None = None,
 ) -> SingleAskGrade:
     units = spawned_units(tool_calls)
     expected = owners(spec)
@@ -218,10 +213,14 @@ def grade(
     forbidden = {"question-selection"} | (set() if spec.is_plan_ask else {"research-plan"})
     job_reasons = sorted({u["unit"] for u in units if u["unit"] in forbidden})
     # Empty folder in, empty folder out: nothing was created, which is no failure.
-    empty_folder_untouched = starting_research is None and final_research is None
+    # A research.json that exists but did not parse is not an untouched folder.
+    empty_folder_untouched = (
+        starting_research is None and final_research is None and research_json_exists is not True
+    )
+    missing = "research.json unreadable" if research_json_exists else "no research.json"
     if final_research is None:
         if not empty_folder_untouched:
-            job_reasons.append("no research.json")
+            job_reasons.append(missing)
     else:
         if _new_rows(starting_research, final_research, "questions"):
             job_reasons.append("new questions entry")
@@ -233,7 +232,7 @@ def grade(
     )
 
     if final_research is None and not empty_folder_untouched:
-        checks["save"] = (False, "no research.json")
+        checks["save"] = (False, missing)
     else:
         results = [_save_check(alt, starting_research, final_research or {}) for alt in saves(spec)]
         hit = next((d for ok, d in results if ok), None)
@@ -280,12 +279,11 @@ def grade(
         if any(alt.get("absent") for alt in saves(spec)) and checks["save"][0]:
             checks["save"] = (False, "background spawn: an absence cannot be confirmed")
     if spec.ends_on_offer:
-        offered = _offered_step(last_text)
-        lines = [ln.strip() for ln in str(last_text or "").splitlines() if ln.strip()]
+        offered = _BOUNDARY.offered_step(last_text)
         checks["ends_on_offer"] = (
             offered is not None,
             f"offers {offered}" if offered
-            else f"last line is no offer: {lines[-1][:120]!r}" if lines
+            else f"no offer at the end: {str(last_text).strip()[-120:]!r}" if last_text
             else "no main-thread text",
         )
     failed = [name for name in CHECKS if name in checks and not checks[name][0]]

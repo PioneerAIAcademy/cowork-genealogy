@@ -19,7 +19,7 @@ from e2e.run_single_ask import (
     fixture_dirs,
     load_single_ask_fixture,
 )
-from e2e.single_ask_grade import SingleAskSpec, format_line, grade, saves, spawned_units
+from e2e.single_ask_grade import SingleAskSpec, format_line, grade, spawned_units
 
 SPEC = SingleAskSpec(
     id="review-sources",
@@ -881,13 +881,21 @@ def test_main_grades_an_empty_folder_run_with_its_offer(monkeypatch, tmp_path, c
     assert log["grade"]["checks"]["ends_on_offer"]["ok"] is True
 
 
-def test_no_empty_folder_init_project_fixture_counts_a_new_source_as_its_save():
-    # project_create imports the person's Memories as sources, so in an empty
-    # folder a `sources` alternative passes before the deliverable runs at all.
-    checked = 0
-    for d in fixture_dirs(DEFAULT_SINGLE_ASK_FIXTURES, None):
-        fixture, spec = load_single_ask_fixture(d)
-        if fixture.starting_research_path is None and "init-project" in spec.setup_units:
-            checked += 1
-            assert all(alt["section"] != "sources" for alt in saves(spec)), d.name
-    assert checked >= 3
+
+@pytest.mark.parametrize(
+    "save",
+    [{"section": "sources"}, [{"section": "log", "tool": "record_search"}, {"section": "sources"}]],
+)
+def test_loader_refuses_a_sources_save_in_an_empty_folder(tmp_path, save):
+    with pytest.raises(FixtureError, match="cannot save `sources`"):
+        load_single_ask_fixture(_empty_folder(tmp_path, expected_save=save))
+
+
+def test_a_research_json_that_does_not_parse_is_not_an_untouched_folder():
+    g = grade(
+        tool_calls=[skill("research"), CONTEXT_CALL, agent("init-project")],
+        spec=NO_PID_SPEC, starting_research=None, final_research=None,
+        research_json_exists=True,
+    )
+    assert g.failed == ["no_research_job", "save"]
+    assert g.checks["save"] == (False, "research.json unreadable")
