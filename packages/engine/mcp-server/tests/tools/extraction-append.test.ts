@@ -1434,6 +1434,58 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(r.summary).toMatch(/separate request/);
   });
 
+  // thomas-hanrahan-marriage, 2026-11-16: three of a person's five attached
+  // records failed with "fetch failed" inside the retry's second of attempts,
+  // the call answered ok, and the run went on without them.
+  describe("a read that fails on the network", () => {
+    const blip = () => Object.assign(new TypeError("fetch failed"), { cause: Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }) });
+    const flaky = (failures: number, error: () => Error, reads: string[]) => {
+      const inner = reader([CENSUS()], reads);
+      let left = failures;
+      return {
+        readRetryPauseMs: 0,
+        readRecord: async (i: any, p: any) => {
+          if (left > 0) {
+            left -= 1;
+            reads.push(i.recordId);
+            throw error();
+          }
+          return inner.readRecord(i);
+        },
+      };
+    };
+
+    it("is read again after a pause and extracted", async () => {
+      await writeTree([person("I1", { person: ["S1"] })], [S1]);
+      const reads: string[] = [];
+      const r = await run("I1", flaky(1, blip, reads) as any);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(r.extracted).toBe(1);
+      expect(reads).toHaveLength(2);
+      expect(r.records.every((o: any) => o.status !== "read_failed")).toBe(true);
+      expect(r.summary).not.toMatch(/could not be read/);
+    });
+
+    it("still failing, names the record, its cause and how to retry it", async () => {
+      await writeTree([person("I1", { person: ["S1"] })], [S1]);
+      const reads: string[] = [];
+      const r = await run("I1", flaky(5, blip, reads) as any);
+      expect(reads).toHaveLength(2);
+      const failed = r.records.find((o: any) => o.status === "read_failed")!;
+      expect(failed.summary).toContain("ECONNRESET");
+      expect(r.summary).toMatch(/1 record could not be read \(.*MZGS-1B7.*\)/);
+      expect(r.summary).toContain("call extraction_append again with personId 'I1'");
+    });
+
+    it("is not read again when the failure is not the network's", async () => {
+      await writeTree([person("I1", { person: ["S1"] })], [S1]);
+      const reads: string[] = [];
+      const r = await run("I1", flaky(5, () => new Error("FamilySearch API error: 404 Not Found"), reads) as any);
+      expect(reads).toHaveLength(1);
+      expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain("404");
+    });
+  });
+
   it("after a re-extraction, links only the live reading and refuses nothing (#3678)", async () => {
     await writeTree([person("I1", { person: ["S1"] })], [S1]);
     const rdr = reader([CENSUS()]);

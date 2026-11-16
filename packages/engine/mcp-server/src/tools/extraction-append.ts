@@ -73,6 +73,7 @@ import { recordReadTool } from "./record-read.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 import { researchLogAppend, type ResearchLogAppendOp } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
+import { describeFetchError, isFetchTimeout } from "../utils/http.js";
 import { sourceIdsForRecordIds, activePlanItems, canonicalFactKey } from "./research-append.js";
 import { findAnchor, collectSourceRefs, ATTACHMENT_LINK_RATIONALE } from "../utils/tree-person.js";
 import { isRejectedPair } from "../utils/rejected-links.js";
@@ -185,9 +186,26 @@ export async function runExtractionAppend(
  */
 export interface ExtractionAppendDeps {
   readRecord: (input: RecordReadInput, principal: Principal) => Promise<RecordReadResult>;
+  /** The pause before reads that failed on the network are tried once more.
+   *  Tests pass 0. */
+  readRetryPauseMs?: number;
 }
 
 const DEFAULT_DEPS: ExtractionAppendDeps = { readRecord: recordReadTool };
+
+/** How long a short network outage gets before failed reads are tried again.
+ *  `fetchWithRetry` spends its three attempts in about a second, and the
+ *  thomas-hanrahan-marriage run of 2026-11-16 lost three of a person's five
+ *  attached records to a blip that outlasted them all. */
+const READ_RETRY_PAUSE_MS = 2_000;
+
+/** A read that failed on the way to FamilySearch rather than at it: Node's
+ *  fetch rejects every transport failure with "fetch failed", and a timeout is
+ *  `fetchWithTimeout`'s own. A refusal, a missing record or a staging fault is
+ *  not retried. */
+function isTransientReadError(e: unknown): boolean {
+  return isFetchTimeout(e) || (e instanceof TypeError && e.message === "fetch failed");
+}
 
 /** One expected-but-absent person, found by a search that returned no record. */
 export interface AbsenceInput {
@@ -900,6 +918,16 @@ async function personIdMode(
   if (unselected > 0) parts.push(`${plural(unselected, "relationship party", "relationship parties")} whose persona in the record could not be chosen`);
   if (rejectedSkipped > 0) parts.push(`${plural(rejectedSkipped, "rejected pair", "rejected pairs")} not re-linked`);
   if (refused > 0) parts.push(`${plural(refused, "link", "links")} refused`);
+  // A record that could not be read is neither extracted nor linked, and the
+  // person's other links say nothing of it: name it, and the way to retry it.
+  const unread = extraction.records.filter((o) => o.status === "read_failed").map((o) => o.recordId);
+  if (unread.length > 0) {
+    parts.push(
+      `${plural(unread.length, "record", "records")} could not be read (${unread.join(", ")}), so nothing from ` +
+        `${unread.length === 1 ? "it is" : "them is"} extracted or linked: call extraction_append again with ` +
+        `personId '${person.id}' to retry ${unread.length === 1 ? "it" : "them"}; what this call wrote is not written twice`,
+    );
+  }
   return {
     ...extraction,
     ok: extraction.ok,
@@ -1023,21 +1051,40 @@ async function recordIdsMode(
   }
 
   // 3. Reads, in parallel. An error or an unstaged read is reported and skipped.
+  //    A read that failed on the network is tried once more after a pause, so
+  //    a short outage does not cost the record (READ_RETRY_PAUSE_MS).
   const toRead = outcomes.filter((o) => o.status === "extracted" && !o.logId);
-  await mapWithConcurrency(toRead, READ_CONCURRENCY, async (o) => {
+  const transient = new Set<(typeof outcomes)[number]>();
+  const before = new Map<(typeof outcomes)[number], string>();
+  const readOne = async (o: (typeof outcomes)[number]) => {
     try {
       const r = await deps.readRecord({ recordId: o.recordId, projectPath: input.projectPath }, principal);
+      // On the second pass, the first pass's failure is undone.
+      const retried = transient.delete(o);
       if (!r.staged) {
         o.status = "read_failed";
         o.summary = `${o.recordId}: read, but not staged, so it cannot be extracted: ${r.stagingError ?? "no staging handle returned"}.`;
       } else {
+        if (retried) {
+          o.status = "extracted";
+          o.summary = before.get(o) ?? o.summary;
+        }
         o.stagedRef = r.staged.resultsRef;
       }
     } catch (e) {
+      if (!before.has(o)) before.set(o, o.summary);
       o.status = "read_failed";
-      o.summary = `${o.recordId}: could not be read: ${e instanceof Error ? e.message : String(e)}.`;
+      o.summary = `${o.recordId}: could not be read: ${describeFetchError(e)}.`;
+      if (isTransientReadError(e)) transient.add(o);
+      else transient.delete(o);
     }
-  });
+  };
+  await mapWithConcurrency(toRead, READ_CONCURRENCY, readOne);
+  if (transient.size > 0) {
+    const again = [...transient];
+    await new Promise((r) => setTimeout(r, deps.readRetryPauseMs ?? READ_RETRY_PAUSE_MS));
+    await mapWithConcurrency(again, READ_CONCURRENCY, readOne);
+  }
 
   // 3b. Household skip. Step 1 widens an id only by sidecars already logged,
   //     so it cannot see a member of a record extracted under an accepted hint

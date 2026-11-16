@@ -3236,6 +3236,17 @@ them; a differently-surnamed household head as a lead; notes; and a count of
 defaulted classifications. `ok` is true when at least one record was extracted
 or found already extracted.
 
+A read that fails on the way to FamilySearch (Node's `fetch failed`, or a
+timeout) is tried once more after a 2 s pause, because `fetchWithRetry`'s three
+attempts span about a second and a short outage outlasts them: the
+thomas-hanrahan-marriage run of 2026-11-16 lost three of a person's five attached
+records that way, and person mode answered `ok` without them. A refusal, a missing
+record or a staging fault is not read again. A record still unread is
+`read_failed`, its summary carrying the full cause (`describeFetchError`, so the
+socket error is named, not the bare "fetch failed"), and person mode's summary
+names it and says that calling again with the same `personId` retries it, which
+writes nothing twice.
+
 The reader is injected (`runExtractionAppend(input, deps, principal)`), so the
 eval harness can serve `record_read` fixtures. It is a function parameter, not
 a schema field, so no model can reach it.
