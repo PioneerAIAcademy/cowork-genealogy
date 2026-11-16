@@ -295,7 +295,7 @@ For wildcard rules and fuzzy matching behavior, read the “Name search mechanic
 - Maiden names for married women
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
 
-Varying a name’s spelling is a separate step from changing which fields you search: a search that adds, drops or moves fields while keeping the same spelling has not tried a spelling variant.
+Varying a name’s spelling is a separate step from changing which fields you search: a search that adds, drops or moves fields while keeping the same spelling has not tried a spelling variant. If the subject is not among the results — whether the search returned nothing or a pool of other people — treat it as a nil for the subject: the next search varies the spelling of the given name before you change place, dates or surname.
 
 **Secondary names need variants too — the given name, not just the surname.** The
 variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`
