@@ -7,7 +7,7 @@ Extends `flynn-census-exhausted` by adding completed negative searches of the 18
 ## State
 
 - **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)
-- **Questions:** q_001 (parentage, in_progress), q_002 (1850 census placement, resolved)
+- **Questions:** q_001 (parentage, in_progress), q_002 (Patrick's 1850 residence, resolved)
 - **Plans:** pl_001 (1850 census, completed), pl_002 (parentage evidence, completed — 1860 census + death cert + 1870/1880/1900 census + probate + church-record searches)
 - **Log:** 10 entries — 1850 ×3, 1860, death cert, 1870 negative, 1880 negative, 1900 negative, probate negative, church records negative
 - **Timeline:** Patrick documented 1845 (birth), 1850 census, 1860 census, 1908 death. 1870/1880/1900 searched — not found. Gap remains but has been investigated.

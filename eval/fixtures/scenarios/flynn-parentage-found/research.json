@@ -51,7 +51,7 @@
     },
     {
       "id": "q_002",
-      "question": "Where was Patrick Flynn in the 1850 census?",
+      "question": "Where did Patrick Flynn live in 1850?",
       "rationale": "The 1850 census is the earliest enumeration where Patrick would appear by name (age ~5). Locating him in a household identifies candidate parents.",
       "selection_basis": "objective_decomposition",
       "priority": "high",
@@ -671,6 +671,21 @@
       ],
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census (FamilySearch), death certificate (FamilySearch), probate records 1870–1890 (FamilySearch). Three independent source types confirm Thomas Flynn as father. Probate negative but does not undermine the conclusion.",
       "narrative_markdown": "Patrick Flynn's father was **Thomas Flynn** of Schuylkill County, Pennsylvania. Three independent source types confirm this conclusion: co-enumeration in the 1850 and 1860 censuses and a death certificate naming Thomas as father. Birthplace conflict resolved in favor of Ireland. Probate search returned no will."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "proved",
+      "vehicle": "summary",
+      "shortfall": "none",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch, Ancestry and MyHeritage (log_001, log_002, log_003); all three place Patrick Flynn, age 5, in Thomas Flynn's household in Schuylkill County, Pennsylvania, in 1850.",
+      "narrative_markdown": "In 1850 Patrick Flynn, age 5, lived in the household of **Thomas Flynn** in Schuylkill County, Pennsylvania. Three independent indexes of the same original enumeration agree on the household, his age and the county, and no record places him elsewhere."
     }
   ],
   "evaluations": []
