@@ -159,11 +159,9 @@ router that sends them one after the other records one spawn and fails.
 naming a different item, and accepts any id-line spelling (`planItemId:`,
 `Plan item ID:`) or none.
 
-`ut_research_uh1` clones `ut_research_fsh` on an `--autonomous` run. SKILL.md
-passes `userPresent: no` to `search-hints` only on an `--autonomous` run, and the
-agent reads a missing field as yes. `delegates-user-present-no-hints` adds the
-field to `test_spawn_carries_its_step_mode_fields`. Its `search-external-sites`
-twin, `delegates-user-present-no-external`, has no test yet: the router left the
+`ut_research_uh1` clones `ut_research_fsh` on an `--autonomous` run: search-hints
+decides hints itself on every run, so the hand-off is the same.
+`delegates-user-present-no-external`, for `search-external-sites`, has no test yet: the router left the
 field out in 1 of 3 scratch runs, and issue #4554 tracks the fix and the test.
 
 ## What is NOT covered (and why)
