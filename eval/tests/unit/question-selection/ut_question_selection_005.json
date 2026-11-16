@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_question_selection_005",
     "skill": "question-selection",
-    "name": "FAN pivot when all direct evidence searches are complete and unresolved",
+    "name": "No new question when every direct search on the open question is done",
     "type": "positive",
     "description": "The flynn-fan-pivot scenario has q_001 in_progress with every plan completed and all direct searches negative. q_001 is still open, so no new question is written. Whether further research is owed is research-exhaustiveness's and research-plan's call, not this agent's.",
     "tags": [

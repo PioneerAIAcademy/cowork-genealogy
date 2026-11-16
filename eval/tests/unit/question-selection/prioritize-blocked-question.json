@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_question_selection_003",
     "skill": "question-selection",
-    "name": "Select a question that addresses an unresolved conflict",
+    "name": "No new question while unresolved conflicts block the open parents question",
     "type": "positive",
     "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. Settling them is q_001's own work, so no new question is written.",
     "tags": [

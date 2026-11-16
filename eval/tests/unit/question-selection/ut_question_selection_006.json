@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_question_selection_006",
     "skill": "question-selection",
-    "name": "Timeline gap outranks pending objective decomposition",
+    "name": "No new question for a timeline gap on the open question",
     "type": "positive",
     "description": "The flynn-census-exhausted scenario has a high-severity timeline gap from 1860 to 1908 while q_001 is open. A gap on the open question is q_001's own work, not a new question, so the agent writes nothing.",
     "tags": [
