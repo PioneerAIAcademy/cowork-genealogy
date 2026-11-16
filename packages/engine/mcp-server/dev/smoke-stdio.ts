@@ -52,7 +52,7 @@ try {
   await client.connect(transport);
 
   const { tools } = await client.listTools();
-  const problems = assertCoverage(tools.map((t) => t.name));
+  const problems = assertCoverage(tools.map((t) => t.name), { connector: false });
   report("tools/list coverage", problems.length === 0, problems.length === 0 ? `${tools.length} tools advertised, all planned or excluded` : problems.join("; "));
   if (problems.length > 0) failures.push("tools/list coverage");
 

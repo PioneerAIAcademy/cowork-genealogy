@@ -23,7 +23,7 @@ import re
 
 import pytest
 
-from validators_lib import bare_tool_name
+from validators_lib import as_mapping, bare_tool_name
 
 
 # --- Cross-file referential integrity ---------------------------------
@@ -92,9 +92,13 @@ def _trees_equal(before: dict | None, after: dict | None) -> bool:
 def test_verification_reads_the_tree(tool_calls, test):
     """Tag-gated (reads-tree): the delegation states the values it wants
     confirmed, so a reply can repeat them without looking. tree-edit reads the
-    tree only through ``tree_query`` (it holds no ``Read``), so a ``tree_query``
-    call that covers I1, by naming it or by reading the whole tree, shows the
-    tree was checked."""
+    tree only through ``tree_query`` (it holds no ``Read``), so the check passes
+    on a ``tree_query`` call that was served (``ok`` with persons) and that
+    covered I1, by naming it in ``personIds`` or by reading the whole tree.
+
+    "Covered I1" is read from the call's arguments, not its answer: a whole-tree
+    answer cut short with I1 in ``omittedPersonIds`` still passes, and a query
+    naming I1 by its FamilySearch id fails."""
     if "reads-tree" not in test.get("tags", []):
         pytest.skip("not a reads-tree scenario")
     calls = tool_calls or []
@@ -102,14 +106,31 @@ def test_verification_reads_the_tree(tool_calls, test):
     for c in calls:
         if bare_tool_name(str(c.get("tool") or "")) != "tree_query":
             continue
-        args = c.get("args") or c.get("input") or {}
-        person_ids = args.get("personIds")
+        response = as_mapping(c.get("response"))
+        if response.get("ok") is not True or not response.get("persons"):
+            continue
+        person_ids = as_mapping(c.get("args") or c.get("input")).get("personIds")
         if not person_ids or "I1" in person_ids:
             covering.append(c)
     assert covering, (
-        "The agent reported on the tree without a tree_query call covering I1; "
+        "The agent reported on the tree without a served tree_query covering I1; "
         f"its tool calls were {[bare_tool_name(str(c.get('tool') or '')) for c in calls][:5]}"
     )
+
+
+def test_record_matches_ask_every_confidence(tool_calls, test):
+    """Tag-gated (person-record-matches): the tool's default floor of 2 leaves
+    out matches at confidence 1, so every listing call passes minConfidence 1."""
+    if "person-record-matches" not in test.get("tags", []):
+        pytest.skip("not a person-record-matches scenario")
+    calls = [
+        c.get("args") or {}
+        for c in tool_calls or []
+        if bare_tool_name(c.get("tool")) == "person_record_matches"
+    ]
+    assert calls, "The agent listed record matches without calling person_record_matches"
+    low = [a for a in calls if a.get("minConfidence") != 1]
+    assert not low, f"person_record_matches called without minConfidence 1: {low}"
 
 
 def test_tree_edit_noop(before_state, after_state, test):

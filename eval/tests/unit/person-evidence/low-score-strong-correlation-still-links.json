@@ -8,10 +8,10 @@
     "tags": ["person-evidence", "same-person", "score-variant"]
   },
   "input": {
-    "delegation": "Link assertion a_003 — the 1850 census record for 'Patrick Flinn' — to the right person in the tree.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-record-matching"
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_003, a_020, a_021, a_022, a_023, a_024, a_025, a_026. They are the 1850 census record of the Thomas Flinn household; a_003 is its 'Patrick Flinn'.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-record-matching-extracted"
   },
-  "mcp_fixtures": ["same-person-flynn-variant"],
+  "mcp_fixtures": ["same-person-flinn-extracted-relatives", "same-person-flinn-extracted-thomas", "same-person-flynn-variant"],
   "judge_context": [
     "same_person returns a low 0.32 because 'Flinn' is a transcription variant, but correlation is strong — age, year, county, and the father's name all match the subject",
     "person-evidence must still create a person_evidence entry for a_003 — the low score is an input, not a veto; correlation analysis carries the decision",

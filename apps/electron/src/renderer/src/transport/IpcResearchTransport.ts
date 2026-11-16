@@ -72,7 +72,7 @@ export class IpcResearchTransport implements ResearchTransport {
       // boilerplate naming an IPC channel they have no concept of. Stripping it
       // belongs here: this is the only layer that knows the transport is
       // Electron IPC (#1722 round-8).
-      throw new Error(unwrapIpcError(err))
+      throw new Error(unwrapIpcError(err), { cause: err })
     }
   }
 

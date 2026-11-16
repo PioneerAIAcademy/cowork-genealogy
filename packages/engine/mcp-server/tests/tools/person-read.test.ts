@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -15,10 +18,17 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
 });
 
-import { personReadTool, readPerson } from "../../src/tools/person-read.js";
+import { START_PROJECT_RULE } from "../../src/utils/project-io.js";
+import { personReadTool, readPerson, trimPersonReadForModel } from "../../src/tools/person-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import type { GedcomXSourceReference } from "../../src/types/gedcomx.js";
-import type { FSTreeResponse } from "../../src/types/person-read.js";
+import type { FSTreeResponse, PersonReadResult } from "../../src/types/person-read.js";
+
+// The whole read, untrimmed: what `project_create` receives. The shaping tests assert on it;
+// `person_read`'s own answer is `trimPersonReadForModel` of it.
+async function readFull(input: Parameters<typeof personReadTool>[0], principal: typeof LOCAL) {
+  return (await readPerson(input.personId, {}, principal)).result;
+}
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -385,7 +395,7 @@ describe("personReadTool", () => {
   // 1. Returns simplified person for valid ID
   it("returns simplified person for a valid ID", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
+    const result = await readFull({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons).toHaveLength(1);
     expect(result.persons[0].id).toBe("KNDX-MKG");
     expect(result.persons[0].gender).toBe("Male");
@@ -407,7 +417,7 @@ describe("personReadTool", () => {
   // 3. Includes sources[] when flag set
   it("includes sources when sourceDescriptions flag is set", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({ personId: "KNDX-MKG", sourceDescriptions: true }, LOCAL);
+    const result = await readFull({ personId: "KNDX-MKG", sourceDescriptions: true }, LOCAL);
     expect(result.sources.length).toBeGreaterThan(0);
     // The sourceDescriptions flag must be encoded into the request URL.
     expect(String(mockFetch.mock.calls[0][0])).toContain(
@@ -421,7 +431,7 @@ describe("personReadTool", () => {
     [{ relatives: false, sourceDescriptions: false }],
   ])("a caller cannot suppress relatives or sources (%j)", async (flags) => {
     mockOk({ ...WITH_RELATIVES, sourceDescriptions: WITH_SOURCES.sourceDescriptions });
-    const result = await personReadTool({ personId: "KNDX-MKG", ...flags }, LOCAL);
+    const result = await readFull({ personId: "KNDX-MKG", ...flags }, LOCAL);
     const url = String(mockFetch.mock.calls[0][0]);
     expect(url).toContain("relatives=true");
     expect(url).toContain("sourceDescriptions=true");
@@ -436,7 +446,7 @@ describe("personReadTool", () => {
       sourceDescriptions: WITH_SOURCES.sourceDescriptions,
     };
     mockOk(combined);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "KNDX-MKG",
       relatives: true,
       sourceDescriptions: true,
@@ -509,7 +519,7 @@ describe("personReadTool", () => {
   // 10. Filters SD_* metadata from sources
   it("filters out SD_* metadata source entries", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
     }, LOCAL);
@@ -518,10 +528,23 @@ describe("personReadTool", () => {
     expect(result.sources).toHaveLength(2);
   });
 
+  it("filters out lowercase sd_* metadata entries too", async () => {
+    mockOk({
+      ...WITH_SOURCES,
+      sourceDescriptions: [
+        ...(WITH_SOURCES.sourceDescriptions ?? []),
+        { id: "sd_metadata_2", about: "https://example.com/m2", titles: [{ value: "lowercase metadata" }] },
+      ],
+    });
+    const result = await readFull({ personId: "KNDX-MKG", sourceDescriptions: true }, LOCAL);
+    expect(result.sources.filter((s) => /^sd_/i.test(s.id))).toHaveLength(0);
+    expect(result.sources).toHaveLength(2);
+  });
+
   // 11. Flattens source title/citation/url correctly
   it("flattens source title, citation, and url", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
     }, LOCAL);
@@ -547,7 +570,7 @@ describe("personReadTool", () => {
   // 13. Converts couple relationships with marriage facts
   it("converts couple relationships with marriage facts", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
+    const result = await readFull({ personId: "KNDX-MKG", relatives: true }, LOCAL);
     const couples = result.relationships.filter((r) => r.type === "Couple");
     expect(couples).toHaveLength(1);
     expect(couples[0].person1).toBe("KNDX-MKG");
@@ -653,7 +676,7 @@ describe("personReadTool", () => {
   // 18. Includes notes on sources when present
   it("collects notes onto sources when present", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
     }, LOCAL);
@@ -787,7 +810,7 @@ describe("personReadTool", () => {
   // 27. Surfaces the canonical ARK lifted from the Persistent identifier
   it("surfaces ark from the Persistent identifier", async () => {
     mockOk(MULTI_NAME);
-    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
+    const result = await readFull({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons[0].ark).toBe("ark:/61903/4:1:KNDX-MKG");
   });
 
@@ -813,7 +836,7 @@ describe("personReadTool", () => {
   // 30. Preferred name lands first and keeps its flag; alternates do not
   it("orders the preferred name first and flags only it", async () => {
     mockOk(MULTI_NAME);
-    const [person] = (await personReadTool({ personId: "KNDX-MKG" }, LOCAL)).persons;
+    const [person] = (await readFull({ personId: "KNDX-MKG" }, LOCAL)).persons;
     expect(person.names[0].preferred).toBe(true);
     expect(person.names[0].type).toBe("BirthName");
     expect(person.names[1].preferred).toBeUndefined();
@@ -834,7 +857,7 @@ describe("personReadTool", () => {
   // omitted rather than faked when FS supplies none.
   it("carries the name id through, omitting it when absent", async () => {
     mockOk(MULTI_NAME);
-    const [person] = (await personReadTool({ personId: "KNDX-MKG" }, LOCAL)).persons;
+    const [person] = (await readFull({ personId: "KNDX-MKG" }, LOCAL)).persons;
     expect(person.names[0].id).toBe("name-birth-1");
     expect(person.names[1].id).toBeUndefined();
     expect("id" in person.names[1]).toBe(false);
@@ -858,7 +881,7 @@ describe("personReadTool", () => {
   // returns "R B Torrance", the exact symptom the alpha tester reported.
   it("keeps the preferred full name first for a relative with an initials alternate", async () => {
     mockOk(RELATIVE_INITIALS_ALTERNATE);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "LHKH-XKK",
       relatives: true,
     }, LOCAL);
@@ -873,7 +896,7 @@ describe("personReadTool", () => {
   // the tester saw. Relative order within the non-preferred group is stable.
   it("keeps a relative's initials alternate behind the preferred name", async () => {
     mockOk(RELATIVE_INITIALS_ALTERNATE);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "LHKH-XKK",
       relatives: true,
     }, LOCAL);
@@ -892,7 +915,7 @@ describe("personReadTool", () => {
   // caller's re-ID to local ids still pointing at the FamilySearch person.
   it("emits ark for a relative, not just the anchor", async () => {
     mockOk(RELATIVE_INITIALS_ALTERNATE);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "LHKH-XKK",
       relatives: true,
     }, LOCAL);
@@ -908,7 +931,7 @@ describe("personReadTool", () => {
   // stable, not an unconditional rotation.
   it("leaves an already-preferred-first anchor in place", async () => {
     mockOk(RELATIVE_INITIALS_ALTERNATE);
-    const result = await personReadTool({
+    const result = await readFull({
       personId: "LHKH-XKK",
       relatives: true,
     }, LOCAL);
@@ -1306,7 +1329,7 @@ describe("personReadTool — sibling fan-out", () => {
       LOCAL,
     );
     expect(out.notes).toBeDefined();
-    expect(out.notes!.join(" ")).toContain("1 ParentChild");
+    expect(out.notes!.join(" ")).not.toContain("Dropped");
     // the second line is the one that matters: it is the SUBJECT's parent, not
     // some distant relative's, so the caller is told the parentage is missing
     expect(out.notes!.join(" ")).toContain("parent of the requested person");
@@ -1326,8 +1349,8 @@ describe("personReadTool — sibling fan-out", () => {
       { personId: SUBJECT, relatives: true },
       LOCAL,
     );
-    expect(out.notes).toBeUndefined();
-    expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
+    expect(out.notes).toEqual([START_PROJECT_RULE]);
+    expect(Object.keys(out).sort()).toEqual(["notes", "persons", "relationships", "sources"]);
   });
 
   it("holds the fan-out at FOUR parent reads in flight, and still reads all five", async () => {
@@ -1913,7 +1936,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
         coverage: [{ temporal: { original: "1860" } }],
       },
     ]);
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
 
     // The description arrived as an ORDINARY sources[] entry — no discriminator.
     const rel = out.sources.find((s) => s.id === "REL-9AA");
@@ -1934,7 +1957,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     // "ordinary entries" shape exists to prevent.
     mockOk(bodyWithRelativeRef());
     mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "x" }] }]);
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
   });
 
@@ -1944,7 +1967,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     // exercising since the feature landed — the fetch falls through and nothing changes.
     mockOk(bodyWithRelativeRef());
     mockFetch.mockRejectedValueOnce(new Error("upstream down"));
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(out.sources.map((s) => s.id)).toEqual(["SUBJ-SRC"]);
     const kid = out.persons.find((p) => p.id === "KID-0001")!;
     expect("sources" in kid).toBe(false);
@@ -1956,7 +1979,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     const body = bodyWithRelativeRef();
     (body as { persons: Array<{ sources?: unknown }> }).persons[1].sources = undefined;
     mockOk(body);
-    await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
@@ -1983,7 +2006,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     mockOk(body as never);
     mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "shared" }] }]);
     mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "shared" }] }]);
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(out.sources.filter((s) => s.id === "REL-9AA")).toHaveLength(1);
   });
 
@@ -1992,7 +2015,7 @@ describe("personReadTool relatives' attached sources (#1689 Half 3)", () => {
     // One relative carries a ref, so exactly one extra call — not two.
     mockOk(bodyWithRelativeRef());
     mockRelativeSources([{ id: "REL-9AA", titles: [{ value: "x" }] }]);
-    await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(mockFetch).toHaveBeenCalledTimes(2);
     const urls = mockFetch.mock.calls.map((c) => String(c[0]));
     expect(urls.some((u) => u.includes("KID-0001/sources"))).toBe(true);
@@ -2084,7 +2107,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
         }),
       headers: new Headers(),
     });
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     const rel = out.sources.find((s) => s.id === "REL-9AA")!;
     expect(rel).toBeDefined();
     // Exactly the keys `shapeSources` emits. `resource_type` and `coverage` are the two
@@ -2100,7 +2123,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
       json: () => Promise.resolve({ sourceDescriptions: [{ id: "REL-9AA" }] }),
       headers: new Headers(),
     });
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(out.sources.find((s) => s.id === "REL-9AA")!.title).toBe("");
   });
 
@@ -2118,7 +2141,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
         }),
       headers: new Headers(),
     });
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(out.sources.map((s) => s.id)).not.toContain("SD_METADATA_9");
     expect(out.sources.map((s) => s.id)).toContain("REL-9AA");
   });
@@ -2135,7 +2158,7 @@ describe("relatives' sources are shaped for the tree write (#1689 Half 3)", () =
         }),
       headers: new Headers(),
     });
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(out.sources.filter((s) => s.id === "SUBJ-SRC")).toHaveLength(1);
   });
 });
@@ -2187,7 +2210,7 @@ describe("relatives' sources on a non-living subject (#1689 Half 3)", () => {
     // relatives with it.
     mockFetch.mockRejectedValue(new Error("memories unavailable"));
 
-    const out = await personReadTool({ personId: "DEAD-001" }, LOCAL);
+    const out = await readFull({ personId: "DEAD-001" }, LOCAL);
     expect(out.sources.map((s) => s.id).sort()).toEqual(["OWN-1", "REL-9AA"]);
     const kid = out.persons.find((p) => p.id === "KID-0001")!;
     expect(kid.sources).toEqual([{ ref: "REL-9AA" }]);
@@ -2232,7 +2255,7 @@ describe("a skipped relative is reported in the response (#1689 Half 3)", () => 
   it("names the count in notes[] when a relative could not be read", async () => {
     mockOk(body());
     mockFetch.mockRejectedValueOnce(new Error("unreachable"));
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(out.notes).toBeDefined();
     expect(out.notes!.join(" ")).toMatch(/1 of 1 relatives'.*could not be read/);
   });
@@ -2247,7 +2270,7 @@ describe("a skipped relative is reported in the response (#1689 Half 3)", () => 
       json: () => Promise.resolve({ sourceDescriptions: [{ id: "REL-9AA", titles: [{ value: "x" }] }] }),
       headers: new Headers(),
     });
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect((out.notes ?? []).join(" ")).not.toMatch(/could not be read/);
   });
 
@@ -2280,7 +2303,7 @@ describe("a skipped relative is reported in the response (#1689 Half 3)", () => 
     // Whatever the memories phase then does fails soft.
     mockFetch.mockRejectedValue(new Error("memories unavailable"));
 
-    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const out = await readFull({ personId: "SUBJ-001" }, LOCAL);
     expect(out.sources.map((s) => s.id)).toEqual(["OWN-1"]);
     expect(out.notes!.join(" ")).toMatch(/could not be read/);
   });
@@ -2450,6 +2473,43 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
   const edgesTo = (out: Awaited<ReturnType<typeof personReadTool>>, child: string) =>
     out.relationships.filter((r) => r.type === "ParentChild" && r.child === child);
 
+  it("person_read keeps the sources on edges that name the subject, and does not read the others'", async () => {
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person("CO-1"), person("KID-1"), person("CO-2"), person("KID-2")],
+          relationships: [],
+          childAndParentsRelationships: [
+            capr("CAPR-1", "KID-1", "CO-1", SUBJECT, [ref("SRC-OWN")]),
+            capr("CAPR-2", "KID-2", "CO-1", "CO-2", [ref("SRC-OTHER")]),
+          ],
+        },
+      },
+      { "SRC-OWN": "ok", "SRC-OTHER": "ok" },
+    );
+    const model = await personReadTool({ personId: SUBJECT }, LOCAL);
+    expect(model.sources.map((s) => s.id)).toEqual(["SRC-OWN"]);
+    // Only the edge that names the subject keeps its refs (the co-parent's copy of the
+    // same child-and-parents group does not), and no edge names a ref that is gone.
+    expect(model.relationships.filter((r) => r.sources).map((r) => [r.parent, r.child])).toEqual([[SUBJECT, "KID-1"]]);
+    expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-OWN`]);
+  });
+
+  it("project_create's read still holds every edge's sources (#4420)", async () => {
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person("CO-1"), person("KID-2"), person("CO-2")],
+          relationships: [],
+          childAndParentsRelationships: [capr("CAPR-2", "KID-2", "CO-1", "CO-2", [ref("SRC-OTHER")])],
+        },
+      },
+      { "SRC-OTHER": "ok" },
+    );
+    const full = await readFull({ personId: SUBJECT }, LOCAL);
+    expect(full.sources.map((s) => s.id)).toEqual(["SRC-OTHER"]);
+    expect(full.relationships.filter((r) => r.sources)).toHaveLength(2);
+  });
   it("keeps a Couple's ref, and reads its description by id into sources[]", async () => {
     route(
       {
@@ -2473,7 +2533,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
     });
     expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-M`]);
     // A read that lost nothing says nothing, and adds no top-level key.
-    expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
+    expect(Object.keys(out).sort()).toEqual(["notes", "persons", "relationships", "sources"]);
   });
 
   it("puts a child-and-parents relationship's ref on BOTH parent edges", async () => {
@@ -2489,7 +2549,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-C": "ok" },
     );
-    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+    const out = await readFull({ personId: SUBJECT }, LOCAL); // project_create's read; person_read drops these (#4420)
 
     const edges = edgesTo(out, "KID-1");
     expect(edges.map((e) => e.parent).sort()).toEqual(["CO-1", SUBJECT]);
@@ -2518,7 +2578,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-P": "ok" },
     );
-    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+    const out = await readFull({ personId: SUBJECT }, LOCAL); // project_create's read; person_read drops these (#4420)
 
     expect(out.relationships.find((r) => r.type === "Couple")!.sources).toEqual([{ ref: "SRC-P" }]);
     expect(out.sources.map((s) => s.id)).toEqual(["SRC-P"]);
@@ -2551,7 +2611,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-SIB": "ok" },
     );
-    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+    const out = await readFull({ personId: SUBJECT }, LOCAL); // project_create's read; person_read drops these (#4420)
 
     const edges = edgesTo(out, SIB);
     expect(edges.map((e) => e.parent).sort()).toEqual([DAD, MUM]);
@@ -2580,7 +2640,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-H": "ok" },
     );
-    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+    const out = await readFull({ personId: SUBJECT }, LOCAL); // project_create's read; person_read drops these (#4420)
 
     const edges = edgesTo(out, HALF);
     expect(edges.map((e) => e.parent)).toEqual([DAD]);
@@ -2636,7 +2696,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
     expect("sources" in second).toBe(false);
     expect(out.sources.map((s) => s.id)).toEqual(["SRC-OK"]);
     // Visible, not silent: a count in the response, the ids on stderr.
-    expect(out.notes).toEqual([expect.stringMatching(/^2 of 3 source descriptions .*could not be read/)]);
+    expect(out.notes).toEqual([expect.stringMatching(/^2 of 3 source descriptions .*could not be read/), START_PROJECT_RULE]);
     const log = stderr.mock.calls.map((c) => String(c[0])).join("");
     expect(log).toContain("SRC-GONE");
     expect(log).toContain("SRC-DOWN");
@@ -2681,6 +2741,298 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
     expect(descriptionReads()).toEqual([]);
     // Pruned like any dangling ref, and not reported: there was nothing to read.
     expect("sources" in out.relationships[0]).toBe(false);
-    expect(out.notes).toBeUndefined();
+    expect(out.notes).toEqual([START_PROJECT_RULE]);
   });
 });
+
+// ─── Issue #4384 — the model-facing answer is trimmed ───────────────────────
+
+describe("person_read's answer is trimmed for the model (#4384)", () => {
+  const body = () =>
+    ({
+      persons: [
+        {
+          id: "SUBJ-001",
+          living: true,
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ id: "n-1", nameForms: [{ fullText: "Sam Subject" }], preferred: true }],
+          facts: [
+            {
+              id: "f-1",
+              type: "http://gedcomx.org/Birth",
+              place: { original: "Peru, Clinton, New York, United States", normalized: [{ value: "Peru, Clinton, New York, United States" }] },
+            },
+          ],
+          sources: [{ description: "#SUBJ-SRC", descriptionId: "SUBJ-SRC" }],
+        },
+        {
+          id: "KID-0001",
+          living: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ id: "n-2", nameForms: [{ fullText: "Bea Child" }] }],
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/REL-9AA",
+              descriptionId: "REL-9AA",
+            },
+          ],
+        },
+      ],
+      childAndParentsRelationships: [
+        { parent1: { resourceId: "SUBJ-001" }, child: { resourceId: "KID-0001" } },
+      ],
+      sourceDescriptions: [
+        {
+          id: "SUBJ-SRC",
+          titles: [{ value: "Subject's own source" }],
+          citations: [{ value: "A long formatted citation" }],
+          about: "https://www.familysearch.org/ark:/61903/1:1:AAAA-111",
+        },
+      ],
+    }) as unknown as FSTreeResponse;
+
+  it("keeps the subject's sources and links, and drops citation and the internal ids", async () => {
+    mockOk(body());
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const subject = out.persons[0];
+    expect(subject.id).toBe("SUBJ-001");
+    expect(subject.sources).toEqual([{ ref: "SUBJ-SRC" }]);
+    expect(out.sources).toEqual([
+      { id: "SUBJ-SRC", title: "Subject's own source", url: "https://www.familysearch.org/ark:/61903/1:1:AAAA-111" },
+    ]);
+    expect(subject.names.every((n) => !("id" in n))).toBe(true);
+    expect(subject.names[0].given + subject.names[0].surname).not.toBe("");
+    expect(subject.facts!.length).toBeGreaterThan(0);
+    expect(subject.facts!.every((f) => !("id" in f))).toBe(true);
+  });
+
+  it("drops a fact's place when it equals standard_place, and keeps it when it differs", () => {
+    const out = trimPersonReadForModel({
+      persons: [
+        {
+          id: "A",
+          gender: "Male",
+          living: false,
+          names: [{ given: "A", surname: "B" }],
+          facts: [
+            { id: "1", type: "Birth", place: "X, Y", standard_place: "X, Y" },
+            { id: "2", type: "Death", place: "x y", standard_place: "X, Y" },
+            { id: "3", type: "Residence", place: "Only As Entered" },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    expect(out.persons[0].facts).toEqual([
+      { type: "Birth", standard_place: "X, Y" },
+      { type: "Death", place: "x y", standard_place: "X, Y" },
+      { type: "Residence", place: "Only As Entered" },
+    ]);
+  });
+
+  it("returns relatives with no sources, and makes no request to read them", async () => {
+    mockOk(body());
+    const out = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    const kid = out.persons.find((p) => p.id === "KID-0001")!;
+    expect("sources" in kid).toBe(false);
+    expect(out.sources.map((s) => s.id)).toEqual(["SUBJ-SRC"]);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(out.notes).toEqual([START_PROJECT_RULE]);
+  });
+
+  it("cuts a relative's residence from the answer, but not from project_create's read (#4420)", async () => {
+    const withResidence = () => {
+      const b = body() as unknown as { persons: Array<Record<string, unknown>> };
+      b.persons[1].facts = [
+        { id: "f-9", type: "http://gedcomx.org/Residence", place: { original: "Peru, New York" } },
+        { id: "f-8", type: "http://gedcomx.org/Birth", date: { original: "1 Jan 1900" } },
+      ];
+      return b as unknown as FSTreeResponse;
+    };
+    mockOk(withResidence());
+    const answer = await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(answer.persons.find((p) => p.id === "KID-0001")!.facts?.map((f) => f.type)).toEqual(["Birth"]);
+
+    mockFetch.mockReset();
+    mockOk(withResidence());
+    mockFetch.mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ sourceDescriptions: [] }), headers: new Headers() });
+    const { result } = await readPerson("SUBJ-001", {}, LOCAL);
+    expect(result.persons.find((p) => p.id === "KID-0001")!.facts?.map((f) => f.type)).toEqual(["Residence", "Birth"]);
+  });
+
+  it("readPerson with relativeSources: false makes no relative fetch and adds no note, even when one would fail", async () => {
+    mockOk(body());
+    mockFetch.mockRejectedValue(new Error("must not be called"));
+    const { result } = await readPerson("SUBJ-001", { relativeSources: false }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result.notes).toBeUndefined();
+  });
+
+  it("readPerson by default still fetches relatives' sources (project_create's read)", async () => {
+    mockOk(body());
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          sourceDescriptions: [{ id: "REL-9AA", titles: [{ value: "Rel src" }], citations: [{ value: "cite" }] }],
+        }),
+      headers: new Headers(),
+    });
+    const { result } = await readPerson("SUBJ-001", {}, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result.persons.find((p) => p.id === "KID-0001")!.sources).toEqual([{ ref: "REL-9AA" }]);
+    expect(result.sources.find((s) => s.id === "REL-9AA")!.citation).toBe("cite");
+  });
+
+  it("does not mutate its input, and keeps a memory source that no ref points at", () => {
+    const input = {
+      persons: [
+        { id: "A", gender: "Male", living: false, names: [{ id: "n", given: "A", surname: "B" }], sources: [{ ref: "S1" }] },
+      ],
+      relationships: [{ type: "ParentChild" as const, parent: "A", child: "B", sources: [{ ref: "S3" }] }],
+      sources: [
+        { id: "S1", title: "t", citation: "c", url: "https://x/ark:/61903/1:1:AAAA-111" },
+        { id: "S2", title: "orphan", citation: "c" },
+        { id: "M1", title: "memory", artifact_url: "https://x/y" },
+        { id: "M2", title: "story", text: "words", artifact_url: "https://x/z", image_ref: "images/M2.jpg", notes: ["Story text unavailable."] },
+        { id: "S3", title: "edge", citation: "c", url: "https://x/ark:/61903/1:1:BBBB-222" },
+        { id: "S4", title: "other edge", citation: "c" },
+        { id: "S5", title: "upload", citation: "uploaded by a cousin", url: "https://example.org/doc" },
+      ],
+    };
+    input.persons[0].sources.push({ ref: "S5" });
+    input.relationships.push({ type: "ParentChild" as const, parent: "B", child: "C", sources: [{ ref: "S4" }] });
+    const before = JSON.stringify(input);
+    const out = trimPersonReadForModel(input);
+    expect(JSON.stringify(input)).toBe(before);
+    expect(out.sources.map((s) => s.id)).toEqual(["S1", "M1", "M2", "S3", "S5"]);
+    // `citation` goes where the url carries a 1:1 ARK (`record_read` returns it) and stays
+    // where it does not: it is all an agent has of a source it cannot read.
+    expect(out.sources.map((s) => "citation" in s)).toEqual([false, false, false, false, true]);
+    expect(out.relationships[0].sources).toEqual([{ ref: "S3" }]);
+    expect(out.sources.find((s) => s.id === "M2")).toEqual({ id: "M2", title: "story", artifact_url: "https://x/z" });
+    // An edge that does not name the subject loses its refs, and a source only it cited goes (#4420).
+    expect(out.relationships[1].sources).toBeUndefined();
+  });
+
+  // The captured live read of Edward Tallman (KPQ5-V9F): 21 people, 320 sources, ~163k
+  // characters, past Claude Code's ~50k cutoff, where the agent got a "too large" error
+  // and none of the profile.
+  describe("the Tallman capture", () => {
+    const fixture = JSON.parse(
+      readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), "../../../../../eval/fixtures/mcp/person-read-tallman-attached-sources.json"),
+        "utf-8",
+      ),
+    ).response as PersonReadResult;
+    const size = (r: unknown) => JSON.stringify(r).length;
+
+    it("is over the cutoff untrimmed and under 25,000 characters trimmed", () => {
+      expect(size(fixture)).toBeGreaterThan(150_000);
+      const out = trimPersonReadForModel(fixture);
+      expect(size(out)).toBeLessThan(25_000);
+      expect(out.persons).toHaveLength(fixture.persons.length);
+      expect(out.persons[0].id).toBe("KPQ5-V9F");
+      expect(out.persons.slice(1).every((p) => !("sources" in p))).toBe(true);
+      const arks = out.sources.filter((s) => s.url?.includes("1:1:"));
+      expect(arks.length).toBeGreaterThan(0);
+      expect(arks.every((s) => !("citation" in s))).toBe(true);
+      expect(out.sources.some((s) => !s.url?.includes("1:1:") && "citation" in s)).toBe(true);
+    });
+
+    it("leaves a relative its names and vital facts only, and drops ark, living: false and the edges' sources", () => {
+      const out = trimPersonReadForModel(fixture);
+      const vital = new Set(["Birth", "Death", "Christening", "Burial", "Baptism"]);
+      for (const rel of out.persons.slice(1)) {
+        expect(rel.ark).toBeUndefined();
+        expect(rel.living).toBeUndefined();
+        expect((rel.facts ?? []).every((f) => vital.has(f.type))).toBe(true);
+      }
+      const subject = out.persons[0];
+      expect(subject.ark).toBeUndefined();
+      expect("preferred" in subject.names[0]).toBe(false);
+      const subjectId = subject.id;
+      for (const r of out.relationships) {
+        if (![r.parent, r.child, r.person1, r.person2].includes(subjectId)) expect(r.sources).toBeUndefined();
+      }
+      // A marriage lives on the Couple edge, which stays whole.
+      expect(out.relationships.some((r) => r.type === "Couple" && r.facts?.some((f) => f.type === "Marriage"))).toBe(true);
+    });
+
+    it("keeps every source link the subject's refs point at", () => {
+      const out = trimPersonReadForModel(fixture);
+      const byId = new Map(fixture.sources.map((s) => [s.id, s]));
+      expect((out.persons[0].sources ?? []).length).toBeGreaterThan(0);
+      for (const { ref } of out.persons[0].sources ?? []) {
+        expect(out.sources.find((s) => s.id === ref)?.url).toBe(byId.get(ref)?.url);
+      }
+    });
+  });
+});
+
+// A relative's trimmed answer is still too big for a family this large (issue #4420): the
+// subject's children and siblings lose their facts, then the siblings go.
+describe("person_read's size bound (#4420)", () => {
+  const longPlace = "Some Long Township Name, Some Long County Name, Some State Name, United States of America";
+  const vitalFacts = () =>
+    ["Birth", "Death", "Christening", "Burial", "Baptism"].map((type) => ({
+      type,
+      standard_date: "1 Jan 1800",
+      standard_place: longPlace,
+    }));
+  const kin = (id: string) => ({
+    id,
+    gender: "Male",
+    living: false,
+    names: [{ given: "Given" + id, surname: "Surname" }],
+    facts: vitalFacts(),
+  });
+  const family = (kids: number, sibs: number): PersonReadResult => {
+    const persons = [kin("SUBJ"), kin("DAD"), kin("MUM")];
+    const relationships: PersonReadResult["relationships"] = [
+      { type: "ParentChild", parent: "DAD", child: "SUBJ" },
+      { type: "ParentChild", parent: "MUM", child: "SUBJ" },
+      { type: "Couple", person1: "DAD", person2: "MUM" },
+    ];
+    for (let i = 0; i < kids; i++) {
+      persons.push(kin("KID" + i));
+      relationships.push({ type: "ParentChild", parent: "SUBJ", child: "KID" + i });
+    }
+    for (let i = 0; i < sibs; i++) {
+      persons.push(kin("SIB" + i));
+      for (const parent of ["DAD", "MUM"]) relationships.push({ type: "ParentChild", parent, child: "SIB" + i });
+    }
+    return { persons, relationships, sources: [] };
+  };
+  const size = (r: unknown) => JSON.stringify(r).length;
+
+  it("leaves a family under the bound whole", () => {
+    const out = trimPersonReadForModel(family(3, 3));
+    expect(out.persons).toHaveLength(9);
+    expect(out.persons.find((p) => p.id === "SIB0")!.facts).toHaveLength(5);
+  });
+
+  it("drops children's and siblings' facts first, keeping every person and the parents' facts", () => {
+    const input = family(40, 40);
+    const out = trimPersonReadForModel(input);
+    expect(size(trimPersonReadForModel(family(3, 3)))).toBeLessThan(40_000);
+    expect(size(out)).toBeLessThan(40_000);
+    expect(out.persons).toHaveLength(input.persons.length);
+    expect(out.persons.find((p) => p.id === "KID0")!.facts).toBeUndefined();
+    expect(out.persons.find((p) => p.id === "SIB0")!.facts).toBeUndefined();
+    expect(out.persons.find((p) => p.id === "DAD")!.facts).toHaveLength(5);
+    expect(out.persons[0].facts).toHaveLength(5);
+  });
+
+  it("drops the siblings, and their edges, when the facts were not enough", () => {
+    const out = trimPersonReadForModel(family(40, 700));
+    expect(size(out)).toBeLessThan(40_000);
+    expect(out.persons.some((p) => p.id.startsWith("SIB"))).toBe(false);
+    expect(out.relationships.some((r) => String(r.child).startsWith("SIB"))).toBe(false);
+    expect(out.persons.filter((p) => p.id.startsWith("KID"))).toHaveLength(40);
+    expect(out.persons.map((p) => p.id)).toEqual(expect.arrayContaining(["SUBJ", "DAD", "MUM"]));
+  });
+});
+

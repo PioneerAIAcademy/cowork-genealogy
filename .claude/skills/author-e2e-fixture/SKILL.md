@@ -123,8 +123,10 @@ folder — `scaffold`'s two templates live in the harness instead).
 - `polarity`: omit for a normal recover-this finding. `"avoid"` marks a
   claim the agent must **NOT** assert (spec §3.4.1) — the judge passes
   it when the claim is absent from the final tree, and the harness
-  re-checks that mechanically (a matching person in the final tree
-  forces the finding to fail). Pair a `required` avoid guard with a
+  re-checks that mechanically against what the finding states: a
+  wrong person's `wrong_candidate.records` (every persona ARK of their
+  records), a fact's avoided date or place, or a `relation` plus the
+  candidate's name. `make e2e-validate` names a missing field. Pair a `required` avoid guard with a
   `required` recover finding that the agent documented the negative
   conclusion, so a run that does nothing does not pass by default.
 
@@ -219,8 +221,9 @@ Then report the files written and stop. Do not run, commit, or push.
 > 1. **Seed an editable project** — `SeedProject.bat` (enter `<slug>`) or
 >    `make e2e-project TEST=<slug>`. It copies the fixture's starting state
 >    into `eval/e2e-project/<slug>/` (throwaway, never committed).
-> 2. **Watch it run** — open `eval/e2e-project/<slug>/` in the Claude Desktop
->    **Cowork** tab and run `/research`. Open the same folder in the Research
+> 2. **Watch it run** — in Claude Desktop, start a **Cowork** task on
+>    `eval/e2e-project/<slug>/` (**New** → **Cowork** → **Project or folder** →
+>    **Add folder**) and run `/research`. Open the same folder in the Research
 >    Viewer (`Viewer.bat` / `make electron`) to follow along.
 > 3. Commit the fixture directory and open a PR.
 

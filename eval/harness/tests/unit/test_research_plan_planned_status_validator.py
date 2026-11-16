@@ -1,9 +1,13 @@
 """Direct tests for `test_new_plan_items_planned_status`.
 
 Same reason as `test_research_plan_objective_target_validator.py`: nothing
-under `validators/` is collected by `make harness-test`, and 17 research-plan
-tests carry this validator's tag, so a regression here would otherwise surface
+under `validators/` is collected by `make harness-test`, and every research-plan
+test counted by `grep -rl new-plan-items-planned-status eval/tests/unit/research-plan | wc -l`
+carries this validator's tag, so a regression here would otherwise surface
 only inside a paid per-skill run.
+
+Issue #4477: the tag means the test writes a plan, so a tagged run that adds no
+new plan item fails instead of passing with nothing checked.
 
 Issue #1830 item 1 (the lead's 2026-08-31 ruling on #1917) adds one exception:
 on an `enumerative` question, an event type the plan does not cover is written
@@ -23,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "validators"))
 from test_research_plan import (  # noqa: E402
     test_new_plan_items_planned_status as check_planned,
 )
+from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
 
 TAGGED = {"tags": ["planning", "new-plan-items-planned-status"]}
 UNTAGGED = {"tags": ["planning"]}
@@ -63,19 +68,18 @@ def test_fails_an_enumerative_skip_that_names_none_of_the_five_events():
     item = {"id": "pli_002", "record_type": "land", "status": "skipped",
             "skip_category": "out_of_scope", "skip_reason": "Later."}
     before, after = _states("enumerative", [_planned(1), item])
-    with pytest.raises(AssertionError):
-        check_planned(before, after, TAGGED)
+    expect_fires(lambda: check_planned(before, after, TAGGED), "pli_002 has status='skipped'")
 
 
 def test_passes_an_enumerative_skip_with_category_and_reason():
     before, after = _states("enumerative", [_planned(1), _skipped(2)])
-    check_planned(before, after, TAGGED)
+    expect_passes(lambda: check_planned(before, after, TAGGED))
 
 
 def test_passes_a_plan_of_planned_items_on_any_question():
     for kind in ("enumerative", "targeted", None):
         before, after = _states(kind, [_planned(1), _planned(2)])
-        check_planned(before, after, TAGGED)
+        expect_passes(lambda: check_planned(before, after, TAGGED))
 
 
 # --- still fails everywhere else --------------------------------------------
@@ -85,8 +89,7 @@ def test_fails_a_skip_at_creation_on_a_targeted_or_unlabelled_question(kind):
     """The over-firing footprint: enumerative bookkeeping on a question that
     carries no five-event obligation."""
     before, after = _states(kind, [_planned(1), _skipped(2)])
-    with pytest.raises(AssertionError, match="pli_002 has status='skipped'"):
-        check_planned(before, after, TAGGED)
+    expect_fires(lambda: check_planned(before, after, TAGGED), "pli_002 has status='skipped'")
 
 
 @pytest.mark.parametrize("category,reason", [
@@ -98,22 +101,55 @@ def test_fails_a_skip_at_creation_on_a_targeted_or_unlabelled_question(kind):
 def test_fails_an_enumerative_skip_missing_its_category_or_reason(category, reason):
     """"Must state in writing why" — a skip without both says nothing."""
     before, after = _states("enumerative", [_skipped(2, category, reason)])
-    with pytest.raises(AssertionError, match="pli_002 has status='skipped'"):
-        check_planned(before, after, TAGGED)
+    expect_fires(lambda: check_planned(before, after, TAGGED), "pli_002 has status='skipped'")
 
 
 @pytest.mark.parametrize("status", ["in_progress", "completed"])
 def test_fails_other_statuses_even_on_an_enumerative_question(status):
     item = {**_planned(1), "status": status}
     before, after = _states("enumerative", [item])
-    with pytest.raises(AssertionError, match=f"status='{status}'"):
-        check_planned(before, after, TAGGED)
+    expect_fires(lambda: check_planned(before, after, TAGGED), f"status='{status}'")
 
 
 def test_ignores_pre_existing_items():
     old = {**_planned(9), "status": "completed"}
     before, after = _states("targeted", [_planned(1)], before_items=[old])
-    check_planned(before, after, TAGGED)
+    expect_passes(lambda: check_planned(before, after, TAGGED))
+
+
+# --- #4477: a tagged run must write at least one new item --------------------
+
+def _hand_states(before_plans, after_plans):
+    q = [_question("targeted")]
+    return ({"research_json": {"questions": q, "plans": before_plans}},
+            {"research_json": {"questions": q, "plans": after_plans}})
+
+
+def test_fails_a_tagged_run_that_writes_an_empty_plan():
+    before, after = _states("targeted", [])
+    expect_fires(lambda: check_planned(before, after, TAGGED), "wrote no new plan items")
+
+
+def test_fails_a_tagged_run_that_writes_no_plan_at_all():
+    """A pre-existing plan comes through untouched: its items are not new."""
+    old = [{"id": "pl_000", "question_id": "q_001", "items": [_planned(9)]}]
+    before, after = _hand_states(old, [dict(p) for p in old])
+    expect_fires(lambda: check_planned(before, after, TAGGED), "wrote no new plan items")
+
+
+def test_fails_the_v18_shape_with_no_plans_before_or_after():
+    """research-plan v18: the agent stopped for a locality survey, so `plans`
+    was empty before the run and still empty after it."""
+    before, after = _hand_states([], [])
+    expect_fires(lambda: check_planned(before, after, TAGGED), "wrote no new plan items")
+
+
+def test_counts_an_item_added_to_an_existing_plan():
+    before, after = _hand_states(
+        [{"id": "pl_000", "question_id": "q_001", "items": [_planned(9)]}],
+        [{"id": "pl_000", "question_id": "q_001", "items": [_planned(9), _planned(10)]}],
+    )
+    expect_passes(lambda: check_planned(before, after, TAGGED))
 
 
 def test_skips_when_the_tag_is_absent():

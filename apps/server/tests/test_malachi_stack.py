@@ -191,8 +191,11 @@ def shape_violations(doc: dict) -> list[str]:
     for key in ("FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE"):
         if web.get(key) != f"${{{key}:-}}":
             out.append(f"sign-in: web's {key} comes from the env file")
-    if tools.get("OAUTH_ISSUER", "").split(":")[0] != "${PUBLIC_URL":
-        out.append("issuer: tools' OAUTH_ISSUER must be PUBLIC_URL")
+    # Both tiers print the issuer, and a client compares the two; the web tier's is also
+    # what registers Claude's sign-in routes at all (#3997).
+    for name, env in (("tools", tools), ("web", web)):
+        if env.get("OAUTH_ISSUER", "").split(":")[0] != "${PUBLIC_URL":
+            out.append(f"issuer: {name}'s OAUTH_ISSUER must be PUBLIC_URL")
     if services["tools"].get("read_only") is not True or services["edge"].get("read_only") is not True:
         out.append("read_only: tools and edge run read-only")
     if not any("dml_role.py" in m for m in _mounts(services["migrate"])):
@@ -360,6 +363,10 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "a limit the env file cannot reach", _drop_env("tools", "GENEALOGY_MAX_TRANSCRIPTIONS")),
     ("shape", "links from a second setting", _set_env("tools", "WEB_PUBLIC_URL", "${WEB_PUBLIC_URL:-}")),
     ("shape", "no links", _drop_env("tools", "WEB_PUBLIC_URL")),
+    ("shape", "no sign-in routes on web", _drop_env("web", "OAUTH_ISSUER")),
+    ("shape", "web's issuer from a second setting", _set_env("web", "OAUTH_ISSUER", "${OAUTH_ISSUER:-}")),
+    ("shape", "no issuer on tools", _drop_env("tools", "OAUTH_ISSUER")),
+    ("shape", "tools' issuer from a second setting", _set_env("tools", "OAUTH_ISSUER", "${OAUTH_ISSUER:-}")),
     ("shape", "a redirect the env file cannot reach", _drop_env("web", "FS_REDIRECT_URI")),
     ("shape", "a sign-in budget the env file cannot reach", _drop_env("web", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")),
     ("shape", "owner DSN on web", _set_env("web", "MIGRATE_PG_DSN", "x")),
@@ -753,6 +760,20 @@ def test_up_refuses_a_populated_directory_it_does_not_own(first_run):
 
 
 @needs_bash
+def test_up_refuses_a_public_url_ending_in_a_slash(first_run):
+    """It is both tiers' OAUTH_ISSUER, and the web tier refuses one that is not its own
+    PUBLIC_URL without the slash: caught here, before compose replaces a running stack."""
+    path, env = first_run
+    text = path.read_text(encoding="utf-8")
+    assert "PUBLIC_URL=https://example.test\n" in text
+    path.write_text(text.replace("PUBLIC_URL=https://example.test\n", "PUBLIC_URL=https://example.test/\n"),
+                    encoding="utf-8")
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "EDGE": "off"})
+    assert result.returncode == 1 and "must not end in '/'" in result.stderr
+    assert "compose" not in result.stdout
+
+
+@needs_bash
 @pytest.mark.parametrize("edge", ["of", "OFF", "no"])
 def test_up_refuses_an_edge_value_it_does_not_know(first_run, edge):
     """Read before anything starts: a typo must not open the public port."""
@@ -900,8 +921,11 @@ def test_backup_at_or_over_the_default_keep_does_not_ask(first_run, given):
 
 GOOD_ROUTES: dict[tuple[str, str], tuple[int, dict[str, str], bytes]] = {
     ("GET", "/livez"): (200, {}, b'{"ok":true}'),
-    ("GET", "/.well-known/oauth-protected-resource/mcp"): (200, {}, b'{"resource":"http://x/mcp"}'),
-    ("POST", "/mcp"): (401, {"WWW-Authenticate": 'Bearer resource_metadata="http://x/m"'}, b"{}"),
+    ("GET", "/.well-known/oauth-protected-resource/mcp"): (
+        200, {}, b'{"resource":"http://x/mcp","authorization_servers":["http://x"],"scopes_supported":["genealogy"]}'),
+    ("GET", "/.well-known/oauth-authorization-server"): (
+        200, {}, b'{"issuer":"http://x","authorization_endpoint":"http://x/authorize"}'),
+    ("POST", "/mcp"): (401, {"WWW-Authenticate": 'Bearer resource_metadata="http://x/m", scope="genealogy"'}, b"{}"),
     ("GET", "/auth/config"): (200, {}, b'{"familysearch":true,"devLogin":false,"openrouter":false}'),
 }
 
@@ -944,6 +968,7 @@ def stub() -> Iterator[Callable[[dict], str]]:
 
 def _routes(**changes: Any) -> dict:
     keys = {"livez": ("GET", "/livez"), "metadata": ("GET", "/.well-known/oauth-protected-resource/mcp"),
+            "signin": ("GET", "/.well-known/oauth-authorization-server"),
             "mcp": ("POST", "/mcp"), "config": ("GET", "/auth/config"), "healthz": ("GET", "/healthz"),
             "health": ("GET", "/api/health"), "index": ("GET", "/index.html"), "sessions": ("GET", "/api/sessions")}
     return {**GOOD_ROUTES, **{keys[k]: v for k, v in changes.items()}}
@@ -964,6 +989,12 @@ FAULTS = [
     ("unauthenticated POST /mcp", {"mcp": (401, {}, b"{}")}),
     ("metadata", {"metadata": (200, {}, b'{"resource":"http://x/other"}')}),
     ("metadata", {"metadata": (404, {}, b"{}")}),
+    # The web tier started without OAUTH_ISSUER: Claude's discovery would end in a 404.
+    ("authorization server", {"signin": (404, {}, b"{}")}),
+    ("authorization server", {"signin": (200, {}, b'{"issuer":"http://other"}')}),
+    ("authorization server", {"signin": (200, {}, b'{"issuer":"http://x/"}')}),
+    ("authorization server", {"signin": (200, {}, b"{}")}),
+    ("authorization server", {"metadata": (200, {}, b'{"resource":"http://x/mcp"}')}),
     ("/index.html", {"index": (200, {}, b"<html>")}),
     ("/api/sessions", {"sessions": (200, {}, b"[]")}),
     ("/auth/config", {"config": (200, {}, b'{"familysearch":true,"devLogin":true,"openrouter":false}')}),

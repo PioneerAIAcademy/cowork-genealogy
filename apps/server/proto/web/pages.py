@@ -108,9 +108,9 @@ def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] 
 <li><strong>Living people.</strong> Do not store information about living people.</li>
 <li><strong>This is a beta.</strong> Nothing promises your work survives, so download what you want to keep.</li>
 <li><strong>No desktop extension.</strong> Turn the Genealogy Research desktop extension off on that Claude account,
-under Settings → Extensions on each computer, or use a second Claude account.</li>
+under Settings → Desktop app → Extensions on each computer, or use a second Claude account.</li>
 <li><strong>Signing in again.</strong> Placeholder: what to expect when FamilySearch ends a session, and when the
-connector itself needs reconnecting (Settings → Connectors), will be written from the live sittings.</li>
+connector itself needs reconnecting (Customize → Connectors), will be written from the live sittings.</li>
 <li><strong>Feedback.</strong> Email it with the conversation pasted in, because this server does not store your
 conversations. Placeholder: the feedback address has not been supplied yet.</li>
 <li><strong>Team and Enterprise plans.</strong> An Owner adds the connector and makes the plugin available.</li>
@@ -191,6 +191,37 @@ def refused_page(message: str, *, temporary: bool = False, up: str = "") -> str:
 {_POST_AND_RELOAD}"""
         + _foot(up)
     )
+
+
+def consent_page(*, signed_request: str, client_name: str, redirect_host: str) -> str:
+    """The connector's consent page (#3997, ``GET /connect``): who is asking, what agreeing
+    gives them, and one button. A plain form, not ``postAndReload``: the answer is a redirect
+    to FamilySearch, which a navigation follows and a ``fetch`` cannot. ``signed_request``
+    rides back in a hidden field; it is our own signed token, escaped all the same."""
+    return (
+        _HEAD.format(title=f"Connect {escape(client_name)} to {CONNECTOR_NAME}")
+        + f"""<h1>Connect {escape(client_name)} to {CONNECTOR_NAME}</h1>
+<p><strong>{escape(client_name)}</strong> ({escape(redirect_host)}) is asking to connect to your
+{CONNECTOR_NAME} account.</p>
+<p><strong>Continue only if you just clicked Connect in {escape(client_name)} yourself.</strong> Connecting gives that
+{escape(client_name)} account access to your FamilySearch sign-in and to your projects here.</p>
+<p>Next you sign in with FamilySearch.</p>
+<p class="note">This is a beta. Everything stored here is deleted when the beta ends. By continuing you agree to
+the <a href="terms">Terms</a> and the <a href="privacy">Privacy policy</a>.</p>
+<form method="post" action="connect">
+<input type="hidden" name="request" value="{escape(signed_request, quote=True)}">
+<p><button type="submit">Agree and sign in with FamilySearch</button></p>
+</form>
+"""
+        + _FOOT
+    )
+
+
+def consent_refused_page(message: str) -> str:
+    """The consent step's refusal: a request that is missing, altered or older than its ten
+    minutes, or a POST from another site. ``message`` is escaped whole."""
+    return (_HEAD.format(title="Connection not started")
+            + f"<h1>This connection didn't start</h1>\n<p>{escape(message)}</p>\n" + _FOOT)
 
 
 def not_found_page() -> str:

@@ -3,16 +3,16 @@ SAMPLE_PROJECT = test/fixtures/sample-project
 # ── Development ─────────────────────────────────────────
 
 dev:                          ## Start dev mode with HMR
-	npx electron-vite dev
+	npx install-electron && npx electron-vite dev
 
 dev-sample:                   ## Dev mode, auto-open sample project
-	npx electron-vite dev -- --project-dir $(SAMPLE_PROJECT)
+	npx install-electron && npx electron-vite dev -- --project-dir $(SAMPLE_PROJECT)
 
 dev-debug:                    ## Dev mode with CDP on port 9222 (for agent-browser)
-	npx electron-vite dev --remoteDebuggingPort 9222
+	npx install-electron && npx electron-vite dev --remoteDebuggingPort 9222
 
 dev-debug-sample:             ## Dev + debug + sample project (full QA setup)
-	npx electron-vite dev --remoteDebuggingPort 9222 -- --project-dir $(SAMPLE_PROJECT)
+	npx install-electron && npx electron-vite dev --remoteDebuggingPort 9222 -- --project-dir $(SAMPLE_PROJECT)
 
 # ── Testing ─────────────────────────────────────────────
 

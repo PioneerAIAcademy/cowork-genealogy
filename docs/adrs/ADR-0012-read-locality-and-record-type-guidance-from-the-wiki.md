@@ -14,11 +14,11 @@
 - **Status:** Accepted
 - **Decided:** 2026-08-27 (issue #1967: no record-type × country tables) and
   2026-08-31 (issue #1923: the wiki is the source of truth)
-- **Last updated:** 2026-10-21 (issue #3516, lead ruling: `timeline_build` reads census years from a table in code, never from the catalog or the wiki); 2026-10-06 (issue #2259: a small wiki-carried residue may stay inline when fetching it is out of all proportion to the residue; and 2026-10-05, the per-agent ruling for person-evidence's corridor fetch, issue #2537)
+- **Last updated:** 2026-11-12 (lead ruling: `record_search` answers a census search from the same table, and search-records no longer reads the census wiki page); 2026-10-21 (issue #3516, lead ruling: `timeline_build` reads census years from a table in code, never from the catalog or the wiki); 2026-10-06 (issue #2259: a small wiki-carried residue may stay inline when fetching it is out of all proportion to the residue; and 2026-10-05, the per-agent ruling for person-evidence's corridor fetch, issue #2537)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `packages/engine/plugin/skills`, `packages/engine/plugin/agents`, `packages/engine/mcp-server/src/tools/wiki-read.ts`, `packages/engine/mcp-server/src/tools/wiki-search.ts`, `packages/engine/mcp-server/src/tools/wiki-place-page.ts`, `packages/engine/mcp-server/src/data/census-table.ts`, `docs/skill-to-agent-pair-conversion.md` — *linted; keep current*
+- **Applies to:** `packages/engine/plugin/skills`, `packages/engine/plugin/agents`, `packages/engine/mcp-server/src/tools/wiki-read.ts`, `packages/engine/mcp-server/src/tools/wiki-search.ts`, `packages/engine/mcp-server/src/tools/wiki-place-page.ts`, `packages/engine/mcp-server/src/data/census-table.ts`, `packages/engine/mcp-server/src/utils/census-note.ts`, `docs/skill-to-agent-pair-conversion.md` — *linted; keep current*
 - **Related:** ADR-0002 (where a capability goes), ADR-0003 (prose does not
   bind), ADR-0004 (three tool spellings), ADR-0011 (write-boundary rules);
   issues #1923, #1967, #2123, #2153, #2078, #2054, #2130, #1344, #1112, #2259
@@ -153,6 +153,15 @@ Concretely:
   survive in that index, and a place no row covers produces no census gap.
   It is a tool's own data, read by code; it does not license a census fact in a
   prompt, and the timeline agent's hypothesis mode still reads the wiki.
+- **`record_search` reads the same table** (lead, 2026-11-12). A census search is
+  answered with a `census` block: the censuses of that year and place, and what
+  each schedule recorded where the table knows it. The search-records agent
+  states schedule facts only from that block and holds no wiki tool. The
+  instruction to read the census page was skipped by a cheaper model in 4 to 13
+  of 39 unit runs whatever the prompt said, which is the risk this file names
+  below. A missing row asserts nothing: the block says the table lists none, and
+  the agent still runs the search before reporting a year as not on FamilySearch.
+  Issue #4515 adds what the schedules of the other jurisdictions recorded.
 - **Where the wiki is wrong or thin, fix the wiki.** The genealogist's path is
   to find the page for the country and record type and request a specific change
   to it. The plugin does not keep a corrected local copy.

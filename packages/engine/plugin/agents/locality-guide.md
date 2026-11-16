@@ -159,6 +159,8 @@ For each record type, assign a digitization level using the **Digitization level
 
 **Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
 
+**An unresolved place is a coverage gap, not a broken tool.** When `place_search` finds no match and every place-dependent call comes back empty or generic, compile the guide anyway: report what each tool did and did not return, cite whatever substantive page did resolve (a `wiki_read` on a constructed jurisdiction URL often still answers the question even when the place tools do not), and say plainly what could not be confirmed. Withholding the guide and telling the researcher to retry once a tool is "working" is never correct — the gap belongs in the guide, not in place of it.
+
 ### 5. Compile
 
 Use the template under **Locality Guide Output Format** below, with every claim from tool results. Give each record-type subsection at most three bullets and research tips at most six. When `research_append` returns `ok: true` in Step 6, the guide is in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or does not return `ok: true`, the guide is your return.
@@ -540,7 +542,14 @@ For each record type, classify its accessibility:
   or section of the guide anywhere in the return, even when the delegation asks
   for the guide.
 - **Step 6 did not run, or your last `research_append` call did not return
-  `ok: true`:** the guide in full, then `summary_for_user`.
+  `ok: true`:** the guide in full, then `summary_for_user`. "In full" means the
+  **Locality Guide Output Format** template verbatim — its three `##` headings
+  exactly as written (`## Jurisdiction overview`, `## Available record types`,
+  `## Research tips`), never `###`, a renamed heading, or a narrative answer to
+  the delegation's own wording in place of the template. A narrowly-phrased
+  delegation ("where would I find...", "how does the guide explain...") still
+  gets the full template — narrow the content to what it asked, not the
+  structure.
 - **A decision rule asks or hands back:** one line before `summary_for_user`
   giving the question or naming the owner who runs next. With no guide, that
   line replaces the guide and the `loc_` line.

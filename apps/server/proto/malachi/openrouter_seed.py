@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
         print("no key on stdin", file=sys.stderr)
         return 2
     if not seed(os.environ["PG_DSN"], args.email, key):
-        print(f"no user {args.email}: they must sign in once first", file=sys.stderr)
+        print(f"no user {args.email}: they must connect from Claude once first", file=sys.stderr)
         return 1
     print(f"seeded {args.email}")
     return 0
