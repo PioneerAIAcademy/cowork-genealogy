@@ -19,7 +19,7 @@ from e2e.run_single_ask import (
     fixture_dirs,
     load_single_ask_fixture,
 )
-from e2e.single_ask_grade import SingleAskSpec, format_line, grade, spawned_units
+from e2e.single_ask_grade import SingleAskSpec, format_line, grade, saves, spawned_units
 
 SPEC = SingleAskSpec(
     id="review-sources",
@@ -667,3 +667,227 @@ def test_committed_absence_fixture_matches_the_graded_spec():
     )
     _, spec = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "find-death-john-mcnerny")
     assert (spec.expected_owner, spec.expected_save) == (FIND.expected_owner, FIND.expected_save)
+
+
+# --- empty-folder fixtures and the offer check (issue #4509) -----------------
+
+def _empty_folder(tmp_path: Path, **over) -> Path:
+    d = _write(tmp_path, **over)
+    for name in ("starting-research.json", "starting-tree.gedcomx.json"):
+        (d / name).unlink()
+    return d
+
+
+def test_loader_takes_a_fixture_with_neither_starting_file_as_an_empty_folder(tmp_path):
+    fixture, spec = load_single_ask_fixture(_empty_folder(tmp_path))
+    assert fixture.starting_research_path is None
+    assert fixture.starting_tree_path is None
+    assert spec.ends_on_offer is False
+
+
+@pytest.mark.parametrize("keep", ["starting-research.json", "starting-tree.gedcomx.json"])
+def test_loader_refuses_a_fixture_with_one_starting_file(tmp_path, keep):
+    d = _write(tmp_path)
+    for name in ("starting-research.json", "starting-tree.gedcomx.json"):
+        if name != keep:
+            (d / name).unlink()
+    with pytest.raises(FixtureError, match="both starting files or neither"):
+        load_single_ask_fixture(d)
+
+
+@pytest.mark.parametrize("value", ["true", 1, None])
+def test_loader_refuses_a_non_bool_ends_on_offer(tmp_path, value):
+    with pytest.raises(FixtureError, match="ends_on_offer must be true or false"):
+        load_single_ask_fixture(_write(tmp_path, ends_on_offer=value))
+
+
+def test_loader_carries_ends_on_offer(tmp_path):
+    _, spec = load_single_ask_fixture(_write(tmp_path, ends_on_offer=True))
+    assert spec.ends_on_offer is True
+
+
+def test_build_workspace_copies_nothing_for_an_empty_folder_fixture(tmp_path):
+    from e2e.orchestrator import build_workspace
+
+    fx = tmp_path / "fx"
+    fx.mkdir()
+    fixture, _ = load_single_ask_fixture(_empty_folder(fx))
+    skills, agents, ws = tmp_path / "skills", tmp_path / "agents", tmp_path / "ws"
+    for d in (skills, agents, ws):
+        d.mkdir()
+    build_workspace(fixture, ws, skills, agents)
+    for name in ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json"):
+        assert not (ws / name).exists(), name
+
+
+def _offer(step="search"):
+    from harness.skill_runner import load_step_boundary
+
+    line = load_step_boundary().offer_line(step)
+    assert line, f"no offer label for {step}"
+    return line
+
+
+def _offer_spec(**over):
+    return SingleAskSpec(**{**SPEC.__dict__, "ends_on_offer": True, **over})
+
+
+def run_offer(last_text, spec=None):
+    spec = spec or _offer_spec()
+    g = grade(
+        tool_calls=[skill("research"), agent("source-evaluation")], spec=spec,
+        starting_research=START, final_research=SAVED, last_text=last_text,
+    )
+    return g, format_line(spec, g)
+
+
+def test_offer_check_passes_on_a_continue_line():
+    g, line = run_offer(f"Here is what I found.\n\n{_offer()}")
+    assert g.passed, line
+    assert g.checks["ends_on_offer"][0]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Here is what I found. Nothing more to do.",
+        "Continue with polishing the family tree?",  # an invented label offers nothing
+        f"{_offer()}\n\nLet me know what you think.",  # the offer is not the last line
+        None,
+    ],
+)
+def test_offer_check_fails_without_a_named_offer(text):
+    g, line = run_offer(text)
+    assert not g.passed
+    assert g.failed == ["ends_on_offer"]
+    assert "failed=[ends_on_offer]" in line and "ends_on_offer:" in line
+
+
+def test_offer_check_is_not_graded_unless_the_fixture_asks():
+    g, _ = run_offer(None, spec=SPEC)
+    assert g.passed
+    assert "ends_on_offer" not in g.checks
+
+
+def test_last_main_text_skips_subagent_and_harness_lines():
+    from e2e.single_ask_grade import last_main_text
+
+    narration = [
+        {"kind": "assistant", "thread": "main", "text": "first"},
+        {"kind": "assistant", "thread": "main", "text": _offer()},
+        {"kind": "assistant", "thread": "sub", "text": "a subagent's last words"},
+        {"kind": "harness", "text": "harness note"},
+    ]
+    assert last_main_text(narration) == _offer()
+    assert last_main_text([{"kind": "assistant", "thread": "sub", "text": "x"}]) is None
+    assert last_main_text(None) is None
+
+
+NO_PID_SPEC = SingleAskSpec(
+    id="no-pid", message="Locate the birth date of Marie Anne Brigard.",
+    expected_owner="init-project", expected_save=({"section": "log", "absent": True},),
+    required_tools=("project_context",),
+)
+CONTEXT_CALL = {"tool": "mcp__genealogy__project_context", "args": {}, "thread": "main"}
+
+
+def test_empty_folder_with_no_research_json_after_is_no_new_rows():
+    g = grade(
+        tool_calls=[skill("research"), CONTEXT_CALL, agent("init-project")],
+        spec=NO_PID_SPEC, starting_research=None, final_research=None,
+    )
+    assert g.passed, format_line(NO_PID_SPEC, g)
+    assert g.checks["no_research_job"] == (True, "none started")
+
+
+def test_empty_folder_with_no_research_json_still_fails_a_present_save():
+    spec = SingleAskSpec(**{**NO_PID_SPEC.__dict__, "expected_save": {"section": "sources"}})
+    g = grade(
+        tool_calls=[skill("research"), CONTEXT_CALL, agent("init-project")],
+        spec=spec, starting_research=None, final_research=None,
+    )
+    assert g.failed == ["save"]
+    assert g.checks["no_research_job"][0]
+
+
+def test_route_note_hook_sends_the_shipped_decision():
+    import asyncio
+
+    from harness.context_policy import _route, route_note_hook
+
+    prompt = {"prompt": "Find records on KWCF-S1C."}
+    out = asyncio.run(route_note_hook(prompt, None, None))
+    assert out == _route.decision(prompt, {})
+    assert out["hookSpecificOutput"]["additionalContext"] == f"{_route.CONTEXT}\n\n{_route.SOURCES_NOTE}"
+    hand_back = {"prompt": '<agent-message from="a1">done</agent-message>'}
+    assert asyncio.run(route_note_hook(hand_back, None, None)) == {}
+
+
+def test_run_agent_binds_the_route_hook_only_in_single_ask_mode():
+    tree = ast.parse(_orchestrator_source())
+    picks = [
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.IfExp)
+        and getattr(n.test, "id", None) == "single_ask"
+        and getattr(n.body, "id", None) == "route_note_hook"
+        and getattr(n.orelse, "id", None) == "sources_note_hook"
+    ]
+    assert len(picks) == 1, "_run_agent must pick route_note_hook when single_ask, else sources_note_hook"
+
+
+def test_main_grades_an_empty_folder_run_with_its_offer(monkeypatch, tmp_path, capsys):
+    import e2e.run_single_ask as rsa
+
+    seen: dict = {}
+
+    async def fake_turn(**kwargs):
+        return {
+            "tool_calls": [skill("research"), agent("init-project"), agent("search-records")],
+            "narration": [
+                {"kind": "assistant", "thread": "main", "text": f"No match found.\n{_offer()}"},
+                {"kind": "assistant", "thread": "sub", "text": "subagent text"},
+            ],
+            "usage": {}, "aborted_reason": None, "error": None,
+        }
+
+    def fake_workspace(fixture, target, *a, **k):
+        seen["research_path"] = fixture.starting_research_path
+        (Path(target) / "research.json").write_text(json.dumps(
+            {"log": [{"id": "log_001", "tool": "record_search", "outcome": "negative"}]}
+        ), encoding="utf-8")
+        return Path(target)
+
+    monkeypatch.setattr(rsa, "run_single_ask_turn", fake_turn)
+    monkeypatch.setattr(rsa, "build_workspace", fake_workspace)
+    monkeypatch.setattr(rsa, "load_env_file", lambda: None)
+    monkeypatch.setattr(rsa, "stage_openrouter_key", lambda: None)
+    entry = tmp_path / "index.js"
+    entry.write_text("", encoding="utf-8")
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    _empty_folder(
+        fixtures, expected_owner="search-records", setup_units=["init-project"],
+        expected_save={"section": "log", "tool": "record_search", "outcome": "negative"},
+        ends_on_offer=True,
+    )
+    code = rsa.main([
+        "--fixtures-root", str(fixtures), "--runlog-root", str(tmp_path / "runs"),
+        "--mcp-server-entry", str(entry),
+    ])
+    out = capsys.readouterr()
+    assert code == 0, out
+    assert seen["research_path"] is None
+    log = json.loads(next((tmp_path / "runs").rglob("run-*.json")).read_text(encoding="utf-8"))
+    assert log["grade"]["checks"]["ends_on_offer"]["ok"] is True
+
+
+def test_no_empty_folder_init_project_fixture_counts_a_new_source_as_its_save():
+    # project_create imports the person's Memories as sources, so in an empty
+    # folder a `sources` alternative passes before the deliverable runs at all.
+    checked = 0
+    for d in fixture_dirs(DEFAULT_SINGLE_ASK_FIXTURES, None):
+        fixture, spec = load_single_ask_fixture(d)
+        if fixture.starting_research_path is None and "init-project" in spec.setup_units:
+            checked += 1
+            assert all(alt["section"] != "sources" for alt in saves(spec)), d.name
+    assert checked >= 3
