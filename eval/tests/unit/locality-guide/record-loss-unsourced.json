@@ -46,6 +46,8 @@
     "wiki-place-page-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ]
 }
