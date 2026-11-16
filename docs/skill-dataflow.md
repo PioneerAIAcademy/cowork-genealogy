@@ -219,7 +219,7 @@ the absorbed person's id in every section that holds person ids.
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the hook routes any non-null `search_stop.stopped_because` to `research-exhaustiveness`; the tool refuses a `resolved` with no proof summary, a declaration while the active plan has `in_progress` or `planned` items, and a new question while another's search is in flight |
 | | `plans` / `plan_items` | `research-plan` | `search-records`, `search-external-sites`, `search-full-text`, `search-images`, `search-hints`, for `items[].status` only; `extraction_append`, by tool identity, for `items[].status` `in_progress` → `completed` only | `research_append`, `extraction_append` | unit on `plans` (whole-section only — it cannot tell a status flip from a rewritten plan); **nothing** on `plan_items`. The hook keeps the five search agents to `plan_items` |
 | | `log` | none by design — append-only, multi-writer | `search-records`, `search-external-sites`, `search-full-text`, `search-images`, `search-hints`, `survey-surname`, `search-wikipedia`, `search-familysearch-wiki`, `historical-context`, `source-evaluation`, `check-warnings`, `translation`, `convert-dates`, `validate-schema`; `extraction_append` for its own `record_read` entries | `research_log_append`, `build_external_search_url`, `extraction_append` | unit + tool |
-| | `sources` | none — written in code by `extraction_append`, whoever calls it | `citation` (refine only, never create); `init-project` (one entry per transcribed memory, at creation) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
+| | `sources` | none — written in code by `extraction_append`, whoever calls it | `citation` (refine only, never create); `init-project` (one entry per transcribed memory, at creation) | `research_append`, `extraction_append` | unit + hook; create-vs-refine held by tool identity, and the hook denies a `research_append` to the section to every caller but the citation **agent** |
 | | `assertions` | none — written in code by `extraction_append`, whoever calls it | — | `extraction_append`; `research_append` only for an update setting `informant_bias_notes` alone | unit + tool |
 | | `person_evidence` | `person-evidence` | `extraction_append`, by tool identity, for unchecked attachment links only | `research_append`, `merge_tree_persons`, `extraction_append` | unit + hook — the hook denies the section to every caller but the person-evidence **agent**; `extraction_append`'s attachment links, written only in `personId` mode, never pass the hook |
 | | `rejected_links` | `person-evidence` | — | `research_append`, `merge_tree_persons` | unit + hook + tool — the hook denies the section to every caller but the person-evidence **agent**; `research_append` refuses a `person_evidence` write that creates, moves onto or revives a rejected pair |
@@ -250,8 +250,8 @@ Three consequences worth holding onto:
   `packages/engine/plugin/hooks/guard_project_files.py`. On `research_append` it carries
   six maps: `OWNED_SECTIONS` gives `proof_summaries` to proof-conclusion,
   `person_evidence` and `rejected_links` to person-evidence, `namesakes` to
-  search-records, `evaluations` to gps-mentor and `hit_verdicts` to
-  evaluate-search-results; `OWNED_DECLARATIONS` gives a non-null
+  search-records, `evaluations` to gps-mentor, `hit_verdicts` to
+  evaluate-search-results and `sources` to citation; `OWNED_DECLARATIONS` gives a non-null
   `search_stop.stopped_because` to research-exhaustiveness; `OWNED_FIELDS` gives
   `project.status` to proof-conclusion; `OWNED_CLAIMS` gives a conflict's resolve, moot and
   analysis fields to conflict-resolution; `OWNED_APPENDS` gives creating a question to

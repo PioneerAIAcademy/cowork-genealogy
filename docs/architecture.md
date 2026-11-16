@@ -1347,8 +1347,10 @@ on the delegation tools, and one on the tools only agents hold, which the final
    `proof_summaries` to `proof-conclusion`, `person_evidence` and
    `rejected_links` to `person-evidence`, `namesakes` to `search-records` (with
    `search-images` and `search-full-text` as its co-writers, `SECTION_CO_WRITERS`),
-   `evaluations` to `gps-mentor`, and `hit_verdicts` to
-   `evaluate-search-results`, `OWNED_DECLARATIONS` reserves
+   `evaluations` to `gps-mentor`, `hit_verdicts` to
+   `evaluate-search-results`, and `sources` to `citation` (the one agent whose
+   `research_append` writes it; `extraction_append` writes it by tool identity),
+   `OWNED_DECLARATIONS` reserves
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
