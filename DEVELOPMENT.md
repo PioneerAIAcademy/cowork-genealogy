@@ -780,3 +780,13 @@ cd eval/harness && uv run pytest
 See [`eval/README.md`](./eval/README.md) for the full guide including
 prerequisites, useful flags, and Windows `.bat` shortcuts for
 non-technical users.
+
+**PRs that owe a single-ask panel run.** A PR that changes
+`packages/engine/plugin/skills/research/SKILL.md`, any agent's `description:`,
+`packages/engine/plugin/hooks/no_project_route.py` or
+`packages/engine/plugin/main-thread.json` runs `make e2e-single-ask` and pastes the
+printed block into the PR. Those files decide which unit answers a message, and the
+panel is how production routing is measured (`docs/specs/e2e-test-spec.md` §16). It
+is live and billed: each fixture's README records its cost
+(`grep -h Measured eval/tests/e2e-single-ask/*/README.md`). A FAIL is fine when that
+fixture's README names the issue that owns it.
