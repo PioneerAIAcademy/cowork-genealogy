@@ -81,6 +81,8 @@ from test_search_external_sites import (  # noqa: E402
     test_hosted_upload_is_read_with_the_tools as check_upload_read,
     test_refused_transcription_leaves_the_handoff_open as check_refused_open,
     test_folder_mode_upload_is_read_with_read as check_folder_read,
+    test_blm_outside_coverage_refusal_is_the_answer as check_blm_refusal,
+    test_browse_site_catalog_cross_check as check_browse_catalog,
 )
 
 from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
@@ -656,6 +658,88 @@ def test_archion_quiet_on_the_parish_page_with_projectpath():
 )
 def test_archion_fires(calls, match):
     expect_fires(lambda: check_archion(calls, ARCHION), match)
+
+
+# --- a browse-site hand-off checks the FamilySearch Catalog (#4428) ------
+
+BROWSE_CATALOG = {"type": "positive", "tags": ["browse-catalog"]}
+MATRICULA_ROOT = "https://data.matricula-online.eu/de/"
+
+
+def _catalog(available_online=False, response=True):
+    call = {"tool": "mcp__genealogy__catalog_search", "args": {"standardPlace": "Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany"}}
+    if response:
+        call["response"] = {
+            "hits": [
+                {
+                    "id": "koha:202974",
+                    "title": "Kirchenbuch, 1667-1875",
+                    "filmNotes": [
+                        {"filmNumber": "876539", "imageGroupNumber": "8643224", "text": "Taufen, Heiraten, Tote 1667-1809"},
+                        {"filmNumber": "876540", "imageGroupNumber": "8109455", "text": "Taufen, Heiraten, Tote 1804-1865"},
+                    ],
+                    "availableOnline": available_online,
+                }
+            ]
+        }
+    return call
+
+
+def _matricula(**over):
+    args = {"site": "matricula", "attributes": {}, "projectPath": "/p"}
+    args.update(over)
+    return _build(**args)
+
+
+GOOD_TAIL = (
+    "Invocation: hand-off.\n---\nOpen the Matricula link, then Suchen → Ortssuche for Ochtrup. FamilySearch filmed the "
+    "same Catholic register as film 876540, viewable only at a FamilySearch Center or affiliate library.\n"
+    "Next, upload the page."
+)
+
+
+def test_browse_catalog_quiet_on_a_named_center_only_film():
+    expect_passes(lambda: check_browse_catalog([_catalog(), _matricula()], GOOD_TAIL, BROWSE_CATALOG))
+
+
+def test_browse_catalog_quiet_on_a_replay_with_no_recorded_response():
+    calls = [_catalog(response=False), _matricula()]
+    expect_passes(lambda: check_browse_catalog(calls, "x\n---\nOpen the Matricula link, then Suchen → Ortssuche.", BROWSE_CATALOG))
+
+
+def test_browse_catalog_quiet_on_the_place_search_given_as_its_url():
+    tail = GOOD_TAIL.replace("Suchen → Ortssuche", "the place search at https://data.matricula-online.eu/de/suchen/")
+    expect_passes(lambda: check_browse_catalog([_catalog(), _matricula()], tail, BROWSE_CATALOG))
+
+
+def test_browse_catalog_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_browse_catalog([], "", POSITIVE)
+
+
+@pytest.mark.parametrize(
+    "calls, reply, match",
+    [
+        ([_matricula()], GOOD_TAIL, "no catalog_search call"),
+        ([_catalog()], GOOD_TAIL, "browse-site link was dropped"),
+        ([_catalog(), _matricula(projectPath=None)], GOOD_TAIL, "omitted projectPath"),
+        ([_catalog(), _matricula()], "Film 876540 is at a FamilySearch Center.\n---\nOpen the Matricula link.", "names none of the center-only films"),
+        ([_catalog(), _matricula()], GOOD_TAIL.replace("film 876540", "film 8765401"), "names none of the center-only films"),
+        ([_catalog(), _matricula()], GOOD_TAIL + " I can read image group 008109455 for you.", "offers a read"),
+        ([_catalog(available_online=True), _matricula()], GOOD_TAIL, "no center-only film"),
+        (
+            [_catalog(), _matricula()],
+            GOOD_TAIL.replace(
+                "Suchen → Ortssuche for Ochtrup",
+                "find Ochtrup in the places/dioceses list (Diocese of Münster)",
+            ),
+            "never gives Matricula's place search",
+        ),
+    ],
+    ids=["no_catalog", "no_build", "no_projectpath", "film_only_above_the_line", "film_number_inside_a_longer_one", "offers_the_group", "no_center_only_hit", "diocese_list_route"],
+)
+def test_browse_catalog_fires(calls, reply, match):
+    expect_fires(lambda: check_browse_catalog(calls, reply, BROWSE_CATALOG), match)
 
 
 # --- a plan item's collection_url is the baseUrl (#2995) -----------------
@@ -1691,3 +1775,114 @@ def test_upload_wording_fires_on_a_link_planted_in_a_committed_reply_with_no_han
     expect_fires(lambda: _replay_wording(before, after, out, test, reply=plant), "did not serve")
     expect_passes(lambda: _replay_wording(before, after, out, test, tool_calls=served))
     expect_passes(lambda: _replay_wording(before, after, out, test, tool_calls=served, reply=plant))
+
+
+# --- blm-outside-coverage: the refusal is the answer (#4402) ---------------
+
+BLM_REFUSAL = {"type": "positive", "tags": ["blm-outside-coverage"]}
+
+
+def _blm_call(response, **args):
+    return {
+        "tool": "mcp__genealogy__build_external_search_url",
+        "args": {"site": "blm_glo", "attributes": {"surname": "Flynn", "usState": "Pennsylvania"}, **args},
+        "response": response,
+    }
+
+
+REFUSED_BUILD = _blm_call({"ok": False, "reason": "outside_coverage", "errors": ["Pennsylvania is not a public-land state"]})
+NATIONWIDE_BUILD = _blm_call(
+    {"ok": True, "url": "https://glorecords.blm.gov/s/advanced-search?searchTerm=x", "access": "free"},
+    attributes={"surname": "Flynn"},
+)
+
+
+def test_blm_refusal_passes_when_the_refusal_stands_and_nothing_is_logged():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_passes(lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL))
+
+
+def test_blm_refusal_fires_when_a_nationwide_build_follows_the_refusal():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [REFUSED_BUILD, NATIONWIDE_BUILD], BLM_REFUSAL),
+        "went through after the refusal",
+    )
+
+
+def test_blm_refusal_fires_when_the_refused_search_is_logged():
+    logged = {
+        "id": "log_002", "tool": "external_site", "outcome": "negative",
+        "external_site": {"site": "blm_glo", "url_generated": "https://glorecords.blm.gov/s/", "capture_received": False},
+    }
+    before, after = _states(before_log=_open_log(), after_log=_open_log() + [logged])
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL), "record a blm_glo search"
+    )
+
+
+def test_blm_refusal_fires_when_blm_glo_was_never_called():
+    archives = {
+        "tool": "mcp__genealogy__build_external_search_url",
+        "args": {"site": "archives_gov", "attributes": {"surname": "Flynn"}},
+        "response": {"ok": True, "url": "https://catalog.archives.gov/search?q=Flynn"},
+    }
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [archives], BLM_REFUSAL), "no blm_glo build was refused"
+    )
+
+
+def test_blm_refusal_skips_untagged_tests():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    with pytest.raises(pytest.skip.Exception, match="not a blm-outside-coverage"):
+        check_blm_refusal(before, after, [REFUSED_BUILD], POSITIVE)
+
+
+def test_positive_log_check_skips_a_blm_refusal():
+    """The refusal check asserts the opposite there."""
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    with pytest.raises(pytest.skip.Exception, match="refused build"):
+        check_positive_log(before, after, BLM_REFUSAL)
+
+
+def test_blm_refusal_fires_when_the_refusal_is_for_another_reason():
+    """A `no_attributes` refusal (no name passed) is not the state-land answer."""
+    no_name = _blm_call({"ok": False, "reason": "no_attributes", "errors": ["blm_glo needs a surname or given name"]})
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [no_name], BLM_REFUSAL), "no blm_glo build was refused"
+    )
+
+
+def test_blm_refusal_fires_when_the_refused_state_is_retried_and_built():
+    retried = _blm_call({"ok": True, "url": "https://glorecords.blm.gov/s/advanced-search?searchTerm=y"})
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [REFUSED_BUILD, retried], BLM_REFUSAL), "for the same land"
+    )
+
+
+def test_blm_refusal_passes_a_build_for_another_state():
+    """A public-land state the person lived in is a separate search."""
+    ohio = _blm_call(
+        {"ok": True, "url": "https://glorecords.blm.gov/s/advanced-search?searchTerm=oh"},
+        attributes={"surname": "Flynn", "usState": "Ohio"},
+    )
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_passes(lambda: check_blm_refusal(before, after, [REFUSED_BUILD, ohio], BLM_REFUSAL))
+
+
+def test_blm_refusal_passes_a_nationwide_build_before_the_refusal():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_passes(lambda: check_blm_refusal(before, after, [NATIONWIDE_BUILD, REFUSED_BUILD], BLM_REFUSAL))
+
+
+def test_blm_refusal_passes_a_logged_follow_up_search_on_another_site():
+    """Routing to the county deed records may build and log another site's search."""
+    deeds = {
+        "id": "log_002", "tool": "external_site", "outcome": "partial",
+        "external_site": {"site": "familysearch_web", "url_generated": "https://www.familysearch.org/search/catalog", "capture_received": False},
+    }
+    before, after = _states(before_log=_open_log(), after_log=_open_log() + [deeds])
+    expect_passes(lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL))

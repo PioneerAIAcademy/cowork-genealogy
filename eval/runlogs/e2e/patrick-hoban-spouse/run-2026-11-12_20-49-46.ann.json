@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "No wife Ellen, son Thomas Dee or 1895 Dee marriage fact was added for Patrick Hoban (KK3W-WLT); his wife remains Catherine Donovan. The 1895 Thomas Dee marriage source entries S7/S8 sit unattached in the source list, and no person, fact or relationship cites them, so they establish no prohibited relationship or fact.",
+    "f2": "The q_001 stop justification says the 1895 marriage was excluded because Thomas Dee belonged to a household headed by Patrick Dee, not Patrick Hoban, but the conclusion cites no supporting record: Thomas A. Dee's 1874 birth naming Patrick Dee as his father (F26H-XH5) is not cited anywhere in the research. A stated exclusion without the conflicting record documented does not satisfy an evidence-based negative conclusion."
+  },
+  "annotator": "benter-070",
+  "findings_hash": "f2ac77dac85c94d044c6777fc3801dbbc13899e2c8b250929110ab2b444ddc43",
+  "blind_bundle_digest": "3a2412c19edd9198605dbe9e0750fbfddc91a3e7d2ff5f32544ede5560eae329"
+}

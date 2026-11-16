@@ -5,6 +5,7 @@ import {
   simplifySourceDescription,
 } from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { START_PROJECT_RULE } from "../utils/project-io.js";
 import {
   fetchMemories,
   fetchPortraitId,
@@ -20,6 +21,7 @@ import {
   fetchSourceDescriptions,
   type RelativeSourcesResult,
 } from "../utils/relative-sources.js";
+import { VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { imageTranscribeTool } from "./image-transcribe.js";
@@ -45,6 +47,7 @@ import type {
   PersonReadResult,
   PersonReadToolInput,
   TreeFact,
+  TreeName,
   TreePerson,
   TreeRelationship,
   TreeSource,
@@ -65,13 +68,15 @@ export const personReadToolSchema = {
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the subject (`persons[0]`) and to the relationships, each linked from " +
-    "the subject's or a relationship's own `sources` refs. Relatives carry no " +
-    "sources, and a source with a record link carries a title and link but no " +
-    "citation — `record_read` returns the citation. For a " +
-    "non-living subject it also returns source-style memories (scanned " +
-    "wills, certificates, obituaries), transcribed where the " +
-    "read's time budget allowed. " +
+    "to the subject (`persons[0]`) and to the relationships that name the " +
+    "subject, each linked from those `sources` refs. Relatives carry only " +
+    "names and birth, christening, baptism, death and burial facts, and no " +
+    "sources; marriages are on the Couple relationships. A source with a " +
+    "record link carries a title and link but no citation — `record_read` " +
+    "returns the citation. For a non-living subject it also returns " +
+    "source-style memories (scanned wills, certificates, obituaries) as a " +
+    "title and links (`url`, `artifact_url`) with no text: `image_transcribe` " +
+    "(memoryArtifactUrl) reads one. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -88,16 +93,14 @@ export const personReadToolSchema = {
         type: "boolean",
         description:
           "Ignored: the subject's and the relationships' attached sources are "
-          + "always returned; relatives' own are not.",
+          + "always returned, on the relationships that name the subject; relatives' " +
+          "own are not.",
       },
       projectPath: {
         type: "string",
         description:
-          "Optional absolute path to the project folder. When set, any memory " +
-          "scan transcribed during this read is saved under images/ and its " +
-          "project-relative path returned on that source as image_ref, so a " +
-          "retained source can cite it. Without it the scan is transcribed but " +
-          "not kept. The read itself is also staged, returned as `staged`.",
+          "Optional absolute path to the project folder. When set, the read is " +
+          "staged there, returned as `staged`.",
       },
     },
     required: ["personId"],
@@ -118,7 +121,7 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   }
   const { result: full, resolvedId } = await readPerson(
     personId.trim(),
-    { projectPath, relativeSources: false },
+    { projectPath, relativeSources: false, memoryText: false, subjectEdgeSourcesOnly: true },
     principal,
   );
   // Trimmed BEFORE staging, so the staged copy is exactly the answer.
@@ -138,53 +141,142 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       ...result,
     };
   }
-  return result;
+  return {
+    ...result,
+    notes: [
+      ...(result.notes ?? []),
+      START_PROJECT_RULE,
+    ],
+  };
 }
 
 /**
  * The model-facing answer: the full read minus what no reader of `person_read` uses.
  * Pure; `project_create` never calls it, so the starting tree keeps everything.
  *
- * - every person but `persons[0]` (the subject) loses its `sources` refs;
- * - a source no remaining ref points at, and that is not a memory (`artifact_url`, `text` or
- *   `image_ref`), is dropped;
- * - relationships keep their `sources` refs (issue #3229); source-evaluation's audit-list
- *   rule leaves the ones that are not the subject's out, and issue #4420 owns trimming them;
+ * - every person but `persons[0]` (the subject) loses its `sources` refs, and keeps only
+ *   `id`, `gender`, `living`, `names` and its vital facts (`VITAL_PRIMARY_TYPES` plus
+ *   Baptism): a relative is a lead for a search, not a profile;
+ * - a relationship that does not name the subject loses its `sources` refs, so a source
+ *   cited only there is dropped with them (issue #4420);
+ * - a source no remaining ref points at, and that is not a memory (`artifact_url`), is dropped;
+ *   a memory keeps its title and links and loses its `text`, `image_ref` and `notes`;
  * - `citation` goes from every source whose `url` carries a record-persona ARK
  *   (`record_read` returns it); a source with no `1:1:` ARK keeps its own, the only
  *   description of it an agent has;
  * - `id` goes from every fact and name; `place` goes from a fact equal to its
- *   `standard_place`.
- * Person ids, source ids and `url`s, and the relationships' own refs stay.
+ *   `standard_place`; `date` goes from a fact that has a `standard_date`;
+ * - `ark` goes from every person, `living` when false, and `preferred` and `type` from
+ *   `names[0]`; the "Dropped N relationship(s)" note goes;
+ * - an answer still over `MODEL_ANSWER_BUDGET` characters loses the facts of the subject's
+ *   children and siblings, and then the siblings.
+ * Person ids, source ids and `url`s stay.
  */
 export function trimPersonReadForModel(result: PersonReadResult): PersonReadResult {
+  const subjectId = result.persons[0]?.id;
   const trimFact = (f: TreeFact): TreeFact => {
     const { id: _id, ...rest } = f;
     if (rest.place !== undefined && rest.place === rest.standard_place) delete rest.place;
+    if (rest.date !== undefined && rest.standard_date !== undefined) delete rest.date;
+    return rest;
+  };
+  const trimName = (n: TreeName, i: number): TreeName => {
+    const { id: _id, ...rest } = n;
+    if (i === 0) {
+      delete rest.preferred;
+      delete rest.type;
+    }
     return rest;
   };
   const persons = result.persons.map((p, i) => {
     const { sources: _sources, ...rest } = p;
     const kept: TreePerson = i === 0 ? { ...p } : rest;
-    kept.names = p.names.map(({ id: _id, ...n }) => n);
-    if (p.facts) kept.facts = p.facts.map(trimFact);
+    delete kept.ark;
+    if (!p.living) delete kept.living;
+    kept.names = p.names.map(trimName);
+    delete kept.facts;
+    const facts = (i === 0 ? p.facts : p.facts?.filter((f) => RELATIVE_FACT_TYPES.has(f.type)))
+      ?.map(trimFact);
+    if (facts && facts.length > 0) kept.facts = facts;
     return kept;
   });
-  const relationships = result.relationships.map((r) =>
-    r.facts ? { ...r, facts: r.facts.map(trimFact) } : r,
+  const relationships = result.relationships.map((r) => {
+    const { sources: _sources, ...rest } = r;
+    const names = subjectId !== undefined && relationshipEndpoints(r).includes(subjectId);
+    const base: TreeRelationship = names ? { ...r } : rest;
+    if (r.facts) base.facts = r.facts.map(trimFact);
+    return base;
+  });
+  const notes = (result.notes ?? []).filter((n) => !n.startsWith("Dropped "));
+  const { notes: _notes, ...restResult } = result;
+  const answer = (people: TreePerson[], rels: TreeRelationship[]): PersonReadResult => {
+    const pointedAt = new Set<string>();
+    for (const holder of [...people, ...rels]) {
+      for (const { ref } of holder.sources ?? []) pointedAt.add(ref);
+    }
+    const sources = result.sources
+      .filter((s) => pointedAt.has(s.id) || s.artifact_url !== undefined)
+      .map((s) => {
+        // A memory is a title and links: its text, its retained scan and its
+        // "not transcribed" note belong to project_create's read.
+        const { text: _text, image_ref: _imageRef, ...rest } = s;
+        if (s.artifact_url !== undefined) delete rest.notes;
+        if (s.url === undefined || !RECORD_ARK.test(s.url)) return rest;
+        const { citation: _citation, ...bare } = rest;
+        return bare;
+      });
+    return {
+      ...restResult,
+      persons: people,
+      relationships: rels,
+      sources,
+      ...(notes.length > 0 ? { notes } : {}),
+    };
+  };
+  const full = answer(persons, relationships);
+  if (subjectId === undefined || JSON.stringify(full).length <= MODEL_ANSWER_BUDGET) return full;
+
+  // Over budget: the subject's children and siblings are the least useful relatives.
+  const { children, siblings } = distantRelatives(relationships, subjectId);
+  const lean = persons.map((p) => {
+    if (!children.has(p.id) && !siblings.has(p.id)) return p;
+    const { facts: _facts, ...rest } = p;
+    return rest;
+  });
+  const leaner = answer(lean, relationships);
+  if (JSON.stringify(leaner).length <= MODEL_ANSWER_BUDGET) return leaner;
+  return answer(
+    lean.filter((p) => !siblings.has(p.id)),
+    relationships.filter((r) => !relationshipEndpoints(r).some((id) => siblings.has(id))),
   );
-  const pointedAt = new Set<string>();
-  for (const holder of [...persons, ...relationships]) {
-    for (const { ref } of holder.sources ?? []) pointedAt.add(ref);
+}
+
+/** The characters past which `trimPersonReadForModel` sheds children's and siblings'
+ *  facts, then the siblings. Claude Code saves a larger MCP answer to a file and shows
+ *  the agent a short error instead (issue #4380); this leaves room under its ~50k. */
+export const MODEL_ANSWER_BUDGET = 40_000;
+
+/** The facts `person_read` keeps on a relative: the vitals, which a search lead needs. */
+const RELATIVE_FACT_TYPES: ReadonlySet<string> = new Set([...VITAL_PRIMARY_TYPES, "Baptism"]);
+
+/** The subject's children, and its siblings: every other child of the subject's parents. */
+function distantRelatives(
+  relationships: TreeRelationship[],
+  subjectId: string,
+): { children: Set<string>; siblings: Set<string> } {
+  const children = new Set<string>();
+  const parents = new Set<string>();
+  for (const r of relationships) {
+    if (r.type !== "ParentChild" || r.parent === undefined || r.child === undefined) continue;
+    if (r.parent === subjectId) children.add(r.child);
+    if (r.child === subjectId) parents.add(r.parent);
   }
-  const sources = result.sources
-    .filter((s) => pointedAt.has(s.id) || s.artifact_url !== undefined || s.text !== undefined || s.image_ref !== undefined)
-    .map((s) => {
-      if (s.url === undefined || !RECORD_ARK.test(s.url)) return s;
-      const { citation: _citation, ...rest } = s;
-      return rest;
-    });
-  return { ...result, persons, relationships, sources };
+  const siblings = new Set<string>();
+  for (const r of relationships) {
+    if (r.type !== "ParentChild" || r.parent === undefined || r.child === undefined) continue;
+    if (parents.has(r.parent) && r.child !== subjectId && !children.has(r.child)) siblings.add(r.child);
+  }
+  return { children, siblings };
 }
 
 const RECORD_ARK = /1:1:/;
@@ -216,11 +308,20 @@ export interface PersonReadOutcome {
  */
 export async function readPerson(
   personId: string,
-  opts: { projectPath?: string; deadline?: number; relativeSources?: boolean },
+  opts: {
+    projectPath?: string;
+    deadline?: number;
+    relativeSources?: boolean;
+    /** `false`: memories come back as title and links, never transcribed. */
+    memoryText?: boolean;
+    /** `true`: read only the descriptions cited on edges that name the subject. */
+    subjectEdgeSourcesOnly?: boolean;
+  },
   principal: Principal,
 ): Promise<PersonReadOutcome> {
   const { projectPath } = opts;
   const relativeSources = opts.relativeSources !== false;
+  const memoryText = opts.memoryText !== false;
   // Anchored HERE, before the tree read, so the read and the memories paging
   // are spent inside the same budget the 60s bridge abort measures.
   const deadline = opts.deadline ?? Date.now() + OCR_PHASE_BUDGET_MS;
@@ -278,7 +379,10 @@ export async function readPerson(
   // Issue #3229: the descriptions behind the refs on the EDGES, which the body does not
   // hold either. Started beside `relativesPending` for the same reason, on the same
   // deadline, and with the same load-bearing `.catch`.
-  const edgeDescriptionIds = unresolvedEdgeRefs(result);
+  const edgeDescriptionIds = unresolvedEdgeRefs(
+    result,
+    opts.subjectEdgeSourcesOnly ? resolvedId : undefined,
+  );
   const edgeDescriptionsPending: Promise<RelativeSourcesResult> =
     edgeDescriptionIds.length > 0
       ? fetchSourceDescriptions(edgeDescriptionIds, principal, deadline).catch(() => ({
@@ -295,6 +399,7 @@ export async function readPerson(
       principal,
       deadline,
       projectPath,
+      memoryText,
     ));
   }
 
@@ -568,6 +673,7 @@ async function mergeMemories(
   principal: Principal,
   deadline: number,
   projectPath?: string,
+  memoryText = true,
 ): Promise<{ sources: TreeSource[]; kinds: Record<string, MemoryKind> }> {
   try {
     // allSettled, NOT all. Both of these go through fetchWithRetry, which
@@ -594,7 +700,9 @@ async function mergeMemories(
     // (tree `SD_PERSON_KWCJ-RN4` vs memory `3475`, 0 overlap on both persons
     // sampled). An id-keyed dedupe could never fire, so it is not written.
     const memorySources = kept.map(toTreeSource);
-    await transcribeMemories(kept, memorySources, principal, projectPath, deadline);
+    if (memoryText) {
+      await transcribeMemories(kept, memorySources, principal, projectPath, deadline);
+    }
     const kinds: Record<string, MemoryKind> = {};
     for (const m of kept) kinds[m.id] = isStoryText(m) ? "story" : "document";
     return { sources: [...treeSources, ...memorySources], kinds };
@@ -710,10 +818,11 @@ function mergeDescriptions(
  * an `SD_*` id, which `shapeSources` filters out so the ref could never resolve, and the
  * empty ref `toTreeSourceRef` writes for an upstream ref that names no description.
  */
-function unresolvedEdgeRefs(result: PersonReadResult): string[] {
+function unresolvedEdgeRefs(result: PersonReadResult, subjectId?: string): string[] {
   const have = new Set(result.sources.map((s) => s.id));
   const ids = new Set<string>();
   for (const rel of result.relationships) {
+    if (subjectId !== undefined && !relationshipEndpoints(rel).includes(subjectId)) continue;
     for (const { ref } of rel.sources ?? []) {
       if (ref !== "" && !have.has(ref) && !isMetadataSource(ref)) ids.add(ref);
     }

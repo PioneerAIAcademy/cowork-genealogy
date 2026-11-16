@@ -4,14 +4,14 @@
     "skill": "conflict-resolution",
     "name": "Resolution rationale explains historically why the losing-side evidence exists",
     "type": "positive",
-    "description": "Birthplace conflict c_001 — Ireland (1850 and 1860 censuses) vs. Pennsylvania (1908 death certificate). The user explicitly asks why the contradiction exists, not just which source wins. Tests whether Part 4 of the resolution rationale uses historically grounded reasoning: delayed birth certificates compiled from secondary-informant recollection, Irish immigrants whose descendants assumed American birth decades later, and a son-in-law informant with no firsthand knowledge of a birth 63 years earlier.",
+    "description": "Birthplace conflict c_001 — Ireland (1850 and 1860 censuses) vs. Pennsylvania (1908 death certificate). The user explicitly asks why the contradiction exists, not just which source wins. Tests whether Part 4 of the resolution rationale uses historically grounded reasoning: a 1908 death certificate whose birthplace came from a secondary informant's recollection, Irish immigrants whose descendants assumed American birth decades later, and a son-in-law informant with no firsthand knowledge of a birth 63 years earlier.",
     "tags": [
       "fact-conflict",
       "historical-context",
       "resolution-rationale",
       "part-four",
       "informant-error",
-      "delayed-birth-certificate",
+      "death-certificate",
       "flynn-identity-geographic",
       "direct-arm"
     ]
@@ -21,9 +21,7 @@
     "scenario": "flynn-identity-geographic"
   },
   "judge_context": [
-    "Part 4 of the resolution rationale must go beyond 'informants make mistakes' — it should name the specific historical mechanism: a son-in-law reporting a birth he wasn't present for, 63 years after the event, from what he was told, in a milieu where Pennsylvania would be the locally familiar answer for any member of the family",
-    "Grade on whether the persisted resolution_rationale names the documented historical PATTERN — e.g. immigration-origin confusion (Irish-born parents whose American-born children assumed the whole family was American) or secondary-informant late reporting. Citing the historical-contradictions.md FILENAME is not required and its absence is never a deduction. Do not synthesize extra grading dimensions beyond the rubric's",
-    "The answer to 'why does the death certificate say Pennsylvania' should be a plausible historical narrative — not a generic disclaimer — explaining the informant's epistemic position: James Brown had no firsthand knowledge of Patrick's birth in Ireland and may genuinely not have known, or may have heard 'Pennsylvania' used as shorthand for the family's American origin",
+    "Part 4 of the persisted resolution_rationale (why the less reliable evidence exists) is graded under Evidence weighing, per the rubric — never under Completeness or Correctness. For this test it is graded whether c_001 is resolved or deferred: the informant's position does not depend on the identity question (c_002), so a deferred rationale still has to explain the Pennsylvania entry on the 1908 death certificate. The reason must be historical: the rationale names the pattern (for example immigration-origin confusion) or plainly describes it; a reason that is not historical scores partial. The informant is the subject's son-in-law (his name is not required), who could not have known the birthplace firsthand; and he reported it about 63 years after the birth (a figure or 'decades later' both count). Do not synthesize extra grading dimensions beyond the rubric's",
     "The independence of the two census sources (a_002 and a_009) and the shared-informant caveat (both may reflect the same household member's knowledge) should appear in the independence_analysis — the historical reasoning belongs in Part 4, not as a substitute for the independence assessment"
   ],
   "execution": {

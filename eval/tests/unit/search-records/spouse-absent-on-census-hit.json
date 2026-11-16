@@ -13,7 +13,7 @@
       "evidence-language",
       "gps-reasoning",
       "pre-1880-census-household",
-      "topical-fixture-required",
+      "census-search",
       "direct-arm"
     ]
   },
@@ -22,7 +22,6 @@
     "scenario": "census-household-absent-spouse"
   },
   "mcp_fixtures": [
-    "wiki-read-united-states-census",
     "record-search-ackerman-1860-spouse-absent",
     "record-search-ackerman-1860-catherine-principal-nil",
     "record-search-ackerman-1860-catch-all",
@@ -41,8 +40,7 @@
     "Completeness: reporting the hit, its absent-spouse status, and logging the search is a complete answer. Do NOT require extraction, attachment, or a second search.",
     "The scenario README's 'What the skill must do' list (build the household; detect and flag Catherine's absence unprompted as an identity question) is written for the person-evidence test that shares this scenario, not for this search test. Grade Completeness only on the bullet above: a run that says Catherine is not named in the record but does not frame her absence as an identity or research question is COMPLETE, and scores 3.",
     "Tool Arguments: the record_search call must carry a spouse anchor (spouseGivenName 'Catherine' and/or spouseSurname) — that is what makes record_search report relativeTerms at all. A call with projectPath + subjectId is preferred since it folds in ranking, but its absence is not a Tool Arguments defect on its own.",
-    "record_read IS stocked for this test — reading the top hit is normal behavior, not a defect. Score Tool Arguments on the record_search call's arguments.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+    "record_read IS stocked for this test — reading the top hit is normal behavior, not a defect. Score Tool Arguments on the record_search call's arguments."
   ],
   "judge_reads_files": true,
   "execution": {

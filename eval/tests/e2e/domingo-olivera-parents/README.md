@@ -129,15 +129,12 @@ Domingo Olivera with spouse Francisca González, and for Domingo Olivera born
   parents.
 
 **f3's mechanical guard names only the father, and is partial by
-construction.** `apply_avoid_guard` matches ASCII name tokens from
-`wrong_candidate.name`, which for f3 are `{domingo, oliviery}`. So it catches a
-parent added as "Domingo Oliviery". Asserting the shifted pair requires
-asserting the father, so naming him alone loses nothing. Francisca is left out
-on purpose (the #2640 fix, as in #2855). The wife GN5K-L8W is legitimately in
-the tree and is not exempt. A run that rewrote her surname unaccented
-("Gonzalez Maysonet", as the 1925 index spells it) would otherwise force f3
-false for doing nothing wrong. The guard misses "Domingo Olivera" (the surname
-token is absent). It cannot be widened: adding `olivera` collides with
-GN52-SH9, which would force f3 false on every run, a perfect one included (spec
-§3.4). The judge's semantic grade still covers that spelling. Only the
-deterministic backstop is partial.
+construction.** f3's `wrong_candidate.records` list is empty (its note says
+why), so `apply_avoid_guard` enforces it by the edge check alone: a new
+parent-child edge, absent from the starting tree, making a person whose names
+carry a given and a surname token from `wrong_candidate.name` (`{domingo,
+oliviery}`) a non-Step parent of the subject. Asserting the shifted pair requires
+asserting the father, so naming him alone loses nothing; Francisca is left out
+on purpose (the #2640 fix, as in #2855). The guard misses a father written
+"Domingo Olivera" (the surname token is absent); the judge's semantic grade
+covers that spelling. Only the deterministic backstop is partial.

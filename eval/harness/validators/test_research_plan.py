@@ -324,7 +324,9 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     by the search-* skills via log entries — never by research-plan.
     The one exception is `_enumerative_skip`; on a targeted or unlabelled
     question a `skipped` item at creation still fails, which is what stops
-    the enumerative obligation over-firing."""
+    the enumerative obligation over-firing. The tag means the test writes a
+    plan, so a run that adds no new item (to a new plan or an existing one)
+    fails rather than passing with nothing checked (#4477)."""
     if "new-plan-items-planned-status" not in test.get("tags", []):
         pytest.skip("not a new-plan-items-planned-status scenario")
     before = before_state.get("research_json")
@@ -342,17 +344,23 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     questions = {q.get("id"): q for q in after.get("questions", []) or []}
 
     errors: list[str] = []
+    new_items = 0
     for plan in after.get("plans", []) or []:
         question = questions.get(plan.get("question_id"))
         for item in plan.get("items", []) or []:
             if item.get("id") in before_item_ids:
                 continue  # pre-existing item, not our responsibility
+            new_items += 1
             status = item.get("status")
             if status != "planned" and not _enumerative_skip(item, question):
                 errors.append(
                     f"new plan item {item.get('id')} has status='{status}'; "
                     f"expected 'planned'"
                 )
+    assert new_items, (
+        "new-plan-items-planned-status test wrote no new plan items: the tag "
+        "means this test writes a plan, so there is nothing to check"
+    )
     assert not errors, "New plan items with non-planned status:\n  - " + "\n  - ".join(errors)
 
 

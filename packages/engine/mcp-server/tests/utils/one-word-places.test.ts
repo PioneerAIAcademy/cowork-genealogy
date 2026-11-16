@@ -59,18 +59,18 @@ describe("accentKey (the fold with the accents kept)", () => {
   });
 });
 
-describe("the bundled one-word list (the lead, 2026-10-26)", () => {
+describe("the bundled one-word list (the lead, 2026-10-26; Tbilisi and Georgia Republic added 2026-11-12)", () => {
   it("holds the whole v2 list: every entry, by kind", () => {
     const counts: Record<string, number> = {};
     for (const e of Object.values(shipped.entries)) counts[kindOf(e)] = (counts[kindOf(e)] ?? 0) + 1;
-    expect(counts).toEqual({ always: 1084, except_record_countries: 3, record_country: 35, accented_spellings: 2 });
+    expect(counts).toEqual({ always: 1086, except_record_countries: 3, record_country: 35, accented_spellings: 2 });
     expect(shipped._meta.by_kind).toEqual(counts);
-    expect(shipped._meta.entries).toBe(1124);
+    expect(shipped._meta.entries).toBe(1126);
   });
 
   it("is the content dev/build-one-word-places.ts wrote: an edit by hand changes the hash", () => {
     const sha = createHash("sha256").update(JSON.stringify(shipped.entries)).digest("hex");
-    expect(sha).toBe("f467c82aacbe37193a377958afdf02c7f8f661345981411452f5d9a9fddf6398");
+    expect(sha).toBe("747ef9c8c2089b902e35c3b1ca030317027ac9f0a4af15e05e6ddb0780b980f2");
     expect(shipped._meta.entries_sha256).toBe(sha);
   });
 
@@ -126,6 +126,8 @@ describe("the bundled one-word list (the lead, 2026-10-26)", () => {
   it("lists the curated names as the lead set them", () => {
     expect(listedOneWordPlace("Georgia")).toBe("Georgia, United States");
     expect(listedOneWordPlace("Republic of Georgia")).toBe("Republic of Georgia");
+    expect(listedOneWordPlace("Georgia Republic")).toBe("Republic of Georgia");
+    expect(listedOneWordPlace("Tbilisi")).toBe("Tbilisi, Republic of Georgia");
     expect(listedOneWordPlace("New York")).toBe("New York, United States");
     expect(listedOneWordPlace("Quebec")).toBe("Quebec, Canada");
     expect(listedOneWordPlace("Mexico")).toBe("Mexico");

@@ -350,10 +350,10 @@ message.
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
    | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). For each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`. Then `@plugin:question-selection`. Report each `timeline_build` `summary`, then the question. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
-   | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
-   | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
+   | A question with **no plan**, and no `localities` entry yet for its target jurisdiction | `@plugin:locality-guide` (survey the place first) |
+   | A question with **no plan**, and its jurisdiction already has a `localities` entry | `@plugin:research-plan` |
    | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item, routing to person-evidence, **or** invoking research-exhaustiveness | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until hypothesis-tracking has written the entry |
-   | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints`, handing it the item's `planItemId`, its plan's `planId`, the `personId` you read out of the item's `rationale` ("Review pending FamilySearch hints on <PID> before…"), and `userPresent: no` ONLY on an `--autonomous` run (otherwise omit it; absent means yes). It reviews the subject's pending FamilySearch hints and sets the item's own status — a hint that already answers the question can save a search. A hints item awaiting verdicts is not "next" (`project_context` skips it), so this never holds up the other searches |
+   | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints`, handing it the item's `planItemId`, its plan's `planId`, the `personId` you read out of the item's `rationale` ("Review pending FamilySearch hints on <PID> before…"). It decides the subject's pending FamilySearch hints, logs its decisions and sets the item's own status — a hint that already answers the question can save a search |
    | The active plan has `planned` items and the analyzed evidence already answers the question, and none of those items is the subject's own record of the event asked about (that one is searched) | `@plugin:research-plan` with the `planItemIds` `project_context`'s `nextStep` names, to dispose of them; then `@plugin:research-exhaustiveness` |
    | The question's **`active`** plan has items not yet executed — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block, learned from `project_context` and `tree_query` with the subject person id and `factTypes` `["Birth","Death","Marriage"]` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`), handing it the subject you hold as a `subject:` block |
@@ -421,7 +421,13 @@ message.
    comparison with no backing `hypotheses`/`conflicts` entry is incomplete,
    whatever tier it claims. This binds your summary after a hand-off too: list
    each candidate neutrally, never which one the evidence favours, and report
-   only what the callee's return states it wrote.
+   only what the callee's return states it wrote. **This contract governs the
+   job routing table only.** A bounded same-person ask or a researcher's hedge
+   about a record (§"Bounded request or job") is not the inline comparison
+   this contract forbids — it is `@plugin:person-evidence`'s deliverable, and
+   it goes straight there, never to `conflict-resolution` or
+   `hypothesis-tracking`, whatever hypotheses or conflicts the project already
+   holds.
 
    **Exhaustiveness/proof-conclusion contract — a `proof_summaries` entry, a non-null `search_stop.stopped_because` or a `person_evidence` link is refused unless it comes from `@plugin:proof-conclusion`, `@plugin:research-exhaustiveness` or `@plugin:person-evidence` respectively, or is one of the attachment links `extraction_append({ personId })` writes.**
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are
@@ -456,7 +462,7 @@ message.
    `baseUrl` when one is known, `userPresent` — `no` in an autonomous run, otherwise `yes` —
    and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
-   `personId` (and, on the second spawn, the researcher's verdicts) for
+   `personId` (and any verdicts the researcher stated) for
    `@plugin:search-hints`, the `hitRef` and `target` for
    `@plugin:evaluate-search-results`, and the `planItemId` plus the volume's `standardPlace` (with its
    years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`, and the
@@ -620,18 +626,16 @@ target is implied. It is read-only on the tree and on every section except
 ## Hint review
 
 When the user asks to check, review or validate the FamilySearch hints on a
-person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay
-everything after its final `---` verbatim, or its whole return when it has
-none, and stop: whether to accept a hint is the researcher's decision,
-which only the user can supply (§"When to stop"). Print nothing from above
-that line: not the arks, the confidence scores or the per-record lines, and do
-not restate or reformat them. When the researcher answers,
-spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
-verdicts as `{ark, verdict}` per hint, verbatim, plus `planItemId` and `planId`
-when the question's active plan holds an `in_progress` `fs_hints` item whose
-`rationale` names that `personId`. Never pass a verdict the
-researcher did not state — a triage recommendation is not one. The accepted
-hints' positive log entries then route to extraction through the table.
+person, spawn `@plugin:search-hints` with `personId` and `projectPath`. It
+decides each hint itself and logs its decisions. Relay everything after its
+final `---` verbatim, or its whole return when it has none, and end the turn
+as §"One step per turn" does. Print nothing from above that line: not the arks,
+the confidence scores or the per-record lines, and do not restate or reformat
+them. When the researcher states their own verdict on a hint, spawn
+`@plugin:search-hints` again with `personId`, `projectPath` and their verdicts
+as `{ark, verdict}` per hint, verbatim. Never pass a verdict the researcher did
+not state. The accepted hints' positive log entries then route to extraction
+through the table.
 
 ## Search-hit review
 
