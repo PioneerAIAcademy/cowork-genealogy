@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_search_records_023",
     "skill": "search-records",
-    "name": "Vary the bride's given name with her full surname kept; the abbreviated surname is not needed",
+    "name": "Try the hinted abbreviated surname forms, then vary the bride's given name to find her",
     "type": "positive",
-    "description": "Modeled on the anders-monsen-ancestry e2e fixture. The bride the tree calls Unna Halsteinsdatter is indexed 'Urna Halsteinsdr' on the 25 Jun 1786 Hamre marriage (record MY3L-FH3, bride persona NW44-PMK) in Norway, Marriages, 1660-1926. Every record_search fixture is a live capture (2026-11-17) with this delegation's arguments, with its ranking against KZHH-VTX: with the given name Urna the search finds her under the full surname Halsteinsdatter, under Halsteinsdr and with no surname, with or without the collection; under Unna, Udna, Una or Anna it finds her under none of them. The test checks that the skill varies the given name and recovers the record; it does not require the abbreviated surname.",
+    "description": "Modeled on the anders-monsen-ancestry e2e fixture. The bride the tree calls Unna Halsteinsdatter is indexed 'Urna Halsteinsdr' on the 25 Jun 1786 Hamre marriage (record MY3L-FH3, bride persona NW44-PMK) in Norway, Marriages, 1660-1926. Every record_search fixture is a live capture (2026-11-17) with this delegation's arguments, with its ranking against KZHH-VTX: with the given name Urna the search finds her under the full surname Halsteinsdatter, under Halsteinsdr and with no surname, with or without the collection; under Unna, Udna, Una or Anna it finds her under none of them. A search under Unna and her full surname finds nobody, so record_search returns surnameVariantHints listing the abbreviated forms (Halsteinsdr, Halsteinsdtr, Halsteinsd). The test checks that the skill tries those hinted surname forms (the surname-variant-hints-followed validator), and then that a given-name variant (Urna) finds her and the skill recovers the record.",
     "tags": [
       "search",
       "marriage",
@@ -38,6 +38,8 @@
     "record-search-hamre-1786-unna-halsteinsd-unpinned",
     "record-search-hamre-1786-urna-halstensdatter-unpinned",
     "record-search-hamre-1786-urna-halsteins-wildcard-1468080",
+    "record-search-hamre-1786-unna-halstensdatter-unpinned-marriageplace-hamre",
+    "record-search-hamre-1786-unna-halstensdatter-unpinned",
     "record-search-hamre-1786-unna-nosurname-1468080-marriageplace-hamre",
     "record-search-hamre-1786-unna-nosurname-1468080-anyplace-hamre",
     "record-search-hamre-1786-unna-halsteinsdatter-unpinned-marriageplace-hamre",
