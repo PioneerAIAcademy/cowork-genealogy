@@ -4,12 +4,10 @@
     "skill": "research",
     "name": "A second machine pass over the same page is shown beside the index, not counted as agreement",
     "type": "positive",
-    "description": "Issue #4578, the 1900 census in the Tyler bundles (feedback #4490, #4493). The index has surname Tyler and no given name on line 23; one image_transcribe already logged in the scenario read 'Tyler Anthony'. The researcher asks for line 23 to be read again. The mock returns what the OCR actually said, 'Tyler Anthony', never the correct value: the tester, who read the image, gives Antone. A mock holding the correct value would reproduce nothing. In the bundle the main thread wrote 'Two independent machine reads of the same image both return Anthony' and 'Confirmed — both AI reads agree', and called the index wrong. The same model reading the same page is not an independent source. GRADING: deterministic. `index-vs-reading` makes test_index_and_machine_reading_shown_side_by_side require the index reading (no given name), the machine reading (Anthony) and line 23 in the reply, and forbid 'is clear', 'index was wrong', 'both ... agree' and 'confirmed'; test_search_brief_never_carries_the_disputed_reading forbids a search brief naming the subject Anthony Tyler. `transcribes-in-place` asserts the router transcribed in place and read the staged page.",
+    "description": "Issue #4578, the 1900 census in the Tyler bundles (feedback #4490, #4493). The index has surname Tyler and no given name on line 23; one image_transcribe already logged in the scenario read 'Tyler Anthony'. The researcher asks for line 23 to be read again. The mock returns what the OCR actually said, 'Tyler Anthony', never the correct value: the tester, who read the image, gives Antone. A mock holding the correct value would reproduce nothing. In the bundle the main thread wrote 'Two independent machine reads of the same image both return Anthony' and 'Confirmed — both AI reads agree', and called the index wrong. The same model reading the same page is not an independent source. GRADING: deterministic. `index-vs-reading` makes test_index_and_machine_reading_shown_side_by_side require the index reading (no given name), the machine reading (Anthony) and line 23 in the reply, and forbid 'is clear', 'index was wrong', 'both ... agree' and 'confirmed'. `transcribes-in-place` asserts the router transcribed in place and read the staged page. A transcription takes no hand-off, so the brief rule (step 4) is pinned by ut_research_iv3, not here.",
     "tags": [
       "transcribes-in-place",
       "index-vs-reading",
-      "surname:Tyler",
-      "agreed-prefix:An*",
       "index-reading:blank",
       "machine-reading:Anthony",
       "on-line:23"

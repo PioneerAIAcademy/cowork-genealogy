@@ -1168,7 +1168,7 @@ _FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORE
 _SEARCH_CALLEES = ("search-records", "search-images", "search-full-text")
 # `_field_values` stops a value at `*`, which is the wildcard this check looks for.
 _GIVEN_FIELD = re.compile(
-    r"(?<![A-Za-z])(?:given[\s_-]?names?|first[\s_-]?name)[`*\"']*\s*[:=][\s`*\"']*"
+    r"(?<![A-Za-z])(?:given(?:[\s_-]?names?)?|first[\s_-]?name)[`*\"']*\s*[:=][\s`*\"']*"
     r"(?P<v>[A-Za-z][\w*?-]*)",
     re.IGNORECASE,
 )
@@ -1227,20 +1227,24 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
     )
 
 
+_BRIEF_TAG = "brief-no-disputed-reading"
+
+
 def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_calls):
-    """Tag-gated (``index-vs-reading``), issue #4578. A name only a machine reading
-    gives is not the subject's name: no search spawn (search-records, search-images,
-    search-full-text) writes it as a given name, beside the surname or in a
-    given-name field, and a given name a brief does search on is the wildcard on
-    the prefix every reading agrees on (``agreed-prefix:``). The disputed reading
-    may still appear in a brief as a reading in doubt.
+    """Tag-gated (``brief-no-disputed-reading``), issue #4578. A name only a machine
+    reading gives is not the subject's name: no search spawn (search-records,
+    search-images, search-full-text) writes it as a given name, beside the surname or
+    in a given-name field, and a given name a brief does search on is the wildcard on
+    the prefix every reading agrees on (``agreed-prefix:``). The disputed reading may
+    still appear in a brief as a reading in doubt. The test asks for a search, so a
+    run that briefs none fails rather than passing with nothing checked.
 
     Spawn prompts are read from the hook records, because the judge cannot see them
     (``_spawn_prompts``). Proven both ways in
     ``tests/unit/test_research_index_vs_reading_validator.py``.
     """
-    if _READING_TAG not in test.get("tags", []):
-        pytest.skip(f"not an {_READING_TAG} test")
+    if _BRIEF_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BRIEF_TAG} test")
     machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
     surname = _one_tag_value(test, _SURNAME_PREFIX)
     prefix = _one_tag_value(test, _AGREED_PREFIX_PREFIX)
@@ -1250,16 +1254,20 @@ def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_call
     )
     m, s = re.escape(machine), re.escape(surname)
     as_name = re.compile(rf"\b{m}\s+{s}\b|\b{s},?\s+{m}\b", re.IGNORECASE)
+    briefs = [(c, p) for c in _SEARCH_CALLEES for p in _spawn_prompts(builtin_tool_calls, c)]
+    assert briefs, (
+        f"the test asks for a search, but no {', '.join(_SEARCH_CALLEES)} spawn was "
+        "briefed, so there is no brief to check"
+    )
     problems = []
-    for callee in _SEARCH_CALLEES:
-        for prompt in _spawn_prompts(builtin_tool_calls, callee):
-            if as_name.search(prompt):
-                problems.append(f"{callee} was briefed with {machine!r} as the subject's name")
-            for value in (g.group("v") for g in _GIVEN_FIELD.finditer(prompt)):
-                if value.lower() != prefix.lower():
-                    problems.append(
-                        f"{callee} was briefed to search the given name {value!r}, not {prefix!r}"
-                    )
+    for callee, prompt in briefs:
+        if as_name.search(prompt):
+            problems.append(f"{callee} was briefed with {machine!r} as the subject's name")
+        for value in (g.group("v") for g in _GIVEN_FIELD.finditer(prompt)):
+            if value.lower() != prefix.lower():
+                problems.append(
+                    f"{callee} was briefed to search the given name {value!r}, not {prefix!r}"
+                )
     assert not problems, (
         "a name only a machine reading gives is a reading in doubt, not the subject's "
         "name: " + "; ".join(problems)

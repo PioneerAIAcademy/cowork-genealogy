@@ -21,16 +21,20 @@ from test_research import (  # noqa: E402
     test_search_brief_never_carries_the_disputed_reading as check_brief,
 )
 
-BRIEF_TAGS = ["surname:Tyler", "agreed-prefix:An*"]
 T1900 = {
     "skill": "research",
     "tags": ["transcribes-in-place", "index-vs-reading", "index-reading:blank",
-             "machine-reading:Anthony", "on-line:23", *BRIEF_TAGS],
+             "machine-reading:Anthony", "on-line:23"],
 }
 T1880 = {
     "skill": "research",
     "tags": ["transcribes-in-place", "index-vs-reading", "index-reading:Armtogne",
-             "machine-reading:Armistead", "on-line:43", "as-written:Ann Tone", *BRIEF_TAGS],
+             "machine-reading:Armistead", "on-line:43", "as-written:Ann Tone"],
+}
+
+BRIEF = {
+    "skill": "research",
+    "tags": ["brief-no-disputed-reading", "machine-reading:Anthony", "surname:Tyler", "agreed-prefix:An*"],
 }
 
 GOOD_1900 = (
@@ -108,15 +112,21 @@ def _spawn(callee: str, prompt: str) -> dict:
 @pytest.mark.parametrize(
     "calls",
     [
-        [],
         [_spawn("search-records", 'subject: {"names": ["Tyler"]}\ngivenName: An*\n'
                 "The 1900 index gives no given name; one machine reading gives Anthony, in doubt.")],
         [_spawn("search-images", "Machine reading 'Anthony' is disputed; the index has Tyler only.")],
-        [_spawn("person-evidence", "Anthony Tyler")],
+        [_spawn("search-records", 'subject: {"names": [{"given": "An*", "surname": "Tyler"}]}'),
+         _spawn("person-evidence", "Anthony Tyler")],
     ],
 )
 def test_a_brief_holding_the_reading_in_doubt_passes(calls):
-    check_brief(T1900, calls)
+    check_brief(BRIEF, calls)
+
+
+@pytest.mark.parametrize("calls", [[], [_spawn("person-evidence", "Anthony Tyler")]])
+def test_no_search_briefed_fails_rather_than_passing_unchecked(calls):
+    with pytest.raises(AssertionError, match="no brief to check"):
+        check_brief(BRIEF, calls)
 
 
 @pytest.mark.parametrize(
@@ -127,8 +137,14 @@ def test_a_brief_holding_the_reading_in_doubt_passes(calls):
         [_spawn("search-full-text", "givenName: Anthony\nsurname: Tyler")],
         [_spawn("search-records", '{"givenName": "Anthony", "surname": "Tyler"}')],
         [_spawn("search-images", "**first name:** Antone")],
+        [_spawn("search-records", 'subject: {"names": [{"given": "Anthony", "surname": "Tyler"}]}')],
     ],
 )
 def test_a_brief_naming_the_subject_by_the_reading_fails(calls):
-    with pytest.raises(AssertionError):
-        check_brief(T1900, calls)
+    with pytest.raises(AssertionError, match="reading in doubt"):
+        check_brief(BRIEF, calls)
+
+
+def test_the_brief_check_skips_the_transcription_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_brief(T1900, [])

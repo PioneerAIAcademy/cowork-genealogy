@@ -29,8 +29,12 @@ bundle's own notes had already fitted the readings together, for example calling
 "Ann Tone" a "split-word rendering consistent with Antone/Antoine". Keeping that would
 hand the run the conclusion the tests check it does not draw.
 
-Used by `ut_research_iv1` (with `image-transcribe-tyler-1900-census`) and
-`ut_research_iv2` (with `image-transcribe-tyler-1880-census`).
+Used by:
+- `ut_research_iv1`, with `image-transcribe-tyler-1900-census`;
+- `ut_research_iv2`, with `image-transcribe-tyler-1880-census`;
+- `ut_research_iv3`, with `person-read-tyler-stub` and `source-attachments-tyler-none`.
+  The FamilySearch person behind I1, `PJHQ-7RG`, is a tester's placeholder named
+  "stub stub" with no attached sources.
 
 The people are real and long dead, taken from public FamilySearch records. Nothing
 identifies the tester.

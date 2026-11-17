@@ -1,0 +1,85 @@
+{
+  "test": {
+    "id": "ut_research_iv3",
+    "skill": "research",
+    "name": "A search for a subject whose given name only a machine reading gives is not briefed with that name",
+    "type": "positive",
+    "description": "Issue #4578 step 4, from the Tyler bundles (feedback #4510; the issue's 'Carried into the work' bullet). The tree's subject I1 is named 'Anthony Tyler', but that given name comes only from a machine transcription of the 1900 page; the index gives her no given name, the 1880 index has 'Armtogne', and the 1923 certificate 'Ann Tone'. In the bundle the main thread briefed searches on 'Anthony', and when told to stop it dropped the given name entirely instead of searching An*. The researcher, who read the images, gives Antone (1900) and Anntogne (1880). The message is a bounded record ask, so the router hands it to @plugin:search-records with a `subject:` block; the run ends at that hand-off (execution.stop_at_stub). A bare 'continue' was rejected: on this scenario project_context.nextStep reads 'search-records … or research-plan', so it could go either way. GRADING: deterministic. `brief-no-disputed-reading` makes test_search_brief_never_carries_the_disputed_reading read the spawn prompts (the judge cannot see them): no search brief may name the subject 'Anthony Tyler' or put Anthony in a given-name field, a given name it does search on must be `An*`, and a run that briefs no search fails. person_read and source_attachments are mocked because the router reads what is already attached before any search, and neither is a live tool.",
+    "tags": [
+      "brief-no-disputed-reading",
+      "bounded-request",
+      "machine-reading:Anthony",
+      "surname:Tyler",
+      "agreed-prefix:An*"
+    ]
+  },
+  "input": {
+    "user_message": "/research Find her in the 1910 census.",
+    "scenario": "tyler-fluvanna-census"
+  },
+  "mcp_fixtures": [
+    "person-read-tyler-stub",
+    "source-attachments-tyler-none"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stop_at_stub": true,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "The subject's given name is in dispute. The tree calls her Anthony Tyler, but only one machine transcription gives 'Anthony'; the 1900 index gives no given name, the 1880 index 'Armtogne', and the 1923 certificate 'Ann Tone'. The researcher, who read the images, gives Antone and Anntogne.",
+    "A pass: the router hands the search to @plugin:search-records and briefs the given name as a reading in doubt beside the index reading, or as the wildcard An*, never as the subject's name. Dropping the given name entirely is also a fail.",
+    "search-records is stubbed and the run ends at the router's first hand-off by design (execution.stop_at_stub). No search results, extraction or closing summary follow the spawn; do not mark any of them as missing. The brief itself is graded deterministically by test_search_brief_never_carries_the_disputed_reading; do not grade it yourself."
+  ],
+  "judge_reads_files": true
+}
