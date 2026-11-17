@@ -56,7 +56,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "Agree with 2, but not for the judge's reason. search-records was delegated and stubbed; relaying the stub's report as the searches done is correct per judge_context, so the missing record_search calls are not fabrication. Two real slips: it adds \"immigration collections\", which the stub did not list (it said births, marriages, deaths and censuses), and it names Ancestry, FindMyPast and newspaper archives, which no tool returned. judge_context says to mark the reply down for naming such sites."
     },
     {
       "test_id": "ut_research_b4w",
@@ -96,7 +96,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Disagree with 2. search-records was delegated and stubbed. The stub's return says the FamilySearch searches were run and \"each search is saved in the project's research log\", and Claude relayed that faithfully, as the harness instructs. The main thread is not meant to call record_search itself, so its absence is not fabrication. Minor slip: Claude added \"immigration collections\", which the stub did not list (it said births, marriages, deaths and censuses). Small embellishment, so 3."
+      "comment": "Agree with 2, for a narrower reason than the judge gives. search-records was delegated and stubbed, and the reply relays the stub faithfully (births, marriages, deaths and censuses for Pennsylvania, 1845-1908; each search saved in the log), so the missing record_search calls are not fabrication. But it ends by naming Ancestry, MyHeritage and newspaper archives, which no tool returned, and judge_context says to mark the reply down for exactly that."
     },
     {
       "test_id": "ut_research_018",
@@ -143,8 +143,8 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "Disagree with 1. The judge expected a decline, but the research skill answered the user's question fully from project state: both open questions with their next steps, the open conflict, a recommended order, and an offer to start. It did not hand off to question-selection, but project_context's nextStep for both questions is proof-conclusion, so no new question was due.\n\n"
+      "corrected_score": 2,
+      "comment": "Disagree with 1. The judge's premise is wrong: the skill did invoke the sub-skill the state calls for (proof-conclusion for q_001, matching nextStep \"re-conclude ps_001\"; see builtin_tool_calls and agent_returns). Two real gaps remain, both from judge_context. It ran a second step in the same turn (proof-conclusion for q_002, outside the parentage objective). It also ended without a \"Continue with ...?\" offer, even though it names a next step (resolve the open conflict). That is a 2, not a 1."
     },
     {
       "test_id": "ut_research_018",
@@ -152,14 +152,14 @@
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Disagree with 1. By the test's own explanation, the correct behavior is not evaluating exhaustiveness. Whether Claude calls question-selection or narrates the handoff is model variance and is not graded. Claude evaluated nothing and wrote nothing (files_created empty, test_no_search_stop passed). It still answered the user's question in full: all three open items from project_context, in a sensible order, ending with an offer instead of acting. Nothing the user needed was missing."
     },
     {
       "test_id": "ut_research_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
-      "corrected_score": 1,
+      "corrected_score": 3,
       "comment": "Disagree with 1. This test checks that \"what next?\" does not trigger an exhaustiveness declaration, and test_no_search_stop passed: nothing was written. Claude read project_context and every recommendation matches it: q_001 nextStep is re-conclude ps_001, q_002 is resolved with no proof summary, and there is 1 conflict. Accurate, grounded, and it offered rather than acted."
     },
     {
@@ -215,8 +215,8 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "Disagree with 3. The researcher asked to \"Reevaluate based on this evidence\". The reply weighed the record against none of the existing hypotheses and never mentioned h_002's 1870 marriage, so the reevaluation step is missing. It did follow the lead correctly by asking for the record's identifier before extraction, which judge_context accepts as a first step. Minor: it ignores the narration guidance (an example ARK link, \"187 assertions\", narrating \"Checking the current state\")."
     },
     {
       "test_id": "ut_research_9k4",

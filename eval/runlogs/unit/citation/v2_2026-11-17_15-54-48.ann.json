@@ -239,8 +239,8 @@
       "dimension_source": "rubric",
       "dimension_name": "Source fidelity — no fabricated detail",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
+      "corrected_score": 3,
+      "comment": "Disagree with 2. I checked against log_003.notes: \"Site may not have this collection indexed\" appears verbatim in the citation, so this is not a paraphrase passed off as the log's wording. Every other value (date, query terms, negative outcome, 0 results, 1850 Schuylkill County then broader Pennsylvania) comes from log_003, and the missing collection is flagged as not recorded rather than invented. Nothing was fabricated. The judge's concern is attribution, not fidelity."
     },
     {
       "test_id": "ut_citation_007",
