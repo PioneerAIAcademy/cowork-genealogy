@@ -1,8 +1,9 @@
 {
   "tool": "record_search",
-  "description": "Surname search for Anna Macek's son under her husband's name Jicinsky (Vaclav Jicinsky). Live capture, 2026-11-16: 567 matches, first 50 rows. Pairs with rank-search-matches-jicinsky-son-below-floor, where every row scores at or below 0.01. The predicate matches any record_search in the test: the one pool answers every query shape the agent tries.",
+  "description": "Surname search for Anna Macek's son under her husband's name Jicinsky (Vaclav Jicinsky). Live capture, 2026-11-16: 567 matches, first 50 rows. Pairs with rank-search-matches-jicinsky-son-below-floor, where every row scores at or below 0.01. The predicate matches any record_search that names the subject PW3W-LJN: the one pool answers every query shape the agent tries, and a search ranked against any other person gets fixture_not_found, so a run cannot pass without the ranking engaging.",
   "args": {
-    "projectPath": "~"
+    "projectPath": "~",
+    "subjectId": "~PW3W-LJN"
   },
   "response": {
     "query": {

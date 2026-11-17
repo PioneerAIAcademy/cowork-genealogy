@@ -1,8 +1,9 @@
 {
   "tool": "record_search",
-  "description": "Surname search for Antonio Fernandes Lucas, Funchal, marriages 1885-1895, spouse Maria. Live capture 2026-11-16: 71 matches, first 50 rows. Four rows score above 0.01; the four rows that are his children's marriages (father of groom or bride) score at or below it. The predicate matches any record_search in the test: the one pool answers every query shape the agent tries.",
+  "description": "Surname search for Antonio Fernandes Lucas, Funchal, marriages 1885-1895, spouse Maria. Live capture 2026-11-16: 71 matches, first 50 rows. Four rows score above 0.01; the four rows that are his children's marriages (father of groom or bride) score at or below it. The predicate matches any record_search that names the subject GK89-82B: the one pool answers every query shape the agent tries, and a search ranked against any other person gets fixture_not_found, so a run cannot pass without the ranking engaging.",
   "args": {
-    "projectPath": "~"
+    "projectPath": "~",
+    "subjectId": "~GK89-82B"
   },
   "response": {
     "query": {

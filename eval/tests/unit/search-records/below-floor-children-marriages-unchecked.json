@@ -17,7 +17,7 @@
     ]
   },
   "input": {
-    "delegation": "Search the Funchal marriage records for the children of Antonio Fernandes Lucas (GK89-82B) and his wife Maria Joana, per plan item pli_001. Tell me which records are worth extracting.\n\nprojectPath: <workspace>\nsubjectId: GK89-82B",
+    "delegation": "Search the Funchal marriage records for the children of Antonio Fernandes Lucas and his wife Maria Joana, per plan item pli_001. Antonio is the research subject: rank every search against him with subjectId GK89-82B (his children are not subjects). A child's marriage names Antonio as the father of the groom or bride, so the matcher scores it low against him; do not read a low score as a non-match. Tell me which records are worth extracting.\n\nprojectPath: <workspace>\nsubjectId: GK89-82B",
     "scenario": "lucas-children-marriages"
   },
   "mcp_fixtures": [
