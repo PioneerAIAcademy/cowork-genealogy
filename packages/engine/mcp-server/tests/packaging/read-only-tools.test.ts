@@ -15,6 +15,7 @@ const PINNED = [
   "external_links_search",
   "fulltext_search",
   "get_name_variants",
+  "image_index",
   "image_read",
   "image_search",
   "image_transcribe",
