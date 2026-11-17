@@ -1,8 +1,9 @@
 // image_index: the records FamilySearch has indexed on one page image, with
 // the personas and names on each (docs/specs/image-index-tool-spec.md).
 //
-// The Peru fixtures in tests/fixtures/image-index/ are SYNTHETIC, shaped from
-// issue #4632's measurements; their own `_note` says so and how to replace them.
+// The Peru fixtures in tests/fixtures/image-index/ are the raw FamilySearch
+// bodies recorded on 2026-11-17 by `dev/try-image-index.ts --record`; their
+// own `_note` says so.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
@@ -109,7 +110,7 @@ beforeEach(() => {
 });
 
 describe("image_index: the acceptance check", () => {
-  it("lists the Peru-shaped fixture's 27 records with Michael Barry and Mila Fuller (synthetic until recorded)", async () => {
+  it("lists the recorded Peru page's 27 records with Michael Barry and Mila Fuller", async () => {
     // Written so a recording of the real page (`--record`) passes it too: it
     // pages to the end as a caller does (large households can need more than
     // one answer), and checks each record against its own body.
