@@ -867,7 +867,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "question-selection.md": {
     tools: [
       "census_children_gap",
-      "person_warnings",
       "project_context",
       "research_append",
       "research_query",

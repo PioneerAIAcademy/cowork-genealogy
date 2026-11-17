@@ -15,5 +15,7 @@ and obituaries of relatives that mention a deceased person get tagged as a
 correct reading is a posthumous mention (unlink and treat as a reference),
 **not** identity confusion / a same-name merge.
 
-Used by `ut_question_selection_c7f` (`person-warnings-contradiction.json`) with the
-`person-warnings-posthumous-residence` MCP fixture.
+Used by `ut_question_selection_c7f` (`person-warnings-contradiction.json`), which checks
+that question-selection writes no new question: the mother is `q_001`'s own unfinished
+work, and the posthumous Residence is starting-tree data the researcher reviews before
+research, not question-selection's to act on.

@@ -32,6 +32,8 @@
     "wiki-read-any",
     "wiki-place-page-any",
     "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title",
     "wikipedia-search-any"
   ],
   "judge_context": [

@@ -180,7 +180,9 @@ export default function LocalitiesSection(): React.JSX.Element {
                       <span className={styles.itemName}>
                         {r.event}: {r.year}
                       </span>
-                      <span className={styles.itemDetail}>{r.level} level</span>
+                      <span className={styles.itemDetail}>
+                        {r.level} level{r.note ? ` (${r.note})` : ''}
+                      </span>
                       <span className={styles.itemDetail}>
                         <Linkify text={r.source_url} />
                       </span>
