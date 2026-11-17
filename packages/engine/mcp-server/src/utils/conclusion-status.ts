@@ -61,6 +61,7 @@ export function setAsideBy(
   edge: any,
   located: readonly Located[],
   genderOf: (id: string) => string | undefined,
+  edges?: readonly any[],
 ): string | null {
   if (edge?.type !== "ParentChild" || !isBiologicalClaim(edge)) return null;
   const gender = genderOf(String(edge.parent));
@@ -75,6 +76,8 @@ export function setAsideBy(
     const r = c?.relationship;
     if (!isAffirmed(c) || !atLeastProbable(c) || !isBiologicalClaim(r)) continue;
     if (r.child !== edge.child || r.parent === edge.parent || genderOf(r.parent) !== gender) continue;
+    // With `edges`, a winner counts only when its own biological edge is in the tree.
+    if (edges && !edges.some((o) => o !== edge && o?.type === "ParentChild" && isBiologicalClaim(o) && o.parent === r.parent && o.child === edge.child)) continue;
     return String(r.parent);
   }
   return null;
@@ -103,11 +106,7 @@ export function setAsideParents(research: any, tree: any): Map<string, Set<strin
   for (const r of edges) {
     if (r?.type !== "ParentChild" || !isBiologicalClaim(r) || typeof r.parent !== "string" || typeof r.child !== "string") continue;
     const ruledOut = located.some(({ c }) => isDisproved(c) && claimCoversEdge(c, r));
-    // Set aside counts only beside a winner whose own edge is in this tree: a
-    // claim naming a parent the tree lacks leaves this parent competing.
-    const winner = ruledOut ? null : setAsideBy(r, located, genderOf);
-    const winnerInTree = winner !== null && edges.some((o: any) => o !== r && o?.type === "ParentChild" && isBiologicalClaim(o) && o.parent === winner && o.child === r.child);
-    if (ruledOut || winnerInTree) {
+    if (ruledOut || setAsideBy(r, located, genderOf, edges) !== null) {
       const set = out.get(r.child) ?? new Set<string>();
       set.add(r.parent);
       out.set(r.child, set);
@@ -206,7 +205,7 @@ export function conclusionStatus(research: any, tree: any, startingTree: any | n
     const row: StatusRow = { holder: { relationshipId: r.id }, label: "" };
     const ruledOut = covering.find(({ c }) => isDisproved(c));
     const best = strongest(covering.filter(({ c }) => isAffirmed(c)));
-    const winner = setAsideBy(r, located, genderOf);
+    const winner = setAsideBy(r, located, genderOf, edges);
     const doubt = doubting(covering);
     if (ruledOut) {
       row.label = STATUS_LABELS.disproved;

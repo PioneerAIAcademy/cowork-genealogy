@@ -696,7 +696,8 @@ from `src/utils/conclusion-status.ts` (Decision 6): `{holder, factId?, label,
 claim?, winner?, rivalsWithoutVerdict?, nearMiss?, subtypeLabel?}`. The label is
 read from claims, never a tree field: the tier labels ("well established",
 "likely", "tentative", "not established", "ruled out"), "set aside in favour of
-<name>", "doubted", "tentative, not yet confirmed to be <name>", "from your
+<name>" (only when that concluded parent's own biological edge is in the tree, the
+same rule the parent-count warnings skip by), "doubted", "tentative, not yet confirmed to be <name>", "from your
 starting tree, not yet checked", "from an earlier finding, no claim recorded", or
 "found in a record, not yet checked". Imports follow Decision 7
 (`src/utils/import-baseline.ts`), read against `starting-tree.gedcomx.json` when

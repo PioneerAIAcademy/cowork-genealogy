@@ -63,6 +63,15 @@ describe("setAsideParents (Decision 26)", () => {
     expect(setAsideParents(research, noWinnerEdge).size).toBe(0);
   });
 
+  it("needs the winner's edge to be biological, and finds a later winner whose edge is in the tree", () => {
+    const adoptive = { ...tree, relationships: tree.relationships.map((r) => (r.parent === "I3" ? { ...r, subtype: "Adoptive" } : r)) };
+    expect(setAsideParents(research, adoptive).size).toBe(0);
+    const stale = { claim: "father (stale)", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I7", child: "I1" } };
+    const r = { proof_summaries: [{ ...research.proof_summaries[0], claims: [stale, ...research.proof_summaries[0].claims] }] };
+    const t = { ...tree, persons: [...tree.persons, male("I7")] };
+    expect([...(setAsideParents(r, t).get("I1") ?? [])]).toEqual(["I2"]);
+  });
+
   it("is empty with no summaries, no claims, or no research at all", () => {
     expect(setAsideParents({}, tree).size).toBe(0);
     expect(setAsideParents({ proof_summaries: [{ id: "ps_001", claims: [] }] }, tree).size).toBe(0);
