@@ -164,7 +164,6 @@ AGENT_ONLY_TOOLS = {
     "person_warnings": (
         "check-warnings",
         "person-evidence",
-        "question-selection",
         "source-evaluation",
     ),
     "place_distance": (
