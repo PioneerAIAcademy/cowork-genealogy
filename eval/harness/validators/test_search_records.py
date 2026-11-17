@@ -1594,3 +1594,70 @@ def test_unproven_surname_used_as_search_input(
         f"the marriage to a {surname} is unproven, yet the run gave the subject "
         f"a {surname} name in the tree"
     )
+
+
+# --- No project: page images and citations (issue #4583) ------------------
+
+_NO_PROJECT_WRITERS = frozenset({"research_log_append", "research_append", "extraction_append"})
+
+
+def test_gives_record_image_links(tool_calls, agent_returns, text_response, test):
+    """Issue #4583. With no project, an ask for the page images or citations of
+    records is answered by reading each record (Step 7b): every page link
+    (`viewerUrl`) and every record link (`recordUrl`) the `record_read` answers gave
+    is in the part of the agent's return the caller prints, after its final `---`.
+
+    The links come from the tool answers, never from the test's prose, so a fixture
+    change cannot leave this checking a stale list. Reads the agent's own return,
+    never the dispatcher's relay.
+
+    Tag-gated: `gives-record-image-links`.
+    """
+    from harness.skill_runner import subject_reply_text, tail_after_final_rule
+
+    if "gives-record-image-links" not in test.get("tags", []):
+        pytest.skip("only the no-project page-images tests")
+    answers = [
+        _as_mapping(c.get("response"))
+        for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool") or "") == "record_read"
+    ]
+    answers = [a for a in answers if a and "error" not in a]
+    assert answers, "no record_read was answered: the records were never read for their pages"
+    wanted = sorted({
+        url
+        for a in answers
+        for url in (a.get("viewerUrl"), a.get("recordUrl"))
+        if isinstance(url, str) and url
+    })
+    assert wanted, f"the {len(answers)} record_read answer(s) carried no viewerUrl or recordUrl"
+    printed = tail_after_final_rule(subject_reply_text(agent_returns, text_response, "search-records", test))
+    missing = [url for url in wanted if url not in printed]
+    assert not missing, (
+        f"{len(missing)} of the {len(wanted)} page and record links the record_read answers "
+        f"gave are not after the return's final `---`, the only part the caller prints: "
+        f"{missing}. Printed part: {printed[:900]!r}"
+    )
+
+
+def test_no_project_writes_nothing(tool_calls, test):
+    """Issue #4583. With no project the agent passes no `projectPath` and calls no
+    writer: there is no project to log to or extract into.
+
+    Tag-gated: `no-project-writes-nothing`.
+    """
+    if "no-project-writes-nothing" not in test.get("tags", []):
+        pytest.skip("only the no-project page-images tests")
+    calls = tool_calls or []
+    with_path = [
+        _bare_tool_name(c.get("tool") or "")
+        for c in calls
+        if "projectPath" in _as_mapping(c.get("args"))
+    ]
+    assert not with_path, f"with no project, these calls passed a projectPath: {with_path}"
+    writers = [
+        _bare_tool_name(c.get("tool") or "")
+        for c in calls
+        if _bare_tool_name(c.get("tool") or "") in _NO_PROJECT_WRITERS
+    ]
+    assert not writers, f"with no project, these writer calls were made: {writers}"

@@ -1,0 +1,56 @@
+{
+  "test": {
+    "id": "ut_research_ip1",
+    "skill": "research",
+    "name": "Routes a no-project ask for the page images of census heads already found, by name, to search-records, not search-images",
+    "type": "positive",
+    "description": "Issue #4583, the tester's case. Empty folder. The message restates five 1825 Lower Canada census heads of Hemmingford found earlier, by name with no links, then asks the tester's question verbatim: \"Cite the sources for the 1825 census entries for Hemmingford, including the specific images available on FamilySearch.\" In the tester's session the router sent this to search-images, which browsed an unindexed film. The page images of records already found go to @plugin:search-records with no projectPath, never @plugin:search-images, and the router relays everything after its final `---`. It creates no project.",
+    "tags": [
+      "routing",
+      "routes-to:search-records",
+      "handback-no-spawn:search-images",
+      "no-project"
+    ]
+  },
+  "input": {
+    "user_message": "/research Earlier you found these heads of household in the 1825 Lower Canada census for Hemmingford: William Brisbin, Joseph Brisbin, Hugh Emerson, Elisha Calkins and Ashal Calkins. Cite the sources for the 1825 census entries for Hemmingford, including the specific images available on FamilySearch.",
+    "scenario": "empty-folder-no-project"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Read 5 records with no project; nothing logged.\n---\n[1825 census page, Hemmingford](https://www.familysearch.org/ark:/61903/3:1:9396-MWWN-1): [William Brisbin](https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJP), [Joseph Brisbin](https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJ2), [Hugh Emerson](https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJK)\n[1825 census page, Hemmingford](https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-Q): [Elisha Calkins](https://www.familysearch.org/ark:/61903/1:2:9MFD-5SKX)\n[1825 census page, Hemmingford](https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-8): [Ashal Calkins](https://www.familysearch.org/ark:/61903/1:2:9MFD-5SR4)\nSource: \"Canada, recensement du Bas-Canada, 1825\", FamilySearch, 1825 Lower Canada Census, Hemmingford. Nothing was saved, because there is no project.\n\nNext, you can open each page to see the entries yourself."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-familysearch-wiki",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. Whether @plugin:search-records is the first hand-off is asserted deterministically by test_routes_to_expected_skill, and that @plugin:search-images is never spawned by test_handback_routing_follows_the_step_group; both read the PreToolUse hook records, so do not grade the routing decision yourself.",
+    "The folder is empty and the message names no FamilySearch person ID. It asks for the page images or citations of records already found, which goes to search-records with no projectPath: a tree-survey, init-project or search-images spawn, or a project_create call, is wrong here. The router reads no record itself.",
+    "search-records is stubbed, and the spawn is an Agent call, not an MCP tool call, so it may not appear in the tool-call list you see. Its return ends with a `---` line followed by three page links, each with the heads on that page as record links, and a source line. Those links exist only in the stub's return. The router must relay that block verbatim, every link included; dropping a link, or rewriting the block into advice to search FamilySearch, is a fault.",
+    "The delegation to search-records should say there is no project and carry the message, with the collection, the place and the five heads by name."
+  ],
+  "judge_reads_files": true
+}

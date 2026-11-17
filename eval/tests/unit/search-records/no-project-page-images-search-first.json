@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_search_records_img2",
+    "skill": "search-records",
+    "name": "With no project, finds five census heads by name, reads them, and links each page and the records on it",
+    "type": "positive",
+    "description": "Issue #4583, the tester's shape. Direct-agent arm in an empty folder, with no projectPath. An earlier report named the 1825 Lower Canada census heads of Hemmingford with no links; the researcher then asked: \"Cite the sources for the 1825 census entries for Hemmingford, including the specific images available on FamilySearch.\" The router hands search-records that message with the collection, the place and five heads by name. Step 7b: the agent finds each head with record_search (no projectPath), reads each with record_read (no projectPath), and after its final `---` gives one line per page, the page linked by its viewerUrl and the records on it linked by their recordUrl, and cites the collection once. Three pages: 3:1:9396-MWWN-1 holds William Brisbin, Joseph Brisbin and Hugh Emerson; 3:1:9396-MWWB-Q holds Elisha Calkins; 3:1:9396-MWWB-8 holds Ashal Calkins. With no project it writes nothing. The searches and reads are live captures (2026-11-17), in the shape the tester's own search-records sent.",
+    "tags": [
+      "no-project",
+      "page-images",
+      "gives-record-image-links",
+      "no-project-writes-nothing",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "There is no project; there is no projectPath. The researcher wrote:\n\nCite the sources for the 1825 census entries for Hemmingford, including the specific images available on FamilySearch.\n\nCollection: Canada, Lower Canada, Census, 1825. Place: Hemmingford, Huntingdon, Quebec, Canada. Records found earlier, by name, with no links given: William Brisbin, Joseph Brisbin, Hugh Emerson, Elisha Calkins, Ashal Calkins.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "record-search-hemmingford-1825-brisbin",
+    "record-search-hemmingford-1825-emerson",
+    "record-search-hemmingford-1825-calkins",
+    "record-read-hemmingford-1825-brisbin-khj8-j56",
+    "record-read-hemmingford-1825-brisbin-khj8-j5z",
+    "record-read-hemmingford-1825-emerson-khj8-j5c",
+    "record-read-hemmingford-1825-calkins-khj8-jtq",
+    "record-read-hemmingford-1825-calkins-khj8-v9y",
+    "record-search-any",
+    "record-search-any-country"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm with NO project: the folder is empty and the delegation carries no projectPath. The agent searches and reads with no projectPath. Logging is NOT expected: a research_log_append, research_append or extraction_append call, or any call carrying a projectPath, is a fault, not thoroughness. Saying plainly that nothing was saved is correct.",
+    "Searches by surname in collection 1834346 (Canada, Lower Canada, Census, 1825) at Hemmingford return the heads: Brisbin gives William (ark:/61903/1:1:KHJ8-J56) and Joseph (ark:/61903/1:1:KHJ8-J5Z); Emerson gives Hugh (ark:/61903/1:1:KHJ8-J5C) and a second Emerson head the researcher did not name, who need not be read or reported; Calkins gives Elisha (ark:/61903/1:1:KHJ8-JTQ) and Ashal (ark:/61903/1:1:KHJ8-V9Y). Any other search returns nothing. A search per head instead of per surname is fine.",
+    "The record_read answers give three pages. https://www.familysearch.org/ark:/61903/3:1:9396-MWWN-1 holds William Brisbin (record https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJP), Joseph Brisbin (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJ2) and Hugh Emerson (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJK). https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-Q holds Elisha Calkins (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SKX). https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-8 holds Ashal Calkins (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SR4). The collection is \"Canada, Lower Canada, Census, 1825\" (FamilySearch's own citation names it \"Canada, recensement du Bas-Canada, 1825\").",
+    "PASS requires, after the agent's final `---` line: one line per page, the page as a markdown link to its viewerUrl, then the heads on that page, each as a markdown link to its recordUrl, every page and head above present and on the right page, and the collection cited once. A page or a head that is missing, put on the wrong page, or given as a bare ARK or a link the tool answers did not give, is a fail; so is stopping after the searches without reading the records. A deterministic validator (gives-record-image-links) checks that every link the reads gave is present; grade the grouping and the citation.",
+    "The block after `---` MAY carry these links: the agent's return contract allows the links Step 7b gives in place of the usual plain-prose first paragraph. Do not mark it down for identifiers or for being a list."
+  ]
+}
