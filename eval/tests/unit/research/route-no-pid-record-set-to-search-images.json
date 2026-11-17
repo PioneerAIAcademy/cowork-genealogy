@@ -52,6 +52,7 @@
     "This is a ROUTING test. Whether @plugin:search-images is the first hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records — do not grade the routing decision yourself.",
     "The folder is empty and the message names no FamilySearch person ID. It asks for the soldiers recorded in a company's roll, which is a record set, so no project is created: an init-project spawn or a project_create call is wrong here.",
     "search-images is stubbed. Its return ends with a `---` line followed by a cited list of soldiers carrying image ids such as 008246133_00412. The router must relay that block verbatim to the researcher, image ids included; dropping the ids or rewriting the list into advice is a fault.",
+    "The stubbed search-images hand-off does not appear among the MCP tool calls, so the soldier list in the reply is the relayed stub return, not an answer from memory: do not score it as fabricated or unretrieved. search-images is the correct route here, not init-project.",
     "Grade only the router's own work: that it delegated rather than answering from memory or giving research advice, and that it relayed the block."
   ],
   "judge_reads_files": true
