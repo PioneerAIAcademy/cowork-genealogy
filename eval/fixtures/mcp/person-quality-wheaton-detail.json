@@ -1,0 +1,133 @@
+{
+  "tool": "person_quality",
+  "description": "person_quality (detail: true) for Orpha (Brooks) Wheaton (LZPF-WMT). Its CONSISTENCY issue and detail.conflicts flag the 1850 census's 'Orfey' against 'Orpha'. Captured live 2026-11-17 for issue #4584 (feedback #4507/#4508: Orpha (Brooks) Wheaton, LZPF-WMT), re-captured on main rather than copied from the 2381ff72c bundle. Verbatim.",
+  "args": {
+    "personId": "LZPF-WMT",
+    "detail": true
+  },
+  "response": {
+    "personId": "LZPF-WMT",
+    "segment": "United States 1776 - 1850",
+    "overallScore": 0.9,
+    "issueCount": 5,
+    "categories": [
+      {
+        "scoreType": "COMPLETENESS",
+        "count": 1,
+        "score": 0.9130434782608695
+      },
+      {
+        "scoreType": "VERIFIABILITY",
+        "count": 2,
+        "score": 1
+      },
+      {
+        "scoreType": "CONSISTENCY",
+        "count": 1,
+        "score": 0.9642857142857143
+      },
+      {
+        "scoreType": "COHERENCE",
+        "count": 1,
+        "score": 0.9
+      }
+    ],
+    "issues": [
+      {
+        "sentence": "A marriage date is missing a month.",
+        "conclusionType": "MARRIAGE",
+        "scoreType": "COMPLETENESS"
+      },
+      {
+        "sentence": "This person has a first name of Orpha, which does not match the name Orfey. Orfey Wheaton in household of James Devoor, \"United States Census, 1850\"",
+        "conclusionType": "NAME",
+        "scoreType": "CONSISTENCY"
+      },
+      {
+        "sentence": "This person gave birth to Charlotte 8 months after Miles Brooks was born.",
+        "scoreType": "COHERENCE"
+      },
+      {
+        "sentence": "A marriage has no tagged sources.",
+        "conclusionType": "MARRIAGE",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "A residence has no tagged sources.",
+        "conclusionType": "RESIDENCE",
+        "scoreType": "VERIFIABILITY"
+      }
+    ],
+    "detail": {
+      "conflicts": [
+        {
+          "field": "Name",
+          "values": [
+            "ORFEY WHEATON",
+            "ORPHA BROOKS WHEATON"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:MC1G-1LV",
+            "https://familysearch.org/ark:/61903/1:1:QK1G-J74Z"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1784-11-11",
+            "+1786"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:MC1G-1LV",
+            "https://familysearch.org/ark:/61903/1:1:QK1G-J74Z"
+          ]
+        },
+        {
+          "field": "Name",
+          "values": [
+            "ORFEY WHEATON",
+            "ORPHA WHEATON"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:MC1G-1LV",
+            "https://familysearch.org/ark:/61903/1:1:FHLZ-S99",
+            "https://familysearch.org/ark:/61903/1:1:N3KL-628"
+          ]
+        },
+        {
+          "field": "Birth Place",
+          "values": [
+            "N.Y.",
+            "New York"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:2W67-BRD",
+            "https://familysearch.org/ark:/61903/1:1:MC1G-1LV"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1784-11-11",
+            "+1785"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:QVNJ-4QXS",
+            "https://familysearch.org/ark:/61903/1:1:QK1G-J74Z"
+          ]
+        },
+        {
+          "field": "Birth Date",
+          "values": [
+            "+1785",
+            "+1786"
+          ],
+          "sources": [
+            "https://familysearch.org/ark:/61903/1:1:QVNJ-4QXS",
+            "https://familysearch.org/ark:/61903/1:1:MC1G-1LV"
+          ]
+        }
+      ]
+    }
+  }
+}
