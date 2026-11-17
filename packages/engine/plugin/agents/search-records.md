@@ -295,7 +295,7 @@ For wildcard rules and fuzzy matching behavior, read the “Name search mechanic
 - Maiden names for married women
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
 
-Varying a name’s spelling is a separate step from changing which fields you search: a search that adds, drops or moves fields while keeping the same spelling has not tried a spelling variant. If the subject is not among the results — whether the search returned nothing or a pool of other people — treat it as a nil for the subject: the next search varies the spelling of the given name before you change place, dates or surname.
+Varying a name’s spelling is a separate step from changing which fields you search: a search that adds, drops or moves fields while keeping the same spelling has not tried a spelling variant.
 
 **Secondary names need variants too — the given name, not just the surname.** The
 variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`
@@ -669,6 +669,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`. When its response carries `planRationale`, search next what that rationale names and you have not searched, then carry on with the levers below.
+   If the subject is not among the results, that search is a nil for the subject, whether it returned nothing or a pool of other people. A plan rationale that says 'if nil' covers this case too. The next search varies the spelling of the given name, before you add a place, change dates or change the surname. Run the spelling variants yourself; don't hand back with an untried variant listed as a next step.
 2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
