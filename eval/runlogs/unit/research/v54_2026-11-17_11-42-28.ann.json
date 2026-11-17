@@ -493,14 +493,6 @@
     {
       "test_id": "ut_research_ken",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "Good to come clean on this and to suggest a possible way forward"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
@@ -1813,18 +1805,26 @@
     {
       "test_id": "ut_research_gm4",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The skill must follow the lead to resolve"
+      "corrected_score": 3,
+      "comment": "The skill did as expected and should consider solving things this way going forward."
     },
     {
       "test_id": "ut_research_gm4",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "The skill did as expected"
+      "comment": "The skill must follow the lead to resolve the leading contradiction to resolve the research problem."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Good to come clean on this and to suggest a possible way forward"
     }
   ]
 }
