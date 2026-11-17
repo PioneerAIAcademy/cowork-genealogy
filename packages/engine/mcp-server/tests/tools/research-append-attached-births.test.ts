@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { coreIdentifierContradictionInvariants, type PersonLink } from "../../src/tools/research-append.js";
+import { attachedBirthConflictInvariants, coreIdentifierContradictionInvariants, researchAppend, type PersonLink } from "../../src/tools/research-append.js";
+import { cp, mkdtemp, rm } from "fs/promises";
+import { tmpdir } from "os";
 import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
 
 // #4444: a tree person whose own FamilySearch-attached records disagree on
@@ -210,5 +212,76 @@ describe("core-identifier gate — a tree person's attached births disagree (#44
       .map((pe: any) => pe.id)
       .sort();
     expect(refused).toEqual(["pe_088", "pe_089", "pe_090", "pe_093", "pe_095"]);
+  });
+});
+
+describe("a birthplace conflict across a person's self-contradicting attached births (#4444)", () => {
+  const conflict = (ids: string[], extra: Record<string, unknown> = {}) => ({
+    id: "c_001",
+    conflict_type: "fact",
+    disputed_attribute: "birth_place",
+    competing_assertion_ids: ids,
+    status: "resolved",
+    preferred_assertion_id: ids[1],
+    ...extra,
+  });
+  const judge = (c: any, research: any, tree: any) => attachedBirthConflictInvariants(c, research, tree, linksOf(research));
+
+  it("refuses resolving the person's two attached births against each other", () => {
+    const { research, tree } = project();
+    const r = judge(conflict(["a_001", "a_002"]), research, tree);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toContain("identity");
+  });
+
+  it("refuses resolving an attached birth against a record that sides with the other one", () => {
+    const { research, tree } = project();
+    expect(judge(conflict(["a_001", "a_003"]), research, tree)).toHaveLength(1);
+  });
+
+  it("allows it unresolved, moot, or about another attribute", () => {
+    const { research, tree } = project();
+    expect(judge(conflict(["a_001", "a_002"], { status: "unresolved", preferred_assertion_id: null }), research, tree)).toEqual([]);
+    expect(judge(conflict(["a_001", "a_002"], { status: "moot" }), research, tree)).toEqual([]);
+    expect(judge(conflict(["a_001", "a_002"], { disputed_attribute: "birth_date" }), research, tree)).toEqual([]);
+  });
+
+  it("allows it once the researcher rejects one of the attachments", () => {
+    const { research, tree } = project({
+      links: [attachment("pe_001", "a_001"), attachment("pe_002", "a_002", { superseded_by: "rj_001" })],
+      rejected: [{ id: "rj_001", assertion_id: "a_002", person_id: P, researcher_words: "Another John.", created: "2026-11-03" }],
+    });
+    expect(judge(conflict(["a_001", "a_002"]), research, tree)).toEqual([]);
+  });
+
+  it("allows attached births that disagree within one country", () => {
+    const cork = birth("a_001", "ark:/61903/1:1:CENS-001", "Cork, Ireland");
+    const dublin = birth("a_002", "ark:/61903/1:1:BAPT-002", "Dublin, Ireland");
+    const { research, tree } = project({ assertions: [cork, dublin, IRISH], treeBirth: "Ireland" });
+    expect(judge(conflict(["a_001", "a_002"]), research, tree)).toEqual([]);
+  });
+
+  it("allows a conflict whose competitors are not on both sides", () => {
+    const other = birth("a_004", "ark:/61903/1:1:OTHR-004", "England");
+    const { research, tree } = project({ assertions: [CENSUS, BAPTISM, IRISH, other] });
+    research.person_evidence.push({ ...link("a_004"), id: "pe_004", created: "2026-11-02", superseded_by: null });
+    expect(judge(conflict(["a_001", "a_004"]), research, tree)).toEqual([]);
+  });
+
+  it("refuses the write through research_append on run 2026-11-16's own documents", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "attached-conflict-"));
+    try {
+      const base = join(__dirname, "../../../../../eval/runlogs/e2e/thomas-hanrahan-marriage/run-2026-11-16_15-55-51");
+      await cp(`${base}.final-research.json`, join(dir, "research.json"));
+      await cp(`${base}.final-tree.gedcomx.json`, join(dir, "tree.gedcomx.json"));
+      const r: any = await researchAppend({
+        projectPath: dir, section: "conflicts", op: "update", entryId: "c_001",
+        fields: { status: "resolved", preferred_assertion_id: "a_074" },
+      } as any);
+      expect(r.ok).toBe(false);
+      expect((r.errors as string[]).join(" ")).toContain("cannot be 'resolved' by preferring one side");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

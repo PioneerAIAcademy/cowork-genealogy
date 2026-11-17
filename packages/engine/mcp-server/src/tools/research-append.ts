@@ -67,6 +67,7 @@ import {
   YEAR_PATTERN,
   yearOf,
   type ResolvedAgainst,
+  isBirthPlaceDispute,
 } from "../utils/settled-birth-disputes.js";
 import { normalizeString } from "../utils/string-similarity.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
@@ -990,6 +991,59 @@ function resolutionKindInvariants(entry: any, op: { op: string; fields?: Record<
  *  corroboration from a different record with the same fact_type, same value
  *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
  *  own, and tied to the same person. Reads live `research`. */
+/** A birthplace fact conflict may not be `resolved` by choosing between the two
+ *  sides of a tree person's self-contradicting attached births (#4444). When the
+ *  records FamilySearch attaches to one person put their birth in different
+ *  countries, that person may be two people under one tree entry: an identity
+ *  question, and the tree's attachments are not weighed against each other
+ *  (lead, 2026-11-13). thomas-hanrahan-marriage resolved exactly that twice, once
+ *  preferring a stranger's civil registration over the census (run 2026-11-09)
+ *  and once his baptism (2026-11-16). Fires when the conflict's competitors fall
+ *  on both sides of such a pair: one is, or agrees with, each. Read by country
+ *  alone, so no coordinate lookup is needed and a near pair never fires. */
+export function attachedBirthConflictInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+): string[] {
+  if (entry?.conflict_type !== "fact" || entry?.status !== "resolved") return [];
+  if (!isBirthPlaceDispute(entry.disputed_attribute)) return [];
+  const ids = new Set<string>(
+    (Array.isArray(entry.competing_assertion_ids) ? entry.competing_assertion_ids : []).filter(
+      (x: unknown): x is string => typeof x === "string",
+    ),
+  );
+  if (ids.size < 2) return [];
+  const byId = resolvableAssertions(research);
+  const competitors = [...ids].map((id) => byId.get(id)).filter((a): a is any => !!a && readableBirthPlace(a));
+  const persons = new Set<string>(
+    ((research?.person_evidence ?? []) as any[])
+      .filter((pe: any) => pe && pe.superseded_by == null && ids.has(pe.assertion_id) && typeof pe.person_id === "string")
+      .map((pe: any) => pe.person_id),
+  );
+  const sides = (c: any, x: any) => c.id === x.id || birthPlacesAgree(c, x);
+  for (const p of [...persons].sort()) {
+    for (const [x, y] of attachedBirthConflictsOf(p, research, tree, personLinks)) {
+      if (!birthCountriesDiffer(x, y)) continue;
+      const withX = competitors.find((c) => sides(c, x) && !sides(c, y));
+      const withY = competitors.find((c) => sides(c, y) && !sides(c, x));
+      if (!withX || !withY) continue;
+      return [
+        `conflict '${entry.id ?? "(new)"}' cannot be 'resolved' by preferring one side: its competitors ` +
+          `'${withX.id}' ('${withX.place}') and '${withY.id}' ('${withY.place}') follow the two records ` +
+          `FamilySearch attaches to '${p}' that put that person's birth in different countries ('${x.place}', ` +
+          `assertion '${x.id}'; '${y.place}', assertion '${y.id}'). A tree person whose own attached records ` +
+          `disagree like this may be two people under one entry, which is an identity question, not a fact ` +
+          `to weigh, and the tree's attachments are not weighed against each other. Leave this conflict ` +
+          `unresolved and open a conflict_type 'identity' conflict on '${p}' naming both records; the ` +
+          `researcher's own rejection of the attachment that is not theirs (a rejected_links entry) settles it.`,
+      ];
+    }
+  }
+  return [];
+}
+
 function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   if (entry.preferred_assertion_id == null) return [];
   const assertions: any[] = (research.assertions ?? []).filter(isLiveAssertion);
@@ -9940,6 +9994,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(conflictFields, "status")
     ) {
       invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
+      invariantErrors.push(...attachedBirthConflictInvariants(resultEntry, research, tree, personLinks));
     }
   }
   // Either side, as declarationStatusInvariants: an update setting only the

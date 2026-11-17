@@ -65,6 +65,12 @@ export function recordParties(assertions: Iterable<any>, recordId: string) {
 const BIRTH_PLACE_DISPUTES: ReadonlySet<string> = new Set([
   "birthplace", "birth_place", "place_of_birth",
 ]);
+
+/** Whether a fact conflict's `disputed_attribute` names a birth place, read as
+ *  `resolvedAgainstIds` reads it. */
+export function isBirthPlaceDispute(attribute: unknown): boolean {
+  return BIRTH_PLACE_DISPUTES.has(String(attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_"));
+}
 const BIRTH_DATE_DISPUTES: ReadonlySet<string> = new Set([
   "birth_year", "birth_date", "birthdate", "date_of_birth", "year_of_birth",
   "christening_date", "baptism_date",
