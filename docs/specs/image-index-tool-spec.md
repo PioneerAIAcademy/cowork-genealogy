@@ -1,8 +1,7 @@
 # `image_index` tool spec
 
-**Status:** built; the live measurements under "Still to measure" are owed before the order and
-cap findings below are final. Read-only, needs a FamilySearch session (`OAuth` in
-`docs/catalog.md`).
+**Status:** built, and measured live on 2026-11-17 (see "Measured live"). Read-only, needs a
+FamilySearch session (`OAuth` in `docs/catalog.md`).
 Built for re-indexing a page against FamilySearch's index: comparing a fresh transcription of a
 page with what FamilySearch already indexed on it, line by line.
 
@@ -37,7 +36,7 @@ a different question asked of FamilySearch, with its own answer shape.
 
 | Field | Type | Required | Meaning |
 |---|---|---|---|
-| `imageId` | string | yes | The page's document-image ARK, in any form: `ark:/61903/3:1:33SQ-GYY1-B2G`, bare `3:1:33SQ-GYY1-B2G`, the id alone in the 4-4-4-1 shape `image_read` also takes (`UNPREFIXED_IMAGE_ID_RE`), or a FamilySearch URL containing it (the image viewer's URL included). `3:2:` is accepted by the shared check (`isDocumentImageArk`), but only `3:1:` has been measured against this route, and a 404 for a `3:2:` ARK says so. A viewer URL's `i=` (and `groupId=`) is not sent: the list is for the ARK itself (see "Still to measure"). |
+| `imageId` | string | yes | The page's document-image ARK, in any form: `ark:/61903/3:1:33SQ-GYY1-B2G`, bare `3:1:33SQ-GYY1-B2G`, the id alone in the 4-4-4-1 shape `image_read` also takes (`UNPREFIXED_IMAGE_ID_RE`), or a FamilySearch URL containing it (the image viewer's URL included). `3:2:` is accepted by the shared check (`isDocumentImageArk`), but only `3:1:` has been measured against this route, and a 404 for a `3:2:` ARK says so. A viewer URL's `i=` (and `groupId=`) is not sent: the list is for the ARK itself, and on the Peru page `i=6` changed nothing measured (see "Measured live"). |
 | `collectionId` | string of digits | no | FamilySearch's collection id, sent as `cc`. When `imageId` is a URL carrying `cc=`, that value is used; when both are given and differ, or the URL carries two different `cc=`, the call is refused, because silently dropping one changes the answer. |
 | `offset` | whole number, at least 0 | no | The position in FamilySearch's record list to start reading from. Default 0. Use the previous answer's `nextOffset`. |
 
@@ -144,24 +143,27 @@ was built to: return the list's order as page order only if the list is shown to
 in-network order (Michael Barry entry 0, Mila Fuller entry 1, carried by the viewer chain's `SortKey`);
 otherwise mark the entries unordered and never sort them, by record id or anything else.
 
-Measured so far: the list's entry 0 is the page's first name (one data point, above). Whether the
-rest follows page order is not measured (see "Still to measure"). One page could not vouch for
-every image anyway, so a live result is recorded here and does not by itself make `ordered` true.
+Measured live on 2026-11-17 (see "Measured live"): on the Peru page, entries 0 and 1 are Michael
+Barry and Mila Fuller, the probe's in-network order, and `FS_SORT_KEY` ascends in list order over
+all 27 entries. That is one page, and one page cannot vouch for every image, so the result is
+recorded here and does not by itself make `ordered` true. Whether it is enough to is the lead's
+call; until then `ordered` stays `false`.
 
 `sortKey`, `lineNumber` and `personNumber` are passed through as FamilySearch's own index fields
-and are not verified as the line order. Note for whoever measures it: the 2026-11-17 grep behind
-"No `SortKey`/`sortKey` field in the body" cannot match `FS_SORT_KEY` (case and underscore), the
-label the raw GedcomX of every census household probed for `src/utils/record-index-fields.ts`
-carries (its table: US 1880, US 1850 and England and Wales 1861). Whether the platform record body
-carries it, or the line and person numbers, is part of the live check.
+and are not verified as the line order. The platform record body does carry `FS_SORT_KEY`
+(measured: every persona on the Peru page), which the earlier grep behind "No `SortKey`/`sortKey`
+field in the body" could not match (case and underscore); it is the label the raw GedcomX of every
+census household probed for `src/utils/record-index-fields.ts` carries (its table: US 1880, US 1850
+and England and Wales 1861). On the Peru page it carries no line or person numbers.
 
 ## How much one call reads (the cursor rule)
 
 - **Cap: 30 records per call, read 6 at a time.** The rule:
   `CAP = min(30, 6 x floor(25 s / p95 read latency))`. Hydration must finish within half the
   50 s tool budget at the 95th-percentile read, and the record reads of one call never number
-  more than 30. The one measured read, 0.41 s, gives 6 x 60 = 360, so the spend ceiling binds; 30
-  covers the Peru page (27) in one call. The rule lowers the cap only if p95 passes 5 s.
+  more than 30. The Peru page's 27 reads (see "Measured live") had a p95 of 0.504 s, which gives
+  6 x 49 = 294, so the spend ceiling binds; 30 covers the Peru page (27) in one call. The rule
+  lowers the cap only if p95 passes 5 s.
 - **What one call can spend:** at most 33 FamilySearch requests: the list call, which keeps
   `fetchWithRetry`'s retries of a 429, a 5xx or a network failure (at most 3 attempts, as
   `catalog_search`'s one search request does), and 30 record reads of one attempt each. Under the
@@ -222,8 +224,9 @@ carries it, or the line and person numbers, is part of the live check.
   on every call. Only an image whose records do not all fit in one answer pages at all: more than 30
   records, a record the deadline left unread, a rate limit, or the answer-size limit, and retrying one
   entry with `offset` set to its `index` is a second call too.
-- **A paged list.** Whether the list route pages is not measured. When its answer carries a GedcomX
-  `links.next`, the answer says `listTruncated: true`: `total` then counts only that first part,
+- **A paged list.** On the Peru page the list answer carries no `links` (measured), so the route
+  did not page there; whether it pages for an image with more records is not measured. When its
+  answer carries a GedcomX `links.next`, the answer says `listTruncated: true`: `total` then counts only that first part,
   and this tool does not follow the link.
 - **A caller that hangs up** gets no special handling: no tool here takes an abort signal. The
   reads already started finish or meet the deadline, bounded by the cap and the 50 s; nothing is
@@ -249,34 +252,40 @@ A list with no record entries is an answer, not an error: `total: 0`, `entries: 
 Names come from FamilySearch's index and are passed through as data. This repo has no
 prompt-injection doctrine (`docs/architecture.md`, "Add an MCP tool"); nothing here adds one.
 
-## Still to measure (live, needs a FamilySearch login)
+## Measured live
 
-Run from `packages/engine/mcp-server/`, signed in, on a network outside the church's:
-`npx tsx dev/try-image-index.ts --record tests/fixtures/image-index`. It prints each item
-below; paste the answers here with the date and the network. It records nothing when any record
-read fails, a body carries no `persons`, or a Record entry carries no record link (a recording with
-unread records is not the page). A recording that contradicts what the unit test checks (27
-records, record `1TVW-1PV` first, Michael Barry and Mila Fuller on it) is still written, with a
-warning: the failing test is then the finding to report. The unit test pages to the end,
-checks the list's first entry (record `1TVW-1PV`, with Michael Barry in it: measured), Mila
-Fuller anywhere, the entries in the list's own order, and each record's persona arks and names
-against its own body, so a recording in another order, with larger households, passes it.
+Measured on 2026-11-17 on a Wi-Fi connection outside the church's network, signed in, by running
+`npx tsx dev/try-image-index.ts --record tests/fixtures/image-index` from
+`packages/engine/mcp-server/` on the Peru page (`3:1:33SQ-GYY1-B2G`, `cc` 1803958):
 
-- The list's order beyond entry 0: are entries 0 and 1 `1:1:XHPP-F3V` and `1:1:XHPP-FQX`?
-- Whether the platform record body carries `FS_SORT_KEY`, `PR_RELATIONSHIP_TO_HEAD`,
-  `PR_EXT_LINE_NBR`, `SOURCE_PERSON_NBR` and `display.role`, and whether the sort keys ascend in
-  list order.
-- Per-record latency over every read: min, median, p95, max, and the cap the rule gives.
-- The list call's own latency: the 24 s list timeout rests on no list measurement (only its size,
-  11,614 bytes, was recorded).
-- The list call's status without `cc`, and with the viewer URL's `i=6` added (the Peru page's
-  viewer URL carries it): whether the route takes `i=`, and whether it changes the answer.
-- Whether the list answer carries any `links` (a `next` would mean the route pages).
-- Whether the route answers from that network at all (record the result either way).
+- **The route answers from outside the church's network:** HTTP 200 with 27 Record entries. The
+  tool's own call returned all 27, every record read and no errors, in 4.2 s.
+- **Order:** entries 0 and 1 are `1:1:XHPP-F3V` (Michael Barry) and `1:1:XHPP-FQX` (Mila Fuller),
+  the probe's in-network order (see "Order").
+- **Index fields:** every persona carries `FS_SORT_KEY` (27 of 27), and the sort keys ascend in
+  list order over all 27 entries. No record body carries `PR_RELATIONSHIP_TO_HEAD`,
+  `PR_EXT_LINE_NBR`, `SOURCE_PERSON_NBR` or `display.role`. Each record on this page names one
+  person.
+- **Latency:** the list call took 315 ms (11,614 characters), so the 24 s list timeout has ample
+  room. The 27 record reads, one at a time: min 319 ms, median 358 ms, p95 504 ms, max 534 ms.
+  The cap rule gives `min(30, 6 x floor(25 s / 0.504 s))` = 30, the shipped cap.
+- **`cc` and `i=`:** without `cc` the list answers HTTP 200 with 27 Record entries (11,317
+  characters, against 11,614 with it). With the viewer URL's `i=6` added it answers HTTP 200 with
+  27 Record entries at the same 11,614 characters, so the route accepts `i=` and on this page
+  nothing measured changes.
+- **Paging:** the list answer carries no `links`, so on this page the route does not page.
 
-The test fixtures `tests/fixtures/image-index/peru-list.json` and `peru-records.json` are built
-from the measurements above, not recorded (their `_note` says so). `--record` overwrites both
-with the raw bodies, and the unit test then runs on the recording.
+To measure again, run the same command signed in. It records nothing when any record read fails, a
+body carries no `persons`, or a Record entry carries no record link (a recording with unread
+records is not the page). A recording that contradicts what the unit test checks (27 records,
+record `1TVW-1PV` first, Michael Barry and Mila Fuller on it) is still written, with a warning:
+the failing test is then the finding to report.
+
+The test fixtures `tests/fixtures/image-index/peru-list.json` and `peru-records.json` are the raw
+bodies recorded above (their `_note` says so), and the unit test passes on them. It pages to the
+end, checks the list's first entry (record `1TVW-1PV`, with Michael Barry in it), Mila Fuller
+anywhere, the entries in the list's own order, and each record's persona arks and names against
+its own body, so a later recording in another order, or with larger households, passes it too.
 
 ## Files
 
@@ -292,7 +301,10 @@ with the raw bodies, and the unit test then runs on the recording.
 
 - `make engine-test` (`tests/tools/image-index.test.ts`, plus the packaging drift tests over the
   registration sites).
-- `make engine-smoke-http`: in its default no-bearer mode the row must answer the hosted reconnect
-  instruction, which proves the request's principal reached the tool.
+- `make engine-smoke-http`: in its default no-bearer mode the tool must be advertised over HTTP
+  with a plan row (its coverage check). The row itself is skipped there, like every FamilySearch
+  row, because without a FamilySearch token the smoke cannot judge one. The hosted reconnect
+  answer is checked by the unit tests ("passes on a missing session's own message" and "answers a
+  401 with the desktop login instruction, and with reconnect when hosted").
 - The live check above, then the lead's call from malachi after deploy: the Peru page returns 27
   entries including `1:1:XHPP-F3V` and `1:1:XHPP-FQX`.

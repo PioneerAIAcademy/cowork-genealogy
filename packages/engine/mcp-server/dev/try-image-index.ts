@@ -1,6 +1,6 @@
 /**
- * Live one-shot for the image_index tool (issue #4632). It answers what the
- * spec's "Still to measure" section asks, from wherever it is run: say which
+ * Live one-shot for the image_index tool (issue #4632). It measures what the
+ * spec's "Measured live" section records, from wherever it is run: say which
  * network that was when you paste the numbers in.
  *
  * Usage (signed in: run dev/try-login.ts first):
@@ -22,7 +22,7 @@
  *
  * `--record <dir>` (Peru page only) writes the raw list body and every raw
  * record body as `<dir>/peru-list.json` and `<dir>/peru-records.json`, the
- * synthetic fixtures' names, so the unit test runs on the recording.
+ * fixtures' names, so the unit test runs on the recording.
  *
  * Spends about 2 x (records + 1) + 2 FamilySearch requests.
  */
