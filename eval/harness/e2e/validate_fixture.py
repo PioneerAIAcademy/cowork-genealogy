@@ -439,11 +439,12 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
     `polarity: "avoid"` plus a paired required finding documenting the
     negative conclusion (spec §3.6, worked example: `thomas-seaver-other-wife`).
 
-    Only checks what's structurally unambiguous: unrecognized fields,
+    Checks what's structurally unambiguous: unrecognized fields,
     out-of-enum `type`/`polarity`, non-boolean `required`, and duplicate
-    ids. Does not require any field be present — real fixtures always
-    populate `description`/`required`, but nothing here should punish an
-    author still mid-draft.
+    ids. A recover finding need not have any field present — nothing here
+    should punish an author still mid-draft. An `avoid` finding must carry
+    what its guard branch reads (`_avoid_guard_shape_errors`), because a
+    branch with nothing to read passes every run silently.
     """
     errors: list[str] = []
     findings = expected_findings.get("findings")
@@ -499,10 +500,12 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
         if required is not None and not isinstance(required, bool):
             errors.append(f"{where} has non-boolean `required`: {required!r}")
 
-        # e2e-test-spec.md:313-323: `apply_avoid_guard` force-fails a target
-        # present in the agent's final tree HOWEVER it is annotated there,
-        # including as an explicitly rejected candidate -- that is the
-        # allowance the rule exists to permit. An `avoid` finding's
+        if polarity == "avoid":
+            errors += _avoid_guard_shape_errors(finding, where)
+
+        # e2e-test-spec.md §3.4.1: `apply_avoid_guard` force-fails what an
+        # avoid finding forbids when it is in the agent's final tree HOWEVER it
+        # is annotated there, including as an explicitly rejected candidate. An `avoid` finding's
         # description must not promise a pass route through the tree, so it
         # must not conflate the two stores ("tree/research") and, if it
         # discusses rejection at all, must say which store a rejected
@@ -537,12 +540,78 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
                     f"name both tree.gedcomx.json and research.json -- a finding "
                     f"whose pass condition can be satisfied by writing the rejected "
                     f"candidate into the tree, even annotated as rejected, describes "
-                    f"a pass apply_avoid_guard cannot grant (it force-fails any match "
-                    f"in the final tree however annotated). Name tree.gedcomx.json as "
+                    f"a pass apply_avoid_guard cannot grant (it force-fails a tree "
+                    f"object citing the candidate's records, a new edge to the "
+                    f"candidate, or the avoided value, however annotated). Name tree.gedcomx.json as "
                     f"what must stay clear and research.json as where a rejected "
                     f"candidate may be documented."
                 )
 
+    return errors
+
+
+_PERSONA_RECORD_RE = re.compile(r"^ark:/61903/1:1:[A-Z0-9]{4}-[A-Z0-9]{2,4}$")
+
+
+def _avoid_guard_shape_errors(finding: dict[str, Any], where: str) -> list[str]:
+    """What an avoid finding must carry for its `apply_avoid_guard` branch to fire.
+
+    Each branch (`e2e.avoid_guard`) passes a run silently when the field it
+    reads is missing, so a missing field is an error here rather than a guard
+    that can never go red.
+    """
+    from e2e.avoid_guard import branch_of, candidate_name, name_is_matchable, relation_role, avoided_value
+
+    errors: list[str] = []
+    details = finding.get("details") if isinstance(finding.get("details"), dict) else {}
+    candidate = details.get("wrong_candidate") if isinstance(details.get("wrong_candidate"), dict) else {}
+    branch = branch_of(finding)
+
+    if "records" in candidate:
+        records = candidate["records"]
+        if not isinstance(records, list) or not all(
+            isinstance(r, str) and _PERSONA_RECORD_RE.match(r) for r in records
+        ):
+            errors.append(
+                f"{where} (avoid) `wrong_candidate.records` must be a list of "
+                f"`ark:/61903/1:1:` persona ARKs, got {records!r}"
+            )
+        elif not records and not candidate.get("note"):
+            errors.append(
+                f"{where} (avoid) has an empty `wrong_candidate.records` and no "
+                f"`wrong_candidate.note` saying why — an empty list disarms the "
+                f"provenance check, so it must be explained."
+            )
+    elif finding.get("type") == "person":
+        errors.append(
+            f"{where} (avoid, person) has no `wrong_candidate.records` — the guard "
+            f"identifies a wrong person only by the records it was minted from."
+        )
+
+    if branch == "wrong-relationship":
+        if relation_role(finding) is None:
+            errors.append(
+                f"{where} (avoid, relationship) has `details.relation` "
+                f"{details.get('relation')!r}, which names no role the guard can "
+                f"check — use child, parent, parents, mother, father, spouse, wife "
+                f"or husband, or list the candidate's records instead."
+            )
+        if candidate.get("any_new") is not True and not name_is_matchable(candidate_name(finding)):
+            errors.append(
+                f"{where} (avoid, relationship) has no candidate name with both a "
+                f"given and a surname token (`wrong_candidate.name` or "
+                f"`target_person.name`) and no `wrong_candidate.any_new: true` — "
+                f"the edge check has nothing to match."
+            )
+    elif branch == "fact":
+        if not details.get("fact_type"):
+            errors.append(f"{where} (avoid, fact) has no `details.fact_type`.")
+        if avoided_value(finding) == (None, None):
+            errors.append(
+                f"{where} (avoid, fact) states no avoided value — give "
+                f"`wrong_candidate.date` (or `.place`), `details.date`/`.place`, "
+                f"or `details.wrong_value`, or the value check has nothing to match."
+            )
     return errors
 
 
@@ -806,7 +875,10 @@ class Suspect:
 
 
 def check_stripping(
-    expected_findings: dict[str, Any], tree: dict[str, Any]
+    expected_findings: dict[str, Any],
+    tree: dict[str, Any],
+    research: dict[str, Any] | None = None,
+    subject_person_ids: Iterable[str] = (),
 ) -> list[Suspect]:
     """Return findings that look like they may NOT have been stripped.
 
@@ -817,19 +889,47 @@ def check_stripping(
     the fact type to be present on that person, since a person
     legitimately remains when only one of their facts was stripped.
 
-    Polarity-agnostic on purpose: a `polarity: "avoid"` claim must be
-    just as absent from the starting tree as a `recover` answer (a
-    pre-asserted wrong claim breaks the fixture the other way), and the
-    avoid-guard reuses this matcher against the run's *final* tree. Only
-    the advice differs — see `format_suspect`.
+    A `polarity: "avoid"` finding was never stripped content, so it is not
+    name-matched here. It gets the avoid guard's own checks in presence mode
+    (`e2e.avoid_guard`, no baseline) over this tree instead: a fixture must
+    not pre-assert the thing it forbids. `research` (the starting research)
+    and `subject_person_ids` feed those checks; without them the provenance
+    and edge checks see less, never more. Only the advice differs for an
+    avoid suspect — see `format_suspect`.
     """
+    from e2e.avoid_guard import finding_hits  # lazy: avoid_guard imports this module
+
     people = index_tree(tree)
     suspects: list[Suspect] = []
+    findings = [f for f in expected_findings.get("findings") or [] if isinstance(f, dict)]
+    recover = [f for f in findings if str(f.get("polarity", "recover")) != "avoid"]
 
-    for finding in expected_findings.get("findings") or []:
+    for finding in findings:
         fid = str(finding.get("id", "?"))
         ftype = str(finding.get("type", "?"))
         polarity = str(finding.get("polarity", "recover"))
+        if polarity == "avoid":
+            found = finding_hits(
+                finding,
+                tree=tree,
+                research=research,
+                subject_person_ids=subject_person_ids,
+                recover_findings=recover,
+                starting_tree=None,
+                presence=True,
+            )
+            for hit in (found.hits.values() if found else ()):
+                suspects.append(
+                    Suspect(
+                        finding_id=fid,
+                        finding_type=ftype,
+                        person_id=", ".join(hit.person_ids),
+                        shared={hit.evidence},
+                        reason=f"{found.branch}: {hit.evidence}",
+                        polarity=polarity,
+                    )
+                )
+            continue
         name_bag = finding_name_tokens(finding)
         if not name_bag:
             continue  # nothing nameable to match — can't judge presence
@@ -903,23 +1003,27 @@ def format_suspect(fixture_name: str, s: Suspect, genre: str = "strip") -> str:
     """
     shared = ", ".join(sorted(s.shared))
     record_hint = genre == "record-hint"
-    if s.polarity == "avoid" and record_hint:
-        fix = (
-            f"this is an `avoid` finding on a record-hint fixture — the claim "
-            f"the agent must NOT assert overlaps a person the starting tree "
-            f"legitimately contains. **Do not edit either tree**: nothing was "
-            f"stripped in this genre and the two are committed identical. "
-            f"Either rewrite the finding so its name tokens no longer match "
-            f"{s.person_id}, or accept this line — and note that the same "
-            f"matcher runs against the agent's FINAL tree at grading time, so "
-            f"a finding left this way is force-failed on every run."
-        )
-    elif s.polarity == "avoid":
-        fix = (
-            f"this is an `avoid` finding — the claim the agent must NOT "
-            f"assert appears to be pre-asserted by the starting tree. Remove "
-            f"it from starting-tree.gedcomx.json (and the identical snapshot "
-            f"on a record-hint fixture), or rewrite the finding."
+    if s.polarity == "avoid":
+        if record_hint:
+            fix = (
+                "this is an `avoid` finding on a record-hint fixture, and the "
+                "starting tree already carries what it forbids. **Do not edit "
+                "either tree**: nothing was stripped in this genre and the two "
+                "are committed identical. Rewrite the finding instead — drop the "
+                "record from `wrong_candidate.records` if the starting tree "
+                "rightly cites it, or correct the avoided value or relation."
+            )
+        else:
+            fix = (
+                "this is an `avoid` finding, and the starting tree already "
+                "carries what it forbids. Remove it from "
+                "starting-tree.gedcomx.json, or rewrite the finding. The grading "
+                "guard subtracts the starting tree, so a run is not failed for "
+                "it, but a fixture must not pre-assert the claim it tests."
+            )
+        return (
+            f"WARN   [{fixture_name}] finding {s.finding_id} ({s.finding_type}, avoid): "
+            f"{s.reason} (tree {s.person_id}). {fix}"
         )
     elif record_hint:
         fix = (
@@ -1045,6 +1149,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     errors += record_hint_tree_errors(fixture_dir)
 
     # Optional: a PID-less fixture under construction may not have one yet.
+    research: dict[str, Any] | None = None
     research_path = fixture_dir / "starting-research.json"
     if research_path.exists():
         try:
@@ -1053,11 +1158,48 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
             errors.append(f"starting-research.json did not parse: {e}")
         else:
             errors += [f"starting-research.json: {e}" for e in validate_research_json(research)]
+    errors += wrong_person_record_errors(fixture_dir, expected)
 
     if errors:
         return [], errors
 
-    return check_stripping(expected, tree), []
+    subjects = {
+        str(sid) for sid in ((research or {}).get("project") or {}).get("subject_person_ids") or []
+    }
+    return check_stripping(expected, tree, research, subjects), []
+
+
+def wrong_person_record_errors(fixture_dir: Path, expected_findings: dict[str, Any]) -> list[str]:
+    """A wrong-person avoid in a `hint.identity: "different"` fixture must list records.
+
+    The fixture's hint says the hinted persona is somebody else, so its
+    relationship and person avoid findings name a wrong person, and the guard
+    identifies a wrong person by the records it was minted from. Without the
+    list such a finding falls to the weaker name-and-role edge check
+    (conclusion-tree.md, Stage 1a).
+    """
+    try:
+        meta = _load_json(Path(fixture_dir) / "fixture.json")
+    except (json.JSONDecodeError, OSError):
+        return []
+    hint = meta.get("hint") if isinstance(meta, dict) else None
+    if not isinstance(hint, dict) or hint.get("identity") != "different":
+        return []
+    errors: list[str] = []
+    for finding in expected_findings.get("findings") or []:
+        if not isinstance(finding, dict) or finding.get("polarity") != "avoid":
+            continue
+        if finding.get("type") not in ("relationship", "person"):
+            continue
+        candidate = (finding.get("details") or {}).get("wrong_candidate")
+        if not isinstance(candidate, dict) or "records" not in candidate:
+            errors.append(
+                f"expected-findings.json: finding {finding.get('id')!r} is a "
+                f"{finding.get('type')} avoid in a hint.identity \"different\" fixture "
+                f"with no `wrong_candidate.records` — list every persona ARK of the "
+                f"rejected candidate's records (spec §3.4.1)."
+            )
+    return errors
 
 
 def _iter_fixture_dirs(fixtures_root: Path) -> Iterable[Path]:

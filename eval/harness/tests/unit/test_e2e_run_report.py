@@ -368,3 +368,38 @@ def test_no_lost_answer_section_without_a_notice():
         {"tool": "mcp__genealogy__wiki_read", "response_summary": None},  # stripped
     ])
     assert "SIZE CAP" not in render(log, "run-x.json", graded=False)
+
+
+# #4588 — a tool call whose input Claude Code could not parse as JSON.
+def _unparsed_call(tool="mcp__genealogy__research_append", size=20527):
+    return {"tool": tool, "agent_type": None, "is_error": True,
+            "args": {"__unparsedToolInput": {"raw": '{"projectPath": "C:', "len": size}}}
+
+
+def test_calls_refused_as_invalid_json_are_counted_by_tool():
+    log = _log(tool_calls=[
+        _unparsed_call(), _unparsed_call(size=10846),
+        _unparsed_call(tool="mcp__genealogy__research_log_append", size=900),
+        {"tool": "mcp__genealogy__research_append", "args": {"section": "localities"}, "is_error": True},
+    ])
+    text = render(log, "run-x.json", graded=False)
+    assert "TOOL CALLS REFUSED AS INVALID JSON" in text
+    assert re.search(r"research_append\s+2 call\(s\)\s+31,373 bytes rewritten", text)
+    assert re.search(r"research_log_append\s+1 call\(s\)\s+900 bytes rewritten", text)
+
+
+def test_no_invalid_json_section_when_every_call_parsed():
+    log = _log(tool_calls=[
+        {"tool": "mcp__genealogy__research_append", "args": {"section": "localities"}, "is_error": True},
+        {"tool": "mcp__genealogy__research_append", "args": {"note": "__unparsedToolInput"}},
+        {"tool": "mcp__genealogy__research_append", "args": None},
+        {"tool": "mcp__genealogy__research_append"},
+    ])
+    assert "INVALID JSON" not in render(log, "run-x.json", graded=False)
+
+
+def test_a_refused_call_with_no_recorded_size_still_counts():
+    log = _log(tool_calls=[{"tool": "mcp__genealogy__research_append",
+                            "args": {"__unparsedToolInput": {"raw": "{"}}}])
+    text = render(log, "run-x.json", graded=False)
+    assert re.search(r"research_append\s+1 call\(s\)\s+0 bytes rewritten", text)
