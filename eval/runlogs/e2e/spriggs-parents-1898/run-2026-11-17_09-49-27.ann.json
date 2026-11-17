@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "Right family identified from the 1910 census (John W Spriggs heading a household with wife Charlotte and children, including a Reuben). But the link tying the subject himself to that household was left speculative, over a namesake born 1928 who could not have appeared in an 1910 census -- never materialized as a tree relationship. The 1920 census the fixture also cites was never searched.",
+    "f2": "Same gap as f1: Charlotte identified in the same 1910 household, but the link to the subject was never confirmed, so no tree relationship exists. Her maiden name (Westby) and her Norway birth record were never found -- the census only states she was born in Norway, nothing more specific."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "8bafbca9815d3278195ddca82bea7048dac938748dd97562a518ce395fac9423"
+}
