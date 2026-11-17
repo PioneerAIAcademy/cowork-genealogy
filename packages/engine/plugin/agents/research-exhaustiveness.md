@@ -428,7 +428,8 @@ the offending field — do not blindly retry the same payload.
   probate; marriage: the marriage record) — or the draft conclusion
   itself names a record as tier-advancing — do not declare until that
   record has been searched or the declaration explicitly justifies why
-  it is inaccessible. Where civil registration existed, the subject's
+  it is inaccessible. When the log already holds the subject's obituary
+  naming the parents, the death certificate is not a gap. Where civil registration existed, the subject's
   own birth record outranks the death record for parentage. Where the
   jurisdiction's own registration began after that date, its absence is
   not a gap, and the baptism is what to gate on instead. If the `wiki_read` call
