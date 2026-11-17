@@ -1362,9 +1362,13 @@ the country) and changed no other answer.
   the US federal census (heads only 1790-1840, the relationship-to-head column
   from 1880, `US_RELATIONSHIP_COLUMN_FROM`), England and Wales and Scotland (the
   column from 1851, `BRITISH_RELATIONSHIP_COLUMN_FROM`; both constants are also
-  read by `research_log_append`'s pre-1880 gate), and the heads-only Illinois
-  1855 and 1865 and Wisconsin 1855-1895 state censuses. Rows for other
-  jurisdictions carry no `schedule` yet.
+  read by `research_log_append`'s pre-1880 gate), the heads-only Illinois 1855
+  and 1865 and Wisconsin 1855-1895 state censuses, the Colorado and Florida 1885
+  state censuses, and Norway 1801, 1865, 1891 and 1900. Each row outside the US
+  federal and British censuses cites, in a comment beside it, the FamilySearch
+  wiki page its `schedule` was read from. Rows with no `schedule` are blank: the
+  wiki did not settle them (North Dakota 1915 and 1925, Mexico 1930) or no one
+  has read their page yet.
 - `fragmentYears` — years searched whose census of the place survives only as
   fragments.
 - With `recordType: "census"` and no census of the years searched, `schedules`

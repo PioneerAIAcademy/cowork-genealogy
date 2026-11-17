@@ -195,7 +195,9 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   census(1885, "Florida", state("Florida"), "1457854", "relationship"), // 309k records
   census(1935, "Florida", state("Florida"), "1457856"), // 1.60m records
   census(1945, "Florida", state("Florida"), "1457855"), // 2.25m records
+  // https://www.familysearch.org/en/wiki/Illinois,_State_Census,_1855_-_FamilySearch_Historical_Records
   census(1855, "Illinois", state("Illinois"), "1803969", "headsOnly"), // heads only; 241k records
+  // https://www.familysearch.org/en/wiki/Illinois,_State_Census,_1865_-_FamilySearch_Historical_Records
   census(1865, "Illinois", state("Illinois"), "1803971", "headsOnly"), // heads only; 380k records
   census(1885, "Iowa", state("Iowa"), "1803643"), // 1.74m records
   census(1895, "Iowa", state("Iowa"), "1803957"), // 2.11m records
@@ -238,9 +240,13 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   census(1925, "South Dakota", state("South Dakota"), "1476077"), // 705k records
   census(1935, "South Dakota", state("South Dakota"), "1614831"), // 673k records
   census(1945, "South Dakota", state("South Dakota"), "1747589"), // 570k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1855_-_FamilySearch_Historical_Records
   census(1855, "Wisconsin", state("Wisconsin"), "1443825", "headsOnly"), // heads only; 133k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1875_-_FamilySearch_Historical_Records
   census(1875, "Wisconsin", state("Wisconsin"), "1443778", "headsOnly"), // heads only; 297k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1885_-_FamilySearch_Historical_Records
   census(1885, "Wisconsin", state("Wisconsin"), "1443713", "headsOnly"), // heads only; 407k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1895_-_FamilySearch_Historical_Records
   census(1895, "Wisconsin", state("Wisconsin"), "1443712", "headsOnly"), // heads only; 495k records
   census(1905, "Wisconsin", state("Wisconsin"), "1443899"), // 2.23m records
 
