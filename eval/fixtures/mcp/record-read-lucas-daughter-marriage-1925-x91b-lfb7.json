@@ -1,0 +1,284 @@
+{
+  "tool": "record_read",
+  "description": "Marriage 9 Sep 1925, Funchal: Conceicao Fernandes Lucas and Eduardo Fernandes Da Silva; parents Antonio Fernandes Lucas and Maria Joana Joana. Live capture 2026-11-16.",
+  "args": {
+    "recordId": "~X91B-LFB7"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_307636961341",
+        "ark": "ark:/61903/1:1:X91B-LFB9",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "42bbb1cc-e78a-4d54-9d58-e56746639d13",
+            "surname": "Fernandes Da Silva",
+            "given": "Eduardo"
+          }
+        ],
+        "facts": [
+          {
+            "id": "c6ff90a1-142a-409e-8070-e572d1c8f11e",
+            "type": "Birth",
+            "place": "Santo Antonio"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307636961342",
+        "ark": "ark:/61903/1:1:X91B-LFBS",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "bca0d07a-295b-472a-ae72-7bd63f0ef435",
+            "surname": "Fernandes Da Silva",
+            "given": "Antonio"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307636961343",
+        "ark": "ark:/61903/1:1:X91B-LFB3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "c22da87b-239d-4bb6-9af1-160bab58c4ba",
+            "surname": "Da Silva",
+            "given": "Helena Candida"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307636961344",
+        "ark": "ark:/61903/1:1:X91B-LFBQ",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "e94d63e8-521c-4bc8-9162-b02d22778251",
+            "surname": "Fernandes Lucas",
+            "given": "Conceição"
+          }
+        ],
+        "facts": [
+          {
+            "id": "4207e071-cb46-4772-bc31-64dae150d80a",
+            "type": "Birth",
+            "place": "Santo"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307636961345",
+        "ark": "ark:/61903/1:1:X91B-LFB7",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "f1c1804a-3c35-41d7-a702-6e1570015e51",
+            "surname": "Fernandes Lucas",
+            "given": "Antonio"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307636961346",
+        "ark": "ark:/61903/1:1:X91B-LFBW",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "d05bed8c-de8d-4c1a-842c-27c141122e0b",
+            "surname": "Joana",
+            "given": "Maria Joana"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "1c6985a5-509c-4587-80b3-a46a859a109b",
+        "type": "ParentChild",
+        "parent": "p_307636961342",
+        "child": "p_307636961341"
+      },
+      {
+        "id": "5f75b113-20ef-4771-8e3d-f64b48936ccb",
+        "type": "ParentChild",
+        "parent": "p_307636961343",
+        "child": "p_307636961341"
+      },
+      {
+        "id": "12cb9523-5e4e-4d24-acda-919c67c0551b",
+        "type": "Couple",
+        "person1": "p_307636961341",
+        "person2": "p_307636961344",
+        "facts": [
+          {
+            "id": "9303ad06-bdde-4d16-9d65-023d50c2f2ad",
+            "type": "Marriage",
+            "primary": true,
+            "date": "9 de setembro de 1925",
+            "standard_date": "9 Sep 1925",
+            "place": "Funchal",
+            "standard_place": "Funchal, Madeira, Portugal"
+          }
+        ]
+      },
+      {
+        "id": "6a09db76-8a17-469f-adf1-d89401d80503",
+        "type": "Couple",
+        "person1": "p_307636961345",
+        "person2": "p_307636961346"
+      },
+      {
+        "id": "3020afc6-7f6f-4108-966d-4836775d28ef",
+        "type": "ParentChild",
+        "parent": "p_307636961345",
+        "child": "p_307636961344"
+      },
+      {
+        "id": "243c0b61-7380-4d04-b2db-062a5ef693bc",
+        "type": "ParentChild",
+        "parent": "p_307636961346",
+        "child": "p_307636961344"
+      },
+      {
+        "id": "6d70b053-61dc-4041-9a0f-bf7faeeeafb7",
+        "type": "Couple",
+        "person1": "p_307636961342",
+        "person2": "p_307636961343"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_180753374456",
+        "resource_type": "Record",
+        "title": "Entrada para Eduardo Fernandes Da Silva e Conceição Fernandes Lucas, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LFB9 : Tue Jan 13 08:55:05 UTC 2026), Entry for Eduardo Fernandes Da Silva and Antonio Fernandes Da Silva, 9 de setembro de 1925.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:H4BD-CDLT",
+        "coverage": {
+          "place_rep_id": "3052581",
+          "date_range": "9 de setembro de 1925",
+          "record_type": "Marriage",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      },
+      {
+        "id": "sd_c_4474701",
+        "resource_type": "Collection",
+        "title": "Portugal, Registro Civil, 1437-2023",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/4474701",
+        "coverage": {
+          "place_rep_id": "237",
+          "date_range": "1231/2023",
+          "record_type": "Vital",
+          "standard_place": "Portugal"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSM1-9SFX-9",
+        "coverage": {
+          "place_rep_id": "3052581",
+          "date_range": "1925",
+          "record_type": "Marriage",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      },
+      {
+        "id": "sd_da2",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSM1-9SF6-1"
+      },
+      {
+        "id": "sd_p_307636961341",
+        "resource_type": "Person",
+        "title": "Eduardo Fernandes Da Silva, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LFB9 : Tue Jan 13 08:55:05 UTC 2026), Eduardo Fernandes Da Silva and Conceição Fernandes Lucas, 9 de setembro de 1925.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X91B-LFB9"
+      },
+      {
+        "id": "sd_p_307636961345",
+        "resource_type": "Person",
+        "title": "Antonio Fernandes Lucas, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LFB7 : Tue Jan 13 08:55:05 UTC 2026), Antonio Fernandes Lucas in entry for Eduardo Fernandes Da Silva and Conceição Fernandes Lucas, 9 de setembro de 1925.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X91B-LFB7"
+      },
+      {
+        "id": "sd_p_307636961346",
+        "resource_type": "Person",
+        "title": "Maria Joana Joana, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LFBW : Tue Jan 13 08:55:05 UTC 2026), Maria Joana Joana in entry for Eduardo Fernandes Da Silva and Conceição Fernandes Lucas, 9 de setembro de 1925.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X91B-LFBW"
+      },
+      {
+        "id": "sd_p_307636961344",
+        "resource_type": "Person",
+        "title": "Conceição Fernandes Lucas, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LFBQ : Tue Jan 13 08:55:05 UTC 2026), Eduardo Fernandes Da Silva and Conceição Fernandes Lucas, 9 de setembro de 1925.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X91B-LFBQ"
+      },
+      {
+        "id": "sd_p_307636961342",
+        "resource_type": "Person",
+        "title": "Antonio Fernandes Da Silva, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LFBS : Tue Jan 13 08:55:05 UTC 2026), Antonio Fernandes Da Silva in entry for Eduardo Fernandes Da Silva and Conceição Fernandes Lucas, 9 de setembro de 1925.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X91B-LFBS"
+      },
+      {
+        "id": "sd_p_307636961343",
+        "resource_type": "Person",
+        "title": "Helena Candida Da Silva, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LFB3 : Tue Jan 13 08:55:05 UTC 2026), Helena Candida Da Silva in entry for Eduardo Fernandes Da Silva and Conceição Fernandes Lucas, 9 de setembro de 1925.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X91B-LFB3"
+      },
+      {
+        "id": "sd_auto_M9J1-QD3",
+        "resource_type": "auto",
+        "title": "Portugal, Madeira, Marriages, from 1728 to 31 March 1992",
+        "coverage": {
+          "place_rep_id": "4716",
+          "date_range": "+1728-01-01T00:00:00Z/+1992-03-31T23:59:59Z",
+          "standard_place": "Madeira, Portugal"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_3052581"
+      }
+    ]
+  }
+}

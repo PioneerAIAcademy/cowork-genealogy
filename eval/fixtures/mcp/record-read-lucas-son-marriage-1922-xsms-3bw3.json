@@ -1,0 +1,475 @@
+{
+  "tool": "record_read",
+  "description": "Marriage 22 Nov 1922, Funchal: Antonio Marques Lucas (b. 1896) and Conceicao Marques dos Santos; parents Antonio Fernandes Lucas and Maria Joana Joana. Live capture 2026-11-16.",
+  "args": {
+    "recordId": "~XSMS-3BW3"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_307639726382",
+        "ark": "ark:/61903/1:1:XSMS-3BWS",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "27c8f1a0-cb77-487b-8ca9-9178fdc7427e",
+            "surname": "Lucas",
+            "given": "Antonio Ma Ques"
+          }
+        ],
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "solteiro"
+          },
+          {
+            "type": "Occupation",
+            "value": "calceteiro"
+          },
+          {
+            "id": "bceabe2f-1aa9-4722-86d9-8747a165f92e",
+            "type": "Residence",
+            "place": "concelho de Funchal"
+          },
+          {
+            "id": "7a619940-bce4-46f6-923b-8348e9f45f7b",
+            "type": "Birth",
+            "date": "1896",
+            "standard_date": "1896",
+            "place": "Santo Antonio",
+            "standard_place": "Santo António, Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307639726383",
+        "ark": "ark:/61903/1:1:XSMS-3BW3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "4b470b6d-1ec9-45c2-8be7-47c179f1d906",
+            "surname": "Fernandes Lucas",
+            "given": "Antonio"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "propietario"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "casado"
+          },
+          {
+            "id": "cfa47ace-410e-4b26-b76e-0fca82344eea",
+            "type": "Birth",
+            "place": "concelho d o Funchal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307639726384",
+        "ark": "ark:/61903/1:1:XSMS-3BWQ",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "333abc17-cd41-4329-9cb9-a7ade018522e",
+            "surname": "Joana",
+            "given": "Maria Joana"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "domes C tica"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "casada"
+          },
+          {
+            "id": "bceabe2f-1aa9-4722-86d9-8747a165f92e",
+            "type": "Residence",
+            "place": "concelho de Funchal"
+          },
+          {
+            "id": "0f49f2b4-5a8e-46b5-a1fc-893e0f45ccdd",
+            "type": "Birth",
+            "place": "Santo Antonio"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307639726385",
+        "ark": "ark:/61903/1:1:XSMS-3BW7",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "85b4e2fc-27dc-4869-baf4-0077d0771940",
+            "surname": "Marques dos San -",
+            "given": "Conceição"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "trabalhador"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "solteira"
+          },
+          {
+            "id": "9e0a7867-f394-4fcb-bb6e-e1b3608dfc28",
+            "type": "Birth",
+            "date": "1903",
+            "standard_date": "1903",
+            "place": "Santo Antonio",
+            "standard_place": "Santo António, Funchal, Madeira, Portugal"
+          },
+          {
+            "id": "2209c910-f679-4141-8c6d-bcecf2bd7f7b",
+            "type": "Residence",
+            "place": "sitio do Lombo dos Aguiara"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307639726386",
+        "ark": "ark:/61903/1:1:XSMS-3BWW",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "bb5ef9ab-bc2b-4ee0-a22b-c4100015eff5",
+            "surname": "Marques dos Santos",
+            "given": "João"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "trabalhador"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "casado"
+          },
+          {
+            "id": "2209c910-f679-4141-8c6d-bcecf2bd7f7b",
+            "type": "Residence",
+            "place": "sitio do Lombo dos Aguiara"
+          },
+          {
+            "id": "a3756eea-350a-4fb4-a9d9-d7f8602f0732",
+            "type": "Birth",
+            "place": "Santo António, Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307639726387",
+        "ark": "ark:/61903/1:1:XSMS-3BW4",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "fdfbbdf3-8c7a-4699-b369-1486b19e4dd3",
+            "surname": "de Jesus",
+            "given": "Genoveva de Jesus"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "domestica"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "casada"
+          },
+          {
+            "id": "2209c910-f679-4141-8c6d-bcecf2bd7f7b",
+            "type": "Residence",
+            "place": "sitio do Lombo dos Aguiara"
+          },
+          {
+            "id": "3292fc6c-f5c3-4639-8bd2-c112ebc10bc2",
+            "type": "Birth",
+            "place": "Santo António, Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307639726388",
+        "ark": "ark:/61903/1:1:XSMS-3BWH",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "abc8b928-c528-4c6a-8d20-2e59703059fb",
+            "surname": "Amaro Da Silva"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "comerciante"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "casado"
+          },
+          {
+            "id": "2209c910-f679-4141-8c6d-bcecf2bd7f7b",
+            "type": "Residence",
+            "place": "sitio do Lombo dos Aguiara"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307639726389",
+        "ark": "ark:/61903/1:1:XSMS-3BWC",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "9d5d9590-52c9-45d8-9934-e26cf0b0be2a",
+            "surname": "de Castro",
+            "given": "Manoel"
+          }
+        ],
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "solteiro"
+          },
+          {
+            "type": "Occupation",
+            "value": "empregueira"
+          },
+          {
+            "id": "2209c910-f679-4141-8c6d-bcecf2bd7f7b",
+            "type": "Residence",
+            "place": "sitio do Lombo dos Aguiara",
+            "sources": [
+              {
+                "ref": "sd_da1"
+              }
+            ]
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da2"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "035fbaa8-bac5-4f13-8e52-40a7bff90d0b",
+        "type": "Couple",
+        "person1": "p_307639726383",
+        "person2": "p_307639726384"
+      },
+      {
+        "id": "167b2229-7779-4cac-b97d-393a0e6086c1",
+        "type": "ParentChild",
+        "parent": "p_307639726384",
+        "child": "p_307639726382"
+      },
+      {
+        "id": "69e5d335-6ce8-42d5-b5c0-cce4f6ef30b2",
+        "type": "Couple",
+        "person1": "p_307639726386",
+        "person2": "p_307639726387"
+      },
+      {
+        "id": "7e9aca4c-eea6-4ecb-b196-b189982b8cb2",
+        "type": "ParentChild",
+        "parent": "p_307639726387",
+        "child": "p_307639726385"
+      },
+      {
+        "id": "f23ed86f-990a-4af1-b129-0005dcee515e",
+        "type": "Couple",
+        "person1": "p_307639726382",
+        "person2": "p_307639726385",
+        "facts": [
+          {
+            "id": "49606f7f-fbc7-4437-a826-e663fc5d9d70",
+            "type": "Marriage",
+            "primary": true,
+            "date": "22 de novembro de 1922",
+            "standard_date": "22 Nov 1922",
+            "place": "Funchal, Madeira, Portugal"
+          }
+        ]
+      },
+      {
+        "id": "89baa70f-0e04-48c7-831e-45983e09be2c",
+        "type": "ParentChild",
+        "parent": "p_307639726383",
+        "child": "p_307639726382"
+      },
+      {
+        "id": "911c7b5c-a33a-4d28-95b2-09b1aeb78a9a",
+        "type": "ParentChild",
+        "parent": "p_307639726386",
+        "child": "p_307639726385"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_180753705604",
+        "resource_type": "Record",
+        "title": "Entrada para Antonio Ma Ques Lucas e Conceição Marques dos San -, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWS : Tue Jan 13 21:09:36 UTC 2026), Entry for Antonio Ma Ques Lucas and Antonio Fernandes Lucas, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:H4BD-L22Q",
+        "coverage": {
+          "place_rep_id": "3052581",
+          "date_range": "22 de novembro de 1922",
+          "record_type": "Marriage",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      },
+      {
+        "id": "sd_c_4474701",
+        "resource_type": "Collection",
+        "title": "Portugal, Registro Civil, 1437-2023",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/4474701",
+        "coverage": {
+          "place_rep_id": "237",
+          "date_range": "1231/2023",
+          "record_type": "Vital",
+          "standard_place": "Portugal"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSL2-4S7R-3",
+        "coverage": {
+          "place_rep_id": "3052581",
+          "date_range": "1922",
+          "record_type": "Marriage",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      },
+      {
+        "id": "sd_da2",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSL2-4S7R-B"
+      },
+      {
+        "id": "sd_p_307639726388",
+        "resource_type": "Person",
+        "title": "Amaro Da Silva, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWH : Tue Jan 13 21:09:36 UTC 2026), Amaro Da Silva in entry for Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWH"
+      },
+      {
+        "id": "sd_p_307639726389",
+        "resource_type": "Person",
+        "title": "Manoel de Castro, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWC : Tue Jan 13 21:09:36 UTC 2026), Manoel de Castro in entry for Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWC"
+      },
+      {
+        "id": "sd_p_307639726384",
+        "resource_type": "Person",
+        "title": "Maria Joana Joana, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWQ : Tue Jan 13 21:09:36 UTC 2026), Maria Joana Joana in entry for Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWQ"
+      },
+      {
+        "id": "sd_p_307639726387",
+        "resource_type": "Person",
+        "title": "Genoveva de Jesus de Jesus, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BW4 : Tue Jan 13 21:09:36 UTC 2026), Genoveva de Jesus de Jesus in entry for Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BW4"
+      },
+      {
+        "id": "sd_p_307639726382",
+        "resource_type": "Person",
+        "title": "Antonio Ma Ques Lucas, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWS : Tue Jan 13 21:09:36 UTC 2026), Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWS"
+      },
+      {
+        "id": "sd_p_307639726383",
+        "resource_type": "Person",
+        "title": "Antonio Fernandes Lucas, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BW3 : Tue Jan 13 21:09:36 UTC 2026), Antonio Fernandes Lucas in entry for Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BW3"
+      },
+      {
+        "id": "sd_p_307639726385",
+        "resource_type": "Person",
+        "title": "Conceição Marques dos San -, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BW7 : Tue Jan 13 21:09:36 UTC 2026), Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BW7"
+      },
+      {
+        "id": "sd_p_307639726386",
+        "resource_type": "Person",
+        "title": "João Marques dos Santos, “Portugal, Registro Civil, 1437-2023”",
+        "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWW : Tue Jan 13 21:09:36 UTC 2026), João Marques dos Santos in entry for Antonio Ma Ques Lucas and Conceição Marques dos San -, 22 de novembro de 1922.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XSMS-3BWW"
+      },
+      {
+        "id": "sd_auto_M9J1-QD3",
+        "resource_type": "auto",
+        "title": "Portugal, Madeira, Marriages, from 1728 to 31 March 1992",
+        "coverage": {
+          "place_rep_id": "4716",
+          "date_range": "+1728-01-01T00:00:00Z/+1992-03-31T23:59:59Z",
+          "standard_place": "Madeira, Portugal"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_1542672"
+      },
+      {
+        "id": "place_3052581"
+      }
+    ]
+  }
+}

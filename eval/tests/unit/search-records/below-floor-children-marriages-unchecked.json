@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_search_records_below_floor_children",
+    "skill": "search-records",
+    "name": "Children's marriages sit below the floor and attachments are unchecked: keep them as leads",
+    "type": "positive",
+    "description": "Executing a marriage-record surname search for the children of Antonio Fernandes Lucas (plan item pli_001), the subject's own 1890 marriage scores 0.386 and four rows score at or below 0.01. Those four are records where Antonio appears as father of the groom or bride, with wife Maria Joana: his children's marriages. Attachment status could not be checked (`ranked.attachmentsChecked: false`), so no row carries a flag. The skill must treat the low-scored rows as relatives worth reading, not as non-matches, and must not read the missing attachment flag as 'attached to nobody'.",
+    "tags": [
+      "search",
+      "marriage",
+      "below-floor",
+      "relative-search",
+      "attachments-unchecked",
+      "evidence-language",
+      "rank-search-matches",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Search the Funchal marriage records for the children of Antonio Fernandes Lucas (GK89-82B) and his wife Maria Joana, per plan item pli_001. Tell me which records are worth extracting.\n\nprojectPath: <workspace>\nsubjectId: GK89-82B",
+    "scenario": "lucas-children-marriages"
+  },
+  "mcp_fixtures": [
+    "record-search-lucas-children-below-floor",
+    "rank-search-matches-lucas-children-below-floor",
+    "record-read-lucas-son-marriage-1922-xsms-3bw3",
+    "record-read-lucas-daughter-marriage-1919-x911-tkfz",
+    "record-read-lucas-daughter-marriage-1919-xsmm-msc8",
+    "record-read-lucas-daughter-marriage-1925-x91b-lfb7",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "GROUND TRUTH (confirmed by the senior genealogist): four rows in the pool score at or below 0.01 and are his children's marriages. XSMS-3BW3 (marriage 22 Nov 1922): the groom Antonio Marques Lucas, b. 1896, matches the tree's son Antonio. X911-TKFZ and XSMM-MSC8 (both 26 Nov 1919): the bride Julia do Espirito Santo (Lucas) matches the tree's daughter Julia; the records say b. 1898 where the tree says 1899; the two entries have different event places, so do not require or penalise treating them as one event or two. X91B-LFB7 (9 Sep 1925): the bride Conceicao Fernandes Lucas, parents Antonio Fernandes Lucas and Maria Joana Joana: a daughter the tree does not carry, plausible but not proved.",
+    "CORE (Correctness): the skill must identify these low-scoring rows as records of his children (father of groom / father of bride, wife Maria Joana) and recommend reading or extracting them. Score 1 if it dismisses them as non-matches, or reports 'no strong match beyond the 1890 marriage', because of their low scores. A low score on a row where the subject is the PARENT is expected: the matcher compares the persona to the subject, and a child's record is not the subject.",
+    "The subject's own 1890 marriage (6BG7-FC2X, score 0.386, groom, wife Maria Joanna de Jesus) is the top row and is correct to note, but it is not one of the four below-floor rows and is not the point of this test.",
+    "ATTACHMENTS: `ranked.attachmentsChecked` is false, so no row carries `attachedToSubject` / `attachedToOther`. A skill that says these records are 'unattached', 'not yet in the tree' or 'new evidence' because no flag is present has misread the field: score 1 on Correctness. Saying attachment status is unknown, or not mentioning attachment, is acceptable.",
+    "Do NOT penalise the skill for noting Julia's birth year (1898 in the records, 1899 in the tree) or that Conceicao is not in the tree. Both are good observations. A skill that states Conceicao IS Antonio's child as established fact, without noting that no tree evidence yet links her, should score no higher than 2 on Correctness.",
+    "Rows scoring at or below the matcher floor (0.01) reach the skill SLIMMED: only name, role, birth date and place, events, relativeTerms, collection id, ranks and score. A field missing from such a row is not evidence that the record lacks it, and `record_read` returns the full record. Do not penalise the skill for reading a below-floor row in full; do penalise it for treating the slimmed row as the whole record.",
+    "Many other Antonio ... Lucas rows (Gomes, Francisco, Rodrigues, Florenca, da Silva) are different men with different wives; naming any of them as the subject's family scores 1. The other Antonio Fernandes Lucas (b. 1840, wife Antonia de Jesus) does not appear in this pool.",
+    "Do NOT require extraction or a tree edit. Naming the four records as worth extracting, reading at least one in full, and logging the search is a complete answer.",
+    "Tool Arguments: the record_search call should carry the subject id GK89-82B and projectPath so the result is ranked, and a marriage record type. The search may anchor on the surname Lucas or on the parents' given names; both are acceptable."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
+  }
+}
