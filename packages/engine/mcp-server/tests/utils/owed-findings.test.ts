@@ -10,7 +10,7 @@ const vectors = JSON.parse(
 );
 
 describe("owed findings vectors", () => {
-  it.each(vectors.cases.map((c: any) => [c.name, c]))("%s", (_name, c: any) => {
+  it.each<[string, any]>(vectors.cases.map((c: any) => [c.name, c]))("%s", (_name: string, c: any) => {
     const got = owedFindings(c.research, c.tree);
     expect(got).toHaveLength(c.expect.length);
     c.expect.forEach((want: any, i: number) => expect(got[i]).toMatchObject(want));
