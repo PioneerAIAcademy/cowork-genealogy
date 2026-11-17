@@ -251,6 +251,12 @@ no fail. Committed runs, for the two agents whose paging line this shape
 reworded: proof-conclusion 26 (23 pass, 3 partial, no fail) and gps-mentor 2
 (2 pass).
 
+person-evidence's two `research_query` lines ("group the items by `record_id` +
+`record_role`", and paging "until you hold `count` items") were left as they
+are, though both read stale against groups. On `ut_person_evidence_027`
+(Haiku 5.5 low), main's text linked a_012 `confident` in 4 of 7 runs, and any
+edit to either line did so in 0 of 22, on the flat and grouped builds alike.
+
 **Two fields are left out of `items`.** An item of a plan that is not active
 (`superseded` or `completed`) carries no `rationale`, except a `skipped` item
 with no `skip_category`. Every item of an active plan keeps its `rationale`,
