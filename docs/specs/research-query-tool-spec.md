@@ -213,8 +213,9 @@ a different value from `null`:
   returns the flat assertions, deep-equal to the stored ones, key order aside.
   `replay_collapse.py`'s `_flatten_items` restates it for the replay harness.
 
-Measured over 653 recorded assertion answers (`make replay-sizes BASE=<pre-change>
-TOOLS=research_query SECTION=assertions`), the grouped answers are 20.1% smaller;
+Measured with `make replay-sizes BASE=<pre-change> TOOLS=research_query
+SECTION=assertions` over the 651 recorded assertion reads that answered (of 653
+replayed), the grouped answers are 20.1% smaller;
 a single-assertion read grows by the 14 characters of its one-fact wrapper.
 
 **Two fields are left out of `items`.** An item of a plan that is not active
@@ -462,8 +463,9 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 - **Assertions grouped by persona, consecutive runs only — not columnar, not
   merged across the page (2026-11-17).** Assertions are the largest share of what
   `research_query` returns, and within one persona the five hoisted keys repeat on
-  every fact. Measured over 651 recorded assertion answers against the
-  pre-change build (`make replay-sizes … SECTION=assertions`):
+  every fact. Measured over the 651 recorded assertion reads that answered (of
+  653 replayed) against the pre-change build (`make replay-sizes …
+  SECTION=assertions`):
 
   | shape | smaller by |
   |---|---|

@@ -568,12 +568,13 @@ def _log_ids_cut_from_summary(
     answer (`_summary_truncated`), so their `logId`s never reach the replay and
     everything those records wrote is missing from the replayed notes. The call's
     own `recordIds` are never cut: each one not visible in the summary is matched
-    to the earliest log entry in the final notes whose `query.recordId` names it
-    and that no assertion in the replay cites yet -- the entry this call wrote,
-    since the replay applies calls in order. That is the engine's own rule
-    (`reusableLogEntry` in extraction-append.ts): an entry a `record_read`
-    already logged is reused, not duplicated, so the entry may be one the
-    replay already holds with none of its assertions. The cut can fall
+    to the entry this call wrote its assertions under. The engine
+    (`reusableLogEntry` in extraction-append.ts) reuses the latest entry it
+    already holds for the record that no assertion cites yet, and otherwise
+    writes a new one. So: the latest entry the replay holds that names the
+    record, that no replayed assertion cites, and that the final notes'
+    assertions do cite; else the earliest entry naming it that the replay does
+    not hold yet, since the replay applies calls in order. The cut can fall
     inside a record, after its `recordId` and before its `logId`, so being named in
     the summary is not enough; a record the summary shows with a status other than
     `extracted` wrote nothing and is never back-filled.
@@ -598,16 +599,31 @@ def _log_ids_cut_from_summary(
         if status != "extracted"
     }
     cited = {a.get("log_entry_id") for a in state.get("assertions") or [] if isinstance(a, dict)} | set(seen)
+    cited_finally = {a.get("log_entry_id") for a in final_research.get("assertions") or [] if isinstance(a, dict)}
+    held = [e for e in state.get("log") or [] if isinstance(e, dict)]
+    held_ids = {e.get("id") for e in held}
     out: list[str] = []
+
+    # The final notes' copy of an entry: the replayed copy can lack `query`.
+    final_by_id = {e.get("id"): e for e in final_research.get("log") or [] if isinstance(e, dict)}
+
+    def names(e: dict, key: str) -> bool:
+        entry = final_by_id.get(e.get("id")) or e
+        return _record_key((entry.get("query") or {}).get("recordId")) == key
+
     for record in asked:
         key = _record_key(record)
         if not key or key in unwritten or key in accounted:
             continue
+        reused = [e["id"] for e in held if names(e, key) and e.get("id") not in cited
+                  and e.get("id") not in out and e.get("id") in cited_finally]
+        if reused:
+            out.append(reused[-1])
+            continue
         for e in final_research.get("log") or []:
-            if not isinstance(e, dict) or e.get("id") in cited or e.get("id") in out:
+            if not isinstance(e, dict) or e.get("id") in held_ids or e.get("id") in cited or e.get("id") in out:
                 continue
-            query = e.get("query") or {}
-            if _record_key(query.get("recordId")) == key:
+            if names(e, key):
                 out.append(e["id"])
                 break
     return out

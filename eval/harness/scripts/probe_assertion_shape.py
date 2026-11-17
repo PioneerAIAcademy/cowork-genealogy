@@ -197,11 +197,18 @@ async def build_pages(base: Path, candidate: Path, n_pages: int) -> list[dict[st
         if len(flat) < 4:
             continue
         where = f"{row.item.run}#{row.item.index}"
-        if _flatten_items("assertions", grouped, row.item.args) != flat:
-            raise IntegrityError(f"{where}: the grouped answer does not flatten to the flat one")
         if any(isinstance(g, dict) and "facts" in g for g in flat):
             raise IntegrityError(f"{where}: the base build already groups — pass a pre-#4412 --base-build")
+        # The builds measure the page budget on different shapes, so a page the
+        # budget cut can hold more assertions grouped. Compare, and ask, only
+        # what both pages hold.
+        unrolled = _flatten_items("assertions", grouped, row.item.args)
+        shared = min(len(flat), len(unrolled))
+        if unrolled[:shared] != flat[:shared]:
+            raise IntegrityError(f"{where}: the grouped answer does not flatten to the flat one")
+        flat = flat[:shared]
         asked = pick(flat, grouped, where)
+        asked = [a for a in asked if a in {x.get("id") for x in flat if isinstance(x, dict)}]
         pages.append({"page": where, "flat_text": row.base.text, "grouped_text": row.candidate.text,
                       "flat": {a["id"]: a for a in flat if isinstance(a, dict) and "id" in a}, "asked": asked})
         if len(pages) >= n_pages:
@@ -234,6 +241,8 @@ def ask(client: Any, model: str, effort: str, text: str, asked: list[str]) -> tu
         )
     except anthropic.APIStatusError as exc:
         raise IntegrityError(f"{model}: API error {exc.status_code}: {exc.message}") from exc
+    except anthropic.APIConnectionError as exc:
+        raise IntegrityError(f"{model}: connection error: {exc}") from exc
     if response.stop_reason == "refusal":
         raise IntegrityError(f"{model}: refused ({getattr(response.stop_details, 'category', None)})")
     if response.stop_reason == "max_tokens":
@@ -241,7 +250,13 @@ def ask(client: Any, model: str, effort: str, text: str, asked: list[str]) -> tu
     out = next((b.text for b in response.content if b.type == "text"), None)
     if out is None:
         raise IntegrityError(f"{model}: no text block")
-    return json.loads(out).get("answers") or [], response.usage
+    try:
+        parsed = json.loads(out)
+    except ValueError as exc:
+        raise IntegrityError(f"{model}: output is not JSON: {out[:120]}") from exc
+    if not isinstance(parsed, dict) or not isinstance(parsed.get("answers"), list):
+        raise IntegrityError(f"{model}: output has no answers list: {out[:120]}")
+    return parsed["answers"], response.usage
 
 
 def main(argv: list[str] | None = None) -> int:

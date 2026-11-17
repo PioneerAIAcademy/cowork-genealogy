@@ -289,7 +289,8 @@ the user changed assertions/links since you last saw them — use
 **`research_query`**:
 
 - `research_query({ section: "assertions", recordId: [ … ] })` — every persona
-  of every record you are about to link, in one call.
+  of every record you are about to link, in one call; join groups that
+  share `record_id` + `record_role`.
 - `research_query({ section: "person_evidence", assertionId: [ … ] })` — which
   of those `a_` are already linked; `countById[id]` of 0 means unlinked.
 - `research_query({ section: "person_evidence", personId: [ … ] })` — the

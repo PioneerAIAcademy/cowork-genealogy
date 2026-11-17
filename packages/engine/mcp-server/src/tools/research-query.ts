@@ -187,9 +187,10 @@ export type ResearchQueryResult =
       /** The section's entries; on `assertions`, persona groups
        *  (`flattenAssertionGroups` restores the flat assertions). */
       items: any[];
-      /** true when matches remain *beyond this page* (`count > offset +
-       *  items.length`) — page with `offset` (or narrow the filter) rather than
-       *  relying on this being everything. */
+      /** true when matches remain *beyond this page* — page with
+       *  `offset: nextOffset` (or narrow the filter) rather than relying on this
+       *  being everything. Never derive it from `items.length`: on
+       *  `assertions` an item is a group of several matches. */
       truncated: boolean;
       /** When `truncated` is true: the offset to pass to fetch the next page.
        *  Callers must use this value rather than stepping by a fixed count,

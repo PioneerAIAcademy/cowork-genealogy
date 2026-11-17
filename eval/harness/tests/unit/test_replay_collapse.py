@@ -783,3 +783,13 @@ def test_flatten_leaves_a_flat_answer_and_other_sections_alone():
 def test_flatten_without_a_question_id_adds_no_echo():
     groups = _group_like_the_tool(G_STATE["assertions"][:1], None)
     assert rc._flatten_items("assertions", groups, {}) == G_STATE["assertions"][:1]
+
+
+def test_the_hoisted_keys_match_the_engines():
+    """`_flatten_items` restates research_query's HOISTED_KEYS; a key the engine
+    hoists and this list lacks would vanish from every flattened assertion."""
+    src = (Path(__file__).resolve().parents[4] / "packages/engine/mcp-server/src/tools/research-query.ts"
+           ).read_text(encoding="utf-8")
+    m = re.search(r"const HOISTED_KEYS = \[([^\]]*)\] as const", src)
+    assert m, "HOISTED_KEYS not found in research-query.ts"
+    assert tuple(re.findall(r'"([a-z_]+)"', m.group(1))) == rc.ASSERTION_HEAD_KEYS

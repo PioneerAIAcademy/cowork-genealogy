@@ -230,6 +230,14 @@ def _is_harness_denial(call: dict) -> bool:
     return bool(call.get("is_error")) and call.get("result_chars") == CAP_DENIAL_CHARS
 
 
+def _section(call: dict) -> str | None:
+    """A call's `section` argument, or None when it is missing or not a string
+    (a model can send a list, which a set lookup cannot hash)."""
+    args = call.get("args")
+    section = args.get("section") if isinstance(args, dict) else None
+    return section if isinstance(section, str) else None
+
+
 def build_items(
     run_path: Path, log: dict, tools: set[str], skipped: Counter, skipped_chars: Counter,
     sections: frozenset[str] | None = None,
@@ -268,7 +276,7 @@ def build_items(
                 reason = "not-on-local-allow-list"
         elif name not in tools:
             reason = "filtered-out (--tools)"
-        elif sections is not None and (call.get("args") or {}).get("section") not in sections:
+        elif sections is not None and _section(call) not in sections:
             reason = "filtered-out (--section)"
         elif not isinstance(call.get("result_chars"), int):
             reason = "unclassifiable"
@@ -712,10 +720,7 @@ async def _main(args: argparse.Namespace) -> int:
     if not runs_logs:
         raise UsageError("no committed run carries tool_calls[].result_chars for this selection")
     if sections is not None:
-        recorded = {
-            (c.get("args") or {}).get("section")
-            for _, log in runs_logs for c in log["tool_calls"] if isinstance(c, dict)
-        }
+        recorded = {_section(c) for _, log in runs_logs for c in log["tool_calls"] if isinstance(c, dict)}
         if not sections & recorded:
             raise UsageError(f"--section {args.section!r} matches no recorded call's section")
 

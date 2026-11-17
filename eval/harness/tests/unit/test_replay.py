@@ -12,6 +12,8 @@ for it, which silently dropped 1,629 of ~4,800 writer responses and produced a
 replay that reconstructed 1% of runs while looking like it worked.
 """
 
+import pytest
+
 from harness.replay import parse_tool_result, replay
 
 
@@ -538,11 +540,62 @@ def test_a_record_cut_from_the_summary_reuses_the_entry_a_record_read_logged():
             '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}}]')
     final = {**TRUNC_FINAL, "log": TRUNC_FINAL["log"][:2],
              "sources": TRUNC_FINAL["sources"][:2], "assertions": TRUNC_FINAL["assertions"][:2]}
-    r = replay([_call("research_log_append", {"projectPath": "/p", "entry": {"tool": "record_read",
-                      "query": {"recordId": "ark:/61903/1:1:BBB"}}}, read),
+    r = replay([_call("research_log_append", {"projectPath": "/p", "tool": "record_read",
+                      "query": {"recordId": "ark:/61903/1:1:BBB"}}, read),
                 _call("extraction_append", TRUNC_ARGS, resp)], final_research=final)
     assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_003"]
     assert [e["id"] for e in r.research["sources"]] == ["src_001", "src_002"]
+
+
+@pytest.mark.parametrize("used", ["log_005", "log_007"])
+def test_a_record_read_twice_reuses_the_entry_its_assertions_cite(used):
+    """Two record_reads of BBB (log_005, log_007), both held and uncited. The engine
+    reuses the latest whose staged read it can use, so either can be the one; the
+    final notes say which the assertions cite."""
+    read5, read7 = '[{"ok": true, "entryId": "log_005"}]', '[{"ok": true, "entryId": "log_007"}]'
+    resp = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+            '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}}]')
+    entry = {"tool": "record_read", "query": {"recordId": "ark:/61903/1:1:BBB"}}
+    final = {"log": [TRUNC_FINAL["log"][0], {"id": "log_005", **entry}, {"id": "log_007", **entry}],
+             "sources": [{"id": "src_001", "log_entry_id": "log_004"}, {"id": "src_002", "log_entry_id": used}],
+             "assertions": [{"id": "a_001", "log_entry_id": "log_004"}, {"id": "a_003", "log_entry_id": used}]}
+    r = replay([_call("research_log_append", {"projectPath": "/p", **entry}, read5),
+                _call("research_log_append", {"projectPath": "/p", **entry}, read7),
+                _call("extraction_append", TRUNC_ARGS, resp)], final_research=final)
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_003"]
+    assert [e["id"] for e in r.research["sources"]] == ["src_001", "src_002"]
+
+
+def test_of_two_usable_entries_the_extraction_takes_the_latest():
+    """Both reads end up cited: this call's extraction used the latest (log_007), as
+    the engine does, and a later call used log_005. Replayed up to and including
+    this call, only log_007's assertions are in."""
+    read5, read7 = '[{"ok": true, "entryId": "log_005"}]', '[{"ok": true, "entryId": "log_007"}]'
+    resp = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+            '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}}]')
+    entry = {"tool": "record_read", "query": {"recordId": "ark:/61903/1:1:BBB"}}
+    final = {"log": [TRUNC_FINAL["log"][0], {"id": "log_005", **entry}, {"id": "log_007", **entry}],
+             "sources": [{"id": "src_001", "log_entry_id": "log_004"}],
+             "assertions": [{"id": "a_001", "log_entry_id": "log_004"}, {"id": "a_003", "log_entry_id": "log_007"},
+                            {"id": "a_005", "log_entry_id": "log_005"}]}
+    r = replay([_call("research_log_append", {"projectPath": "/p", **entry}, read5),
+                _call("research_log_append", {"projectPath": "/p", **entry}, read7),
+                _call("extraction_append", TRUNC_ARGS, resp)], final_research=final)
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_003"]
+
+
+def test_a_held_entry_is_matched_by_its_final_notes_query():
+    """The replayed copy of a record_read entry can lack `query` (spriggs-parents-1898
+    log_003); the final notes' copy names the record."""
+    read = '[{"ok": true, "entryId": "log_005"}]'
+    resp = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+            '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}}]')
+    final = {**TRUNC_FINAL, "log": TRUNC_FINAL["log"][:2],
+             "sources": TRUNC_FINAL["sources"][:2], "assertions": TRUNC_FINAL["assertions"][:2]}
+    r = replay([_call("research_log_append", {"projectPath": "/p", "tool": "record_read"}, read),
+                _call("extraction_append", TRUNC_ARGS, resp)], final_research=final)
+    assert "query" not in r.research["log"][0] or not r.research["log"][0]["query"]
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_003"]
 
 
 OK_PS1 = '[{"type": "text", "text": "{\\n  \\"ok\\": true,\\n  \\"entryId\\": \\"ps_001\\"\\n}"}]'

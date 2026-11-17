@@ -254,6 +254,7 @@ def test_a_section_filter_keeps_only_calls_on_that_section(tmp_path, monkeypatch
         _call("research_query", args={"section": "log"}),
         _call("project_context", args={}),
         _call("research_query", args={"section": "assertions"}),
+        _call("research_query", args={"section": ["assertions", "log"]}),
     ]
     monkeypatch.setattr(rs, "E2E_TESTS", tmp_path / "tests")
     run_dir = tmp_path / "runlogs" / "fx"
@@ -265,11 +266,11 @@ def test_a_section_filter_keeps_only_calls_on_that_section(tmp_path, monkeypatch
     skipped, chars = Counter(), Counter()
     out = rs.build_items(run, {"tool_calls": calls}, set(rs.REPLAYABLE), skipped, chars, frozenset({"assertions"}))
     assert [i.index for i in out.items] == [0, 3]
-    assert skipped[("research_query", "filtered-out (--section)")] == 1
+    assert skipped[("research_query", "filtered-out (--section)")] == 2
     assert skipped[("project_context", "filtered-out (--section)")] == 1
     # Without the filter, all four replay.
     out = rs.build_items(run, {"tool_calls": calls}, set(rs.REPLAYABLE), Counter(), Counter())
-    assert [i.index for i in out.items] == [0, 1, 2, 3]
+    assert [i.index for i in out.items] == [0, 1, 2, 3, 4]
 
 
 def test_main_refuses_a_section_filter_that_matches_nothing(capsys):
