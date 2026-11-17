@@ -203,7 +203,14 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
 `projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
-link. Only when `project_context` returns `reason: "no_project"`: one named image, called
+link. Where the record's index and the machine reading disagree, show both side by side, say
+they differ, and name the line to check on the image; never call the index wrong, never say the
+image is clear or was seen, and never state a correction. A second pass over the same image, or
+a reading made after declining to read, confirms nothing; only a different record or a different
+person's reading does. Report each record's name as written: a record that disagrees with a
+reading challenges it, never call it a variant, rendering or split of another name, never call
+a disagreeing spelling consistent, and never drop a reading on a premise the project's files
+contradict. Only when `project_context` returns `reason: "no_project"`: one named image, called
 without `projectPath`, its `transcription` shown inline; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
@@ -481,7 +488,9 @@ message.
    `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. **When the
    question or request a search serves asks about the subject's parentage, even one parent (who a
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
-   block.** In a wrap-up turn
+   block.** A given name only a machine reading gives goes in that brief as plain text, a reading
+   in doubt beside the index reading, never in `names`, which keep the surname alone; a search on it uses a wildcard on the part
+   every reading agrees on (`An*`), and never drops the name. In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and
    `@plugin:proof-conclusion` takes `newQuestion: yes` when the researcher
