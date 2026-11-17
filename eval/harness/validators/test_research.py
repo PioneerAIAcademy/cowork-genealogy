@@ -810,9 +810,10 @@ _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
 
 
 def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
-    """Tag-gated (``delegates-user-present-no``, ``delegates-wrap-up``). The
-    fields research/SKILL.md's spawn rule passes on a "Keep going." or "Wrap it
-    up." turn sit in the spawn prompt, which the judge cannot see, so they are
+    """Tag-gated (``delegates-user-present-no``,
+    ``delegates-user-present-no-external``, ``delegates-qs-user-present-no``,
+    ``delegates-wrap-up``). The fields research/SKILL.md's spawn rule passes on a
+    "Keep going." or "Wrap it up." turn, or in an autonomous run, sit in the spawn prompt, which the judge cannot see, so they are
     read from the hook records. A field is matched as ``name: value`` on any
     line, case-insensitively, with optional backticks around either side."""
     rules = [r for tag in (test.get("tags") or []) for r in _SPAWN_FIELD_TAGS.get(tag, ())]

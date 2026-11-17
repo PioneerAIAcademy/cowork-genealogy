@@ -446,10 +446,10 @@ router sentence: plan at most one extra round, then wrap up.
   1. research-plan's dispose completes every open item whose search ran and skips the
      rest with `skip_category: "user_declined"`. It leaves an item waiting on an upload
      hand-off alone.
-  2. person-evidence links the question's unlinked assertions, when there are any, with
-     `userPresent: no`, so it resolves weak matches downward instead of pausing. Both
-     research-exhaustiveness and proof-conclusion refuse while a relied-upon person is
-     unidentified. An absent `userPresent` means a researcher is present.
+  2. person-evidence links the question's unlinked assertions, when there are any. The
+     router passes `userPresent: no`, which the agent does not read: a weak match gets no
+     link on every run, so nothing pauses. Both research-exhaustiveness and
+     proof-conclusion refuse while a relied-upon person is unidentified.
   3. conflict-resolution settles any blocking unresolved conflict it can from the evidence
      in hand.
   4. research-exhaustiveness, with `wrapUp: yes`, records the stop: `resources_spent`,

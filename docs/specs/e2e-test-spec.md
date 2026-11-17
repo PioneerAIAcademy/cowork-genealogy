@@ -739,7 +739,8 @@ rules in `research/SKILL.md` branch on it; find them with
   search-external-sites without it, and that plan item stayed `in_progress` waiting
   for a capture.
 
-Those three agents read the `userPresent` field, not the string. The e2e
+Of those three, search-external-sites and question-selection read the `userPresent`
+field, not the string; person-evidence receives it but does not read it. The e2e
 orchestrator writes no delegation, so it cannot pass `userPresent: no` itself: the
 flag is how an e2e run gets it. That is why the flag stays as e2e's opening (lead,
 2026-11-10); decision 22 of the step-mode spec records that ruling, which rescinded

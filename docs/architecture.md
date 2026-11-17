@@ -888,11 +888,11 @@ There **is** an orchestrator, and it is a skill:
    since come to read it again: besides the trigger in its description, an
    autonomous message is always a job, never a bounded ask, and the router hands
    `userPresent: no` to
-   `search-external-sites` and `search-hints`, which get it on no other run, and to
-   `person-evidence`, which also gets it on a "Keep going." or "Wrap it up." turn
-   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those agents read that
-   field, not the string. `agents/person-evidence.md` was left out of the folding; its
-   resolve-downward rule now applies when its delegation says `userPresent: no`.
+   `search-external-sites` and `question-selection`, which get it on no other run
+   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those two read that field,
+   not the string (§9). The router also sends it to `person-evidence`, on a "Keep
+   going." or "Wrap it up." turn as well, but `agents/person-evidence.md` no longer
+   reads it.
    `agents/search-records.md` hands back `userPresent: no` for
    search-external-sites only when its delegation says the search is part of an
    autonomous run, which the router's search-records delegation does not carry;
