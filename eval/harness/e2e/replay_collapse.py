@@ -574,6 +574,33 @@ async def _call(arm, args: dict[str, Any], where: str) -> tuple[list[dict], bool
     return content, is_error, text, _parsed(text)
 
 
+#: Keys `research_query` hoists onto an `assertions` group (#4412).
+ASSERTION_HEAD_KEYS = ("record_id", "record_persona_id", "record_role", "source_id", "log_entry_id")
+
+
+def _flatten_items(section: Any, items: list[Any], args: dict[str, Any]) -> list[Any]:
+    """A page's items as flat entries. An `assertions` answer is grouped by
+    persona (`{...head, facts: [...]}`); expand each group and restore the
+    `extracted_for_question_ids: [questionId]` a questionId read omits. An
+    item with no `facts` list passes through, so a flat answer from a build
+    before the grouping is unchanged."""
+    if section != "assertions":
+        return items
+    question = args.get("questionId")
+    out: list[Any] = []
+    for group in items:
+        if not isinstance(group, dict) or not isinstance(group.get("facts"), list):
+            out.append(group)
+            continue
+        head = {k: group[k] for k in ASSERTION_HEAD_KEYS if k in group}
+        for fact in group["facts"]:
+            entry = {**head, **fact} if isinstance(fact, dict) else fact
+            if isinstance(entry, dict) and isinstance(question, str) and "extracted_for_question_ids" not in entry:
+                entry["extracted_for_question_ids"] = [question]
+            out.append(entry)
+    return out
+
+
 async def _singular_pages(arm, args: dict[str, Any], where: str) -> list[dict[str, Any]]:
     """Every item of a singular answer, paged until `truncated` is false."""
     items: list[dict[str, Any]] = []
@@ -585,7 +612,7 @@ async def _singular_pages(arm, args: dict[str, Any], where: str) -> list[dict[st
         if is_error or not isinstance(body, dict) or body.get("ok") is not True:
             raise IntegrityError(f"{where} [{arm.label}]: the singular call failed on the rebuilt state")
         page = [e for e in body.get("items") or [] if isinstance(e, dict)]
-        items.extend(page)
+        items.extend(e for e in _flatten_items(args.get("section"), page, args) if isinstance(e, dict))
         if pages > (body.get("count") or 0) + 1:
             raise IntegrityError(f"{where} [{arm.label}]: singular paging passed its page cap")
         if not body.get("truncated"):
@@ -621,7 +648,7 @@ def _classify(g: PluralGroup, call: PluralCall, replayed: int, found: list[dict[
 
 
 def _plural_diffs(
-    pages: list[Any], truth: list[dict[str, Any]], expected: dict[str, int],
+    pages: list[Any], truth: list[dict[str, Any]], expected: dict[str, int], args: dict[str, Any],
 ) -> list[str]:
     """What is wrong with a list call's pages, against the truth — empty when right."""
     diffs: list[str] = []
@@ -634,7 +661,8 @@ def _plural_diffs(
             diffs.append(f"p{n}: count {body.get('count')} != truth {len(truth)}")
         if body.get("countById") != expected:
             diffs.append(f"p{n}: countById {body.get('countById')!r} != {expected!r}")
-        returned.extend(e for e in body.get("items") or [] if isinstance(e, dict))
+        flat = _flatten_items(args.get("section"), body.get("items") or [], args)
+        returned.extend(e for e in flat if isinstance(e, dict))
     ids = [e.get("id") for e in returned]
     if len(ids) != len(set(ids)):
         diffs.append("an item appears twice across the pages")
@@ -734,7 +762,7 @@ async def evaluate_plural_group(
     out.plural_calls = len(bodies)
     out.plural_chars = sum(len(json.dumps([{"type": "text", "text": t}])) for t in texts)
     out.largest_page = max((len(t) for t in texts), default=0)
-    diffs = _plural_diffs(bodies, truth, expected)
+    diffs = _plural_diffs(bodies, truth, expected, plural)
     if all(c.recorded_count == 0 for c in g.calls):
         out.status = "collapsed-empty"
     if diffs:
@@ -745,7 +773,7 @@ async def evaluate_plural_group(
 
     # 7. Report-only: does the base build answer the list correctly?
     base_bodies, _, base_capped = await _plural_pages(base, plural, len(truth), f"{where} [base]")
-    out.base_correct = not base_capped and not _plural_diffs(base_bodies, truth, expected)
+    out.base_correct = not base_capped and not _plural_diffs(base_bodies, truth, expected, plural)
 
     if _hash_dir(project) != before:
         raise IntegrityError(f"{where}: a read changed the project files")
