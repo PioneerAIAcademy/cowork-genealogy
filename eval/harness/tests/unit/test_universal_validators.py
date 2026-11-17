@@ -574,12 +574,19 @@ def _couple(primary=True, **fact_over):
     return [{"id": "R2", "type": "Couple", "person1": "I1", "person2": "I3", "facts": [fact]}]
 
 
+#: research.json before and after a claim write.
+def _claims_before_after():
+    return ({"proof_summaries": [{"id": "ps_001", "claims": [{"claim": "x"}]}]},
+            {"proof_summaries": [{"id": "ps_001", "claims": []}]})
+
+
 def test_a_primary_cleared_by_research_appends_claim_rule_is_explained_on_a_person_fact():
     """Decision 34: research_append clears `primary` when its covering claim goes,
     with no assertion corrected."""
+    rb, ra = _claims_before_after()
     check_tree(
-        _tree_state(_person_with_fact(primary=True)),
-        _tree_state(_person_with_fact()),
+        _tree_state(_person_with_fact(primary=True), rb),
+        _tree_state(_person_with_fact(), ra),
         {"name": "conflict-resolution"},
         POSITIVE,
         tool_calls=_CLAIM_CALL,
@@ -587,9 +594,21 @@ def test_a_primary_cleared_by_research_appends_claim_rule_is_explained_on_a_pers
 
 
 def test_a_primary_cleared_by_research_appends_claim_rule_is_explained_on_a_couple_fact():
-    before = tree(relationships=_couple())
-    after = tree(relationships=_couple(primary=False))
+    rb, ra = _claims_before_after()
+    before = {**tree(relationships=_couple()), "research_json": rb}
+    after = {**tree(relationships=_couple(primary=False)), "research_json": ra}
     check_tree(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_CLAIM_CALL)
+
+
+def test_a_proof_summary_call_that_changed_nothing_explains_no_clear():
+    """A refused or no-op proof_summaries call is logged too; only a write that
+    landed can have cleared a flag."""
+    same = {"proof_summaries": [{"id": "ps_001", "claims": [{"claim": "x"}]}]}
+    with pytest.raises(AssertionError) as e:
+        check_tree({**tree(relationships=_couple()), "research_json": same},
+                   {**tree(relationships=_couple(primary=False)), "research_json": same},
+                   {"name": "search-records"}, POSITIVE, tool_calls=_CLAIM_CALL)
+    assert "relationships" in str(e.value)
 
 
 def test_rewrite_plus_cleared_primary_on_one_fact_is_explained():

@@ -1486,6 +1486,10 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     owners = writer_sets(TREE_GEDCOMX_JSON, subject=skill_name)
     identity_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
     called = _tools_called(tool_calls)
+    # A proof-summary write that landed: the call alone is not enough, since a
+    # refused or no-op call is logged too.
+    summaries = lambda state: ((state or {}).get("research_json") or {}).get("proof_summaries")
+    claims_changed = _claims_changed(tool_calls) and summaries(before_state) != summaries(after_state)
     modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
     for section in modified:
@@ -1505,7 +1509,7 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
                 after.get(section),
                 after_state.get("research_json"),
                 _corrected_assertion_ids(tool_calls),
-                _claims_changed(tool_calls),
+                claims_changed,
             )
         ):
             continue
@@ -1515,7 +1519,7 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
             section == "relationships"
             and "research_append" in (identity_tools.get(section) or set())
             and "research_append" in called
-            and _explained_by_primary_clear(before.get(section), after.get(section), _claims_changed(tool_calls))
+            and _explained_by_primary_clear(before.get(section), after.get(section), claims_changed)
         ):
             continue
         # extraction_append mints each `S` entry beside the `src_` it writes.
