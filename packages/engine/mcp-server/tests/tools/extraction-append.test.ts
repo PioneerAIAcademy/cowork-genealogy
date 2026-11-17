@@ -1484,6 +1484,25 @@ describe("extraction_append: personId extracts and links a person's attachments"
       const r = await run("I1", flaky(5, () => new Error("FamilySearch API error: 404 Not Found"), reads) as any);
       expect(reads).toHaveLength(1);
       expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain("404");
+      expect(r.summary).toMatch(/1 record could not be read \(.*MZGS-1B7.*\)/);
+      expect(r.summary).not.toContain("call extraction_append again");
+      expect(r.summary).toContain("calling again will not change that");
+    });
+
+    it("is read again when FamilySearch answered a 5xx past the request's own retries", async () => {
+      await writeTree([person("I1", { person: ["S1"] })], [S1]);
+      const reads: string[] = [];
+      const r = await run("I1", flaky(1, () => new Error("FamilySearch recapi error: 503"), reads) as any);
+      expect(reads).toHaveLength(2);
+      expect(r.extracted).toBe(1);
+      expect(r.summary).not.toMatch(/could not be read/);
+    });
+
+    it("is not read again on a rate limit", async () => {
+      await writeTree([person("I1", { person: ["S1"] })], [S1]);
+      const reads: string[] = [];
+      const r = await run("I1", flaky(5, () => new Error("FamilySearch recapi error: 429"), reads) as any);
+      expect(reads).toHaveLength(1);
     });
   });
 

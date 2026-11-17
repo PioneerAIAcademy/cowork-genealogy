@@ -200,12 +200,15 @@ const DEFAULT_DEPS: ExtractionAppendDeps = { readRecord: recordReadTool };
  *  outlasted them all. */
 const READ_RETRY_PAUSE_MS = 2_000;
 
-/** A read that failed on the way to FamilySearch rather than at it: Node's
- *  fetch rejects every transport failure with "fetch failed", and a timeout is
- *  `fetchWithTimeout`'s own. A refusal, a missing record or a staging fault is
- *  not retried. */
+/** A read that failed for a moment rather than for good: Node's fetch rejects
+ *  every transport failure with "fetch failed", a timeout is `fetchWithTimeout`'s
+ *  own, and a 5xx that outlasted `fetchWithRetry` is `record_read`'s
+ *  "FamilySearch recapi error: 5xx". A refusal, a rate limit, a missing record or
+ *  a staging fault is not retried. */
 function isTransientReadError(e: unknown): boolean {
-  return isFetchTimeout(e) || (e instanceof TypeError && e.message === "fetch failed");
+  if (isFetchTimeout(e)) return true;
+  if (e instanceof TypeError && e.message === "fetch failed") return true;
+  return e instanceof Error && /^FamilySearch recapi error: 5\d\d$/.test(e.message);
 }
 
 /** One expected-but-absent person, found by a search that returned no record. */
@@ -603,6 +606,8 @@ async function noteRetired(projectPath: string, outcomes: (RecordOutcome & { ret
 interface RecordIdsOptions {
   /** Bare record id -> the tree S the import already made for it. */
   sourceDescriptionIdByBare?: ReadonlyMap<string, string>;
+  /** Filled with the record ids whose read failed for a moment both times. */
+  retryableReads?: Set<string>;
 }
 
 /** The sections a link write reaches: `personId` mode's attachment links only,
@@ -715,11 +720,12 @@ async function personIdMode(
 
   const importedS = new Map(sourceIdByBare);
   for (const b of relationshipOnly) importedS.set(b, [...viaRelationship.get(b)!.sourceIds][0]);
+  const retryableReads = new Set<string>();
   const extraction = await recordIdsMode(
     { projectPath: input.projectPath, recordIds: [...importedS.keys()].map((b) => `ark:/61903/1:1:${b}`) },
     deps,
     principal,
-    { sourceDescriptionIdByBare: importedS },
+    { sourceDescriptionIdByBare: importedS, retryableReads },
   );
 
   // Link, against the project as it now stands.
@@ -920,13 +926,24 @@ async function personIdMode(
   if (rejectedSkipped > 0) parts.push(`${plural(rejectedSkipped, "rejected pair", "rejected pairs")} not re-linked`);
   if (refused > 0) parts.push(`${plural(refused, "link", "links")} refused`);
   // A record that could not be read is neither extracted nor linked, and the
-  // person's other links say nothing of it: name it, and the way to retry it.
+  // person's other links say nothing of it: name it, and, when the failure was
+  // a passing one, the way to retry it.
   const unread = extraction.records.filter((o) => o.status === "read_failed").map((o) => o.recordId);
-  if (unread.length > 0) {
+  const passing = unread.filter((id) => retryableReads.has(id));
+  const lasting = unread.filter((id) => !retryableReads.has(id));
+  const them = (n: number) => (n === 1 ? "it is" : "them is");
+  if (passing.length > 0) {
     parts.push(
-      `${plural(unread.length, "record", "records")} could not be read (${unread.join(", ")}), so nothing from ` +
-        `${unread.length === 1 ? "it is" : "them is"} extracted or linked: call extraction_append again with ` +
-        `personId '${person.id}' to retry ${unread.length === 1 ? "it" : "them"}; what this call wrote is not written twice`,
+      `${plural(passing.length, "record", "records")} could not be read (${passing.join(", ")}), so nothing from ` +
+        `${them(passing.length)} extracted or linked: call extraction_append again with ` +
+        `personId '${person.id}' to retry ${passing.length === 1 ? "it" : "them"}; what this call wrote is not written twice`,
+    );
+  }
+  if (lasting.length > 0) {
+    parts.push(
+      `${plural(lasting.length, "record", "records")} could not be read (${lasting.join(", ")}), so nothing from ` +
+        `${them(lasting.length)} extracted or linked; ${lasting.length === 1 ? "its summary says" : "their summaries say"} ` +
+        `why, and calling again will not change that`,
     );
   }
   return {
@@ -1086,6 +1103,7 @@ async function recordIdsMode(
     await new Promise((r) => setTimeout(r, deps.readRetryPauseMs ?? READ_RETRY_PAUSE_MS));
     await mapWithConcurrency(again, READ_CONCURRENCY, readOne);
   }
+  for (const o of transient) opts.retryableReads?.add(o.recordId);
 
   // 3b. Household skip. Step 1 widens an id only by sidecars already logged,
   //     so it cannot see a member of a record extracted under an accepted hint

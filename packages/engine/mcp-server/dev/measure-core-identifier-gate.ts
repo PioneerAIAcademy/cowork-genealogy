@@ -60,7 +60,8 @@ let refused = 0, refusedRelational = 0, refusedPlace = 0, refusedDate = 0;
 let refusedWithoutConflicts = 0;
 let refusedAttached = 0;
 let conflictsBirthPlace = 0, conflictsAttachedRefused = 0;
-const conflictRule = (ra as any).attachedBirthConflictInvariants as ((c: any, r: any, t: any, l?: any) => string[]) | undefined;
+const conflictRule = (ra as any).attachedBirthConflictInvariants as ((c: any, r: any, t: any, l?: any, coords?: any) => string[]) | undefined;
+const conflictNames = (ra as any).attachedBirthConflictPlaceNames as ((c: any, r: any, l?: any) => string[]) | undefined;
 const isBirthPlace = (sbd as any).isBirthPlaceDispute as ((a: unknown) => boolean) | undefined;
 const judgedAttached = new Set<string>();
 const attachedOf = (ra as any).attachedBirthsOf as ((p: string, r: any, l?: any) => any[]) | undefined;
@@ -128,6 +129,7 @@ for (const { label, research, tree } of docs) {
     for (const e of live) for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
     const attachedNames = ((ra as any).birthPlaceNameLookups ?? (ra as any).attachedBirthPlaceNames) as ((e: any, r: any, t: any, l?: any) => string[]) | undefined;
     if (attachedNames) for (const e of live) for (const n of attachedNames(e, research, tree, personLinks)) withNames.add(n);
+    if (conflictNames) for (const c of (research.conflicts ?? []) as any[]) for (const n of conflictNames(c, research, personLinks)) withNames.add(n);
     const info = (ra as any).birthPlaceInfo as ((n: string, w: boolean) => Promise<any>) | undefined;
     for (const n of withNames) names.add(n);
     coords = names.size
@@ -182,7 +184,7 @@ for (const { label, research, tree } of docs) {
     for (const c of (research.conflicts ?? []) as any[]) {
       if (c?.conflict_type !== "fact" || c?.status !== "resolved" || !isBirthPlace(c.disputed_attribute)) continue;
       conflictsBirthPlace += 1;
-      if (conflictRule(c, research, tree, personLinks).length === 0) continue;
+      if (conflictRule(c, research, tree, personLinks, coords).length === 0) continue;
       conflictsAttachedRefused += 1;
       if (LIST) lines.push(`CONFLICT-ATTACHED\t${label}\t${c.id}\t${(c.competing_assertion_ids ?? []).join(",")}\tpreferred ${c.preferred_assertion_id}`);
     }

@@ -157,6 +157,7 @@ import {
   resolveStandardPlace,
   repIdToStandardPlace,
   standardPlaceToCoords,
+  standardPlaceToPlaceId,
   checkFirstPlace,
   familySearchPlace,
   textNamesPlace,
@@ -13454,6 +13455,35 @@ describe("research_append — detected core-identifier contradiction", () => {
     const r = await researchAppend(link("confident"));
     expect((r as any).errors ?? []).toEqual([]);
     expect(r.ok).toBe(true);
+  });
+
+  // A spent budget in the names read is a refusal, not "no other names": read
+  // as the latter, the same link was capped for a contradiction it does not have.
+  it("fails the write when the FamilySearch budget refuses the names read", async () => {
+    await write(
+      { place: "Russia", standard_place: "Russia" },
+      { place: "Selz, near Odessa, Russia (now Ukraine)", standard_place: "Selz, Odessa, Kherson, Russian Empire", date: "7 Sep 1891" },
+    );
+    const FS_URL = "https://www.familysearch.org/service/places/search";
+    const stub = vi.mocked(standardPlaceToPlaceId).getMockImplementation()!;
+    try {
+      configureFsBudget({ perMinute: 1 });
+      consumeFsBudgetSlot(FS_URL);
+      let refusal: unknown;
+      try {
+        consumeFsBudgetSlot(FS_URL);
+      } catch (e) {
+        refusal = e;
+      }
+      expect(isFsBudgetExhausted(refusal)).toBe(true);
+      __resetFsBudgetForTests();
+      vi.mocked(standardPlaceToPlaceId).mockRejectedValue(refusal);
+      const err = await researchAppend(link("confident")).then(() => null, (e) => e);
+      expect(isFsBudgetExhausted(err)).toBe(true);
+    } finally {
+      vi.mocked(standardPlaceToPlaceId).mockImplementation(stub);
+      __resetFsBudgetForTests();
+    }
   });
 
   // Six miles apart, but a border between them: the country arm alone caps it,
