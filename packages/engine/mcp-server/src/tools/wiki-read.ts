@@ -83,9 +83,9 @@ export function legacyNotice(content: string): string | null {
     .replace(/\s+/g, " ")
     .trim();
   if (text.length <= COLLECTION_NOTICE_MAX_CHARS) return text;
-  const head = text.slice(0, COLLECTION_NOTICE_MAX_CHARS);
-  const sentenceEnd = head.lastIndexOf(". ");
-  return sentenceEnd > 0 ? head.slice(0, sentenceEnd + 1) : head;
+  // One character past the cap, so a sentence whose period is the cap's last character is kept.
+  const sentenceEnd = text.slice(0, COLLECTION_NOTICE_MAX_CHARS + 1).lastIndexOf(". ");
+  return sentenceEnd > 0 ? text.slice(0, sentenceEnd + 1) : text.slice(0, COLLECTION_NOTICE_MAX_CHARS);
 }
 
 /** The linked collection pages that carry the Legacy notice. A failed or missing page is skipped. */

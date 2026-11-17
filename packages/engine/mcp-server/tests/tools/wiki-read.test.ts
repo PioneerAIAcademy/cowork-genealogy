@@ -508,6 +508,15 @@ describe("wikiReadTool, collection notices", () => {
     expect(notice!.startsWith("This is a Legacy Collection This sentence")).toBe(true);
   });
 
+  it("keeps a sentence whose period is the cap's last character", () => {
+    const prefix = "This is a Legacy Collection ";
+    const first = `${"a".repeat(200)}. `;
+    const second = `${"b".repeat(COLLECTION_NOTICE_MAX_CHARS - prefix.length - first.length - 1)}.`;
+    const notice = legacyNotice(`**This is a Legacy Collection** ${first}${second} And more after it.|`);
+    expect(notice).toBe(`${prefix}${first}${second}`);
+    expect(notice!.length).toBe(COLLECTION_NOTICE_MAX_CHARS);
+  });
+
   it("keeps a full part with ten long notices under the CLI spill line", async () => {
     const slugs = Array.from({ length: 10 }, (_, i) => `Collection_number_${i}`);
     const longNotice = `**This is a Legacy Collection** ${"A sentence that runs on and on. ".repeat(200)}|`;

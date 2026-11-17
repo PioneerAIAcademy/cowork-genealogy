@@ -7,7 +7,12 @@ import { WIKI_SEARCH_TIMEOUT_MS } from "./wiki-search.js";
 import type { WikiSearchAPIResponse } from "../types/wiki-search.js";
 import { getWikiApiUrl } from "../auth/config.js";
 import { describeFetchError, fetchWithRetry } from "../utils/http.js";
-import { fetchPage, type PageApiResponse } from "../utils/wiki-page-fetch.js";
+import {
+  WIKI_EXTRAS_DEADLINE_MS,
+  fetchPage,
+  settleByDeadline,
+  type PageApiResponse,
+} from "../utils/wiki-page-fetch.js";
 
 export { fetchPage };
 import { pageText, requireWholeNumber } from "../utils/text-page.js";
@@ -280,35 +285,72 @@ export function countryCandidates(standardPlace: string): string[] {
   return standardPlace.split(",").map((p) => p.trim()).filter(Boolean).reverse();
 }
 
+const HOME_LINK = /\]\(https:\/\/www\.familysearch\.org\/en\/wiki\/([^)\s"]+)_Genealogy[\s")]/;
+const HOME_LINK_SEARCH_CHARS = 2_000;
+
+/**
+ * Whether a topic page found under a part narrower than the country belongs to this place: the
+ * first `{Place}_Genealogy` link near its top (its breadcrumb) must name only parts of
+ * `standardPlace`. "Victoria, Australia" fails for "Victoria, British Columbia, Canada".
+ */
+export function topicPageFitsPlace(content: unknown, standardPlace: string): boolean {
+  if (typeof content !== "string") return false;
+  const match = content.slice(0, HOME_LINK_SEARCH_CHARS).match(HOME_LINK);
+  if (!match) return false;
+  let title = match[1];
+  try {
+    title = decodeURIComponent(title);
+  } catch {
+    // A malformed escape is compared as written.
+  }
+  const parts = new Set(countryCandidates(standardPlace).map((p) => p.toLowerCase()));
+  return title
+    .replace(/_/g, " ")
+    .split(",")
+    .map((p) => p.trim().toLowerCase())
+    .filter(Boolean)
+    .every((p) => parts.has(p));
+}
+
 /**
  * The country's record-type pages that exist: for each `WIKI_TOPIC_SUFFIXES` entry, the first
- * candidate whose `{Candidate}_{Suffix}` page the server returns. A lookup that fails omits
- * that topic rather than failing the place page.
+ * candidate whose `{Candidate}_{Suffix}` page the server returns, where a page found under a part
+ * narrower than the country must fit the place (`topicPageFitsPlace`). A lookup that fails omits
+ * that topic rather than failing the place page, and lookups still running at `deadlineAt` are
+ * dropped; neither answer is cached.
  */
-async function topicPagesFor(standardPlace: string, baseUrl: string): Promise<WikiTopicPage[]> {
+async function topicPagesFor(
+  standardPlace: string,
+  baseUrl: string,
+  deadlineAt: number
+): Promise<WikiTopicPage[]> {
   const candidates = countryCandidates(standardPlace);
   const key = JSON.stringify([baseUrl, candidates]);
   const cached = topicPagesCache.get(key);
   if (cached) return cached;
   let failed = false;
-  const found = await Promise.all(
-    WIKI_TOPIC_SUFFIXES.map(async (suffix): Promise<WikiTopicPage | null> => {
-      for (const name of candidates) {
+  const { results, timedOut } = await settleByDeadline(
+    WIKI_TOPIC_SUFFIXES.map((suffix) => async (stopped: () => boolean): Promise<WikiTopicPage | null> => {
+      for (const [i, name] of candidates.entries()) {
+        if (stopped()) return null;
         const slug = `${nameToSlug(name)}_${suffix}`;
+        let page: PageApiResponse | null;
         try {
-          if ((await fetchPage(baseUrl, slug)) !== null) {
-            return { topic: suffix.replace(/_/g, " "), url: `${FS_WIKI_BASE}/${slug}` };
-          }
+          page = await fetchPage(baseUrl, slug);
         } catch {
           failed = true;
           return null;
         }
+        if (page !== null && (i === 0 || topicPageFitsPlace(page.content, standardPlace))) {
+          return { topic: suffix.replace(/_/g, " "), url: `${FS_WIKI_BASE}/${slug}` };
+        }
       }
       return null;
-    })
+    }),
+    deadlineAt
   );
-  const pages = found.filter((p): p is WikiTopicPage => p !== null);
-  if (!failed) topicPagesCache.set(key, pages);
+  const pages = results.filter((p): p is WikiTopicPage => p !== null);
+  if (!failed && !timedOut) topicPagesCache.set(key, pages);
   return pages;
 }
 
@@ -389,6 +431,7 @@ export async function wikiPlacePageTool(
   principal: Principal
 ): Promise<WikiPlacePageResult> {
   const { standardPlace, section } = input;
+  const deadlineAt = Date.now() + WIKI_EXTRAS_DEADLINE_MS;
   // Argument checks first: a bad offset must not cost a request or a place lookup.
   const offset = input.offset === undefined ? undefined : requireWholeNumber("offset", input.offset, 0);
   // An out-of-set string would fall through candidateSlugsFor's switch to
@@ -417,7 +460,7 @@ export async function wikiPlacePageTool(
   if (!offset) {
     const baseUrl = await getWikiApiUrl(principal);
     if (section === "home") {
-      result.topicPages = await topicPagesFor(standardPlace, baseUrl);
+      result.topicPages = await topicPagesFor(standardPlace, baseUrl, deadlineAt);
     } else if (section === "research_tips") {
       const help = await searchHelpFor(stripWikiSidebar(hit.content), baseUrl);
       if (help) result.searchHelp = help;
