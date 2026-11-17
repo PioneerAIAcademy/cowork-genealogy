@@ -189,8 +189,10 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   // 264,435); Michigan 1894; New Jersey 1855 and 1865; New Mexico 1885; New York
   // 1865, 1875 and 1892 (FamilySearch's collection pages list 13, 12 and 20
   // counties missing); Wisconsin 1865 (FamilySearch wiki: 6 counties only).
-  census(1885, "Colorado", state("Colorado"), "1807096"), // 234k records
-  census(1885, "Florida", state("Florida"), "1457854"), // 309k records
+  // https://www.familysearch.org/en/wiki/Colorado,_State_Census,_1885_-_FamilySearch_Historical_Records
+  census(1885, "Colorado", state("Colorado"), "1807096", "relationship"), // 234k records
+  // https://www.familysearch.org/en/wiki/Florida,_State_Census,_1885_-_FamilySearch_Historical_Records
+  census(1885, "Florida", state("Florida"), "1457854", "relationship"), // 309k records
   census(1935, "Florida", state("Florida"), "1457856"), // 1.60m records
   census(1945, "Florida", state("Florida"), "1457855"), // 2.25m records
   census(1855, "Illinois", state("Illinois"), "1803969", "headsOnly"), // heads only; 241k records

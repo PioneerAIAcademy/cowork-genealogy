@@ -59,12 +59,13 @@ describe("censusNote", () => {
     for (const s of note!.schedules) expect(s.recorded).toBeUndefined();
   });
 
-  it("carries on each row exactly what the US federal, British, heads-only and Norway rules give, and nothing elsewhere", () => {
+  it("carries on each row exactly what the US federal, British, heads-only, Norway, Colorado and Florida rules give, and nothing elsewhere", () => {
     const relationshipFrom = (from: number, y: number): ScheduleContents =>
       y >= from ? "relationship" : "everyone";
     const HEADS_ONLY_STATE_ROWS = new Set([
       "Illinois 1855", "Illinois 1865", "Wisconsin 1855", "Wisconsin 1875", "Wisconsin 1885", "Wisconsin 1895",
     ]);
+    const RELATIONSHIP_STATE_ROWS = new Set(["Colorado 1885", "Florida 1885"]);
     for (const r of CENSUS_TABLE) {
       const expected =
         r.label === "United States"
@@ -75,7 +76,7 @@ describe("censusNote", () => {
             ? relationshipFrom(BRITISH_RELATIONSHIP_COLUMN_FROM, r.year)
             : HEADS_ONLY_STATE_ROWS.has(`${r.label} ${r.year}`)
               ? "headsOnly"
-              : r.label === "Norway"
+              : r.label === "Norway" || RELATIONSHIP_STATE_ROWS.has(`${r.label} ${r.year}`)
                 ? "relationship"
                 : undefined;
       expect(r.schedule, `${r.label} ${r.year}`).toBe(expected);
@@ -99,6 +100,16 @@ describe("censusNote", () => {
           recorded: "names every person and states each one's relationship to the head of household",
         },
       ]);
+    }
+  });
+
+  it("says the 1885 Colorado and Florida state censuses name everyone and state relationships", () => {
+    for (const place of ["Denver, Colorado, United States", "Leon, Florida, United States"]) {
+      const note = censusNote({ recordType: "census", residenceYearFrom: 1885, residenceYearTo: 1885, residencePlace: place });
+      const state = note?.schedules.find((s) => s.census !== "United States");
+      expect(state?.recorded, place).toBe(
+        "names every person and states each one's relationship to the head of household",
+      );
     }
   });
 
