@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_question_selection_tf2",
+    "skill": "question-selection",
+    "name": "A two-fact objective with no researcher present: write one question, for the fact the objective names first",
+    "type": "positive",
+    "description": "Clone of ut_question_selection_tf1 (scenario unmodified) with userPresent: no in the delegation, as the research router sends it on an --autonomous run (issue #4531). The objective names two independent facts, where Patrick Flynn is buried and whom he married, burial first. Nobody is there to answer which first, so question-selection writes one question, for the burial, and its rationale says it followed the objective's order because no researcher was present. Asking which first, writing a marriage question, or writing a question joining both fails. tf1 keeps the attended side: with userPresent absent it still asks.",
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "empty-project",
+      "question-selection-one-new-question",
+      "selection-basis-objective-decomposition",
+      "first-question-depends-on-empty",
+      "objective-scope-match",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>\nuserPresent: no",
+    "scenario": "empty-project-two-fact-objective"
+  },
+  "judge_context": [
+    "**Exactly one question is written, for where Patrick Flynn is buried.** The objective names two independent facts, burial first and marriage second, and the delegation says userPresent: no, so nobody can answer which first. The agent takes the objective's order instead of asking.",
+    "The question's rationale must say it took the objective's order (the burial is named first) because no researcher was present. A rationale that gives a different basis, such as the burial being the more valuable or the easier fact, is a partial: that is not a basis the agent can state, and the same project would choose differently from run to run.",
+    "Writing a question for the marriage, writing one question joining both facts, writing no question, or asking the researcher which fact to research first is the failure this test exists for.",
+    "The reply may mention the marriage as the part of the objective still to come. It must not say a marriage question was written."
+  ]
+}
