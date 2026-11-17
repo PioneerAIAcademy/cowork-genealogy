@@ -47,7 +47,9 @@
     "wiki-search-any",
     "wikipedia-search-any",
     "volume-search-oklahoma-landrun",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "Must mention the Land Run of 1889. Must highlight homestead applications, land allotments, and territorial court records. Must not suggest statewide vital registration for this period."
