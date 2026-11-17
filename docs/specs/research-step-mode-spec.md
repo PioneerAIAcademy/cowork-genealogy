@@ -453,7 +453,9 @@ router sentence: plan at most one extra round, then wrap up.
   3. conflict-resolution settles any blocking unresolved conflict it can from the evidence
      in hand.
   4. research-exhaustiveness, with `wrapUp: yes`, records the stop: `resources_spent`,
-     skipped items as `skipped_plan_item`, waiting items as `handed_to_user`, never-planned
+     items skipped `user_declined`, `no_coverage` or `inaccessible` as `skipped_plan_item`
+     (the rule research-exhaustiveness's "Build `not_reached`" applies to every stop it
+     writes), waiting items as `handed_to_user`, never-planned
      gaps (including the tentative-value (b) path's alternative) as `deferred`. Under
      `wrapUp` it skips its scope check and the blocks that would refuse, but keeps the
      "already declared" stop.
