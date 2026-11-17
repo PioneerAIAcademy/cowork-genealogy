@@ -144,7 +144,7 @@
           "sequence": 3,
           "record_type": "probate",
           "jurisdiction": "Schuylkill County, Pennsylvania",
-          "date_range": "1870-1890",
+          "date_range": "1860-1890",
           "repository": "FamilySearch",
           "rationale": "Thomas Flynn probate/will may name Patrick as son.",
           "fallback_for": null,
@@ -159,7 +159,9 @@
           "repository": "FamilySearch",
           "rationale": "Later censuses (1870, 1880, 1900) could corroborate parentage (1880 introduces relationship column), but three independent sources already converge on Thomas Flynn as father — two census co-enumerations (1850, 1860) plus the death certificate naming him directly. Later censuses would corroborate but cannot contradict this convergence. Overturn risk is low.",
           "fallback_for": null,
-          "status": "skipped"
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Three independent sources already converge on Thomas Flynn as father: the 1850 and 1860 census co-enumerations and the death certificate naming him. The 1870, 1880 and 1900 censuses would corroborate but cannot contradict that convergence."
         },
         {
           "id": "pli_008",
@@ -181,7 +183,9 @@
           "repository": "FamilySearch",
           "rationale": "Thomas Flynn's naturalization papers may list family members, but naturalization records rarely name children. Three independent sources already confirm parentage. Low value-add for this specific question.",
           "fallback_for": null,
-          "status": "skipped"
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Naturalization papers of this period rarely name children, and three independent sources already agree on the father. It would not change the answer."
         }
       ]
     }
@@ -288,12 +292,12 @@
         "surname": "Flynn",
         "given": "Thomas",
         "jurisdiction": "Schuylkill County, Pennsylvania",
-        "date_range": "1870-1890",
+        "date_range": "1860-1890",
         "collection": "Probate Records"
       },
       "outcome": "negative",
       "results_examined": 0,
-      "notes": "No probate record found for Thomas Flynn in Schuylkill County 1870-1890. Searched FamilySearch probate index and browsed available registers. Negative result is itself meaningful: either Thomas died intestate without estate proceedings, died elsewhere, or his name does not match — but the absence does not contradict the parentage conclusion.",
+      "notes": "No probate record found for Thomas Flynn in Schuylkill County 1860-1890. Searched FamilySearch probate index and browsed available registers. Negative result is itself meaningful: either Thomas died intestate without estate proceedings, died elsewhere, or his name does not match — but the absence does not contradict the parentage conclusion.",
       "external_site": null
     },
     {
@@ -869,7 +873,7 @@
       "resolved_conflict_ids": [
         "c_001"
       ],
-      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), and probate records 1870-1890 (FamilySearch — log_006, negative). The 1870, 1880, and 1900 censuses were not searched.",
+      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), and probate records 1860-1890 (FamilySearch — log_006, negative). The 1870, 1880, and 1900 censuses were not searched.",
       "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845-1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). Indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate names Thomas Flynn as his father. Direct evidence, secondary informant (son-in-law James Brown).\n\n### Conflict Resolution\n\nBirthplace conflict resolved: Ireland (censuses) over Pennsylvania (death cert) per informant proximity and source independence.\n\n### Assessment\n\nRated **Probable** pending exhaustive declaration."
     }
   ],

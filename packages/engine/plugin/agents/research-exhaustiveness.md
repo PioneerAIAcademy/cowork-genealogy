@@ -255,7 +255,8 @@ decline names the blocking criterion and its assessment in `justification`.
 ## The decline
 
 Every active-plan item is closed or waiting only on an upload, and a genuinely
-unsearched source remains. Also reached from a `premise_invalidated` verdict
+unsearched source remains. If the Step 1 `wiki_read` has not been called
+yet, call it now, before the write below. Also reached from a `premise_invalidated` verdict
 and the tentative-value (b) path. Write:
 
 - `stopped_because: "resources_spent"`, `stop_criteria: null`, `status` unchanged;
