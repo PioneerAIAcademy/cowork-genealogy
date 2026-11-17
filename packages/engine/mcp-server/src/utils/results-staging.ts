@@ -574,9 +574,10 @@ export async function unloggedStagedSearches(
     try {
       const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
       // Only a search producer's file can be owed a log entry. An acquisition read
-      // is logged as `user_provided` or under the search that found it, and a
-      // legacy `external_links_search` file (that tool stopped staging in #2995)
-      // can no longer pair, so either would nag until the TTL.
+      // is logged with its own ref by what uses it (`extraction_append` for the
+      // reads it extracts); no caller logs a `person_read` file; and a legacy
+      // `external_links_search` file (that tool stopped staging in #2995) can no
+      // longer pair. A nag on any of these four would be wrong.
       if (typeof envelope.tool === "string" && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
       if (envelope.tool !== tool) continue;
       const parsed = Date.parse(envelope.retrieved);

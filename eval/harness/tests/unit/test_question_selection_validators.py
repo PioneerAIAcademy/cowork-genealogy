@@ -503,7 +503,8 @@ def test_passes_the_issues_own_worked_example():
 # --- the held-record rule (lead decision on issue #4382, 2026-11-16) ---
 #
 # A record type in the hand-back passes only when the before-state research.json
-# already holds or plans it (sources, plan items, proof summaries, assertions).
+# already holds or plans it (sources, plan items, assertions), or a proof summary
+# lists it as still to search.
 
 
 def _held(**sections):
@@ -519,11 +520,12 @@ _PROBATE_REPLY = _reply(
 @pytest.mark.parametrize("before", [
     _held(plans=[{"items": [{"id": "pli_006", "status": "completed", "title": "Thomas Flynn probate, 1870-1890"}]}]),
     _held(sources=[{"id": "src_004", "title": "Schuylkill County Probate Records"}]),
-    _held(proof_summaries=[{"id": "ps_001", "narrative_markdown": "The probate search is still in progress."}]),
+    _held(proof_summaries=[{"id": "ps_001", "exhaustive_search_summary": "Thomas Flynn's probate records not yet searched."}]),
     _held(assertions=[{"id": "a_009", "value": "Estate administered in probate court"}]),
 ])
 def test_a_record_type_the_project_holds_may_be_named(before):
-    """Each of the four sections counts, and a completed item counts: the old
+    """Each section counts (a proof summary through its still-to-search list),
+    and a completed item counts: the old
     skip covered only planned/in_progress items."""
     check_handback(
         before_state=before,
@@ -661,3 +663,128 @@ def test_the_v7_replay_keeps_nine_of_the_leads_eleven():
     leads_eleven = [c for c in v7 if c["test_id"] not in old_skip]
     assert len(leads_eleven) == 11
     assert sorted(c["test_id"][-3:] for c in leads_eleven if c["expect"] == "pass") == ["007", "c7f"]
+
+
+# --- test_handback_not_record_scoped: naming an existing question is not a record pick ---
+#
+# The Return contract tells the agent to name other questions by their text; the
+# Flynn fixtures' q_002 is "Where was Patrick Flynn in the 1850 census?", and a
+# user can type a question like it. Lead, 2026-11-16: "a line that refers to
+# q_002 is this case. Any other line that names a record is a real failure."
+# The 1870-census case is the one that separates "the word is part of naming
+# the question" from "the word appears in some question" -- the latter would
+# switch `census` off in every Flynn project.
+
+_CENSUS_Q002 = {"id": "q_002", "question": "Where was Patrick Flynn in the 1850 census?", "status": "resolved"}
+_PARENTS_Q001 = {"id": "q_001", "question": "Who were the parents of Patrick Flynn?", "status": "in_progress"}
+
+
+def _before_with(questions):
+    return {"research_json": {"plans": [], "questions": questions}}
+
+
+def _check(questions, summary_tail, caller="**Next step:** plan research for this question."):
+    check_handback(
+        before_state=_before_with(questions),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": _reply(caller, summary_tail)}],
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "The census question is resolved.",
+    "The 1850 census question still needs its own write-up.",
+    "The q_002 census question is resolved.",
+    "The second question, q_002 (where Patrick was in the 1850 census), is marked resolved.",
+])
+def test_naming_an_existing_census_question_passes(sentence):
+    _check([_PARENTS_Q001, _CENSUS_Q002], sentence)
+
+
+def test_naming_an_existing_census_question_passes_in_the_caller_line():
+    _check(
+        [_PARENTS_Q001, _CENSUS_Q002],
+        "The next step is to plan the search for his mother.",
+        caller="- **Depends on:** q_001; q_002 (the 1850 census question) is resolved.",
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "Search the probate records next.",
+    "Search the 1870 census next.",
+    "The next step is adding searches for the later census years.",
+    "The 1850 census question is resolved; search the 1870 census next.",
+    "The tree and the census evidence give Ireland.",
+])
+def test_a_record_suggestion_still_fails_beside_a_census_question(sentence):
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001, _CENSUS_Q002], sentence)
+
+
+def test_the_census_question_fails_where_no_question_carries_census():
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001], "The census question is resolved.")
+
+
+def test_a_question_id_whose_text_has_no_census_does_not_cover_it():
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001, _CENSUS_Q002], "q_001 (search the 1870 census) comes next.")
+
+
+# --- test_handback_not_record_scoped: relaying a proof summary's own gap list ---
+#
+# A proof summary that says which records are not yet searched has already
+# named them; relaying that list is reading the project, the same footing as
+# naming an existing plan item. A record the summary names only as work done
+# ("Searched 1850 census …") is not on the list and stays a violation.
+
+_GAP_SUMMARY = {
+    "id": "ps_001",
+    "question_id": "q_001",
+    "exhaustive_search_summary": (
+        "Searched 1850 census (FamilySearch, Ancestry, MyHeritage) and the death certificate. "
+        "1870, 1880, and 1900 censuses and Thomas Flynn's probate records not yet searched."
+    ),
+    "narrative_markdown": "If Thomas Flynn's will names Patrick as a son, the conclusion would advance to **Proved**.",
+}
+_DONE_ONLY_SUMMARY = {
+    "id": "ps_001",
+    "question_id": "q_001",
+    "exhaustive_search_summary": (
+        "Searched 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census and the death "
+        "certificate. Thomas Flynn probate search (pli_006) completed."
+    ),
+}
+
+
+def _before_with_summary(summary):
+    return {"research_json": {"plans": [], "questions": [_PARENTS_Q001], "proof_summaries": [summary]}}
+
+
+def _check_summary(summary, sentence):
+    check_handback(
+        before_state=_before_with_summary(summary),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": _reply(
+            "**Next step:** plan research for this question.", sentence)}],
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "Further checks, such as the 1870 to 1900 censuses or Thomas Flynn's probate records, would only strengthen an answer already in place.",
+    "Later searches of additional census years or a will would only strengthen that answer.",
+])
+def test_relaying_the_summarys_own_gap_list_passes(sentence):
+    _check_summary(_GAP_SUMMARY, sentence)
+
+
+@pytest.mark.parametrize("summary,sentence", [
+    (_GAP_SUMMARY, "Search his land deeds next."),
+    (_DONE_ONLY_SUMMARY, "Search the 1870 census next."),
+    (_DONE_ONLY_SUMMARY, "Search Thomas Flynn's probate records next."),
+])
+def test_a_record_the_summary_does_not_list_as_a_gap_still_fails(summary, sentence):
+    with pytest.raises(AssertionError, match="names a record"):
+        _check_summary(summary, sentence)
