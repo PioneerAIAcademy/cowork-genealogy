@@ -1,0 +1,178 @@
+{
+  "tool": "record_read",
+  "description": "record_read for a source attached to Orpha (Brooks) Wheaton (LZPF-WMT). New York City Municipal Deaths: William Wheaton d. 1893, naming a father Wm. Wheaton. Captured live 2026-11-17 for issue #4584 (feedback #4507/#4508: Orpha (Brooks) Wheaton, LZPF-WMT), re-captured on main rather than copied from the 2381ff72c bundle. Verbatim.",
+  "args": {
+    "recordId": "~2W67-BRD"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14736490960",
+        "ark": "ark:/61903/1:1:2W67-BRZ",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "e6ddf947-a5f3-4ba8-b95b-889b1e601372",
+            "type": "BirthName",
+            "given": "William",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "id": "4e678c9d-bb5f-4c9c-bf99-e299266cbdeb",
+            "type": "Residence",
+            "place": "New York City, New York, New York"
+          },
+          {
+            "id": "6b1c2854-dd8b-40e8-8964-e300240c693f",
+            "type": "Birth",
+            "date": "1818",
+            "standard_date": "1818",
+            "place": "N.Y."
+          },
+          {
+            "id": "bc083aad-c360-46fb-a807-4fb17474d7bf",
+            "type": "Burial",
+            "date": "19 Dec 1893",
+            "standard_date": "19 Dec 1893",
+            "place": "New York City, New York, New York"
+          },
+          {
+            "id": "b7e51ecf-262b-446c-95cd-f8ff04be04fb",
+            "type": "Death",
+            "primary": true,
+            "date": "17 Dec 1893",
+            "standard_date": "17 Dec 1893",
+            "place": "Manhattan, New York, New York, United States",
+            "standard_place": "New York County, New York, United States"
+          }
+        ]
+      },
+      {
+        "id": "p_14736490961",
+        "ark": "ark:/61903/1:1:2W67-BR8",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "ab1bee9f-2d4b-4dcf-bcb1-c9cb7ec133f5",
+            "type": "BirthName",
+            "given": "Wm.",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "15ec755c-98ab-435e-81e2-5fdbcbbc781d",
+            "type": "Birth",
+            "place": "N.Y."
+          }
+        ]
+      },
+      {
+        "id": "p_14736490962",
+        "ark": "ark:/61903/1:1:2W67-BRD",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "2694d447-071c-4f04-bf28-cd7555fd96a5",
+            "type": "BirthName",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "3e53ce72-e96c-4f4a-8e9c-5d74b0594e72",
+            "type": "Birth",
+            "place": "N.Y."
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "f91a59de-1959-4c93-801a-1e7b8a71841f",
+        "type": "ParentChild",
+        "parent": "p_14736490962",
+        "child": "p_14736490960"
+      },
+      {
+        "id": "374fcd2e-6884-4800-965d-87fcab4154b0",
+        "type": "ParentChild",
+        "parent": "p_14736490961",
+        "child": "p_14736490960"
+      },
+      {
+        "id": "c564a754-6792-4936-b868-9d42edd58872",
+        "type": "Couple",
+        "person1": "p_14736490961",
+        "person2": "p_14736490962"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22723276454",
+        "resource_type": "Record",
+        "title": "Entry for William Wheaton, \"New York, New York City Municipal Deaths, 1795-1949\"",
+        "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W67-BRZ : Wed Mar 26 22:53:20 UTC 2025), Entry for William Wheaton and Wm. Wheaton, 17 Dec 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9973-D5BX",
+        "coverage": {
+          "place_rep_id": "4608756",
+          "date_range": "17 Dec 1893",
+          "record_type": "Death",
+          "standard_place": "New York County, New York, United States"
+        }
+      },
+      {
+        "id": "sd_c_2240477",
+        "resource_type": "Collection",
+        "title": "New York, New York City Municipal Deaths, 1795-1949",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2240477",
+        "coverage": {
+          "place_rep_id": "399970",
+          "date_range": "1846/1909",
+          "record_type": "Death",
+          "standard_place": "New York City, New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_14736490960",
+        "resource_type": "Person",
+        "title": "William Wheaton, \"New York, New York City Municipal Deaths, 1795-1949\"",
+        "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W67-BRZ : Wed Mar 26 22:53:20 UTC 2025), William Wheaton, 17 Dec 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:2W67-BRZ"
+      },
+      {
+        "id": "sd_p_14736490961",
+        "resource_type": "Person",
+        "title": "Wm. Wheaton, \"New York, New York City Municipal Deaths, 1795-1949\"",
+        "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W67-BR8 : Wed Mar 26 22:53:20 UTC 2025), Wm. Wheaton in entry for William Wheaton, 17 Dec 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:2W67-BR8"
+      },
+      {
+        "id": "sd_p_14736490962",
+        "resource_type": "Person",
+        "title": "Wheaton, \"New York, New York City Municipal Deaths, 1795-1949\"",
+        "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W67-BRD : Wed Mar 26 22:53:20 UTC 2025), Wheaton in entry for William Wheaton, 17 Dec 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:2W67-BRD"
+      }
+    ],
+    "places": [
+      {
+        "id": "place_4608756"
+      }
+    ],
+    "birthRanges": {
+      "p_14736490960": "Bet 1817 and 1818"
+    }
+  }
+}
