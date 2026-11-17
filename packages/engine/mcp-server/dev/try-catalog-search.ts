@@ -6,6 +6,12 @@
  *   npx tsx dev/try-catalog-search.ts "Ireland" "Catholic parish registers baptism marriage"
  *   npx tsx dev/try-catalog-search.ts "Hammer, Hordaland, Norway" "kirkebøker"
  *   npx tsx dev/try-catalog-search.ts "Javorje nad Škofjo Loko, Slovenia"
+ *   npx tsx dev/try-catalog-search.ts --catalog-id koha:36984
+ *
+ * `--catalog-id <id>` opens one entry (`catalogId`: an id, the digits, or a
+ * Catalog link) instead of searching, and prints that entry's film notes and
+ * access fields. The positional arguments are a place and keywords, so an id
+ * given without the flag is searched for as a PLACE; it is refused beside them.
  *
  * `count` and `hydrate` are sent ONLY when passed (`--count 8 --hydrate 4`), so
  * a bare run measures what an agent that gives a place gets. `--save <file>`
@@ -45,6 +51,7 @@ import { CLI_SPILL_CHARS } from "../tests/helpers/cli-spill.js";
 
 const USAGE =
   "usage: npx tsx dev/try-catalog-search.ts [place] [keywords] [--count N] [--hydrate N] [--save FILE]\n" +
+  "       npx tsx dev/try-catalog-search.ts --catalog-id ID [--save FILE]\n" +
   "       npx tsx dev/try-catalog-search.ts --from FILE [--shape]";
 
 function die(message: string): never {
@@ -59,6 +66,7 @@ interface Args {
   hydrate?: number;
   save?: string;
   from?: string;
+  catalogId?: string;
   shape: boolean;
 }
 
@@ -77,7 +85,13 @@ function parseArgs(argv: string[]): Args {
       shape = true;
       continue;
     }
-    if (name !== "count" && name !== "hydrate" && name !== "save" && name !== "from") {
+    if (
+      name !== "count" &&
+      name !== "hydrate" &&
+      name !== "save" &&
+      name !== "from" &&
+      name !== "catalog-id"
+    ) {
       die(`unknown flag ${a}`);
     }
     const value = argv[++i];
@@ -91,6 +105,11 @@ function parseArgs(argv: string[]): Args {
   // --from would be silently ignored, which reads as "measured with them".
   if (flags.from !== undefined && (positional.length > 0 || Object.keys(flags).length > 1)) {
     die("--from takes a file, and --shape, and nothing else");
+  }
+  // The tool refuses a filter beside catalogId; a place or keywords here would
+  // be that filter, and --from would ignore the id.
+  if (flags["catalog-id"] !== undefined && (positional.length > 0 || flags.from !== undefined)) {
+    die("--catalog-id opens one entry: give it no place, no keywords and no --from");
   }
   // A live answer was shaped by the tool already; shaping it again measures nothing new.
   if (shape && flags.from === undefined) die("--shape applies to --from: a live answer is already shaped");
@@ -109,6 +128,7 @@ function parseArgs(argv: string[]): Args {
     hydrate: whole("hydrate"),
     save: flags.save,
     from: flags.from,
+    catalogId: flags["catalog-id"],
     shape,
   };
 }
@@ -163,7 +183,9 @@ function printFields(
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const input: CatalogSearchInput = {
-    standardPlace: args.place,
+    ...(args.catalogId !== undefined
+      ? { catalogId: args.catalogId }
+      : { standardPlace: args.place }),
     ...(args.keywords !== undefined ? { keywords: args.keywords } : {}),
     ...(args.count !== undefined ? { count: args.count } : {}),
     ...(args.hydrate !== undefined ? { hydrate: args.hydrate } : {}),
@@ -190,10 +212,20 @@ async function main(): Promise<void> {
       : `input sent: ${JSON.stringify(input)}`,
   );
   console.log(
-    `${args.from !== undefined ? "saved answer" : args.place} -> ${r.totalHits} hits, ${r.returned} returned, ${hydrated.length} hydrated ` +
+    `${args.from !== undefined ? "saved answer" : (args.catalogId ?? args.place)} -> ${r.totalHits} hits, ${r.returned} returned, ${hydrated.length} hydrated ` +
       `(hydrateRequested=${r.hydrateRequested}), placeResolved=${r.placeResolved}, ` +
       `hydrationTimedOut=${r.hydrationTimedOut}${args.from !== undefined ? "" : `, ${seconds}s`}`,
   );
+  if (args.catalogId !== undefined) {
+    // The one entry, in full: what a researcher who pasted the link wants.
+    const h = r.hits[0];
+    console.log(`\nentry ${h.id}: ${h.title}`);
+    if (h.creator) console.log(`  creator: ${h.creator}`);
+    console.log(`  repositoryCalls: ${JSON.stringify(h.repositoryCalls)}  availableOnline: ${String(h.availableOnline)}`);
+    for (const f of h.filmNotes ?? []) {
+      console.log(`  film ${f.filmNumber ?? "-"}  DGS ${f.imageGroupNumber ?? "-"}  ${(f.text ?? "").slice(0, 100)}`);
+    }
+  }
   const verdict =
     total > CLI_SPILL_CHARS
       ? `OVER the spill line by ${fmt(total - CLI_SPILL_CHARS)}`

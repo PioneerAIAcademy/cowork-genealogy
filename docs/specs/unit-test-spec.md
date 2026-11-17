@@ -147,6 +147,15 @@ always does): `false` means the agent never saw that tool's answer, `true` means
 could have opened the saved file. It is read from the run's transcripts, not the
 fixture's size, and is not shown to the judge.
 
+An `unparsed_tool_input` entry in `output.warnings` (a harness advisory) means the
+agent wrote a tool call whose input was not valid JSON, so Claude Code refused it
+before the tool saw it and the agent wrote the call again. `count` is how many such
+calls the run made and `bytes` the size of each. They are left out of the
+`uncovered_tool_call` tally, since no fixture can cover one, and the end of every
+suite prints `N tool call(s) in M test(s) were refused as invalid JSON before
+reaching the tool, and written again`, naming the tests. A test can pass with any
+number of them, so read that line when a suite's agent changes model or effort.
+
 **How scenarios reach Claude:** The harness creates a temp directory per test, copies scenario files into it, and sets it as the `cwd` for the Claude Agent SDK session. Skills read `research.json` and `tree.gedcomx.json` with the `Read` tool exactly as they do in Cowork — no mocking of file I/O. See Section 15 for full details.
 
 The README.md describes the scenario in terms genealogists understand:

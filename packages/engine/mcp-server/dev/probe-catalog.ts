@@ -164,6 +164,15 @@
  *      sampled items had none, 6 had a dict, others a list of up to 29).
  *      Any parser must normalize to an array before reading.
  *
+ *      THE NAMESPACE IS IGNORED (measured 2026-11-16, issue #4586): `36984`,
+ *      `koha:36984`, `olib:36984` and `KOHA:36984` all return titleno 36984
+ *      (St. Marylebone christenings 1821-1827, filmno 883645, DGS 9113284);
+ *      `2333650`, `koha:2333650` and `olib:2333650` all return the olib entry.
+ *      One number space, and the item names no namespace (only `titleno`).
+ *      `source` carries `title`, `display_title`, `author` (type "Author" or
+ *      "Added Author") and film notes with `copy_location`, but no
+ *      `repositoryCalls` or `creator`. That is what `catalogId` is built on.
+ *
  *   H. `Accept: application/json` is load-bearing — omit it and the service
  *      answers 200 with XML, so a JSON parse fails on a response that looked
  *      successful. And `identifier.value` IS the item endpoint URL
@@ -492,6 +501,10 @@ async function sectionF(token: string): Promise<void> {
     "koha:3308785", // a book, no film
     "olib:2333650", // the other id namespace
     "koha:99999999999", // unknown
+    "koha:36984", // #4586's pasted link: St. Marylebone christenings
+    "36984", // the same entry, no namespace
+    "olib:36984", // the same entry again: the namespace is not read
+    "koha:2333650", // the olib entry, under the other namespace
   ];
   for (const id of ids) {
     const res = await fetchWithRetry(`${ITEM_URL}/${id}`, {
@@ -506,7 +519,7 @@ async function sectionF(token: string): Promise<void> {
     const shapes = Object.entries(data.source ?? {})
       .map(([k, v]) => `${k}:${Array.isArray(v) ? `list[${v.length}]` : typeof v}`)
       .join(" ");
-    console.log(`  ${id.padEnd(20)} ${res.status}  ${shapes}`);
+    console.log(`  ${id.padEnd(20)} ${res.status}  titleno ${String(data.source?.titleno)}  ${shapes}`);
   }
 }
 
