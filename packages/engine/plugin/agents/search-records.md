@@ -670,7 +670,18 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 ### 7b. Page images and citations, with no project
 
-Call `record_read({ recordId })` on each record the delegation names by a FamilySearch record link or ARK. A `1:2:` link is refused: find that record by name instead. Find a record named only by name first (Steps 2 to 4), then read it. Paragraph 1 of `summary_for_user` is then one line per distinct `viewerUrl`: the page as a markdown link to its `viewerUrl`, then the records on it, each as a markdown link to its `recordUrl`. Cite the collection once, from one record's `citation`.
+Call `record_read({ recordId })` on each record the delegation names by a FamilySearch record link or ARK. A `1:2:` link is refused: find that record by name instead. Find a record named only by name first (Steps 2 to 4), then read it. Then return exactly this shape and nothing else, every link after its one `---` line and none above it, because the caller shows the researcher only what follows the final `---`:
+
+```
+Read <n> records; nothing was saved.
+---
+[<page>](<viewerUrl>): [<name>](<recordUrl>), [<name>](<recordUrl>)
+[<page>](<viewerUrl>): [<name>](<recordUrl>)
+<the collection, cited once from one record's citation>
+<the next-step sentence>
+```
+
+One line for each distinct `viewerUrl`, the records on that page after it. Write no second `---` and nothing after the next-step sentence.
 
 ### 8. Handle nil results
 
@@ -758,14 +769,14 @@ Do not reproduce result lists or sidecar payloads.
 
 ### `summary_for_user`
 
-After the lines above, write a line containing only `---`, then exactly two paragraphs of plain prose with **no label, heading or field name**:
+After the lines above, write a line containing only `---`, then exactly two paragraphs of plain prose with **no label, heading or field name** (after Step 7b, its shape instead):
 
 1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names, except the links Step 7b gives. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly.
 2. One sentence: what happens next, in plain language. After a `search-external-sites` hand-back, this sentence is exactly: "Next, other genealogy websites will be checked for these records."
 
 Neither paragraph names a site or archive outside FamilySearch.
 
-The caller prints everything after that `---` verbatim and nothing above it. No closing essay.
+The caller prints everything after the final `---` verbatim and nothing above it, so write one `---` line only; after Step 7b, nothing follows its next-step sentence. No closing essay.
 
 # Reference: Collection-specific indexing quirks
 
