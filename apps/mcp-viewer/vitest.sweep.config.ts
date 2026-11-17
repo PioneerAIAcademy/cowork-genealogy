@@ -8,7 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['sweep/**/*.sweep.tsx'],
     execArgv: ['--no-experimental-webstorage'],
-    testTimeout: 600_000,
+    // The case-file pass over ~250 projects took 24 minutes on a Windows laptop.
+    testTimeout: 1_800_000,
     silent: false
   }
 })

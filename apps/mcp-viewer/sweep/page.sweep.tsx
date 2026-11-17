@@ -33,6 +33,16 @@ const COMPARE_EXPECTED = [
   { project: 'hannah-earnest-children--run-2026-07-22_19-18-50', personId: 'GN29-3TT', assertionId: 'a_148', tag: 'new', why: 'the tube trade occupation' }
 ]
 
+/** The link card on real data: each named question must read so, with nothing else asked of it. */
+const LINK_EXPECTED = [
+  {
+    project: 'joao-sousa-death--run-2026-11-09_20-41-44',
+    questionId: 'q_001',
+    text: /Ruled out\s*4 links rejected, 2 namesakes/,
+    why: 'the one committed end state with rejected_links, all on the subject'
+  }
+]
+
 interface Staged {
   name: string
   document: ProjectDocument
@@ -125,6 +135,39 @@ it('every card and every narrative renders with no id left, every known pid link
   console.log(`projects ${states.length}, narratives ${narratives}, cards ${cards}, problems ${problems.length}`)
   if (process.env.SWEEP_OUT) writeFileSync(process.env.SWEEP_OUT, problems.join('\n'), 'utf-8')
   expect(problems.length, problems.slice(0, 40).join('\n')).toBe(0)
+})
+
+it('the link card reads as expected on the named end states', () => {
+  const host = document.createElement('div')
+  const states = staged()
+  const problems: string[] = []
+  for (const want of LINK_EXPECTED) {
+    const state = states.find((s) => s.name === want.project)
+    if (!state) {
+      problems.push(`${want.project}: not staged`)
+      continue
+    }
+    const view = cardView(state.document, { show: 'link', questionId: want.questionId })
+    const Card = CARDS[cardKind('link', view)]
+    host.innerHTML = renderToStaticMarkup(<Card view={view} />)
+    const text = (host.textContent ?? '').replace(/\s+/g, ' ')
+    if (!want.text.test(text)) problems.push(`${want.project} ${want.questionId}: no ${want.text} (${want.why}) | ${text.slice(0, 300)}`)
+  }
+  let named = 0
+  for (const { name, document } of states) {
+    for (const question of document.research?.questions ?? []) {
+      const view = cardView(document, { show: 'link', questionId: question.id })
+      const Card = CARDS[cardKind('link', view)]
+      host.innerHTML = renderToStaticMarkup(<Card view={view} />)
+      for (const li of host.querySelectorAll('ul.people li')) {
+        named++
+        const line = (li.textContent ?? '').trim()
+        if (!line || line.startsWith(':')) problems.push(`${name} ${question.id}: a linked person with no name | ${line}`)
+      }
+    }
+  }
+  console.log(`link card: ${named} linked-person lines`)
+  expect(problems, problems.slice(0, 40).join('\n')).toEqual([])
 })
 
 it('the new case file draws its pages and every pane with no id left, for every project', () => {
