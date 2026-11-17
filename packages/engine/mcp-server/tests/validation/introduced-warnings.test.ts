@@ -913,3 +913,36 @@ describe("introducedWarnings — hasPlaceStandardOtherCountry is gate-exempt (is
     ).toBe(true);
   });
 });
+
+describe("competingParentage skips set-aside parents (Decision 26)", () => {
+  const person = (id: string, gender: string) => ({ id, gender, names: [{ id: `${id}-n`, given: id, surname: "Flynn" }], facts: [] });
+  const pc = (id: string, parent: string) => ({ id, type: "ParentChild", parent, child: "I1", sources: [{ ref: "S1" }] });
+  const persons = [person("I1", "Male"), person("I2", "Male"), person("I3", "Male")];
+  const before = { persons, relationships: [pc("R1", "I2")], sources: [{ id: "S1", title: "x" }] } as unknown as SimplifiedGedcomX;
+  const after = { ...before, relationships: [pc("R1", "I2"), pc("R2", "I3")] } as unknown as SimplifiedGedcomX;
+  const claims = {
+  proof_summaries: [
+    {
+      id: "ps_001",
+      question_id: "q_001",
+      tier: "probable",
+      claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+        { claim: "not Thomas", proof_tier: "possible", polarity: "denied", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+      ],
+    },
+  ],
+};
+
+  it("finds the competition with no summary, and none when the import reads set aside", () => {
+    expect(competingParentage(before, after, {})).toHaveLength(1);
+    expect(competingParentage(before, after, claims)).toEqual([]);
+  });
+
+  it("introducedWarnings skips the count on both sides when given research", () => {
+    const ids = (r?: unknown) =>
+      introducedWarnings(before, after, ["I1", "I3"], undefined, undefined, true, true, r).allIntroduced.map((w) => w.issueType);
+    expect(ids()).toContain("tooManyFathers2");
+    expect(ids(claims)).not.toContain("tooManyFathers2");
+  });
+});

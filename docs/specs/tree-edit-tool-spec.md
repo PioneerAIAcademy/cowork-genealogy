@@ -577,7 +577,10 @@ parent arrives by a new edge, a merge, or a parent's gender being set. No
 `warningJustifications` entry passes it: the refusal leads with the route, and
 asks for justifications only for any other warnings the same write introduces.
 An adoptive, step, foster or guardian parent is written with that subtype and is
-never counted. Each value names one parent as
+never counted. Nor is a parent whose edge reads set aside or ruled out in a proof
+summary's claims (`setAsideParents`), on either side, so the concluded parent's
+edge lands beside a set-aside import; a parent with no claim still competes, and
+with no claims the refusal and its routing are unchanged. Each value names one parent as
 `"<personId> <name> (<evidence>)"`. The evidence is the call's
 `sourceAssertionId` for the proposed edge; else the parentage assertions
 `person_evidence` links to that parent on the edge's sources, plus

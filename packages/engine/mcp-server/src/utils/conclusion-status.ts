@@ -80,6 +80,37 @@ export function setAsideBy(
   return null;
 }
 
+/** Every biological parent whose edge reads set aside (Decision 9) or ruled out
+ *  (a `disproved` claim covers it, Decision 10), by child. The parent-count
+ *  warnings and the competing-parentage refusal skip them (Decision 26), so a
+ *  winner's edge lands beside a set-aside import. Empty with no claims: with no
+ *  live summary nothing is skipped and the refusal still routes. */
+export function setAsideParents(research: any, tree: any): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+  const located: Located[] = summaries.flatMap((s: any) =>
+    (Array.isArray(s?.claims) ? s.claims : [])
+      .filter((c: any) => c && typeof c === "object")
+      .map((c: any) => ({ c, summaryId: String(s.id) })),
+  );
+  if (located.length === 0) return out;
+  const gender = new Map<string, string>();
+  for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
+    if (typeof p?.id === "string" && typeof p.gender === "string") gender.set(p.id, p.gender);
+  }
+  const genderOf = (id: string) => gender.get(id);
+  for (const r of Array.isArray(tree?.relationships) ? tree.relationships : []) {
+    if (r?.type !== "ParentChild" || !isBiologicalClaim(r) || typeof r.parent !== "string" || typeof r.child !== "string") continue;
+    const ruledOut = located.some(({ c }) => isDisproved(c) && claimCoversEdge(c, r));
+    if (ruledOut || setAsideBy(r, located, genderOf) !== null) {
+      const set = out.get(r.child) ?? new Set<string>();
+      set.add(r.parent);
+      out.set(r.child, set);
+    }
+  }
+  return out;
+}
+
 export function conclusionStatus(research: any, tree: any, startingTree: any | null): StatusRow[] {
   const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
   const located: Located[] = summaries.flatMap((s: any) =>
