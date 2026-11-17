@@ -106,14 +106,11 @@ why `f1` uses 28 May.
 
 **Why `f3` is not `required: true`.** `f3` is the `polarity: "avoid"` guard
 against the 1835 Lichtental hint. Its avoided claim is a Birth fact on the
-*subject herself*, not a wrongly-attached different person, and
-`apply_avoid_guard` exempts the fixture's own subject from its matcher
-(`eval/harness/e2e/judge.py`, `subject_person_ids`) — so the deterministic
-backstop described in spec §3.4.1 cannot fire here, and `f3` is graded by the
-judge alone. The verdict gate therefore rests on `f1`, which a do-nothing run
-cannot pass; `f3` records restraint without gating the fixture on an
-unbackstopped subjective call. Do not promote it to `required` without first
-giving the guard a way to distinguish the 1835 fact from the 1830 one.
+subject herself. `apply_avoid_guard` now backstops it: it fails `f3` on a Birth
+dated 25 May 1835 on any person, the subject included (spec §3.4.1). `f3` was
+authored optional because the earlier guard could not see a fact on the subject;
+the verdict gate rests on `f1`, which a do-nothing run cannot pass. Promoting
+`f3` to `required` is now possible and is this fixture's own call.
 
 Second opinion: Edmund Oware, 2026-09-11, concurs with outcome 2.
 

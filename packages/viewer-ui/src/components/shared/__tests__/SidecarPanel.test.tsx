@@ -356,21 +356,47 @@ describe('SidecarPanel — fulltext_search / Evaluate button', () => {
     lastMtime: 1
   }
 
-  it('shows no Evaluate hits button when sendPrompt is absent', () => {
+  it('shows no Evaluate search results button when sendPrompt is absent', () => {
     mountWithState(sidecarState)
     render(<SidecarPanel />)
-    expect(screen.queryByRole('button', { name: 'Evaluate hits' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Evaluate search results' })).toBeNull()
   })
 
-  it('clicking Evaluate hits calls sendPrompt with the sidecar log id', async () => {
+  it('clicking Evaluate search results calls sendPrompt with the sidecar log id', async () => {
     const sendPrompt = vi.fn()
     vi.mocked(useResearchData).mockReturnValue({
       ...buildMockContext({ sidecar: sidecarState }),
       sendPrompt
     })
     render(<SidecarPanel />)
-    await userEvent.click(screen.getByRole('button', { name: 'Evaluate hits' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Evaluate search results' }))
+    // The prompt keeps "hits": it is routing text the research skill's evals key on,
+    // not a label; only what the researcher reads on the panel changed.
     expect(sendPrompt).toHaveBeenCalledWith('Evaluate the hits from log_001 against the tree.')
+  })
+
+  it('counts the evaluated results in plain words, never "hits"', () => {
+    const base = buildMockContext({ sidecar: sidecarState })
+    mountWithState(sidecarState, {
+      research: {
+        ...base.research!,
+        hit_verdicts: [
+          {
+            id: 'hv_001',
+            log_id: 'log_001',
+            hit_id: 'ark:/61903/3:1:AAAA-0001',
+            person_id: 'P1',
+            verdict: 'match',
+            new_vital_info: false,
+            rationale: 'Same name, place and date.',
+            created: '2026-10-01T12:00:00Z'
+          }
+        ]
+      }
+    })
+    render(<SidecarPanel />)
+    expect(screen.getByText('1 of 2 search results evaluated')).toBeTruthy()
+    expect(screen.queryByText(/hits evaluated/)).toBeNull()
   })
 })
 

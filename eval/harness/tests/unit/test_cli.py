@@ -2229,3 +2229,31 @@ def test_main_leaves_a_readable_report_beside_the_run_log(tmp_path, monkeypatch)
     report = written[0].parent / "reports" / f"{written[0].stem}.txt"
     assert report.exists()
     assert "ut_a_000  pass" in report.read_text(encoding="utf-8")
+
+
+# --- the suite's line for tool calls refused as invalid JSON (issue #4588) -----
+
+
+def test_the_suite_names_the_tests_whose_tool_calls_were_refused_as_invalid_json(capsys):
+    run_tests._print_unparsed_tool_inputs([
+        {"test_id": "ut_a", "unparsed_tool_inputs": 6},
+        {"test_id": "ut_b", "unparsed_tool_inputs": 0},
+        {"test_id": "ut_c"},
+        {"test_id": "ut_d", "unparsed_tool_inputs": 2},
+    ])
+    out = capsys.readouterr().out
+    assert "8 tool call(s) in 2 test(s) were refused as invalid JSON" in out
+    assert "ut_a x6, ut_d x2" in out
+    assert "ut_b" not in out and "ut_c" not in out
+
+
+def test_the_suite_prints_no_invalid_json_line_when_none_were_refused(capsys):
+    run_tests._print_unparsed_tool_inputs([{"test_id": "ut_a", "unparsed_tool_inputs": 0}, {"test_id": "ut_b"}])
+    assert capsys.readouterr().out == ""
+
+
+def test_the_summary_prints_the_invalid_json_line(capsys):
+    run_tests._print_summary([
+        {"test_id": "ut_a", "skill": "locality-guide", "outcome": "pass", "unparsed_tool_inputs": 3},
+    ])
+    assert "3 tool call(s) in 1 test(s) were refused as invalid JSON" in capsys.readouterr().out

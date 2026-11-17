@@ -67,7 +67,7 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 | **assertion** | One evidence claim extracted from one source, persisted in `research.json`. |
 | **proof summary / `ps_id`** | The written argument resolving one research question, carrying a confidence **tier**: `proved`, `probable`, `possible`, `not_proved`, or `disproved` (a closed enum — `enums.schema.json`). "Tier ≥ probable" in §4 means `proved` or `probable`. |
 | **sidecar** | A raw search payload stored at `results/<log_id>.json` instead of inside `research.json`, so the co-edited file stays small (§6.1). |
-| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
+| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `extraction_append` logs with the read's own ref when it extracts from it; an `image_transcribe` entry with no ref is refused unless it records a failed call), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
 | **projection** | A compact, filtered read of a large document — what `project_context` and `research_query` return instead of the whole file (§6.3). |
 | **compaction** | When a long session's context is summarized to fit the window. Skill bodies can be evicted by it — the reason §3.1 exists. |
 | **fixture** | Two different things. `eval/fixtures/mcp/` holds **mocked tool responses** for unit runs; `eval/tests/e2e/<slug>/` holds a **benchmark case** (a starting project plus expected findings). |
@@ -1578,7 +1578,7 @@ trustworthy rather than merely present:
 
 | Location | What |
 |---|---|
-| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), which no shipped flow logs; `project_create` reads the `person_read` one. 24h TTL. |
+| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), finalized when it is logged with its ref, as `extraction_append` does for the read it extracts from; `project_create` reads the `person_read` one, which is never logged. 24h TTL. |
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. Each entry names its `scorer` (`familysearch` or `service`) and `model`. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail, each line naming its `scorer` and `model`. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
@@ -2397,10 +2397,12 @@ nobody will). `search-hints` decides hints itself on every run. Each has eval fi
 each side. The mode difference survives in the router, which sets that field from the
 flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
 where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
-never to reach its `yes` side, but no check makes the router send the field to
-search-external-sites (the research unit suite checks it only on person-evidence's spawn): one
-committed step-mode run spawned search-external-sites without it, and its capture item
-stayed waiting (`docs/specs/e2e-test-spec.md` §5).
+never to reach its `yes` side, and `ut_research_ue1` (tag `delegates-user-present-no-external`)
+checks that the router sends the field on the opening turn of an autonomous run.
+That is narrower than the miss it was written for: one committed step-mode run
+spawned search-external-sites without the field 166 tool calls in, and its capture
+item stayed waiting (`docs/specs/e2e-test-spec.md` §5). No check covers a spawn
+later in a run, or an attended run's `yes`.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months. The first is fixed; the second stands:

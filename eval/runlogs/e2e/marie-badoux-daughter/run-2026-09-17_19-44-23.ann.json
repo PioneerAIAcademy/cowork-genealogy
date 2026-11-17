@@ -4,10 +4,10 @@
     "f2": "true"
   },
   "notes": {
-    "f1": "Claudine (I8, chr. 12 Oct 1781) is attached to Philippe Thenot and Marie Joly, not to Marie Badoux; no 1781 fact on Marie Badoux, whose only child in the tree is Jean (1780). The extra 27 Jun 1780 marriage date on the Badoux couple does not bear on this finding.",
-    "f2": "ps_001 gives both refuting routes: Marie Badoux died 21 Mar 1780, nineteen months before the baptism, and the mother named is a different woman. It oddly says the 1781 baptism itself was not found, and does not state outright that no record gives her a daughter, but the required negative conclusion is documented."
+    "f1": "I8 Claudine Thenot is linked to Philippe and Marie Joly (R16/R17), not Marie Badoux, and Marie Badoux carries no 1781 fact. Separate tree-quality errors not graded here: Claudine's 12 Oct 1781 christening is sourced to the 1783/1784 baptisms (S4/S5) because the 1781 record was never located, and the Philippe-Marie Badoux couple (R1) carries the 27 Jun 1780 remarriage date, after Marie's death.",
+    "f2": "ps_001 (proved) rejects Marie Badoux as Claudine's mother on the decisive route, her burial on 22 Mar 1780 nineteen months before the christening, and on the 1773 marriage showing her birth surname was Badoux, not Joly."
   },
   "annotator": "benter-070",
   "findings_hash": "4e3663048e170d6f95b43bc296cd74bffd256f16551ac3d175699185aae79571",
-  "blind_bundle_digest": "f1a9e0723b5a59d4203e1e0257b963e49bdb158a2e39613fd30c5f0599beed41"
+  "blind_bundle_digest": "61e18400942845f2d1fcb6602650ed97871742b69dffde9c10219c8989c61b35"
 }

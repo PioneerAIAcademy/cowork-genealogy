@@ -48,7 +48,9 @@
     "place-search-all-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "Recognize Oklahoma was Indian Territory in the mid\u20111800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn\u2019t exist yet).",
