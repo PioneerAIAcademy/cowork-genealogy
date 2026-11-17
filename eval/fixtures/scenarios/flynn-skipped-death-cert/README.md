@@ -1,5 +1,7 @@
 # flynn-skipped-death-cert
 
+> **Parent rebuilt 2026-11-17.** This fork was taken from `flynn-exhaustive-ready` as it stood before that date (later censuses skipped, negative probate search, no Irish search); see the parent's README. This scenario's data is unchanged.
+
 Fork of `flynn-exhaustive-ready` with four plan-item changes:
 
 - **pli_005** (death certificate): `completed` -> `skipped` -- records

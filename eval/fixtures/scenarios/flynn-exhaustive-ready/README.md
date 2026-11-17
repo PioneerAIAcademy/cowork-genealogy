@@ -1,64 +1,70 @@
 # flynn-exhaustive-ready
 
-Patrick Flynn parentage research with all planned searches completed and
-research genuinely exhaustive, but the `search_stop` has not
-yet been written. This is the state immediately before the
-research-exhaustiveness skill fires to declare.
+Patrick Flynn parentage research with every planned search carried out and
+the research genuinely exhaustive, but the `search_stop` not yet written.
+This is the state immediately before research-exhaustiveness declares.
 
-Differs from `flynn-resolved` in these ways:
+## What the project holds
 
-- **`project.objective`:** narrowed to "father" (was "parents") to make
-  the question answerable with the evidence present.
-- **`questions[q_001].question`:** "Who was the father of Patrick Flynn?"
-  (was "Who were the parents?").
+Question `q_001`: who was the father of Patrick Flynn (b. ~1845, d. 1908)?
+The mother is out of scope.
 
-- **`project.status`:** `active` (was `completed`).
-- **`questions[q_001].status`:** `in_progress` (was `resolved`).
-- **`questions[q_001].resolved`:** `null` (was `"2026-05-04"`).
-- **`questions[q_001].resolution_assertion_ids`:** `[]` (was populated).
-- **`questions[q_001].search_stop`:** `stopped_because: null` with
-  empty fields (was a stop-gate value with full `stop_criteria`).
-- **`proof_summaries[ps_001].tier`:** `probable` (was `proved`).
-  The proof summary was written pre-declaration and reflects the
-  provisional assessment.
-- **Plan items:** Three additional plan items added — pli_007 later
-  censuses and pli_009 naturalization with `status: "skipped"` and a
-  rationale explaining why each was considered but not pursued, and
-  pli_008 church records `completed` with a searched negative (log_007).
-  Together these keep Claude from refusing to declare on the ground of an
-  unsearched record type.
-- **`log`:** one entry beyond `flynn-resolved` — `log_007`, the searched
-  negative on pli_008 (see below).
-- **Everything else** (sources, assertions, person_evidence, hypotheses,
-  timelines, conflicts): identical to `flynn-resolved`.
+Plan `pl_002`, all items closed:
+
+| Item | Search | Result |
+|---|---|---|
+| `pli_004` | 1860 census | Patrick, 15, in Thomas Flynn's household (`log_004`) |
+| `pli_005` | 1908 death certificate | names Thomas Flynn as father; informant a son-in-law (`log_005`) |
+| `pli_006` | probate 1860-1890 | Thomas Flynn's will, made 1881, filed 1882, names "my eldest son Patrick Flynn" (`log_006`) |
+| `pli_007` | censuses 1870, 1880, 1900 | 1870 in Thomas's household; 1880 and 1900 head of his own; all give Ireland (`log_008`) |
+| `pli_008` | Pottsville baptismal register 1845-1850 | read page by page, no entry (`log_007`) |
+| `pli_009` | naturalization | `skipped`, `skip_category: "answered"`, with a recorded reason |
+| `pli_010` | indexed Irish Catholic baptisms 1844-1846 | several candidates, none identifiable (`log_009`) |
+
+The birthplace conflict `c_001` (Ireland in the censuses, Pennsylvania on
+the death certificate) is resolved to Ireland. `ps_001` sits at `probable`
+with `shortfall: "ceiling"`: the will is direct evidence, and identifying
+its testator with the 1850-1870 head of household rests on name and county.
 
 ## Used by
 
-- `research-exhaustiveness` affirmative-declaration test: the skill
-  evaluates q_001, determines all criteria are met, and writes
-  a stop-gate `stopped_because` value with all seven `stop_criteria` keys populated.
+- `ut_research_exhaustiveness_d5e`: the agent evaluates `q_001` and declares.
+  The one skipped item, `pli_009`, carries a recorded reason, which the agent
+  accepts as written.
+- `ut_research_exhaustiveness_013`: the same declaration, reached past
+  several unlinked assertions that only corroborate linked ones.
 
-## Why this scenario supports a genuine declaration
+## Rebuilt 2026-11-17
 
-All seven log entries are present (four census searches, one death
-cert, one probate negative, one baptismal-register negative). The plan
-for q_001 (pl_002) has four items completed and two skipped with
-documented rationales. The birthplace conflict (c_001) is resolved.
-Three independent sources support the parentage conclusion. Both
-negative results — probate and baptism — are documented. Overturn risk
-is low.
+Until this date the scenario skipped the 1870-1900 censuses as `answered`
+("three independent sources already converge"), held a negative probate
+search, and had no Irish search. Two genealogists were shown that case and
+both said it was not ready to declare:
+
+- The 1850 and 1860 censuses show co-residence only, and the death
+  certificate, whose informant was a son-in-law, was the only source naming
+  Thomas as father.
+- 1880 is the first census with a relationship column, so skipping the later
+  censuses because earlier sources agree was not a fair skip.
+- Irish Catholic baptisms are name-indexed, so "parish unknown" was not a
+  reason to leave them unsearched.
+- The Pottsville register is worth reading for a different purpose than the
+  one recorded: it tests the death certificate's Pennsylvania birthplace.
+
+The agent, on a cheaper model, declined for the same reasons. The scenario
+was the defect. The later censuses and the Irish index are now searched,
+the probate search finds the will that `flynn-skipped-death-cert` already
+uses for this family, `pli_008` and `log_007` state the purpose above, and
+the proof summary's `shortfall` moved from `gap` to `ceiling`.
+
+Scenarios forked from this one before 2026-11-17 (`flynn-planned-item-blocks`,
+`flynn-skipped-death-cert`, `flynn-unresolved-conflict`) keep the earlier
+evidence and are not changed.
+
+## History
 
 **pli_008 is searched, not assumed away (#2269).** It previously sat
-`skipped` on the rationale that "pre-1850 Irish Catholic parish records
-for Schuylkill County are fragmentary and largely unavailable on
-FamilySearch" — a planning-time assumption no search ever tested, and a
-wrong one: St. John the Baptist, Pottsville (est. 1827) has continuous
-registers across Patrick's birth window. The agent was right to decline
-on it, which is what `ut_research_exhaustiveness_d5e` recorded as an
-`xfail`. Reading the register and recording the negative (log_007) is
-what makes the declaration defensible: the one record type that could
-have supplied original, primary, direct evidence of the father was
-looked for and is not there, so the conclusion rests on the three
-converging sources — and that is exactly why ps_001 sits at `probable`
-rather than `proved`. The `xfail` marker on `_d5e` is removed with this
-change, per its own stated removal condition.
+`skipped` on the rationale that pre-1850 Irish Catholic parish records for
+Schuylkill County are "fragmentary and largely unavailable", a
+planning-time assumption no search tested, and a wrong one: St. John the
+Baptist, Pottsville (est. 1827) has continuous registers across the window.
