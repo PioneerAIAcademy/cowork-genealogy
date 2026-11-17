@@ -17,13 +17,14 @@
  *      the sort keys ascend in list order;
  *   4. per-record latency, each record read on its own, one at a time:
  *      min / median / p95 / max, and the cap the spec's rule gives;
- *   5. the list call's status WITHOUT cc.
+ *   5. the list answer's top-level links (a "next" means the route pages), the
+ *      list call WITHOUT cc, and (Peru) with the viewer URL's i=6 added.
  *
  * `--record <dir>` (Peru page only) writes the raw list body and every raw
  * record body as `<dir>/peru-list.json` and `<dir>/peru-records.json`, the
  * synthetic fixtures' names, so the unit test runs on the recording.
  *
- * Spends about 2 x (records + 1) + 1 FamilySearch requests.
+ * Spends about 2 x (records + 1) + 2 FamilySearch requests.
  */
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -93,6 +94,8 @@ console.log(
       returned: result.returned,
       nextOffset: result.nextOffset,
       hydrationTimedOut: result.hydrationTimedOut,
+      rateLimited: result.rateLimited,
+      listTruncated: result.listTruncated ?? false,
       ordered: result.ordered,
       unhydrated: result.entries.filter((e) => !e.hydrated).length,
       errors: Object.fromEntries(errors),
@@ -119,8 +122,9 @@ if (imageArk === PERU) {
 // ── 3. What the personas carry ──────────────────────────────────────────────
 console.log("\n== 3. persona fields");
 const personas = result.entries.flatMap((e) => e.personas);
-const count = (k: "sortKey" | "role" | "relationshipToHead") => personas.filter((p) => p[k] !== undefined).length;
-console.log(`personas ${personas.length}: sortKey ${count("sortKey")}, role ${count("role")}, relationshipToHead ${count("relationshipToHead")}`);
+const FIELDS = ["sortKey", "lineNumber", "personNumber", "role", "relationshipToHead"] as const;
+const count = (k: (typeof FIELDS)[number]) => personas.filter((p) => p[k] !== undefined).length;
+console.log(`personas ${personas.length}: ${FIELDS.map((k) => `${k} ${count(k)}`).join(", ")}`);
 const firstKeys = result.entries.map((e) => e.personas.find((p) => p.sortKey)?.sortKey);
 const keyed = firstKeys.filter((k): k is string => k !== undefined);
 if (keyed.length > 1) {
@@ -131,9 +135,10 @@ if (keyed.length > 1) {
 
 // ── 4. Per-record latency, one read at a time, and --record ─────────────────
 console.log("\n== 4. per-record latency");
+const listStarted = Date.now();
 const listRes = await fsFetch(LOCAL, listUrl(true), { headers: HEADERS });
 const listText = await listRes.text();
-console.log(`raw list call: HTTP ${listRes.status}, ${listText.length} chars`);
+console.log(`raw list call: HTTP ${listRes.status}, ${listText.length} chars, ${Date.now() - listStarted} ms`);
 if (!listRes.ok) process.exit(1);
 const listBody = JSON.parse(listText) as { sourceDescriptions?: Array<Record<string, any>> };
 const links = (listBody.sourceDescriptions ?? [])
@@ -171,12 +176,22 @@ if (recordDir !== undefined) {
   console.log(`recorded ${links.length} list entries and ${Object.keys(recordBodies).length} records into ${recordDir}`);
 }
 
-// ── 5. The list without cc ──────────────────────────────────────────────────
-console.log("\n== 5. list call without cc");
-if (cc === undefined) {
-  console.log("(no cc was sent in the first place)");
-} else {
-  const bare = await fsFetch(LOCAL, listUrl(false), { headers: HEADERS });
-  const bareText = await bare.text();
-  console.log(`${listUrl(false)}: HTTP ${bare.status}, ${bareText.length} chars`);
+// ── 5. The list without cc, with the viewer's i=, and its links ─────────────
+console.log("\n== 5. list call variants");
+console.log(`list answer's top-level links: ${JSON.stringify(Object.keys((listBody as { links?: object }).links ?? {}))} (a "next" means the route pages)`);
+const variants: string[] = [];
+if (cc !== undefined) variants.push(listUrl(false));
+// The Peru page's own viewer URL carries i=6: does the route take it, and does it change the list?
+if (imageArk === PERU) variants.push(`${listUrl(true)}&i=6`);
+for (const url of variants) {
+  const res = await fsFetch(LOCAL, url, { headers: HEADERS });
+  const text = await res.text();
+  let count = "n/a";
+  try {
+    const body = JSON.parse(text) as { sourceDescriptions?: Array<Record<string, unknown>> };
+    count = String((body.sourceDescriptions ?? []).filter((d) => d?.resourceType === "http://gedcomx.org/Record").length);
+  } catch {
+    // not JSON: the status says enough
+  }
+  console.log(`${url}: HTTP ${res.status}, ${text.length} chars, ${count} Record entries`);
 }

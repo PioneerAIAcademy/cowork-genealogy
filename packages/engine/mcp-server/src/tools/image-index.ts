@@ -9,10 +9,16 @@
 
 import type { Principal } from "../auth/principal.js";
 import { rejectedTokenMessage } from "../auth/config.js";
+import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
-import { IMAGE_ID_PATTERN, isDocumentImageArk, toArk } from "../utils/ark.js";
+import { IMAGE_ID_PATTERN, UNPREFIXED_IMAGE_ID_RE, isDocumentImageArk, toArk } from "../utils/ark.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { fsFetch } from "../utils/fs-fetch.js";
-import { DEFAULT_FETCH_TIMEOUT_MS, describeFetchError } from "../utils/http.js";
+import {
+  MIN_REQUEST_AFTER_WAIT_MS,
+  describeFetchError,
+  isFetchTimeout,
+} from "../utils/http.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { personaIndexFields } from "../utils/record-index-fields.js";
 import type {
@@ -24,13 +30,28 @@ import type {
 
 /** Records read per call. The spec's rule, `min(30, 6 x floor(25 s / p95 read
  *  latency))`, gives 360 at the one measured read (0.41 s), so the spend
- *  ceiling binds: one call never asks FamilySearch more than 1 + 30 times. */
+ *  ceiling binds: 30 record reads, each one attempt, beside the list call's
+ *  (at most three, as fetchWithRetry retries it). */
 export const IMAGE_INDEX_CAP = 30;
 /** Record reads in flight at once. */
 export const IMAGE_INDEX_CONCURRENCY = 6;
 /** The whole call's budget, anchored at entry, under the Cowork bridge's ~60 s
  *  abort (the same figure and shape as catalog_search's). */
 export const IMAGE_INDEX_BUDGET_MS = 50_000;
+/** The longest one record read may run. A stalled read then ends as an error
+ *  entry inside the budget, so the cursor moves past it instead of pinning on
+ *  it; it is about 36 times the one measured read. */
+export const IMAGE_INDEX_READ_TIMEOUT_MS = 15_000;
+/** Every read must end this long before the deadline, so a read cut off by its
+ *  own timeout still lands inside the budget, as an error entry. */
+const READ_MARGIN_MS = 2_000;
+/** The list call's timeout. Under the desktop login fsFetch repeats a request
+ *  that got 401 once, with the same timeout, so two of these (48 s) must fit
+ *  the 50 s budget. */
+const LIST_TIMEOUT_MS = 24_000;
+/** Thrown by fsFetch's `beforeAttempt` when a stop was raised after a read
+ *  passed its own stop check: the request is refused at the last moment. */
+const STOPPED = new Error("image_index: reading stopped");
 
 const FS_ORIGIN = "https://www.familysearch.org";
 const FS_HOST = "www.familysearch.org";
@@ -56,14 +77,19 @@ export const imageIndexSchema = {
     '(e.g. "ark:/61903/3:1:33SQ-GYY1-B2G", or the image viewer URL, whose cc= is ' +
     "used as collectionId). Each entry carries its `index` in FamilySearch's list, " +
     "the record's 1:2: `recordArk`, and `personas` (personaArk, name, principal, and " +
-    "role, relationshipToHead and sortKey when indexed). The entries are UNORDERED " +
-    "(`ordered` is false): neither `index` nor `sortKey` is verified as the line " +
-    "order on the page, so never read either as a line number. One call reads a " +
-    "capped number of records; when `nextOffset` is present, call again with " +
-    "`offset` set to it. An entry with `hydrated: false` was not read and its " +
-    "`error` says why; retry it with `offset` set to its `index`. " +
-    "`hydrationTimedOut` means the call ran out of time before reading every " +
-    "record in its window. Use record_read on a personaArk for the full record.",
+    "role, relationshipToHead, sortKey, lineNumber and personNumber when indexed). " +
+    "The entries are UNORDERED (`ordered` is false): none of `index`, `sortKey`, " +
+    "`lineNumber` or `personNumber` is verified as the line order on the page. A " +
+    "viewer URL's i= is not sent: the list is for the ARK itself, so open the one " +
+    "image and pass its own ARK. 3:2: ARKs are passed through but unmeasured. One " +
+    "call reads a capped number of records; when `nextOffset` is present, call " +
+    "again with `offset` set to it. An entry with `hydrated: false` was not read " +
+    "and its `error` says why; when that is a timeout, a network error or a 5xx, retry it " +
+    "with `offset` set to its `index`. `hydrationTimedOut`: the call ran out of " +
+    "time. `rateLimited`: FamilySearch is rate-limiting, so wait a minute before " +
+    "calling again with `nextOffset`. `listTruncated`: FamilySearch's list was " +
+    "paged and only its first part is here. Use record_read on a personaArk for " +
+    "the full record.",
   inputSchema: {
     type: "object",
     properties: {
@@ -71,7 +97,8 @@ export const imageIndexSchema = {
         type: "string",
         description:
           "The page's document-image ARK (3:1:), in any form: ark:/61903/3:1:..., " +
-          "3:1:..., or a FamilySearch URL containing it.",
+          "3:1:..., the 4-4-4-1 image id alone (as image_read takes it), or a " +
+          "FamilySearch URL containing it.",
       },
       collectionId: {
         type: "string",
@@ -117,7 +144,8 @@ function parseImage(input: ImageIndexInput): ParsedImage {
         "imageArk).",
     );
   }
-  const ark = toArk(text);
+  // The id alone, as image_read and image_transcribe also take it.
+  const ark = UNPREFIXED_IMAGE_ID_RE.test(text) ? `ark:/61903/3:1:${text}` : toArk(text);
   if (/^ark:\/61903\/1:[12]:/.test(ark)) {
     throw new Error(
       `imageId "${text}" is a 1:1: persona or 1:2: record ARK, not an image. ` +
@@ -162,8 +190,14 @@ function collectionFromUrl(text: string): string | undefined {
   } catch {
     return undefined;
   }
-  const cc = url.searchParams.get("cc");
-  if (cc === null) return undefined;
+  const values = [...new Set(url.searchParams.getAll("cc"))];
+  if (values.length === 0) return undefined;
+  if (values.length > 1) {
+    throw new Error(
+      `imageId's URL carries more than one cc= (${values.join(", ")}). Keep the right one, or pass collectionId.`,
+    );
+  }
+  const cc = values[0];
   if (!DIGITS.test(cc)) {
     throw new Error(
       `imageId's URL carries cc=${cc}, which is not a collection id. Drop it, or pass collectionId.`,
@@ -221,15 +255,21 @@ export function recordLink(href: unknown): { url: string; id: string } | undefin
   return m ? { url: url.toString(), id: m[1] } : undefined;
 }
 
+interface RecordList {
+  records: ListedRecord[];
+  /** The answer carried a next-page link (GedcomX `links.next`). */
+  truncated: boolean;
+}
+
 async function readList(
   principal: Principal,
   image: ParsedImage,
   deadline: number,
-): Promise<ListedRecord[]> {
+): Promise<RecordList> {
   const url =
     `${FS_ORIGIN}/platform/records/images/${image.pathId}/records` +
     (image.collectionId !== undefined ? `?cc=${image.collectionId}` : "");
-  const timeout = Math.max(1, Math.min(DEFAULT_FETCH_TIMEOUT_MS, deadline - Date.now()));
+  const timeout = Math.max(1, Math.min(LIST_TIMEOUT_MS, deadline - Date.now()));
   const res = await fsFetch(principal, url, { headers: HEADERS }, timeout);
 
   if (!res.ok) {
@@ -245,6 +285,9 @@ async function readList(
       throw new Error(
         `FamilySearch has no record list for image ${image.ark} (404): the page may not be ` +
           "indexed, or the id is wrong." +
+          (image.pathId.startsWith("3:2:")
+            ? " This route has been measured only with 3:1: image ARKs."
+            : "") +
           (image.collectionId === undefined
             ? " If the image viewer's URL carries cc=, pass that number as collectionId."
             : ""),
@@ -271,13 +314,15 @@ async function readList(
       `FamilySearch's record list for image ${image.ark} could not be read (not the GedcomX it sends). Try again later.`,
     );
   }
-  return (Array.isArray(descriptions) ? descriptions : [])
+  const records = (Array.isArray(descriptions) ? descriptions : [])
     .filter((d): d is Record<string, unknown> => isObject(d) && d.resourceType === RECORD_TYPE)
     .map((d) => {
       const links = isObject(d.links) ? d.links : undefined;
       const record = links && isObject(links.record) ? links.record : undefined;
       return { link: recordLink(record?.href) };
     });
+  const next = isObject(body.links) ? body.links.next : undefined;
+  return { records, truncated: isObject(next) && nonBlank(next.href) !== undefined };
 }
 
 // ─── One record ────────────────────────────────────────────────────────────
@@ -288,19 +333,29 @@ function nonBlank(v: unknown): string | undefined {
 
 function personaName(p: Record<string, unknown>): string | undefined {
   const names = Array.isArray(p.names) ? p.names.filter(isObject) : [];
-  const chosen = names.find((n) => n.preferred === true) ?? names[0];
-  const forms = chosen && Array.isArray(chosen.nameForms) ? chosen.nameForms.filter(isObject) : [];
-  for (const form of forms) {
-    const text = nonBlank(form.fullText);
-    if (text) return text;
+  // The preferred name first, then the rest in order: a preferred name with no
+  // text must not hide a name the record does carry.
+  const ordered = [...names.filter((n) => n.preferred === true), ...names.filter((n) => n.preferred !== true)];
+  for (const name of ordered) {
+    const forms = Array.isArray(name.nameForms) ? name.nameForms.filter(isObject) : [];
+    for (const form of forms) {
+      const text = nonBlank(form.fullText);
+      if (text) return text;
+    }
   }
   return nonBlank(isObject(p.display) ? p.display.name : undefined);
 }
 
+/** The first Persistent identifier that is a 1:1 persona ark, the form
+ *  record_read takes; anything else is not handed on as a personaArk. */
 function personaArk(p: Record<string, unknown>): string | undefined {
   const ids = isObject(p.identifiers) ? p.identifiers[PERSISTENT] : undefined;
-  const first = Array.isArray(ids) ? nonBlank(ids[0]) : undefined;
-  return first ? toArk(first) : undefined;
+  for (const id of Array.isArray(ids) ? ids : []) {
+    const text = nonBlank(id);
+    const ark = text ? toArk(text) : undefined;
+    if (ark && /^ark:\/61903\/1:1:[A-Za-z0-9-]+$/.test(ark)) return ark;
+  }
+  return undefined;
 }
 
 /** The personas on a record body, or undefined when it is not a record. */
@@ -318,18 +373,30 @@ function readPersonas(body: unknown): ImageIndexPersona[] | undefined {
       ...(role ? { role } : {}),
       ...(fields?.relationshipToHead ? { relationshipToHead: fields.relationshipToHead } : {}),
       ...(fields?.sortKey ? { sortKey: fields.sortKey } : {}),
+      ...(fields?.lineNbr ? { lineNumber: fields.lineNbr } : {}),
+      ...(fields?.personNbr ? { personNumber: fields.personNbr } : {}),
     };
   });
 }
 
-async function readFailure(status: number, principal: Principal): Promise<string> {
-  if (status === 401) return `HTTP 401: ${await rejectedTokenMessage(principal)}`;
+/** An entry's error for a status the tool does not stop on (401 and 429 stop
+ *  the reading instead). Only a server error is worth a retry. */
+function readFailure(status: number): string {
   if (status === 403) return "HTTP 403: this record is restricted and cannot be read.";
   if (status === 404) return "HTTP 404: FamilySearch has no record at this link.";
-  if (status === 429) {
-    return "HTTP 429: FamilySearch rate limit. Wait a minute, then call again with offset set to this entry's index.";
+  if (status >= 500) return `HTTP ${status}: call again with offset set to this entry's index to retry it.`;
+  return `HTTP ${status}: FamilySearch refused this record read.`;
+}
+
+/** The session's own refusal message when it is not usable now, else
+ *  undefined. Never throws. */
+async function sessionProblem(principal: Principal): Promise<string | undefined> {
+  try {
+    await getValidToken(principal);
+    return undefined;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
   }
-  return `HTTP ${status}: call again with offset set to this entry's index to retry it.`;
 }
 
 // ─── The tool ──────────────────────────────────────────────────────────────
@@ -343,7 +410,8 @@ export async function imageIndexTool(
   const offset = parseOffset(input);
   const deadline = Date.now() + IMAGE_INDEX_BUDGET_MS;
 
-  const listed = await readList(principal, image, deadline);
+  const list = await readList(principal, image, deadline);
+  const listed = list.records;
   const total = listed.length;
   if (offset > 0 && offset >= total) {
     throw new Error(
@@ -353,9 +421,38 @@ export async function imageIndexTool(
   }
 
   const window = listed.slice(offset, offset + IMAGE_INDEX_CAP);
-  // A slot is written only when its read finished before the deadline, so an
-  // empty slot is an unfinished read, whichever side wins the race below.
+  // The invariant (spec, "How much one call reads"): every record in the
+  // window ends as an entry, or unread with the answer saying why, or the whole
+  // call asks for a sign-in; and nothing that lands at or after the deadline
+  // changes the answer. Every outcome goes through `settle`, which enforces the
+  // second half.
   const slots: Array<ImageIndexEntry | undefined> = new Array(window.length).fill(undefined);
+  // Unread because reading stopped on a rate limit; any other unread record is
+  // unread for lack of time.
+  const stoppedAt: boolean[] = new Array(window.length).fill(false);
+  // `signIn`: undefined while the session works; null for a 401 (answered with
+  // rejectedTokenMessage); the session's own message when getValidToken threw.
+  const stop: { rateLimited: boolean; signIn?: string | null } = { rateLimited: false };
+  type Outcome =
+    | { entry: ImageIndexEntry }
+    | { rateLimited: true }
+    | { skippedAfterStop: true }
+    | { signIn: string | null };
+  const settle = (i: number, outcome: Outcome): void => {
+    // Landed at or past the deadline: changes nothing, so the same call's
+    // answer never depends on how the event loop was scheduled.
+    if (Date.now() >= deadline) return;
+    if ("entry" in outcome) {
+      slots[i] = outcome.entry;
+    } else if ("rateLimited" in outcome) {
+      stop.rateLimited = true;
+      stoppedAt[i] = true;
+    } else if ("skippedAfterStop" in outcome) {
+      stoppedAt[i] = true;
+    } else {
+      stop.signIn = stop.signIn ?? outcome.signIn;
+    }
+  };
 
   if (window.length > 0) {
     // Every task catches its own error, so `work` cannot reject, and nothing
@@ -363,45 +460,86 @@ export async function imageIndexTool(
     const work = mapWithConcurrency(window, IMAGE_INDEX_CONCURRENCY, async (item, i) => {
       const index = offset + i;
       if (item.link === undefined) {
-        slots[i] = { index, hydrated: false, personas: [], error: NOT_A_RECORD_LINK };
+        settle(i, { entry: { index, hydrated: false, personas: [], error: NOT_A_RECORD_LINK } });
+        return;
+      }
+      // After a stop no read starts. A rate-limit stop leaves this record
+      // unread for that reason; a sign-in stop makes the whole call throw.
+      if (stop.rateLimited || stop.signIn !== undefined) {
+        if (stop.rateLimited) settle(i, { skippedAfterStop: true });
         return;
       }
       const recordArk = `ark:/61903/1:2:${item.link.id}`;
-      // REACHABLE, unlike catalog_search's twin: with more records than
-      // workers, queued reads start after the race has returned. Such a read
-      // makes no request at all (no token read, no hosted budget slot, and no
-      // zero timeout, which AbortSignal.timeout would refuse).
-      const remaining = deadline - Date.now();
-      if (remaining <= 0) return;
-      let entry: ImageIndexEntry;
+      // A read must end READ_MARGIN_MS before the deadline, so one cut off by
+      // its own timeout is still an entry (with its error) and the cursor moves
+      // past it. REACHABLE, unlike catalog_search's twin: with more records
+      // than workers, queued reads start late. One with too little time left
+      // makes no request at all (no token read, no hosted budget slot) and
+      // stays unread for lack of time, so the cursor points at it.
+      const time = Math.min(IMAGE_INDEX_READ_TIMEOUT_MS, deadline - READ_MARGIN_MS - Date.now());
+      if (time < MIN_REQUEST_AFTER_WAIT_MS) return;
+      const failed = (error: string): Outcome => ({
+        entry: { index, recordArk, hydrated: false, personas: [], error },
+      });
       try {
-        // One attempt: retries would let one call spend past the cap.
-        const res = await fsFetch(principal, item.link.url, { headers: HEADERS }, remaining, {
+        // One attempt: retries would let one call spend past the cap. The
+        // `beforeAttempt` check runs after any token read or connector pause
+        // wait, just before the request, so a stop raised meanwhile still
+        // keeps it from going out.
+        const res = await fsFetch(principal, item.link.url, { headers: HEADERS }, time, {
           attempts: 1,
+          beforeAttempt: async () => {
+            if (stop.rateLimited || stop.signIn !== undefined) throw STOPPED;
+          },
         });
+        if (res.status === 401 || res.status === 429) {
+          // The stop is raised when the status arrives, before the drain.
+          settle(i, res.status === 401 ? { signIn: null } : { rateLimited: true });
+          await res.text().catch(() => "");
+          return;
+        }
         if (!res.ok) {
+          settle(i, failed(readFailure(res.status)));
           // An unread undici body holds its socket until GC.
           await res.text().catch(() => "");
-          entry = { index, recordArk, hydrated: false, personas: [], error: await readFailure(res.status, principal) };
-        } else {
-          let body: unknown;
-          try {
-            body = await res.json();
-          } catch {
-            body = undefined;
-          }
-          const personas = readPersonas(body);
-          entry = personas
-            ? { index, recordArk, hydrated: true, personas }
-            : { index, recordArk, hydrated: false, personas: [], error: UNREADABLE_RECORD };
+          return;
         }
+        // Read inside this `try`: a body that stalls past the read's timeout or
+        // a socket reset mid-body is this read's (retryable) error. Only a body
+        // that arrives whole and does not parse is "unreadable".
+        const text = await res.text();
+        let body: unknown;
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = undefined;
+        }
+        const personas = readPersonas(body);
+        settle(i, personas ? { entry: { index, recordArk, hydrated: true, personas } } : failed(UNREADABLE_RECORD));
       } catch (err) {
-        entry = { index, recordArk, hydrated: false, personas: [], error: describeFetchError(err) };
+        if (err === STOPPED) {
+          if (stop.rateLimited) settle(i, { skippedAfterStop: true });
+          return;
+        }
+        // The hosted request budget, or this user's 429 pause, refused it
+        // before any network I/O: the same stop as a 429.
+        if (isFsBudgetExhausted(err)) {
+          settle(i, { rateLimited: true });
+          return;
+        }
+        // Beside a fetch timeout, what fsFetch throws is a network failure or
+        // getValidToken's own refusal (signed out, or a refresh that failed,
+        // before the request or after a 401). Ask the session which: a lost
+        // session is the whole call's answer, not one record's error.
+        if (!isFetchTimeout(err)) {
+          const problem = await sessionProblem(principal);
+          if (problem !== undefined) {
+            settle(i, { signIn: problem });
+            return;
+          }
+        }
+        settle(i, failed(describeFetchError(err)));
       }
-      // Landed at or past the deadline: unfinished, never a late write that
-      // makes the same call's answer depend on scheduling.
-      if (Date.now() >= deadline) return;
-      slots[i] = entry;
     });
     let timer: ReturnType<typeof setTimeout> | undefined;
     const expiry = new Promise<void>((resolve) => {
@@ -414,12 +552,17 @@ export async function imageIndexTool(
     }
   }
 
-  // The answer is the finished prefix: it stops at the first unfinished read,
-  // so nextOffset points at it and no record is skipped.
+  if (stop.signIn !== undefined) {
+    throw new Error(stop.signIn ?? (await rejectedTokenMessage(principal)));
+  }
+  // The answer is the finished prefix: it stops at the first unread record, so
+  // nextOffset points at it and no record is skipped.
   const snapshot = slots.slice();
+  const stoppedSnapshot = stoppedAt.slice();
   let finished = 0;
   while (finished < snapshot.length && snapshot[finished] !== undefined) finished++;
-  const hydrationTimedOut = finished < window.length;
+  const rateLimited = stop.rateLimited;
+  const hydrationTimedOut = snapshot.some((slot, i) => slot === undefined && !stoppedSnapshot[i]);
   let entries = snapshot.slice(0, finished) as ImageIndexEntry[];
 
   const build = (kept: ImageIndexEntry[]): ImageIndexResult => ({
@@ -432,6 +575,8 @@ export async function imageIndexTool(
     ...(offset + kept.length < total ? { nextOffset: offset + kept.length } : {}),
     ordered: false,
     hydrationTimedOut,
+    rateLimited,
+    ...(list.truncated ? { listTruncated: true as const } : {}),
   });
   let result = build(entries);
   // Over the budget, drop trailing entries; nextOffset follows them. One is

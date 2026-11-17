@@ -26,6 +26,12 @@ export interface ImageIndexPersona {
   /** FamilySearch's `FS_SORT_KEY` index field, when the record carries one.
    *  Passed through; not verified as the line order on the page. */
   sortKey?: string;
+  /** The schedule's line number as indexed (`PR_EXT_LINE_NBR`), when the
+   *  record carries one. Passed through, like `sortKey`. */
+  lineNumber?: string;
+  /** The person number on the source page as indexed (`SOURCE_PERSON_NBR`),
+   *  when the record carries one. Passed through, like `sortKey`. */
+  personNumber?: string;
 }
 
 export interface ImageIndexEntry {
@@ -57,4 +63,10 @@ export interface ImageIndexResult {
   ordered: false;
   /** Some record in this call's window was still unread at the deadline. */
   hydrationTimedOut: boolean;
+  /** FamilySearch rate-limited a record read (429), or this server's own
+   *  FamilySearch limit refused one, so reading stopped at `nextOffset`. */
+  rateLimited: boolean;
+  /** FamilySearch's list answer carried a next-page link this tool does not
+   *  follow, so `total` counts only the records it returned. */
+  listTruncated?: true;
 }
