@@ -2087,6 +2087,51 @@ def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monke
     )
 
 
+def test_orchestrator_threads_variant_names_into_validators(tmp_path, monkeypatch):
+    """A test JSON's top-level `variant_names` must reach the `test` dict
+    run_validators receives (issue #4584) — the same whitelist trap
+    `index_error_source` hit. Without it the tagged test has no names, and
+    test_name_variant_not_called_index_error fails every run for a missing
+    declaration instead of judging the reply."""
+    spec = load_test(WIKI_TEST_PATH)
+    spec.raw["variant_names"] = ["Smyth", "Smithe"]
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert captured["test"].get("variant_names") == ["Smyth", "Smithe"], (
+        "orchestrator did not thread spec.raw['variant_names'] into "
+        "run_validators' test dict"
+    )
+
+
 
 def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_path, monkeypatch):
     """`input.delegation` and `builtin_tool_calls` must both reach run_validators.

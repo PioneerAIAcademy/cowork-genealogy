@@ -1531,3 +1531,93 @@ def test_age_derived_birth_is_not_a_conflict(text_response, test, agent_returns=
         "the reply does not report the exact-date conflict "
         f"({required.get('date')}), which a birth range must not hide"
     )
+
+
+# --- a stated name variant is not an index error (issue #4584) ---------------
+#
+# A name that differs from the profile only by a spelling that sounds the same
+# (the 1850 census's "Orfey" for Orpha) is a variant the record states. Calling
+# it an index or transcription error, or recommending an index correction for
+# it, sends a beginner to "correct" a correct index entry. Scoped to the names
+# the test declares, per `_passages` unit, because a correct report can still
+# recommend an index correction for some other source. unit-test-spec.md § 5.13.
+
+_VARIANT_ERROR_TERM = re.compile(
+    r"\bindex(?:ing|er'?s?)?\s+(?:errors?|mistakes?|corrections?)\b"
+    r"|\bsubmit\s+(?:an?\s+)?(?:index\s+)?correction\b"
+    r"|\btranscription\s+(?:errors?|mistakes?)\b"
+    r"|\bmis-?transcri\w*"
+    r"|\bmis-?read(?:s|ing)?\b"
+    r"|\bmis-?keyed\b"
+    r"|\bcorrect(?:s|ing)?\s+the\s+index\b",
+    re.IGNORECASE,
+)
+# `no` counts here, unlike the detach guards: "no index correction is needed"
+# is how the body's own rule is phrased back.
+_VARIANT_NEGATOR = re.compile(
+    r"\b(?:" + "|".join(re.escape(n) for n in _NEGATORS + ("no", "neither", "nor")) + r")\b",
+    re.IGNORECASE,
+)
+_VARIANT_NEGATOR_REACH = re.compile(r"^(?:\s+[\w'-]+){0,3}\s*$")
+# "not an indexing error or a transcription error": one denial covers both.
+_VARIANT_OR_JOIN = re.compile(r"\s+(?:or|nor)\s+(?:an?\s+|the\s+)?", re.IGNORECASE)
+# "no doubt a misread", "without a doubt": emphasis, not negation.
+_VARIANT_EMPHASIS = re.compile(r"^\s+(?:a\s+)?(?:doubt|question)\b", re.IGNORECASE)
+
+
+def _variant_term_negated(text: str, at: int) -> bool:
+    before = text[max(0, at - _NEG_WINDOW - 20):at]
+    low = before.lower()
+    cut = max((low.rfind(b) + len(b) for b in _CLAUSE_BREAKS if b in low), default=0)
+    clause = before[cut:]
+    for m in _VARIANT_NEGATOR.finditer(clause):
+        rest = clause[m.end():]
+        if _VARIANT_EMPHASIS.match(rest):
+            continue
+        if _VARIANT_NEGATOR_REACH.match(rest):
+            return True
+    return False
+
+
+def _variant_error_passage(reply: str, names: list[str]) -> str | None:
+    name_re = re.compile(
+        r"\b(?:" + "|".join(re.escape(n) for n in names) + r")\b", re.IGNORECASE
+    )
+    for passage in _passages(_unemphasised(reply)):
+        if not name_re.search(passage):
+            continue
+        prev_end, prev_negated = None, False
+        for m in _VARIANT_ERROR_TERM.finditer(passage):
+            joined = prev_end is not None and _VARIANT_OR_JOIN.fullmatch(
+                passage[prev_end:m.start()]
+            )
+            negated = (prev_negated and bool(joined)) or _variant_term_negated(
+                passage, m.start()
+            )
+            if not negated:
+                return passage
+            prev_end, prev_negated = m.end(), negated
+    return None
+
+
+def test_name_variant_not_called_index_error(text_response, test, agent_returns=None):
+    """A declared name variant is never called an index error or given an index correction."""
+    if "name-variant" not in (test.get("tags") or []):
+        pytest.skip("test does not declare a name variant")
+    if test.get("type") != "positive":
+        pytest.skip("negative tests route away and produce no audit")
+    names = [n for n in (test.get("variant_names") or []) if n]
+    assert names, (
+        "test is tagged name-variant but declares no variant_names; without them "
+        "this guard checks nothing"
+    )
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    bad = _variant_error_passage(reply, names)
+    assert bad is None, (
+        f"a spelling the record states ({', '.join(names)}) was called an index or "
+        "transcription error, or given an index correction:\n"
+        f"  {bad.strip()[:400]!r}\n"
+        "Report it as a form of the name the record states, outside the findings."
+    )

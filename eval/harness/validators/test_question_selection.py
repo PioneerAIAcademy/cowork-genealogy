@@ -23,6 +23,7 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
@@ -198,17 +199,22 @@ def _last_sentence(text: str) -> str:
     return sentences[-1].strip() if sentences else ""
 
 
-def _project_has_planned_item(before: dict) -> bool:
-    """True iff any plan item is already `planned` or `in_progress` --
-    i.e. already weighed by research-plan, so naming it is describing the
-    plan, not choosing a record (issue #4166's carve-out). Same two
-    statuses `test_research_exhaustiveness.py` treats as "still
-    outstanding" for the same reason."""
-    for plan in before.get("plans") or []:
-        for item in plan.get("items") or []:
-            if item.get("status") in ("planned", "in_progress"):
-                return True
-    return False
+def _held_record_text(before: dict) -> str:
+    """The before-state research.json text a hand-back may name a record type
+    from: its sources, every plan's items except `skipped` ones, and its
+    assertions (lead decision on issue #4382, 2026-11-16). A skipped item is
+    neither held nor planned, so its rationale ("probate records burned in
+    1865") must not license searching that record. A record type that appears here is one the
+    project already holds or plans; naming it describes the project, not a
+    search to run next. Proof summaries count only through
+    `_conclusion_gap_patterns`: a summary that names a record as work done
+    ("Searched 1850 census") does not license searching another one."""
+    held = {
+        "sources": before.get("sources") or [],
+        "plan_items": [item for plan in before.get("plans") or [] for item in plan.get("items") or [] if item.get("status") != "skipped"],
+        "assertions": before.get("assertions") or [],
+    }
+    return json.dumps(held, ensure_ascii=False)
 
 
 _QUESTION_WORD_AFTER = re.compile(r"(?:\s+[\w-]+){0,2}?\s+questions?\b", re.IGNORECASE)
@@ -284,30 +290,33 @@ def _conclusion_gap_patterns(before: dict) -> set[str]:
 
 
 def test_handback_not_record_scoped(before_state, text_response, test, agent_returns=None):
-    """The hand-back (caller lines + `summary_for_user`) must not name a
-    record type, collection, repository, jurisdiction-as-record-source or
-    census/record year. Choosing those is research-plan's job (SKILL.md
-    "Return contract"); naming one here is the same defect
-    `test_new_question_not_record_scoped` catches in the question text
-    itself, one layer further out — issue #4166.
+    """The hand-back (the last caller line and `summary_for_user`'s last
+    sentence) may name a record type only as the project already holds or
+    plans it, never one to search next. Choosing a record to search is
+    research-plan's job; naming one here is the defect
+    `test_new_question_not_record_scoped` catches in the question text itself,
+    one layer further out (issue #4166).
 
-    Runs on every question-selection test, not tag-gated: the population is
-    suite-wide (issue #4166, "Measured"). The one exemption is a project
-    that already has a `planned` plan item — the record choice was already
-    weighed by research-plan, and `stay-inside-objective-scope.json` (plus
-    its `direct-` twin) expect the hand-back to describe that item as the
-    plan already states it. A record word that is part of naming an existing
-    question is not a match (`_names_existing_question`), nor is a record a
-    proof summary already lists as still to search (`_conclusion_gap_patterns`).
+    Decided from the project's files, not from wording (lead decision on issue
+    #4382, 2026-11-16): each `_RECORD_SCOPED_PATTERNS` hit in a snippet passes
+    when the same pattern matches the before-state's sources, plan items or
+    assertions, or a record a proof summary lists as still to search
+    (`_conclusion_gap_patterns`, PR #4610), and fails otherwise. Every pattern is checked, so a
+    snippet naming one held and one unheld record type fails. This replaced a
+    skip for any project with a `planned` or `in_progress` item, which it
+    subsumes. Accepted leak: a project already holding a census source can be
+    told to search another census.
+
+    A record word that is part of naming an existing question
+    (`_names_existing_question`, PR #4610) also passes.
     """
     before = before_state.get("research_json")
     if before is None:
         pytest.skip("missing research.json")
-    if _project_has_planned_item(before):
-        pytest.skip("a planned plan item already exists — naming it is expected")
     reply = subject_reply_text(agent_returns, text_response, "question-selection", test)
     if not reply:
         pytest.skip("question-selection made no return")
+    held = _held_record_text(before)
     caller_line = _last_nonblank_line(_head_before_final_rule(reply))
     summary_tail = _last_sentence(tail_after_final_rule(reply))
     questions = before.get("questions") or []
@@ -315,14 +324,15 @@ def test_handback_not_record_scoped(before_state, text_response, test, agent_ret
     offenders: list[str] = []
     for label, snippet in (("next-step hint", caller_line), ("summary_for_user", summary_tail)):
         for pattern in _RECORD_SCOPED_PATTERNS:
-            if pattern in listed_gaps:
+            if pattern in listed_gaps or re.search(pattern, held, re.IGNORECASE):
                 continue
             if any(
                 not _names_existing_question(snippet, m, pattern, questions)
                 for m in re.finditer(pattern, snippet, re.IGNORECASE)
             ):
-                offenders.append(f"{label} names a record (matched /{pattern}/): {snippet!r}")
-                break
+                offenders.append(
+                    f"{label} names a record the project does not hold or plan (matched /{pattern}/): {snippet!r}"
+                )
     assert not offenders, (
         "hand-back names a record target that only research-plan can weigh:\n  - "
         + "\n  - ".join(offenders)
