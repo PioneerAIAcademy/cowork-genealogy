@@ -173,6 +173,12 @@ autonomous run it would wait for a researcher who is not there.
 which the judge cannot see. SKILL.md states the rule at each routing row and
 dispatch list that reaches the agent, not only in the spawn-fields contract.
 
+`ut_research_uq1` clones `ut_research_023` on `empty-project-two-fact-objective`.
+question-selection reads a missing `userPresent` as a researcher being there, so
+on an autonomous run it would ask which fact of the objective to research first.
+`delegates-qs-user-present-no` asserts `userPresent: no` in the question-selection
+spawn.
+
 ## What is NOT covered (and why)
 
 - **Second-opinion verdict handling**: gps-mentor is not a routing row; it
