@@ -1650,7 +1650,14 @@ PROJECT_WRITER_TOOLS = {
 # appends its in-flight hand-off log entry then, and writes nothing otherwise.
 # Counted only when it carried one, so a pure URL build cannot vouch for a
 # hand edit made in the same run.
-CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url"}
+#
+# `record_search` joins them at issue #4527: with a projectPath it appends a nil
+# search's own log entry, and writes nothing without one. Conditional rather than
+# unconditional for the same reason — a no-project search cannot vouch for a hand
+# edit. It writes on a narrower condition still (only when the search found
+# nothing), but nil-ness is not visible in the call's args, and the projectPath
+# test is the one this guard can actually make.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"}
 
 
 def _is_project_writer_call(call: dict) -> bool:

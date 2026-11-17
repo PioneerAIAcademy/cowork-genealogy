@@ -588,8 +588,14 @@ def test_staging_tool_sets_agree_across_the_two_copies():
     assert ts_extra == {"image_transcribe", "record_read", "person_read"}
 
 
-def test_nil_search_carries_the_negative_log_note(tmp_path):
-    """The emission CONDITION, not the text — a text-only test passes on a wrong gate."""
+def test_a_nil_record_search_no_longer_asks_the_agent_to_log_it(tmp_path):
+    """The emission CONDITION, not the text — a text-only test passes on a wrong gate.
+
+    record_search writes a nil's own log entry now (issue #4527), so the note
+    that asked the agent to log it must NOT come back: emitting it would tell the
+    model to make a call the engine removed. `fulltext_search` keeps the note,
+    which the test below pins so this one cannot pass by the gate dying entirely.
+    """
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
     )
@@ -600,10 +606,7 @@ def test_nil_search_carries_the_negative_log_note(tmp_path):
             {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
         )
     )
-    assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
-    # Ordered ahead of `results`, like every other model-facing note.
-    keys = list(body)
-    assert keys.index("nilSearchNeedsLog") < keys.index("results")
+    assert "nilSearchNeedsLog" not in body
 
 
 def test_no_log_note_without_a_project_path(tmp_path):
@@ -2805,6 +2808,66 @@ def test_non_patronymic_nil_carries_no_surname_hint(tmp_path):
         {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
     )
     assert "surnameVariantHints" not in body
+    # The nil is real — record_search just logs it itself now (issue #4527)
+    # rather than asking the agent to.
+    assert "nilSearchNeedsLog" not in body
+
+
+def test_a_nil_record_search_actually_writes_its_log_entry(tmp_path):
+    """The mock performs the real write through compiled code (issue #4527).
+
+    Without this the suite would pass while exercising nothing: the response
+    would carry no logId, the project would gain no entry, and a paid run would
+    grade the agent on a feature that never ran.
+    """
+    import json as _json
+
+    (tmp_path / "research.json").write_text(_json.dumps({"log": []}), encoding="utf-8")
+    (tmp_path / "tree.gedcomx.json").write_text(
+        _json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+    )
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+        )
+    )
+    assert body.get("logId"), f"no logId; response was {sorted(body)}"
+    keys = list(body)
+    assert keys.index("logId") < keys.index("results")
+
+    after = _json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    assert len(after["log"]) == 1
+    entry = after["log"][0]
+    assert entry["id"] == body["logId"]
+    assert entry["tool"] == "record_search"
+    assert entry["outcome"] == "negative"
+    assert entry["written_by"] == "record_search"
+    # The whole point of the card: the logged query is what the call sent, and
+    # carries no plumbing.
+    assert entry["query"] == {"surname": "Flynn", "givenName": "Patrick"}
+
+
+def test_a_nil_fulltext_search_still_asks_the_agent_to_log_it(tmp_path):
+    """The other direction of issue #4527: only record_search's arm was dropped.
+
+    Without this, a gate that stopped emitting for EVERY tool would pass the two
+    `nilSearchNeedsLog not in body` assertions above and nothing would notice.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flinn-variant-zero"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "fulltext_search",
+            {"keywords": "~Flinn", "projectPath": str(tmp_path)},
+        )
+    )
     assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
 
 

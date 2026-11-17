@@ -391,7 +391,9 @@ export async function consumeStagedResults(
  */
 export function stripQueryPlumbing(raw: unknown): Record<string, unknown> | undefined {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return undefined;
-  const { projectPath: _p, subjectId: _s, ...rest } = raw as Record<string, unknown>;
+  // `planItemId` and `note` are record_search's nil-log inputs (issue #4527),
+  // not filters: they address and annotate the log entry the tool writes.
+  const { projectPath: _p, subjectId: _s, planItemId: _pli, note: _n, ...rest } = raw as Record<string, unknown>;
   return rest;
 }
 

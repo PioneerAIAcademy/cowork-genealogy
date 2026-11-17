@@ -101,6 +101,17 @@ VALIDATION_SHIP_DATE = date(2026, 8, 11)
 # `external_links_search` only until it stopped staging (2026-10): see
 # `_stopped_emitting`.
 SEARCH_TOOLS = frozenset({"record_search", "fulltext_search", "external_links_search"})
+# `nilSearchNeedsLog` loses its record_search arm at issue #4527: the tool writes
+# a nil's log entry itself and stops emitting the note. Scoped so the drop in
+# fired-counts is not read as "agents stopped ignoring it" — nothing about agent
+# behaviour changed, the engine stopped asking.
+#
+# Derived by SUBTRACTION, deliberately. Only `fulltext-search.ts` emits the note
+# in the engine today, so naming fulltext alone would also drop
+# external_links_search — a change this card did not ask for and whose history
+# nobody here has checked. Subtracting the one tool that changed keeps this edit
+# to what shipped.
+NIL_NOTE_TOOLS = SEARCH_TOOLS - frozenset({"record_search"})
 # The two writer tools that land sources / assertions: `research_append` names
 # the section in its args, `extraction_append` writes both for each record it
 # extracts and names none.
@@ -445,7 +456,7 @@ def _acted_log_no_persist(calls: list[dict], idx: int, fire_call: dict,
 FIELDS: list[FieldSpec] = [
     FieldSpec("unloggedSearches", SEARCH_TOOLS, SEARCH_SHIP_COMMIT, SEARCH_SHIP_DATE,
               False, _fired_search_key("unloggedSearches"), _acted_unlogged),
-    FieldSpec("nilSearchNeedsLog", SEARCH_TOOLS, SEARCH_SHIP_COMMIT, SEARCH_SHIP_DATE,
+    FieldSpec("nilSearchNeedsLog", NIL_NOTE_TOOLS, SEARCH_SHIP_COMMIT, SEARCH_SHIP_DATE,
               False, _fired_search_key("nilSearchNeedsLog"), _acted_nil),
     FieldSpec("sources-without-assertions", SECTION_WRITERS, VALIDATION_SHIP_COMMIT,
               VALIDATION_SHIP_DATE, True, _fired_validation(SRC_NO_ASSERT_MARKER),

@@ -65,7 +65,7 @@ def _states(rows, field):
     return Counter(r.state for r in rows if r.field == field)
 
 
-def _search(doc, *, tool="mcp__genealogy__record_search", **extra):
+def _search(doc, *, tool="mcp__genealogy__fulltext_search", **extra):
     """A search-tool call carrying a decoded-response `doc`."""
     call = {"tool": tool, "response_summary": _doc_envelope(doc, as_text_block=False)}
     call.update(extra)
@@ -83,7 +83,7 @@ def _log_append(**args):
 def test_nil_fired_and_acted(tmp_path, as_text_block):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
     calls = [
-        {"tool": "mcp__genealogy__record_search",
+        {"tool": "mcp__genealogy__fulltext_search",
          "response_summary": _doc_envelope(nil_doc, as_text_block=as_text_block)},
         _log_append(outcome="negative"),  # negative, no stagedResultsRef, before next search
     ]
@@ -95,7 +95,7 @@ def test_nil_fired_and_acted(tmp_path, as_text_block):
 def test_nil_fired_and_ignored(tmp_path, as_text_block):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
     calls = [
-        {"tool": "mcp__genealogy__record_search",
+        {"tool": "mcp__genealogy__fulltext_search",
          "response_summary": _doc_envelope(nil_doc, as_text_block=as_text_block)},
         # another search before any qualifying log append (itself an emitter,
         # so it classifies too — here never-held, since its response has no note)
@@ -111,7 +111,7 @@ def test_nil_fired_and_ignored(tmp_path, as_text_block):
 def test_nil_condition_never_held(tmp_path, as_text_block):
     # observable search response with no nil note
     doc = {"results": [{"id": "x"}], "totalMatches": 5}
-    calls = [{"tool": "mcp__genealogy__record_search",
+    calls = [{"tool": "mcp__genealogy__fulltext_search",
               "response_summary": _doc_envelope(doc, as_text_block=as_text_block)}]
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert _states(rows, "nilSearchNeedsLog") == Counter({NEVER_HELD: 1})
@@ -119,7 +119,7 @@ def test_nil_condition_never_held(tmp_path, as_text_block):
 
 def test_nil_not_observable_predates_ship(tmp_path):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
-    calls = [{"tool": "mcp__genealogy__record_search",
+    calls = [{"tool": "mcp__genealogy__fulltext_search",
               "response_summary": _doc_envelope(nil_doc, as_text_block=False)}]
     # captured before the search ship date -> engine could not have emitted it
     rows = scan([_write_run(tmp_path, calls, captured_at=OLD)]).rows
@@ -127,7 +127,7 @@ def test_nil_not_observable_predates_ship(tmp_path):
 
 
 def test_nil_not_observable_no_summary(tmp_path):
-    calls = [{"tool": "mcp__genealogy__record_search"}]  # no response_summary
+    calls = [{"tool": "mcp__genealogy__fulltext_search"}]  # no response_summary
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert _states(rows, "nilSearchNeedsLog") == Counter({NOT_OBSERVABLE: 1})
 
@@ -351,7 +351,7 @@ def test_firing_call_carries_its_agent_label(tmp_path):
 
 def test_error_firing_call_is_skipped_entirely(tmp_path):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
-    calls = [{"tool": "mcp__genealogy__record_search", "is_error": True,
+    calls = [{"tool": "mcp__genealogy__fulltext_search", "is_error": True,
               "response_summary": _doc_envelope(nil_doc, as_text_block=False)}]
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert [r for r in rows if r.field == "nilSearchNeedsLog"] == []
@@ -365,7 +365,7 @@ def test_partition_identity_holds(tmp_path):
         _search(nil_fire), _log_append(outcome="negative"),   # acted (log before next search)
         _search(nil_fire),                                     # ignored (next emitter is a search)
         _search(nil_clean),                                   # never-held
-        {"tool": "mcp__genealogy__record_search"},            # not-observable (no summary)
+        {"tool": "mcp__genealogy__fulltext_search"},            # not-observable (no summary)
     ]
     rows = scan([_write_run(tmp_path, calls)]).rows
     nil = _states(rows, "nilSearchNeedsLog")
@@ -456,7 +456,7 @@ def test_resolvable_sha_decides_observability_over_captured_at(tmp_path):
 
 def test_nil_fires_on_a_search_capture_cut_mid_document(tmp_path):
     raw = _doc_envelope({"nilSearchNeedsLog": "Nothing returned", "results": []}, as_text_block=False)
-    calls = [{"tool": "mcp__genealogy__record_search", "response_summary": raw[:40] + "..."},
+    calls = [{"tool": "mcp__genealogy__fulltext_search", "response_summary": raw[:40] + "..."},
              _log_append(outcome="negative")]
     assert _states(scan([_write_run(tmp_path, calls)]).rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
 

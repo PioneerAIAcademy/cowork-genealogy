@@ -517,6 +517,11 @@ _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 # `searchAdvice` from the call's own arguments and the answer's counts, so no
 # fixture carries a copy.
 _SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+# record_search writes a nil search's own log entry (issue #4527). The mock
+# performs that write through the SAME compiled code, as it already does for
+# staging — a Python restatement would grade the agent against a log entry
+# production never wrote.
+_RESEARCH_LOG_APPEND_JS = _MCP_BUILD / "tools" / "research-log-append.js"
 
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
@@ -702,6 +707,64 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
     except Exception as exc:  # noqa: BLE001 — advisory, never fails the call
         warnings.warn(f"mock record_search could not compute surnameVariantHints ({exc})", stacklevel=2)
         return None
+
+
+def _write_nil_log(args: dict[str, Any]) -> dict[str, Any]:
+    """Production's own `researchLogAppend` for a nil `record_search` (#4527).
+
+    Returns the keys record_search puts before `results` — `logId` and friends on
+    success, `nilLogRefused` when the log tool refused. Empty when the build
+    predates it or node fails, with a warning: a harness fault must not read as
+    the tool declining to log.
+
+    `store=True` (the default) because this WRITES: under `--store pg` the prelude
+    is what binds the Postgres-backed store the rest of the run uses.
+    """
+    if not _compiled_module_present(
+        _RESEARCH_LOG_APPEND_JS, "a nil record_search will leave no log entry"
+    ):
+        return {}
+    script = (
+        f"import {{ researchLogAppend }} from '{_node_module_url(_RESEARCH_LOG_APPEND_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await researchLogAppend(input);"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    payload = {
+        "projectPath": args.get("projectPath"),
+        "tool": "record_search",
+        # The call's OWN arguments, minus plumbing — the whole point of the
+        # change. `stripQueryPlumbing` drops projectPath/subjectId/planItemId/note.
+        "query": {
+            k: v
+            for k, v in args.items()
+            if k not in ("projectPath", "subjectId", "planItemId", "note")
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "planItemId": args.get("planItemId"),
+        "notes": args.get("note") or None,
+        "writtenBy": "record_search",
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        logged = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock record_search could not write its nil log entry ({exc})", stacklevel=2)
+        return {}
+    if not logged.get("ok"):
+        return {"nilLogRefused": logged.get("errors") or []}
+    out: dict[str, Any] = {"logId": logged.get("logId")}
+    for key in ("planRationale", "escalationDue"):
+        if logged.get(key):
+            out[key] = logged[key]
+    warn = (logged.get("validation") or {}).get("warnings") or []
+    if warn:
+        out["validationWarnings"] = warn
+    return out
 
 
 def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -2143,7 +2206,7 @@ def create_mock_server(
                 and "error" not in response
                 and args.get("projectPath")
             ):
-                _notes: dict[str, str] = {}
+                _notes: dict[str, Any] = {}
                 if _unlogged_staged:
                     _notes["unloggedSearches"] = UNLOGGED_SEARCHES_NOTE.replace(
                         "{n}", str(len(_unlogged_staged))
@@ -2151,8 +2214,16 @@ def create_mock_server(
                         "{refs}",
                         _format_unlogged_refs([h.get("ref", "") for h in _unlogged_staged]),
                     )
-                if _fixture_is_nil(response):
+                # fulltext_search only. record_search writes a nil's log entry
+                # itself (issue #4527) and no longer asks the agent to, so the
+                # note would tell the model to make a call the engine removed.
+                if _name == "fulltext_search" and _fixture_is_nil(response):
                     _notes["nilSearchNeedsLog"] = NIL_SEARCH_NEEDS_LOG_NOTE
+                # ...and record_search performs that write here, through the same
+                # compiled code production runs, so the suite grades the agent on
+                # the entry production would actually have written.
+                if _name == "record_search" and _fixture_is_nil(response):
+                    _notes.update(_write_nil_log(args))
                 if _notes:
                     reordered = {}
                     for _key, _value in response.items():

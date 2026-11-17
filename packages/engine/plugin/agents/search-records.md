@@ -611,7 +611,7 @@ Never write a bare sentence there — a prose `query` carrying an ARK is rejecte
 
 **A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` whenever `positive` is wrong: `negative` when the ranker says the pool holds no match (Step 4), `partial` for a collection mismatch, `error`. Send `resultsExamined` only when you triaged fewer rows than came back.
 
-**A zero-result search** (the search returned zero results, not merely a null `staged`): pass `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
+**A zero-result search logs itself.** Pass `planItemId` and `note` (why you are running it) on the `record_search` call; when it finds nothing the tool writes the entry and returns `logId`. Do NOT call `research_log_append` for it — the logged query is the search's own arguments. If the response carries `nilLogRefused` instead, the write was refused: log that nil by hand, batched in one `research_log_append` call with the retry the message names.
 
 **Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry, do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
 
@@ -666,8 +666,8 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
-1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`. When its response carries `planRationale`, search next what that rationale names and you have not searched, then carry on with the levers below.
-2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
+1. **The nil is already logged** — `record_search` wrote it when you passed `planItemId`. When its response carries `planRationale`, search next what that rationale names and you have not searched, then carry on with the levers below. Only a `nilLogRefused` response needs a hand-written entry.
+2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Each retry that nils is logged by the tool, so long as you pass `planItemId`.** A retry that RETURNS results still needs its own `research_log_append` with the `stagedResultsRef`; send those as they complete rather than holding the ladder for one call at the end, since a batch still unsent when a run aborts loses every entry inside it.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
    is a legitimate next step, not an unsupported guess — `*` and `?` both bind, and the
@@ -697,7 +697,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
    ❌ WRONG: Ending your return with "FamilySearch is exhausted — would you like me to check Ancestry?" Offering the escalation as a question is not escalating.
    ✅ CORRECT: Log the nils, then return "Hand-back: search-external-sites — FamilySearch variants exhausted; <person attributes, plan item, userPresent>".
 
-   In the nil log entry's `notes`, record that FamilySearch variants were exhausted and external sites should be checked. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
+   Hand back to `search-external-sites`: FamilySearch variants being exhausted is what that hand-back reports, and prose offering Ancestry is not it. The nil entry's `notes` are written for you — pass the reason as `note` on the search. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
 
 ### 9. Present results
 
