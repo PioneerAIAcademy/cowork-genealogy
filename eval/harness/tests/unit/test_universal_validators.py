@@ -617,6 +617,35 @@ def test_a_cleared_flag_beside_another_change_is_not_explained(label, before_sec
     assert section in str(e.value), label
 
 
+#: A research_append call that cannot change a claim.
+_PLANS_CALL = [{"tool": "mcp__genealogy__research_append", "args": {"section": "plans", "op": "append", "entry": {}}}]
+
+
+@pytest.mark.parametrize("section", ["persons", "relationships"])
+def test_a_cleared_primary_needs_a_claim_write_not_just_any_research_append_call(section):
+    """A non-owner clearing `primary` with tree_correct beside an unrelated
+    research_append call is not research_append's clear."""
+    if section == "persons":
+        before, after = _tree_state(_person_with_fact(primary=True)), _tree_state(_person_with_fact())
+    else:
+        before, after = tree(relationships=_couple()), tree(relationships=_couple(primary=False))
+    with pytest.raises(AssertionError) as e:
+        check_tree(before, after, {"name": "search-records"}, POSITIVE, tool_calls=_PLANS_CALL)
+    assert section in str(e.value)
+
+
+def test_a_rewrite_on_one_fact_does_not_explain_a_cleared_flag_on_another():
+    before = [{**_person_with_fact()[0], "facts": _person_with_fact()[0]["facts"]
+               + [{"id": "F2", "type": "Birth", "primary": True, "sources": [{"ref": "S1"}]}]}]
+    after = [{**_person_with_fact(place="Odessa, Saskatchewan, Canada")[0],
+              "facts": _person_with_fact(place="Odessa, Saskatchewan, Canada")[0]["facts"]
+              + [{"id": "F2", "type": "Birth", "sources": [{"ref": "S1"}]}]}]
+    with pytest.raises(AssertionError) as e:
+        check_tree(_tree_state(before), _tree_state(after), {"name": "conflict-resolution"}, POSITIVE,
+                   tool_calls=_EXTRACTION_CALL)
+    assert "persons" in str(e.value)
+
+
 def test_a_cleared_couple_primary_needs_a_research_append_call():
     with pytest.raises(AssertionError) as e:
         check_tree(tree(relationships=_couple()), tree(relationships=_couple(primary=False)),

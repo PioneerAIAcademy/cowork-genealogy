@@ -1174,6 +1174,27 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
 _REWRITABLE_FACT_ATTRS = ("place", "standard_place", "date", "value")
 
 
+def _claims_changed(tool_calls) -> bool:
+    """Whether this run wrote a proof summary through `research_append`: the only
+    way it clears `primary` on a fact no assertion correction moved (Decision 34)."""
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "research_append":
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        if any(isinstance(op, dict) and op.get("section") == "proof_summaries" for op in candidates):
+            return True
+    return False
+
+
 def _corrected_assertion_ids(tool_calls) -> set[str]:
     """Assertion ids this run corrected through the two rewriting tools.
 
@@ -1292,7 +1313,7 @@ def _person_identity(person: dict) -> tuple:
 _SANITIZER_MINTED_KEYS = frozenset({"id"})
 
 
-def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected) -> bool:
+def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected, claims_changed=False) -> bool:
     """True when the whole persons delta is the assertion-backlink fact rewrite.
 
     `research_append` / `extraction_append` reach `tree.gedcomx.json`'s `persons`
@@ -1344,10 +1365,15 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
                 return False
             if not _same_but_primary(b_fact, a_fact):
                 return False
-            cleared_any = cleared_any or _primary_cleared(b_fact, a_fact)
             changed = [
                 k for k in _REWRITABLE_FACT_ATTRS if b_fact.get(k) != a_fact.get(k)
             ]
+            if _primary_cleared(b_fact, a_fact):
+                # A claim write clears it anywhere; otherwise only the rewrite that
+                # moved this fact off its claim can have.
+                if not claims_changed and not (changed and b_fact.get("assertion_id") in corrected):
+                    return False
+                cleared_any = True
             if not changed:
                 continue
             link = b_fact.get("assertion_id")
@@ -1377,9 +1403,11 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
     return bool(corrected) or cleared_any
 
 
-def _explained_by_primary_clear(before_section, after_section) -> bool:
+def _explained_by_primary_clear(before_section, after_section, claims_changed=False) -> bool:
     """True when the whole relationships delta is cleared `primary` flags on
     Couple facts, the only change research_append makes there (Decision 34)."""
+    if not claims_changed:
+        return False
     if not isinstance(before_section, list) or not isinstance(after_section, list):
         return False
     if len(before_section) != len(after_section):
@@ -1477,6 +1505,7 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
                 after.get(section),
                 after_state.get("research_json"),
                 _corrected_assertion_ids(tool_calls),
+                _claims_changed(tool_calls),
             )
         ):
             continue
@@ -1486,7 +1515,7 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
             section == "relationships"
             and "research_append" in (identity_tools.get(section) or set())
             and "research_append" in called
-            and _explained_by_primary_clear(before.get(section), after.get(section))
+            and _explained_by_primary_clear(before.get(section), after.get(section), _claims_changed(tool_calls))
         ):
             continue
         # extraction_append mints each `S` entry beside the `src_` it writes.
