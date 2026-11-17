@@ -58,6 +58,11 @@ describe("setAsideParents (Decision 26)", () => {
     expect([...(setAsideParents(research, tree).get("I1") ?? [])]).toEqual(["I2"]);
   });
 
+  it("keeps a weak parent counted when the claimed winner has no edge in the tree", () => {
+    const noWinnerEdge = { ...tree, relationships: tree.relationships.filter((r) => r.parent !== "I3") };
+    expect(setAsideParents(research, noWinnerEdge).size).toBe(0);
+  });
+
   it("is empty with no summaries, no claims, or no research at all", () => {
     expect(setAsideParents({}, tree).size).toBe(0);
     expect(setAsideParents({ proof_summaries: [{ id: "ps_001", claims: [] }] }, tree).size).toBe(0);

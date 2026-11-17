@@ -99,10 +99,15 @@ export function setAsideParents(research: any, tree: any): Map<string, Set<strin
     if (typeof p?.id === "string" && typeof p.gender === "string") gender.set(p.id, p.gender);
   }
   const genderOf = (id: string) => gender.get(id);
-  for (const r of Array.isArray(tree?.relationships) ? tree.relationships : []) {
+  const edges: any[] = Array.isArray(tree?.relationships) ? tree.relationships : [];
+  for (const r of edges) {
     if (r?.type !== "ParentChild" || !isBiologicalClaim(r) || typeof r.parent !== "string" || typeof r.child !== "string") continue;
     const ruledOut = located.some(({ c }) => isDisproved(c) && claimCoversEdge(c, r));
-    if (ruledOut || setAsideBy(r, located, genderOf) !== null) {
+    // Set aside counts only beside a winner whose own edge is in this tree: a
+    // claim naming a parent the tree lacks leaves this parent competing.
+    const winner = ruledOut ? null : setAsideBy(r, located, genderOf);
+    const winnerInTree = winner !== null && edges.some((o: any) => o !== r && o?.type === "ParentChild" && isBiologicalClaim(o) && o.parent === winner && o.child === r.child);
+    if (ruledOut || winnerInTree) {
       const set = out.get(r.child) ?? new Set<string>();
       set.add(r.parent);
       out.set(r.child, set);
