@@ -1,0 +1,656 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_034: any search with no surname, anchored on recordCountry. Live response for givenName An* + Female + recordCountry United States + Fluvanna + 1910 census (1727033) + otherGivenName Edward: 41 matches, and the first row is 'Antone Lightfoot' (MPPN-TV7) with relativeTerms.other present (Edward Lightfoot). Keyed on recordCountry alone, so whichever household anchor the agent picks reaches it. Listed after every Tyler fixture. Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "recordCountry": "~"
+  },
+  "response": {
+    "query": {
+      "givenName": "An*",
+      "recordCountry": "United States",
+      "sex": "Female",
+      "collectionId": "1727033",
+      "residencePlace": "Fluvanna, Virginia, United States",
+      "otherGivenName": "Edward"
+    },
+    "totalMatches": 41,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "census": {
+      "schedules": [
+        {
+          "year": 1910,
+          "census": "United States",
+          "collectionId": "1727033",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        }
+      ],
+      "note": "From this tool's census table, not from the search results: what each census schedule recorded. Say nothing else about what a schedule collected."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MPPN-TV7",
+        "events": [
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Antone Lightfoot",
+        "sex": "Female",
+        "birthDate": "1837",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Edward Lightfoot",
+        "recordArk": "ark:/61903/1:2:9JKH-393",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "present",
+            "name": "Edward Lightfoot"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-3SL",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Fork Union, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "Black"
+          }
+        ],
+        "personName": "Anna Cruisy",
+        "sex": "Female",
+        "birthDate": "1897",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Bertha Cruisy",
+        "recordArk": "ark:/61903/1:2:9JKH-3HL",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "present",
+            "name": "Edward Cruisy"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-12J",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Palmyra, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "Anne Jones",
+        "sex": "Female",
+        "birthDate": "1862",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Wm M Jones",
+        "recordArk": "ark:/61903/1:2:9JKH-3T4",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "present",
+            "name": "Edward Jones"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPN-11Z",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Columbia, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Annie M Crutchfield",
+        "sex": "Female",
+        "birthDate": "1896",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Jeff D Crutchfield",
+        "recordArk": "ark:/61903/1:2:9JKH-SHJ",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QJDK-T1PS",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Rio Canas, Las Marias, Puerto Rico"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ],
+        "personName": "Antonia Camacho Y Arcon",
+        "sex": "Female",
+        "birthDate": "1899",
+        "birthPlace": "Puerto Rico",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Domingo Camacho Y Gordil",
+        "recordArk": "ark:/61903/1:2:QKSL-44NC",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QJDK-R2N8",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Rio Canas Arriba, Juana Diaz, Puerto Rico"
+          }
+        ],
+        "personName": "Ana Rodriguez Y Torres",
+        "sex": "Female",
+        "birthDate": "1905",
+        "birthPlace": "Puerto Rico",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Lorenzo Rodriguez Y Cruz",
+        "recordArk": "ark:/61903/1:2:QKSL-7BSP",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QKJL-H151",
+        "events": [
+          {
+            "type": "Census",
+            "place": "Buena Vista, ED 468, Las Marias, Puerto Rico"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "Angelina Miranda Y Pagan De Morales",
+        "sex": "Female",
+        "birthPlace": "Puerto Rico",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Hermogenes Morales Y Sanchez",
+        "recordArk": "ark:/61903/1:2:Q2P5-3JLJ",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QKJL-H1R3",
+        "events": [
+          {
+            "type": "Census",
+            "place": "Buena Vista, ED 468, Las Marias, Puerto Rico"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "personName": "Angela Morales Y Miranda",
+        "sex": "Female",
+        "birthPlace": "Puerto Rico",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Hermogenes Morales Y Sanchez",
+        "recordArk": "ark:/61903/1:2:Q2P5-3JLJ",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QJDK-RYFY",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Capitanejo, ED 695, Juana Diaz, Puerto Rico"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Consensual Contract"
+          }
+        ],
+        "personName": "Angela Velez",
+        "sex": "Female",
+        "birthDate": "1872",
+        "birthPlace": "Puerto Rico",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Flavio Reverón",
+        "recordArk": "ark:/61903/1:2:QKSL-W7SN",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-F2L",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Columbia, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "Black"
+          }
+        ],
+        "personName": "Annie L Anderson",
+        "sex": "Female",
+        "birthDate": "1904",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of William W Wood",
+        "recordArk": "ark:/61903/1:2:9JKH-S6M",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-KBC",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Palmyra, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "personName": "Annia Hoff",
+        "sex": "Female",
+        "birthDate": "1906",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of W D Hoff",
+        "recordArk": "ark:/61903/1:2:9JKH-3RG",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPN-L32",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Columbia, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "personName": "Annie L Fleming",
+        "sex": "Female",
+        "birthDate": "1895",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Willie B Fleming",
+        "recordArk": "ark:/61903/1:2:9JKH-S4D",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-9HK",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Columbia, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "personName": "Ann M Loveing",
+        "sex": "Female",
+        "birthDate": "1868",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of T R Loveing",
+        "recordArk": "ark:/61903/1:2:9JKH-S8T",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-CLR",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Fork Union, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "personName": "Annie C Minter",
+        "sex": "Female",
+        "birthDate": "1894",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of John W Minter",
+        "recordArk": "ark:/61903/1:2:9JKH-3CH",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPN-PKM",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Fork Union, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Annie Siegfried",
+        "sex": "Female",
+        "birthDate": "1865",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Maynard Fleming",
+        "recordArk": "ark:/61903/1:2:9JKH-3JQ",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-M4P",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Palmyra, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "personName": "Annis Marks",
+        "sex": "Female",
+        "birthDate": "1893",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Ara R Coleman",
+        "recordArk": "ark:/61903/1:2:9JKH-3YX",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-L96",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Cunningham, 86, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Anna L Mills",
+        "sex": "Female",
+        "birthDate": "1900",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Patrick H Mills",
+        "recordArk": "ark:/61903/1:2:9JKH-3S1",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPN-F5F",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Columbia, 83, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "personName": "Annie E Kawey",
+        "sex": "Female",
+        "birthDate": "1847",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Samuel Kawey, Jr, Jr",
+        "recordArk": "ark:/61903/1:2:9JKH-SW1",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPN-2LD",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "personName": "Annie Costick",
+        "sex": "Female",
+        "birthDate": "1897",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of James H Keene",
+        "recordArk": "ark:/61903/1:2:9JKH-3MZ",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-LDC",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Palmyra, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "Annie May King",
+        "sex": "Female",
+        "birthDate": "1884",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Andew B King",
+        "recordArk": "ark:/61903/1:2:9JKH-31J",
+        "role": "Principal",
+        "relativeTerms": {
+          "other": {
+            "status": "unknown"
+          }
+        }
+      }
+    ],
+    "collections": {
+      "1727033": "United States, Census, 1910"
+    }
+  }
+}

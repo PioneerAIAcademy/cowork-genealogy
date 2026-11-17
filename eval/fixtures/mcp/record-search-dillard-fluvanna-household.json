@@ -1,0 +1,330 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_034: a Dillard search (Mary Dillard is in the subject's 1900 household). Live response for Mary Dillard, census, Fluvanna County, 1910-1930: 54 matches, including 'Mary Dillard', b. 1892, in the 1910 'Household of Edward Lightfoot', Cunningham (MPPN-TV4), the subject's household. A household-member anchor reaches her. Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "surname": "~Dillard"
+  },
+  "response": {
+    "query": {
+      "surname": "Dillard",
+      "givenName": "Mary",
+      "recordType": "census",
+      "residencePlace": "Fluvanna County, Virginia, United States",
+      "residenceYearFrom": 1910,
+      "residenceYearTo": 1930
+    },
+    "totalMatches": 54,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "census": {
+      "schedules": [
+        {
+          "year": 1910,
+          "census": "United States",
+          "collectionId": "1727033",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        },
+        {
+          "year": 1920,
+          "census": "United States",
+          "collectionId": "1488411",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        },
+        {
+          "year": 1930,
+          "census": "United States",
+          "collectionId": "1810731",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        }
+      ],
+      "note": "From this tool's census table, not from the search results: what each census schedule recorded. Say nothing else about what a schedule collected."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MJNW-TMS",
+        "events": [
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Census",
+            "date": "1920",
+            "place": "Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Mary Dillard",
+        "sex": "Female",
+        "birthDate": "1897",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1488411",
+        "recordTitle": "Household of Mary Dillard",
+        "recordArk": "ark:/61903/1:2:QVG7-MHZL",
+        "batchNumber": "N03114-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPN-L7W",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Columbia, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Mary S Dillard",
+        "sex": "Female",
+        "birthDate": "1873",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Silas Dillard",
+        "recordArk": "ark:/61903/1:2:9JKH-S4R",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPN-TV4",
+        "events": [
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Mary Dillard",
+        "sex": "Female",
+        "birthDate": "1892",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Edward Lightfoot",
+        "recordArk": "ark:/61903/1:2:9JKH-393",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-GN5",
+        "events": [
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Fork Union, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Mollie Dillard",
+        "sex": "Female",
+        "birthDate": "1881",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Daniel Dillard",
+        "recordArk": "ark:/61903/1:2:9JKH-3DL",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:W9RK-LVT2",
+        "personName": "Mary Louise Dillon",
+        "sex": "Female",
+        "birthDate": "1906",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillon",
+        "recordArk": "ark:/61903/1:2:7KZS-JMN2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:76RR-Y3ZM",
+        "personName": "Mary Louise Dillon",
+        "sex": "Female",
+        "birthDate": "1906",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillon",
+        "recordArk": "ark:/61903/1:2:775G-QBW2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPQH-282K",
+        "personName": "Mary Louise Dillon",
+        "sex": "Female",
+        "birthDate": "1906",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillon",
+        "recordArk": "ark:/61903/1:2:QRKB-KHZN",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:7N6G-YY3Z",
+        "personName": "Mary Cut Foot Dillon",
+        "sex": "Female",
+        "birthDate": "1872",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Cut Foot Dillon",
+        "recordArk": "ark:/61903/1:2:74QN-1YPZ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:7P5T-KQ2M",
+        "personName": "Mary Louise Dillion",
+        "sex": "Female",
+        "birthDate": "1906",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillion",
+        "recordArk": "ark:/61903/1:2:76QR-R8ZM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:7PK6-396Z",
+        "personName": "Mary Louise Dillon",
+        "sex": "Female",
+        "birthDate": "1906",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillon",
+        "recordArk": "ark:/61903/1:2:76SS-DG2M",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP7W-KN3L",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "personName": "Mary Louise Dillon",
+        "sex": "Female",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillon",
+        "recordArk": "ark:/61903/1:2:QR2N-Q3D6",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:7P5Y-2FPZ",
+        "personName": "Mary Louise Dillon",
+        "birthDate": "1906",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillon",
+        "recordArk": "ark:/61903/1:2:76QT-XHPZ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:76TW-Q1ZM",
+        "personName": "Mary Cut Foot Dillon",
+        "sex": "Female",
+        "birthDate": "1872",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Cut Foot Dillon",
+        "recordArk": "ark:/61903/1:2:775Y-XXZM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP7W-KN32",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "Mary Dillon",
+        "sex": "Female",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Dillon",
+        "recordArk": "ark:/61903/1:2:QR2N-Q3DD",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPQH-282V",
+        "personName": "Mary Cut Foot Dillon",
+        "sex": "Female",
+        "birthDate": "1872",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Cut Foot Dillon",
+        "recordArk": "ark:/61903/1:2:QRKB-KHZF",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:W9RK-LVPZ",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "Mary Cut Foot Dillon",
+        "sex": "Female",
+        "birthDate": "1872",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Cut Foot Dillon",
+        "recordArk": "ark:/61903/1:2:7KZS-JM6Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:W95F-H1PZ",
+        "personName": "Mary Dillon",
+        "birthDate": "1872",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Cut Foot",
+        "recordArk": "ark:/61903/1:2:7KC6-8GW2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:W9RL-SK2M",
+        "personName": "Mary Cut Foot Dillon",
+        "sex": "Female",
+        "birthDate": "1872",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Cut Foot Dillon",
+        "recordArk": "ark:/61903/1:2:7KZ3-CV3Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:76RR-Y33Z",
+        "personName": "Mary Dillon",
+        "sex": "Female",
+        "birthDate": "1872",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Dillon",
+        "recordArk": "ark:/61903/1:2:775G-QBMM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:W9RL-SKPZ",
+        "personName": "Mary Louise Dillon",
+        "sex": "Female",
+        "birthDate": "1906",
+        "collectionId": "2761958",
+        "recordTitle": "Household of Mary Louise Dillon",
+        "recordArk": "ark:/61903/1:2:7KZ3-CVW2",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1488411": "United States, Census, 1920",
+      "1727033": "United States, Census, 1910",
+      "2761958": "United States, Native American, Census Rolls, 1885-1940"
+    }
+  }
+}

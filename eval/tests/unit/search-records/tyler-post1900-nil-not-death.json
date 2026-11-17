@@ -1,0 +1,47 @@
+{
+  "test": {
+    "id": "ut_search_records_034",
+    "skill": "search-records",
+    "name": "Post-1900 nil under tight filters is not a death: drop the surname, anchor on the household",
+    "type": "positive",
+    "description": "The subject, a widowed Black midwife b. Apr 1853, is in the 1900 census of Cunningham District, Fluvanna County, Virginia as '[blank] Tyler', with William E Lightfoot (b. 1872), Dora Lightfoot and Mary Dillard in her household. Every Tyler-surnamed search after 1900 nils (the 1910 pin returns one unrelated white Sallie R Tyler), because she is indexed under her birth surname Lightfoot and with birth years 1837 and 1833. In the session (feedback #4510) four such nils produced 'strongly suggests she died between 1900 and approximately 1912'. The agent must report each nil as not found under the named filters, draw no death inference from them, and search again without the Tyler surname, anchored on place plus a household member, which reaches 'Antone Lightfoot' in Edward Lightfoot's 1910 household. Issue #4580.",
+    "tags": [
+      "search",
+      "census",
+      "negative-result",
+      "nil-no-death-inference",
+      "nil-drops-surname"
+    ]
+  },
+  "input": {
+    "delegation": "Run plan item pli_001: find the subject in the Fluvanna County, Virginia censuses after 1900 (1910-1930), and in Virginia death records if she died after 1912. She is the widowed midwife enumerated in 1900 in Cunningham District as '[given name blank] Tyler', female, black, born April 1853 (ark:/61903/1:1:MMF1-WWF). Her 1900 household: Dora Lightfoot (b. Jan 1885), William E Lightfoot (b. Oct 1872), Mary Dillard (b. Jan 1895), Emma Winston (b. Feb 1895). Her given name is in doubt; readings include Ann and Antone.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "scenario": "tyler-fluvanna-midwife"
+  },
+  "mcp_fixtures": [
+    "record-search-tyler-1910-census-tight",
+    "record-search-tyler-post1900-nil",
+    "record-search-lightfoot-fluvanna",
+    "record-search-dillard-fluvanna-household",
+    "record-search-winston-fluvanna-household",
+    "record-search-surname-free-fluvanna-1910",
+    "record-search-catch-all-empty",
+    "record-read-tyler-1900-mmf1-wwf",
+    "record-read-lightfoot-1910-mppn-tv7",
+    "record-read-lightfoot-1923-death-qvr7-5ljj",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "GROUND TRUTH: after 1900 she is indexed under her birth surname Lightfoot. 1910 census, Cunningham: 'Antone Lightfoot', widowed, b. 1837, mother in Edward Lightfoot's household (ark:/61903/1:1:MPPN-TV7); Edward (b. 1872) is the 1900 household's William E Lightfoot. 1923 Fluvanna death registration: 'Ann Tone Lightfoot', widowed, midwife, age 90 (ark:/61903/1:1:QVR7-5LJJ). Every Tyler-surnamed search after 1900 returns nothing relevant.",
+    "FIXTURES: any search carrying surname Tyler (or a Tyl* wildcard) returns 0, or, pinned to the 1910 census, one unrelated white Sallie R Tyler. A Lightfoot search, a Mary Dillard search (she is in Edward Lightfoot's 1910 household), or any search with no surname anchored on recordCountry returns rows that include the subject's 1910 household. An Emma Winston search returns seven Winstons, none in that household. Any other surname returns 0 by a catch-all, which is a fixture simplification, not evidence. A surname-free search may return the 1910 rows whatever year it asked for; that too is a fixture simplification, not a defect in the agent's query.",
+    "CORE: a nil under surname Tyler + female + a birth range is reported as 'not found under those filters', naming them. 'No record under the Tyler name', 'nothing came back under Tyler' and the like ARE that correct form: they state what the search returned under a named filter, and are not an absence inference. Score Result triage 1 only if the reply concludes something about HER from the nils: that she died, emigrated or was absent, or a date range for a death (the session's 'strongly suggests she died between 1900 and approximately 1912').",
+    "Score Nil escalation 3 when, after the Tyler nils, the agent searches without the Tyler surname, anchored on the place and a household member from 1900 (Lightfoot, William/Edward, Mary Dillard), or on her given name with recordCountry, and reports the 1910 Antone Lightfoot entry as a candidate needing review. Score 2 if it drops the surname but keeps the 1848-1858 birth range and does not consider the 1837 birth year. Score 1 if it never searches without Tyler.",
+    "Identity is not settled by the 1910 row alone. For Result triage, reporting the 1910 Antone Lightfoot entry (or the 1923 Ann Tone Lightfoot death) as needs-review and not adopted is a 3, whether or not the reply spells out the household overlap (Edward = William E Lightfoot, b. 1872; Mary Dillard in both); naming the overlap is good practice, not a requirement. Score 2 if the reply dismisses the entry as not her on the birth-year gap alone. Calling it proved is overclaiming, also a 2.",
+    "record_read fixtures are stocked for the 1900, 1910 and 1923 records and are OPTIONAL; reading before reporting is sound practice, not a defect."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

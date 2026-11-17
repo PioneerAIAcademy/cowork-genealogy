@@ -1594,3 +1594,144 @@ def test_unproven_surname_used_as_search_input(
         f"the marriage to a {surname} is unproven, yet the run gave the subject "
         f"a {surname} name in the tree"
     )
+
+
+# --- A nil under tight filters is not a death; a found candidate is not filtered out (#4580)
+
+
+def _record_search_calls(tool_calls) -> list[dict]:
+    return [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool", "")) == "record_search"]
+
+
+def _surname_could_be(value, target: str) -> bool:
+    """True when a surname argument (wildcards and all) could match `target`."""
+    import fnmatch
+
+    if not isinstance(value, str) or not value.strip():
+        return False
+    return fnmatch.fnmatchcase(target.lower(), value.strip().lower())
+
+
+def _total_matches(call) -> int | None:
+    response = call.get("response")
+    if isinstance(response, str):
+        try:
+            response = json.loads(response)
+        except ValueError:
+            return None
+    if not isinstance(response, dict):
+        return None
+    total = response.get("totalMatches")
+    return total if isinstance(total, int) else None
+
+
+# A death placed by the absence of records: "died between 1900 and approximately
+# 1912", "deceased before 1910", or "suggests she died" in a sentence that also
+# names the empty searches. A death read off a record ("she died 29 October 1923",
+# "the 1923 death registration is likely her") is not one.
+_DEATH_RANGE = re.compile(
+    r"\b(?:died|death|deceased)\b[^.\n]{0,40}?\b(?:between|before|by|prior to)\b[^.\n]{0,30}?\b1[89]\d\d\b",
+    re.IGNORECASE,
+)
+_DEATH_SUGGESTED = re.compile(
+    r"\b(?:suggest|indicat|impl)\w*\b[^.\n]{0,60}?\b(?:died|deceased|death)\b",
+    re.IGNORECASE,
+)
+_NIL_WORDS = re.compile(
+    r"\b(?:no (?:records?|results?|matches)|nil|zero|absence|absent|not found|none|empty)\b",
+    re.IGNORECASE,
+)
+
+
+def nil_death_inference(text: str) -> str | None:
+    """The first sentence of `text` that infers a death from empty searches, or None."""
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text or ""):
+        if _DEATH_RANGE.search(sentence):
+            return sentence.strip()
+        if _DEATH_SUGGESTED.search(sentence) and _NIL_WORDS.search(sentence):
+            return sentence.strip()
+    return None
+
+
+def test_nil_not_read_as_death(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (nil-no-death-inference / nil-drops-surname): issue #4580.
+
+    The Tyler session (feedback #4510): four searches under surname Tyler +
+    female + born 1848-1858 came back empty after 1900, and the return said this
+    "strongly suggests she died between 1900 and approximately 1912". She is
+    indexed under her birth surname Lightfoot, with birth years 1837 and 1833.
+
+    Two checks, each under its own tag. `nil-drops-surname`: after the first
+    empty Tyler search, at least one record_search carries no surname or one
+    that could not match Tyler. `nil-no-death-inference`: the agent's own
+    return places no death from the nils (`nil_death_inference`).
+    """
+    from harness.skill_runner import subject_reply_text
+
+    tags = test.get("tags", [])
+    if "nil-no-death-inference" not in tags and "nil-drops-surname" not in tags:
+        pytest.skip("not a nil-death scenario")
+
+    if "nil-drops-surname" in tags:
+        calls = _record_search_calls(tool_calls)
+        first_nil = next(
+            (
+                i for i, c in enumerate(calls)
+                if _surname_could_be(_as_mapping(c.get("args")).get("surname"), "tyler")
+                and _total_matches(c) == 0
+            ),
+            None,
+        )
+        assert first_nil is not None, (
+            "no record_search under surname Tyler came back empty, so the test "
+            "never reached the nil it grades; record_search args: "
+            + repr([_as_mapping(c.get("args")) for c in calls])
+        )
+        later = [_as_mapping(c.get("args")) for c in calls[first_nil + 1:]]
+        dropped = [a for a in later if not _surname_could_be(a.get("surname"), "tyler")]
+        assert dropped, (
+            "after the empty Tyler search, every record_search kept a surname that "
+            "matches Tyler; none dropped it to anchor on the place and a household "
+            "member (issue #4580). Later calls: " + repr(later)
+        )
+
+    if "nil-no-death-inference" in tags:
+        reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+        found = nil_death_inference(reply)
+        assert found is None, (
+            "the return infers a death from empty searches; a nil is 'not found "
+            f"under <the filters>', never a death or a date range for one: {found!r}"
+        )
+
+
+def _year(value) -> int | None:
+    try:
+        return int(str(value).strip()[:4])
+    except (TypeError, ValueError):
+        return None
+
+
+def test_found_candidate_not_excluded(tool_calls, test):
+    """Tag-gated (candidate-not-excluded): issue #4580.
+
+    The delegation hands in Antoine Tyler, indexed female, b. 1833, as a live
+    candidate for the subject (b. about 1853). The session's next search
+    (log_100) kept birthYearFrom 1848 / birthYearTo 1858, which excludes her,
+    and its nil was read as a finding. Every record_search this test makes must
+    carry no birth range or one that includes 1833; and there must be one.
+    """
+    if "candidate-not-excluded" not in test.get("tags", []):
+        pytest.skip("not a found-candidate scenario")
+    candidate_year = 1833
+    calls = [_as_mapping(c.get("args")) for c in _record_search_calls(tool_calls)]
+    assert calls, "no record_search was made for the 1870 census plan item"
+    excluding = []
+    for args in calls:
+        low, high = _year(args.get("birthYearFrom")), _year(args.get("birthYearTo"))
+        if (low is not None and low > candidate_year) or (high is not None and high < candidate_year):
+            excluding.append(args)
+    assert not excluding, (
+        f"a record_search's birth range excludes {candidate_year}, the birth year of "
+        "a candidate this invocation was already handed (issue #4580): "
+        + repr(excluding)
+    )
