@@ -150,8 +150,11 @@ class Stub:
         offset = args.get("offset", 0)
         page = items[offset:offset + 1] if self.mode == "tiny-pages" else items[offset:offset + 50]
         count = len(items) if self.mode != "drop-one" else len(items) + 1
+        truncated = offset + len(page) < len(items)
         body = {"ok": True, "section": "log", "count": count, "items": page,
-                "truncated": offset + len(page) < len(items)}
+                "truncated": truncated}
+        if truncated:
+            body["nextOffset"] = offset + len(page)
         if self.mode == "duplicate" and "questionId" in args:
             body["items"] = page + page[:1]
         return [{"type": "text", "text": json.dumps(body)}], False
@@ -339,8 +342,11 @@ class PluralStub:
         page = items[offset:offset + size]
         if is_list and self.mode == "repeat-page1":
             page = items[:size]
+        truncated = offset + len(page) < len(items) or (is_list and self.mode == "repeat-page1")
         body = {"ok": True, "section": section, "count": len(items), "items": page,
-                "truncated": offset + len(page) < len(items) or (is_list and self.mode == "repeat-page1")}
+                "truncated": truncated}
+        if truncated and not (is_list and self.mode == "repeat-page1"):
+            body["nextOffset"] = offset + len(page)
         if is_list and self.mode == "duplicate":
             body["items"] = page + page[:1]
         if is_list and self.mode != "no-count-by-id":
@@ -585,6 +591,27 @@ def test_one_item_pages_still_collapse(tmp_path):
     groups, _ = _pgroups([_q("sources", "sourceId", "src_001", 1), _q("sources", "sourceId", "src_002", 1)])
     out = _prun(tmp_path, groups[0], mode="tiny-pages", base_mode="tiny-pages")
     assert (out.status, out.walk_calls, out.plural_calls) == ("collapsed", 2, 2)
+
+
+def test_short_pages_with_next_offset_paging_still_collapse(tmp_path):
+    """When the tool returns `nextOffset`, the paging loop uses it instead of len(page).
+
+    This was the tight test for the cap change (`n+1` instead of `ceil(n/PAGE)+1`):
+    with 55 entries and 1-item pages the old cap of 3 would have raised IntegrityError
+    after 3 calls; the new cap of 56 lets all 55 drain.
+
+    Each planItemId has exactly 1 entry so both stubs return the same walk-phase
+    size regardless of page mode."""
+    state_55 = {
+        "plans": [{"id": "pl_001", "question_id": "q_001",
+                   "items": [{"id": f"pli_{i:03d}"} for i in range(55)]}],
+        "log": [{"id": f"log_{i:03d}", "plan_item_id": f"pli_{i:03d}", "tool": "record_search"}
+                for i in range(55)],
+    }
+    calls_55 = [_walk(f"pli_{i:03d}", 1) for i in range(55)]
+    group_55, _ = rc.find_walk_groups(calls_55, state_55)
+    out = _run(tmp_path, mode="tiny-pages", group=group_55[0], base_mode="reject")
+    assert out.status == "collapsed"
 
 
 def test_an_empty_walk_answered_right_is_collapsed_empty(tmp_path):

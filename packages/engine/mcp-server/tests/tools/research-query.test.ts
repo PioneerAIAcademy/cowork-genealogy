@@ -1557,3 +1557,63 @@ describe("research_query — person_evidence names settled birth disputes", () =
     expect(result).not.toHaveProperty("settledConflicts");
   });
 });
+
+describe("research_query — character budget paging", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-budget-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeResearch(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+  }
+
+  it("truncates below MAX_ITEMS when large items exhaust the budget and returns nextOffset", async () => {
+    // Each entry serialises to ~1000 chars, so 50 × ~1000 = ~50 000 > 40 000 budget.
+    const NOTE = "x".repeat(900);
+    const entries = Array.from({ length: 50 }, (_, i) => ({
+      id: `l_${String(i).padStart(3, "0")}`,
+      plan_item_id: "pi_001",
+      entry_type: "search",
+      text: NOTE,
+    }));
+    await writeResearch({ log: entries });
+
+    const first = await researchQuery({ projectPath: dir, section: "log" });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.count).toBe(50);
+    expect(first.truncated).toBe(true);
+    expect(first.nextOffset).toBeGreaterThan(0);
+    expect(first.items.length).toBeLessThan(50);
+
+    // Fetching the next page with nextOffset drains the remaining items.
+    const second = await researchQuery({ projectPath: dir, section: "log", offset: first.nextOffset });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.items.length).toBe(50 - first.items.length);
+    expect(second.truncated).toBe(false);
+    expect(second).not.toHaveProperty("nextOffset");
+  });
+
+  it("refuses an offset that does not land on a greedy page boundary", async () => {
+    const NOTE = "x".repeat(900);
+    const entries = Array.from({ length: 50 }, (_, i) => ({
+      id: `l_${String(i).padStart(3, "0")}`,
+      plan_item_id: "pi_001",
+      entry_type: "search",
+      text: NOTE,
+    }));
+    await writeResearch({ log: entries });
+
+    // 7 is not a valid page start: the first page ends somewhere around index 41.
+    const result = await researchQuery({ projectPath: dir, section: "log", offset: 7 });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toMatch(/not a valid page start/);
+    expect(result.errors[0]).toMatch(/nearest valid start/);
+  });
+});

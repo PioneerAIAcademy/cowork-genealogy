@@ -180,6 +180,28 @@ describe('annotations — upsert / delete', () => {
     expect(a2.corrections[0].comment).toBe('updated');
   });
 
+  it('upsertCorrection keeps a replaced entry at its original index', () => {
+    let ann = newAnnotation('v1.json', 'a');
+    for (const name of ['A', 'B', 'C']) {
+      ann = upsertCorrection(ann, {
+        test_id: 'ut_001',
+        dimension_source: 'base',
+        dimension_name: name,
+        llm_score: 3,
+        corrected_score: 3,
+      });
+    }
+    const regraded = upsertCorrection(ann, {
+      test_id: 'ut_001',
+      dimension_source: 'base',
+      dimension_name: 'A',
+      llm_score: 3,
+      corrected_score: 2,
+    });
+    expect(regraded.corrections.map((c) => c.dimension_name)).toEqual(['A', 'B', 'C']);
+    expect(regraded.corrections[0].corrected_score).toBe(2);
+  });
+
   it('deleteCorrection removes by key', () => {
     const ann = upsertCorrection(newAnnotation('v1.json', 'a'), {
       test_id: 'ut_001',

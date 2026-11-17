@@ -267,14 +267,14 @@ message.
    `research.json` grows all run — dozens of sources, 100+ assertions by
    late run — so a whole-section query costs more context every
    time you route, and routing happens constantly. `research_query` answers
-   the routing question host-side and returns only the ids, statuses and
-   counts. For tree facts (birth, death, marriage) call `tree_query` with
+   the routing question host-side. For tree facts (birth, death, marriage)
+   call `tree_query` with
    `personIds` and `factTypes`.
 
-   **`research_query` returns at most 50 `items` per call; `count` is the true
-   total.** When `truncated` is true you are routing on part of the set — page
-   with `offset` (50, then 100) before concluding a section is empty, complete,
-   or that some step has produced nothing.
+   **`count` is the true total; `items` is one page.** When `truncated` is true
+   you are routing on part of the set — page with `offset: nextOffset` before
+   concluding a section is empty, complete, or that some step has produced
+   nothing.
 
    **Query what the routing decision needs and no more.** Each call is a turn.
    Pull the one section that answers the question in front of you rather than

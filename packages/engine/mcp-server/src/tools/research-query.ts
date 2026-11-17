@@ -37,6 +37,38 @@ import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
 
 const MAX_ITEMS = 50;
+const TOOL_RESULT_CHAR_BUDGET = 40_000;
+
+/** Returns the exclusive end index for a greedy page starting at `start`:
+ *  adds items until the next one would push the cumulative JSON length past
+ *  `budget` or `maxItems` is reached.  Always returns at least `start + 1`
+ *  when items exist beyond `start`. */
+function greedyEnd(items: unknown[], start: number, budget: number, maxItems: number): number {
+  let size = 0;
+  for (let i = start; i < items.length && i - start < maxItems; i++) {
+    const len = JSON.stringify(items[i]).length;
+    if (i > start && size + len > budget) return i;
+    size += len;
+  }
+  return Math.min(start + maxItems, items.length);
+}
+
+/** Returns the nearest valid page start at or below `start`, or null when
+ *  `start` already falls on a page boundary (0 or a prior `nextOffset`).
+ *  Also returns null when `start` is at or beyond the end of the array —
+ *  such an offset returns empty results, same as today, so is not refused. */
+function nearestPageStart(items: unknown[], start: number, budget: number, maxItems: number): number | null {
+  if (start === 0) return null;
+  let pos = 0;
+  while (pos < start) {
+    const end = greedyEnd(items, pos, budget, maxItems);
+    if (end <= pos) return null; // past the end of the array; allow it
+    if (end === start) return null;
+    if (end > start) return pos;
+    pos = end;
+  }
+  return null;
+}
 
 export const RESEARCH_QUERY_SECTIONS = [
   "questions",
@@ -148,6 +180,10 @@ export type ResearchQueryResult =
        *  items.length`) — page with `offset` (or narrow the filter) rather than
        *  relying on this being everything. */
       truncated: boolean;
+      /** When `truncated` is true: the offset to pass to fetch the next page.
+       *  Callers must use this value rather than stepping by a fixed count,
+       *  because page sizes vary with the character budget. */
+      nextOffset?: number;
       /** List calls only: `{id: n}` for every requested id, zeros included,
        *  over the whole match set (identical on every page). On a contains-mode
        *  section an item naming two ids counts under both, so the values can
@@ -703,12 +739,20 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
         : [];
       const hits = rows.filter((item) => activeFilters.every(({ rule, values }) => matches(item, rule, values)));
       const from = input.offset ?? 0;
+      const nearestEc = nearestPageStart(hits, from, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS);
+      if (nearestEc !== null) {
+        throw new ResearchQueryError(
+          `offset ${from} is not a valid page start (nearest valid start: ${nearestEc}).`,
+        );
+      }
+      const toEc = greedyEnd(hits, from, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS);
       return {
         ok: true,
         section,
         count: hits.length,
-        items: hits.slice(from, from + MAX_ITEMS),
-        truncated: hits.length > from + MAX_ITEMS,
+        items: hits.slice(from, toEc),
+        truncated: toEc < hits.length,
+        ...(toEc < hits.length ? { nextOffset: toEc } : {}),
       };
     }
 
@@ -809,23 +853,31 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     }
 
     const start = input.offset ?? 0;
+    const nearestMain = nearestPageStart(ordered, start, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS);
+    if (nearestMain !== null) {
+      throw new ResearchQueryError(
+        `offset ${start} is not a valid page start (nearest valid start: ${nearestMain}).`,
+      );
+    }
+    const end = greedyEnd(ordered, start, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS);
     const page: Extract<ResearchQueryResult, { ok: true }> = {
       ok: true as const,
       section,
       count: ordered.length,
-      items: projectItems(section, ordered.slice(start, start + MAX_ITEMS)),
-      truncated: ordered.length > start + MAX_ITEMS,
+      items: projectItems(section, ordered.slice(start, end)),
+      truncated: end < ordered.length,
+      ...(end < ordered.length ? { nextOffset: end } : {}),
     };
     // Reasons for the links on this page only.
     const reviewReasons = Object.fromEntries(
       (ranked ?? [])
-        .slice(start, start + MAX_ITEMS)
+        .slice(start, end)
         .filter((r) => r.reasons.length > 0)
         .map((r) => [r.id, r.reasons]),
     );
     if (Object.keys(reviewReasons).length > 0) page.reviewReasons = reviewReasons;
     if (section === "person_evidence") {
-      const settled = await settledConflictRows(projectPath, research, ordered.slice(start, start + MAX_ITEMS));
+      const settled = await settledConflictRows(projectPath, research, ordered.slice(start, end));
       if (settled.length > 0) page.settledConflicts = settled;
     }
     // Per id over the whole match set, so a page answers "0 means none" for
@@ -865,9 +917,9 @@ export const researchQuerySchema = {
     "\n" +
     "Pick `section` and, optionally, the well-known filter fields that section " +
     "supports (below) — passing a filter a section doesn't support is an error, not " +
-    "a silent no-op. Omit all filters to get the whole section (50 items per call; " +
-    "check `truncated`, then either narrow the filter or page with `offset` to fetch " +
-    "items 51+).\n" +
+    "a silent no-op. Omit all filters to get the whole section (paged by character " +
+    "budget; check `truncated`, then either narrow the filter or page with " +
+    "`offset: nextOffset` to fetch more).\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
     "(questionId, status), `log` (planItemId, questionId — every entry for any plan item " +
@@ -894,10 +946,10 @@ export const researchQuerySchema = {
     "`personId`, `assertionId`, `sourceId`, `recordId` and `conflictId` also take a list (≤50 ids): one call " +
     "returns items matching any, plus `countById` per id.\n" +
     "\n" +
-    "Returns `{ section, count, items, truncated }` — `count` is the total match " +
-    "count before the 50-item page cap and any `offset`; `truncated` is true when " +
-    "matches remain beyond the returned page, so advance `offset` by items.length " +
-    "and call again until it is false. `items` is camelCase-untouched (the " +
+    "Returns `{ section, count, items, truncated, nextOffset? }` — `count` is the " +
+    "total match count before the page cap and any `offset`; `truncated` is true when " +
+    "matches remain beyond the returned page — set `offset` to `nextOffset` and call " +
+    "again until `truncated` is false. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
     "projection, not a persisted document, with two omissions. An item of a plan " +
     "that is not active (superseded or completed) carries no `rationale`, except " +
@@ -995,10 +1047,10 @@ export const researchQuerySchema = {
       offset: {
         type: "number",
         description:
-          "Pagination (not a filter): 0-based index of the first match to return — " +
-          "skips that many, then returns up to 50. Default 0. When `truncated` is " +
-          "true, fetch items 51+ by setting offset to 50, then 100, and so on. " +
-          "Must be a non-negative whole number.",
+          "Pagination (not a filter): 0-based index of the first match to return. " +
+          "Default 0. When `truncated` is true, fetch the next page by setting " +
+          "`offset` to the `nextOffset` the previous call returned — do not step by " +
+          "a fixed number. Must be a non-negative whole number.",
       },
       includeSuperseded: {
         type: "boolean",

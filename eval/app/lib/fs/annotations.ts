@@ -191,8 +191,10 @@ export function upsertCorrection(
 ): AnnotationFile {
   const key = (c: AnnotationCorrection) =>
     `${c.test_id}|${c.dimension_source}|${c.dimension_name}`;
-  const next = ann.corrections.filter((c) => key(c) !== key(correction));
-  next.push(correction);
+  const next = [...ann.corrections];
+  const i = next.findIndex((c) => key(c) === key(correction));
+  if (i === -1) next.push(correction);
+  else next[i] = correction;
   return { ...ann, corrections: next };
 }
 
