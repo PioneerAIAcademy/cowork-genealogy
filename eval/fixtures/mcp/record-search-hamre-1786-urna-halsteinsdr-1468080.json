@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "Live capture (2026-11-16, engine recordSearchTool) of record_search givenName Urna, surname Halsteinsdr, in collection 1468080, marriage 1770-1800, subjectId KZHH-VTX. 2 matches; the first row is the bride NW44-PMK, Urna Halsteinsdr, in the 25 Jun 1786 Hamre marriage (record MY3L-FH3). Used by ut_search_records_023.",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Urna, surname Halsteinsdr, collection 1468080, marriage 1770-1800, count 50. 2 matches; row 1 is the bride NW44-PMK, Urna Halsteinsdr, in the 25 Jun 1786 Hamre marriage (record MY3L-FH3). Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-urna-halsteinsdr-1468080, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023.",
   "args": {
     "givenName": "Urna",
     "surname": "Halsteinsdr",
@@ -8,12 +8,12 @@
   },
   "response": {
     "query": {
-      "surname": "Halsteinsdr",
       "givenName": "Urna",
+      "surname": "Halsteinsdr",
       "collectionId": "1468080",
       "marriageYearFrom": 1770,
       "marriageYearTo": 1800,
-      "subjectId": "KZHH-VTX"
+      "count": 50
     },
     "totalMatches": 2,
     "returned": 2,

@@ -1,20 +1,20 @@
 {
   "tool": "record_search",
-  "description": "Live capture (2026-11-16, engine recordSearchTool) of record_search givenName Anna, surname Halsteinsdatter, with no collectionId, marriage 1770-1800, subjectId KZHH-VTX. 1794 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023. Listed after the collection-1468080 fixtures, so it answers only calls with no collectionId.",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Anna, surname Halsteinsdatter, no collection, marriage 1770-1800, count 50. 1794 matches; the bride NW44-PMK is not among the 50 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-anna-halsteinsdatter-unpinned, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023. The predicate cannot require collectionId to be absent, so it is listed after every pinned fixture.",
   "args": {
     "givenName": "Anna",
     "surname": "Halsteinsdatter"
   },
   "response": {
     "query": {
-      "surname": "Halsteinsdatter",
       "givenName": "Anna",
+      "surname": "Halsteinsdatter",
       "marriageYearFrom": 1770,
       "marriageYearTo": 1800,
-      "subjectId": "KZHH-VTX"
+      "count": 50
     },
     "totalMatches": 1794,
-    "returned": 20,
+    "returned": 50,
     "offset": 0,
     "hasMore": true,
     "results": [
@@ -332,15 +332,410 @@
         "recordTitle": "Eintrag für Benedict Becker, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
         "recordArk": "ark:/61903/1:2:QRBY-3BNG",
         "role": "Mother In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPJD-VC8X",
+        "personName": "Hallstein",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Georg Philipp Luft, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRY2-BVX7",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP6B-FXKN",
+        "personName": "Hallstein",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Wilhelm Heinrich August Wienecke, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRRY-H5TW",
+        "role": "Mother In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPJD-Y6XL",
+        "personName": "Anna Eva Hallstein",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Johann Georg Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRYL-MPT1",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XWYJ-3S98",
+        "personName": "Anna Halstein",
+        "sex": "Female",
+        "collectionId": "1482191",
+        "recordTitle": "Entrée de Michael Cordara, \"Belgique, Brabant, registres d’état civil, 1582-1950\"",
+        "recordArk": "ark:/61903/1:2:H8HB-TJLV",
+        "role": "Mother In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X982-7CP8",
+        "personName": "Anna Halsteen",
+        "sex": "Female",
+        "collectionId": "1482191",
+        "recordTitle": "Entrée de Michael Cordara, \"Belgique, Brabant, registres d’état civil, 1582-1950\"",
+        "recordArk": "ark:/61903/1:2:H45B-HKJC",
+        "role": "Mother In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLM2-6FX3",
+        "personName": "Anna Catharina Halstein",
+        "collectionId": "2704829",
+        "recordTitle": "Entry for Johan Michael van Rooijen and Anna Landschaar",
+        "recordArk": "ark:/61903/1:2:QGY1-XMKF",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QL51-HJZV",
+        "personName": "Anna Catharina Halstein",
+        "collectionId": "2704829",
+        "recordTitle": "Entry for Nicolaas Gosen Schippers and Johanna Aletta Elisabeth van Rooijen",
+        "recordArk": "ark:/61903/1:2:Q53T-53GV",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XRLX-HXC",
+        "personName": "Anna Halsteenson",
+        "sex": "Female",
+        "collectionId": "1708704",
+        "recordTitle": "Entry for Tideman Knudson",
+        "recordArk": "ark:/61903/1:2:MX1P-PXY",
+        "batchNumber": "M00342-6",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:D7SD-7CPZ",
+        "personName": "M Anna Hallstein",
+        "sex": "Female",
+        "collectionId": "3499252",
+        "recordTitle": "Eintrag für Paul Wagenseil, „Deutschland, Württemberg, Diözese Rottenburg-Stuttgart, Katholische Kirchenbücher, 1520-1975“",
+        "recordArk": "ark:/61903/1:2:46MJ-88PZ",
+        "role": "Mother In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:DQ1T-786Z",
+        "personName": "M Anna Hallstein",
+        "sex": "Female",
+        "collectionId": "3499252",
+        "recordTitle": "Eintrag für Joan Bapt Waggner, „Deutschland, Württemberg, Diözese Rottenburg-Stuttgart, Katholische Kirchenbücher, 1520-1975“",
+        "recordArk": "ark:/61903/1:2:4D12-ZSMM",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z3T-WF11",
+        "personName": "Anna Haustense",
+        "sex": "Female",
+        "collectionId": "3398459",
+        "recordTitle": "Eintrag für Joseph Scheil, „Deutschland, Bayern, katholische Kirchenbücher, 1653-1875“",
+        "recordArk": "ark:/61903/1:2:4B3X-M8HL",
+        "role": "Mother In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:7M8S-412M",
+        "personName": "Anna Maria Hallstein",
+        "sex": "Female",
+        "collectionId": "2790181",
+        "recordTitle": "Eintrag für Johannes Eisele und Elisabetha Keller, „Deutschland, Baden, Erzbistum Freiburg, katholische Kirchenbücher, 1463-1931“",
+        "recordArk": "ark:/61903/1:2:Q1CS-N6ZM",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:683N-JFBZ",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "24 May 1879",
+            "place": "Aurdal, Nord-Aurdal, Oppland, Norge"
+          }
+        ],
+        "personName": "Anne Halsteinsdatter",
+        "birthDate": "1 September 1878",
+        "birthPlace": "Haslene",
+        "deathDate": "15 May 1879",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BX6-HP12",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q233-YT5S",
+        "events": [
+          {
+            "type": "Probate",
+            "date": "23 May 1832",
+            "place": "Granskogen, Fåvang Ringebu, Sør-Gudbrandsdal, Oppland, Norway"
+          }
+        ],
+        "personName": "Anne Halsteinsdatter",
+        "sex": "Female",
+        "collectionId": "1661306",
+        "recordArk": "ark:/61903/1:2:QLMV-F22X",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6PMN-J4MT",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "7 Dec 1794",
+            "place": "Komorau, Hořowitz, Böhmen, Österreich"
+          }
+        ],
+        "personName": "Maria Anna Halstarin",
+        "sex": "Female",
+        "collectionId": "1804263",
+        "recordArk": "ark:/61903/1:2:HQ3J-LXGQ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVNT-9N83",
+        "events": [
+          {
+            "type": "Confirmation",
+            "date": "03 Dec 1893",
+            "place": "Ottertail, Minnesota, United States"
+          }
+        ],
+        "personName": "Anna Marie Halstensen",
+        "collectionId": "2363041",
+        "recordArk": "ark:/61903/1:2:QK1P-WCZ8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2X5S-Z2F",
+        "events": [
+          {
+            "type": "BirthRegistration",
+            "date": "1886",
+            "place": "Thingoe, Suffolk, England"
+          }
+        ],
+        "personName": "Eva Anna M Hailstone",
+        "collectionId": "2285338",
+        "recordArk": "ark:/61903/1:2:99D7-VZY7",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2NQ7-HJX",
+        "events": [
+          {
+            "type": "BirthRegistration",
+            "date": "1851",
+            "place": "Clifton, Gloucestershire, England"
+          }
+        ],
+        "personName": "Sarah Anna Hailstone",
+        "collectionId": "2285338",
+        "recordArk": "ark:/61903/1:2:996F-LH5Q",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2XC9-L1Q",
+        "events": [
+          {
+            "type": "BirthRegistration",
+            "date": "1873",
+            "place": "Thetford, Norfolk, England"
+          }
+        ],
+        "personName": "Anna Maria Hailstone",
+        "collectionId": "2285338",
+        "recordArk": "ark:/61903/1:2:9982-JG75",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2NK4-7YZ",
+        "personName": "Anna Hailstone",
+        "deathDate": "1862",
+        "deathPlace": "Clifton, Gloucestershire, England, United Kingdom",
+        "collectionId": "2285341",
+        "recordArk": "ark:/61903/1:2:99XM-PWQM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLPG-KV7Y",
+        "events": [
+          {
+            "type": "Census",
+            "date": "from 1861 to 1885",
+            "place": "Gothenburg, Göteborg och Bohus, Sweden"
+          }
+        ],
+        "personName": "Anna Christina Hallstén",
+        "birthDate": "20 August 1797",
+        "deathDate": "21 April 1879",
+        "collectionId": "2790465",
+        "recordTitle": "Household of Anna Christina Hallstén",
+        "recordArk": "ark:/61903/1:2:Q5SY-LJ7N",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6N85-HDXS",
+        "events": [
+          {
+            "type": "LandAssessment",
+            "date": "16 Nov 1875",
+            "place": "Albany, New York, United States"
+          }
+        ],
+        "personName": "Anna Halstein",
+        "collectionId": "2078654",
+        "recordArk": "ark:/61903/1:2:HMTT-PCJY",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP6K-TBT5",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "9. Juni 1845",
+            "place": "Hadmersleben, Hadmersleben, Wanzleben, Freistaat Sachsen, Deutschland"
+          }
+        ],
+        "personName": "Anna Magdalena Elisabeth Jäger",
+        "birthDate": "1803",
+        "deathDate": "5 June 1845",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRRP-BT8Q",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPJ8-D7RN",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "1855",
+            "place": "Erbach, Erbach, Kreis Limburg, Hessen-Nassau, Freistaat Preußen, Deutschland"
+          }
+        ],
+        "personName": "Anna Elisabetha Hallstein",
+        "birthDate": "1805",
+        "deathDate": "1855",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Anna Elisabetha Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRY2-KCRH",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPFN-1YM2",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "2 Aug 1821",
+            "place": "Erbach, Erbach, Kreis Limburg, Hessen-Nassau, Freistaat Preußen, Deutschland"
+          }
+        ],
+        "personName": "Anna Eva Breitwieser",
+        "birthDate": "1784",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRTP-QTRT",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPK3-1QRR",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "6 Nov 1764",
+            "place": "Sülze, Sülze, Mecklenburg-Schwerin, Deutschland"
+          }
+        ],
+        "personName": "Anna Elisabeth Halsten",
+        "sex": "Female",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Anna Elisabeth Halsten, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRBJ-ZNZM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPF8-D85F",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "1855",
+            "place": "Höchst, Kreis Höchst, Hessen-Nassau, Freistaat Preußen, Deutschland"
+          }
+        ],
+        "personName": "Anna Elisabetha Hallstein",
+        "birthDate": "1805",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Barth, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRTK-NJ2T",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP27-P6G7",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "29. Juni 1752",
+            "place": "Trarbach, Zell, Rheinprovinz, Preußen, Deutsches Reich"
+          }
+        ],
+        "personName": "Anna Maria Haustens",
+        "sex": "Female",
+        "birthDate": "24 June 1752",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Anna Maria Haustens, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QR13-TPHM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPF8-B2W1",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "23 Sep 1845",
+            "place": "Höchst, Kreis Höchst, Hessen-Nassau, Freistaat Preußen, Deutschland"
+          }
+        ],
+        "personName": "Anna Margaretha Hallsten",
+        "birthDate": "1790",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Anna Margaretha Hallsten, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRTK-GFQY",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP5V-1RZ1",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "15 Mar 1715",
+            "place": "Württemberg, Deutschland"
+          }
+        ],
+        "personName": "Anna Elisabetha Haustellern",
+        "birthDate": "1715",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Anna Elisabetha Haustellern, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QTMY-BRHB",
+        "role": "Principal"
       }
     ],
     "collections": {
       "1468080": "Norway, Marriages, 1660-1926",
+      "1482191": "Belgium, Brabant, Civil Registration, 1582-1950",
       "1520596": "Sweden, Marriages, 1630-1920",
       "1647693": "Sweden, Södermanland, Church Records, 1604-1900; index 1640-1860",
+      "1661306": "Norway, Probate Index Cards, 1640-1903",
       "1676970": "Finland, Marriages, 1682-1892",
+      "1708704": "Wisconsin, Marriages, 1836-1930",
+      "1804263": "Czech Republic, Church Books, 1552-1981",
+      "2078654": "New York, Land Records, 1630-1975",
+      "2285338": "England and Wales, Birth Registration Index, 1837-2008",
+      "2285341": "England and Wales, Death Registration Index 1837-2007",
+      "2363041": "United States, Evangelical Lutheran Church in America records, ca. 1800-1900",
+      "2704829": "Netherlands, Archival Indexes, Vital Records, 1600-2000",
+      "2790181": "Germany, Baden, Archdiocese of Freiburg im Breisgau, Catholic Church Records, 1463-1931",
+      "2790465": "Sweden, Household Examination Books, 1874-1931",
       "3015626": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+      "3398459": "Germany, Bavaria, Catholic Church Records, 1650-1875",
+      "3499252": "Germany, Württemberg, Diocese of Rottenburg-Stuttgart, Catholic Church Records, 1520-1975",
       "3733603": "Norway, Census, 1801",
+      "4237104": "Norway, Church Books, 1797-1958",
       "4496123": "Belgium, Brabant, Civil Registration and Church Records, 1704-1916",
       "5000002": "Austria, Catholic Church Records, 1565-2007"
     }

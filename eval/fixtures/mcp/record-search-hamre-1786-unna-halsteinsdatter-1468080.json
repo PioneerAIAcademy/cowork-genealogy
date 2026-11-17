@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "Live capture (2026-11-16, engine recordSearchTool) of record_search givenName Unna, surname Halsteinsdatter, in collection 1468080, marriage 1770-1800, subjectId KZHH-VTX. 1 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023.",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Unna, surname Halsteinsdatter, collection 1468080, marriage 1770-1800, count 50. 1 matches; the bride NW44-PMK is not among the 1 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-unna-halsteinsdatter-1468080, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023.",
   "args": {
     "givenName": "Unna",
     "surname": "Halsteinsdatter",
@@ -8,12 +8,12 @@
   },
   "response": {
     "query": {
-      "surname": "Halsteinsdatter",
       "givenName": "Unna",
+      "surname": "Halsteinsdatter",
       "collectionId": "1468080",
       "marriageYearFrom": 1770,
       "marriageYearTo": 1800,
-      "subjectId": "KZHH-VTX"
+      "count": 50
     },
     "totalMatches": 1,
     "returned": 1,

@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "Live capture (2026-11-16, engine recordSearchTool) of a surname-free record_search: givenName Una, recordCountry Norway, no collectionId, marriage 1770-1800, subjectId KZHH-VTX -- the shape ut_search_records_023 sent in v16_2026-11-16_12-25-11. 38089 matches; the 1786 Hamre marriage (record MY3L-FH3) is not among the rows returned. Used by ut_search_records_023. The predicate cannot require surname to be absent, so it is listed after every surname-specific fixture and after the collection-1468080 fixtures; a call with a surname no earlier fixture covers also gets this answer.",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Una, no surname (recordCountry Norway), no collection, marriage 1770-1800, count 50. 37756 matches; the bride NW44-PMK is not among the 50 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-una-nosurname-unpinned, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023. The predicate cannot require surname or collectionId to be absent, so it is listed after every pinned and surname-specific fixture.",
   "args": {
     "givenName": "Una"
   },
@@ -10,10 +10,10 @@
       "recordCountry": "Norway",
       "marriageYearFrom": 1770,
       "marriageYearTo": 1800,
-      "subjectId": "KZHH-VTX"
+      "count": 50
     },
-    "totalMatches": 38089,
-    "returned": 20,
+    "totalMatches": 37756,
+    "returned": 50,
     "offset": 0,
     "hasMore": true,
     "results": [
@@ -327,11 +327,519 @@
         "recordArk": "ark:/61903/1:2:MYQK-JDX",
         "batchNumber": "M42496-2",
         "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N71B-B38",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jun 1770",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Baarsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torgier Larsen",
+        "recordArk": "ark:/61903/1:2:MYST-97N",
+        "batchNumber": "M42302-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4F-JH9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20 Jul 1783",
+            "place": "Myking, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Magnesen",
+        "recordArk": "ark:/61903/1:2:MY3L-M49",
+        "batchNumber": "M42071-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ4-R4P",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jun 1781",
+            "place": "Luster, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Olsen",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erich Johansen",
+        "recordArk": "ark:/61903/1:2:MYQW-WL6",
+        "batchNumber": "M42303-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW37-S29",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "15 Jul 1798",
+            "place": "Korskirken, Bergen, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unje Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Christiansen",
+        "recordArk": "ark:/61903/1:2:MYSX-WY3",
+        "batchNumber": "M42939-5",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZH-DPL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jun 1777",
+            "place": "Norum, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Jensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torkild Monsen",
+        "recordArk": "ark:/61903/1:2:MYQ7-GDT",
+        "batchNumber": "M42307-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4G-3K9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "14 Jun 1779",
+            "place": "Vinje, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unia Larsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Michelsen",
+        "recordArk": "ark:/61903/1:2:MY32-MFX",
+        "batchNumber": "M42334-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZH-SMY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "29 May 1792",
+            "place": "Luster, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Larsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jens Siursen",
+        "recordArk": "ark:/61903/1:2:MYQW-WFK",
+        "batchNumber": "M42303-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-94Y",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "7 Nov 1787",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Lars Dr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hans Endresen",
+        "recordArk": "ark:/61903/1:2:MYST-3Z9",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N71B-168",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "12 Jan 1778",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Larsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Tomas Endresen",
+        "recordArk": "ark:/61903/1:2:MYST-SJV",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7BH-B29",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "22 May 1796",
+            "place": "Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Unni Christensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Toresen",
+        "recordArk": "ark:/61903/1:2:MYST-7G4",
+        "batchNumber": "M73983-0",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N71B-B23",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "28 Dec 1773",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Vielhielmsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Bottel Hansen",
+        "recordArk": "ark:/61903/1:2:MYST-SJ2",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N71B-1NL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "21 Jun 1779",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Uni Lassesdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Knud Nielsen",
+        "recordArk": "ark:/61903/1:2:MYST-SJK",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW7V-8LK",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 May 1793",
+            "place": "Eiker, Buskerud, Norway"
+          }
+        ],
+        "personName": "Und Knudsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Even Larsen",
+        "recordArk": "ark:/61903/1:2:MY31-CJ6",
+        "batchNumber": "M42866-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7BH-K29",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "22 Jun 1783",
+            "place": "Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Unni Roarsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Olsen",
+        "recordArk": "ark:/61903/1:2:MYST-7G6",
+        "batchNumber": "M73983-0",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-3WP",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "29 Jun 1798",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Pedersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Lasse Lassesen",
+        "recordArk": "ark:/61903/1:2:MYST-SJY",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N711-9Z9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "2 Jul 1789",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Pedersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hans Erichsen",
+        "recordArk": "ark:/61903/1:2:MYST-SJW",
+        "batchNumber": "M42302-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4G-37K",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "28 Jun 1791",
+            "place": "Vinje, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unni Pedersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Stephen Knudsen",
+        "recordArk": "ark:/61903/1:2:MY3K-1YN",
+        "batchNumber": "M42334-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4S-K6K",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20 Jun 1770",
+            "place": "Eidfjord, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Siursdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Rasmus Asbiornsen",
+        "recordArk": "ark:/61903/1:2:MY32-9PY",
+        "batchNumber": "M42338-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ4-BF9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Nov 1780",
+            "place": "Luster, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unni Siursdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Eyleve Johansen",
+        "recordArk": "ark:/61903/1:2:MYQW-W42",
+        "batchNumber": "M42303-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68Q9-23WW",
+        "personName": "Oonan Jensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Knut Aanonsen Smedalnd",
+        "recordArk": "ark:/61903/1:2:4BXK-RYJV",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:DX46-8RPZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1865",
+            "place": "Balestrand, Nordre Bergenhus, Norge"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          }
+        ],
+        "personName": "Unni Kolbeinsdatter",
+        "sex": "Female",
+        "birthDate": "1784",
+        "birthPlace": "Balestrands Prgj.",
+        "collectionId": "3756102",
+        "recordTitle": "Household of Kristen Markussen",
+        "recordArk": "ark:/61903/1:2:4JJD-JRN2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:DX72-1JZM",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Census",
+            "date": "1865",
+            "place": "Lindås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Kolbeindatter",
+        "sex": "Female",
+        "birthDate": "1804",
+        "birthPlace": "Lindaas Prgj.",
+        "collectionId": "3756102",
+        "recordTitle": "Household of Unna Kolbeindatter",
+        "recordArk": "ark:/61903/1:2:4JXK-19MM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687C-PLPC",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "12 Dec 1833",
+            "place": "Indre Arna, Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Nielsdr Mæhle",
+        "sex": "Female",
+        "birthDate": "1780",
+        "deathDate": "8 December 1833",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BF9-3PDX",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687C-RFMY",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "12 Dec 1833",
+            "place": "Indre Arna, Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Nielsdatt",
+        "sex": "Female",
+        "birthDate": "1780",
+        "deathDate": "8 December 1833",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BF9-9655",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6876-SJHC",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "12 Apr 1841",
+            "place": "Lærdalsøyri, Lærdal, Sogn og Fjordane, Norge"
+          }
+        ],
+        "personName": "Unni Nielsdatter",
+        "birthDate": "1781",
+        "deathDate": "10 April 1841",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFS-DKSL",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6876-SV2F",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "19 Sep 1833",
+            "place": "Sogndal, Nordre Bergenhus, Norge"
+          }
+        ],
+        "personName": "Unni Nielsdr",
+        "birthDate": "1770",
+        "deathDate": "September 0014",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFS-ZFCP",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHJ4-NQF",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "4 Feb 1786",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Nielsen",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJ43-892",
+        "batchNumber": "C42302-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHJ4-BH9",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "4 Jun 1805",
+            "place": "Leikanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Unnie Nielsen",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJ43-C54",
+        "batchNumber": "C42302-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHJF-G4J",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 May 1783",
+            "place": "Sogndal, Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Unni Nielsen",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJ4S-CMF",
+        "batchNumber": "C42308-3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6876-62GZ",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "1851",
+            "place": "Lavik, Nordre Bergenhus, Norge"
+          }
+        ],
+        "personName": "Unni Ols Dr",
+        "sex": "Female",
+        "birthDate": "1830",
+        "deathDate": "June 0020",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFS-JXZB",
+        "role": "Principal"
       }
     ],
     "collections": {
       "1467014": "Norway, Baptisms, 1634-1927",
       "1468080": "Norway, Marriages, 1660-1926",
+      "3756102": "Norway, Census, 1865",
       "4237104": "Norway, Church Books, 1797-1958"
     }
   }
