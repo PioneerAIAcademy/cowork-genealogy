@@ -329,6 +329,8 @@ are exhausted (the “Search strategy levers” reference at the end of this fil
 
 **Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). Send no `surname` at all — never one you derived from a parent's given name (Hans → "Hansen"); `recordCountry` supplies the anchor. A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
 
+When you send no surname, the given name is the only name in the search. If the subject is not among the results, the next search keeps the same anchors and varies the spelling of the given name, before you add a place, change dates, change or drop the collection, or change the parents' names.
+
 ### 3. Execute the search
 
 Call `record_search` with the constructed params plus **`projectPath`** (the
