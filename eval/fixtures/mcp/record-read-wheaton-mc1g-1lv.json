@@ -1,0 +1,441 @@
+{
+  "tool": "record_read",
+  "description": "record_read for a source attached to Orpha (Brooks) Wheaton (LZPF-WMT). United States Census 1850, Woodhull, Steuben, household of James Devoor: indexes her as 'Orfey Wheaton', age-derived birth 1785-1786. Captured live 2026-11-17 for issue #4584 (feedback #4507/#4508: Orpha (Brooks) Wheaton, LZPF-WMT), re-captured on main rather than copied from the 2381ff72c bundle. Verbatim.",
+  "args": {
+    "recordId": "~MC1G-1LV"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_242810742",
+        "ark": "ark:/61903/1:1:MC1G-1LD",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "660c69b5-25df-468d-ae20-8db9fdaee393",
+            "type": "BirthName",
+            "surname": "Devoor",
+            "given": "James"
+          },
+          {
+            "id": "75cf5c29-8639-4b48-b891-e8ce459b674a",
+            "type": "BirthName",
+            "surname": "Devoe",
+            "given": "James"
+          }
+        ],
+        "facts": [
+          {
+            "id": "9acdef89-f3db-4f55-b109-98e5580e2b82",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Woodhull, Steuben, New York, United States",
+            "standard_place": "Woodhull, Steuben, New York, United States"
+          },
+          {
+            "id": "cfc9a7e5-14c0-4f17-a418-faba6216453c",
+            "type": "Birth",
+            "date": "1825",
+            "standard_date": "1825",
+            "place": "New York"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_242810743",
+        "ark": "ark:/61903/1:1:MC1G-1L6",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "3981a8ca-ec9f-454a-acb0-15ea5f2f51d2",
+            "type": "BirthName",
+            "surname": "Devoor",
+            "given": "Rebeccah"
+          },
+          {
+            "id": "cc441f09-da5b-40ed-9c00-ea7320181175",
+            "type": "BirthName",
+            "surname": "Devoe",
+            "given": "Rebeccah"
+          }
+        ],
+        "facts": [
+          {
+            "id": "ef4c4753-f76e-40ac-a835-dc354c9e72c6",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Woodhull, Steuben, New York, United States",
+            "standard_place": "Woodhull, Steuben, New York, United States"
+          },
+          {
+            "id": "7669f914-247c-41ac-82fc-5cb79d2603f7",
+            "type": "Birth",
+            "date": "1826",
+            "standard_date": "1826",
+            "place": "New York"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_242810744",
+        "ark": "ark:/61903/1:1:MC1G-1LX",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "5c7013db-22ba-4f32-bc03-9258a41ccdee",
+            "type": "BirthName",
+            "given": "Mary C",
+            "surname": "Devoor"
+          },
+          {
+            "id": "3fa61196-51f0-4ca4-9fca-b6584de7cbbc",
+            "type": "BirthName",
+            "surname": "Devoe",
+            "given": "Mary C"
+          }
+        ],
+        "facts": [
+          {
+            "id": "afc122b2-96aa-44a8-921d-474d27134b5e",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Woodhull, Steuben, New York, United States",
+            "standard_place": "Woodhull, Steuben, New York, United States"
+          },
+          {
+            "id": "a74d2289-80c2-4e96-84c9-010d4a1a0a0c",
+            "type": "Birth",
+            "date": "1847",
+            "standard_date": "1847",
+            "place": "New York"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_242810745",
+        "ark": "ark:/61903/1:1:MC1G-1LF",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "44f084e7-c8b2-4e97-b03d-7263e09df5df",
+            "type": "BirthName",
+            "given": "Matilda J",
+            "surname": "Devoor"
+          },
+          {
+            "id": "f2ccf0b1-ec7c-4cc9-aca8-1313b477ed6f",
+            "type": "BirthName",
+            "surname": "Devoe",
+            "given": "Matilda J"
+          }
+        ],
+        "facts": [
+          {
+            "id": "143eb765-3b3a-43d5-9f0b-1af6d46feb37",
+            "type": "Birth",
+            "date": "1848",
+            "standard_date": "1848",
+            "place": "New York"
+          },
+          {
+            "id": "dcf6c77c-ff1d-462d-89fd-222c8c1c44ad",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Woodhull, Steuben, New York, United States",
+            "standard_place": "Woodhull, Steuben, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_242810746",
+        "ark": "ark:/61903/1:1:MC1G-1LN",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "81b9e275-b4b2-4948-aea7-c92e43110e88",
+            "type": "BirthName",
+            "surname": "Devoor",
+            "given": "Miles"
+          },
+          {
+            "id": "10e8856b-4202-49a3-aabb-b775b458b64a",
+            "type": "BirthName",
+            "surname": "Devoe",
+            "given": "Miles"
+          }
+        ],
+        "facts": [
+          {
+            "id": "6f928ee3-3d1f-4e27-bd00-81657f18d11f",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Woodhull, Steuben, New York, United States",
+            "standard_place": "Woodhull, Steuben, New York, United States"
+          },
+          {
+            "id": "95bd9145-b26d-4d05-b059-89eb07a260d2",
+            "type": "Birth",
+            "date": "1849",
+            "standard_date": "1849",
+            "place": "New York"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_242810747",
+        "ark": "ark:/61903/1:1:MC1G-1LJ",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "debcccba-ccab-4652-b752-5b525c84bde3",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "William"
+          }
+        ],
+        "facts": [
+          {
+            "id": "7c01b5be-f108-407e-90d4-ccf6c3be67a2",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Woodhull, Steuben, New York, United States",
+            "standard_place": "Woodhull, Steuben, New York, United States"
+          },
+          {
+            "id": "d611b41f-c8b4-4cfa-a908-cff0043bcb5b",
+            "type": "Birth",
+            "date": "1780",
+            "standard_date": "1780",
+            "place": "Connecticut"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_242810748",
+        "ark": "ark:/61903/1:1:MC1G-1LV",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "75a301c8-00c8-458e-ba1c-d4906f7d7eff",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "Orfey"
+          }
+        ],
+        "facts": [
+          {
+            "id": "d902f9a9-8e49-45a6-8a3a-c43b731854d5",
+            "type": "Birth",
+            "date": "1786",
+            "standard_date": "1786",
+            "place": "New York"
+          },
+          {
+            "id": "295e1b06-4f45-4592-b5bc-9b838a99259e",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Woodhull, Steuben, New York, United States",
+            "standard_place": "Woodhull, Steuben, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_180277283",
+        "resource_type": "Record",
+        "title": "Household of James Devoor, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1LD : Sun Jan 19 14:18:37 UTC 2025), Entry for James Devoe and Rebeccah Devoe, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:M4DN-BSP",
+        "coverage": {
+          "place_rep_id": "4613370",
+          "date_range": "1850",
+          "record_type": "Census",
+          "standard_place": "Woodhull, Steuben, New York, United States"
+        }
+      },
+      {
+        "id": "sd_c_1401638",
+        "resource_type": "Collection",
+        "title": "United States Census, 1850",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "1850/1850",
+          "record_type": "Census",
+          "standard_place": "United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-63F6-BJ",
+        "coverage": {
+          "place_rep_id": "4613370",
+          "date_range": "1850",
+          "record_type": "Census",
+          "standard_place": "Woodhull, Steuben, New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_242810748",
+        "resource_type": "Person",
+        "title": "Orfey Wheaton, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1LV : Sun Jan 19 14:18:37 UTC 2025), Orfey Wheaton in entry for James Devoor, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MC1G-1LV"
+      },
+      {
+        "id": "sd_p_242810744",
+        "resource_type": "Person",
+        "title": "Mary C Devoor, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1LX : Sun Jan 19 14:18:37 UTC 2025), Mary C Devoor in entry for James Devoor, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MC1G-1LX"
+      },
+      {
+        "id": "sd_p_242810746",
+        "resource_type": "Person",
+        "title": "Miles Devoor, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1LN : Sun Jan 19 14:18:37 UTC 2025), Miles Devoor in entry for James Devoor, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MC1G-1LN"
+      },
+      {
+        "id": "sd_p_242810747",
+        "resource_type": "Person",
+        "title": "William Wheaton, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1LJ : Sun Jan 19 14:18:37 UTC 2025), William Wheaton in entry for James Devoor, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MC1G-1LJ"
+      },
+      {
+        "id": "sd_p_242810745",
+        "resource_type": "Person",
+        "title": "Matilda J Devoor, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1LF : Sun Jan 19 14:18:37 UTC 2025), Matilda J Devoor in entry for James Devoor, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MC1G-1LF"
+      },
+      {
+        "id": "sd_p_242810743",
+        "resource_type": "Person",
+        "title": "Rebeccah Devoor, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1L6 : Sun Jan 19 14:18:37 UTC 2025), Rebeccah Devoor in entry for James Devoor, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MC1G-1L6"
+      },
+      {
+        "id": "sd_p_242810742",
+        "resource_type": "Person",
+        "title": "James Devoor, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1G-1LD : Sun Jan 19 14:18:37 UTC 2025), James Devoor, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MC1G-1LD"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1790 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1790-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_4613370"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HY-63F6-BJ",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HY-63F6-BJ",
+    "birthRanges": {
+      "p_242810742": "Bet 1824 and 1825",
+      "p_242810743": "Bet 1825 and 1826",
+      "p_242810744": "Bet 1846 and 1847",
+      "p_242810745": "Bet 1847 and 1848",
+      "p_242810746": "Bet 1848 and 1849",
+      "p_242810747": "Bet 1779 and 1780",
+      "p_242810748": "Bet 1785 and 1786"
+    }
+  }
+}
