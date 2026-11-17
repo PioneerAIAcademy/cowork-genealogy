@@ -16,4 +16,4 @@ certificate is still not a gap.
 Its pair is `decisive-skip-inaccessible`, which now carries pli_009 / log_011:
 the same index searched, no entry. There the agent declares.
 
-Used by `ut_research_exhaustiveness_020`.
+Used by `ut_research_exhaustiveness_021`.

@@ -5,7 +5,7 @@
     "sdk_message_silence_seconds": 600
   },
   "test": {
-    "id": "ut_research_exhaustiveness_020",
+    "id": "ut_research_exhaustiveness_021",
     "skill": "research-exhaustiveness",
     "name": "An open index beside a sealed record is an unsearched avenue, so the sealed-record exception does not apply",
     "type": "positive",
