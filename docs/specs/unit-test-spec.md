@@ -358,6 +358,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
+| `variant_names` | optional (see Section 5.13) | omit (a declined skill produces no audit) |
 | `negative` | omit | required |
 
 ### How a negative test is graded
@@ -500,6 +501,12 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
     "index_error_source": {
       "type": "string",
       "description": "Optional. Names the ONE attached source an index-discrepancy test declares to be an indexing error — the source that must never be recommended for detaching. Checked mechanically by test_index_discrepancy_does_not_recommend_detaching. See Section 5.12."
+    },
+    "variant_names": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional. The name spellings a name-variant test declares to be variants the records state, not indexing errors. Checked mechanically by test_name_variant_not_called_index_error. See Section 5.13."
     },
     "negative": {
       "type": "object",
@@ -1351,6 +1358,41 @@ Three subtractions, each pinned by a case:
 so every other test field **and `tags`** are in the run-log snapshot — adding
 one would buy a paid `source-evaluation` run. This rule needs no declared
 source.
+
+### 5.13 `variant_names`
+
+Optional non-empty list of name spellings a test declares to be **variants the
+records themselves state** — a form of the person's name that differs from the
+profile only in a spelling that sounds the same — and therefore not indexing
+errors. Ground truth for `source-evaluation`'s rule that such a
+spelling is reported outside the findings, with no index correction. Checked by
+`test_name_variant_not_called_index_error`
+(`eval/harness/validators/test_source_evaluation.py`), which reads the agent's
+own return (`subject_reply_text`, as § 5.12 explains), splits it with
+`_passages`, and fails a passage that names a declared spelling (whole word,
+any case) beside an indexing-error or index-correction term the passage does
+not negate. Negation is judged per term occurrence inside that term's own
+clause, with bare `no` counted and up to three words between negator and term,
+so "no index correction is needed" and "do not submit an index correction for
+it" pass; a negator followed by `doubt` or `question` ("no doubt a
+transcription error") is emphasis, not negation, and does not count. Gated on
+the `name-variant` tag; a tagged test with no `variant_names` fails rather than
+skipping.
+
+Scoped to the declared names because a reply-wide check cannot express the
+rule: a correct report of the same person can recommend an index correction for
+some other source. A denial covers every error term it joins with "or" or
+"nor" ("not an indexing error or a transcription error"). Three limits, all
+lexical: a passage that names a variant and also correctly recommends an index
+correction for a *different* field of that source fails the guard; a reply that
+discusses the variant without spelling it out is not seen; and a defect worded
+outside the term list ("a misspelling by the indexer … fix the name") is not
+seen. The rubric's Remediation doctrine bar is the judgement
+backstop for both.
+
+Like § 5.12's field, this is top-level and reaches the validator only through
+`orchestrator.py`'s whitelist;
+`test_orchestrator_threads_variant_names_into_validators` pins it.
 
 ---
 
