@@ -1,0 +1,28 @@
+{
+  "id": "children-skip-router-aleksiy-ivanov",
+  "message": "Research PID L8PL-3W8. What children did Алексий Васильев Иванов of Samara, husband of Елизавета Васильева and father of Виктор (born 29 October 1894) and Павел (born 15 February 1902), have besides these two?",
+  "expected_owner": "search-records",
+  "expected_save": [
+    {
+      "section": "log",
+      "tool": "record_search"
+    }
+  ],
+  "setup_units": [
+    "init-project"
+  ],
+  "required_tools": [
+    "project_create"
+  ],
+  "ends_on_offer": true,
+  "must_not": "No answer from person_read alone with no project (the issue #3768 failure); no 1885 Павел (a different family) added as a child",
+  "caps": {
+    "wall_clock_seconds": 1800,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 80,
+    "max_turns": 80,
+    "max_cost_usd": 4.0
+  },
+  "is_plan_ask": false
+}

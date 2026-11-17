@@ -25,6 +25,9 @@
     "sdk_message_silence_seconds": 300
   },
   "mcp_fixtures": [
+    "same-person-flynn-will-testator-no-persona",
+    "same-person-flynn-will-heir",
+    "same-person-flynn-will-heir-against-father",
     "same-person-flynn-degenerate"
   ]
 }

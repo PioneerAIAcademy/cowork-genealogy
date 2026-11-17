@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "No Antonia de Jesus person, relationship, fact or name in the tree, and none of the rejected record ARKs. Four namesake source descriptions (S2 to S5) remain in tree.sources, cited by no person or fact; not counted against it."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "ac089ce40e776b094060cfff4fd3e17467b24cbc1d97c94113c55f4f8e6f949c",
+  "blind_bundle_digest": "e4e89a74d227a81e239af3b0bdc113969a6db5861db69eb530216f783f8478ab"
+}

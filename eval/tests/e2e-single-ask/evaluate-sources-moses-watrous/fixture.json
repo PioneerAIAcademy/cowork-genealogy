@@ -19,5 +19,6 @@
     "tool_calls": 150,
     "max_turns": 150,
     "max_cost_usd": 6.0
-  }
+  },
+  "known_issue": "#2813"
 }

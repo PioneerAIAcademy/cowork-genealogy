@@ -45,11 +45,13 @@ export interface TreeName {
 }
 
 export interface TreeFact {
+  /** Dropped from `person_read`'s answer, as on a name. */
   id?: string;
   type: string;
   primary?: boolean;
   date?: string;
   standard_date?: string;
+  /** Dropped from `person_read`'s answer when equal to `standard_place`. */
   place?: string;
   // Reaches callers through `shapePersons`' type predicate, which narrows
   // without stripping properties — so the field shipped undeclared.
@@ -66,14 +68,18 @@ export interface TreeSourceRef {
 
 export interface TreePerson {
   id: string;
+  /** Absent from `person_read`'s answer (the id carries it). */
   ark?: string;
   gender: string;
-  living: boolean;
+  /** Absent from `person_read`'s answer when false. */
+  living?: boolean;
   names: TreeName[];
   facts?: TreeFact[];
   /** The sources FamilySearch attached to this person, as refs into the
    *  result's `sources[]`. Only refs that resolve there are kept; absent when
-   *  none do. */
+   *  none do. `person_read`'s answer carries them on `persons[0]` only
+   *  (`trimPersonReadForModel`); `project_create`'s own read keeps every
+   *  person's. */
   sources?: TreeSourceRef[];
 }
 
@@ -95,6 +101,8 @@ export interface TreeRelationship {
 export interface TreeSource {
   id: string;
   title: string;
+  /** In `project_create`'s read only; `person_read`'s answer drops it
+   *  (`record_read` returns the citation for a source an agent reads). */
   citation?: string;
   url?: string;
   /**

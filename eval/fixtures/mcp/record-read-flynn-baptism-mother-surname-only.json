@@ -1,0 +1,53 @@
+{
+  "tool": "record_read",
+  "description": "record_read — the 1845 Kilrush baptism of Patrick Flynn as flynn-baptism-mother-surname-only holds it: the entry names one parent, the mother, by surname alone (Doyle), and no father.",
+  "args": {
+    "recordId": "~BAPT-K1Q"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "BP1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "BN1",
+            "preferred": true,
+            "given": "Patrick",
+            "surname": "Flynn",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "BF1",
+            "type": "Christening",
+            "date": "12 March 1845",
+            "place": "Kilrush, County Clare, Ireland"
+          }
+        ]
+      },
+      {
+        "id": "BP3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "BN3",
+            "preferred": true,
+            "surname": "Doyle",
+            "type": "BirthName"
+          }
+        ],
+        "facts": []
+      }
+    ],
+    "relationships": [
+      {
+        "id": "BR2",
+        "type": "ParentChild",
+        "person1": "BP3",
+        "person2": "BP1"
+      }
+    ]
+  }
+}

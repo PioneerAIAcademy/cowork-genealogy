@@ -15,7 +15,7 @@
       "external-sites",
       "familysearch-exhausted",
       "no-sole-repository-claim",
-      "topical-fixture-required",
+      "census-search",
       "direct-arm",
       "outside-holding-claim"
     ]
@@ -25,10 +25,8 @@
     "scenario": "tallman-ny-state-census"
   },
   "mcp_fixtures": [
-    "wiki-read-new-york-census",
     "record-search-tallman-ny-directory-only",
     "record-read-tallman-ny-directory",
-    "wiki-search-any",
     "catalog-search-empty",
     "catalog-search-empty-keywords"
   ],
@@ -38,10 +36,9 @@
   },
   "judge_context": [
     "This is an AD-HOC search the user named; executing it is correct. Do not expect a plan item or a research-plan hand-back.",
-    "FamilySearch holds no 1825, 1835 or 1845 New York state census collection: the wiki page's state-census table starts at 1855, and every record_search returns only city-directory rows. The correct return reports those years as 'not on FamilySearch' and hands back to search-external-sites after one logged record_search per county. Do NOT score Nil escalation down for handing back without 2-3 name variants: the agent body exempts a record set with no FamilySearch collection from the variant threshold, because no spelling can surface a collection that does not exist. Score Nil escalation on whether the agent established the absence from the wiki page or census-type record_search results, not on the number of variants.",
+    "FamilySearch holds no 1825, 1835 or 1845 New York state census collection: record_search's `census` block lists no census of the place for those years (its New York state census rows start at 1855), and every record_search returns only city-directory rows. The correct return reports those years as 'not on FamilySearch' and hands back to search-external-sites after one logged record_search per county. Do NOT score Nil escalation down for handing back without 2-3 name variants: the agent body exempts a record set with no FamilySearch collection from the variant threshold, because no spelling can surface a collection that does not exist. Score Nil escalation on whether the agent established the absence from the `census` block and census-type record_search results, not on the number of variants.",
     "DO NOT grade whether the hand-back was named, or whether the return says the records are held only at one repository -- deterministic validators (test_escalates_to_external_sites_after_fs_exhaustion, test_no_sole_repository_claim) own both and read the agent's own return text.",
-    "The city-directory rows are not census records. Logging them as a collection mismatch (partial) or a negative for the census question is correct; presenting them as census findings is not.",
-    "The census wiki_read calls are NOT graded on Tool Arguments -- score that dimension on the record_search calls. A state census reads the state's page (New_York_Census) instead of the country page. Not fetching it at all is owned by test_census_wiki_fixture_actually_used."
+    "The city-directory rows are not census records. Logging them as a collection mismatch (partial) or a negative for the census question is correct; presenting them as census findings is not."
   ],
   "judge_reads_files": true
 }

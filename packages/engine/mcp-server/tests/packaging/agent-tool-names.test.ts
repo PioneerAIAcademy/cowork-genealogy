@@ -532,8 +532,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "person-evidence.md": {
     tools: [
       "materialize_facts",
-      "merge_warnings",
-      "person_quality",
       "person_warnings",
       "place_distance",
       "place_search",
@@ -810,17 +808,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "catalog_search",
       "extraction_append",
       "project_context",
-      "rank_search_matches",
       "record_read",
       "record_search",
       "research_append",
       "research_log_append",
       "research_query",
-      "same_person",
-      "source_attachments",
       "tree_query",
-      "wiki_read",
-      "wiki_search",
     ],
     denies: [],
   },
@@ -874,7 +867,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "question-selection.md": {
     tools: [
       "census_children_gap",
-      "person_warnings",
       "project_context",
       "research_append",
       "research_query",
@@ -888,11 +880,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // in `awaitingUser`. `Read` opens a capture in folder mode; with an
   // `uploadUrl`, `sidecar_read` reads an upload's text and `image_transcribe` an
   // upload with none (issue #3990). No wiki tools: the parish page arrives in the
-  // delegation as `baseUrl`.
+  // delegation as `baseUrl`. `catalog_search` (issue #4428) is step 2b's
+  // cross-check for archion/matricula: whether FamilySearch filmed the same
+  // church register, and whether that film is online.
   "search-external-sites.md": {
     tools: [
       "Read",
       "build_external_search_url",
+      "catalog_search",
       "collections_search",
       "external_links_search",
       "image_transcribe",

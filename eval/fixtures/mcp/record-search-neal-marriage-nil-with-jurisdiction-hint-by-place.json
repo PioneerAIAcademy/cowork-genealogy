@@ -1,0 +1,33 @@
+{
+  "tool": "record_search",
+  "description": "The same nil and jurisdictionHints block as record-search-neal-marriage-nil-with-jurisdiction-hint, for a marriage search that scopes Union County, South Carolina with `marriagePlace` and sends no `recordType`. Production computes the hint for any marriage search that finds nobody, whichever way the search says it is one.",
+  "args": {
+    "surname": "Neal",
+    "marriagePlace": "~South Carolina"
+  },
+  "response": {
+    "query": {
+      "surname": "Neal",
+      "recordType": "marriage",
+      "recordCountry": "United States"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": [],
+    "jurisdictionHints": {
+      "searchedPlace": "Union County, South Carolina",
+      "candidates": [
+        {
+          "place": "Yell County, Arkansas",
+          "earliestYear": 1857,
+          "whose": "I1",
+          "fromFact": "Birth"
+        }
+      ],
+      "note": "This marriage search did not find the subject in the place searched. A marriage is filed where the wedding happened, not where the couple later lived, and a couple usually married BEFORE they migrated. Listed below are other places these people are on record as having been. Search these before concluding no marriage record exists. These are places to LOOK, not evidence of anything."
+    }
+  }
+}

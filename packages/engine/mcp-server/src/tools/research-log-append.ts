@@ -49,6 +49,7 @@ import {
 import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { arkToBareId } from "../utils/ark.js";
 import { opensHandOff } from "../utils/awaiting-hand-offs.js";
 import {
   collectionKey,
@@ -58,7 +59,11 @@ import {
   type StoredCollectionUrls,
 } from "../utils/external-collections-store.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
-import { HEAD_ONLY_US_CENSUS_YEARS } from "../data/census-table.js";
+import {
+  BRITISH_RELATIONSHIP_COLUMN_FROM,
+  HEAD_ONLY_US_CENSUS_YEARS,
+  US_RELATIONSHIP_COLUMN_FROM,
+} from "../data/census-table.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -219,6 +224,52 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
   return notes.length > 0 ? notes.join("\n") : null;
 }
 
+/**
+ * Returned as `planRationale` when this call logs the first FamilySearch index
+ * search to find nothing for a plan item: the item's own rationale, with the
+ * instruction to search what it names before any other retry.
+ *
+ * A plan item's rationale carries what research-plan knew about the search:
+ * another surname the person may be under, how a collection is indexed, a
+ * second jurisdiction. Measured 2026-11-12 on Haiku 5.5 at low effort,
+ * `ut_search_records_d33` never searched the married surname its rationale
+ * names in 2 to 3 of 10 runs, and a body rule at either of two places did not
+ * move that. The note puts the rationale on the call the agent makes at the
+ * moment it matters.
+ */
+export const PLAN_RATIONALE_NOTE =
+  "This is the first search for plan item {planItemId} to find nothing. The plan " +
+  'item\'s rationale: "{rationale}" If it gives a name, place or source you have ' +
+  "not yet searched, search that next, before any other retry. Then carry on with " +
+  "the other retries: this note does not end the search.";
+
+/**
+ * The `planRationale` note for the plan items whose first nil this call logged,
+ * one line per item, or null. Reads only research.json (ADR-0011). Silent for a
+ * plan item that already had a nil, has found something, or has no rationale.
+ */
+function planRationaleNote(research: any, newEntries: any[]): string | null {
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const plans: any[] = Array.isArray(research.plans) ? research.plans : [];
+  const newNils = newEntries.filter(isNilFsSearch);
+  const touched = [...new Set(newNils.map((e) => e.plan_item_id))].filter(
+    (id): id is string => typeof id === "string",
+  );
+  const notes: string[] = [];
+  for (const pli of touched) {
+    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const nils = entries.filter(isNilFsSearch).length;
+    if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
+    if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
+    const item = plans.flatMap((p) => (Array.isArray(p?.items) ? p.items : [])).find((i: any) => i?.id === pli);
+    const rationale = typeof item?.rationale === "string" ? item.rationale.trim() : "";
+    if (rationale === "") continue;
+    // Function replacers: a string replacement would expand `$&` and `$'` in the rationale.
+    notes.push(PLAN_RATIONALE_NOTE.replaceAll("{planItemId}", () => pli).replaceAll("{rationale}", () => rationale));
+  }
+  return notes.length > 0 ? notes.join("\n") : null;
+}
+
 export interface ResearchLogAppendExternalSite {
   site: string;
   urlGenerated: string;
@@ -269,6 +320,8 @@ export type ResearchLogAppendResult =
       validation: { valid: true; warnings: string[] };
       /** `NIL_ESCALATION_NOTE`, present only when it fired. */
       escalationDue?: string;
+      /** `PLAN_RATIONALE_NOTE`, present only when it fired. */
+      planRationale?: string;
       /** `REPORT_REPLY_NEXT`, present only when a report tool was logged. */
       next?: string;
     } & ResearchLogAppendOpResult)
@@ -279,6 +332,7 @@ export type ResearchLogAppendResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
       escalationDue?: string;
+      planRationale?: string;
       next?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
@@ -487,12 +541,12 @@ const CENSUS_AFTER = new RegExp(
 function relationshipColumnFrom(qualifier: string): number | null {
   const q = qualifier.toLowerCase();
   if (/\b(?:england|english|wales|welsh|scotland|scottish|britain|british|uk|united\s+kingdom)\b/.test(q)) {
-    return 1851;
+    return BRITISH_RELATIONSHIP_COLUMN_FROM;
   }
   if (/\b(?:ireland|irish|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian)\b/.test(q)) {
     return Number.NaN; // named, non-US, undocumented here -> skip
   }
-  return 1880; // unqualified or explicitly US/federal
+  return US_RELATIONSHIP_COLUMN_FROM; // unqualified or explicitly US/federal
 }
 
 /** An explicitly US mention: never re-jurisdictioned by a staged payload. */
@@ -1987,12 +2041,155 @@ function fillStagedSearchCounts(
   }
 }
 
+const USER_PROVIDED_REMEDY =
+  "A reading no image tool made (the researcher's own, or one made with `Read` on an upload) is " +
+  'logged as `tool: "user_provided"`.';
+
+/** `query` keys that list page ids, or name a span of pages, in a browse entry. */
+const PAGE_KEYS = ["imageIds", "imageIdsExamined", "pagesRead", "imageRange", "imagesExamined", "imagesAttempted", "pagesAttempted"];
+
+const DGS_ID = /^\d+(?:_\d+)*$/;
+/** A bare ARK-style id (prefixes already dropped by `arkToBareId`): hyphen-joined letter-digit groups with a digit. */
+const ARK_STYLE_ID = /^(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)+$/;
+
+/**
+ * A page id, normalized so one page in two spellings compares equal, or null:
+ * a finite number, a DGS-style id (`00033`, `004433380_00033`, each segment
+ * read as a number), or an ARK-style id of letter-digit groups joined by
+ * hyphens with a digit somewhere, in any ARK form `arkToBareId` reads (a bare
+ * id, `3:1:...`, `ark:/61903/3:1:...`, a resolver URL), upper-cased. Words,
+ * file names, upload paths and prose are never one.
+ */
+function pageId(x: unknown): string | null {
+  if (typeof x === "number") return Number.isFinite(x) ? String(x) : null;
+  if (typeof x !== "string") return null;
+  const t = x.trim();
+  if (DGS_ID.test(t)) return t.split("_").map(Number).join("_");
+  const bare = arkToBareId(t);
+  return ARK_STYLE_ID.test(bare) ? bare.toUpperCase() : null;
+}
+
+/**
+ * Whether one `query` value names two or more distinct page ids: a list of them
+ * (JSON text read as one), text whose comma- or semicolon-separated parts are
+ * all page ids, or a whole value that is a range `lo-hi` (hyphen or en dash) of
+ * two DGS-style ids, where `hi` has no `_` or has `lo`'s prefix, and `lo`'s last
+ * segment is below `hi`'s (`650-712`, `004433380_00033-00047`).
+ */
+function namesSeveralPages(value: unknown): boolean {
+  const v = coerceJsonArg(value);
+  const several = (items: unknown[]) => {
+    const ids = items.map(pageId);
+    return ids.length > 1 && ids.every((id) => id !== null) && new Set(ids).size > 1;
+  };
+  if (Array.isArray(v)) return several(v);
+  if (typeof v !== "string") return false;
+  if (several(v.split(/[,;]/).filter((x) => x.trim() !== ""))) return true;
+  const range = /^\s*(\d+(?:_\d+)*)\s*[-\u2013]\s*(\d+(?:_\d+)*)\s*$/.exec(v);
+  if (range === null) return false;
+  const lo = range[1].split("_").map(Number);
+  const hi = range[2].split("_").map(Number);
+  const prefixMatches = hi.length === 1 || hi.slice(0, -1).join("_") === lo.slice(0, -1).join("_");
+  return prefixMatches && lo[lo.length - 1] < hi[hi.length - 1];
+}
+
+/**
+ * Whether a logged `query` lists or spans several pages and names no `file`,
+ * the only entries `imageToolEntryRefusal` offers `image_search`
+ * (search-result-staging-spec.md §6.1). Structural on purpose: a guess from
+ * loose text or from which keys are absent offered it to single readings.
+ */
+function isBrowseQuery(q: Record<string, unknown> | null): boolean {
+  if (q === null || q.file != null) return false;
+  return PAGE_KEYS.some((k) => namesSeveralPages(q[k]));
+}
+
+/** The logged `query` as a plain object, read as `applyLogAppendOp` reads it, or null. */
+function queryObject(query: unknown): Record<string, unknown> | null {
+  const q = coerceJsonArg(query);
+  return q !== null && typeof q === "object" && !Array.isArray(q) ? (q as Record<string, unknown>) : null;
+}
+
+/**
+ * A logged `tool` read for comparison: trimmed, case-folded, hyphens as
+ * underscores, and any `mcp__` or `mcp__<server>__` prefix dropped, so the
+ * qualified name a model sees in its own tool list is the same tool. The entry
+ * is persisted as sent; an image entry in a variant spelling can carry no
+ * staged ref anyway (the staged file's tool is compared exactly). Exported for
+ * `dev/measure-image-log-entries.ts`.
+ */
+export function canonicalToolName(tool: unknown): string | undefined {
+  if (typeof tool !== "string") return undefined;
+  return tool.trim().toLowerCase().replace(/^mcp__(?:.+__)?/, "").replace(/-/g, "_");
+}
+
+/**
+ * The refusal for an image-tool entry no image call stands behind, or null
+ * (issue #4581). `image_transcribe` stages the page it reads whenever it has a
+ * project, so a genuine entry carries the ref that call returned; one without
+ * it is a reading no tool made, a browse summary, or a call made without
+ * `projectPath`. A failed call reads and stages nothing, so an `error` entry
+ * that examined nothing passes; an absent count is left to
+ * `preflightRequiredFields` to ask for. `image_read` stages nothing and leaves
+ * no trace that proves a call, so it is refused only where it cannot be
+ * genuine: it takes no `file`. The messages offer neither unchecked tool for a
+ * single-page reading, since a refused reading would come back relabelled under
+ * it; `image_search` is named only for an entry whose `query` stands for
+ * several pages (`isBrowseQuery`). Exported for
+ * `dev/measure-image-log-entries.ts`.
+ */
+export function imageToolEntryRefusal(
+  op: Pick<ResearchLogAppendOp, "tool" | "query" | "outcome" | "resultsExamined" | "stagedResultsRef">,
+): string | null {
+  const tool = canonicalToolName(op.tool);
+  if (tool === "image_transcribe" && typeof asNull(op.stagedResultsRef) !== "string") {
+    const examined = coerceJsonArg(op.resultsExamined);
+    const failedCall = op.outcome === "error";
+    if (failedCall && (examined === 0 || examined === undefined || examined === null)) return null;
+    const browse = isBrowseQuery(queryObject(op.query));
+    return (
+      "an `image_transcribe` entry needs the `stagedResultsRef` its call returned: without it the log " +
+      `cannot show the page was machine-read. ${USER_PROVIDED_REMEDY} A page \`image_transcribe\` read ` +
+      "is logged with the `staged.resultsRef` that call returned; if it returned none, call " +
+      "`image_transcribe` again with `projectPath` and pass the `staged.resultsRef` it returns." +
+      (browse
+        ? ' A browse across several pages, or one the image cap stopped, is logged as `tool: "image_search"`.'
+        : "") +
+      (failedCall ? ' A call that failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`.' : "") +
+      (op.tool !== "image_transcribe" ? " Name the tool `image_transcribe`: the staged file records that name." : "")
+    );
+  }
+  if (tool === "image_read") {
+    const file = queryObject(op.query)?.file;
+    if (file === undefined || file === null) return null;
+    return (
+      "`image_read` takes no `file`, so an entry whose `query` names one records a reading of an upload " +
+      `that no image tool made. ${USER_PROVIDED_REMEDY} To machine-read the upload, call ` +
+      '`image_transcribe` with `projectPath` and that `file`, then log it as `tool: "image_transcribe"` ' +
+      "with the `staged.resultsRef` it returns."
+    );
+  }
+  return null;
+}
+
+/**
+ * Refuse an op `imageToolEntryRefusal` refuses. Runs before the other
+ * preflights, so a mislabelled op is not first asked to fill fields for an
+ * entry it must relabel. It needs no filled `tool`: it fires only with no
+ * staged ref, and `tool` is filled only from one.
+ */
+function preflightImageToolEntry(op: ResearchLogAppendOp): void {
+  const refusal = imageToolEntryRefusal(op);
+  if (refusal !== null) throw new LogAppendError(refusal);
+}
+
 /**
  * Fill an omitted `tool` from the staged envelope, then refuse once naming every
- * required field still missing. Runs first, so every later preflight sees the
- * filled `tool`. Without it an omitted `tool` reached the staging check as
- * `'undefined'` and read as a mismatch, and a caller that dropped the staged ref
- * to get past it lost the search's results (feedback issue #3069).
+ * required field still missing. Runs before every preflight but
+ * `preflightImageToolEntry`, so each later one sees the filled `tool`. Without
+ * it an omitted `tool` reached the staging check as `'undefined'` and read as a
+ * mismatch, and a caller that dropped the staged ref to get past it lost the
+ * search's results (feedback issue #3069).
  */
 async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   const ref = asNull(op.stagedResultsRef);
@@ -2487,10 +2684,12 @@ export async function researchLogAppend(
     const priorLogLength = Array.isArray(beforeResearch.log) ? beforeResearch.log.length : 0;
     // The nil-escalation note, computed on the committed document. Advisory, so
     // a failure computing it drops the note rather than the successful write.
-    const escalation = (): { escalationDue?: string } => {
+    const escalation = (): { escalationDue?: string; planRationale?: string } => {
       try {
-        const note = nilEscalationNote(research, research.log.slice(priorLogLength));
-        return note ? { escalationDue: note } : {};
+        const added = research.log.slice(priorLogLength);
+        const note = nilEscalationNote(research, added);
+        const rationale = planRationaleNote(research, added);
+        return { ...(note ? { escalationDue: note } : {}), ...(rationale ? { planRationale: rationale } : {}) };
       } catch {
         return {};
       }
@@ -2539,16 +2738,26 @@ export async function researchLogAppend(
       const prior = research.log.find((e: { id?: string }) => e.id === found.logId) ?? {};
       const differs: string[] = [];
       const sent = (v: unknown) => v !== undefined && v !== null && v !== "";
-      if (sent(op.tool) && op.tool !== prior.tool) differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      if (sent(op.tool) && canonicalToolName(op.tool) !== canonicalToolName(prior.tool)) {
+        differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      }
       if (sent(op.planItemId) && op.planItemId !== prior.plan_item_id) {
         differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
       }
       if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
       if (differs.length > 0) {
+        // An image_transcribe entry with no ref is refused (`imageToolEntryRefusal`),
+        // so a correction to a logged page needs a page of its own, not no ref.
+        const pageRead =
+          canonicalToolName(prior.tool) === "image_transcribe" &&
+          (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
         throw new LogAppendError(
           `stagedResultsRef '${ref}' is already logged as ${found.logId}, and this re-send differs in ` +
             `${differs.join(", ")}. The log is append-only: leave ${found.logId} as it is and append a ` +
-            "new entry, without the stagedResultsRef, whose notes state the correction.",
+            (pageRead
+              ? "new entry whose notes state the correction: call `image_transcribe` again with " +
+                "`projectPath` and log it with the new `staged.resultsRef` it returns."
+              : "new entry, without the stagedResultsRef, whose notes state the correction."),
         );
       }
       return found;
@@ -2595,6 +2804,7 @@ export async function researchLogAppend(
             logged.set(i, found);
             continue;
           }
+          preflightImageToolEntry(input.ops[i]);
           await preflightRequiredFields(input.ops[i], projectPath);
           const staged = await preflightStagedRef(input.ops[i], projectPath);
           if (staged) stagedChecks.set(i, staged);
@@ -2689,6 +2899,7 @@ export async function researchLogAppend(
       const prior = alreadyLoggedResult(found, "stagedResultsRef");
       return { ok: true, ...prior, filesWritten: [], validation: { valid: true, warnings: opWarnings } };
     }
+    preflightImageToolEntry(singleOp);
     await preflightRequiredFields(singleOp, projectPath);
     const singleStaged = await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
@@ -2754,7 +2965,8 @@ export const researchLogAppendSchema = {
     "the search tool returned (when you called it with `projectPath`) as " +
     "`stagedResultsRef`; the host finalizes that staged file into the sidecar " +
     "without you re-serializing the payload. Omit `stagedResultsRef` for nil " +
-    "searches and external-site searches.\n" +
+    "searches and external-site searches; a page read with `image_transcribe` " +
+    "keeps its `staged.resultsRef` even when it found nothing.\n" +
     "\n" +
     "Returns a compact summary (logId, resultsRef, returnedCount, filesWritten) — " +
     "never the payload. On a validation failure nothing is written and " +
@@ -2850,7 +3062,9 @@ export const researchLogAppendSchema = {
         type: ["string", "null"],
         description:
           "The `staged.resultsRef` handle returned by record_search / fulltext_search " +
-          "(when called with projectPath). Omit/null for nil and external-site searches.",
+          "(when called with projectPath). Omit/null for nil and external-site searches. An " +
+          "`image_transcribe` entry needs the `staged.resultsRef` that call returned, even when the " +
+          "page held nothing you sought.",
       },
       ops: {
         type: "array",

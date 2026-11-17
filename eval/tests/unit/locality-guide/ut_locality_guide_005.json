@@ -13,7 +13,8 @@
       "archives",
       " jurisdiction-awareness",
       "volume-search",
-      "direct-arm"
+      "direct-arm",
+      "no-project"
     ]
   },
   "input": {
@@ -44,7 +45,9 @@
     "place-search-all-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "Recognizes Arkansas was under Spanish control before 1800 and mentions Spanish colonial land grants, church registers, and territorial records and must not mention modern databases as if they existed in 1800.",
