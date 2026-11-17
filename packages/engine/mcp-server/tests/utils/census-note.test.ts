@@ -51,15 +51,15 @@ describe("censusNote", () => {
   it("says nothing about what a census recorded where the table does not know", () => {
     const note = censusNote({
       recordType: "census",
-      residenceYearFrom: 1865,
-      residenceYearTo: 1865,
-      residencePlace: "Ringsaker, Hedmark, Norway",
+      residenceYearFrom: 1930,
+      residenceYearTo: 1930,
+      residencePlace: "Jalisco, Mexico",
     });
     expect(note?.schedules.length).toBeGreaterThan(0);
     for (const s of note!.schedules) expect(s.recorded).toBeUndefined();
   });
 
-  it("carries on each row exactly what the US federal, British and heads-only rules give, and nothing elsewhere", () => {
+  it("carries on each row exactly what the US federal, British, heads-only and Norway rules give, and nothing elsewhere", () => {
     const relationshipFrom = (from: number, y: number): ScheduleContents =>
       y >= from ? "relationship" : "everyone";
     const HEADS_ONLY_STATE_ROWS = new Set([
@@ -75,9 +75,30 @@ describe("censusNote", () => {
             ? relationshipFrom(BRITISH_RELATIONSHIP_COLUMN_FROM, r.year)
             : HEADS_ONLY_STATE_ROWS.has(`${r.label} ${r.year}`)
               ? "headsOnly"
-              : undefined;
+              : r.label === "Norway"
+                ? "relationship"
+                : undefined;
       expect(r.schedule, `${r.label} ${r.year}`).toBe(expected);
       expect(r.headsOnly, `${r.label} ${r.year}`).toBe(expected === "headsOnly");
+    }
+  });
+
+  it("says every Norway census names everyone and states relationships", () => {
+    for (const y of [1801, 1865, 1891, 1900]) {
+      const note = censusNote({
+        recordType: "census",
+        residenceYearFrom: y,
+        residenceYearTo: y,
+        residencePlace: "Ringsaker, Hedmark, Norway",
+      });
+      expect(note?.schedules, `${y}`).toEqual([
+        {
+          year: y,
+          census: "Norway",
+          collectionId: expect.any(String),
+          recorded: "names every person and states each one's relationship to the head of household",
+        },
+      ]);
     }
   });
 

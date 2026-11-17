@@ -298,10 +298,16 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   census(1890, "Denmark", ["Denmark"], "2800928"), // 2.14m records
   census(1901, "Denmark", ["Denmark"], "2800929"), // 2.33m records
   census(1906, "Denmark", ["Denmark"], "2800931"), // 2.53m records
-  census(1801, "Norway", ["Norway"], "3733603"), // 879k records
-  census(1865, "Norway", ["Norway"], "3756102"), // 1.69m records
-  census(1891, "Norway", ["Norway"], "4067726"), // 2.73m records
-  census(1900, "Norway", ["Norway"], "3744863"), // 2.26m records
+  // Norway schedules, from each collection's FamilySearch wiki page, "What Can
+  // These Records Tell Me?": every person's name and position in family.
+  // https://www.familysearch.org/en/wiki/Norway_Census,_1801_-_FamilySearch_Historical_Records
+  census(1801, "Norway", ["Norway"], "3733603", "relationship"), // 879k records
+  // https://www.familysearch.org/en/wiki/Norway,_Census,_1865_-_FamilySearch_Historical_Records
+  census(1865, "Norway", ["Norway"], "3756102", "relationship"), // 1.69m records
+  // https://www.familysearch.org/en/wiki/Norway,_Census,_1891_-_FamilySearch_Historical_Records
+  census(1891, "Norway", ["Norway"], "4067726", "relationship"), // 2.73m records
+  // https://www.familysearch.org/en/wiki/Norway,_Census,_1900_-_FamilySearch_Historical_Records
+  census(1900, "Norway", ["Norway"], "3744863", "relationship"), // 2.26m records
   census(1835, "Iceland", ["Iceland"], "4380200"), // 76k records
   census(1860, "Iceland", ["Iceland"], "4460200"), // 66k records
 
