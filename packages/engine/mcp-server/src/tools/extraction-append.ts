@@ -194,9 +194,10 @@ export interface ExtractionAppendDeps {
 const DEFAULT_DEPS: ExtractionAppendDeps = { readRecord: recordReadTool };
 
 /** How long a short network outage gets before failed reads are tried again.
- *  `fetchWithRetry` spends its three attempts in about a second, and the
- *  thomas-hanrahan-marriage run of 2026-11-16 lost three of a person's five
- *  attached records to a blip that outlasted them all. */
+ *  `fetchWithRetry` spends its three attempts in about a second, and a
+ *  thomas-hanrahan-marriage e2e run on 2026-11-16 (log not kept) lost three of the
+ *  five records attached to its subject and his relationships to a blip that
+ *  outlasted them all. */
 const READ_RETRY_PAUSE_MS = 2_000;
 
 /** A read that failed on the way to FamilySearch rather than at it: Node's

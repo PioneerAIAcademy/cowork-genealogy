@@ -1434,9 +1434,10 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(r.summary).toMatch(/separate request/);
   });
 
-  // thomas-hanrahan-marriage, 2026-11-16: three of a person's five attached
-  // records failed with "fetch failed" inside the retry's second of attempts,
-  // the call answered ok, and the run went on without them.
+  // A thomas-hanrahan-marriage e2e run on 2026-11-16 (log not kept): three of the
+  // five records attached to the subject and his relationships failed with "fetch
+  // failed" inside the retry's second of attempts, the call answered ok, and the
+  // run went on without them.
   describe("a read that fails on the network", () => {
     const blip = () => Object.assign(new TypeError("fetch failed"), { cause: Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }) });
     const flaky = (failures: number, error: () => Error, reads: string[]) => {
