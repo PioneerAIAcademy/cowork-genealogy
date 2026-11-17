@@ -1574,6 +1574,26 @@ describe("matchedName", () => {
     expect(listingFetches("3932015")).toBe(1);
   });
 
+  it("place_search_all names nothing on a result named after the leaf, though it fetches the listing (Paris)", async () => {
+    routeByUrl([
+      {
+        match: "search?q=name:%22Paris%22",
+        json: { entries: [entry("100", "Paris", "Paris, Bear Lake, Idaho, United States", "9001")] },
+      },
+      {
+        match: "description/100",
+        json: placeDescription("100", "Paris", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      { match: "places/9001", json: listing("9001", [["en", "Paris"], ["fr", "Paris"]], ["100"]) },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearchAllTool({ placeName: "Paris", contextName: "Idaho" });
+
+    expect(result.matchType).toBe("exact");
+    expect(result.results[0].matchedName).toBeUndefined();
+  });
+
   it("names nothing on a fuzzy outcome and fetches no listing (Eschdref)", async () => {
     routeByUrl([
       { match: "search?q=name:%22Eschdref%22", json: { entries: [] } },
