@@ -1364,7 +1364,7 @@ source.
 Optional non-empty list of name spellings a test declares to be **variants the
 records themselves state** — a form of the person's name that differs from the
 profile only in a spelling that sounds the same — and therefore not indexing
-errors (issue #4584). Ground truth for `source-evaluation`'s rule that such a
+errors. Ground truth for `source-evaluation`'s rule that such a
 spelling is reported outside the findings, with no index correction. Checked by
 `test_name_variant_not_called_index_error`
 (`eval/harness/validators/test_source_evaluation.py`), which reads the agent's

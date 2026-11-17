@@ -391,7 +391,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "type": "string", "minLength": 1 },
-      "description": "Optional. The name spellings a test declares to be variants the records themselves state, not indexing errors (issue #4584). Consumed by test_name_variant_not_called_index_error in eval/harness/validators/test_source_evaluation.py, which fails a passage that names one of these spellings beside an un-negated indexing-error or index-correction term. Scoped to the declared names because a reply-wide check cannot express the rule: a correct report can recommend an index correction for some other source. A test tagged name-variant must declare it (see unit-test-spec.md § 5.13)."
+      "description": "Optional. The name spellings a test declares to be variants the records themselves state, not indexing errors. Consumed by test_name_variant_not_called_index_error in eval/harness/validators/test_source_evaluation.py, which fails a passage that names one of these spellings beside an un-negated indexing-error or index-correction term. Scoped to the declared names because a reply-wide check cannot express the rule: a correct report can recommend an index correction for some other source. A test tagged name-variant must declare it (see unit-test-spec.md § 5.13)."
     }
   },
   "allOf": [
