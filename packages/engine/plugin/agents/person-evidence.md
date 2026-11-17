@@ -289,8 +289,8 @@ the user changed assertions/links since you last saw them — use
 **`research_query`**:
 
 - `research_query({ section: "assertions", recordId: [ … ] })` — every persona
-  of every record you are about to link, in one call; join groups that
-  share `record_id` + `record_role`.
+  of every record you are about to link, in one call; group the items by
+  `record_id` + `record_role`.
 - `research_query({ section: "person_evidence", assertionId: [ … ] })` — which
   of those `a_` are already linked; `countById[id]` of 0 means unlinked.
 - `research_query({ section: "person_evidence", personId: [ … ] })` — the
@@ -298,7 +298,7 @@ the user changed assertions/links since you last saw them — use
 
 A list takes at most 50 ids, and only one filter per call may be a list. While
 `truncated` is true, re-query with `offset: nextOffset` until `truncated` is
-false and you hold `count` assertions.
+false and you hold `count` items.
 
 **Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 
