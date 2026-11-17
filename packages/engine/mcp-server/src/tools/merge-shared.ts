@@ -29,6 +29,8 @@ export interface MergePairSummary {
   namesKept: number;
   factsMerged: number;
   factsKept: number;
+  /** Vital fact types holding a `primary` after the merge, carried over from an
+   *  input: a merge never sets one (Decision 34). */
   primarySet: string[];
   genderConflictKeptSurvivor: boolean;
 }

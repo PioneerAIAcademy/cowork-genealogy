@@ -215,6 +215,18 @@ tree_edit({
   fact into a couple event is refused (§7); editing one already there is not.
   `add_person` and `add_relationship` apply the same `primary: false` deletion
   to each inline fact they author.
+- **`primary` follows its claim** (Decision 34 of `docs/plan/conclusion-tree.md`,
+  rule id `primary-claimed`, warn mode until Stage 1c). After every op applies,
+  each fact the call left `primary: true` that no live affirmed claim at
+  `probable` or better covers (Decision 31's join) is a finding when the call set
+  the flag (`add_fact`, `add_person`'s inline facts, `add_relationship`'s inline
+  Couple facts, `update_fact`) or moved a claimed fact's `type`, `date`,
+  `standard_date`, `place`, `standard_place` or `value` off its claim. Each comes
+  back in `validation.warnings` as `Will be refused: personId <id>, factId <id>: …`
+  (or `relationshipId <id>, factId <id>`), since a fact id alone is ambiguous across
+  persons. A primary no claim covered before the call (legacy or imported) is
+  never a finding when corrected (Decision 24). In refuse mode the same findings
+  refuse the write. tree_correct shares this applier.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
   `name.preferred === true`, clear `preferred` on the person's other names.
 - **`update_name`** `{ personId, nameId, name }` — shallow-merge fields; preferred

@@ -559,6 +559,71 @@ def test_the_tool_identity_path_authorizes_nothing_else(label, after_persons):
     assert "persons" in str(e.value), label
 
 
+#: A claim-only downgrade: research_append updates a proof summary and names no assertion.
+_CLAIM_CALL = [{
+    "tool": "mcp__genealogy__research_append",
+    "args": {"section": "proof_summaries", "op": "update", "entryId": "ps_001", "fields": {"claims": []}},
+}]
+
+
+def _couple(primary=True, **fact_over):
+    fact = {"id": "F9", "type": "Marriage", "date": "1875", "sources": [{"ref": "S1"}]}
+    if primary:
+        fact["primary"] = True
+    fact.update(fact_over)
+    return [{"id": "R2", "type": "Couple", "person1": "I1", "person2": "I3", "facts": [fact]}]
+
+
+def test_a_primary_cleared_by_research_appends_claim_rule_is_explained_on_a_person_fact():
+    """Decision 34: research_append clears `primary` when its covering claim goes,
+    with no assertion corrected."""
+    check_tree(
+        _tree_state(_person_with_fact(primary=True)),
+        _tree_state(_person_with_fact()),
+        {"name": "conflict-resolution"},
+        POSITIVE,
+        tool_calls=_CLAIM_CALL,
+    )
+
+
+def test_a_primary_cleared_by_research_appends_claim_rule_is_explained_on_a_couple_fact():
+    before = tree(relationships=_couple())
+    after = tree(relationships=_couple(primary=False))
+    check_tree(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_CLAIM_CALL)
+
+
+def test_rewrite_plus_cleared_primary_on_one_fact_is_explained():
+    check_tree(
+        _tree_state(_person_with_fact(primary=True)),
+        _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+        {"name": "conflict-resolution"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )
+
+
+@pytest.mark.parametrize("label,before_section,after_section,section", [
+    ("a cleared flag beside a retype", _person_with_fact(primary=True), _person_with_fact(type="Residence"), "persons"),
+    ("a cleared flag beside an added ref", _person_with_fact(primary=True),
+     _person_with_fact(sources=[{"ref": "S1"}, {"ref": "S2"}]), "persons"),
+    ("a Couple flag cleared beside a date change", _couple(), _couple(primary=False, date="1876"), "relationships"),
+    ("a Couple flag set", _couple(primary=False), _couple(), "relationships"),
+])
+def test_a_cleared_flag_beside_another_change_is_not_explained(label, before_section, after_section, section):
+    before = _tree_state(before_section) if section == "persons" else tree(relationships=before_section)
+    after = _tree_state(after_section) if section == "persons" else tree(relationships=after_section)
+    with pytest.raises(AssertionError) as e:
+        check_tree(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_CLAIM_CALL)
+    assert section in str(e.value), label
+
+
+def test_a_cleared_couple_primary_needs_a_research_append_call():
+    with pytest.raises(AssertionError) as e:
+        check_tree(tree(relationships=_couple()), tree(relationships=_couple(primary=False)),
+                   {"name": "conflict-resolution"}, POSITIVE)
+    assert "relationships" in str(e.value)
+
+
 def test_the_tool_identity_path_needs_the_call():
     """Without an extraction_append/research_append call, the same delta fails."""
     with pytest.raises(AssertionError) as e:

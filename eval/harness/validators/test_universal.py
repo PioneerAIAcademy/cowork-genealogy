@@ -1243,6 +1243,23 @@ def _fact_identity(fact: dict) -> tuple:
             fact.get("standard_date"), fact.get("assertion_id"), refs)
 
 
+def _primary_cleared(before_fact: dict, after_fact: dict) -> bool:
+    """`primary` was true and is now absent: research_append's claim rule clears
+    it when the claim covering the fact goes (Decision 34). A flag set, never."""
+    return before_fact.get("primary") is True and after_fact.get("primary") is not True
+
+
+def _same_but_primary(before_fact: dict, after_fact: dict) -> bool:
+    """Identity equal apart from `primary`, which may only have been cleared."""
+    if _fact_identity(before_fact)[:1] + _fact_identity(before_fact)[2:] != (
+        _fact_identity(after_fact)[:1] + _fact_identity(after_fact)[2:]
+    ):
+        return False
+    return (before_fact.get("primary") is True) == (after_fact.get("primary") is True) or _primary_cleared(
+        before_fact, after_fact
+    )
+
+
 def _person_identity(person: dict) -> tuple:
     """The same, for one person: nothing but its facts' mirrored attrs may move."""
     names = tuple(
@@ -1299,8 +1316,6 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
         return False
     if len(before_section) != len(after_section):
         return False
-    if not corrected:
-        return False
 
     assertions = {}
     if isinstance(research_after, dict):
@@ -1310,6 +1325,7 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
             if isinstance(a, dict)
         }
 
+    cleared_any = False
     for b_person, a_person in zip(before_section, after_section):
         if not isinstance(b_person, dict) or not isinstance(a_person, dict):
             return False
@@ -1326,8 +1342,9 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
         for b_fact, a_fact in zip(b_facts, a_facts):
             if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
                 return False
-            if _fact_identity(b_fact) != _fact_identity(a_fact):
+            if not _same_but_primary(b_fact, a_fact):
                 return False
+            cleared_any = cleared_any or _primary_cleared(b_fact, a_fact)
             changed = [
                 k for k in _REWRITABLE_FACT_ATTRS if b_fact.get(k) != a_fact.get(k)
             ]
@@ -1357,7 +1374,36 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
                     return False
                 if got != want:
                     return False
-    return True
+    return bool(corrected) or cleared_any
+
+
+def _explained_by_primary_clear(before_section, after_section) -> bool:
+    """True when the whole relationships delta is cleared `primary` flags on
+    Couple facts, the only change research_append makes there (Decision 34)."""
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+    cleared_any = False
+    for b_rel, a_rel in zip(before_section, after_section):
+        if not isinstance(b_rel, dict) or not isinstance(a_rel, dict):
+            return False
+        strip = lambda r: {k: v for k, v in r.items() if k != "facts"}
+        if strip(b_rel) != strip(a_rel):
+            return False
+        b_facts = b_rel.get("facts") or []
+        a_facts = a_rel.get("facts") or []
+        if not isinstance(b_facts, list) or not isinstance(a_facts, list) or len(b_facts) != len(a_facts):
+            return False
+        for b_fact, a_fact in zip(b_facts, a_facts):
+            if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
+                return False
+            if {k: v for k, v in b_fact.items() if k != "primary"} != {k: v for k, v in a_fact.items() if k != "primary"}:
+                return False
+            if not _same_but_primary(b_fact, a_fact):
+                return False
+            cleared_any = cleared_any or _primary_cleared(b_fact, a_fact)
+    return cleared_any
 
 
 def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
@@ -1432,6 +1478,15 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
                 after_state.get("research_json"),
                 _corrected_assertion_ids(tool_calls),
             )
+        ):
+            continue
+        # research_append clears `primary` on a Couple fact whose covering claim
+        # the call removed (Decision 34), and nothing else on this section.
+        if (
+            section == "relationships"
+            and "research_append" in (identity_tools.get(section) or set())
+            and "research_append" in called
+            and _explained_by_primary_clear(before.get(section), after.get(section))
         ):
             continue
         # extraction_append mints each `S` entry beside the `src_` it writes.

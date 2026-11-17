@@ -36,6 +36,8 @@ import {
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { primaryTarget, unclaimedPrimarySet } from "../utils/primary-claim.js";
+import { applyRuleMode, ruleMode, treeConcern } from "../validation/rule-modes.js";
 import {
   introducedWarnings,
   staleJustifications,
@@ -1225,6 +1227,22 @@ function proposedParentAssertions(ops: Array<Partial<TreeEditOp>> | undefined): 
   return out;
 }
 
+/** The `primary` rule (Decision 34): a fact the call left `primary` that no live
+ *  affirmed claim at `probable` or better covers. Warns until Stage 1c. */
+function primaryRuleOutcome(beforeTree: SimplifiedGedcomX, afterTree: SimplifiedGedcomX, research: any): { errors: string[]; warnings: string[] } {
+  const mode = ruleMode("primary-claimed");
+  const out = { errors: [] as string[], warnings: [] as string[] };
+  for (const x of unclaimedPrimarySet(beforeTree, afterTree, research)) {
+    const r = applyRuleMode(mode, treeConcern(primaryTarget(x)), [
+      "`primary` marks a fact the concluded value of its type, and no live affirmed claim at probable or better " +
+        "covers this one. Set it once a proof summary claims this value, or leave it unset.",
+    ]);
+    out.errors.push(...r.errors);
+    out.warnings.push(...r.warnings);
+  }
+  return out;
+}
+
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
  *  id-assignment, and validate-on-write semantics; only the admitted
  *  op set (the gate) differs. */
@@ -1317,6 +1335,8 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
+      const primaryRule = primaryRuleOutcome(beforeTree, tree, research);
+      if (primaryRule.errors.length > 0) return { ok: false, errors: primaryRule.errors };
 
       // Warning gate: refuse if the write introduces unjustified warnings
       const warningGateResult = await checkWarningGate(
@@ -1345,7 +1365,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
         filesWritten,
         validation: {
           valid: true,
-          warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
+          warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings, ...primaryRule.warnings],
         },
       };
     }
@@ -1365,6 +1385,8 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
+    const primaryRule = primaryRuleOutcome(beforeTree, tree, research);
+    if (primaryRule.errors.length > 0) return { ok: false, errors: primaryRule.errors };
 
     // Warning gate: refuse if the write introduces unjustified warnings
     const singleGateResult = await checkWarningGate(
@@ -1394,7 +1416,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       filesWritten: singleFilesWritten,
       validation: {
         valid: true,
-        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings],
+        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings, ...primaryRule.warnings],
       },
     };
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;

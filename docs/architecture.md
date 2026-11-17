@@ -1635,7 +1635,10 @@ one:** `research_append`'s assertion-`update` op also rewrites the tree fact
 that assertion minted, and a rewrite that fails validation is rolled back and
 degraded to a warning rather than refusing the assertion correction, which is
 the legitimate write the caller asked for. So that call writes `research.json`
-and not the tree. `tree-materialization-spec.md` §4.4 says why refusing would be
+and not the tree. The `primary` clear (Decision 34 of
+`docs/plan/conclusion-tree.md`: `primary` comes off a fact whose covering claim
+the call lowered or removed) rides the same write and rollback, re-run on the
+restored facts. `tree-materialization-spec.md` §4.4 says why refusing would be
 wrong. The tools assign all ids; callers never predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the
