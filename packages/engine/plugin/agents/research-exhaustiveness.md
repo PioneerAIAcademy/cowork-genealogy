@@ -441,6 +441,8 @@ the offending field — do not blindly retry the same payload.
   **sealed by privacy law** (e.g. a recent birth certificate still inside
   its statutory embargo, heir-request only) counts as inaccessible: note the
   limitation and declare on the accessible evidence; do not gate on it.
+  The other decisive records for the question still gate: before
+  declaring past a sealed one, check each is searched or itself inaccessible.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary

@@ -105,9 +105,11 @@
           "jurisdiction": "Utah",
           "date_range": "1936",
           "repository": "Utah Dept. of Health / Ancestry",
-          "rationale": "Alan's own 1936 Utah birth certificate would name his parents directly. NOT obtainable: Utah birth records are sealed by privacy law for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. Not a reasonably available record for this project.",
+          "rationale": "Alan's own 1936 Utah birth certificate would name his parents directly.",
           "fallback_for": null,
-          "status": "skipped"
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. No access path exists for this project."
         },
         {
           "id": "pli_009",
@@ -198,22 +200,6 @@
       "outcome": "negative",
       "results_examined": 0,
       "notes": "No probate located for either parent (Olive d. 1970, John d. 1998) that enumerates children.",
-      "external_site": null
-    },
-    {
-      "id": "log_004",
-      "plan_item_id": "pli_004",
-      "performed": "2026-07-14T12:00:00Z",
-      "tool": "record_search",
-      "query": {
-        "surname": "Applegarth",
-        "given": "Alan",
-        "birth_year": 1936,
-        "collection": "Utah Birth Certificates"
-      },
-      "outcome": "negative",
-      "results_examined": 0,
-      "notes": "Alan's 1936 Utah birth certificate is NOT publicly accessible: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. The record exists but is not reasonably obtainable for this project. Not an exhaustiveness gap; do not recommend obtaining it as a routine next step.",
       "external_site": null
     },
     {
