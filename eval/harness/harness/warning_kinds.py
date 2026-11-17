@@ -72,6 +72,9 @@ WARNING_KIND_SIDES: dict[str, str] = {
     # An MCP result reached the model as Claude Code's "too large, saved to file"
     # notice, so the agent never saw that tool's answer (#4380).
     "oversize_tool_result": "harness",
+    # Claude Code refused a tool call whose input was not valid JSON, before the
+    # tool saw it, and the agent wrote the call again (#4588).
+    "unparsed_tool_input": "harness",
 }
 
 _VALID_SIDES = frozenset({"judge", "harness"})

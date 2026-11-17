@@ -12,6 +12,7 @@ export function resolveFieldId(id: unknown, index: RuleIndex): FieldLabel | null
   let person: PersonEntry | null | undefined
   if (/^I\d+$/.test(id)) person = index.persons.get(id)
   else if (/^pe_\d+$/.test(id)) person = index.links.get(id)
+  else if (index.persons.has(id)) person = index.persons.get(id)
   if (person !== undefined) {
     if (!person?.name) return null
     return person.pid ? { label: person.name, href: personHref(person.pid) } : { label: person.name }

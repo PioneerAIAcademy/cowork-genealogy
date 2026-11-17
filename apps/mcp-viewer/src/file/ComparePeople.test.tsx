@@ -110,7 +110,7 @@ const SEARCHING = (): ProjectDocument => {
   ]
   d.derived = {
     ...d.derived,
-    questions: [{ id: 'q_001', state: 'evidence-gathered', nextStep: null, openConflictIds: [], storedStatus: 'in_progress', unregisteredDisagreements: [], competingParentSets: [] }]
+    questions: [{ id: 'q_001', state: 'searching', nextStep: null, openConflictIds: [], storedStatus: 'in_progress', unregisteredDisagreements: [], competingParentSets: [] }]
   }
   return d
 }

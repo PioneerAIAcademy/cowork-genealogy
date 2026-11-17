@@ -38,6 +38,8 @@
     "place-population-any",
     "place-search-all-any",
     "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title",
     "wiki-search-any",
     "wikipedia-search-any"
   ],
