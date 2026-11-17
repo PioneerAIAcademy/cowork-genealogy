@@ -1,9 +1,9 @@
 {
-  "run_log": "v6_2026-10-26_20-31-00.json",
-  "annotator": "edmondoware70@gmail.com",
+  "run_log": "v12_2026-11-17_21-57-27.json",
+  "annotator": "raphaeldaveal@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
       "dimension_source": "rubric",
       "dimension_name": "Tier justification",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
       "dimension_source": "rubric",
       "dimension_name": "Evidence completeness",
       "llm_score": 3,
@@ -51,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
       "dimension_source": "rubric",
       "dimension_name": "Proof-conclusion fit",
       "llm_score": 3,
@@ -59,7 +59,71 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
       "dimension_source": "rubric",
       "dimension_name": "Tree encoding",
       "llm_score": null,
@@ -67,6 +131,70 @@
       "comment": null
     },
     {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_proof_conclusion_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -131,70 +259,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "The persisted proof never calls him their son; that wording appears only in the refused first write. ps_001 concludes only the birthplace and quotes what the records say about the parents, which the test calls compliant."
-    },
-    {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "The test says a refusal from the unlinked parent check, followed by a write that removes the parentage, is the gate working and counts as a clean recovery under Tool Arguments too. The judge's own rationale says the rubric gives that recovery full credit."
-    },
-    {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "rubric",
-      "dimension_name": "Tier justification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "rubric",
-      "dimension_name": "Narrative standalone",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "rubric",
-      "dimension_name": "Proof-conclusion fit",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_32f",
-      "dimension_source": "rubric",
-      "dimension_name": "Tree encoding",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_proof_conclusion_r7k",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -207,8 +271,8 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "All three checks the test sets are explicit. Each of the five GPS components gets its own heading, the reply says the summary vehicle is appropriate for this evidence set, and it answers \"Would adding these change the tier? No\" for the uncited assertions."
+      "corrected_score": 2,
+      "comment": "Agree with 2. The reply states a tier effect for src_005 and src_006, but src_008 and src_009 only get \"would strengthen\" or \"possible statement\", with no explicit yes or no on changing the tier. The rubric calls that implied, which is a 2."
     },
     {
       "test_id": "ut_proof_conclusion_r7k",
@@ -246,9 +310,9 @@
       "test_id": "ut_proof_conclusion_r7k",
       "dimension_source": "rubric",
       "dimension_name": "Proof-conclusion fit",
-      "llm_score": 2,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "The review names the form as a summary and says outright that it suits this evidence set: three independent sources, one resolved conflict, consistent direction. It separates that from the missing reasoning in the text, which is the explicit fit judgment the review branch asks for."
+      "comment": null
     },
     {
       "test_id": "ut_proof_conclusion_r7k",
@@ -259,7 +323,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -267,7 +331,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -275,7 +339,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -283,7 +347,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "rubric",
       "dimension_name": "Tier justification",
       "llm_score": 3,
@@ -291,7 +355,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
       "llm_score": 3,
@@ -299,7 +363,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "rubric",
       "dimension_name": "Evidence completeness",
       "llm_score": 3,
@@ -307,7 +371,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "rubric",
       "dimension_name": "Proof-conclusion fit",
       "llm_score": 3,
@@ -315,7 +379,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_005",
+      "test_id": "ut_proof_conclusion_e1k",
       "dimension_source": "rubric",
       "dimension_name": "Tree encoding",
       "llm_score": null,
@@ -323,23 +387,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Judge error. The test requires naming research-plan as the route for what would advance the tier, and not naming question-selection. The reply says \"Plan these in research-plan\" and never names question-selection. An agent routes by naming the next agent; it cannot invoke one, so \"did not invoke research-plan\" is not a fault."
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Judge error. The test requires naming research-plan as the route for what would advance the tier, and not naming question-selection. The reply says \"Plan these in research-plan\" and never names question-selection. An agent routes by naming the next agent; it cannot invoke one, so \"did not invoke research-plan\" is not a fault."
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -347,7 +411,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "rubric",
       "dimension_name": "Tier justification",
       "llm_score": 3,
@@ -355,7 +419,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
       "llm_score": 3,
@@ -363,7 +427,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "rubric",
       "dimension_name": "Evidence completeness",
       "llm_score": 3,
@@ -371,7 +435,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "rubric",
       "dimension_name": "Proof-conclusion fit",
       "llm_score": 3,
@@ -379,7 +443,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_rt4",
       "dimension_source": "rubric",
       "dimension_name": "Tree encoding",
       "llm_score": null,
@@ -387,31 +451,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Proof-conclusion fit",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Tree encoding",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -419,7 +459,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_012",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -427,7 +467,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_012",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -435,7 +475,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_012",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "rubric",
       "dimension_name": "Tier justification",
       "llm_score": 3,
@@ -443,55 +483,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Narrative standalone",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Tier justification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "The persisted narrative cites no a_ ids at all; each source is described in prose with its full citation under Source Classifications. The few ids left (c_001, I1, I2, S4, pe_007) each sit beside a prose description, and the conflict reasoning and both claim tiers are stated."
+      "comment": "Changed to 3. The judge's rationale calls the narrative adequate. Each tree fact is described in prose alongside its label, the tier and the gap are stated plainly, and there are no sources to cite because this scenario has no evidence."
     },
     {
-      "test_id": "ut_proof_conclusion_022",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "rubric",
       "dimension_name": "Evidence completeness",
       "llm_score": 3,
@@ -499,7 +499,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_022",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "rubric",
       "dimension_name": "Proof-conclusion fit",
       "llm_score": 3,
@@ -507,11 +507,11 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_022",
+      "test_id": "ut_proof_conclusion_wz1",
       "dimension_source": "rubric",
       "dimension_name": "Tree encoding",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     }
   ]
