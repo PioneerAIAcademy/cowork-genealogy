@@ -890,7 +890,7 @@ There **is** an orchestrator, and it is a skill:
    `userPresent: no` to
    `search-external-sites` and `question-selection`, which get it on no other run
    (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those two read that field,
-   not the string (§9). The router also sends it to `person-evidence`, on a "Keep
+   not the string (§9.5 below). The router also sends it to `person-evidence`, on a "Keep
    going." or "Wrap it up." turn as well, but `agents/person-evidence.md` no longer
    reads it.
    `agents/search-records.md` hands back `userPresent: no` for
