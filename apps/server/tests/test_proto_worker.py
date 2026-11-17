@@ -4678,6 +4678,13 @@ def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
     assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
 
 
+def test_the_record_set_route_rides_the_same_turn_prompt(tmp_path):
+    """Issue #4583: the worker sends the page images of records already found to
+    search-records, the same text the alpha and the Cowork hook carry."""
+    opts = _options(config_dir=str(tmp_path))
+    assert options.RECORD_SET_ROUTE in opts.system_prompt["append"]
+
+
 def test_the_researcher_view_note_is_alpha_only(tmp_path):
     """Issue #4241: the note the alpha carries about sandbox paths and Findings is
     specific to the alpha's own download story (#3987 / #4001 gave the beta its own

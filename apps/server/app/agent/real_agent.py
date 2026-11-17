@@ -48,6 +48,7 @@ from .continue_policy import (
     DELEGATION_TOOLS,
     foreground_rewrite,
     NO_PROJECT_NOTE,
+    RECORD_SET_ROUTE,
     SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
     completion_halt_summary,
@@ -831,10 +832,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         "Follow the genealogy skills, and apply "
         "researcher_profile.narration_guidance from research.json as your "
         "narration style. "
-        "With no project and no FamilySearch person ID, a request for the names and details "
-        "recorded in a record set (a roll, register, muster list or volume) goes to the "
-        "search-images agent with no projectPath, even when it names no images; relay "
-        "everything after its final --- verbatim."
+        f"{RECORD_SET_ROUTE}"
     )
     main = load_main_thread(_PLUGIN_DIR)
     kwargs = dict(

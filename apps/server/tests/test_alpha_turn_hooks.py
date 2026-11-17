@@ -274,6 +274,22 @@ def test_the_sources_sentence_is_the_one_the_plugin_hook_adds(tmp_path):
     assert SOURCES_GUIDANCE in real_agent.build_options(tmp_path).system_prompt["append"]
 
 
+def test_the_record_set_route_is_the_one_the_plugin_hook_adds(tmp_path):
+    """Issue #4583. The hosted planes end their project note with `RECORD_SET_ROUTE` and
+    the Cowork hook ends `CONTEXT` with its own copy; a reword on one side alone sends the
+    page images of records already found to a different agent on each path."""
+    import importlib.util
+
+    from app.agent.continue_policy import RECORD_SET_ROUTE
+
+    path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/no_project_route.py"
+    spec = importlib.util.spec_from_file_location("_no_project_route", path)
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    assert hook.CONTEXT.endswith(RECORD_SET_ROUTE)
+    assert RECORD_SET_ROUTE in real_agent.build_options(tmp_path).system_prompt["append"]
+
+
 class _Turns:
     """Stands in for the session, borrowing the REAL turn-boundary method.
 

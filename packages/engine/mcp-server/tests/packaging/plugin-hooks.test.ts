@@ -1652,6 +1652,15 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     );
   });
 
+  it("routes a no-project ask for the page images of records already found to search-records (#4583)", () => {
+    const out = runNoProjectRoute(
+      JSON.stringify({ prompt: "Cite the sources for the 1825 census entries for Hemmingford, including the specific images." }),
+    );
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /With no project, the page images or\s+citations of records already found go to the search-records agent instead, with no\s+projectPath/,
+    );
+  });
+
   it("stays silent on a subagent hand-back", () => {
     expect(runNoProjectRoute(JSON.stringify({ prompt: '<agent-message from="a1">done</agent-message>' }))).toEqual({});
   });

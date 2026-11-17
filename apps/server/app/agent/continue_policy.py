@@ -78,6 +78,21 @@ SOURCES_GUIDANCE = (
 )
 
 
+# Issue #4583. The no-project routes for a record set, ending each hosted plane's project
+# note. A record set's names go to search-images, which browses pages; the page images or
+# citations of records already found go to search-records, which reads each record and
+# links its page. The plugin's `no_project_route.py` ends `CONTEXT` with the same text for
+# Cowork; `test_the_record_set_route_is_the_one_the_plugin_hook_adds` fails if they differ.
+RECORD_SET_ROUTE = (
+    "With no project and no FamilySearch person ID, a request for the names and details "
+    "recorded in a record set (a roll, register, muster list or volume) goes to the "
+    "search-images agent with no projectPath, even when it names no images; relay "
+    "everything after its final --- verbatim. With no project, the page images or "
+    "citations of records already found go to the search-records agent instead, with no "
+    "projectPath; relay everything after its final --- verbatim."
+)
+
+
 # Set in the SDK env by both hosted planes (`real_agent._sdk_env`, the prototype worker's
 # options). The plugin's `no_project_route.py` hook defines the same name and stays silent
 # when it is set, so its routing text reaches Cowork only and the hosted planes keep the
