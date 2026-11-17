@@ -24,7 +24,8 @@ import {
   imageIndexTool,
 } from "../../src/tools/image-index.js";
 import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../../src/constants.js";
-import type { ImageIndexInput } from "../../src/types/image-index.js";
+import type { ImageIndexInput, ImageIndexResult } from "../../src/types/image-index.js";
+import { toArk } from "../../src/utils/ark.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -109,28 +110,84 @@ beforeEach(() => {
 
 describe("image_index: the acceptance check", () => {
   it("lists the Peru-shaped fixture's 27 records with Michael Barry and Mila Fuller (synthetic until recorded)", async () => {
+    // Written so a recording of the real page (`--record`) passes it too: it
+    // pages to the end as a caller does (large households can need more than
+    // one answer), and checks each record against its own body.
     route(PERU_LIST, PERU_RECORDS);
-    const r = await imageIndexTool({ imageId: PERU, collectionId: "1803958" }, LOCAL);
+    const pages: ImageIndexResult[] = [];
+    let offset: number | undefined = 0;
+    while (offset !== undefined && pages.length < 30) {
+      const page = await imageIndexTool({ imageId: PERU, collectionId: "1803958", ...(offset ? { offset } : {}) }, LOCAL);
+      pages.push(page);
+      offset = page.nextOffset;
+    }
+    for (const page of pages) {
+      expect(page).toMatchObject({
+        imageArk: PERU,
+        collectionId: "1803958",
+        total: 27,
+        ordered: false,
+        hydrationTimedOut: false,
+        rateLimited: false,
+      });
+    }
+    const entries = pages.flatMap((page) => page.entries);
+    expect(entries.map((e) => e.index)).toEqual(Array.from({ length: 27 }, (_, i) => i));
+    expect(entries.every((e) => e.hydrated)).toBe(true);
 
-    expect(r.total).toBe(27);
-    expect(r.returned).toBe(27);
-    expect(r.entries).toHaveLength(27);
-    expect(r.entries.every((e) => e.hydrated)).toBe(true);
-    expect(r.entries[0].recordArk).toBe("ark:/61903/1:2:1TVW-1PV");
-    expect(r.entries[0].personas[0]).toMatchObject({
-      personaArk: "ark:/61903/1:1:XHPP-F3V",
+    // Measured from malachi: the list's first entry is record 1TVW-1PV, and it
+    // carries Michael Barry (his place among its personas was not measured).
+    expect(entries[0].recordArk).toBe("ark:/61903/1:2:1TVW-1PV");
+    expect(entries[0].personas.find((p) => p.personaArk === "ark:/61903/1:1:XHPP-F3V")).toMatchObject({
       name: "Michael Barry",
-      principal: true,
     });
-    expect(r.entries[1].personas[0]).toMatchObject({ personaArk: "ark:/61903/1:1:XHPP-FQX", name: "Mila Fuller" });
-    expect(r.entries[26].recordArk).toBe("ark:/61903/1:2:1TVW-15H");
-    expect(r.ordered).toBe(false);
-    expect(r.nextOffset).toBeUndefined();
-    expect(r.hydrationTimedOut).toBe(false);
-    expect(r.imageArk).toBe(PERU);
-    expect(r.collectionId).toBe("1803958");
+    // On the page per the in-network list; where in the list is not measured.
+    expect(entries.flatMap((e) => e.personas).find((p) => p.personaArk === "ark:/61903/1:1:XHPP-FQX")).toMatchObject({
+      name: "Mila Fuller",
+    });
 
-    expect(mockFetch).toHaveBeenCalledTimes(28);
+    // Against the fixture itself: every Record entry the list carries, once,
+    // each with exactly the persona arks its own body carries.
+    const recordIds = (PERU_LIST.sourceDescriptions as Array<Record<string, any>>)
+      .filter((d) => d?.resourceType === RECORD_TYPE)
+      .map((d) => recordIdOf(new URL(d.links.record.href, "https://www.familysearch.org").toString()) as string);
+    // In the list's own order (the tool never reorders), whatever that order is.
+    expect(entries.map((e) => e.recordArk)).toEqual(recordIds.map((id) => `ark:/61903/1:2:${id}`));
+    const bodyArks = (id: string): Array<string | undefined> =>
+      ((PERU_RECORDS[id] as { persons: unknown[] }).persons ?? [])
+        .filter((p): p is Record<string, any> => typeof p === "object" && p !== null && !Array.isArray(p))
+        .map((p) =>
+          ((p.identifiers?.[PERSISTENT] ?? []) as unknown[])
+            .filter((x): x is string => typeof x === "string")
+            .map((x) => toArk(x.trim()))
+            .find((a) => /^ark:\/61903\/1:1:/.test(a)),
+        )
+        .sort();
+    const bodyNames = (id: string): Set<string> =>
+      new Set(
+        ((PERU_RECORDS[id] as { persons: unknown[] }).persons ?? []).flatMap((p) => {
+          const person = p as Record<string, any>;
+          const forms = ((person?.names ?? []) as Array<Record<string, any>>).flatMap((n) => n?.nameForms ?? []);
+          return [...forms.map((f: Record<string, any>) => f?.fullText), person?.display?.name]
+            .filter((t): t is string => typeof t === "string" && t.trim() !== "")
+            .map((t) => t.trim());
+        }),
+      );
+    for (const e of entries) {
+      const id = (e.recordArk as string).replace("ark:/61903/1:2:", "");
+      expect(e.personas.map((p) => p.personaArk).sort(), id).toEqual(bodyArks(id));
+      const names = bodyNames(id);
+      for (const p of e.personas) if (p.name !== undefined) expect(names.has(p.name), `${id}: ${p.name}`).toBe(true);
+    }
+
+    // One list call per answer; every record read, and read once when one
+    // answer holds them all (an entry cut to fit the size limit is read again
+    // on the next page).
+    expect(requested().filter(isList)).toHaveLength(pages.length);
+    expect(new Set(recordRequests().map((u) => recordIdOf(u)))).toEqual(new Set(recordIds));
+    expect(recordRequests()).toHaveLength(
+      pages.reduce((n, page) => n + Math.min(IMAGE_INDEX_CAP, 27 - page.offset), 0),
+    );
     expect(requested()[0]).toBe(
       "https://www.familysearch.org/platform/records/images/3:1:33SQ-GYY1-B2G/records?cc=1803958",
     );

@@ -146,17 +146,35 @@ const links = (listBody.sourceDescriptions ?? [])
   .map((d) => recordLink(d?.links?.record?.href));
 const timings: number[] = [];
 const recordBodies: Record<string, unknown> = {};
+let failedReads = 0;
+const badLinks = links.filter((l) => l === undefined).length;
+if (badLinks > 0) console.log(`  ${badLinks} list entr(ies) carry no FamilySearch record link`);
+const ids = links.filter((l): l is { url: string; id: string } => l !== undefined).map((l) => l.id);
+const duplicates = ids.length - new Set(ids).size;
+if (duplicates > 0) console.log(`  ${duplicates} record id(s) appear more than once in the list`);
 for (const link of links) {
   if (!link) continue;
   const t0 = Date.now();
-  const res = await fsFetch(LOCAL, link.url, { headers: HEADERS }, undefined, { attempts: 1 });
-  const text = await res.text();
-  const ms = Date.now() - t0;
-  if (res.ok) {
+  try {
+    const res = await fsFetch(LOCAL, link.url, { headers: HEADERS }, undefined, { attempts: 1 });
+    const text = await res.text();
+    const ms = Date.now() - t0;
+    if (!res.ok) {
+      failedReads++;
+      console.log(`  ${link.id}: HTTP ${res.status} in ${ms} ms`);
+      continue;
+    }
+    const body = JSON.parse(text) as { persons?: unknown };
+    if (!Array.isArray(body?.persons)) {
+      failedReads++;
+      console.log(`  ${link.id}: HTTP 200 in ${ms} ms but no persons array`);
+      continue;
+    }
     timings.push(ms);
-    recordBodies[link.id] = JSON.parse(text);
-  } else {
-    console.log(`  ${link.id}: HTTP ${res.status} in ${ms} ms`);
+    recordBodies[link.id] = body;
+  } catch (error) {
+    failedReads++;
+    console.log(`  ${link.id}: ${error instanceof Error ? error.message : String(error)} after ${Date.now() - t0} ms`);
   }
 }
 if (timings.length > 0) {
@@ -169,7 +187,26 @@ if (timings.length > 0) {
   );
   console.log(`cap by the spec's rule min(30, 6 x floor(25 s / p95)): ${ruleCap} (shipped: ${IMAGE_INDEX_CAP})`);
 }
-if (recordDir !== undefined) {
+if (recordDir !== undefined && (failedReads > 0 || badLinks > 0)) {
+  console.log(
+    `NOT recorded: ${failedReads} record read(s) failed and ${badLinks} Record entr(ies) had no record link ` +
+      "(above); a recording with unread records is not the page. Run again, or report the list's shape.",
+  );
+} else if (recordDir !== undefined) {
+  // The facts the unit test checks: a recording that contradicts one is
+  // still the truth, and the failing test is the finding to report.
+  const owed = [
+    result.total === 27 ? "" : `total ${result.total}, not 27`,
+    result.entries[0]?.recordArk === "ark:/61903/1:2:1TVW-1PV" ? "" : "entry 0 is not record 1TVW-1PV",
+    result.entries[0]?.personas.some((p) => p.personaArk === EXPECTED[0] && p.name === "Michael Barry")
+      ? ""
+      : "entry 0 does not carry 1:1:XHPP-F3V named Michael Barry",
+    result.entries.some((e) => e.personas.some((p) => p.personaArk === EXPECTED[1] && p.name === "Mila Fuller"))
+      ? ""
+      : "no entry carries 1:1:XHPP-FQX named Mila Fuller (in this first answer)",
+    duplicates === 0 ? "" : `${duplicates} record id(s) repeat`,
+  ].filter(Boolean);
+  if (owed.length > 0) console.log(`WARNING: recording anyway, and the unit test will fail on it: ${owed.join("; ")}`);
   const note = `Recorded ${new Date().toISOString()} by dev/try-image-index.ts --record (raw FamilySearch bodies).`;
   writeFileSync(join(recordDir, "peru-list.json"), JSON.stringify({ _note: note, ...listBody }, null, 2) + "\n");
   writeFileSync(join(recordDir, "peru-records.json"), JSON.stringify({ _note: note, ...recordBodies }, null, 2) + "\n");

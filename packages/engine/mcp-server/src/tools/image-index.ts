@@ -80,8 +80,8 @@ export const imageIndexSchema = {
     "role, relationshipToHead, sortKey, lineNumber and personNumber when indexed). " +
     "The entries are UNORDERED (`ordered` is false): none of `index`, `sortKey`, " +
     "`lineNumber` or `personNumber` is verified as the line order on the page. A " +
-    "viewer URL's i= is not sent: the list is for the ARK itself, so open the one " +
-    "image and pass its own ARK. 3:2: ARKs are passed through but unmeasured. One " +
+    "viewer URL's i= is not sent: the list is for the ARK itself. 3:2: ARKs are " +
+    "passed through but unmeasured. One " +
     "call reads a capped number of records; when `nextOffset` is present, call " +
     "again with `offset` set to it. An entry with `hydrated: false` was not read " +
     "and its `error` says why; when that is a timeout, a network error or a 5xx, retry it " +

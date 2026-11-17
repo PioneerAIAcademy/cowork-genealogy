@@ -217,6 +217,11 @@ carries it, or the line and person numbers, is part of the live check.
   characters, `src/constants.ts`; at least one entry is always kept, so one record over that size
   is still returned whole, which is outside every household measured: `record_read` keeps 40
   personas whole). A read that failed is finished: it stays in the prefix with its `error`.
+- **Paging assumes a stable list.** Each call fetches the list again and slices it by position, so
+  "no record skipped or returned twice" holds while FamilySearch returns the same list in the same order
+  on every call. Only an image whose records do not all fit in one answer pages at all: more than 30
+  records, a record the deadline left unread, a rate limit, or the answer-size limit, and retrying one
+  entry with `offset` set to its `index` is a second call too.
 - **A paged list.** Whether the list route pages is not measured. When its answer carries a GedcomX
   `links.next`, the answer says `listTruncated: true`: `total` then counts only that first part,
   and this tool does not follow the link.
@@ -248,7 +253,14 @@ prompt-injection doctrine (`docs/architecture.md`, "Add an MCP tool"); nothing h
 
 Run from `packages/engine/mcp-server/`, signed in, on a network outside the church's:
 `npx tsx dev/try-image-index.ts --record tests/fixtures/image-index`. It prints each item
-below; paste the answers here with the date and the network.
+below; paste the answers here with the date and the network. It records nothing when any record
+read fails, a body carries no `persons`, or a Record entry carries no record link (a recording with
+unread records is not the page). A recording that contradicts what the unit test checks (27
+records, record `1TVW-1PV` first, Michael Barry and Mila Fuller on it) is still written, with a
+warning: the failing test is then the finding to report. The unit test pages to the end,
+checks the list's first entry (record `1TVW-1PV`, with Michael Barry in it: measured), Mila
+Fuller anywhere, the entries in the list's own order, and each record's persona arks and names
+against its own body, so a recording in another order, with larger households, passes it.
 
 - The list's order beyond entry 0: are entries 0 and 1 `1:1:XHPP-F3V` and `1:1:XHPP-FQX`?
 - Whether the platform record body carries `FS_SORT_KEY`, `PR_RELATIONSHIP_TO_HEAD`,
