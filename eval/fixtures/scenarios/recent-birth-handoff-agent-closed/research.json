@@ -130,6 +130,17 @@
           "rationale": "A 1936 birth announcement in the Ogden Standard-Examiner would name Alan's parents. Newspapers.com is a subscription site; the search was handed to the researcher.",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital",
+          "jurisdiction": "Utah",
+          "date_range": "1936",
+          "repository": "FamilySearch",
+          "rationale": "Utah Births and Christenings, 1892-1941 (FamilySearch index, collection 1675542) could index Alan's 1936 birth or christening with his parents' names. Searched; no entry for Alan.",
+          "fallback_for": null,
+          "status": "completed"
         }
       ]
     }
@@ -241,6 +252,21 @@
       "outcome": "negative",
       "results_examined": 0,
       "notes": "Alan's 1936 Utah birth certificate is NOT publicly accessible: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. The record exists but is not reasonably obtainable for this project. Not an exhaustiveness gap; do not recommend obtaining it as a routine next step.",
+      "external_site": null
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-14T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "given": "Alan",
+        "collection": "Utah Births and Christenings, 1892-1941"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Utah Births and Christenings, 1892-1941 (FamilySearch collection 1675542, the online birth index the Utah Vital Records wiki page lists for 1936) searched for Alan Glen Applegarth, b. 1936 Ogden, with surname variants: no entry. The index does not cover his birth.",
       "external_site": null
     },
     {

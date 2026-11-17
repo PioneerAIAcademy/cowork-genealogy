@@ -1,0 +1,40 @@
+{
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_020",
+    "skill": "research-exhaustiveness",
+    "name": "An open index beside a sealed record is an unsearched avenue, so the sealed-record exception does not apply",
+    "type": "positive",
+    "description": "q_001 in sealed-birth-open-index-unsearched asks for the parents of Alan Glen Applegarth (b. 1936 Utah). His birth certificate (pli_004) is skipped as inaccessible: Utah seals it for about 100 years. The Utah Vital Records wiki page the agent reads lists one online birth source for 1936, the FamilySearch index 'Utah Births and Christenings, 1892-1941', and no log entry searched it. The inaccessibility exception applies only when the sealed record is the only known avenue to the fact, so the agent declines and names the index. The sealed certificate is still not a gap and is not recommended. The decline half of a pair with _d8h, where the same index has been searched with no entry and the agent declares.",
+    "tags": [
+      "research-exhaustiveness",
+      "skip-category",
+      "decisive-record",
+      "birth-record",
+      "no-exhaustive-declaration",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording the decline if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "sealed-birth-open-index-unsearched"
+  },
+  "mcp_fixtures": [
+    "wiki-read-utah-vital-records"
+  ],
+  "judge_context": [
+    "The Utah Vital Records wiki page the agent fetches lists one online birth source covering 1936: the FamilySearch index 'Utah Births and Christenings, 1892-1941' (collection 1675542). No plan item and no log entry in this project searched it. It is a reachable record that could name Alan's parents.",
+    "Claude must NOT declare q_001 reasonably exhaustive. The inaccessibility exception applies only when the inaccessible source is the only known avenue to the fact. Here the index is a second avenue, so it is an unsearched gap. A stop-gate value (`question_answered`, `record_exhausted`, `nothing_further_reachable`) or `exhaustive_declared` is a FAIL.",
+    "A decline WRITES the stop: every item on the active plan is closed and an unsearched source remains, so `stopped_because` is `resources_spent` with `stop_criteria: null` and `status` left `in_progress`. Writing nothing is a miss.",
+    "Claude must name the births index (by title or collection number) as what is unsearched. A decline that names no specific source, or names only the sealed certificate, is a FAIL.",
+    "The sealed 1936 birth certificate (pli_004, `skip_category: \"inaccessible\"`) is still NOT a gap. Claude must not list it as an outstanding searchable record and must not recommend obtaining it. Doing either is a FAIL even when the index is also named. Recording it in `not_reached` as `privacy_sealed` or `skipped_plan_item` is correct.",
+    "Do NOT penalize Claude for declining even though the censuses, the marriage and the obituary agree on the parents. This is the pair of ut_research_exhaustiveness_d8h: there the same index has been searched with no entry and the agent declares.",
+    "`justification` must open with `Overturn risk: high — <sources>` or `Overturn risk: low`. The ladder reads that prefix to pick the default, so free prose without it is a miss. Either verdict is acceptable here: the accessible evidence already agrees, and the index could still name the parents directly.",
+    "The reply's LAST line is exactly \"Continue with planning the searches?\" on a high verdict or \"Continue with writing the conclusion?\" on a low one. The host parses only that line against the step labels.",
+    "Claude must not claim the birth certificate or the index was examined, or invent their contents."
+  ]
+}
