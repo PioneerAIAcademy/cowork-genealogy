@@ -2,12 +2,11 @@
   "test": {
     "id": "ut_question_selection_c7f",
     "skill": "question-selection",
-    "name": "Select a question driven by a person_warnings contradiction",
+    "name": "No new question while the parents question has concluded only the father",
     "type": "positive",
-    "description": "The subject carries a real `hasEventAfterDeath1` contradiction (a posthumous residence event). The skill must call `person_warnings` before deciding and report the contradiction as evidence to weigh on the open q_001 (conflict-resolution), writing no new question.",
+    "description": "q_001 asks who Patrick Flynn's parents were, and its proof summary ps_001 concludes only the father, so the mother is q_001's own unfinished work. The tree also carries a Residence dated 1925, after his 1908 death; research assumes the researcher reviewed the starting tree before research began, so it is not question-selection's to act on. The skill writes no new question.",
     "tags": [
       "question-selection",
-      "person-warnings-contradiction",
       "question-selection-no-new-question",
       "direct-arm"
     ]
@@ -17,9 +16,8 @@
     "scenario": "flynn-posthumous-residence-plan-done"
   },
   "judge_context": [
-    "Should call person_warnings on the subject (I1) before deciding",
-    "Should recognize the hasEventAfterDeath1 contradiction (a Residence event dated after the subject's death) and name it as evidence for conflict-resolution on q_001",
-    "**No question is proposed.** A `person_warnings` contradiction is evidence to weigh on the question already open: it goes to `conflict-resolution`, and from there to plan items. Calling `person_warnings` and reporting the contradiction is still correct and should be credited; writing a question for it is not. Nor is a mother question: `q_001` asks who Patrick's **parents** were, and `ps_001` concludes only the father, so the mother is `q_001`'s own unfinished work and goes to research-plan as items on `q_001`. A new question for her is a FAIL.",
-    "`research_append` ACCEPTS a new question in this scenario: `q_001` has a proof summary and no `planned` or `in_progress` item on its active plan (`pli_004`–`pli_006` are completed), which is the concluded-question exemption. Whether to open one is the agent's judgement, graded by the line above, not something the writer decides."
+    "**No question is proposed.** `q_001` asks who Patrick's **parents** were, and `ps_001` concludes only the father, so the mother is `q_001`'s own unfinished work, not a new question. A new question for her is a FAIL. The 1925 Residence dated after his 1908 death is starting-tree data the researcher reviews before research; a new question for it is also a FAIL, and mentioning it is neither required nor penalised.",
+    "`research_append` ACCEPTS a new question in this scenario: `q_001` has a proof summary and no `planned` or `in_progress` item on its active plan (`pli_004`–`pli_006` are completed), which is the concluded-question exemption. Whether to open one is the agent's judgement, graded by the line above, not something the writer decides.",
+    "JOB BOUNDARY: the reply is graded on the question decision only — that no new question is written, and why. Whether, and which, further research is owed on q_001 is research-exhaustiveness's and research-plan's call, not this agent's; the reply is neither required nor credited for naming it."
   ]
 }
