@@ -10,7 +10,7 @@ const vectors = JSON.parse(
 );
 
 describe("conclusion status vectors", () => {
-  it.each(vectors.cases.map((c: any) => [c.name, c]))("%s", (_name, c: any) => {
+  it.each<[string, any]>(vectors.cases.map((c: any) => [c.name, c]))("%s", (_name: string, c: any) => {
     const rows = conclusionStatus(c.research, c.tree, c.startingTree);
     if (c.expectRowCount !== undefined) expect(rows).toHaveLength(c.expectRowCount);
     for (const want of c.expect) {
