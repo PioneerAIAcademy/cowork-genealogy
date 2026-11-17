@@ -54,7 +54,7 @@ def _rel_finding(target_name, fid="f1"):
         "id": fid,
         "type": "relationship",
         "description": f"John Smith's father is {target_name}",
-        "details": {"target_person": {"name": target_name}},
+        "details": {"relation": "father", "target_person": {"name": target_name}},
     }
 
 
@@ -92,24 +92,34 @@ def test_partial_name_overlap_does_not_flag():
     assert check_stripping(expected, tree) == []
 
 
-def test_an_avoid_finding_still_flags_but_carries_its_polarity():
-    """A `polarity: "avoid"` claim must be as absent from the starting tree
-    as a recover answer (a pre-asserted wrong claim breaks the fixture the
-    other way) — same matcher, but the WARN advice differs (spec §3.4.1)."""
+def test_an_avoid_finding_flags_a_starting_tree_that_pre_asserts_it():
+    """A `polarity: "avoid"` claim must be absent from the starting tree (a
+    pre-asserted wrong claim breaks the fixture the other way). It gets the
+    avoid guard's own checks in presence mode, not the name matcher, and the
+    WARN advice differs (spec §3.4.1)."""
     finding = _rel_finding("Robert Smith")
     finding["polarity"] = "avoid"
     tree = {
         "persons": [
             _person("I1", "John", "Smith"),
             _person("I9", "Robert", "Smith"),  # the pre-asserted wrong claim
-        ]
+        ],
+        "relationships": [{"id": "R1", "type": "ParentChild", "parent": "I9", "child": "I1"}],
     }
-    suspects = check_stripping({"findings": [finding]}, tree)
+    suspects = check_stripping({"findings": [finding]}, tree, None, {"I1"})
     assert len(suspects) == 1
     assert suspects[0].polarity == "avoid"
     warn = vf.format_suspect("fx", suspects[0])
     assert "avoid" in warn
-    assert "must NOT" in warn
+    assert "pre-assert" in warn
+
+
+def test_an_avoid_finding_is_not_name_matched_against_the_starting_tree():
+    # The same person with no edge to the subject: nothing pre-asserted.
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    tree = {"persons": [_person("I1", "John", "Smith"), _person("I9", "Robert", "Smith")]}
+    assert check_stripping({"findings": [finding]}, tree, None, {"I1"}) == []
 
 
 # --- non-ASCII names (issue #3490) -----------------------------------
@@ -619,6 +629,7 @@ def _avoid_pair_findings(supporting_sources_by_finding):
                 "type": "fact",
                 "polarity": "avoid",
                 "description": "must not assert the hinted claim",
+                "details": {"fact_type": "Death", "wrong_candidate": {"date": "15 December 1854"}},
                 "supporting_sources": supporting_sources_by_finding.get("f1", []),
                 "required": True,
             },
@@ -1111,16 +1122,16 @@ def test_fact_findings_keep_their_own_advice_on_a_strip_fixture():
 
 def _genre_fixture(path: Path, genre: str) -> None:
     """A fixture that lints clean but raises one suspect, at `genre`."""
-    finding = _rel_finding("Robert Smith")
-    finding["polarity"] = "avoid"
-    _write_fixture(
-        path,
-        _valid_tree(
-            _valid_person("I1", "John", "Smith"),
-            _valid_person("I9", "Robert", "Smith"),  # the suspect
-        ),
-        {"findings": [finding]},
-    )
+    finding = {
+        "id": "f1",
+        "type": "fact",
+        "polarity": "avoid",
+        "description": "must not assert John died 15 December 1854",
+        "details": {"fact_type": "Death", "wrong_candidate": {"date": "15 December 1854"}},
+    }
+    john = _valid_person("I1", "John", "Smith")
+    john["facts"] = [{"id": "F1", "type": "Death", "date": "15 Dec 1854"}]  # the suspect
+    _write_fixture(path, _valid_tree(john), {"findings": [finding]})
     (path / "fixture.json").write_text(
         json.dumps({"id": path.name, "genre": genre}), encoding="utf-8"
     )
@@ -1169,3 +1180,109 @@ def test_suspect_genre_falls_back_to_strip_rather_than_crashing(tmp_path: Path):
         json.dumps({"genre": None}), encoding="utf-8"
     )
     assert vf.suspect_genre(tmp_path) == "strip"
+
+
+# --- what each avoid-guard branch must be able to read (spec §3.4.1) -------
+# A branch with nothing to read passes every run silently, so a missing field
+# is a hard error. Each error has a legitimate variant that must still pass.
+
+
+def _avoid(ftype="relationship", **details):
+    return {"id": "f1", "type": ftype, "polarity": "avoid", "description": "must not assert it", "details": details}
+
+
+def _shape(finding):
+    return finding_shape_errors({"findings": [finding]})
+
+
+_GOOD_RECORDS = ["ark:/61903/1:1:QPV4-RPBS"]
+
+
+@pytest.mark.parametrize(
+    "records",
+    [["QPV4-RPBS"], ["ark:/61903/1:2:9MHY-8S3G"], "ark:/61903/1:1:QPV4-RPBS", [None]],
+)
+def test_records_must_be_a_list_of_persona_arks(records):
+    finding = _avoid(relation="child", wrong_candidate={"name": "Hinrich Burmeister", "records": records})
+    assert any("persona ARKs" in e for e in _shape(finding))
+
+
+def test_a_list_of_persona_arks_passes():
+    assert _shape(_avoid(relation="child", wrong_candidate={"name": "Hinrich Burmeister", "records": _GOOD_RECORDS})) == []
+
+
+def test_an_empty_records_list_needs_a_note():
+    bare = _avoid(relation="child", wrong_candidate={"name": "Magdalena Schedler", "records": []})
+    assert any("empty" in e for e in _shape(bare))
+    noted = _avoid(relation="child", wrong_candidate={"name": "Magdalena Schedler", "records": [], "note": "a correct run cites them"})
+    assert _shape(noted) == []
+
+
+def test_a_person_avoid_needs_records():
+    assert any("person" in e and "records" in e for e in _shape(_avoid("person", person="Elsch Burmeister")))
+    assert _shape(_avoid("person", wrong_candidate={"name": "Elsch Burmeister", "records": _GOOD_RECORDS})) == []
+
+
+@pytest.mark.parametrize("relation", [None, "mother of child (unconfirmed)", "research conclusion"])
+def test_a_wrong_relationship_avoid_needs_a_mapped_relation(relation):
+    finding = _avoid(wrong_candidate={"name": "Agnes Wardrop"})
+    if relation is not None:
+        finding["details"]["relation"] = relation
+    assert any("names no role" in e for e in _shape(finding))
+
+
+@pytest.mark.parametrize("relation", ["mother", "Spouse", "parents", "child"])
+def test_a_mapped_relation_passes(relation):
+    assert _shape(_avoid(relation=relation, wrong_candidate={"name": "Agnes Wardrop"})) == []
+
+
+@pytest.mark.parametrize("name", ["Ricardo, baptized 3 Apr 1874", "", "the parents of a namesake"[:0]])
+def test_a_wrong_relationship_avoid_needs_a_matchable_name_or_any_new(name):
+    finding = _avoid(relation="child", wrong_candidate={"name": name})
+    assert any("nothing to match" in e for e in _shape(finding))
+
+
+def test_any_new_or_a_two_token_name_passes():
+    assert _shape(_avoid(relation="spouse", wrong_candidate={"name": "an unidentified second wife", "any_new": True})) == []
+    assert _shape(_avoid(relation="child", target_person={"name": "Ricardo Beisaga"})) == []
+
+
+def test_a_fact_avoid_needs_a_type_and_a_value():
+    errors = _shape(_avoid("fact", wrong_candidate={"name": "Frank J Wojtczak", "note": "died 19 March 1997"}))
+    assert any("fact_type" in e for e in errors)
+    assert any("no avoided value" in e for e in errors)
+
+
+@pytest.mark.parametrize(
+    "details",
+    [
+        {"fact_type": "Death", "wrong_candidate": {"date": "19 March 1997"}},
+        {"fact_type": "Birth", "date": "25 May 1835", "place": "Lichtental"},
+        {"fact_type": "Birth", "wrong_value": "1883"},
+        {"fact_type": "Marriage", "place": "Ballylooby"},
+    ],
+)
+def test_a_fact_avoid_with_any_value_form_passes(details):
+    assert _shape(_avoid("fact", **details)) == []
+
+
+def test_recover_findings_are_not_held_to_the_avoid_fields():
+    assert finding_shape_errors({"findings": [{"id": "f1", "type": "relationship"}]}) == []
+
+
+def _hint_fixture(path, identity, finding):
+    _write_fixture(path, _valid_tree(_valid_person("I1", "John", "Smith")), {"findings": [finding]})
+    (path / "fixture.json").write_text(json.dumps({"id": path.name, "hint": {"identity": identity}}), encoding="utf-8")
+
+
+def test_a_wrong_person_avoid_in_an_identity_different_fixture_needs_records(tmp_path):
+    _hint_fixture(tmp_path, "different", _avoid(relation="father", wrong_candidate={"name": "Robert Smith"}))
+    _, errors = lint_fixture(tmp_path)
+    assert any('hint.identity "different"' in e for e in errors)
+
+
+@pytest.mark.parametrize("identity", ["same", "unresolved"])
+def test_other_identities_may_use_the_edge_check_alone(tmp_path, identity):
+    _hint_fixture(tmp_path, identity, _avoid(relation="father", wrong_candidate={"name": "Robert Smith"}))
+    _, errors = lint_fixture(tmp_path)
+    assert not any("identity" in e for e in errors)

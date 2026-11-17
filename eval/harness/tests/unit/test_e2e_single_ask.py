@@ -899,3 +899,95 @@ def test_a_research_json_that_does_not_parse_is_not_an_untouched_folder():
     )
     assert g.failed == ["no_research_job", "save"]
     assert g.checks["save"] == (False, "research.json unreadable")
+
+
+# --- known_issue: a FAIL an open issue owns stays out of the exit code -------
+
+def test_loader_carries_known_issue(tmp_path):
+    _, spec = load_single_ask_fixture(_write(tmp_path, known_issue="#2813"))
+    assert spec.known_issue == "#2813"
+
+
+@pytest.mark.parametrize("value", ["2813", "#0", "#2813 items 3-4", 2813, None, ["#2813"]])
+def test_loader_refuses_a_known_issue_that_is_not_an_issue_number(tmp_path, value):
+    with pytest.raises(FixtureError, match="known_issue must be an issue number"):
+        load_single_ask_fixture(_write(tmp_path, known_issue=value))
+
+
+def _known_spec():
+    return SingleAskSpec(**{**SPEC.__dict__, "known_issue": "#2813"})
+
+
+def test_a_known_failure_prints_known_fail_and_its_issue():
+    g, line = run([skill("research"), agent("check-warnings")], spec=_known_spec())
+    assert not g.passed
+    assert line.startswith("KNOWN-FAIL review-sources")
+    assert "failed=[owner]" in line and "known_issue=#2813" in line
+
+
+def test_a_known_issue_fixture_that_passes_says_to_remove_it():
+    g, line = run([skill("research"), agent("source-evaluation")], spec=_known_spec())
+    assert g.passed
+    assert line.startswith("PASS review-sources")
+    assert "remove known_issue" in line
+
+
+def _main_known(monkeypatch, tmp_path, capsys, calls_by_fixture, known):
+    import e2e.run_single_ask as rsa
+
+    async def fake_turn(*, fixture, **kwargs):
+        return {"tool_calls": calls_by_fixture[fixture.id], "usage": {}, "aborted_reason": None, "error": None}
+
+    def fake_workspace(fixture, target, *a, **k):
+        (Path(target) / "research.json").write_text(json.dumps(FIXTURE_SAVED), encoding="utf-8")
+        return Path(target)
+
+    monkeypatch.setattr(rsa, "run_single_ask_turn", fake_turn)
+    monkeypatch.setattr(rsa, "build_workspace", fake_workspace)
+    monkeypatch.setattr(rsa, "load_env_file", lambda: None)
+    monkeypatch.setattr(rsa, "stage_openrouter_key", lambda: None)
+    entry = tmp_path / "index.js"
+    entry.write_text("", encoding="utf-8")
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    for fid in calls_by_fixture:
+        over = {"id": fid}
+        if fid in known:
+            over["known_issue"] = "#2813"
+        _write(fixtures, **over)
+    code = rsa.main([
+        "--fixtures-root", str(fixtures), "--runlog-root", str(tmp_path / "runs"),
+        "--mcp-server-entry", str(entry),
+    ])
+    return code, capsys.readouterr().out
+
+
+def test_main_exits_0_when_the_only_failure_is_known(monkeypatch, tmp_path, capsys):
+    code, out = _main_known(monkeypatch, tmp_path, capsys, {
+        "a-pass": [agent("source-evaluation")],
+        "b-known": [agent("check-warnings")],
+    }, known={"b-known"})
+    assert code == 0, out
+    assert "KNOWN-FAIL b-known" in out
+    assert "2 fixtures: 1 pass, 1 known fail, 0 fail or ungraded" in out
+
+
+def test_main_exits_1_on_a_failure_with_no_known_issue(monkeypatch, tmp_path, capsys):
+    code, out = _main_known(monkeypatch, tmp_path, capsys, {
+        "a-known": [agent("check-warnings")],
+        "b-new": [agent("check-warnings")],
+    }, known={"a-known"})
+    assert code == 1, out
+    assert "FAIL b-new" in out and "KNOWN-FAIL b-new" not in out
+    assert "2 fixtures: 0 pass, 1 known fail, 1 fail or ungraded" in out
+
+
+def test_every_committed_known_issue_is_named_in_its_readme():
+    marked = 0
+    for d in fixture_dirs(DEFAULT_SINGLE_ASK_FIXTURES, None):
+        _, spec = load_single_ask_fixture(d)
+        if spec.known_issue:
+            marked += 1
+            readme = (d / "README.md").read_text(encoding="utf-8")
+            assert f"Issue {spec.known_issue} owns it" in readme, d.name
+    assert marked, "no committed fixture carries known_issue"
