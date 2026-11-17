@@ -261,7 +261,8 @@ starts from a FamilySearch person ID: `init-project` never searches by name, and
 no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
 front door — its routing table sends a first message with no project to `init-project`
 or `tree-survey` (or, for the names in a record set with no person ID, to
-`search-images`), so nothing prefixes an opener onto the user's first message.
+`search-images`, and for the page images or citations of records already found, to
+`search-records`), so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -372,7 +373,8 @@ which one it is** — the hook bound under both, which is the part that matters.
 A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sentences
 to each Cowork researcher message: a conditional one (no project → a research request goes
 to the research skill; a no-PID ask for the names in a record set goes to
-search-images) and one naming a source, collection, book or citation only from a
+search-images; the page images or citations of records already found go to
+search-records) and one naming a source, collection, book or citation only from a
 tool result. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
 `continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
@@ -381,9 +383,12 @@ The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
 `test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ. The sources
 sentence is too (`continue_policy.SOURCES_GUIDANCE`, which both hosted planes append, and
 `no_project_route.SOURCES_NOTE`), pinned by
-`test_the_sources_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add it the
-same way, as `UserPromptSubmit` context (`context_policy.sources_note_hook`), and not the
-routing sentence.
+`test_the_sources_sentence_is_the_one_the_plugin_hook_adds`. So are the record-set routes
+(`continue_policy.RECORD_SET_ROUTE`, which ends both hosted planes' `project_note`, and
+the end of `no_project_route.CONTEXT`), pinned by
+`test_the_record_set_route_is_the_one_the_plugin_hook_adds`. Both harnesses add the
+sources sentence the same way, as `UserPromptSubmit` context
+(`context_policy.sources_note_hook`), and not the routing sentence.
 
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the

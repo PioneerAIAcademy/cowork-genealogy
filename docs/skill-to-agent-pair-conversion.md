@@ -522,7 +522,9 @@ up while the body ran on the main thread, and each cost a run to find.
    the router can copy "everything after the final `---`" without judging what
    is researcher-facing. The router prints only that, verbatim, and appends the
    hand-back literal issue #2292 rules; it never summarizes, and no label or
-   field name reaches the researcher. In the autonomous `/research` loop that
+   field name reaches the researcher. With no project, `search-records`' answer to
+   a page-images or citations ask links each page by `viewerUrl` and each record by
+   `recordUrl` (lead, 2026-11-17, issue #4583). In the autonomous `/research` loop that
    relayed tail is also the phase's narration line, so the router writes no
    separate one in its place (issue #3862: with both rules side by side, 0 of 85
    e2e relays survived). The router is still told to relay verbatim, but since
