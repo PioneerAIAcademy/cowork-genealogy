@@ -39,14 +39,20 @@ import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
 const MAX_ITEMS = 50;
 const TOOL_RESULT_CHAR_BUDGET = 40_000;
 
+/** What item `i` adds to a page that starts at `start`, in characters of the
+ *  answer actually emitted. */
+type ItemCost = (items: unknown[], i: number, start: number) => number;
+
+const jsonCost: ItemCost = (items, i) => JSON.stringify(items[i]).length;
+
 /** Returns the exclusive end index for a greedy page starting at `start`:
  *  adds items until the next one would push the cumulative JSON length past
  *  `budget` or `maxItems` is reached.  Always returns at least `start + 1`
  *  when items exist beyond `start`. */
-function greedyEnd(items: unknown[], start: number, budget: number, maxItems: number): number {
+function greedyEnd(items: unknown[], start: number, budget: number, maxItems: number, cost: ItemCost = jsonCost): number {
   let size = 0;
   for (let i = start; i < items.length && i - start < maxItems; i++) {
-    const len = JSON.stringify(items[i]).length;
+    const len = cost(items, i, start);
     if (i > start && size + len > budget) return i;
     size += len;
   }
@@ -57,11 +63,13 @@ function greedyEnd(items: unknown[], start: number, budget: number, maxItems: nu
  *  `start` already falls on a page boundary (0 or a prior `nextOffset`).
  *  Also returns null when `start` is at or beyond the end of the array —
  *  such an offset returns empty results, same as today, so is not refused. */
-function nearestPageStart(items: unknown[], start: number, budget: number, maxItems: number): number | null {
+function nearestPageStart(
+  items: unknown[], start: number, budget: number, maxItems: number, cost: ItemCost = jsonCost,
+): number | null {
   if (start === 0) return null;
   let pos = 0;
   while (pos < start) {
-    const end = greedyEnd(items, pos, budget, maxItems);
+    const end = greedyEnd(items, pos, budget, maxItems, cost);
     if (end <= pos) return null; // past the end of the array; allow it
     if (end === start) return null;
     if (end > start) return pos;
@@ -494,11 +502,107 @@ function withoutInactiveRationale(plan: any): any {
   };
 }
 
+/** The keys every fact of one persona repeats, hoisted onto an assertions group.
+ *  Exactly these five: `informant` and `informant_proximity` vary within a
+ *  persona, and `record_document_id` is on too few assertions to pay. */
+const HOISTED_KEYS = ["record_id", "record_persona_id", "record_role", "source_id", "log_entry_id"] as const;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** The hoisted keys `a` carries, in fixed order; an absent key stays absent. */
+function assertionHead(a: Record<string, unknown>): Record<string, unknown> {
+  const head: Record<string, unknown> = {};
+  for (const key of HOISTED_KEYS) if (Object.hasOwn(a, key)) head[key] = a[key];
+  return head;
+}
+
+/** True when two assertions share all five hoisted keys, absent ≠ `null`. */
+function sameHead(a: unknown, b: unknown): boolean {
+  if (!isPlainObject(a) || !isPlainObject(b)) return false;
+  return HOISTED_KEYS.every((key) =>
+    Object.hasOwn(a, key) === Object.hasOwn(b, key) &&
+    (!Object.hasOwn(a, key) || JSON.stringify(a[key]) === JSON.stringify(b[key])),
+  );
+}
+
+/** `a` without the hoisted keys, and without `extracted_for_question_ids` when
+ *  it is exactly `[questionId]` (every hit of a questionId read contains it,
+ *  so its absence there is lossless). */
+function assertionFact(a: Record<string, unknown>, questionId: string | undefined): Record<string, unknown> {
+  const fact: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(a)) {
+    if ((HOISTED_KEYS as readonly string[]).includes(key)) continue;
+    if (
+      key === "extracted_for_question_ids" && questionId !== undefined &&
+      Array.isArray(value) && value.length === 1 && value[0] === questionId
+    ) continue;
+    fact[key] = value;
+  }
+  return fact;
+}
+
+/** An assertions page as groups: each maximal run of consecutive assertions
+ *  sharing the five hoisted keys becomes `{ ...head, facts: [...] }`. Order is
+ *  kept, so `flattenAssertionGroups` restores the page exactly. A non-object
+ *  entry passes through on its own. */
+function groupAssertions(items: unknown[], questionId: string | undefined): unknown[] {
+  const out: unknown[] = [];
+  let open: { facts: unknown[] } | undefined;
+  items.forEach((a, i) => {
+    if (!isPlainObject(a)) {
+      out.push(a);
+      open = undefined;
+      return;
+    }
+    if (open && sameHead(items[i - 1], a)) {
+      open.facts.push(assertionFact(a, questionId));
+      return;
+    }
+    open = { ...assertionHead(a), facts: [assertionFact(a, questionId)] };
+    out.push(open);
+  });
+  return out;
+}
+
+/** The inverse of the grouped `assertions` answer: one flat assertion per
+ *  fact, the group's hoisted keys restored, and `extracted_for_question_ids:
+ *  [questionId]` restored on a questionId read. An entry with no `facts` list
+ *  passes through unchanged, so a flat answer flattens to itself. */
+export function flattenAssertionGroups(items: unknown[], questionId?: string): unknown[] {
+  return items.flatMap((group) => {
+    if (!isPlainObject(group) || !Array.isArray(group.facts)) return [group];
+    const head = assertionHead(group);
+    return group.facts.map((fact) => {
+      const a: Record<string, unknown> = { ...head, ...(fact as Record<string, unknown>) };
+      if (questionId !== undefined && !Object.hasOwn(a, "extracted_for_question_ids")) {
+        a.extracted_for_question_ids = [questionId];
+      }
+      return a;
+    });
+  });
+}
+
+/** What assertion `i` adds to its grouped page, exactly: opening a group
+ *  costs the whole one-fact group; continuing one costs a comma and the fact. */
+function groupedAssertionCost(questionId: string | undefined): ItemCost {
+  return (items, i, start) => {
+    const a = items[i];
+    if (!isPlainObject(a)) return JSON.stringify(a).length;
+    const fact = assertionFact(a, questionId);
+    if (i > start && sameHead(items[i - 1], a)) return 1 + JSON.stringify(fact).length;
+    return JSON.stringify({ ...assertionHead(a), facts: [fact] }).length;
+  };
+}
+
 /** The page's items as the tool returns them. A log entry's `staged_ref` is
- *  research_log_append's own bookkeeping, read from research.json directly. */
-function projectItems(section: ResearchQuerySection, items: any[]): any[] {
+ *  research_log_append's own bookkeeping, read from research.json directly.
+ *  Assertions come back grouped by persona (`groupAssertions`). */
+function projectItems(section: ResearchQuerySection, items: any[], questionId?: string): any[] {
   if (section === "plans") return items.map(withoutInactiveRationale);
   if (section === "log") return items.map((entry) => without(entry, "staged_ref"));
+  if (section === "assertions") return groupAssertions(items, questionId);
   return items;
 }
 
@@ -853,18 +957,21 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     }
 
     const start = input.offset ?? 0;
-    const nearestMain = nearestPageStart(ordered, start, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS);
+    // Assertions are emitted grouped, so the page budget is measured on groups.
+    const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
+    const cost = section === "assertions" ? groupedAssertionCost(questionId) : jsonCost;
+    const nearestMain = nearestPageStart(ordered, start, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS, cost);
     if (nearestMain !== null) {
       throw new ResearchQueryError(
         `offset ${start} is not a valid page start (nearest valid start: ${nearestMain}).`,
       );
     }
-    const end = greedyEnd(ordered, start, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS);
+    const end = greedyEnd(ordered, start, TOOL_RESULT_CHAR_BUDGET, MAX_ITEMS, cost);
     const page: Extract<ResearchQueryResult, { ok: true }> = {
       ok: true as const,
       section,
       count: ordered.length,
-      items: projectItems(section, ordered.slice(start, end)),
+      items: projectItems(section, ordered.slice(start, end), questionId),
       truncated: end < ordered.length,
       ...(end < ordered.length ? { nextOffset: end } : {}),
     };
