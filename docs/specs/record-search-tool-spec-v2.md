@@ -1357,11 +1357,14 @@ the country) and changed no other answer.
 ```
 
 - `schedules` — at most 8, earliest first. `recorded` is present only where the
-  table knows it: a heads-only schedule; the relationship-to-head column from
-  1880 for the US federal census and from 1851 for England and Wales and
-  Scotland (`US_RELATIONSHIP_COLUMN_FROM`, `BRITISH_RELATIONSHIP_COLUMN_FROM`,
-  which `research_log_append`'s pre-1880 gate also reads). Rows for other
-  jurisdictions carry no `recorded` yet.
+  row's `schedule` says what the schedule recorded (`headsOnly`, `everyone` or
+  `relationship`, one sentence each); a row with no `schedule` gets none. Filled:
+  the US federal census (heads only 1790-1840, the relationship-to-head column
+  from 1880, `US_RELATIONSHIP_COLUMN_FROM`), England and Wales and Scotland (the
+  column from 1851, `BRITISH_RELATIONSHIP_COLUMN_FROM`; both constants are also
+  read by `research_log_append`'s pre-1880 gate), and the heads-only Illinois
+  1855 and 1865 and Wisconsin 1855-1895 state censuses. Rows for other
+  jurisdictions carry no `schedule` yet.
 - `fragmentYears` — years searched whose census of the place survives only as
   fragments.
 - With `recordType: "census"` and no census of the years searched, `schedules`

@@ -1,4 +1,11 @@
 import { describe, expect, it } from "vitest";
+import {
+  BRITISH_RELATIONSHIP_COLUMN_FROM,
+  CENSUS_TABLE,
+  HEAD_ONLY_US_CENSUS_YEARS,
+  US_RELATIONSHIP_COLUMN_FROM,
+  type ScheduleContents,
+} from "../../src/data/census-table.js";
 import { censusNote, CENSUS_SCHEDULES_NOTE, MAX_CENSUS_SCHEDULES } from "../../src/utils/census-note.js";
 
 const PA_1850 = {
@@ -48,7 +55,30 @@ describe("censusNote", () => {
       residenceYearTo: 1865,
       residencePlace: "Ringsaker, Hedmark, Norway",
     });
-    for (const s of note?.schedules ?? []) expect(s.recorded).toBeUndefined();
+    expect(note?.schedules.length).toBeGreaterThan(0);
+    for (const s of note!.schedules) expect(s.recorded).toBeUndefined();
+  });
+
+  it("carries on each row exactly what the US federal, British and heads-only rules give, and nothing elsewhere", () => {
+    const relationshipFrom = (from: number, y: number): ScheduleContents =>
+      y >= from ? "relationship" : "everyone";
+    const HEADS_ONLY_STATE_ROWS = new Set([
+      "Illinois 1855", "Illinois 1865", "Wisconsin 1855", "Wisconsin 1875", "Wisconsin 1885", "Wisconsin 1895",
+    ]);
+    for (const r of CENSUS_TABLE) {
+      const expected =
+        r.label === "United States"
+          ? HEAD_ONLY_US_CENSUS_YEARS.has(r.year)
+            ? "headsOnly"
+            : relationshipFrom(US_RELATIONSHIP_COLUMN_FROM, r.year)
+          : r.label === "England and Wales" || r.label === "Scotland"
+            ? relationshipFrom(BRITISH_RELATIONSHIP_COLUMN_FROM, r.year)
+            : HEADS_ONLY_STATE_ROWS.has(`${r.label} ${r.year}`)
+              ? "headsOnly"
+              : undefined;
+      expect(r.schedule, `${r.label} ${r.year}`).toBe(expected);
+      expect(r.headsOnly, `${r.label} ${r.year}`).toBe(expected === "headsOnly");
+    }
   });
 
   it("fires on a single residence year without recordType", () => {
