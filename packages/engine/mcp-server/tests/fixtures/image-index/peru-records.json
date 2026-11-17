@@ -1,0 +1,597 @@
+{
+  "_note": "SYNTHETIC, not a recording. Shaped from issue #4632's measurements of the Peru page (3:1:33SQ-GYY1-B2G, cc=1803958, from malachi 2026-11-17): 27 Record sourceDescriptions, each with links.record.href to /platform/records/records/{id}. Only entries 0, 1 and 26 carry the record and persona ids the issue names; the SYN-* ids and names are placeholders. Replace both files with `dev/try-image-index.ts --record tests/fixtures/image-index`.",
+  "1TVW-1PV": {
+    "persons": [
+      {
+        "id": "p_0",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:XHPP-F3V"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Michael Barry"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "1TVW-15X": {
+    "persons": [
+      {
+        "id": "p_1",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:XHPP-FQX"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Mila Fuller"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0002": {
+    "persons": [
+      {
+        "id": "p_2",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P002"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 2"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0003": {
+    "persons": [
+      {
+        "id": "p_3",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P003"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 3"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0004": {
+    "persons": [
+      {
+        "id": "p_4",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P004"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 4"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0005": {
+    "persons": [
+      {
+        "id": "p_5",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P005"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 5"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0006": {
+    "persons": [
+      {
+        "id": "p_6",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P006"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 6"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0007": {
+    "persons": [
+      {
+        "id": "p_7",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P007"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 7"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0008": {
+    "persons": [
+      {
+        "id": "p_8",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P008"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 8"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0009": {
+    "persons": [
+      {
+        "id": "p_9",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P009"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 9"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0010": {
+    "persons": [
+      {
+        "id": "p_10",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P010"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 10"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0011": {
+    "persons": [
+      {
+        "id": "p_11",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P011"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 11"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0012": {
+    "persons": [
+      {
+        "id": "p_12",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P012"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 12"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0013": {
+    "persons": [
+      {
+        "id": "p_13",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P013"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 13"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0014": {
+    "persons": [
+      {
+        "id": "p_14",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P014"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 14"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0015": {
+    "persons": [
+      {
+        "id": "p_15",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P015"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 15"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0016": {
+    "persons": [
+      {
+        "id": "p_16",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P016"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 16"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0017": {
+    "persons": [
+      {
+        "id": "p_17",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P017"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 17"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0018": {
+    "persons": [
+      {
+        "id": "p_18",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P018"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 18"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0019": {
+    "persons": [
+      {
+        "id": "p_19",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P019"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 19"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0020": {
+    "persons": [
+      {
+        "id": "p_20",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P020"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 20"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0021": {
+    "persons": [
+      {
+        "id": "p_21",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P021"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 21"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0022": {
+    "persons": [
+      {
+        "id": "p_22",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P022"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 22"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0023": {
+    "persons": [
+      {
+        "id": "p_23",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P023"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 23"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0024": {
+    "persons": [
+      {
+        "id": "p_24",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P024"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 24"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "SYN-0025": {
+    "persons": [
+      {
+        "id": "p_25",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P025"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 25"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "1TVW-15H": {
+    "persons": [
+      {
+        "id": "p_26",
+        "principal": true,
+        "identifiers": {
+          "http://gedcomx.org/Persistent": [
+            "https://familysearch.org/ark:/61903/1:1:SYN-P026"
+          ]
+        },
+        "names": [
+          {
+            "nameForms": [
+              {
+                "fullText": "Synthetic Name 26"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

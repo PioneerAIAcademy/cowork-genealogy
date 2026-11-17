@@ -1,0 +1,410 @@
+{
+  "_note": "SYNTHETIC, not a recording. Shaped from issue #4632's measurements of the Peru page (3:1:33SQ-GYY1-B2G, cc=1803958, from malachi 2026-11-17): 27 Record sourceDescriptions, each with links.record.href to /platform/records/records/{id}. Only entries 0, 1 and 26 carry the record and persona ids the issue names; the SYN-* ids and names are placeholders. Replace both files with `dev/try-image-index.ts --record tests/fixtures/image-index`.",
+  "sourceDescriptions": [
+    {
+      "id": "r_0",
+      "about": "https://familysearch.org/ark:/61903/1:2:1TVW-1PV",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:1TVW-1PV"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/1TVW-1PV?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_1",
+      "about": "https://familysearch.org/ark:/61903/1:2:1TVW-15X",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:1TVW-15X"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/1TVW-15X?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_2",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0002",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0002"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0002?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_3",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0003",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0003"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0003?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_4",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0004",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0004"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0004?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_5",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0005",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0005"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0005?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_6",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0006",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0006"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0006?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_7",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0007",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0007"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0007?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_8",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0008",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0008"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0008?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_9",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0009",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0009"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0009?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_10",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0010",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0010"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0010?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_11",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0011",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0011"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0011?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_12",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0012",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0012"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0012?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_13",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0013",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0013"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0013?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_14",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0014",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0014"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0014?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_15",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0015",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0015"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0015?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_16",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0016",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0016"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0016?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_17",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0017",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0017"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0017?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_18",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0018",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0018"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0018?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_19",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0019",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0019"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0019?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_20",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0020",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0020"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0020?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_21",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0021",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0021"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0021?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_22",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0022",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0022"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0022?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_23",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0023",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0023"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0023?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_24",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0024",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0024"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0024?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_25",
+      "about": "https://familysearch.org/ark:/61903/1:2:SYN-0025",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:SYN-0025"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/SYN-0025?flag=fsh&cc=1803958"
+        }
+      }
+    },
+    {
+      "id": "r_26",
+      "about": "https://familysearch.org/ark:/61903/1:2:1TVW-15H",
+      "resourceType": "http://gedcomx.org/Record",
+      "identifiers": {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:2:1TVW-15H"
+        ]
+      },
+      "links": {
+        "record": {
+          "href": "https://www.familysearch.org/platform/records/records/1TVW-15H?flag=fsh&cc=1803958"
+        }
+      }
+    }
+  ]
+}

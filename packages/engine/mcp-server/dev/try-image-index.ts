@@ -1,0 +1,182 @@
+/**
+ * Live one-shot for the image_index tool (issue #4632). It answers what the
+ * spec's "Still to measure" section asks, from wherever it is run: say which
+ * network that was when you paste the numbers in.
+ *
+ * Usage (signed in: run dev/try-login.ts first):
+ *   cd packages/engine/mcp-server
+ *   npx tsx dev/try-image-index.ts                     # the Peru page, cc 1803958
+ *   npx tsx dev/try-image-index.ts <imageArk> [--cc <collectionId>]
+ *   npx tsx dev/try-image-index.ts --record tests/fixtures/image-index
+ *
+ * It prints, in order:
+ *   1. the tool's answer as a user gets it (summary, first entries, errors);
+ *   2. the order check: are entries 0 and 1 the personas issue #4140 found
+ *      in-network (1:1:XHPP-F3V Michael Barry, 1:1:XHPP-FQX Mila Fuller)?
+ *   3. which personas carry sortKey / role / relationshipToHead, and whether
+ *      the sort keys ascend in list order;
+ *   4. per-record latency, each record read on its own, one at a time:
+ *      min / median / p95 / max, and the cap the spec's rule gives;
+ *   5. the list call's status WITHOUT cc.
+ *
+ * `--record <dir>` (Peru page only) writes the raw list body and every raw
+ * record body as `<dir>/peru-list.json` and `<dir>/peru-records.json`, the
+ * synthetic fixtures' names, so the unit test runs on the recording.
+ *
+ * Spends about 2 x (records + 1) + 1 FamilySearch requests.
+ */
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { LOCAL } from "../src/auth/principal.js";
+import { BROWSER_USER_AGENT } from "../src/constants.js";
+import { IMAGE_INDEX_CAP, imageIndexTool, recordLink } from "../src/tools/image-index.js";
+import { fsFetch } from "../src/utils/fs-fetch.js";
+
+const PERU = "ark:/61903/3:1:33SQ-GYY1-B2G";
+const PERU_CC = "1803958";
+const EXPECTED = ["ark:/61903/1:1:XHPP-F3V", "ark:/61903/1:1:XHPP-FQX"];
+const HEADERS = { Accept: "application/x-gedcomx-v1+json", "User-Agent": BROWSER_USER_AGENT };
+
+const args = process.argv.slice(2);
+function flag(name: string): string | undefined {
+  const i = args.indexOf(name);
+  if (i === -1) return undefined;
+  const value = args[i + 1];
+  if (value === undefined || value.startsWith("--")) {
+    console.error(`${name} needs a value`);
+    process.exit(1);
+  }
+  args.splice(i, 2);
+  return value;
+}
+const recordDir = flag("--record");
+const ccFlag = flag("--cc");
+const unknown = args.filter((a) => a.startsWith("--"));
+if (unknown.length > 0) {
+  console.error(`Unknown option ${unknown.join(", ")}. Options: --cc <collectionId>, --record <dir>.`);
+  process.exit(1);
+}
+const imageArk = args[0] ?? PERU;
+const cc = ccFlag ?? (imageArk === PERU ? PERU_CC : undefined);
+if (recordDir !== undefined && imageArk !== PERU) {
+  console.error("--record writes the Peru fixtures, so it runs on the Peru page only.");
+  process.exit(1);
+}
+
+function pathId(ark: string): string {
+  return ark.replace(/^ark:\/61903\//, "");
+}
+function listUrl(withCc: boolean): string {
+  const base = `https://www.familysearch.org/platform/records/images/${pathId(imageArk)}/records`;
+  return withCc && cc !== undefined ? `${base}?cc=${cc}` : base;
+}
+
+// ── 1. The tool, as a user calls it ─────────────────────────────────────────
+const started = Date.now();
+let result;
+try {
+  result = await imageIndexTool({ imageId: imageArk, ...(cc ? { collectionId: cc } : {}) }, LOCAL);
+} catch (error) {
+  console.error(`Tool error: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`${Date.now() - started} ms`);
+  process.exit(1);
+}
+const toolMs = Date.now() - started;
+const errors = new Map<string, number>();
+for (const e of result.entries) if (e.error) errors.set(e.error, (errors.get(e.error) ?? 0) + 1);
+console.log("== 1. tool answer");
+console.log(`list URL         ${listUrl(true)}`);
+console.log(
+  JSON.stringify(
+    {
+      total: result.total,
+      returned: result.returned,
+      nextOffset: result.nextOffset,
+      hydrationTimedOut: result.hydrationTimedOut,
+      ordered: result.ordered,
+      unhydrated: result.entries.filter((e) => !e.hydrated).length,
+      errors: Object.fromEntries(errors),
+      wallMs: toolMs,
+      firstEntries: result.entries.slice(0, 3),
+    },
+    null,
+    2,
+  ),
+);
+
+// ── 2. Order beyond entry 0 ─────────────────────────────────────────────────
+console.log("\n== 2. order");
+if (imageArk === PERU) {
+  EXPECTED.forEach((ark, i) => {
+    const got = result.entries[i]?.personas.map((p) => `${p.personaArk} ${p.name ?? "(no name)"}`) ?? [];
+    const ok = got.some((g) => g.startsWith(ark));
+    console.log(`entry ${i}: ${ok ? "MATCHES" : "DIFFERS"} ${ark}; got ${JSON.stringify(got)}`);
+  });
+} else {
+  console.log("(the in-network order is known for the Peru page only)");
+}
+
+// ── 3. What the personas carry ──────────────────────────────────────────────
+console.log("\n== 3. persona fields");
+const personas = result.entries.flatMap((e) => e.personas);
+const count = (k: "sortKey" | "role" | "relationshipToHead") => personas.filter((p) => p[k] !== undefined).length;
+console.log(`personas ${personas.length}: sortKey ${count("sortKey")}, role ${count("role")}, relationshipToHead ${count("relationshipToHead")}`);
+const firstKeys = result.entries.map((e) => e.personas.find((p) => p.sortKey)?.sortKey);
+const keyed = firstKeys.filter((k): k is string => k !== undefined);
+if (keyed.length > 1) {
+  const ascending = keyed.every((k, i) => i === 0 || keyed[i - 1] < k);
+  console.log(`sort keys (first per entry) ascend in list order: ${ascending ? "YES" : "NO"} over ${keyed.length} entries`);
+  console.log(`first keys: ${JSON.stringify(keyed.slice(0, 3))}`);
+}
+
+// ── 4. Per-record latency, one read at a time, and --record ─────────────────
+console.log("\n== 4. per-record latency");
+const listRes = await fsFetch(LOCAL, listUrl(true), { headers: HEADERS });
+const listText = await listRes.text();
+console.log(`raw list call: HTTP ${listRes.status}, ${listText.length} chars`);
+if (!listRes.ok) process.exit(1);
+const listBody = JSON.parse(listText) as { sourceDescriptions?: Array<Record<string, any>> };
+const links = (listBody.sourceDescriptions ?? [])
+  .filter((d) => d?.resourceType === "http://gedcomx.org/Record")
+  .map((d) => recordLink(d?.links?.record?.href));
+const timings: number[] = [];
+const recordBodies: Record<string, unknown> = {};
+for (const link of links) {
+  if (!link) continue;
+  const t0 = Date.now();
+  const res = await fsFetch(LOCAL, link.url, { headers: HEADERS }, undefined, { attempts: 1 });
+  const text = await res.text();
+  const ms = Date.now() - t0;
+  if (res.ok) {
+    timings.push(ms);
+    recordBodies[link.id] = JSON.parse(text);
+  } else {
+    console.log(`  ${link.id}: HTTP ${res.status} in ${ms} ms`);
+  }
+}
+if (timings.length > 0) {
+  const sorted = [...timings].sort((a, b) => a - b);
+  const at = (q: number) => sorted[Math.min(sorted.length - 1, Math.ceil(q * sorted.length) - 1)];
+  const p95 = at(0.95);
+  const ruleCap = Math.min(IMAGE_INDEX_CAP, 6 * Math.floor(25_000 / Math.max(1, p95)));
+  console.log(
+    `reads ${timings.length}: min ${sorted[0]} ms, median ${at(0.5)} ms, p95 ${p95} ms, max ${sorted.at(-1)} ms`,
+  );
+  console.log(`cap by the spec's rule min(30, 6 x floor(25 s / p95)): ${ruleCap} (shipped: ${IMAGE_INDEX_CAP})`);
+}
+if (recordDir !== undefined) {
+  const note = `Recorded ${new Date().toISOString()} by dev/try-image-index.ts --record (raw FamilySearch bodies).`;
+  writeFileSync(join(recordDir, "peru-list.json"), JSON.stringify({ _note: note, ...listBody }, null, 2) + "\n");
+  writeFileSync(join(recordDir, "peru-records.json"), JSON.stringify({ _note: note, ...recordBodies }, null, 2) + "\n");
+  console.log(`recorded ${links.length} list entries and ${Object.keys(recordBodies).length} records into ${recordDir}`);
+}
+
+// ── 5. The list without cc ──────────────────────────────────────────────────
+console.log("\n== 5. list call without cc");
+if (cc === undefined) {
+  console.log("(no cc was sent in the first place)");
+} else {
+  const bare = await fsFetch(LOCAL, listUrl(false), { headers: HEADERS });
+  const bareText = await bare.text();
+  console.log(`${listUrl(false)}: HTTP ${bare.status}, ${bareText.length} chars`);
+}
