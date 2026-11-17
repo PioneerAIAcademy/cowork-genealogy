@@ -535,6 +535,25 @@ def test_a_record_type_the_project_holds_may_be_named(before):
     )
 
 
+def test_a_skipped_plan_item_does_not_hold_its_record_type():
+    """A skipped item is neither held nor planned: its rationale naming
+    probate must not license a hand-back that searches probate next."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "The next step is to search the probate court files for his estate.",
+    )
+    with pytest.raises(AssertionError, match="probate"):
+        check_handback(
+            before_state=_held(plans=[{"items": [{
+                "id": "pli_001", "status": "skipped", "title": "Vital records",
+                "rationale": "Probate records for this county burned in 1865.",
+            }]}]),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+        )
+
+
 def test_a_record_type_the_project_does_not_hold_still_fires():
     """The rule is not vacuous: the same reply on an empty project fails."""
     with pytest.raises(AssertionError, match="names a record"):

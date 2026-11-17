@@ -201,15 +201,17 @@ def _last_sentence(text: str) -> str:
 
 def _held_record_text(before: dict) -> str:
     """The before-state research.json text a hand-back may name a record type
-    from: its sources, every plan's items and its assertions (lead decision on
-    issue #4382, 2026-11-16). A record type that appears here is one the
+    from: its sources, every plan's items except `skipped` ones, and its
+    assertions (lead decision on issue #4382, 2026-11-16). A skipped item is
+    neither held nor planned, so its rationale ("probate records burned in
+    1865") must not license searching that record. A record type that appears here is one the
     project already holds or plans; naming it describes the project, not a
     search to run next. Proof summaries count only through
     `_conclusion_gap_patterns`: a summary that names a record as work done
     ("Searched 1850 census") does not license searching another one."""
     held = {
         "sources": before.get("sources") or [],
-        "plan_items": [item for plan in before.get("plans") or [] for item in plan.get("items") or []],
+        "plan_items": [item for plan in before.get("plans") or [] for item in plan.get("items") or [] if item.get("status") != "skipped"],
         "assertions": before.get("assertions") or [],
     }
     return json.dumps(held, ensure_ascii=False)
