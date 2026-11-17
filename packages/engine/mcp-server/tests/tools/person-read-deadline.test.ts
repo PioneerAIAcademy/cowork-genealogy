@@ -20,7 +20,7 @@ vi.mock("../../src/auth/refresh.js", () => ({ getValidToken: vi.fn() }));
 
 import { fetchRelativeSources, fetchSourceDescriptions } from "../../src/utils/relative-sources.js";
 import { getValidToken } from "../../src/auth/refresh.js";
-import { personReadTool } from "../../src/tools/person-read.js";
+import { personReadTool, readPerson } from "../../src/tools/person-read.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const mockFetch = vi.fn();
@@ -121,7 +121,7 @@ describe.each([
   it("anchors the deadline at ENTRY, not after the tree read", async () => {
     const before = Date.now();
     mockTreeReadTaking(20_000);
-    await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    await readPerson("SUBJ-001", {}, LOCAL);
 
     expect(mocked).toHaveBeenCalledTimes(1);
     const deadline = mocked.mock.calls[0][2] as number;
@@ -141,10 +141,24 @@ describe.each([
     // The same property stated from the consumer's side: after 20s of tree read, the
     // phase must see ~20s remaining, never a full 40s.
     mockTreeReadTaking(20_000);
-    await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    await readPerson("SUBJ-001", {}, LOCAL);
     const deadline = mocked.mock.calls[0][2] as number;
     const remaining = deadline - Date.now();
     expect(remaining).toBeLessThan(OCR_PHASE_BUDGET_MS - 10_000);
     expect(remaining).toBeGreaterThan(0);
+  });
+});
+
+describe("person_read's own read", () => {
+  it("never fetches relatives' sources, and still reads the edges' descriptions", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(treeBody()),
+      headers: new Headers(),
+    });
+    await personReadTool({ personId: "SUBJ-001" }, LOCAL);
+    expect(mockedFetchRelatives).not.toHaveBeenCalled();
+    expect(mockedFetchDescriptions).toHaveBeenCalledTimes(1);
   });
 });

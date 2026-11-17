@@ -18,6 +18,8 @@ import {
   gatedSummary,
   namesakeTieInvariants,
   planItemCompletionRecordTypeInvariants,
+  planItemVoidSearchInvariants,
+  voidSearchCandidateGroupIds,
 } from "../../src/tools/research-append.js";
 import { startingPersonIdsOf } from "../../src/utils/starting-tree.js";
 
@@ -26,12 +28,36 @@ const registry = JSON.parse(readFileSync(join(casesDir, "registry.json"), "utf-8
 
 /** One binding per registered writer guard. A guard added to the registry with a
  *  `writer_guard` and no binding here fails the first test below. */
-const WRITER_GUARDS: Record<string, (entry: any, research: any, tree?: any, startingTree?: any) => string[]> = {
+const WRITER_GUARDS: Record<
+  string,
+  (entry: any, research: any, tree?: any, startingTree?: any, searchable?: string[] | null) => string[]
+> = {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
   namesakeTieInvariants: (entry, research, tree, startingTree) =>
     namesakeTieInvariants(entry, research, tree, startingTree ? startingPersonIdsOf(startingTree) : undefined, startingTree),
   planItemCompletionRecordTypeInvariants,
+  // #4431 takes its answer from outside the document, so the case carries it as
+  // `searchable` rather than the guard reading it from `research`. A wrapper,
+  // not a bare name: bound bare, the replay's third positional argument (the
+  // case's `tree`) would arrive as the searchability set. An absent `searchable`
+  // is `null` — UNKNOWN, which refuses nothing — so the four guards above are
+  // unaffected by the widened signature.
+  planItemVoidSearchInvariants: (entry, research, _tree, _startingTree, searchable) =>
+    planItemVoidSearchInvariants(
+      entry,
+      research,
+      // Both absent and an explicit JSON `null` mean UNKNOWN. `=== undefined`
+      // alone would send an explicit null to `new Set(null)`, which is a legal
+      // EMPTY set — the opposite of UNKNOWN, and it would make a case labelled
+      // "the loader returned null" assert that nothing is searchable.
+      searchable === undefined || searchable === null
+        ? null
+        : // `asked` is derived from the case's OWN document by the same
+          // collector production uses, so a case cannot accidentally assert an
+          // answer for an id nothing asked about.
+          { asked: new Set(voidSearchCandidateGroupIds(research)), searchable: new Set(searchable) },
+    ),
 };
 
 /** The entry a case is written for, found by `write` id. A proof-summary guard
@@ -53,6 +79,10 @@ interface GuardCase {
   tree?: any;
   /** The project's starting tree, for a guard that reads one. */
   starting_tree?: any;
+  /** #4431: the image groups FamilySearch reports as full-text searchable, for a
+   *  guard whose answer is not in the document. Absent means UNKNOWN (`null`),
+   *  which every such guard treats as "no opinion". */
+  searchable?: string[] | null;
 }
 
 // Scoped to this file's guards (proof_summary-shaped). The research-log-append
@@ -84,7 +114,7 @@ describe("guard case files: writer-tool replay", () => {
           ? (c.research[section] ?? []).find((e: any) => e?.id === c.write)
           : findEntry(c.research, c.write);
         expect(entry, `case ${c.id}: no entry ${c.write} in its research`).toBeDefined();
-        const errors = guard(entry, c.research, c.tree, c.starting_tree);
+        const errors = guard(entry, c.research, c.tree, c.starting_tree, c.searchable);
         if (c.expect === "fire") expect(errors, `case ${c.id} should fire`).toHaveLength(1);
         else expect(errors, `case ${c.id} should be silent`).toEqual([]);
       });

@@ -2,7 +2,7 @@
 
 Grading dimensions for search-hints unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness, tool arguments).
 
-search-hints reviews the FamilySearch hints on one tree person. A hint is a **pending** record match, returned by `person_record_matches` with `status: ["pending"]`. The agent runs in two modes, one per spawn, because it returns once and cannot ask the researcher anything mid-run: **triage** recommends `accept`, `reject` or `not enough information to judge` for each hint and writes nothing; **record** logs one entry per verdict the researcher stated and recommends nothing. Accepted hints flow on to extraction through their positive log entries; the agent extracts nothing itself.
+search-hints reviews the FamilySearch hints on one tree person. A hint is a **pending** record match, returned by `person_record_matches` with `status: ["pending"]`. The agent runs in two modes, one per spawn: **review** decides `accept`, `reject` or `not enough information to judge` for each hint itself and logs each accept and reject; **record** logs one entry per verdict the researcher stated, overruling any earlier decision, and decides nothing. Accepted hints flow on to extraction through their positive log entries; the agent extracts nothing itself.
 
 Harness note: the fixtures are static. `record_read` returns a fixed persona per hint ark, and `image_transcribe` returns the death certificate's image only for its `imageArk`. Whether `status: ["pending"]` was sent, whether the image was read, whether a hint the project already linked reads `already linked by <pe_ id>`, and the shape of the log entries are checked deterministically (`eval/harness/validators/test_search_hints.py`); do not re-grade those mechanics here.
 
@@ -16,7 +16,7 @@ Did the agent review the hints — the pending matches — and only those?
 
 ## Recommendation soundness
 
-Is each recommendation one a careful genealogist would stand behind, and does it say why?
+Is each decision one a careful genealogist would stand behind, and does it say why?
 
 The rules the agent holds: an index-vs-tree disagreement is a reason to read the image, never a reason to reject; a one-field near miss (a date one day off) is weak evidence; FamilySearch's confidence is a triage signal, never the verdict; `not enough information to judge` is a correct answer, not a fallback.
 
@@ -28,10 +28,10 @@ When a hint's record has no page image, its index is the only evidence the agent
 
 ## Verdict recording
 
-In record mode, does the log say what the researcher decided, and only that?
+Does the log say what was decided, and only that? In review mode the decisions are the agent's own; in record mode they are the researcher's.
 
-Score `n/a` on triage tests.
+Score `n/a` on a test where no hint could be read or none was pending.
 
-- **pass:** One log entry per decided hint, its outcome following the researcher's verdict (accept → positive, reject → negative) rather than the agent's own view, with notes naming the hint and the verdict as the researcher's. The return gives each accepted hint's ark with its log id. No extraction, no link, no tree edit.
-- **partial:** The entries are right but the notes do not say the verdict was the researcher's, or the return omits the accepted hints' log ids.
-- **fail:** An entry's outcome contradicts the researcher's verdict, a hint the researcher did not decide is logged as decided, or the agent extracts or links in record mode.
+- **pass:** One log entry per newly accepted or rejected hint, its outcome following the decision (accept → positive, reject → negative); in record mode the researcher's verdict rather than the agent's own view, with notes saying the verdict is the researcher's. A hint not enough to judge, already linked, or accepted when the project already holds its record is not logged. The return gives each accepted hint's ark with its log id. No extraction, no link, no tree edit.
+- **partial:** The entries are right but the notes do not say whose verdict it was, or the return omits the accepted hints' log ids.
+- **fail:** An entry's outcome contradicts the decision it records, a hint nobody decided is logged as decided, the review asks the researcher to decide instead of deciding, or the agent extracts or links.

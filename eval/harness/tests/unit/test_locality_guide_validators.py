@@ -43,6 +43,7 @@ from test_locality_guide import (  # noqa: E402
     test_persisted_guide_is_the_guide as check_guide,
     test_in_project_return_follows_the_contract as check_return_contract,
     test_no_project_return_carries_guide as check_no_project_guide,
+    _heading,
 )
 
 from harness.mock_mcp import create_mock_server  # noqa: E402
@@ -468,6 +469,49 @@ def test_guide_fires_when_guide_markdown_is_absent():
     expect_fires(_check_guide(_entry()), r"loc_001.*guide_markdown")
 
 
+# The engine refuses a guide on the same rule (research_append, research-append-tool-spec
+# section 5.14), and its twin of this table is in
+# packages/engine/mcp-server/tests/tools/research-append.test.ts. Change _heading() and
+# both tables, and the engine's missingGuideHeadings, move together.
+_HEADING_BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n"
+
+
+@pytest.mark.parametrize(
+    "tail, found",
+    [
+        ("## Research tips\nx", True),
+        ("x\n## Research tips", True),
+        ("x\r\n## Research tips", True),
+        ("x\r## Research tips", False),
+        ("x\u2028## Research tips", False),
+        ("x\u2029## Research tips", False),
+        ("## Re\u017fearch tips", True),
+        ("## RESEARCH TIPS (1840)", True),
+        ("### Research tips", False),
+        ("Notes: ## Research tips", False),
+        (" ## Research tips", False),
+        ("##\tResearch tips", True),
+        ("##Research tips", False),
+        ("## research tipsy", True),
+        ("", False),
+        ("##  Research tips", True),
+        ("# Research tips", False),
+        ("Research tips", False),
+        ("##\nResearch tips", False),
+        ("##\u00a0Research tips", False),
+        ("> ## Research tips", False),
+        ("- ## Research tips", False),
+        ("## Research tips and tricks", True),
+    ],
+)
+def test_heading_rule_matches_the_engine_twin_table(tail, found):
+    assert bool(_heading("Research tips").search(_HEADING_BEFORE + tail)) is found
+
+
+def test_heading_rule_ignores_a_heading_behind_a_byte_order_mark():
+    assert not _heading("Research tips").search("\ufeff## Research tips")
+
+
 def test_guide_fires_on_an_in_place_update_that_stubs_the_guide():
     """`include_modified`: an entry rewritten in place with a pointer instead of
     the guide is this run's write and must be checked, not skipped."""
@@ -754,13 +798,32 @@ def test_no_project_stands_down_on_an_untagged_test():
         check_no_project_guide({"id": "ut_locality_guide_004", "tags": ["locality"]}, [])
 
 
-# --- Tag coverage: exactly the four no-project tests carry `no-project` ----
+# --- Tag coverage: exactly these no-project tests carry `no-project` ----
 
 _NO_PROJECT_TEST_IDS = {
     "ut_locality_guide_001",
     "ut_locality_guide_002",
+    "ut_locality_guide_004",
+    "ut_locality_guide_005",
+    "ut_locality_guide_006",
+    "ut_locality_guide_007",
+    "ut_locality_guide_008",
+    "ut_locality_guide_009",
+    "ut_locality_guide_011",
+    "ut_locality_guide_012",
+    "ut_locality_guide_016",
+    "ut_locality_guide_017",
+    "ut_locality_guide_019",
+    "ut_locality_guide_020",
+    "ut_locality_guide_021",
+    "ut_locality_guide_023",
     "ut_locality_guide_026",
     "ut_locality_guide_027",
+    "ut_locality_guide_028",
+    "ut_locality_guide_k9d",
+    "ut_locality_guide_m4t",
+    "ut_locality_guide_r7k",
+    "ut_locality_guide_v7h",
 }
 
 

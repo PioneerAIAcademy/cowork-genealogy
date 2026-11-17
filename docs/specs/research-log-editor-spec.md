@@ -149,6 +149,7 @@ In a batch, every other op is logged as usual. A ref no log entry names keeps th
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
 `{ ok: true, results: [...], filesWritten, validation }` for a batch. Either may
 carry `escalationDue: string`, present only when §8.1's nil-escalation note fires,
+`planRationale: string`, present only when §8.1's plan-rationale note fires,
 and `next: string`, present only when the call logged a report-only agent's own
 entry (`source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
 `validate_schema`): it tells the agent to return the report it just logged, in
@@ -417,7 +418,9 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `resultsExamined` not a non-negative integer (after coercing a numeric string) | input error; write nothing |
 | `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | written with `outcome: "positive"`, plus a warning naming the outcome sent — the entry grades the fetch, not the search |
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validateSidecars`, the `"payload has no 'results' array — cannot verify retrieval integrity"` check) |
-| `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
+| `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1. Not for an `image_transcribe` page read, which keeps its ref whatever it found (next row) |
+| `tool` is `image_transcribe` (compared trimmed, lower-cased, hyphens as underscores, any `mcp__` or `mcp__<server>__` prefix dropped) with no `stagedResultsRef` (absent, `null` or `"null"`), unless `outcome: "error"` with `resultsExamined` 0 | input error, raised before any op is applied and before the required-fields check; write nothing. The message names `tool: "user_provided"` for a reading no image tool made and the `staged.resultsRef` (or a re-run with `projectPath`) for a page `image_transcribe` read, adds `tool: "image_search"` only for an entry whose `query` lists or spans several pages and names no `file`, and never names `image_read`. A tool named in a variant spelling is also told to name it `image_transcribe`, as the staged file records it. Rule, reasons and what it lets through: `search-result-staging-spec.md` §6.1 |
+| `tool` is `image_read` (compared the same way) and its `query` names a `file` | input error, raised before any op is applied; write nothing. `image_read` takes no `file`, so the entry is a mislabelled upload; the message names `user_provided` and `image_transcribe` with `projectPath` and that `file`. See `search-result-staging-spec.md` §6.1 |
 | `query` is prose rather than an object, on a read-style entry (`record_read`, `image_transcribe`, `image_read`) | **not reached** — the MCP input schema rejects it first. An ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing and the call is refused *before* the tool runs: nothing is logged and the turn is spent. This is why `search-records`' Step 5 prescribes a canonical key per read-style tool (`{"recordId": …}`, `{"recordIds": [...]}`, `{"imageArk": …}`). The mechanism belongs here rather than in the body, per CLAUDE.md's no-explanatory-prose rule; as of 2026-10-03 the body still restates it, and moving it out edits a snapshot input, so it waits on the next paid `search-records` eval release |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
@@ -425,7 +428,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file and no log entry records it — pruned after 24h, never staged, or logged before `staged_ref` existed | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search, or `image_transcribe` for a page |
 | `stagedResultsRef` names no staged file, but a log entry records it as its `staged_ref` (already logged) | not an error: return that entry with `alreadyLogged: true` and a warning naming its id; write nothing for that op |
-| that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it |
+| that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it. The `tool` is compared as the image-entry rows above compare it, so a re-send under a variant spelling of the logged tool is the same entry and returns it. When the logged entry and the new one would both be `image_transcribe`, which needs a ref of its own (row above), the correction is a fresh `image_transcribe` call with `projectPath`, logged with its new ref |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
@@ -485,6 +488,20 @@ A third advisory rides a top-level `escalationDue` string rather than
   reads is, which is why this is a tool note and not prose — a prose version of
   the same trigger was measured and made a correct search give up early. A
   call that brings several plan items to the threshold gets one line per item.
+- **Plan rationale:** when a call logs the **first** nil `record_search` /
+  `fulltext_search` entry for a plan item (the same nil test as above),
+  `planRationale` quotes the plan item's `rationale` and says to search next, before
+  any other retry, any name, place or source it gives that is not yet searched,
+  then to carry on with the other retries. The rationale is where
+  research-plan puts what it knew about the search: another surname the person
+  may be under, how a collection is indexed, a second jurisdiction. It fires for
+  any record type. It stays silent when the plan item already had a nil, when any
+  entry for it is `positive` or `partial`, when the rationale is blank, and for a
+  search that serves no plan item. A batch whose nils are the item's first gets
+  one line for it. Measured 2026-11-12 on Haiku 5.5 at low effort:
+  `ut_search_records_d33` never searched the married surname its rationale names
+  in 2 to 3 of 10 runs, with or without a body rule; with the note it searched it
+  in 10 of 10.
 
 ### 8.2 A precondition that blocks: undocumented census structure
 
@@ -1082,6 +1099,10 @@ the command that measured it are in `guardrail-enforcement-spec.md`.
   once ≥3 positive searches are logged with zero sources and zero assertions,
   stays silent below the threshold, stays silent once any source or assertion
   exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
+- **Plan rationale (§8.1)** — `planRationale` appears on the first nil against a
+  plan item, single or batched, for any record type; stays absent on a later nil,
+  once the plan item has a positive or partial entry, with a blank rationale, and
+  with no plan item.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or
@@ -1141,6 +1162,19 @@ the command that measured it are in `guardrail-enforcement-spec.md`.
   and the empty string. The census check judges the decoded text: a hedged
   escaped table passes and an unhedged one is refused, with or without a
   trailing real newline.
+- **An image entry with no image call behind it (§8)**: refused, with nothing
+  written: an `image_transcribe` entry with no staged ref (singly, in a batch where
+  the sibling's staged file is kept, with the ref `null` or `"null"`, under a
+  qualified or variant tool name, and before a missing field is asked for), whose
+  message names `user_provided` and neither `image_read` nor `image_search` unless the
+  `query` lists or spans several pages (a table of shapes pins which do); an `error` entry claiming a page examined; and an `image_read` whose
+  `query` names a `file`, as an object or a JSON string, singly or in a batch.
+  Passes: a staged `image_transcribe`, a failed call logged `error` with 0 examined
+  (which does not clear an unstaged op beside it), and an `image_read` keyed by its
+  ARK. An `error` entry with no count is asked for it by the required-fields check. A
+  differing re-send of a logged page is told to read it again, and that read logs; a
+  re-send under a variant of its own tool name returns the logged entry, and one as
+  `user_provided` gets the ordinary advice.
 
 ---
 

@@ -67,7 +67,7 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 | **assertion** | One evidence claim extracted from one source, persisted in `research.json`. |
 | **proof summary / `ps_id`** | The written argument resolving one research question, carrying a confidence **tier**: `proved`, `probable`, `possible`, `not_proved`, or `disproved` (a closed enum — `enums.schema.json`). "Tier ≥ probable" in §4 means `proved` or `probable`. |
 | **sidecar** | A raw search payload stored at `results/<log_id>.json` instead of inside `research.json`, so the co-edited file stays small (§6.1). |
-| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
+| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `extraction_append` logs with the read's own ref when it extracts from it; an `image_transcribe` entry with no ref is refused unless it records a failed call), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
 | **projection** | A compact, filtered read of a large document — what `project_context` and `research_query` return instead of the whole file (§6.3). |
 | **compaction** | When a long session's context is summarized to fit the window. Skill bodies can be evicted by it — the reason §3.1 exists. |
 | **fixture** | Two different things. `eval/fixtures/mcp/` holds **mocked tool responses** for unit runs; `eval/tests/e2e/<slug>/` holds a **benchmark case** (a starting project plus expected findings). |
@@ -220,7 +220,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 
 | Component | Count | Where | What it is for |
 |---|---|---|---|
-| **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
+| **MCP tools** — `src/tools/`, advertised on every surface via `allToolSchemas` in `src/tool-schemas.ts`, plus the two connector-only tools in `src/tools/project-view.ts` | every tool in `allToolSchemas`, plus those two on the connector | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **2** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **31** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
@@ -563,9 +563,9 @@ agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
-| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan`, `search-records` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan`, `search-records` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection`, `source-evaluation`, `person-evidence` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan`, `search-records` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan`, `search-records`, `source-evaluation`, `person-evidence` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
 | **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
 > **A skill cannot set its model or effort.** To route a step to a different
@@ -676,7 +676,7 @@ Architecturally:
   request carrying `X-Genealogy-Project-Id` is the worker path: a
   `PgS3ProjectStore` bound from that header, fenced on the attempt's claim
   (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer
-  is the one stamped on that open turn of that project (U4). Every other request
+  is the one stamped on that open turn of that project (U4). Every other `/mcp` request
   is the connector path: the bearer is looked up by sha256 in
   `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
   `projectPath` rather than a header, a refusal is 401 with
@@ -688,6 +688,12 @@ Architecturally:
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
+- **A connector-only tool has its own sites.** Its schema stays in
+  `src/tools/project-view.ts`, `createServer` adds it for a connector principal
+  alone, its `dev/smoke-calls.ts` row carries `connectorOnly: true`, and it has
+  no `manifest.json` entry. No string literal of its name goes in the dispatch
+  chain: `manifest.test.ts` reads each one as a dispatch case and fails on a tool
+  outside `allToolSchemas`. Contract: `docs/specs/project-view-tools-spec.md`.
 - **If your tool signals failure by RETURNING `{ ok: false }` rather than
   throwing** — a fifth site, conditional on that shape, and the count above does
   not include it. Add the tool to `OK_FALSE_IS_FAILURE` in `src/tool-result.ts`
@@ -1519,9 +1525,11 @@ raise** — every failure path falls through to allowing the call. Model it on
 runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test.ts`
 proves the script *decides* correctly, and nothing else proves a runtime *binds*
 it — which, because the script must never raise, fails silently. `hook-smoke`
-probes `PreToolUse` binding only; a `UserPromptSubmit` hook is shown binding by a hosted
-replay with `GENEALOGY_HOSTED_PLANE` unset whose transcript carries its text. Whether its
-`additionalContext` reaches the model in Cowork is unmeasured.
+probes `PreToolUse` binding only. **Both hooks are now measured in Cowork on Windows
+(44f98b58, 2026-11-09–10):** `PreToolUse` binds — a built-in Read of
+`research.json` was refused in a fresh folder; `UserPromptSubmit` binds and its
+`additionalContext` reaches the model — the routing text was quoted verbatim on 3/3
+probes. A 2026-11-05 negative (no blocking seen) is unexplained — no build was recorded.
 
 > A plugin hook binds in Cowork and the hosted path and in **neither harness**.
 > All three of the unit harness, the e2e harness, and the hosted control plane
@@ -1570,7 +1578,7 @@ trustworthy rather than merely present:
 
 | Location | What |
 |---|---|
-| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), which no shipped flow logs; `project_create` reads the `person_read` one. 24h TTL. |
+| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), finalized when it is logged with its ref, as `extraction_append` does for the read it extracts from; `project_create` reads the `person_read` one, which is never logged. 24h TTL. |
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. Each entry names its `scorer` (`familysearch` or `service`) and `model`. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail, each line naming its `scorer` and `model`. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
@@ -1818,7 +1826,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
-| `apps/mcp-viewer` | the MCP App page: research cards drawn inside Claude, served by the thin server in `packages/engine/mcp-server/viewer/`. Neither ships in an artifact (`docs/plan/mcp-app-viewer.md`). |
+| `apps/mcp-viewer` | the MCP App page: research cards drawn inside Claude. The page ships in the tools image, built by `apps/server/proto/tools/Dockerfile`, and the connector serves it as `ui://genealogy/viewer-<hash>.html`, versioned by the page itself (`docs/specs/project-view-tools-spec.md`). The `.mcpb` and `eb-tools.zip` carry no page. `make viewer` serves it through the thin server in `packages/engine/mcp-server/viewer/`, which ships in no artifact. |
 | `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
@@ -2156,7 +2164,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 | `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `matchPairs` (`packages/engine/mcp-server/src/utils/matcher.ts`, the call `same_person` and ranking make, so it measures whichever matcher config.json names): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands the matcher (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
-| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha's own system prompt, which differs from the harness's; Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), that named tools were or were not called, and, where a fixture asks, that the turn ended on a "Continue with …?" offer — deterministic, no judge. A fixture with no starting files starts in an empty folder, as most first messages do, and every turn gets Cowork's routing sentence. Live and billed | the hosted alpha's own system prompt, which differs from the harness's; Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 
@@ -2381,19 +2389,20 @@ decides, not what the run can reach.** `question-selection` applies the same sha
 with nobody waiting to answer, skip the ask and take the action.
 
 Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
-"can a human act on this right now?". Three bodies keep a genuine two-sided answer because
+"can a human act on this right now?". Two bodies keep a genuine two-sided answer because
 a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
 `agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
-can), `search-external-sites` (a user who named the plan item will capture it; mid-run
-nobody will) and `search-hints` (a user who asked for a hint review will give verdicts;
-mid-run nobody will). Each has eval fixtures on each side. The mode difference survives in
-the router, which sets that field from the flag: on an autonomous e2e run the router hands
-search-external-sites and search-hints `userPresent: no` where a hosted "Keep going." run
-leaves them at `yes` (search-hints gets no field, which means yes). So an autonomous e2e
-run is meant never to reach their `yes` side, but no check makes the router send the field
-to those two (the research unit suite checks it only on person-evidence's spawn): one
-committed step-mode run spawned search-external-sites without it, and its capture item
-stayed waiting (`docs/specs/e2e-test-spec.md` §5).
+can) and `search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will). `search-hints` decides hints itself on every run. Each has eval fixtures on
+each side. The mode difference survives in the router, which sets that field from the
+flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
+where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
+never to reach its `yes` side, and `ut_research_ue1` (tag `delegates-user-present-no-external`)
+checks that the router sends the field on the opening turn of an autonomous run.
+That is narrower than the miss it was written for: one committed step-mode run
+spawned search-external-sites without the field 166 tool calls in, and its capture
+item stayed waiting (`docs/specs/e2e-test-spec.md` §5). No check covers a spawn
+later in a run, or an attended run's `yes`.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months. The first is fixed; the second stands:

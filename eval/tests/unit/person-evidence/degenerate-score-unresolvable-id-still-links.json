@@ -14,10 +14,13 @@
     ]
   },
   "input": {
-    "delegation": "Link assertion a_001 — the clean 1850 census record for 'Patrick Flynn' — to the right person in the tree.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-record-matching"
+    "delegation": "Link these unlinked assertions to the right persons in the tree: a_001, a_005, a_006, a_007, a_008, a_009, a_010, a_011, a_012, a_013, a_014, a_015, a_016. They are the clean 1850 census record of the Thomas Flynn household; a_001 is its 'Patrick Flynn'.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-record-matching-extracted"
   },
   "mcp_fixtures": [
+    "same-person-flynn-extracted-relatives",
+    "same-person-flynn-extracted-thomas",
+    "same-person-flynn-extracted-mary",
     "same-person-flynn-degenerate"
   ],
   "judge_context": [
@@ -26,7 +29,8 @@
     "It is WRONG to attribute the low score to the tree id lacking a FamilySearch ARK. An ARK-less or locally-minted person IS scorable — it scores on document content — so a missing ARK is never a reason to skip the call or to discount its result.",
     "person-evidence must still create a person_evidence entry linking a_001 to I1 — the qualitative correlation is overwhelming and uncontradicted: exact name match (Patrick Flynn), age 5 in 1850, born Ireland, Schuylkill County, in the household of Thomas Flynn",
     "The rationale should state the score (0.24) and that the tree candidate is thin, and that the link rests on qualitative correlation (Step 3), not on the number",
-    "It is WRONG to drop, defer, or flag-as-weak the a_001 link on the basis of the 0.24 score — a weak-band score on a thin subject with nothing contradicting it must not act as a veto"
+    "It is WRONG to drop, defer, or flag-as-weak the a_001 link on the basis of the 0.24 score — a weak-band score on a thin subject with nothing contradicting it must not act as a veto",
+    "The delegation is the assertions of the one census record, MXHY-TP4. Leaving the other records' assertions (a_002 to a_004 and a_017 to a_026) unlinked is complete, and saying they remain to be evaluated is correct reporting, so neither lowers Completeness or Multi-person awareness."
   ],
   "execution": {
     "max_wall_clock_seconds": 600,

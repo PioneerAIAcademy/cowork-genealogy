@@ -18,5 +18,6 @@
   ],
   "execution": {
     "sdk_message_silence_seconds": 300
-  }
+  },
+  "mcp_fixtures": ["same-person-flynn-1860-thomas"]
 }

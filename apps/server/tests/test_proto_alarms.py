@@ -184,7 +184,10 @@ def test_the_worker_reauth_pattern_is_the_drivers():
 
 # Tools whose code reaches the token but whose result is no FamilySearch answer: login
 # prints the sign-in instruction itself, research_log_append echoes text it was given.
-FS_TOOLS_EXEMPT = {"login", "research_log_append"}
+# project_context and auth_status ask FamilySearch whether the session has ended only for
+# a connector caller (utils/session-check.ts), never for the worker this hook runs in, and
+# project_list reaches the token only through its import of project-context.ts.
+FS_TOOLS_EXEMPT = {"login", "research_log_append", "project_context", "auth_status", "project_list"}
 _IMPORT = re.compile(r"""(?:from|import)\s*\(?\s*['"](\.{1,2}/[^'"]+)['"]""")
 _NAME = re.compile(r"""^\s*name:\s*['"]([a-z_]+)['"]""", re.M)
 

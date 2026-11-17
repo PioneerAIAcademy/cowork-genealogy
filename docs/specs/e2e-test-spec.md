@@ -183,7 +183,7 @@ matters when hand-authoring:
   "researcher_profile": {
     "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Never sound surer than the evidence was rated: say the records show it for a well established fact or relationship, probably for a likely one and possibly for a tentative one, and never write that someone is the parent, spouse or child of another without one of these. Say match or search result, never hit; never write ARK: name the record or link to it. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
@@ -262,19 +262,11 @@ stripped starting tree, then reviewed and pruned by the author.
 
 Most findings should be `required: true` for v1. The `false` lever
 exists for cases where the author is unsure whether a finding is
-truly part of the answer — and, second, for an `avoid` finding whose
-guard is *structurally dead*: one whose name tokens unavoidably collide
-with a person the starting tree legitimately contains, which
-`apply_avoid_guard` force-fails on every run including a perfect one
-(§3.4.1). At `required: true` that makes `pass` unreachable and the
-fixture ungradable. A fixture using the lever this way must say so in
-its README and name what the dead guard costs: the `recall_total`
-ceiling, a permanent `avoid_guard.forced_false` entry in every run log,
-and one structural judge-vs-human disagreement per annotated run
-against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
-`eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
+truly part of the answer. (It once also served an `avoid` finding whose
+name tokens collided with a starting-tree person; the guard now subtracts
+the starting tree, so no avoid finding needs it, §3.4.1.)
 
-Third, for a non-answer finding that a record attached to the subject
+Second, for a non-answer finding that a record attached to the subject
 answers on its own. A project extracts every attached record before its
 first question (§6.1), so such a finding measures setup, not research.
 `maria-bracero-marriage`'s f2, her parents, is the worked example: her
@@ -310,36 +302,88 @@ A fixture may mix `recover` and `avoid` findings. At least one negative
 fixture should exist in the suite so over-claiming is sampled (§1).
 
 The judge's grade on an `avoid` finding is backstopped by a
-deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`,
-applied by the orchestrator and by judge calibration): if the avoided
-claim's target is present in the agent's final tree — the stripping
-linter's own matcher, given+surname token overlap plus fact type for
-`fact` findings — the finding is forced to `matched: "false"`, the
-recall fractions are recomputed, and the verdict is recomputed
-**downgrade-only**. What was forced is recorded under the result's
-`judge_output.avoid_guard.forced_false` and in the finding's `notes`.
-The guard is **unconditional on presence**: it overrides the
-rejected-hypothesis allowance rather than preserving it. A target that
-appears in the agent's final tree is forced to `matched: "false"`
-however the agent annotated it — including as an explicitly rejected
-candidate, which is the outcome the allowance exists to permit.
-Measured against the shipped guard with every judge label set to `true`:
-a clean final tree scores the avoid finding `true`, and the same tree
-plus the avoided person written in as a rejected candidate scores it
-`false`. So an `avoid` finding must not promise a pass route through the
-tree. Word its pass condition to put a rejected candidate in the
-research log (`research.json`) and keep it out of `tree.gedcomx.json`;
-a finding whose text offers the tree route describes a pass that cannot
-be taken. Authoring gates treat
-`avoid` findings accordingly: the presence mirror skips them (the
-claim was never in the tree), while the stripping linter still warns
-when an avoided claim is already present in the *starting* tree — a
-fixture must not pre-assert the thing it forbids. `finding_shape_errors`
-(`eval/harness/e2e/validate_fixture.py`) now enforces the wording rule above
-at authoring time (`lint_fixture`) and in CI (`test_committed_fixture_passes_the_hard_gates`):
-no `avoid` description may conflate the two stores as `tree/research`, and
-any that mentions rejection must name both `tree.gedcomx.json` and
-`research.json`.
+deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`, its
+checks in `e2e/avoid_guard.py`, applied by the orchestrator, by
+`grade_files` and by judge calibration). Which check a finding gets is read
+from its own shape (Decision 20 of `docs/plan/conclusion-tree.md`):
+
+- **Wrong-person** — the finding carries `details.wrong_candidate.records`.
+  It fails when any tree name, fact, person, relationship or relationship
+  fact cites one of those records, in any role, attached or not: a tree
+  source whose `url`, `citation` or `title` holds one of the ids, or the
+  tree source a research assertion on one of them cites. A tree person that
+  a live `person_evidence` link (`confident` or `probable`, not superseded)
+  ties to an assertion on one of the records counts too, so a candidate
+  minted with no source in the tree is still caught; a `speculative` link is
+  a recorded hypothesis and does not. It also fails on the edge check below,
+  against `wrong_candidate.name`, unless `wrong_candidate.provenance_only` is
+  `true` (a same-named relative the fixture allows: hinrich-burmeister-spouse
+  f1). The edge half catches an empty list, a different record of the same
+  candidate, and a candidate read from an image with no persona ARK.
+- **Fact** — `type: "fact"`. It fails when a fact of `details.fact_type`
+  (Christening and Baptism are one type) carrying the avoided value is on any
+  person, the subject included, or on a Couple (a Marriage lives on the edge).
+  The value is `details.date`/`.place`, `wrong_candidate.date`/`.place`, or
+  `details.wrong_value`. A stated date decides: every component it states
+  (year, month, day) must equal the fact's. A full day-month-year binds on
+  any person; a year-only or month-year value binds on the subject only,
+  since a bare year is too common to hold against a relative. On the subject,
+  a fact dated less precisely ("1808" against "24 August 1808") also counts
+  when its stated components agree and the avoided place matches too. A
+  `wrong_candidate.record` is also checked by provenance.
+- **Wrong-relationship** — a `relationship` finding with no records. It fails
+  on an edge joining a subject to the candidate in the role
+  `details.relation` forbids (`child`; `parent`/`parents`/`mother`/`father`;
+  `spouse`/`wife`/`husband`). A ParentChild edge of subtype Step, Adoptive,
+  Foster or Guardian passes; any other subtype, absent included, counts. The
+  candidate is a person whose names share a given and a surname token with
+  `wrong_candidate.name` (else `target_person.name`). With
+  `wrong_candidate.any_new: true` — "no other wife", "no different family's
+  parents" — it is any person except one sharing a name token with a recover
+  finding's target (the subject's own name tokens aside) or already an
+  endpoint of a starting-tree relationship.
+
+**Every check subtracts the starting tree.** The same checks run over
+`starting-tree.gedcomx.json` and `starting-research.json`, and whatever they
+find there is not held against the run: an imported namesake, an existing
+edge (whatever subtype the run later gives it), a value the tree arrived with.
+There is no subject exemption; a wrong fact or record on the subject fails.
+
+A finding with a hit is forced to `matched: "false"`, the recall fractions are
+recomputed, and the verdict is recomputed **downgrade-only**. What was forced
+is recorded under the result's `judge_output.avoid_guard.forced_false` and in
+the finding's `notes`. The guard is **unconditional on annotation**: what it
+finds in the final tree fails the finding however the agent labelled it,
+including as an explicitly rejected candidate. So an `avoid` finding must not
+promise a pass route through the tree. Word its pass condition to put a
+rejected candidate in the research log (`research.json`) and keep it out of
+`tree.gedcomx.json`. `finding_shape_errors`
+(`eval/harness/e2e/validate_fixture.py`) enforces that wording at authoring
+time and in CI: no `avoid` description may conflate the two stores as
+`tree/research`, and any that mentions rejection must name both files. It
+also enforces what each check reads, because a check with nothing to read
+passes every run: a list of `ark:/61903/1:1:` persona ARKs (an empty list
+with a `note`); records on a `person` avoid; on a wrong-relationship finding a
+mapped `relation` and either a name with a given and a surname token before
+its first comma or `any_new`; on a fact finding a `fact_type` and an avoided
+value. `lint_fixture` adds one more: a `relationship` or `person` avoid in a
+`hint.identity: "different"` fixture must carry records.
+
+Authoring gates run the same checks with no baseline over the fixture's own
+starting tree (`check_stripping`, and
+`test_no_fixture_pre_asserts_what_an_avoid_finding_forbids` over the corpus):
+a fixture must not pre-assert the thing it forbids. That mode skips the
+name-matched edge half of a wrong-person finding and any `any_new` finding,
+which cannot tell a starting-tree relative from a candidate without a
+baseline.
+
+A wrong-person `avoid` finding (a `relationship` or `person` finding in a
+`hint.identity: "different"` fixture, plus swarbrick-christening f4) carries
+`details.wrong_candidate.records`: the sorted `ark:/61903/1:1:` ARK of every
+persona on every record of the rejected candidate, read live, leaving out any
+record a correct run's `tree.gedcomx.json` would cite or the starting tree
+already cites (a record the paired negative-conclusion finding cites in
+`research.json` stays listed); an empty list carries a `note` saying why.
 
 An `avoid` finding may be `required: true`; it then gates the verdict
 exactly like a recover finding (`matched: "true"` = correctly
@@ -357,25 +401,12 @@ conclusion **rest on a named conflicting record** — the disproving
 record of §3.6.1 — and say in the finding that a conclusion resting
 only on failure to confirm does not satisfy it.
 
-**Open doctrine call: guards that can never go green (as of 2026-09-18).**
-Three committed fixtures — `antonio-lucas-spouse`,
-`thomas-seaver-other-wife` and `heinrich-zinsmeister-death` — carry a
-`required: true` avoid finding whose name tokens collide with a
-non-exempt person in their own starting tree, so `apply_avoid_guard`
-force-fails it on every run and their ceiling is `partial`, a perfect run
-included. Four remedies have been named and none adopted: relax the guard
-so it matches on more than name tokens, drop `required` on the colliding
-findings, re-author those findings so their target names no longer
-collide, or exclude guard-forced findings from `calibrate_judge`'s
-denominator. Which one to take is the lead's call, not the fixture
-author's. Until it is made the set is pinned by
-`test_no_new_fixture_becomes_unpassable_via_the_avoid_guard`
-(`eval/harness/tests/unit/test_e2e_fixture_corpus.py`), which fails in
-**both** directions — a fourth fixture entering the state fails it, and
-fixing one of the three fails it too — so the defect can neither spread
-nor be silently repaired while the call is open. The mirror-image defect —
-a guard that can never go *red* — is a different thing and is tracked
-separately.
+**Guards that could never go green (closed).** Three fixtures —
+`antonio-lucas-spouse`, `thomas-seaver-other-wife` and
+`heinrich-zinsmeister-death` — once carried a required avoid finding the
+name-token guard failed on every run. The rebuilt guard subtracts the starting
+tree (Decision 20 of `docs/plan/conclusion-tree.md`), so none is unpassable,
+and the pin that held the set is replaced by the pre-assertion check above.
 
 #### 3.4.2 Relationship findings: `matched` is derived, not trusted
 
@@ -690,17 +721,16 @@ rules in `research/SKILL.md` branch on it; find them with
   state, one step per turn, rather than handed straight to the step that owns a
   single deliverable.
 - **No researcher present.** On an autonomous run the router hands `userPresent: no`
-  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  to two agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
   run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
-  otherwise `yes`". `@plugin:search-hints` gets it from its routing-table row:
-  "`userPresent: no` ONLY on an `--autonomous` run". `@plugin:person-evidence` gets
+  otherwise `yes`". `@plugin:person-evidence` gets
   it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
   run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". The rules are there so an e2e run neither waits on an
-  external-site capture nobody will upload nor asks for hint verdicts nobody will
-  give. No check makes the router send the field to search-external-sites or
-  search-hints (the research unit suite checks it only on person-evidence's spawn),
-  and an agent reads a missing field as `yes`:
+  and in an autonomous run". The rules are there so an e2e run never waits on an
+  external-site capture nobody will upload. The research unit suite checks that the router sends
+  the field to search-external-sites on the opening turn of an autonomous run
+  (`ut_research_ue1`, tag `delegates-user-present-no-external`). A spawn later in a
+  run is checked by nothing, and an agent reads a missing field as `yes`:
   `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
   search-external-sites without it, and that plan item stayed `in_progress` waiting
   for a capture.
@@ -1489,8 +1519,9 @@ gate, and its artifacts are written with the gitignored `scratch_` prefix
 (§8).
 
 When the §3.4.1 avoid-guard fires, the persisted `judge_output`
-additionally carries `avoid_guard.forced_false` (which findings the
-harness overrode, and the matching final-tree person ids), the affected
+additionally carries `avoid_guard.forced_false` (per overridden finding: its
+`finding_id`, the `branch` that fired, the final-tree `person_ids` involved,
+and the `evidence`), the affected
 findings' `notes` gain an `[avoid-guard]` annotation, and
 `recall_*`/`verdict` reflect the recompute.
 
@@ -2720,9 +2751,10 @@ research job. Single-ask mode covers that use: it sends one
 message as one ordinary turn and checks which unit answered and what was saved.
 
 `make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
-the whole panel. It prints a short block per fixture (a PASS/FAIL line, then the
-units in order and any reason), exits 0 when all pass, 1 when
-any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
+the whole panel. It prints a short block per fixture (a PASS, FAIL or KNOWN-FAIL
+line, then the units in order and any reason) and a closing count. It exits 0 when
+every fixture passes or fails with its `known_issue` set, 1 when any other fails or
+goes ungraded, and 2 when a run never happened (bad fixture, no build, the genealogy
 MCP server unavailable — §6).
 
 ### 16.1 Directories
@@ -2730,6 +2762,10 @@ MCP server unavailable — §6).
 - Fixtures: `eval/tests/e2e-single-ask/<slug>/`.
 - Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`. They are not
   committed; a PR that changes a fixture's result pastes the printed block instead.
+- **Which PRs owe a run:** one that changes the research skill's `SKILL.md`, any
+  agent's `description:`, `plugin/hooks/no_project_route.py` or
+  `plugin/main-thread.json` runs the whole panel and pastes the printed block. A
+  KNOWN-FAIL is fine; a plain FAIL is new and the PR says why.
 
 Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
 them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
@@ -2753,6 +2789,8 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
+| `known_issue` | no | the open issue that owns this fixture's FAIL, as `"#N"`. The line prints KNOWN-FAIL and the panel's exit code ignores it, so a new FAIL stands out. The README names it ("Issue #N owns it"; a unit test checks). A known-issue fixture that passes prints a note to remove the field |
+| `ends_on_offer` | no (false) | also requires the turn to end on a "Continue with …?" offer (§16.4, check 7). Not set on a turn whose right ending is a question for the researcher, which writes no offer line |
 | `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
 | `blocked_tools` | no | as for autonomous fixtures (§6.1) |
 
@@ -2761,15 +2799,24 @@ name that is not a bare name from `manifest.json` or a built-in, and a save list
 names one section both `absent` and present (it could never fail).
 
 Plus `starting-research.json` and `starting-tree.gedcomx.json`, named as for
-autonomous fixtures. Every fixture starts from an existing project: with no
-project and no PID, `init-project` creates nothing and asks for an ID, so the turn
-would grade as "no unit ran" for a reason that has nothing to do with routing.
-There is no `expected-findings.json` and no judge.
+autonomous fixtures, **or neither**: a fixture with neither runs in an empty
+folder, the shape of most first messages. The loader refuses a fixture with one
+and not the other (partial seeding is an authoring mistake). An empty-folder
+fixture with a FamilySearch person ID lists `init-project` in `setup_units`; one
+with no ID expects `init-project` to ask for it and create nothing. Its save
+cannot be `sources` when init-project runs: `project_create` imports the person's
+Memories as sources, so a new source shows nothing about the deliverable
+(the loader refuses a `sources` save on any empty-folder fixture). There is no `expected-findings.json` and no judge.
 
 ### 16.3 How the turn runs
 
 - The message is sent **verbatim**: no `/research` prefix, no `--autonomous`, no
   provided-documents suffix. The system prompt is the autonomous mode's.
+- **Cowork's routing sentence.** Each message gets what Cowork's plugin hook sends:
+  `no_project_route.decision()`'s routing sentence and `SOURCES_NOTE`, called from
+  the shipped hook, not copied (`context_policy.route_note_hook`). This holds for
+  every fixture, seeded or not, because Cowork sends it whether or not a project
+  exists. The autonomous run and the unit harness add `SOURCES_NOTE` alone.
 - **No continue nudges.** No harness run binds a Stop hook (step mode phase 2), and
   there is no stall resume (it sends a second message). This matches Cowork today and step
   mode's cap 0 (`docs/specs/research-step-mode-spec.md`, decision 1).
@@ -2784,7 +2831,8 @@ There is no `expected-findings.json` and no judge.
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all six hold (`expected_owner` and `setup_units` may carry a plugin
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all seven hold, the
+seventh only when the fixture asks for it (`expected_owner` and `setup_units` may carry a plugin
 namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
@@ -2798,13 +2846,24 @@ namespace; it is stripped, as it is from spawned names):
 3. **`save`** — any one `expected_save` alternative holds: a new `sources` entry,
    a new `log` entry whose `tool` (and `outcome`, when given) is the expected
    value, or, with `absent`, no new entry in that section. "New" means its id is
-   in the final `research.json` and not in `starting-research.json`.
+   in the final `research.json` and not in `starting-research.json`; in an
+   empty-folder fixture every row is new.
 4. **`forbidden_tools`** — no call to any of them, on any thread, matched by
    bare name.
 5. **`required_tools`** — at least one call to each that did not error.
 6. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
    here even if it saved: the patron never got the answer. `cost_cap` is not a
    cut-off (§6: it only labels a finished run), so it does not fail this check.
+7. **`ends_on_offer`** — only with `ends_on_offer: true`: the last line of the
+   turn's last **main-thread** assistant text is a "Continue with …?" offer, read
+   with the step boundary's own `offered_step` (`plugin/hooks/step_boundary.py`).
+   Never a subagent's text or a harness line. An invented label is no offer.
+
+**A missing final `research.json`.** From a seeded project it fails `save` and
+`no_research_job`. In an empty-folder fixture it means no new rows: it adds no
+`no_research_job` reason, an `absent` save passes, and any other save fails. A
+`research.json` that exists but does not parse is not "missing": it fails both, as
+unreadable.
 
 Printed, not graded: every unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
@@ -2816,7 +2875,9 @@ A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 ### 16.5 What a pass does not show
 
 A pass here is **not** a pass on today's hosted alpha, whose system prompt
-(`apps/server/app/agent/real_agent.py`) differs from the harness's. Since step mode's
+(`apps/server/app/agent/real_agent.py`) differs from the harness's. The panel sends
+Cowork's routing sentence, which the hosted planes do not, so a pass on a
+first-message fixture does not show the hosted route fixed either. Since step mode's
 phase 2 neither plane nudges a stop or halts on a delivery signal: a single ask ends
 where the model ends it.
 

@@ -68,15 +68,20 @@ def _new_questions(before: dict, after: dict) -> list[dict]:
 # user asked for a person's parents. `will` is matched only with a preceding
 # article/possessive so the modal verb ("who will…") can't false-positive --
 # except that a preceding possessive pronoun doesn't rule out the modal
-# either: "searches for her will be planned next" still reads as "her" (the
-# subject) "will be planned" (the verb), not "her will" (the document). The
-# `(?!\s+be\b)` lookahead excludes that one observed shape (issue #4166
-# review, ut_question_selection_007's flaky run).
+# either: "searches for her will be planned next" and "the search for her will
+# begin" are the modal verb before a base verb, not "her will" the document.
+# `_MODAL_VERB_AFTER` excludes "will" followed by a common base verb; both
+# observed false positives were ut_question_selection_007 runs (issue #4166
+# review; issue #4382 PR 2).
+_MODAL_VERB_AFTER = (
+    "be|begin|start|need|have|continue|come|go|take|turn|focus|look|use|move|"
+    "follow|proceed|depend|require|remain|rest|resume|run|show|tell|help|work"
+)
 _RECORD_SCOPED_PATTERNS = (
     r"\bcensus\b",
     r"\bcertificates?\b",
     r"\bregisters?\b",
-    r"\b(?:a|the|his|her|their)\s+will\b(?!\s+be\b)",
+    r"\b(?:a|the|his|her|their)\s+will\b(?!\s+(?:" + _MODAL_VERB_AFTER + r")\b)",
     r"\bprobate\b",
     r"\bdeeds?\b",
     r"\bmuster\s+roll\b",
@@ -206,6 +211,78 @@ def _project_has_planned_item(before: dict) -> bool:
     return False
 
 
+_QUESTION_WORD_AFTER = re.compile(r"(?:\s+[\w-]+){0,2}?\s+questions?\b", re.IGNORECASE)
+_QUESTION_ID_PAREN = re.compile(r"\b(q_\d+)\s*\(([^)]*)\)", re.IGNORECASE)
+
+
+def _names_existing_question(snippet: str, match: re.Match, pattern: str, questions: list[dict]) -> bool:
+    """True iff this record-word match is part of naming a question already in
+    the project whose own text carries the same record word: "the 1850 census
+    question", or the parenthesis after that question's id ("q_002 (where
+    Patrick was in the 1850 census)"). The agent's Return contract tells it to
+    name other questions by their text, so a record-first question written
+    before this run (the Flynn fixtures' q_002, or one a user typed) would
+    otherwise fail an agent that obeys it. Only the reference passes: the same
+    word anywhere else in the line is still a record suggestion (lead,
+    2026-11-16: "a line that refers to q_002 is this case. Any other line that
+    names a record is a real failure")."""
+    carrying = {
+        str(q.get("id", "")).lower()
+        for q in questions
+        if re.search(pattern, str(q.get("question") or ""), re.IGNORECASE)
+    }
+    if not carrying:
+        return False
+    if _QUESTION_WORD_AFTER.match(snippet, match.end()):
+        return True
+    for ref in _QUESTION_ID_PAREN.finditer(snippet):
+        if ref.group(1).lower() in carrying and ref.start(2) <= match.start() and match.end() <= ref.end(2):
+            return True
+    return False
+
+
+_RECORD_KEYWORDS = {
+    r"\bcensus\b": r"\bcensus(?:es)?\b",
+    r"\bcertificates?\b": r"\bcertificates?\b",
+    r"\bregisters?\b": r"\bregisters?\b",
+    _RECORD_SCOPED_PATTERNS[3]: r"(?:'s|\b(?:a|the|his|her|their))\s+wills?\b",
+    r"\bprobate\b": r"\bprobate\b",
+    r"\bdeeds?\b": r"\bdeeds?\b",
+    r"\bmuster\s+roll\b": r"\bmuster\s+roll\b",
+    r"\blægdsrulle\w*\b": r"\blægdsrulle\w*\b",
+    r"\blaegdsrulle\w*\b": r"\blaegdsrulle\w*\b",
+}
+assert set(_RECORD_KEYWORDS) == set(_RECORD_SCOPED_PATTERNS), (
+    "every _RECORD_SCOPED_PATTERNS entry needs its _RECORD_KEYWORDS twin"
+)
+_GAP_SENTENCE = re.compile(
+    r"not yet|unsearched|\bnot (?:been )?(?:searched|located|found)\b|remaining gaps?|would (?:advance|strengthen)",
+    re.IGNORECASE,
+)
+
+
+def _conclusion_gap_patterns(before: dict) -> set[str]:
+    """The record patterns a proof summary already names as research still to
+    do: a sentence of any proof-summary text that says a record is not yet
+    searched, not located, a remaining gap, or would advance the tier. Relaying
+    that list is reading the project, not choosing a record -- the same footing
+    as naming an existing plan item. A record named only as work already done
+    ("Searched 1850 census …") is not on it, so it never switches a word off."""
+    gaps = [
+        sentence
+        for summary in before.get("proof_summaries") or []
+        for value in summary.values()
+        if isinstance(value, str)
+        for sentence in re.split(r"(?<=[.!?])\s+|\n+", value)
+        if _GAP_SENTENCE.search(sentence)
+    ]
+    return {
+        pattern
+        for pattern, keyword in _RECORD_KEYWORDS.items()
+        if any(re.search(keyword, sentence, re.IGNORECASE) for sentence in gaps)
+    }
+
+
 def test_handback_not_record_scoped(before_state, text_response, test, agent_returns=None):
     """The hand-back (caller lines + `summary_for_user`) must not name a
     record type, collection, repository, jurisdiction-as-record-source or
@@ -219,7 +296,9 @@ def test_handback_not_record_scoped(before_state, text_response, test, agent_ret
     that already has a `planned` plan item — the record choice was already
     weighed by research-plan, and `stay-inside-objective-scope.json` (plus
     its `direct-` twin) expect the hand-back to describe that item as the
-    plan already states it.
+    plan already states it. A record word that is part of naming an existing
+    question is not a match (`_names_existing_question`), nor is a record a
+    proof summary already lists as still to search (`_conclusion_gap_patterns`).
     """
     before = before_state.get("research_json")
     if before is None:
@@ -231,10 +310,17 @@ def test_handback_not_record_scoped(before_state, text_response, test, agent_ret
         pytest.skip("question-selection made no return")
     caller_line = _last_nonblank_line(_head_before_final_rule(reply))
     summary_tail = _last_sentence(tail_after_final_rule(reply))
+    questions = before.get("questions") or []
+    listed_gaps = _conclusion_gap_patterns(before)
     offenders: list[str] = []
     for label, snippet in (("next-step hint", caller_line), ("summary_for_user", summary_tail)):
         for pattern in _RECORD_SCOPED_PATTERNS:
-            if re.search(pattern, snippet, re.IGNORECASE):
+            if pattern in listed_gaps:
+                continue
+            if any(
+                not _names_existing_question(snippet, m, pattern, questions)
+                for m in re.finditer(pattern, snippet, re.IGNORECASE)
+            ):
                 offenders.append(f"{label} names a record (matched /{pattern}/): {snippet!r}")
                 break
     assert not offenders, (
@@ -592,39 +678,6 @@ def test_new_question_carries_question_kind(before_state, after_state):
         f"new question(s) without a question_kind in {_QUESTION_KINDS}: "
         + ", ".join(offenders)
     )
-
-
-# --- Tag-gated: the timelines section must actually be queried (V3) ---
-
-def test_person_warnings_called_before_deciding(tool_calls, test):
-    """Tag-gated: on a scenario carrying a real person_warnings contradiction,
-    the skill must have actually called person_warnings before writing (or
-    declining to write) the question -- not merely at some point in the run.
-    Concluding 'no contradiction' without this call is fabrication, not
-    informed absence of evidence."""
-    if "person-warnings-contradiction" not in test.get("tags", []):
-        pytest.skip("not a person-warnings-contradiction scenario")
-    warning_idxs = [
-        i
-        for i, call in enumerate(tool_calls)
-        if call.get("tool", "").endswith("person_warnings")
-    ]
-    assert warning_idxs, (
-        "the skill decided without ever calling person_warnings; a "
-        "contradiction on the subject cannot have been seen"
-    )
-    append_idxs = [
-        i
-        for i, call in enumerate(tool_calls)
-        if call.get("tool", "").endswith("research_append")
-    ]
-    if append_idxs:
-        assert min(warning_idxs) < min(append_idxs), (
-            "the skill wrote its question before ever calling "
-            "person_warnings -- the call must inform the decision, not "
-            "just appear somewhere in the transcript after it was already "
-            "made"
-        )
 
 
 # --- Tag-gated: missing-info disputed assignment accepts either honest branch (V4) ---

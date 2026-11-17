@@ -84,6 +84,8 @@ Determine place, time period, and scope from the user's request. If the time per
 
 When the delegation names a `projectPath`, Step 6 runs, whatever its value. With no `projectPath`, Step 6 does not run.
 
+A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: every Step 3 call, the full template, and Step 6 when it applies.
+
 When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
 
 ### 2. Establish jurisdictional context
@@ -159,22 +161,24 @@ For each record type, assign a digitization level using the **Digitization level
 
 **Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
 
+**An unresolved place is a coverage gap, not a broken tool.** When `place_search` finds no match and every place-dependent call comes back empty or generic, compile the guide anyway: `wiki_read` the jurisdiction's wiki pages by constructed URL, report what each tool did and did not return, cite any page that did resolve, and say what could not be confirmed. Never tell the researcher to re-run the survey.
+
 ### 5. Compile
 
-Use the template under **Locality Guide Output Format** below, with every claim from tool results. Give each record-type subsection at most three bullets and research tips at most six. When `research_append` returns `ok: true` in Step 6, the guide is in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or does not return `ok: true`, the guide is your return.
+Use the template under **Locality Guide Output Format** below, with every claim from tool results. Give each record-type subsection at most three bullets and research tips at most six. When Step 6 runs, write the guide only as Step 6's `guideSection` calls, never as text first: the guide is then in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or its first call does not return `ok: true`, the guide is your return.
 
 ### 6. Persist the locality
 
 **Run this step whenever Step 1 says it runs**, whatever the project's objective and
 however the delegation is phrased. Only an answer of `ok: false` with
 `reason: "no_project"` means there is no project; on any other `ok: false`, fix the
-entry and call again. Use `research_append`:
+call and send it again. Use `research_append`, first for the entry with no guide in it:
 
 ```
 research_append({
   projectPath: "<the delegation's projectPath>",
   section: "localities",
-  op: "append",                       // op: "update" with entryId to refresh an existing loc_ for the same place
+  op: "append",                       // op: "update" with entryId and fields to refresh an existing loc_ for the same place
   entry: {
     place: "Pennsylvania, United States",          // the jurisdiction the guide covers
     for_place: "Schuylkill County, Pennsylvania",  // the specific place of interest, if narrower
@@ -189,7 +193,6 @@ research_append({
       "Lackawanna County records before 1878 were filed under Luzerne County — search Luzerne first.",
       "Feliciana Parish split into East and West Feliciana Parish in 1824 — which side holds a given record depends on where within old Feliciana Parish the event occurred; search both unless that's pinned down."
     ],
-    guide_markdown: "<the whole guide as Step 5 caps it, in markdown — never a pointer to it>",
     pages_read: [
       { section: "home", url: "<page url or null>", found: true },
       { section: "getting_started", url: "...", found: true },
@@ -210,6 +213,26 @@ research_append({
 
 The tool assigns the `loc_` id and stamps `created`. **`pages_read` must list all four
 sections** (each with its `found` outcome).
+
+Then send the guide to that `loc_` id, one section per `research_append` call, never
+several in `ops`, all the calls together in one turn:
+
+```
+research_append({
+  projectPath: "<the delegation's projectPath>",
+  section: "localities",
+  op: "update",
+  entryId: "loc_001",
+  guideSection: "## Jurisdiction overview\n- **Formed:** 1811 from Berks and Northampton Counties\n- **County seat:** Pottsville"
+})
+```
+
+- One call for each `## ` section of the template, its `guideSection` beginning with that `## ` line.
+- `## Available record types` and `## Repository guide` go one call for each `### ` subsection, beginning with its `### ` line. The tool puts each under its `## ` heading and all sections in template order.
+- The tool writes the `# Locality Guide:` line. Never send `guide_markdown`, in `entry` or in `fields`.
+- When a call fails, send that one section again; the others are saved.
+- Each answer's `guide[0].missing` names the required headings not yet saved. Step 6 is done when it is empty.
+
 Do not put the applied per-search decision here; that goes in a plan item's
 `rationale` when `research-plan` uses this entry.
 
@@ -540,7 +563,10 @@ For each record type, classify its accessibility:
   or section of the guide anywhere in the return, even when the delegation asks
   for the guide.
 - **Step 6 did not run, or your last `research_append` call did not return
-  `ok: true`:** the guide in full, then `summary_for_user`.
+  `ok: true`:** the guide in full, then `summary_for_user`. Keep the template's
+  `## Jurisdiction overview`, `## Available record types` and `## Research tips`
+  headings as written. A narrowly phrased delegation still gets the full
+  template: narrow the content, not the structure.
 - **A decision rule asks or hands back:** one line before `summary_for_user`
   giving the question or naming the owner who runs next. With no guide, that
   line replaces the guide and the `loc_` line.

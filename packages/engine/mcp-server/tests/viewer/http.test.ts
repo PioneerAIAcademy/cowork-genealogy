@@ -3,13 +3,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { pageUri } from "../../src/tools/project-view.js";
 import { MAX_BODY_BYTES, PAGE_CSP } from "../../viewer/http.js";
 import { PUBLIC_URL, realFoldersOnly, SECRET, startViewer, STUB_PAGE, tempFolders, writeProject } from "./harness.js";
 
 realFoldersOnly();
 const { root } = tempFolders();
 
-const PAGE_URI = "ui://genealogy/viewer.html";
+const PAGE_URI = pageUri(STUB_PAGE);
 const CSP =
   "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; " +
   "font-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'";

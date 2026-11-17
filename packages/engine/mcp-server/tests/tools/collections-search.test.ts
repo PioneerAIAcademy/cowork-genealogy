@@ -1,4 +1,5 @@
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, connectorPrincipal } from "../../src/auth/principal.js";
+import { connectorReauthMessage, REJECTED_TOKEN_MESSAGE } from "../../src/auth/config.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -291,6 +292,23 @@ describe("collectionsSearchTool error handling", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("a 401 is a sign-in problem, worded for the caller: the login tool on the desktop, the link on a connector", async () => {
+    const unauthorized = { ok: false, status: 401, statusText: "Unauthorized", headers: new Headers() };
+    mockedGetValidToken.mockResolvedValue("test-token");
+    mockFetch.mockResolvedValue(unauthorized);
+    await expect(collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL)).rejects.toThrow(REJECTED_TOKEN_MESSAGE);
+
+    clearCollectionsCache();
+    const connector = connectorPrincipal({
+      accessToken: "dead-token",
+      userId: "u_1",
+      config: { webPublicUrl: "https://beta.example" },
+    });
+    const failure = await collectionsSearchTool({ standardPlace: "Alabama" }, connector).catch((e: Error) => e.message);
+    expect(failure).toBe(connectorReauthMessage(connector));
+    expect(failure).toContain("https://beta.example/auth/familysearch/login");
+  });
+
   it("throws on non-OK API response", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
     mockFetch.mockResolvedValue({
@@ -389,7 +407,10 @@ describe("collectionsSearchTool field mapping", () => {
 
   it("collectionCountsById still derives the /Record count the row no longer carries", () => {
     const counts = collectionCountsById(mockApiResponse);
-    expect(counts.get("1234")).toEqual({ personCount: 1048000, recordCount: 524000 });
+    expect(counts.get("1234")).toMatchObject({ personCount: 1048000, recordCount: 524000 });
+    // The title and years ride along for research_append's locality fill.
+    expect(typeof counts.get("1234")?.title).toBe("string");
+    expect(counts.get("1234")?.title).not.toBe("");
   });
 });
 
