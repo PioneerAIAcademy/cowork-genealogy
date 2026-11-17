@@ -361,7 +361,8 @@ A `not_reached` entry for a hand-off the user never returned:
 
 **Early termination** (`resources_spent` or `blocked_by_conflict`) — leave
 `status` as `"in_progress"`; pass only `search_stop`, NOT `status`.
-`stop_criteria` must be `null` for non-gate values. Record in `not_reached`
+`stop_criteria` must be `null` for non-gate values. A `resources_spent` write
+follows the Step 1 `wiki_read`: if it has not been called, call it first. Record in `not_reached`
 any sources that were identified but could not be reached:
 
 ```
