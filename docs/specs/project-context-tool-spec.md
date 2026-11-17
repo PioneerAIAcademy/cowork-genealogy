@@ -7,7 +7,7 @@
 > `research.json` + `tree.gedcomx.json`; the caller never opens either file.
 
 ```
-project_context({ projectPath }) -> compact projection (read-only)
+project_context({ projectPath, include? }) -> compact projection (read-only)
 ```
 
 ---
@@ -167,7 +167,8 @@ Projection rules:
 
 - **`buildId`** — the engine's build stamp (`<base>+<date>.<sha>[.dirty]`, or `<base>+dev`
   for a build outside a git checkout), identical to the wire `serverInfo.version`. Present on
-  the `ok: true` result, the broken-project failure **and** the `no_project` answer, because
+  the `ok: true` result, the broken-project failure, the `include` refusal **and** the
+  `no_project` answer, because
   this tool is the primary "which build is this?" surface (8 skills call it; 0 call
   `auth_status`) and the question is most urgent when nothing else works. Read from
   `build/build-info.json`; format and rationale in `mcpb-package-spec.md` § Versioning.
@@ -744,6 +745,7 @@ untouched.
 |-----------|----------|
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
+| `include` is not an array, or names a value other than `"persons"` or `"sources"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
 | person with no names / no preferred flag | `name` falls back to the first names entry, else absent |
@@ -771,6 +773,11 @@ untouched.
   half of a project.
 - **not a project at all** — `{ ok: false, reason: "no_project", errors }`, and
   no `isError`.
+- **`include`** — omitted, each value, both and `[]` give byte-identical answers on
+  a project with a person outside the subjects' one-hop family; an unknown value or
+  a non-array is refused with `{ ok: false, errors, buildId }` and no `reason`, also
+  on a folder with no project files; through the server, `include` is not refused as
+  an unknown parameter.
 - **`awaitingUser`** — lists an open partial hand-off with its plan item and
   timestamp; drops it once a later entry for the same URL carries the capture,
   and when a later `error` entry records that the user could not access the site;

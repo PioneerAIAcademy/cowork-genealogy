@@ -13,6 +13,7 @@ import {
 } from "../../src/tools/research-query.js";
 import { readBuildInfo } from "../../src/utils/build-info.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
+import { callTool } from "../helpers/call-tool.js";
 import { getProjectStore, runWithProjectStore } from "../../src/store/project-store.js";
 import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
@@ -1019,6 +1020,10 @@ describe("project_context include parameter (#4422 stage 1)", () => {
           persons: [
             { id: "I1", gender: "Male", names: [{ id: "N1", given: "William", surname: "Bottermiller", preferred: true }] },
             { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Bottermiller" }] },
+            // I3 is outside the subject's one-hop family (no edge). A Stage-3
+            // narrowing to subjects + one hop would drop it, so the inert and
+            // pinned-default checks below can see a premature narrowing.
+            { id: "I3", gender: "Male", names: [{ id: "N3", given: "John", surname: "Hale" }] },
           ],
           relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
           sources: [{ id: "S1", title: "1880 census" }],
@@ -1039,6 +1044,9 @@ describe("project_context include parameter (#4422 stage 1)", () => {
       await projectContext({ projectPath: dir, include: [] }, LOCAL),
     ];
     expect(omitted.ok).toBe(true);
+    // Pin the default list: a narrowing that ignores include (always narrows)
+    // leaves every variant byte-identical, so only this line catches it.
+    expect(omitted.ok && omitted.persons?.map((p) => p.id)).toEqual(["I1", "I2", "I3"]);
     const baseline = JSON.stringify(omitted);
     for (const v of variants) expect(JSON.stringify(v)).toBe(baseline);
   });
@@ -1060,5 +1068,16 @@ describe("project_context include parameter (#4422 stage 1)", () => {
     const r = await projectContext({ projectPath: dir, include: "persons" as any }, LOCAL);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors.join(" ")).toContain("persons, sources");
+  });
+
+  it("is taken at the server's door, and an unknown value is refused there by the tool", async () => {
+    // Through createServer: the schema property is what lets include past
+    // rejectUnknownArgs, and the tool's own check is what refuses an unknown
+    // value. Calling projectContext() directly would exercise neither.
+    const taken = await callTool("project_context", { projectPath: dir, include: ["persons", "sources"] });
+    expect(taken.text).not.toContain("has no parameter");
+    const bad = await callTool("project_context", { projectPath: dir, include: ["view"] });
+    expect(bad.isError).toBe(true);
+    expect(bad.text).toContain("persons, sources");
   });
 });
