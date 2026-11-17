@@ -203,9 +203,19 @@ Land_and_Property, Military_Records. For each, the place's comma parts are tried
 broadest first (`countryCandidates`), and the first `{Part}_{Suffix}` page the server
 returns is listed, so the country's page wins and a part the wiki does not title topic
 pages by falls through to the next (`England, United Kingdom` lists
-`England_Church_Records`). The list is in suffix order and may be empty. A lookup that
-fails omits that topic and never fails the place page; a list built with no failure is
-memoised per wiki URL and place. Why: the corpus copy of a country's home page links
+`England_Church_Records`). A page found under a part narrower than the country is listed
+only when it fits the place (`topicPageFitsPlace`): the first `{Place}_Genealogy` link in
+its first 2,000 characters (the breadcrumb) must name only comma parts of `standardPlace`,
+so `Victoria_Church_Records` (breadcrumb `Victoria,_Australia_Genealogy`) is not listed for
+`Victoria, British Columbia, Canada`, and a page with no such link is not listed; the
+country's own page is listed without this check. The list is in suffix order and may be
+empty. A lookup that fails omits that topic and never fails the place page. The lookups
+share a deadline, `WIKI_EXTRAS_DEADLINE_MS` (50 s from the start of the call, under the
+Cowork bridge's 60 s abort; `settleByDeadline` in `src/utils/wiki-page-fetch.ts`): at the
+deadline the topics found so far are returned, a topic still being looked up is omitted,
+and no lookup for a later candidate starts. A list built with no failure and before the
+deadline is memoised per wiki URL and place; one cut short by a failure or the deadline is
+not. Why: the corpus copy of a country's home page links
 none of these pages (measured 2026-11-15 for Norway, Germany, Mexico and England), and an
 agent asked about church books did not construct `{Country}_Church_Records` on its own. Cost: up to eight `GET`s per part, in parallel, on the first `home` call
 for a place.

@@ -1204,10 +1204,12 @@ Scandinavian clerks wrote the patronymic ending *-datter* / *-dotter*
 ("daughter") short, and FamilySearch's indexes transcribe the short form
 without its period. The bride a tree records as "Unna Halsteinsdatter" is
 indexed "Urna Halsteinsdr" in Norway, Marriages, 1660-1926 (collection
-`1468080`). A live check on 2026-11-16 found her with the full surname once the
-given name was Urna, and under neither surname with the given name Unna; the
-measured basis below is against `ut_search_records_023`'s mock, in which only
-the abbreviated surname found her. The tool lists the
+`1468080`). A live check on 2026-11-16 (collection 1468080, 1770-1800) found her
+with `givenName=Urna` and either `surname=Halsteinsdatter` or
+`surname=Halsteinsdr`, and with neither surname under `givenName=Unna`; the
+abbreviated surname is not needed. The measured basis below was taken against an
+earlier `ut_search_records_023` mock, in which only the abbreviated surname found
+her; 023 now serves live captures. The tool lists the
 abbreviated forms itself rather than relying on the caller to remember them —
 the same reasoning as `jurisdictionHints`.
 
