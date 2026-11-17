@@ -142,7 +142,7 @@ export function resolvedAgainstIds(research: any, assertionById: Map<string, any
   for (const c of conflicts) {
     if (c?.conflict_type !== "fact") continue;
     const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
-    const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
+    const into = isBirthPlaceDispute(c.disputed_attribute) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
     if (!into) continue;
     const ids = competingIds(c);
     const settled =

@@ -32,16 +32,20 @@ import { extractionAppend } from "../src/tools/extraction-append.js";
 import { attachedBirthConflictsOf, attachedBirthsOf, birthPlaceInfo } from "../src/tools/research-append.js";
 import { lookupWithin } from "../src/utils/place-coords.js";
 
-const args = process.argv.slice(2);
-const flag = (name: string): string | undefined => {
-  const i = args.indexOf(name);
-  return i >= 0 ? args[i + 1] : undefined;
-};
-const limit = flag("--limit") ? Number(flag("--limit")) : Infinity;
-const only = flag("--only");
-if (!Number.isFinite(limit) && flag("--limit")) {
-  console.error("--limit needs a number");
+function usage(problem: string): never {
+  console.error(`${problem}\nusage: measure-attached-birth-conflicts.ts [--limit <positive whole number>] [--only <fixture slug>]`);
   process.exit(2);
+}
+let limit = Infinity;
+let only: string | undefined;
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length; i += 2) {
+  const [name, value] = [args[i], args[i + 1]];
+  if (name !== "--limit" && name !== "--only") usage(`unknown argument '${name}'`);
+  if (value === undefined || value.startsWith("--")) usage(`${name} needs a value`);
+  if (name === "--only") only = value;
+  else if (!/^[1-9]\d*$/.test(value)) usage(`--limit needs a positive whole number, not '${value}'`);
+  else limit = Number(value);
 }
 
 const here = dirname(fileURLToPath(import.meta.url));

@@ -21,6 +21,7 @@ vi.mock("../../src/utils/place-api.js", async (importOriginal) => {
   const reps: Record<string, string[]> = {
     P_RUSSIA: ["Russia", "Russia, Soviet Union", "Russian Empire"],
     P_SELZ: ["Lymans'ke, Rozdilna, Odesa, Ukraine", "Selz, Odessa, Kherson, Russian Empire"],
+    P_ONTARIO: ["Ontario, Canada", "Upper Canada, British North America"],
   };
   return {
     ...actual,
@@ -88,7 +89,13 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
     // The place a standard name belongs to, for its other names (#4444). Every
     // other name is null, so no test reaches the live Places API.
     standardPlaceToPlaceId: vi.fn(async (name: string) => {
-      const ids: Record<string, string> = { "Russia": "P_RUSSIA", "Selz, Odessa, Kherson, Russian Empire": "P_SELZ" };
+      const ids: Record<string, string> = {
+        "Russia": "P_RUSSIA",
+        "Selz, Odessa, Kherson, Russian Empire": "P_SELZ",
+        // No coordinates for either: a place's other names are kept without them.
+        "Upper Canada, British North America": "P_ONTARIO",
+        "Ontario, Canada": "P_ONTARIO",
+      };
       return ids[name] ?? null;
     }),
     // The localities first-place rule (#3696). Unlisted text is lookup_failed,
@@ -13442,6 +13449,17 @@ describe("research_append — detected core-identifier contradiction", () => {
       { standard_place: "Ireland" },
     );
     expect((await researchAppend(link("confident"))).ok).toBe(false);
+    expect(vi.mocked(standardPlaceToCoords)).not.toHaveBeenCalled();
+  });
+
+  it("does not cap a historical jurisdiction against its modern name when neither has coordinates", async () => {
+    await write(
+      { place: "Upper Canada", standard_place: "Upper Canada, British North America" },
+      { place: "Ontario, Canada", standard_place: "Ontario, Canada", date: "1841" },
+    );
+    const r = await researchAppend(link("confident"));
+    expect((r as any).errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
   });
 
   // wendel-weichel-mother (run 2026-09-09): a 1910s census says "Russia" for a

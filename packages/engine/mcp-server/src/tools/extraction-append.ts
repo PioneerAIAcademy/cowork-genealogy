@@ -186,25 +186,15 @@ export async function runExtractionAppend(
  */
 export interface ExtractionAppendDeps {
   readRecord: (input: RecordReadInput, principal: Principal) => Promise<RecordReadResult>;
-  /** The pause before reads that failed on the network are tried once more.
-   *  Tests pass 0. */
-  readRetryPauseMs?: number;
 }
 
 const DEFAULT_DEPS: ExtractionAppendDeps = { readRecord: recordReadTool };
 
-/** How long a short network outage gets before failed reads are tried again.
- *  `fetchWithRetry` spends its three attempts in about a second, and a
- *  thomas-hanrahan-marriage e2e run on 2026-11-16 (log not kept) lost three of the
- *  five records attached to its subject and his relationships to a blip that
- *  outlasted them all. */
-const READ_RETRY_PAUSE_MS = 2_000;
-
-/** A read that failed for a moment rather than for good: Node's fetch rejects
- *  every transport failure with "fetch failed", a timeout is `fetchWithTimeout`'s
- *  own, and a 5xx that outlasted `fetchWithRetry` is `record_read`'s
- *  "FamilySearch recapi error: 5xx". A refusal, a rate limit, a missing record or
- *  a staging fault is not retried. */
+/** A read that failed for a moment rather than for good, which calling again may
+ *  read: Node's fetch rejects every transport failure with "fetch failed", a
+ *  timeout is `fetchWithTimeout`'s own, and a 5xx that outlasted `record_read`'s
+ *  retries is its "FamilySearch recapi error: 5xx". A refusal, a rate limit, a
+ *  missing record or a staging fault is not. */
 function isTransientReadError(e: unknown): boolean {
   if (isFetchTimeout(e)) return true;
   if (e instanceof TypeError && e.message === "fetch failed") return true;
@@ -1068,42 +1058,25 @@ async function recordIdsMode(
     }
   }
 
-  // 3. Reads, in parallel. An error or an unstaged read is reported and skipped.
-  //    A read that failed on the network is tried once more after a pause, so
-  //    a short outage does not cost the record (READ_RETRY_PAUSE_MS).
+  // 3. Reads, in parallel. An error or an unstaged read is reported and skipped;
+  //    a network failure `record_read`'s own retries outlasted is marked so the
+  //    summary can say calling again may read it.
   const toRead = outcomes.filter((o) => o.status === "extracted" && !o.logId);
-  const transient = new Set<(typeof outcomes)[number]>();
-  const before = new Map<(typeof outcomes)[number], string>();
-  const readOne = async (o: (typeof outcomes)[number]) => {
+  await mapWithConcurrency(toRead, READ_CONCURRENCY, async (o) => {
     try {
       const r = await deps.readRecord({ recordId: o.recordId, projectPath: input.projectPath }, principal);
-      // On the second pass, the first pass's failure is undone.
-      const retried = transient.delete(o);
       if (!r.staged) {
         o.status = "read_failed";
         o.summary = `${o.recordId}: read, but not staged, so it cannot be extracted: ${r.stagingError ?? "no staging handle returned"}.`;
       } else {
-        if (retried) {
-          o.status = "extracted";
-          o.summary = before.get(o) ?? o.summary;
-        }
         o.stagedRef = r.staged.resultsRef;
       }
     } catch (e) {
-      if (!before.has(o)) before.set(o, o.summary);
       o.status = "read_failed";
       o.summary = `${o.recordId}: could not be read: ${describeFetchError(e)}.`;
-      if (isTransientReadError(e)) transient.add(o);
-      else transient.delete(o);
+      if (isTransientReadError(e)) opts.retryableReads?.add(o.recordId);
     }
-  };
-  await mapWithConcurrency(toRead, READ_CONCURRENCY, readOne);
-  if (transient.size > 0) {
-    const again = [...transient];
-    await new Promise((r) => setTimeout(r, deps.readRetryPauseMs ?? READ_RETRY_PAUSE_MS));
-    await mapWithConcurrency(again, READ_CONCURRENCY, readOne);
-  }
-  for (const o of transient) opts.retryableReads?.add(o.recordId);
+  });
 
   // 3b. Household skip. Step 1 widens an id only by sidecars already logged,
   //     so it cannot see a member of a record extracted under an accepted hint

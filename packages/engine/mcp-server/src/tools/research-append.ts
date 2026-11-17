@@ -1027,6 +1027,7 @@ export function attachedBirthConflictPlaceNames(entry: any, research: any, perso
       if (!b.ruledOut && typeof b.assertion.standard_place === "string") names.push(b.assertion.standard_place);
     }
   }
+  for (const c of scope.competitors) if (typeof c.standard_place === "string") names.push(c.standard_place);
   return names;
 }
 
@@ -1052,17 +1053,22 @@ export function attachedBirthConflictInvariants(
   const scope = birthPlaceConflictScope(entry, research, personLinks);
   if (!scope) return [];
   const { competitors, persons } = scope;
-  const sides = (c: any, x: any) => c.id === x.id || birthPlacesAgree(c, x);
   for (const p of persons) {
-    for (const [x, y] of attachedBirthConflictsOf(p, research, tree, personLinks, birthPlaceCoords)) {
-      if (!birthCountriesDiffer(x, y)) continue;
-      const withX = competitors.find((c) => sides(c, x) && !sides(c, y));
-      const withY = competitors.find((c) => sides(c, y) && !sides(c, x));
+    const birth = treeBirthFact(tree, p);
+    if (!birth) continue;
+    // The arm's own tests: the pair it reads as contradicting, and its "near",
+    // so a competitor named by a historical jurisdiction, or within the distance
+    // band, falls on the side it really is.
+    const near = (x: any, y: any) => !attachedPlacesFar(x, y, birth, birthPlaceCoords);
+    const live = attachedBirthsOf(p, research, personLinks).filter((b) => !b.ruledOut).map((b) => b.assertion);
+    for (const [x, y] of contradictingAttachedPairs(live, birth, birthPlaceCoords)) {
+      const withX = competitors.find((c) => near(c, x) && !near(c, y));
+      const withY = competitors.find((c) => near(c, y) && !near(c, x));
       if (!withX || !withY) continue;
       return [
         `conflict '${entry.id ?? "(new)"}' cannot be 'resolved' by preferring one side: its competitors ` +
           `'${withX.id}' ('${withX.place}') and '${withY.id}' ('${withY.place}') follow the two records ` +
-          `FamilySearch attaches to '${p}' that put that person's birth in different countries ('${x.place}', ` +
+          `FamilySearch attaches to '${p}' that put that person's birth too far apart to be one birth ('${x.place}', ` +
           `assertion '${x.id}'; '${y.place}', assertion '${y.id}'). A tree person whose own attached records ` +
           `disagree like this may be two people under one entry, which is an identity question, not a fact ` +
           `to weigh, and the tree's attachments are not weighed against each other. Leave this conflict ` +
@@ -1764,7 +1770,13 @@ function partiesLinkedTo(
  *  full names of every representation of the same FamilySearch place: "Upper
  *  Canada, British North America" and "Ontario, Canada" are one place, 1791-1841
  *  and from 1867 (#4444). */
-export type BirthPlaceInfo = PlaceCoords & { aliases?: readonly string[] };
+export type BirthPlaceInfo = Partial<PlaceCoords> & { aliases?: readonly string[] };
+
+/** Whether a looked-up place carries coordinates: one that kept only its other
+ *  names (a historical jurisdiction often has none) is unresolved for distance. */
+function hasCoords(p: BirthPlaceInfo | null | undefined): p is BirthPlaceInfo & PlaceCoords {
+  return !!p && typeof p.latitude === "number" && typeof p.longitude === "number";
+}
 
 /** Coordinates of standard places, looked up in `prepareOps` because the gate
  *  below is synchronous. A name that is absent or null was not resolved. */
@@ -1784,8 +1796,10 @@ async function placeAliases(name: string): Promise<string[]> {
  *  place has no coordinates. */
 export async function birthPlaceInfo(name: string, withAliases: boolean): Promise<BirthPlaceInfo | null> {
   const coords = await standardPlaceToCoords(name);
-  if (!coords || !withAliases) return coords;
-  return { ...coords, aliases: await placeAliases(name) };
+  if (!withAliases) return coords;
+  const aliases = await placeAliases(name);
+  if (coords) return { ...coords, aliases };
+  return aliases.length > 0 ? { aliases } : null;
 }
 
 /** Places types (as `placeTypeKey` reads them) that name a whole region rather
@@ -1878,7 +1892,7 @@ function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoor
   if (typeof sa !== "string" || typeof sb !== "string") return true;
   const pa = coords?.get(sa);
   const pb = coords?.get(sb);
-  if (!pa || !pb) return !unresolvedIsNear;
+  if (!hasCoords(pa) || !hasCoords(pb)) return !unresolvedIsNear;
   if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
   if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
   const years = yearsIn(birth.date, birth.standard_date, assertion.date);
@@ -2031,11 +2045,30 @@ function attachedBirths(
   const rejected = new Set(
     ((research?.rejected_links ?? []) as any[]).filter((r: any) => r?.person_id === personId).map((r: any) => r.assertion_id),
   );
+  // A researcher rejects a record for the person through whichever of its
+  // assertions they were shown, most often its name: a rejection rules out the
+  // birth of the same record party, not only an assertion of the same id.
+  const keyers = new Map<string, (a: any) => string | null>();
+  const partyOf = (a: any): string | null => {
+    const recordId = recordIdOf(a);
+    if (recordId == null) return null;
+    let keyOf = keyers.get(recordId);
+    if (!keyOf) keyers.set(recordId, (keyOf = recordParties(assertionById.values(), recordId).partyKey));
+    const party = keyOf(a);
+    return party == null ? null : `${recordId} ${party}`;
+  };
+  const rejectedParties = new Set<string>();
+  for (const id of rejected) {
+    const r = assertionById.get(id);
+    const key = r ? partyOf(r) : null;
+    if (key) rejectedParties.add(key);
+  }
   const out: AttachedBirth[] = [];
   for (const id of began) {
     const a = assertionById.get(id);
     if (!a || !readableBirthPlace(a)) continue;
-    if (rejected.has(id)) out.push({ assertion: a, ruledOut: true });
+    const key = partyOf(a);
+    if (rejected.has(id) || (key != null && rejectedParties.has(key))) out.push({ assertion: a, ruledOut: true });
     else if (live.has(id)) out.push({ assertion: a, ruledOut: false });
   }
   return out;
@@ -2101,6 +2134,12 @@ function contradictingAttachedPairs(
 /** A tree person's live attached births that contradict each other, as the gate
  *  reads them: for the live walk in `dev/measure-attached-birth-conflicts.ts`.
  *  Empty when the person has no Birth fact, which the gate needs for scope. */
+/** The tree person's Birth fact, which the arms take the year from. */
+function treeBirthFact(tree: any, personId: string): any {
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  return ((person?.facts ?? []) as any[]).find((f: any) => String(f?.type ?? "").toLowerCase() === "birth");
+}
+
 export function attachedBirthConflictsOf(
   personId: string,
   research: any,
@@ -2108,8 +2147,7 @@ export function attachedBirthConflictsOf(
   personLinks?: ReadonlyArray<PersonLink>,
   coords?: BirthPlaceCoords,
 ): Array<[any, any]> {
-  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
-  const birth = ((person?.facts ?? []) as any[]).find((f: any) => String(f?.type ?? "").toLowerCase() === "birth");
+  const birth = treeBirthFact(tree, personId);
   if (!birth) return [];
   const live = attachedBirthsOf(personId, research, personLinks).filter((b) => !b.ruledOut).map((b) => b.assertion);
   return contradictingAttachedPairs(live, birth, coords).filter(([x, y]) => String(x.id) < String(y.id));
@@ -2127,14 +2165,18 @@ function attachedBirthFinding(
   coords?: BirthPlaceCoords,
   unresolvedIsNear = false,
 ): string | null {
-  const { birth, sameRecord, resolvedAgainst, attached } = scope;
+  const { birth, sameRecord, attached } = scope;
   if (attached.length < 2) return null;
   const near = (x: any, y: any) => !attachedPlacesFar(x, y, birth, coords, unresolvedIsNear);
   const live = attached.filter((b) => !b.ruledOut).map((b) => b.assertion);
   const ruledOut = attached.filter((b) => b.ruledOut).map((b) => b.assertion);
   const pairs = contradictingAttachedPairs(live, birth, coords, unresolvedIsNear);
+  // No settled conflict releases the record's side either. A conflict that
+  // set the record's birth aside against one of the attached births is an agent
+  // weighing the tree's attachments: a `moot` one with both analyses releases
+  // every competitor, and would lift the cap from exactly the link it guards.
   for (const b of sameRecord) {
-    if (!readableBirthPlace(b) || !contradictionIsCredible(b, resolvedAgainst.place)) continue;
+    if (!readableBirthPlace(b)) continue;
     const sided = pairs.find(([x, y]) => near(b, x) && !near(b, y));
     if (sided) {
       const [x, y] = sided;
@@ -11152,7 +11194,10 @@ async function prefetchBirthPlaceCoords(
       if (op.op === "update" && !("preferred_assertion_id" in fields) && !("status" in fields)) continue;
       const prior = op.op === "update" ? ((research?.conflicts ?? []) as any[]).find((c: any) => c?.id === op.entryId) ?? {} : {};
       const conflict = op.op === "update" ? { ...prior, ...fields } : (op as any).entry;
-      for (const n of attachedBirthConflictPlaceNames(conflict, research, personLinks)) withNames.add(n);
+      for (const n of attachedBirthConflictPlaceNames(conflict, research, personLinks)) {
+        names.push(n);
+        withNames.add(n);
+      }
       continue;
     }
     if (op.section !== "person_evidence") continue;
@@ -11183,9 +11228,14 @@ async function prefetchBirthPlaceCoords(
     for (const l of relationalLinksScopedBy(entry, research, personLinks, assertions)) gather(l);
   }
   if (names.length === 0 && withNames.size === 0) return new Map();
+  // Coordinates only for the distance test's names, so a pair already known to
+  // be in different countries still costs no coordinate lookup; other names only
+  // for the names the arms compare by name.
   const all = [...new Set([...names, ...withNames])];
   const [coords, aliases] = await Promise.all([
-    lookupWithin(all, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS),
+    names.length > 0
+      ? lookupWithin([...new Set(names)], (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS)
+      : Promise.resolve(new Map<string, PlaceCoords | null>()),
     withNames.size > 0
       ? lookupWithin([...withNames], placeAliases, BIRTH_PLACE_COORDS_BUDGET_MS)
       : Promise.resolve(new Map<string, string[] | null>()),
@@ -11194,7 +11244,8 @@ async function prefetchBirthPlaceCoords(
   for (const name of all) {
     const c = coords.get(name) ?? null;
     const a = aliases.get(name);
-    out.set(name, c && a ? { ...c, aliases: a } : c);
+    if (c) out.set(name, a ? { ...c, aliases: a } : c);
+    else out.set(name, a && a.length > 0 ? { aliases: a } : null);
   }
   return out;
 }
