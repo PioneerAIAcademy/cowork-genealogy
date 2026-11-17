@@ -1418,7 +1418,7 @@ grade linking work the test does not ask for. `ut_person_evidence_001` asks for
 a review of `pe_005` without writing. The rubric line and a `judge_context`
 line both said that flagging the missing I2 link is the full answer in a review,
 and the judge still docked Multi-person awareness, Score discipline and
-Rationale quality for not doing the linking (issue #4548). Prose did not hold
+Rationale quality for not doing the linking. Prose did not hold
 the judge, so the score is dropped in code.
 
 **Rules.**
@@ -1446,7 +1446,7 @@ the judge, so the score is dropped in code.
   nulls on positive tests; a dimension named in a
   `coerced_review_dimension_to_na` warning is skipped there
   (`review_sample._has_rubric_null_on_positive`). No mandatory-review trigger
-  keys on the warning (decided in #4548).
+  keys on the warning: the judge's original score is kept in it.
 
 It is a real (non-cosmetic) field, so it is snapshot-tracked: editing it
 invalidates the content hash and forces a re-run.
