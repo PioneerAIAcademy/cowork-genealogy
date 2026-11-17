@@ -901,8 +901,9 @@ There **is** an orchestrator, and it is a skill:
    `opening_prompt` in `apps/server/proto/demo.py`, the prototype's default opener
    (`make proto-demo` when no `--prompt` is given, and the `cap_main_real` and
    `concurrent_rss_heavy` cases of `make proto-bounds`; their `-aws` twins run the
-   same scripts); and by the two research unit tests that pin the trigger and the
-   always-a-job rule (`ut_research_005`, `ut_research_023`).
+   same scripts); and by the research unit tests that open with it: `ut_research_005`
+   and `ut_research_023`, which pin the trigger and the always-a-job rule, and
+   `ut_research_ue1`, `ut_research_uh1` and `ut_research_uq1`.
    Offline suites pin that the flag is sent; none can see what the router does
    with it. Only the paid eval runs do.
    **gps-mentor runs only when the user asks for a second opinion, and the router

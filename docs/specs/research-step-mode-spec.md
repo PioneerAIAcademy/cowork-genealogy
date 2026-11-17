@@ -560,7 +560,8 @@ router sentence: plan at most one extra round, then wrap up.
   run; "the highest-value fact" is neither. One question, not one per fact:
   `newQuestionWhileAnotherIsOpenInvariants` refuses a second open question written in a
   later call, and `secondQuestionInOneCallInvariants` one written in the same call. A "Keep
-  going." turn leaves the field out, because a researcher is there to answer.
+  going." turn on a run that did not open with `--autonomous` leaves the field out,
+  because a researcher is there to answer.
 - **The objective row.** When every question is resolved, the router names any uncovered
   part of the objective as a suggested next question and offers setup.
 - **Ladder: a conflict's evidence round.** When every conflict in `openConflictIds`
