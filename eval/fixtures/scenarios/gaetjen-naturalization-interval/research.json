@@ -837,7 +837,58 @@
       "standard_place": "New York City, New York, United States"
     }
   ],
-  "person_evidence": [],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "core_identifier_conflict": null,
+      "rationale": "Germans to America index, Herm Gaetjen, born 1854 Prussia, arrived New York 2 June 1871. Linked before this run on the researcher's identification of this arrival as I1's.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "core_identifier_conflict": null,
+      "rationale": "Germans to America index, Herm Gaetjen, born 1854 Prussia, arrived New York 2 June 1871. Linked before this run on the researcher's identification of this arrival as I1's.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "core_identifier_conflict": null,
+      "rationale": "Germans to America index, Herm Gaetjen, born 1854 Prussia, arrived New York 2 June 1871. Linked before this run on the researcher's identification of this arrival as I1's.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "core_identifier_conflict": null,
+      "rationale": "Germans to America index, Herm Gaetjen, born 1854 Prussia, arrived New York 2 June 1871. Linked before this run on the researcher's identification of this arrival as I1's.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "core_identifier_conflict": null,
+      "rationale": "Germans to America index, Herm Gaetjen, born 1854 Prussia, arrived New York 2 June 1871. Linked before this run on the researcher's identification of this arrival as I1's.",
+      "created": "2026-10-07"
+    }
+  ],
   "conflicts": [],
   "hypotheses": [],
   "timelines": [],

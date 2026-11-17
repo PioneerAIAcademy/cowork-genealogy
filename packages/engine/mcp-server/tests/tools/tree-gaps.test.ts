@@ -401,12 +401,13 @@ describe("treeGapsTool", () => {
       expect(r.notes.join(" ")).toMatch(/Pending hints were not read for 1 person/);
     });
 
-    it("asks for pending matches at the API maximum count, with its own time window", async () => {
+    it("asks for pending matches at confidence 4 and up, at the API maximum count, with its own time window", async () => {
       survey(() => json({ entries: [] }));
       await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
       const call = vi.mocked(fsFetch).mock.calls.find((c) => String(c[1]).includes(MATCHES))!;
       const url = String(call[1]);
       expect(url).toContain("status=pending");
+      expect(url).toContain("minConfidence=4");
       expect(url).toContain("count=50");
       expect(url).not.toContain("includeSummary=true");
       // The read ends inside the 50 s deadline on its own: a timeout and a retry budget.

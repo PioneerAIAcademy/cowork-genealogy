@@ -472,8 +472,26 @@ def test_search_more_goes_once_the_question_is_concluded():
 
 
 def _reply(state=None, mode="job", prev="search-records", step="person-evidence",
-           offer="research-exhaustiveness", outcome="ok"):
-    return sb.next_auto_reply(state, mode, prev, step, offer, outcome)
+           offer="research-exhaustiveness", outcome="ok", research=None):
+    return sb.next_auto_reply(state, mode, prev, step, offer, outcome, research=research)
+
+
+def _research_with_plan_items(statuses, question_status="open"):
+    """A research fixture with one active plan under the current question, whose
+    items carry the given statuses in order."""
+    research = _with_question(status=question_status)
+    research["plans"] = [
+        {
+            "id": "pl_001",
+            "question_id": "q_001",
+            "status": "active",
+            "items": [
+                {"id": f"pli_{i:03d}", "status": status}
+                for i, status in enumerate(statuses, start=1)
+            ],
+        }
+    ]
+    return research
 
 
 def test_an_ordinary_offer_is_answered_with_keep_going():
@@ -504,7 +522,39 @@ def test_a_wrap_up_offer_ends_the_run_because_only_the_researcher_answers_it():
 
 
 def test_a_proof_conclusion_turn_ends_the_run():
+    """No `research` passed: unreadable-store behavior, unchanged from before this
+    parameter existed."""
     assert _reply(step="proof-conclusion", offer="question-selection")["reply"] is None
+
+
+def test_a_blocked_proof_conclusion_with_no_proof_summary_gets_a_reply():
+    """Proof-conclusion was refused (wrote no summary) and offered a real next
+    step -- falls through to the ordinary rules instead of ending the run."""
+    research = _with_question()
+    out = _reply(step="proof-conclusion", offer="conflict", research=research)
+    assert out["reply"] == sb.REPLY_KEEP_GOING
+
+
+def test_a_proof_conclusion_turn_with_a_proof_summary_still_ends_the_run():
+    """A conflict's reopened question: still `current_question` (not resolved),
+    and already has a summary from before the reopening."""
+    research = _with_question()
+    research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
+    out = _reply(step="proof-conclusion", offer="question-selection", research=research)
+    assert out["reply"] is None
+
+
+def test_a_proof_conclusion_that_resolves_the_last_question_still_ends_the_run():
+    """The ordinary case, and the one the bug hid behind: `proof-conclusion`
+    resolves the question it concludes in the SAME batch as the summary, so
+    `current_question` has already moved past it (here, to nothing) by the
+    time this reads research.json back. The gate must find it by creation
+    order, not by asking which question is still open."""
+    research = _with_question(status="resolved")
+    research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
+    assert sb.current_question(research) is None, "the fixture must exercise the no-current-question case"
+    out = _reply(step="proof-conclusion", offer="question-selection", research=research)
+    assert out["reply"] is None
 
 
 def test_the_run_stops_at_max_auto_replies():
@@ -522,6 +572,46 @@ def test_a_repeated_step_and_offer_pair_ends_the_run():
         "research-exhaustiveness", "ok",
     )
     assert second["reply"] is None
+
+
+def test_a_repeated_step_and_offer_pair_with_research_but_no_item_growth_still_ends_the_run():
+    """The regression check: with `research` present but item statuses
+    unchanged, the repeated-pair guard still ends the run exactly as it does
+    when `research` is None (the existing test above never reaches the new
+    growth-check code path at all)."""
+    research = _research_with_plan_items(["planned", "planned"])
+    first = _reply(research=research)
+    second = sb.next_auto_reply(
+        first["state"], "job", "search-records", "person-evidence",
+        "research-exhaustiveness", "ok", research=research,
+    )
+    assert second["reply"] is None
+
+
+def test_a_second_plan_item_s_search_and_link_cycle_gets_a_reply():
+    """Replays the `hannah-earnest-children` shape: a second plan item getting
+    linked reads as real progress, not a repeated loop, even though the
+    (step, offer) pair repeats."""
+    research = _research_with_plan_items(["completed", "planned"])
+    first = sb.next_auto_reply(
+        None, "job", "research-plan", "search-records", "link", "ok", research=research,
+    )
+    assert first["reply"] == sb.REPLY_KEEP_GOING
+    assert first["state"]["touched_items"] == 1
+
+    second = sb.next_auto_reply(
+        first["state"], "job", "search-records", "person-evidence",
+        "research-exhaustiveness", "ok", research=research,
+    )
+    assert second["reply"] == sb.REPLY_KEEP_GOING
+
+    research["plans"][0]["items"][1]["status"] = "completed"
+    third = sb.next_auto_reply(
+        second["state"], "job", "person-evidence", "search-records", "link", "ok",
+        research=research,
+    )
+    assert third["reply"] == sb.REPLY_KEEP_GOING
+    assert third["state"]["touched_items"] == 2
 
 
 def test_the_first_planning_round_is_allowed():
@@ -574,6 +664,9 @@ def test_next_auto_reply_survives_a_missing_or_junk_state():
     assert _reply(state=None)["reply"] == sb.REPLY_KEEP_GOING
     assert _reply(state={})["reply"] == sb.REPLY_KEEP_GOING
     assert _reply(state={"replies": "x", "answered": "x"})["reply"] == sb.REPLY_KEEP_GOING
+    # A state written before `touched_items` existed -- accepted with no KeyError.
+    no_touched = {"replies": 1, "planning_rounds": 0, "answered": []}
+    assert _reply(state=no_touched)["reply"] == sb.REPLY_KEEP_GOING
 
 
 # ---------------------------------------------------------------------------

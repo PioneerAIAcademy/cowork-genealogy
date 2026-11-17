@@ -798,13 +798,32 @@ def test_no_project_stands_down_on_an_untagged_test():
         check_no_project_guide({"id": "ut_locality_guide_004", "tags": ["locality"]}, [])
 
 
-# --- Tag coverage: exactly the four no-project tests carry `no-project` ----
+# --- Tag coverage: exactly these no-project tests carry `no-project` ----
 
 _NO_PROJECT_TEST_IDS = {
     "ut_locality_guide_001",
     "ut_locality_guide_002",
+    "ut_locality_guide_004",
+    "ut_locality_guide_005",
+    "ut_locality_guide_006",
+    "ut_locality_guide_007",
+    "ut_locality_guide_008",
+    "ut_locality_guide_009",
+    "ut_locality_guide_011",
+    "ut_locality_guide_012",
+    "ut_locality_guide_016",
+    "ut_locality_guide_017",
+    "ut_locality_guide_019",
+    "ut_locality_guide_020",
+    "ut_locality_guide_021",
+    "ut_locality_guide_023",
     "ut_locality_guide_026",
     "ut_locality_guide_027",
+    "ut_locality_guide_028",
+    "ut_locality_guide_k9d",
+    "ut_locality_guide_m4t",
+    "ut_locality_guide_r7k",
+    "ut_locality_guide_v7h",
 }
 
 

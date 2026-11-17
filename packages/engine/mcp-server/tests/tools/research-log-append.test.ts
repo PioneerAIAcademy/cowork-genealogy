@@ -426,6 +426,400 @@ describe("research_log_append", () => {
     expect(await exists(handle!.resultsRef)).toBe(false); // consumed
   });
 
+  describe("an image-tool entry with no image call behind it (#4581)", () => {
+    // The log_113 shape: the main thread read an uploaded crop itself with `Read`
+    // and logged that reading as an image_transcribe call that never happened.
+    const unstagedTranscribe = {
+      tool: "image_transcribe",
+      query: { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    };
+    const errorsOf = (result: Awaited<ReturnType<typeof researchLogAppend>>) =>
+      result.ok ? [] : result.errors;
+
+    it("refuses an image_transcribe entry with no staged ref (the log_113 shape)", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe });
+      expect(result.ok).toBe(false);
+      const [message] = errorsOf(result);
+      expect(message).toMatch(/needs the `stagedResultsRef` its call returned/);
+      expect(message).toMatch(/tool: "user_provided"/);
+      expect(message).toMatch(/staged\.resultsRef/);
+      expect(message).not.toMatch(/image_read/);
+      expect(message).not.toMatch(/image_search/);
+      expect(message).not.toMatch(/Name the tool/);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it('refuses it when stagedResultsRef is the string "null"', async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, stagedResultsRef: "null" });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/needs the `stagedResultsRef` its call returned/);
+    });
+
+    it("refuses it in a batch before any op is applied, and keeps the sibling's staged file", async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Tyler" }, results: [{ recordId: "A" }] },
+      });
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: handle!.resultsRef } as any,
+          unstagedTranscribe,
+        ],
+      });
+      expect(result.ok).toBe(false);
+      const errors = errorsOf(result);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(/^ops\[1\]: an `image_transcribe` entry needs/);
+      expect((await readJson("research.json")).log).toEqual([]);
+      expect(await exists(handle!.resultsRef)).toBe(true);
+    });
+
+    // Offer image_search, which is unchecked, only to an entry whose query itself
+    // lists or spans two or more distinct pages; a single reading offered it would
+    // come back relabelled. One row per case (search-result-staging-spec.md §6.1).
+    const BROWSE_CASES: [string, Record<string, unknown>, number, boolean][] = [
+      ["a numeric range (a cap-stopped browse)", { imageGroupNumber: "100881427", pagesAttempted: "650-712" }, 0, true],
+      ["two image ids", { imageIds: ["007226375_00231", "007226375_00232"] }, 2, true],
+      ["a range beside one image id", { imageId: "004516861_00257", imageRange: "00257-00279", subVolume: "_004" }, 23, true],
+      ["a list of pages read", { pagesRead: ["004410623_00073", "004410623_00079"] }, 2, true],
+      ["a comma list in a group", { imageGroupNumber: "007936749", imagesAttempted: "00001, 00005" }, 4, true],
+      ["image ids examined", { imageIdsExamined: ["004410623_00073", "004410623_00079"] }, 2, true],
+      ["an images-examined range", { imagesExamined: "00040-00075" }, 36, true],
+      ["a comma list with no space", { imagesAttempted: "00001,00005" }, 2, true],
+      ["a pages-attempted range", { pagesAttempted: "650-712" }, 0, true],
+      ["a range with an en dash", { imageRange: "00257\u201300279" }, 23, true],
+      ["a semicolon list with no space", { imagesExamined: "00040;00041" }, 2, true],
+      ["a JSON-text list of two", { imageIds: JSON.stringify(["007226375_00231", "007226375_00232"]) }, 2, true],
+      ["a whole group with no page named", { imageGroupNumber: "004410623_002_M9CV-5CM" }, 0, false],
+      ["a space-separated list", { pagesAttempted: "40 41 42" }, 3, false],
+      ["one ARK, however many claimed", { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" }, 5, false],
+      ["an upload with a range beside it", { file: "uploads/crop1.jpg", imagesExamined: "1-2" }, 2, false],
+      ["uploads under another key", { files: ["uploads/a.jpg", "uploads/b.jpg"] }, 2, false],
+      ["a null list key", { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123", imageIds: null }, 1, false],
+      ["one ARK in a group", { imageGroupNumber: "004433380", imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" }, 1, false],
+      ["one image id in a group", { imageGroupNumber: "004433380", imageId: "004433380_00033" }, 1, false],
+      ["one ark in a group", { imageGroupNumber: "004433380", ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, 1, false],
+      ["one image number in a group", { imageGroupNumber: "004433380", imageNumber: 33 }, 1, false],
+      ["a one-element id list", { imageIds: ["007226375_00235"] }, 1, false],
+      ["one id as text", { imageIds: "007226375_00235" }, 1, false],
+      ["a hyphenated ARK as text", { imageIds: "ark:/61903/3:1:3QS7-L9QX-2H77" }, 1, false],
+      ["a one-element JSON-text list", { imageIds: JSON.stringify(["3:1:3QS7-L9QX-2H77"]) }, 1, false],
+      ["a hyphenated group id as text", { pagesRead: "004410623_002_M9CV-5CM" }, 1, false],
+      ["a count in words", { imagesExamined: "1 image" }, 1, false],
+      ["a page reference", { imageRange: "p. 106" }, 1, false],
+      ["one page listed twice", { imageIds: ["007226375_00235", "007226375_00235"] }, 2, false],
+      ["one page listed twice as JSON text", { imageIds: JSON.stringify(["007226375_00235", "007226375_00235"]) }, 2, false],
+      ["an ARK with digits either side of a hyphen", { imageIds: "ark:/61903/3:1:3QS7-99CH-CY6T" }, 1, false],
+      ["one image id standing for a volume check", { imageId: "004516862_00001", volume: "004516862", note: "not baptisms" }, 5, false],
+      ["an empty range", { imageRange: "" }, 0, false],
+      ["two uploads listed as image ids", { imageIds: ["uploads/crop1.jpg", "uploads/crop2.jpg"] }, 2, false],
+      ["prose with a comma in a page key", { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123", pagesRead: "page 12, line 27" }, 1, false],
+      [
+        "a range inside prose",
+        { imageIdsExamined: "004433380_00033\u201300047 (14 of 16 pages; 00032 not attempted, 00038 hard scan)" },
+        14,
+        false,
+      ],
+      ["an id with a hyphen, not a range", { imageRange: "004410623-00073" }, 1, false],
+      ["a range of one page", { imageRange: "257-257" }, 1, false],
+      ["a range whose ends differ in length", { imagesExamined: "5-12" }, 8, true],
+      ["a range beside a null file", { file: null, imageRange: "1-2" }, 2, true],
+      ["page numbers in a list", { imageIds: [12, 13] }, 2, true],
+      ["two ARKs in a list", { imageIds: ["ark:/61903/3:1:S3HT-6XYZ-123", "ark:/61903/3:1:S3HT-6XYZ-124"] }, 2, true],
+      ["a DGS id range", { imageIdsExamined: "004433380_00033-00047" }, 15, true],
+      ["a DGS id range with an en dash", { imageIdsExamined: "004433380_00033\u201300047" }, 15, true],
+      ["a DGS id range with its prefix repeated", { imageIdsExamined: "004433380_00033-004433380_00047" }, 15, true],
+      ["a comma list with a trailing comma", { imagesAttempted: "00001,00005," }, 2, true],
+      ["two words", { pagesRead: "recto, verso" }, 2, false],
+      ["two bare names", { imageIds: ["crop1", "crop2"] }, 2, false],
+      ["two file names", { imageIds: ["crop1.jpg", "crop2.jpg"] }, 2, false],
+      ["one ARK in two spellings", { imageIds: ["ark:/61903/3:1:S3HT-6XYZ-123", "3:1:s3ht-6xyz-123"] }, 2, false],
+      ["one DGS id in two spellings", { imageIds: ["004433380_00033", "4433380_00033"] }, 2, false],
+      ["a page id beside an upload path", { imageIds: ["uploads/a.jpg", "00033"] }, 2, false],
+      ["a range followed by words", { imageRange: "33-47 of 68" }, 15, false],
+      ["hyphenated words", { pagesRead: ["recto-verso", "left-right"] }, 2, false],
+      ["a range across two groups", { imageIdsExamined: "004433380_00033-004433381_00047" }, 15, false],
+      [
+        "two ARK resolver URLs",
+        {
+          imageIds: [
+            "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9QX-2H77",
+            "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9QX-2H78",
+          ],
+        },
+        2,
+        true,
+      ],
+    ];
+    for (const [label, query, resultsExamined, hint] of BROWSE_CASES) {
+      it(`${hint ? "offers" : "does not offer"} image_search to ${label}`, async () => {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          tool: "image_transcribe",
+          query,
+          outcome: "partial",
+          resultsExamined,
+          planItemId: null,
+        });
+        expect(result.ok).toBe(false);
+        const [message] = errorsOf(result);
+        expect(message).toMatch(/tool: "user_provided"/);
+        if (hint) expect(message).toMatch(/several pages, or one the image cap stopped, is logged as `tool: "image_search"`/);
+        else expect(message).not.toMatch(/image_search/);
+      });
+    }
+
+    it("refuses it when stagedResultsRef is a JSON null", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, stagedResultsRef: null });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/needs the `stagedResultsRef` its call returned/);
+    });
+
+    it("refuses it before asking for a missing required field", async () => {
+      await writeProject(baseResearch());
+      const { outcome: _omitted, ...rest } = unstagedTranscribe;
+      const result = await researchLogAppend({ projectPath: dir, ...rest } as any);
+      expect(result.ok).toBe(false);
+      const [message] = errorsOf(result);
+      expect(message).toMatch(/needs the `stagedResultsRef` its call returned/);
+      expect(message).not.toMatch(/missing required/);
+    });
+
+    it("refuses it before asking for a missing required field in a batch too", async () => {
+      await writeProject(baseResearch());
+      const { outcome: _omitted, ...rest } = unstagedTranscribe;
+      const result = await researchLogAppend({ projectPath: dir, ops: [rest as any] });
+      expect(result.ok).toBe(false);
+      const [message] = errorsOf(result);
+      expect(message).toMatch(/^ops\[0\]: an `image_transcribe` entry needs/);
+      expect(message).not.toMatch(/missing required/);
+    });
+
+    it("refuses it under the tool's qualified, case-folded, padded or hyphenated name", async () => {
+      for (const tool of [
+        "mcp__genealogy__image_transcribe",
+        "mcp__remote-devices__Genealogy_Research__image_transcribe",
+        "MCP__genealogy__image_transcribe",
+        "mcp__image_transcribe",
+        "Image_Transcribe",
+        " image_transcribe ",
+        "image-transcribe",
+      ]) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, tool });
+        expect(result.ok).toBe(false);
+        expect(errorsOf(result)[0]).toMatch(/needs the `stagedResultsRef` its call returned/);
+        // The staged file's tool is compared exactly, so the variant is named.
+        expect(errorsOf(result)[0]).toMatch(/Name the tool `image_transcribe`: the staged file records that name/);
+        expect((await readJson("research.json")).log).toEqual([]);
+      }
+      await writeProject(baseResearch());
+      const read = await researchLogAppend({
+        projectPath: dir,
+        tool: "mcp__genealogy__image_read",
+        query: { file: "uploads/x.jpg" },
+        outcome: "positive",
+        resultsExamined: 1,
+        planItemId: null,
+      });
+      expect(read.ok).toBe(false);
+      expect(errorsOf(read)[0]).toMatch(/`image_read` takes no `file`/);
+    });
+
+    it("refuses only the unstaged op when a failed call is logged beside it in one batch", async () => {
+      // The error exemption is per op: it must not stand the check down for the batch.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ ...unstagedTranscribe, outcome: "error", resultsExamined: 0 }, unstagedTranscribe],
+      });
+      expect(result.ok).toBe(false);
+      const errors = errorsOf(result);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(/^ops\[1\]: an `image_transcribe` entry needs/);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("refuses an image_read naming a file in a batch, and writes neither op", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", query: { surname: "Tyler" }, outcome: "negative", resultsExamined: 0, planItemId: null },
+          { tool: "image_read", query: { file: "uploads/x.jpg" }, outcome: "positive", resultsExamined: 1, planItemId: null },
+        ],
+      });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)).toEqual([expect.stringMatching(/^ops\[1\]: `image_read` takes no `file`/)]);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("sends a correction to a logged page to a new read, not to an entry with no ref", async () => {
+      // Told to drop the ref, the caller would be refused here and sent back to
+      // the logged ref: a loop. The message names the way out, and it works.
+      await writeProject(baseResearch());
+      const stagePage = () =>
+        stageSearchResults({
+          projectPath: dir,
+          tool: "image_transcribe",
+          response: { query: { ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, results: [{ id: "page", transcription: "Line 27: Winston" }] },
+        });
+      const first = await stagePage();
+      const page = { tool: "image_transcribe", outcome: "positive", resultsExamined: 1, planItemId: null };
+      expect((await researchLogAppend({ projectPath: dir, ...page, stagedResultsRef: first!.resultsRef })).ok).toBe(true);
+
+      const resend = await researchLogAppend({ projectPath: dir, ...page, outcome: "negative", stagedResultsRef: first!.resultsRef });
+      expect(resend.ok).toBe(false);
+      const [message] = errorsOf(resend);
+      expect(message).toMatch(/call `image_transcribe` again with `projectPath` and log it with the new `staged\.resultsRef`/);
+      expect(message).not.toMatch(/without the stagedResultsRef/);
+
+      const second = await stagePage();
+      const correction = await researchLogAppend({
+        projectPath: dir,
+        ...page,
+        outcome: "negative",
+        notes: "Corrects log_001: line 27 is not the subject.",
+        stagedResultsRef: second!.resultsRef,
+      });
+      expect(correction.ok).toBe(true);
+      expect((await readJson("research.json")).log).toHaveLength(2);
+    });
+
+    it("answers a re-send of a logged page under a variant of its own tool name with the logged entry", async () => {
+      await writeProject(baseResearch());
+      const staged = await stageSearchResults({
+        projectPath: dir,
+        tool: "image_transcribe",
+        response: { query: { ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, results: [{ id: "page", transcription: "Line 27" }] },
+      });
+      const page = { tool: "image_transcribe", outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: staged!.resultsRef };
+      const first = await researchLogAppend({ projectPath: dir, ...page });
+      expect(first.ok).toBe(true);
+      const again = await researchLogAppend({ projectPath: dir, ...page, tool: "mcp__genealogy__image_transcribe" });
+      expect(again.ok).toBe(true);
+      if (!again.ok || !("logId" in again)) throw new Error("expected a single-op success");
+      expect(again.alreadyLogged).toBe(true);
+      expect((await readJson("research.json")).log).toHaveLength(1);
+    });
+
+    it("gives the ordinary advice to a logged page re-sent as user_provided, and the re-read advice when the tool is omitted", async () => {
+      await writeProject(baseResearch());
+      const staged = await stageSearchResults({
+        projectPath: dir,
+        tool: "image_transcribe",
+        response: { query: { ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, results: [{ id: "page", transcription: "Line 27" }] },
+      });
+      const page = { outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: staged!.resultsRef };
+      expect((await researchLogAppend({ projectPath: dir, tool: "image_transcribe", ...page })).ok).toBe(true);
+
+      const asUser = await researchLogAppend({ projectPath: dir, tool: "user_provided", ...page });
+      expect(asUser.ok).toBe(false);
+      expect(errorsOf(asUser)[0]).toMatch(/without the stagedResultsRef/);
+      expect(errorsOf(asUser)[0]).not.toMatch(/call `image_transcribe` again/);
+
+      const noTool = await researchLogAppend({ projectPath: dir, ...page, outcome: "negative" } as any);
+      expect(noTool.ok).toBe(false);
+      expect(errorsOf(noTool)[0]).toMatch(/call `image_transcribe` again with `projectPath`/);
+    });
+
+    it("gives the ordinary correction advice when a re-send claims image_transcribe for another tool's staged file", async () => {
+      await writeProject(baseResearch());
+      const staged = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_read",
+        response: { query: { recordId: "ark:/61903/1:1:XXXX-XXX" }, results: [{ recordId: "ark:/61903/1:1:XXXX-XXX" }] },
+      });
+      const read = { outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: staged!.resultsRef };
+      expect((await researchLogAppend({ projectPath: dir, tool: "record_read", ...read })).ok).toBe(true);
+      const resend = await researchLogAppend({ projectPath: dir, tool: "image_transcribe", ...read });
+      expect(resend.ok).toBe(false);
+      const [message] = errorsOf(resend);
+      expect(message).toMatch(/differs in tool 'image_transcribe' \(logged 'record_read'\)/);
+      expect(message).toMatch(/without the stagedResultsRef/);
+      expect(message).not.toMatch(/call `image_transcribe` again/);
+    });
+
+    it("accepts a failed image_transcribe call logged as an error that examined nothing", async () => {
+      for (const resultsExamined of [0, "0"] as const) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          ...unstagedTranscribe,
+          outcome: "error",
+          resultsExamined: resultsExamined as any,
+          notes: "403 Forbidden: the image is restricted.",
+        });
+        expect(result.ok).toBe(true);
+        expect((await readJson("research.json")).log[0].tool).toBe("image_transcribe");
+      }
+    });
+
+    it("refuses an error entry that claims it examined a page, naming the failed-call shape", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, outcome: "error", resultsExamined: 1 });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`/);
+    });
+
+    it("leaves a missing resultsExamined on an error entry to the required-fields check", async () => {
+      await writeProject(baseResearch());
+      const { resultsExamined: _omitted, ...rest } = unstagedTranscribe;
+      const result = await researchLogAppend({ projectPath: dir, ...rest, outcome: "error" } as any);
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/missing required field `resultsExamined`/);
+    });
+
+    it("refuses an image_read entry whose query names a file, as an object, a JSON string or an empty one", async () => {
+      for (const query of [{ file: "uploads/x.jpg" }, JSON.stringify({ file: "uploads/x.jpg" }), { file: "" }]) {
+        for (const outcome of ["positive", "error"]) {
+          await writeProject(baseResearch());
+          const result = await researchLogAppend({
+            projectPath: dir,
+            tool: "image_read",
+            query,
+            outcome,
+            resultsExamined: outcome === "error" ? 0 : 1,
+            planItemId: null,
+          });
+          expect(result.ok).toBe(false);
+          const [message] = errorsOf(result);
+          expect(message).toMatch(/`image_read` takes no `file`/);
+          expect(message).toMatch(/tool: "user_provided"/);
+          expect((await readJson("research.json")).log).toEqual([]);
+        }
+      }
+    });
+
+    it("accepts an image_read entry keyed by its image ARK, with no file or a null one", async () => {
+      for (const query of [
+        { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" },
+        { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123", file: null },
+      ]) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          tool: "image_read",
+          query,
+          outcome: "positive",
+          resultsExamined: 1,
+          planItemId: null,
+        });
+        expect(result.ok).toBe(true);
+      }
+    });
+  });
+
   it("prefers an explicit `query` over the staged payload's echo", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({
@@ -1508,24 +1902,21 @@ describe("research_log_append", () => {
       expect(warnOf(result)).not.toMatch(/retained none/);
     });
 
-    it("does not warn for image_transcribe or record_read — record-extraction logs both without a stagedResultsRef by instruction", async () => {
-      for (const [tool, query] of [
-        ["image_transcribe", { imageArk: "ark:/61903/3:1:XXXX-XXX" }],
-        ["record_read", { recordId: "ark:/61903/1:1:XXXX-XXX" }],
-      ] as const) {
-        await writeProject(baseResearch());
-        const result = await researchLogAppend({
-          projectPath: dir,
-          tool,
-          query,
-          outcome: "positive",
-          resultsExamined: 1,
-          resultsAvailable: 1,
-          planItemId: null,
-        });
-        expect(result.ok).toBe(true);
-        expect(warnOf(result)).not.toMatch(/retained none/);
-      }
+    it("does not warn for a record_read logged without a stagedResultsRef", async () => {
+      // Its image_transcribe half moved to the #4581 block above: an unstaged
+      // image_transcribe entry is now refused, not merely left unwarned.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_read",
+        query: { recordId: "ark:/61903/1:1:XXXX-XXX" },
+        outcome: "positive",
+        resultsExamined: 1,
+        resultsAvailable: 1,
+        planItemId: null,
+      });
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
     });
 
     it("(batch) surfaces one warning per offending op", async () => {

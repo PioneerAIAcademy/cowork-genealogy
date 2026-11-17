@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1881 son Thomas Carter against the tree's Thomas Carter (I3) (carter-census-stray-burial). Score measured on 2026-11-15 with the FamilySearch matcher, through the compiled same_person project arm on a copy of the scenario. The mock adds `warningsIfLinked` itself, from the compiled function, so it is not canned here.",
+  "args": {
+    "treePersonId": "I3"
+  },
+  "response": {
+    "score": 0.87270397,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "Thomas Carter",
+      "role": "son"
+    },
+    "treePerson": {
+      "id": "I3",
+      "name": "Thomas Carter"
+    }
+  }
+}
