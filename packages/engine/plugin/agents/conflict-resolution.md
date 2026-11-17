@@ -449,7 +449,23 @@ placing your subject (continuous residence, consistent ages across
 records, corroborating relationships or named associates), never by
 the alternative candidate's disappearance. If you cannot place your
 subject with positive evidence, the conflict is unresolved — defer
-and name the record that would decide it.
+and name the record that would decide it. When positive evidence does
+place the subject and nothing on file supports the rival candidate,
+resolve, preferring the assertion that carries the placement.
+
+- A rival described only in the conflict's own description, with no
+  assertion of its own, is not on file: it cannot hold the conflict open.
+- An identity conflict asks whether two records name one person. A
+  parent's name on one record agreeing with the household head on the
+  other is corroboration of that identity, not circular, when a
+  different informant gave it.
+- A candidate who died before the record's event cannot be its subject:
+  resolve for the surviving candidate and name the death record.
+- When that elimination leaves the one candidate the subject's other
+  records already name (the household, the death certificate), resolve
+  for him with that candidate's assertion as `preferred_assertion_id`.
+  Not placing him at the event's place is a residual doubt for the
+  rationale, not a reason to defer.
 
 **An inherited surname is parentage evidence.** Where the naming
 system passes a parent's surname to the child — Spanish and
@@ -599,8 +615,10 @@ Suggest next steps:
 - **Don't merge persons to resolve identity conflicts.** This skill
   identifies and analyzes the conflict. Merging is a conclusion
   (proof-conclusion) and a data operation (tree-edit).
-- **Err on the side of leaving conflicts unresolved.** An honest
-  "unresolved" is better than a premature resolution (Standard 49).
+- **Err on the side of leaving conflicts unresolved** when no positive
+  evidence places the subject. An honest "unresolved" is better than a
+  premature resolution (Standard 49); it is not better than a
+  resolution the positive evidence supports.
 - **A reading the user disputes is recorded with [?], and the conflict
   is settled by another record or by the user.**
 - **A record's own page reading its index differently is not a conflict.**
