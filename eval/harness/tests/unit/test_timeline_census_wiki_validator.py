@@ -186,9 +186,9 @@ def test_passes_on_the_abbreviated_marriage_form():
     """Finding #4 (review round 2): `m.` is how most genealogists abbreviate
     "married", and a word-list fix that only recognised the spelled-out forms
     let `(m. 1859)` through as a census year. The structural fix — a
-    parenthetical names the census year only when the year opens it — closes
-    this without needing to enumerate every abbreviation a genealogist might
-    use."""
+    parenthetical names the census year only when it opens with a year or a
+    capitalized word, so a lowercase marker never does — closes this without
+    needing to enumerate every abbreviation a genealogist might use."""
     gap = [{"start": "1859", "end": "1861",
             "expected_events": ["England census (m. 1859)", "England census 1861"],
             "severity": "high"}]
@@ -237,8 +237,10 @@ def test_passes_on_a_vital_event_marker_outside_the_old_hand_written_list():
 
 
 def test_a_capitalized_marker_paired_with_its_own_date_reads_as_the_census_year():
-    """Round 6 review corrected a wrong claim in the code comment: a
-    vital-event marker is NOT "always written lowercase in this corpus" --
+    """Round 6 review corrected a wrong claim in the validator's comment (that
+    comment now lives in the git history of `validators/test_timeline.py`,
+    before commit 0d22da36a): a vital-event marker is NOT "always written
+    lowercase in this corpus" --
     capitalized markers do appear in running prose. Round 7 review found the
     corpus count cited for the narrower claim unreliable on re-measurement,
     and corrected it to the structural argument alone: no committed
