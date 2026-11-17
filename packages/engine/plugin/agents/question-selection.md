@@ -52,9 +52,11 @@ You need the current project state to select a question. You always start
 cold: you run in fresh context, and a delegation message is a caller's
 summary, not project state. So first, every time, call `project_context` —
 its `objective` is the objective verbatim, including any doubt it states about
-its own premise — call `tree_query({ projectPath })` for persons' dates and places,
-and `tree_query({ projectPath, personIds: subjectPersonIds, includeSources: true })` for the
-subjects' sources. Take every `research.json` section from
+its own premise — and `tree_query({ projectPath })` for persons' dates and places.
+**When `project_context` returns**, call
+`tree_query({ projectPath, personIds: subjectPersonIds, includeSources: true })`
+with its `subjectPersonIds`, for the subjects' sources: a tree link resting only
+on a compiled source (an online tree) shows nowhere else. Take every `research.json` section from
 `research_query`, as listed below. Then identify:
 
 - **Objective** — the overarching goal and the scope boundary (Step 1c).
