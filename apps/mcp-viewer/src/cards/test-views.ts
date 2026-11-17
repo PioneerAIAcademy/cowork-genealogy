@@ -41,3 +41,21 @@ export const FLYNN_DOC = () =>
     questions: [status('q_001', 'critiqued'), status('q_002', 'evidence-gathered')],
     evaluations: { ev_001: { body: { craft: true }, craft: true } }
   })
+
+export const FLYNN_PARENT_CONFLICT =
+  'The record names the father Timothy Flynn; the tree has Thomas Flynn. The child and the mother agree.'
+
+/** FLYNN with q_002's record linked to the tree's father as speculative, his name in conflict (#4592's one such link). */
+export function FLYNN_WITH_STATED_CONFLICT(): ProjectDocument {
+  const doc = FLYNN_DOC()
+  const evidence = doc.research!.person_evidence!
+  const child = evidence.find((pe) => pe.id === 'pe_001')!
+  evidence.push({
+    ...child,
+    id: 'pe_092',
+    person_id: 'I2',
+    confidence: 'speculative',
+    core_identifier_conflict: FLYNN_PARENT_CONFLICT
+  })
+  return doc
+}

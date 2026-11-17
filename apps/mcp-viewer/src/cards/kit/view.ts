@@ -5,6 +5,8 @@ import { buildRuleIndex, type RuleIndex } from '../../rules/rule-index'
 /** Everything a card reads, built once per document. */
 export interface CardView {
   research: ResearchDocument
+  /** tree.gedcomx.json as stored, or undefined. */
+  tree: unknown
   derived: Derived
   index: RuleIndex
   input: ToolInput
@@ -48,12 +50,13 @@ export function currentQuestion(research: ResearchDocument, questionId: unknown)
 
 export type CardKind = Exclude<Show, 'latest' | 'file'>
 
-/** The card `latest` shows, from the current question's state. Until M2: planned shows setup. */
+/** The card `latest` shows, from the current question's state. Planned shows setup until the plan card. */
 export function latestKind(status: DerivedQuestion | null): CardKind {
   switch (status?.state) {
     case 'searching':
-    case 'evidence-gathered':
       return 'search'
+    case 'evidence-gathered':
+      return 'link'
     case 'concluded':
     case 'critiqued':
       return 'conclusion'
@@ -69,6 +72,7 @@ export function cardView(document: ProjectDocument, input: ToolInput): CardView 
   const status = question ? (list(derived.questions).find((q) => q.id === question.id) ?? null) : null
   return {
     research,
+    tree: document.tree,
     derived,
     index: buildRuleIndex({ research, tree: document.tree }),
     input,

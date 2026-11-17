@@ -1262,6 +1262,7 @@ def plan_auto_reply(
     turn_mode: str,
     outcome: str,
     offered: str | None,
+    research: dict[str, Any] | None,
     log: Any,
 ) -> dict[str, Any] | None:
     """Section A2's decision for this turn: ``{"reply", "state"}``, or None.
@@ -1287,6 +1288,7 @@ def plan_auto_reply(
             read_turn_step(conn, turn_id)[0],
             offered,
             outcome,
+            research=research,
         )
     except Exception as exc:  # noqa: BLE001 - never fail a finished turn over its reply
         log(ev="auto_reply_unavailable", turn_id=turn_id, session_id=session_id,
@@ -3201,7 +3203,8 @@ async def _run_turn(
             # Section A2: decided before the options, because a turn the host answers
             # for the researcher offers them nothing.
             auto_reply = plan_auto_reply(conn, boundary, turn, turn_mode=turn_mode,
-                                         outcome=outcome, offered=offered, log=log)
+                                         outcome=outcome, offered=offered,
+                                         research=research, log=log)
             answered_by_host = bool((auto_reply or {}).get("reply"))
             # The replies this turn admits, as exact phrases: the browser shows a button
             # for each and nothing else. Left OUT when empty, as `reply_follows` is, so a
