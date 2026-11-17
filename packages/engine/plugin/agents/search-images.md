@@ -340,8 +340,9 @@ relay where the tool's message says to set it — never ask for it to be pasted
 into the chat, which would land it in the session transcript. Do not retry with a browser or a web fetch;
 those are unavailable and waste turns. Never invent, infer, or guess a page's
 contents when the read failed. A browse stopped by the image cap is unfinished:
-in a project, log it `outcome: "partial"`, never `"error"`; either way, keep its
-`NOT READ` line and also give its link after the final `---`.
+in a project, log it `tool: "image_search"`, `outcome: "partial"`, never `"error"`,
+with no `stagedResultsRef` and no further tool call; either way, keep its
+`NOT READ` line and also paste its link after the final `---`.
 
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event
@@ -517,7 +518,8 @@ paragraphs of plain prose with **no label, heading or field name**:
    nothing was found, say so plainly and say what was looked at, so the reader
    knows the search was real. When a page came back NOT READ on the image cap,
    name the unfinished book, give the link from the cap error, pasted whole and
-   unchanged, say the researcher can finish it by hand from there, and name any
+   unchanged in this paragraph even when it already appears above the `---`
+   (the caller drops everything above it), never "the link above", say the researcher can finish it by hand from there, and name any
    other route you found (for example full-text search).
 2. One sentence: what happens next, in plain language.
 
