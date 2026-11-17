@@ -1,25 +1,77 @@
 {
   "tool": "wiki_search",
-  "description": "FamilySearch Wiki search about a stepfather appointed guardian of his wife's minor children by a prior marriage (issue #2283). Danish record, not US -- the closest live match after the named page (\"United States Guardianship Records\") proved dead; see the deep-dive doc and PR for the full search trail.",
+  "description": "FamilySearch Wiki search about guardianship of minor children in the early 19th-century United States (gsm, u4k; issue #2283). Re-recorded 2026-11-09 (issue #4116) from the live wiki for the query the agent itself sends most often in these tests (\"guardianship bond minor children 19th century United States\"): the top 6 of 20 live results, verbatim and in live order; rank 6 is United States Probate Process § Guardianship. The earlier result, a Danish lesson (Little Used Records on Arkivalieronline), is not returned for this query.",
   "args": { "query": "~guardianship" },
   "response": {
-    "query": "widow remarried stepfather guardian children keep surname",
+    "query": "guardianship bond minor children 19th century United States",
     "total_chunks_searched": 1240565,
     "results": [
       {
         "rank": 1,
-        "relevance_score": 0.648438,
-        "chunk_text": "And , excuse me, this particular entry, , is regarding a little, a girl, , or a young woman. Her name is Anna, , Christina Anderson. And it tells you where she was born, I mean, when she was born, 18th of February, 1808. And she was asking the court to allow her stepfather, , Hans Peter Larsson of Elsig in Lindahl to be her legal guardian since her father had died. So here in this particular record, you then get the information that her mom has remarried and you're getting his full name and residence, which is wonderful. And then you can then pursue him with that information. So all of these, , gives you clues to where to go and when to look for the records . Here is, , an interesting record, , where you get three siblings. You have Tia Victoria, Christine, Cathrine, don't you love the names? Carol, and that she was born the 1st October in 1887. And then it says, and Victor Emanuel August, and it tells you when he was born. And they are getting their brother, so here's the third sibling, Christian Stearns and given the permission to act as the legal guardian. So in this one, well, half a page barely, not even that, you're getting a name, so three different siblings with exact birth information for two of them. And that can help you go back and gather the whole family. And by this record, , it is to be assumed that both parents have died, at least the father, since the one, , son is, is taking over legal guardianship. I guess mom could still be alive, but gives you some clues of where to go and, and, , wonderful and wonderfully helpful And this is another, this is a district guardianship record.And you have a Christiana Matia where, , it is giving you the information, full information of, , her parents, Jacob Mullers and Hanne Balis Fedrickyvandel. And then she is, , two and one seventh years old. And then you have Soren Sorensen, details to when he was christened. Of course, they do in the Latin these days, and gives you the name of mother and father and brother. And they have died, and she has then inheritance rights. So just wonderful records that I, I really recommend you looking into. And this, I'm not gonna say much about except, , it is telling you the names of the person, when they were christened, and who the probate is after. So this is not the, the probate itself, but it's giving you the probate information, including the names of the guardians. And very often the guardian is a relative,and, , it can be, , a father himself, or it can be a grandparents, uncle or an in-law",
-        "page_title": "Little Used Records on Arkivalieronline",
-        "section_heading": "Guardianship Records And Inheritance Clues *(19:40 – 25:47)*",
-        "source_url": "https://www.familysearch.org/en/help/helpcenter/lessons/little-used-records-on-arkivalieronline#Guardianship_Records_And_Inheritance_Clues_*(19:40_–_25:47)*"
+        "relevance_score": 0.777036,
+        "chunk_text": "## 14. Guardianship: Guardianship  \nA guardian was appointed by a court to oversee the affairs of another person, called a \"ward.\" Guardianship proceedings occurred when minor children were orphaned by the death of both parents or when the father (or \"bread winner\") died. In some cases guardians or administrators were appointed when adults were declared incompetent to handle their own affairs.  \nGuardianship records usually give the name and age of the ward, the name of the deceased parent(s), name and residence of the guardian (which might be the mother), and the dates of court decisions. The records may also give the death date of the parent(s).  \nGuardianship records were kept by towns, counties, or states.  \nWhat you are looking for\nGuardianship records for the area where your ancestor lived around the time he or she died.  \nWhy go to the next record\nRegimental histories often give death dates and places for officers and occasionally for soldiers, especially if killed in conflict.",
+        "page_title": "Massachusetts, United States, Death 1841-1899",
+        "section_heading": "14. Guardianship: Guardianship",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts,_United_States,_Death_1841-1899#14._Guardianship:_Guardianship"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.775983,
+        "chunk_text": "### Guardianship: Guardianship  \nA guardian was appointed by a court to oversee the affairs of another person, called a \"ward.\" Guardianship proceedings occurred when minor children were orphaned by the death of both parents or when the father (or \"bread winner\") died. In some cases guardians or administrators were appointed when adults were declared incompetent to handle their own affairs.  \nGuardianship records usually give the name and age of the ward, the name of the deceased parent(s), name and residence of the guardian (which might be the mother), and the dates of court decisions. The records may also give the death date of the parent(s).  \nGuardianship records were kept by towns, counties, or states.  \nWhat you are looking for\nGuardianship records for the area where your ancestor lived around the time he or she died.  \nWhy go to the next record\nRegimental histories often give death dates and places for officers and occasionally for soldiers, especially if killed in conflict.",
+        "page_title": "Massachusetts, United States, Deaths 1841-1899",
+        "section_heading": "Guardianship: Guardianship",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts,_United_States,_Deaths_1841-1899#Guardianship:_Guardianship"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.754936,
+        "chunk_text": "## Types of Bonds  \nBonds have been required for many situations including (but not to the exclusion of others):  \n* **Administrative bond**—a guarantee to accurately settle the administration of an estate.  \n* **Appeal bond**—a bond required to cover costs of appeal in civil cases.  \n* **Bail bond**—a three party bond which involves the state, the accused, and a surety. The surety guarantees the state that the accused will appear at subsequent proceedings.  \n* **Bastardy bond**s—a promise by the father of an illegitimate child to pay support for that child.  \n* **Contract bond**—a guarantee of the faithful performance of a construction contract.  \n**Naturalization of James Harman Lloyd**  \n[![Naturalization of James Harman Lloyd8dC](/en/wiki/img_auth.php/b/bc/Naturalization_of_James_Harman_Lloyd8dC.jpg)](https://www.familysearch.org/en/wiki/index.php?title=File:Naturalization_of_James_Harman_Lloyd8dC.jpg&filetimestamp=20140407135256& \"Naturalization of James Harman Lloyd8dC\")  \n* **Executor’s bond**—a bond that an executor of an estate must furnish in order to serve as the administrator of an estate.  \n* **Guardian bonds**—a promise to carry out the duties of managing the estate of a minor, an incompetent, or of a free person of color. Guardian bonds often provide the name of a deceased parent.  \n* **Marriage bonds**―a bond that a groom and at least one bondsman furnished ensuring that no legal impediments existed to the proposed marriage.  \nTery G. Goss, a poor orphan, was bound out to John F. McElroy on 2 March 1857.[[1]](#cite_note-1)  \n|  |\n| --- |\n| State of Georgia, Pickens County.  Know all men by these presents that we John F. McElroy and Elias W. Allred, Security, are held and firmly bound unto the Ordinary of Said County and his successors in office, in the Sum of Five Hundred Dollars, for which payment well and truly to be made, we bind ourselves our Heirs, executors, and administrators, jointly and severally, firmly by these presents, sealed with our seals, and dated this Second day of March 1857.  The Conditions of the above obligation is such, that whereas the Court of Ordinary has this day bound unto the Said John F. McElroy, a poor orphan, of said county by the name of Tery G. Goss, Son of Elias Goss, deceased of the age of Thirteen years, for eight years, or until he shall arrive at the age of Twenty one; now if the said John F. McElroy shall use, treat and deal with said orphan according to the following requirements to wit, To use Said orphan kindly and teach him, or cause him to be taught, reading, writing and the common rules of arithmetic, and upon Said orphan arriving at the age of twenty one years, he is to give Said orphan, a horse, saddle and bridle and a suit of good clothes; then this obligation to be void, else to remain in full force and virtue  Signed: John F. McElroy (LS) and Elias W. Allred (LS) |  \nAlthough a valuable record because it provides yet another bit of information about our ancestors, bonds provide little in the way of family relationships.",
+        "page_title": "United States, Court Bonds - International Institute",
+        "section_heading": "Types of Bonds",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States,_Court_Bonds_-_International_Institute#Types_of_Bonds"
+      },
+      {
+        "rank": 4,
+        "relevance_score": 0.736278,
+        "chunk_text": "## 15. Guardianship: Guardianship  \nA guardian was appointed by a court to oversee the affairs of another person, called a \"ward.\" Guardianship proceedings occurred when minor children were orphaned by the death of both parents or when the father (or \"bread winner\") died. In some cases guardians or administrators were appointed when adults were declared incompetent to handle their own affairs.  \nGuardianship records usually give the name and age of the ward, the name of the deceased parent(s), name and residence of the guardian (which might be the mother), and the dates of court decisions. The records may also give the death date of the parent(s).  \nGuardianship records were kept by towns, counties, or states.  \n**What you are looking for**  \nGuardianship records for the area where your ancestor lived around the time his or her father died.  \n**Why go to the next record**  \nFamily Bibles often give birth date, parents' names, etc.",
+        "page_title": "Alabama, United States - Birth - 1702-1816",
+        "section_heading": "15. Guardianship: Guardianship",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Alabama,_United_States_-_Birth_-_1702-1816#15._Guardianship:_Guardianship"
+      },
+      {
+        "rank": 5,
+        "relevance_score": 0.729594,
+        "chunk_text": "### Samples of Guardianship Records  \n* [Arkansas County Guardian bonds and letters 1876-1911 vol 1](https://familysearch.org/pal:/MM9.3.1/TH-1971-32510-5121-75?cc=2061549&wc=M7Q8-BP8:353224101,353317401) This sample gives the name of the Guardian and the minor ward, and the date of the guardianship appointment.",
+        "page_title": "Arkansas Guardianship Records",
+        "section_heading": "Samples of Guardianship Records",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Arkansas_Guardianship_Records#Samples_of_Guardianship_Records"
+      },
+      {
+        "rank": 6,
+        "relevance_score": 0.708708,
+        "chunk_text": "## Guardianship  \nThe court may have appointed a guardian to care for minor children or incompetent adults. In some cases a parent was appointed as the guardian for his own child. Sometimes male relatives were made guardians even though the mother was alive. The records may include letters of guardianship (appointment of a guardian), bonds, sale of property (to provide for a minor's needs), accounts (account of the guardian's services and support in behalf of the minor), and a final account when the child comes of age and a guardian is no longer needed. Records of guardianship may be kept separately from other probate papers, or a different court may have jurisdiction over guardianship.",
+        "page_title": "United States Probate Process",
+        "section_heading": "Guardianship",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Probate_Process#Guardianship"
       }
     ],
-    "query_time_ms": 419.91,
+    "query_time_ms": 1403.9,
     "timing": {
-      "embed_ms": 0.0,
-      "search_ms": 164.41,
-      "rerank_ms": 255.39
+      "embed_ms": 407.37,
+      "search_ms": 814.18,
+      "rerank_ms": 182.25
     }
   }
 }

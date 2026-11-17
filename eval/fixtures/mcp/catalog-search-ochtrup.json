@@ -1,0 +1,467 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for Ochtrup, Westphalia: 6 hits. The one that matters is koha:202974, 'Kirchenbuch, 1667-1875', the Catholic parish registers of Ochtrup (creator 'Katholische Kirche Ochtrup (Kr. Steinfurt)'), filmed from the originals in the Bistumsarchiv Münster. Its film 876540 (image group 8109455) holds 'Taufen, Heiraten, Tote 1804-1865', which covers an 1836 marriage, and the hit is availableOnline: false (FamilySearch Center and affiliate library only); image_transcribe on its images returns 403. The other hits are the Ochtrup civil register (1874-1938, online), the Protestant registers of Ochtrup and Flierich, and a 1749-1750 Catholic fragment. Measured live 2026-11-13 with catalogSearchTool({ standardPlace: 'Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany' }), saved as the tool returned it. Predicate matches ~Ochtrup.",
+  "args": {
+    "standardPlace": "~Ochtrup"
+  },
+  "response": {
+    "totalHits": 6,
+    "returned": 6,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "olib:2790658",
+        "title": "Germany, Preußen, Westfalen, Ochtrup, Zivilstandsregister, 1874-1938",
+        "creator": "Ochtrup (Westfalen). Standesamt",
+        "repositoryCalls": [
+          "Online",
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Digital images of originals housed at the Nordrhein-Westfälisches Hauptstaatsarchiv in Duisburg, Germany.",
+          "Includes deaths for Ochtrup, Germany."
+        ],
+        "subjects": [
+          "Germany, Preußen, Westfalen, Ochtrup - Civil registration"
+        ],
+        "filmNotes": [
+          {
+            "imageGroupNumber": "103736650",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01265, 1874"
+          },
+          {
+            "imageGroupNumber": "103736654",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01266, 1875"
+          },
+          {
+            "imageGroupNumber": "103736658",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01267, 1876"
+          },
+          {
+            "imageGroupNumber": "103736663",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01268, 1877"
+          },
+          {
+            "imageGroupNumber": "103736668",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01269, 1878"
+          },
+          {
+            "imageGroupNumber": "103736672",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01270, 1879"
+          },
+          {
+            "imageGroupNumber": "103736677",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01271, 1880"
+          },
+          {
+            "imageGroupNumber": "103736682",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01272, 1881"
+          },
+          {
+            "imageGroupNumber": "103736686",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01273, 1882"
+          },
+          {
+            "imageGroupNumber": "103736691",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01274, 1883"
+          },
+          {
+            "imageGroupNumber": "103736696",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01275, 1884"
+          },
+          {
+            "imageGroupNumber": "103736701",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01276, 1885"
+          },
+          {
+            "imageGroupNumber": "103736709",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01277, 1886"
+          },
+          {
+            "imageGroupNumber": "103736705",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01277 (Kopie), 1886"
+          },
+          {
+            "imageGroupNumber": "103736713",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01278, 1887"
+          },
+          {
+            "imageGroupNumber": "103736717",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01279, 1888"
+          },
+          {
+            "imageGroupNumber": "103736722",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01280, 1889"
+          },
+          {
+            "imageGroupNumber": "103736726",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01281, 1890"
+          },
+          {
+            "imageGroupNumber": "103736732",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01282, 1891"
+          },
+          {
+            "imageGroupNumber": "103736736",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01283, 1892"
+          },
+          {
+            "imageGroupNumber": "103736740",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01284, 1893"
+          },
+          {
+            "imageGroupNumber": "103736745",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01285, 1894"
+          },
+          {
+            "imageGroupNumber": "103736750",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01286, 1895"
+          },
+          {
+            "imageGroupNumber": "103736753",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01287, 1896"
+          },
+          {
+            "imageGroupNumber": "103736757",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01288, 1897"
+          },
+          {
+            "imageGroupNumber": "103736763",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01289, 1898"
+          },
+          {
+            "imageGroupNumber": "103736768",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01290, 1899"
+          },
+          {
+            "imageGroupNumber": "103736774",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01291, 1900"
+          },
+          {
+            "imageGroupNumber": "103736780",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01292, 1901"
+          },
+          {
+            "imageGroupNumber": "103736785",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01293, 1902"
+          },
+          {
+            "imageGroupNumber": "103736792",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01294, 1903"
+          },
+          {
+            "imageGroupNumber": "103736795",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01295, 1904"
+          },
+          {
+            "imageGroupNumber": "103736800",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01296, 1905"
+          },
+          {
+            "imageGroupNumber": "103736805",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01297, 1906"
+          },
+          {
+            "imageGroupNumber": "103736810",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01298, 1907"
+          },
+          {
+            "imageGroupNumber": "103736815",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01299, 1908"
+          },
+          {
+            "imageGroupNumber": "103736820",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01300, 1909"
+          },
+          {
+            "imageGroupNumber": "103736827",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01301, 1910"
+          },
+          {
+            "imageGroupNumber": "103736830",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01302, 1911"
+          },
+          {
+            "imageGroupNumber": "103736835",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01303, 1912"
+          },
+          {
+            "imageGroupNumber": "103736840",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01304, 1913"
+          },
+          {
+            "imageGroupNumber": "103736844",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01305, 1914"
+          },
+          {
+            "imageGroupNumber": "103736849",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01306, 1915"
+          },
+          {
+            "imageGroupNumber": "103736852",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01307, 1916"
+          },
+          {
+            "imageGroupNumber": "103736857",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01308, 1917"
+          },
+          {
+            "imageGroupNumber": "103736862",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01309, 1918"
+          },
+          {
+            "imageGroupNumber": "103736867",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01310, 1919"
+          },
+          {
+            "imageGroupNumber": "103736872",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01311, 1920"
+          },
+          {
+            "imageGroupNumber": "103736877",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01312, 1921"
+          },
+          {
+            "imageGroupNumber": "103736882",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01313, 1922"
+          },
+          {
+            "imageGroupNumber": "103736887",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01314, 1923"
+          },
+          {
+            "imageGroupNumber": "103736892",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01315, 1924"
+          },
+          {
+            "imageGroupNumber": "103736897",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01316, 1925"
+          },
+          {
+            "imageGroupNumber": "103736902",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01317, 1926"
+          },
+          {
+            "imageGroupNumber": "103736906",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01317, 1927"
+          },
+          {
+            "imageGroupNumber": "103736911",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01319, 1928"
+          },
+          {
+            "imageGroupNumber": "103736916",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01320, 1929"
+          },
+          {
+            "imageGroupNumber": "103736921",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01321, 1930"
+          },
+          {
+            "imageGroupNumber": "103736926",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01322, 1931"
+          },
+          {
+            "imageGroupNumber": "103736931",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01323, 1932"
+          },
+          {
+            "imageGroupNumber": "103736935",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01324, 1933"
+          },
+          {
+            "imageGroupNumber": "103736940",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01325, 1934"
+          },
+          {
+            "imageGroupNumber": "103736944",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01326, 1935"
+          },
+          {
+            "imageGroupNumber": "103736948",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01327, 1936"
+          },
+          {
+            "imageGroupNumber": "103736952",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01328, 1937"
+          },
+          {
+            "imageGroupNumber": "103736957",
+            "text": "Sterbenenbenregister Ochtrup, P9-14_01329, 1938"
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:202974",
+        "title": "Kirchenbuch, 1667-1875",
+        "creator": "Katholische Kirche Ochtrup (Kr. Steinfurt)",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Granite Mountain Record Vault",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Mikrofilme aufgenommen von Manuskripten im Bistumsarchiv, Münster.",
+          "Parish register of baptisms, marriages and deaths."
+        ],
+        "subjects": [
+          "Germany, Preußen, Westfalen, Ochtrup - Church records"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "876539",
+            "imageGroupNumber": "8643224",
+            "text": "Taufen, Heiraten, Tote 1667-1809"
+          },
+          {
+            "filmNumber": "876540",
+            "imageGroupNumber": "8109455",
+            "text": "Taufen, Heiraten, Tote 1804-1865"
+          },
+          {
+            "filmNumber": "876541",
+            "imageGroupNumber": "8643225",
+            "text": "Taufen, Heiraten, Tote 1866-1875"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:168486",
+        "title": "Kirchenbuch, 1683-1966",
+        "creator": "Evangelische Kirche Flierich (Kr. Hamm)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Mikrofilme aufgenommen von Manuskripten im Evangelischen Landeskirchenamt Bielefeld.",
+          "Parish register births, marriages, deaths, confirmations. Partly indexed."
+        ],
+        "subjects": [
+          "Germany, Preußen, Westfalen, Flierich - Church records"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "582561",
+            "imageGroupNumber": "8106453",
+            "text": "Taufen, Heiraten 1683-1765 Tote 1684-1765 Konfirmanden 1723-1765"
+          },
+          {
+            "filmNumber": "582562",
+            "imageGroupNumber": "102754671",
+            "text": "Taufen, Heiraten, Tote 1764-1809 Konfirmanden 1801-1809"
+          },
+          {
+            "filmNumber": "582563",
+            "imageGroupNumber": "8550711",
+            "text": "Taufen 1810-1855 Tote 1810"
+          },
+          {
+            "filmNumber": "582564",
+            "imageGroupNumber": "8647715",
+            "text": "Heiraten, Tote, Konfirmanden 1810-1855"
+          },
+          {
+            "filmNumber": "582565",
+            "imageGroupNumber": "102754673",
+            "text": "Taufen, Tote 1856-1894 Heiraten 1856-1899"
+          },
+          {
+            "filmNumber": "582566",
+            "imageGroupNumber": "8647717",
+            "text": "Taufen 1894-1951 Heiraten 1899-1923 Tote 1894-1966"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:193958",
+        "title": "Kirchenbuch, 1749-1750",
+        "creator": "Katholische Kirche Ochtrup (Kr. Steinfurt)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online at FamilySearch Center",
+          "Online at Affiliate Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Roman Catholic parish register of baptisms, marriages, deaths, membership records and communicants for Ochtrup, Westphalia, Germany.",
+          "Mikrofilm aufgenommen von Manuskripten im Bistumsarchiv, Münster."
+        ],
+        "subjects": [
+          "Germany, Preußen, Westfalen, Ochtrup - Church records"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "920121",
+            "imageGroupNumber": "8109829",
+            "text": "Mitgliederliste 1749-1750 -- Taufen, Heiraten, Tote 1749-1750 -- Kommunikanten 1749"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:43170",
+        "title": "Kirchenbuch, 1895-1958",
+        "creator": "Evangelische Kirche Ochtrup (Kr. Steinfurt)",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Protestant parish register of baptisms, marriages, deaths and confirmations for Ochtrup, Westphalia, Germany.",
+          "Mikrofilme aufgenommen von Manuskripten im Evangelischen Landeskirchenamt Bielefeld."
+        ],
+        "subjects": [
+          "Germany, Preußen, Westfalen, Ochtrup - Church records"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "544754",
+            "imageGroupNumber": "8648489",
+            "text": "Taufen 1895-1947 -- Heiraten 1895-1948 -- Tote 1895-1958 -- Konfirmationen 1895-1934"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:360399",
+        "title": "Kirchenbuchduplikat, 1818-1874",
+        "creator": "Evangelische Kirche Flierich (Kr. Hamm)",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Mikrofilme aufgenommen von Manuskripten im Personenstandsrchiv Detmold.",
+          "Parish register transcript of Flierich (also known as Mittelflierich), including Lenningsen and Bramey Osterflierich with Obsen, Kump, Drechen, and Pedinghausen. Births, marriages, deaths."
+        ],
+        "subjects": [
+          "Germany, Preußen, Westfalen, Flierich - Church records"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "939535",
+            "imageGroupNumber": "102620064",
+            "text": "Geburten, Heiraten, Tote 1818-1849"
+          },
+          {
+            "filmNumber": "939536",
+            "imageGroupNumber": "102620067",
+            "text": "Geburten, Heiraten, Tote 1850-1874"
+          }
+        ],
+        "availableOnline": false
+      }
+    ]
+  }
+}

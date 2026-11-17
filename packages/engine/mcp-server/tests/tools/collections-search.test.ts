@@ -407,7 +407,10 @@ describe("collectionsSearchTool field mapping", () => {
 
   it("collectionCountsById still derives the /Record count the row no longer carries", () => {
     const counts = collectionCountsById(mockApiResponse);
-    expect(counts.get("1234")).toEqual({ personCount: 1048000, recordCount: 524000 });
+    expect(counts.get("1234")).toMatchObject({ personCount: 1048000, recordCount: 524000 });
+    // The title and years ride along for research_append's locality fill.
+    expect(typeof counts.get("1234")?.title).toBe("string");
+    expect(counts.get("1234")?.title).not.toBe("");
   });
 });
 

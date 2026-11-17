@@ -198,7 +198,7 @@ person. The agent confirms with per-person checks (hints, `record_search`).
 
 Right after the holes are selected, `pendingHints` counts, per hole,
 FamilySearch's **pending** record matches (`person_record_matches`,
-`status: ["pending"]`) for the hole's person and, on a couple-level hole, the
+`status: ["pending"]`, `minConfidence: 4`, the floor FamilySearch posts hints at) for the hole's person and, on a couple-level hole, the
 spouse, each match counted once. `total` is all of them; `fitting` is those about
 the event the hole is missing.
 

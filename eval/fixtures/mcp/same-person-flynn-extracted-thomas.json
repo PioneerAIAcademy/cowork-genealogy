@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the father on the 1850 census record MXHY-TP4 (Thomas Flynn, P2), from his own assertion or as the second party of Patrick's relationship assertion, against the tree's Thomas Flynn (I2). List before a test's catch-all same_person fixture. Measured live on 2026-11-15 with same_person's project arm on flynn-record-matching-extracted (FamilySearch matcher).",
+  "args": {
+    "treePersonId": "I2"
+  },
+  "response": {
+    "score": 0.41519636,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "P2",
+      "name": "Thomas Flynn",
+      "role": "father"
+    },
+    "treePerson": {
+      "id": "I2",
+      "name": "Thomas Flynn"
+    }
+  }
+}

@@ -70,19 +70,16 @@ to `GQ96-96N`; that is not adjudicated here and does not change the verdict.
 The starting tree is left as captured (record-hint fixtures never edit it).
 
 **How f1 is enforced — read before grading.** The judge grades f1 on meaning,
-but `apply_avoid_guard` then re-checks it by name alone: any person in the final
-tree other than `LZDC-MJN` whose given name shares a token with "Thomas John"
-and whose surname contains "McFerran", "Ferran" or "McFenan" forces f1 to `false`, whatever their birth
-year or parents. It cannot tell the 1879 child from the 1864 Kilmood one. So a
-run that adds the 1864 Thomas John (from `FRQY-WQD`) to the tree, or that brings
-`GQ96-96N`'s son (`GQ96-J1C`) into the tree to show the two families apart,
-also fails f1. The first is a doubtful edit anyway, since that record may belong
-to `GQ96-96N`. The second is a correct approach the guard cannot recognise:
-when grading, look for it in the guard's note before calling f1 a real
-over-claim. f1's target names only the child, with no birth string, because
-every string under `target_person` becomes a match token. It never names the
-mother: a target naming Mary Jane Magee would match the three spouse persons
-already in the starting tree and make `pass` unreachable (issue #2640).
+and `apply_avoid_guard` (`eval/harness/e2e/avoid_guard.py`) re-checks two things
+the final tree can show. It fails f1 when a tree object cites one of the 1879
+child's records (`wrong_candidate.records`, the `FRQS-T…` and `QPKB-8F6…`
+personas), in any role. And it fails f1 on a new parent-child edge, absent from
+the starting tree, that makes a person named Thomas John McFerran (or Ferran,
+McFenan) a non-Step child of `LZDC-MJN`. A run that adds the 1864 Kilmood Thomas
+John (`FRQY-WQD`) without attaching him to `LZDC-MJN`, or brings `GQ96-96N`'s son
+(`GQ96-J1C`) in under his own father, trips neither check unless it cites the
+1879 records. Never name the mother in the candidate: Mary Jane Magee is already
+three spouse persons in the starting tree.
 
 **Retrieval and review.** Retrieval was done by hand on familysearch.org. The
 identity judgement was the genealogists': John identified `FRQS-TZ1` as the same

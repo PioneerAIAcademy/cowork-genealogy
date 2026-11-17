@@ -118,26 +118,14 @@ conflated — two baptisms on one person — and its tree mother is Anna Oldenbu
 (confirmed by both `record_read`'s fact type and the `source_attachments` tag),
 and does not surface in a marriage-typed search of the collection.
 
-**A note on `f1`'s `required: false`.** Outcome-3 fixtures normally carry the
-`avoid` finding as `required: true`. Here it cannot be. `f1`'s claim
-unavoidably contains the name "Hinrich Burmeister", so `apply_avoid_guard`
-(`eval/harness/e2e/judge.py`) matches those tokens against `P71D-DRJ` and
-`P9PK-53N` — both legitimately in the starting tree, neither in the exempt set
-(which is `{G8CJ-7VL}` only) — and forces `f1` to `matched: "false"` no matter
-what the agent does. With `required: true` that makes `pass` unreachable and
-the fixture ungradable. `f1` is therefore `required: false`. Record what that costs, because
-every run will hit it: the guard forces `f1` to `false` on **every** run of
-this fixture, a perfect one included, because `P71D-DRJ` is the subject's real
-1683 son and legitimately stays in any final tree. So `f1` never does
-discriminating work here, `recall_total` can never exceed 2/3, and every run
-log will carry a permanent `avoid_guard.forced_false` entry on `f1`. A blind
-annotator grading a correct run will label `f1` `true`, so each annotated run
-contributes one guaranteed judge-vs-human disagreement to `calibrate_judge`
-(gate: `PER_FINDING_TARGET = 0.80`). **That disagreement is structural, not a
-judge regression — do not chase it.** The same disagreement is already in the
-corpus: `eval/runlogs/e2e/antonio-lucas-spouse/run-2026-08-04_22-45-15.ann.json`
-has human `f1: true` against a judge `f1: false` whose own note reads "the agent
-correctly avoided the false attribution".
+**How `f1` is enforced.** `f1` is `required: true`. Its candidate shares the
+subject's name, and the subject's real 1683 son `P71D-DRJ` is the same name in
+the same role, so a name match cannot tell them apart. `apply_avoid_guard`
+(`eval/harness/e2e/avoid_guard.py`) therefore enforces `f1` by provenance only
+(`wrong_candidate.provenance_only`): it fails a run whose tree cites one of the
+1687 baptism's records (`wrong_candidate.records`), in any role. It subtracts
+the starting tree, so `P71D-DRJ` never trips it, and it does not fail a run that
+adds the 1691 Hinrich as a son, which `f3` allows.
 
 The do-nothing-run protection that `required: true` normally provides is
 carried by `f3`, which is `required: true` and requires the agent to actually
@@ -150,23 +138,8 @@ searches nothing and writes "I could not confirm this hint" would otherwise
 score `pass` on zero research. `f3` is the only finding standing between that run
 and a `pass`, so it names the record.
 
-`f2` is `required: true` and its tokens were measured clean against the starting tree. That measurement is against the
-*starting* tree; the guard runs against the *final* one, where it matches on
-name tokens alone and ignores relationships. So a run that records Elsch in the
-tree as an explicitly rejected candidate is force-failed too. **`f2` is a
-narrower version of `f1`'s problem, not an escape from it.** Both findings
-used to offer that tree route in their own `Pass =` clauses — a pass that
-cannot be taken — and now direct a rejected candidate to the research log
-instead, which is where the guard cannot reach it (spec §3.4.1). The corpus already shows this happening to people the agent
-itself created: `antonio-lucas-spouse`'s `avoid_guard.forced_false` names
-thirteen ids, and nine of them (`I1`–`I13`) appear nowhere in that fixture's
-starting tree, so they can only have come from the agent's own final tree.
-
-One spelling caveat, not fixed here: token matching does no stemming, so
-`Elsche` is a different token from `Elsch`. An agent that writes the mother the
-way the 1690 record spells her slips `f2`'s guard. Widening the name fields to
-"Elsch (Elsche) Burmeister" would catch that and stays clean against the
-starting tree, but it widens the false-positive surface by the same step, so it
-is a trade rather than a fix. Do **not** also add "Elisabeth": that force-fails
-a correct run in which the agent records Liesbeth Oldenburg under the Elisabeth
-form (tried and measured during senior review).
+`f2` is `required: true` and lists Elsch's records. A run that records her in
+the tree, even as an explicitly rejected candidate, cites one of them and fails;
+a rejected candidate belongs in the research log (spec §3.4.1). Spelling no
+longer matters: the guard reads record ids, not name tokens, so "Elsche" and
+"Elsch" are caught alike.

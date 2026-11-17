@@ -104,12 +104,15 @@ describe("#4226 a link means the record entry", () => {
     });
   };
 
+  // match_score: 0.9 is the default so the TRIGGER row -- the one this helper
+  // actually writes -- carries the score `attest()` always records for it;
+  // `over` can still override it for a test that needs a different value.
   const link = (assertion_id: string, person_id = "I1", over: Record<string, unknown> = {}) =>
     researchAppend({
       projectPath: dir,
       section: "person_evidence",
       op: "append",
-      entry: { assertion_id, person_id, confidence: "confident", rationale: "match", superseded_by: null, ...over },
+      entry: { assertion_id, person_id, confidence: "confident", match_score: 0.9, rationale: "match", superseded_by: null, ...over },
     });
 
   const links = async () => (await read()).person_evidence as any[];
@@ -289,14 +292,24 @@ describe("#4226 a link means the record entry", () => {
   it("MUST NOT FIRE: an attachment-shaped link does not expand", async () => {
     // The baseline step assumes every FamilySearch attachment is correct and
     // runs no same_person; expanding there multiplies an assumption.
+    //
+    // `isAttachmentLink` requires match_score to STAY null, so this cannot be
+    // attested (#4549: a null beside a recorded score is refused). Instead the
+    // pairing is made unreachable (a log entry whose tool is neither
+    // record_read/person_record_matches nor a record_search with results_ref),
+    // which excuses the missing score the ordinary gate would otherwise want --
+    // the score-gate exemption for this SHAPE still belongs only to
+    // `extraction_append`'s internal flag, which this public call does not carry.
     await write(project({
-      assertions: [assertion("a_001"), assertion("a_002", { fact_type: "residence", value: "X" })],
+      assertions: [
+        { ...assertion("a_001"), log_entry_id: "log_001" },
+        assertion("a_002", { fact_type: "residence", value: "X" }),
+      ],
+      log: [{
+        id: "log_001", plan_item_id: null, performed: "2026-01-02T00:00:00Z", tool: "fulltext_search",
+        query: { surname: "Smith" }, outcome: "positive", results_examined: 1, results_ref: null, external_site: null,
+      }],
     }));
-    // Attested because the score-gate exemption for this shape belongs to
-    // `extraction_append`'s internal flag, which a public call does not carry.
-    // Without it the call is refused for want of a score and the test would
-    // pass for the wrong reason.
-    await attest("a_001");
     const r = await link("a_001", "I1", {
       confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE,
     });
@@ -400,7 +413,7 @@ describe("#4226 a link means the record entry", () => {
         {
           section: "person_evidence",
           op: "append",
-          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "match", superseded_by: null },
         },
       ],
     });
@@ -428,7 +441,7 @@ describe("#4226 a link means the record entry", () => {
         {
           section: "person_evidence",
           op: "append",
-          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "match", superseded_by: null },
         },
       ],
     });
@@ -484,7 +497,7 @@ describe("#4226 a link means the record entry", () => {
         {
           section: "person_evidence",
           op: "append",
-          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "match", superseded_by: null },
         },
       ],
     });
