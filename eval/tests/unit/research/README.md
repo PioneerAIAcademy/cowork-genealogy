@@ -85,13 +85,18 @@ suite's snapshot carries only the frontmatter of the agents it does not run
 extension gives. `ut_research_hnp` and `ut_research_hsp` instead serve it from
 `project-list-hosted-flynn`, the answer a hosted server gives a signed-in user
 with one project. They are the hosted pairs of `ut_research_tsi` and
-`ut_research_011`. `uses-new-project-path` and `uses-listed-project` gate the
-validators that read which `projectPath` the router took from that answer. The
-mock serves every project tool from the test's one workspace, so each test's
-scenario is the project its route should open. In these two tests it behaves as
-a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the listing does
-not name is refused, and `project_context` at a listed project carries its
-`projectUrl`.
+`ut_research_011`. `ut_research_hts` serves it from `project-list-hosted-empty`,
+a signed-in user with no projects; it is the hosted pair of `ut_research_tsv`,
+the folder test of the no-project, no-objective route to tree-survey.
+`uses-new-project-path` and `uses-listed-project` gate the validators that read
+which `projectPath` the router took from that answer, and
+`no-wrong-project-path` gates the one that checks `project_context` was called
+at `newProjectPath` or not at all, and nowhere else. The mock serves every project tool from
+the test's one workspace, so each test's scenario is the project its route
+should open. In `ut_research_hnp`, `ut_research_hsp` and `ut_research_hts` it
+behaves as a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the
+listing does not name is refused, and `project_context` at a listed project
+carries its `projectUrl`.
 
 ## Reads project state first (issue #3766)
 
@@ -161,8 +166,12 @@ naming a different item, and accepts any id-line spelling (`planItemId:`,
 
 `ut_research_uh1` clones `ut_research_fsh` on an `--autonomous` run: search-hints
 decides hints itself on every run, so the hand-off is the same.
-`delegates-user-present-no-external`, for `search-external-sites`, has no test yet: the router left the
-field out in 1 of 3 scratch runs, and issue #4554 tracks the fix and the test.
+`ut_research_ue1` clones `ut_research_es9` on an `--autonomous` run.
+`search-external-sites` reads a missing `userPresent` as `yes`, so on an
+autonomous run it would wait for a researcher who is not there.
+`delegates-user-present-no-external` asserts `userPresent: no` in the spawn,
+which the judge cannot see. SKILL.md states the rule at each routing row and
+dispatch list that reaches the agent, not only in the spawn-fields contract.
 
 ## What is NOT covered (and why)
 
