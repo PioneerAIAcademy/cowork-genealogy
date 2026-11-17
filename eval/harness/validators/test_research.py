@@ -975,6 +975,21 @@ def _hosted_listing(tool_calls) -> dict:
     return {}
 
 
+def _project_context_paths(tool_calls) -> list:
+    """The ``projectPath`` of every ``project_context`` call, None where a call sent none."""
+    return [
+        (c.get("args") or {}).get("projectPath")
+        for c in tool_calls or []
+        if bare_tool_name(str(c.get("tool") or "")) == "project_context"
+    ]
+
+
+def _listed_paths_named(listing: dict, handoff: str) -> list[str]:
+    """The listed projects' paths that ``handoff`` names."""
+    listed = [p.get("projectPath") for p in listing.get("projects") or [] if p.get("projectPath")]
+    return [p for p in listed if p in handoff]
+
+
 def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
     """The first main-thread hand-off to ``callee``, a ``Skill`` call or a spawn,
     as JSON text; None when there is none."""
@@ -1033,8 +1048,29 @@ def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_ca
     handoff = _first_handoff_args(callee, builtin_tool_calls)
     assert handoff is not None, f"no hand-off to '{callee}' to read a projectPath from"
     assert new_path in handoff, f"the '{callee}' hand-off must name newProjectPath {new_path!r}; got {handoff[:300]}"
-    listed = [p.get("projectPath") for p in listing.get("projects") or [] if p.get("projectPath")]
-    named = [p for p in listed if p in handoff]
+    named = _listed_paths_named(listing, handoff)
+    assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
+
+
+def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_calls):
+    """Tag-gated (``no-wrong-project-path``). The hosted ``project_list`` answer
+    gives a ``newProjectPath``, so the router reads project state there or not at
+    all, never at another path, the working folder included. The first hand-off
+    goes to tree-survey, which takes no ``projectPath``, so it names neither
+    ``newProjectPath`` nor a listed project's path."""
+    if "no-wrong-project-path" not in (test.get("tags") or []):
+        pytest.skip("not a no-wrong-project-path test")
+    listing = _hosted_listing(tool_calls)
+    new_path = listing.get("newProjectPath")
+    assert new_path, f"the router never received a hosted project_list answer with a newProjectPath: {listing}"
+    read_paths = _project_context_paths(tool_calls)
+    other = [p for p in read_paths if p != new_path]
+    assert not other, f"project_context was called at a path other than newProjectPath {new_path!r}: {other}"
+    callee = _expected_skill(test)
+    handoff = _first_handoff_args(callee, builtin_tool_calls)
+    assert handoff is not None, f"no hand-off to '{callee}'"
+    assert new_path not in handoff, f"the '{callee}' hand-off names newProjectPath {new_path!r}: {handoff[:300]}"
+    named = _listed_paths_named(listing, handoff)
     assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
 
 
@@ -1048,11 +1084,7 @@ def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_to
     projects = _hosted_listing(tool_calls).get("projects") or []
     assert len(projects) == 1, f"expected a hosted project_list answer listing one project; got {projects}"
     path, url = projects[0].get("projectPath"), projects[0].get("projectUrl")
-    read_paths = [
-        (c.get("args") or {}).get("projectPath")
-        for c in tool_calls or []
-        if bare_tool_name(str(c.get("tool") or "")) == "project_context"
-    ]
+    read_paths = _project_context_paths(tool_calls)
     assert path in read_paths, f"project_context was never called with the listed projectPath {path!r}: {read_paths}"
     callee = _expected_skill(test)
     handoff = _first_handoff_args(callee, builtin_tool_calls)
