@@ -389,4 +389,11 @@ to research-plan or search-records.
 
 - **ut_research_rpn** (`handle-negative-probate-result.json`, formerly `ut_research_plan_003`): near-miss negative — on a project whose question is resolved, "what should the next plan item look like, or are we done?" must write no plan. Tags `research-plan-no-new-plan` and `no-plan-writes-when-resolved`, `grade_on_invariant`. Moved when the research-plan skill was deleted (Richard's 2026-09-24 note on that issue, applying the issue #2738 ruling); its three validators moved into `validators/test_research.py`.
 
+### "Write this up" (issue #4576)
+
+- **ut_research_wtp** (`write-this-up-with-proof.json`): scenario `mid-research-flynn-with-evaluation`. The report is built from `research_query` reads, with no spawn and no `research_append`, and names the tier (probable), the reviewer's verdict (looks solid), the resolved birthplace conflict and the 1870, 1880 and 1900 censuses as not yet searched. Tag `write-this-up-proof`. "No fact absent from the project" is the judge's (`judge_context` lists the facts).
+- **ut_research_wtm** (`write-this-up-mid-research.json`): scenario `mid-research-flynn-no-proof`. Same bans, and no tier word. Tag `write-this-up-no-proof`.
+
+The report text is the reply joined with every `Write` content and `Bash` command, because the harness cannot produce a .docx. Validator proofs: `eval/harness/tests/unit/test_write_this_up_validator.py`.
+
 A live `make e2e-run` remains the only end-to-end instrument.

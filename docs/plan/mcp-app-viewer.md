@@ -5,7 +5,8 @@ an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fol
 cards and M3's case file are built and on main. Still to do: their first live run on the
 deployed server; M2's step cards other than the link card (plan, conflict, hypothesis and
 assess); M3's demo
-script and recording; and the router lines (issue #4297).
+script and recording; and the router lines (issue #4297). The report line (issue #4576)
+is written, pending the check that the beta connector can produce a downloadable file.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 
@@ -483,7 +484,11 @@ question never loads the skill, so nothing reads that row's line until one does
 - **A readable report** is one more line in the router's bounded-request list:
   "write this up" produces a Word or PDF file in the conversation from the proof summary, the
   family and the sources. It adds no claims and keeps the rating, any reviewer's
-  verdict, what does not fit and what was not searched. No viewer code.
+  verdict, what does not fit and what was not searched. No viewer code. The report is
+  built from tool reads only, so it can be regenerated after a lost chat. The reviewer's
+  verdict is the newest `evaluations` row with `superseded_by` null and a verdict other than
+  `refused`; a craft read is never the verdict. With no proof summary it gives what is
+  established and what is open, with no tier. It never concludes and never writes.
 
 ## Local testing
 

@@ -160,13 +160,13 @@ from this list:
 finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
-a records-request letter; whether a person's children or siblings are complete;
+a records-request letter; a written report of the research ("write this up"); whether a person's children or siblings are complete;
 with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person;
 a timeline for a person; where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
 when it is a step in the label table. **The others are not started this turn:**
-when the first is a transcription, a records-request letter, a timeline for a
+when the first is a transcription, a records-request letter, a written report, a timeline for a
 person on an existing project or a status answer,
 the turn spawns no agent at all: deliver it, name the next, and end your turn
 on its offer line. A message that also asks for open-ended
@@ -196,7 +196,7 @@ to `@plugin:tree-edit`. The names and details in a record set, or a named title'
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
 `projectPath`, even when the message names no images; relay everything after
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
-with no hand-off. A timeline for a person you build yourself: with no project,
+with no hand-off. A written report ("write this up") you write yourself, with no hand-off, from tool reads only, never the conversation: `project_context`; `research_query` on `proof_summaries`, `conflicts`, `evaluations` and `plans`; `tree_query` for the subject's family; sources only by the ids the proof and its conflicts cite. It gives the question, the tier in words, the conclusion, each resolved conflict and how it was settled, what does not fit (unresolved conflicts), what was not searched (`exhaustive_search_summary`, plan items skipped or still planned), and the reviewer's verdict: the newest `evaluations` row with `superseded_by` null and a verdict other than `refused`, targeting the proof, else an on-demand one on the question; a craft read is never the verdict; with no row, say no review was requested. With no proof summary on the question, give what is established and what is open, with no tier. Never spawn proof-conclusion or call `research_append`. Produce the file with the surface's own file creation, and end the turn on no "Continue with …?" line. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
 and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. A transcription you deliver yourself: call
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
@@ -214,7 +214,7 @@ sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver this turn's deliverable, and stop: at least one hand-off
 for it, since one deliverable can need two (a record found goes on through
-extraction), except a transcription, a records-request letter, a timeline for a
+extraction), except a transcription, a records-request letter, a written report, a timeline for a
 person on an existing project and a status question (answered from
 `project_context`), which take no hand-off at all.
 

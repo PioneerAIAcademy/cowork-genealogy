@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_research_wtm",
+    "skill": "research",
+    "name": "'Write this up' mid-research, with no proof summary, reports what is established and open and gives no tier",
+    "type": "negative",
+    "description": "The researcher asks for a written report on a project whose question has no proof summary. The main thread builds it from tool reads, spawns no agent (so no proof-conclusion), never calls research_append, never reads the raw project files, and states no tier. Issue #4576.",
+    "tags": [
+      "write-this-up-no-proof"
+    ]
+  },
+  "input": {
+    "user_message": "Write this up for me so I can keep it.",
+    "scenario": "mid-research-flynn-no-proof"
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "With no proof summary on the question, the report gives what is established and what is open, with no tier, and never concludes. The validator gates: no agent spawn; no research_append; no direct read of the raw project files; no tier word (probable, proved, disproved, not proved) in the report text.",
+    "grade_on_invariant": false
+  },
+  "judge_context": [
+    "The report must come from project state and add no claim; the deterministic validator cannot check that, the judge does.",
+    "Facts of this scenario: the questions are who the parents of Patrick Flynn (b. about 1845, PA, d. 1908) were, and where Patrick was in the 1850 census. Neither has a proof summary and there is no reviewer's verdict. One conflict, Patrick's birthplace, is resolved. The report should say what is established, what is open, and that no conclusion has been written and no review requested.",
+    "A report that rates the parentage (probable, proved or any tier), or says a reviewer approved it, fails.",
+    "The reply must not end on a 'Continue with ...?' line."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
