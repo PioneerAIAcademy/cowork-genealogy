@@ -52,11 +52,11 @@ eval harness's 180-second silence watchdog, so every locality-guide test sets
 The `localities` entry carries what research-plan and research-exhaustiveness
 otherwise re-fetched:
 
-- `guide_markdown`, the whole guide as one markdown string. research_append refuses
-  a value other than a string or `null`, and a string without the template's `## Jurisdiction overview`,
-  `## Available record types` and `## Research tips` lines
-  (research-append-tool-spec §5.14), naming the missing ones, and Step 6 fixes the
-  entry and calls again.
+- `guide_markdown`, the whole guide as one markdown string, built by research_append.
+  Step 6 appends the entry without it and then sends the guide one `guideSection`
+  per call, all in one turn; a call that fails is sent again alone. Each answer's
+  `guide[0].missing` names the required headings not yet saved
+  (research-append-tool-spec §5.14).
 - `collections[].person_count`, copied from `collections_search`'s `personCount`,
   and `record_count`, which the agent leaves out: `collections_search` no longer
   returns a record count, and research_append stamps both from FamilySearch's
