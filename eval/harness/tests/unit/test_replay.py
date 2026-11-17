@@ -528,6 +528,23 @@ def test_a_record_extracted_twice_back_fills_the_second_entry():
     assert [e["id"] for e in r.research["log"]] == ["log_005", "log_004", "log_009"]
 
 
+def test_a_record_cut_from_the_summary_reuses_the_entry_a_record_read_logged():
+    """extraction_append reuses the entry a record_read already logged for a record
+    nothing has extracted yet, so the entry the cut hid is one the replay already
+    holds with none of its assertions (jantje-willems-birth #81,
+    spriggs-parents-1898 #79)."""
+    read = '[{"ok": true, "entryId": "log_005"}]'
+    resp = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+            '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}}]')
+    final = {**TRUNC_FINAL, "log": TRUNC_FINAL["log"][:2],
+             "sources": TRUNC_FINAL["sources"][:2], "assertions": TRUNC_FINAL["assertions"][:2]}
+    r = replay([_call("research_log_append", {"projectPath": "/p", "entry": {"tool": "record_read",
+                      "query": {"recordId": "ark:/61903/1:1:BBB"}}}, read),
+                _call("extraction_append", TRUNC_ARGS, resp)], final_research=final)
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_003"]
+    assert [e["id"] for e in r.research["sources"]] == ["src_001", "src_002"]
+
+
 OK_PS1 = '[{"type": "text", "text": "{\\n  \\"ok\\": true,\\n  \\"entryId\\": \\"ps_001\\"\\n}"}]'
 
 
