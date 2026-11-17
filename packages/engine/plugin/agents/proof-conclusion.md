@@ -207,7 +207,7 @@ All assertions linked to the question via `extracted_for_question_ids`, their pe
 
 **`count` is the true total; `items` is one page.** While `truncated` is true,
 matches remain beyond the page in hand: re-query the same section with
-`offset: nextOffset` until `truncated` is false and you hold `count` items. Step 1's "collect every assertion" is not satisfied by the first page,
+`offset: nextOffset` until `truncated` is false and you hold `count` matches. Step 1's "collect every assertion" is not satisfied by the first page,
 and `{ section: "assertions", questionId }` has no narrower filter that still
 returns every assertion for the question — so paging is the only remedy there.
 Never select a tier from a partial set, and never describe one as complete.

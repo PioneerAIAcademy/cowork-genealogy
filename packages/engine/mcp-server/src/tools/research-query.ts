@@ -181,8 +181,11 @@ export type ResearchQueryResult =
   | {
       ok: true;
       section: ResearchQuerySection;
-      /** Total matches (before the MAX_ITEMS cap and any `offset`). */
+      /** Total matches (before the MAX_ITEMS cap and any `offset`). On
+       *  `assertions` it counts assertions, not the groups `items` holds. */
       count: number;
+      /** The section's entries; on `assertions`, persona groups
+       *  (`flattenAssertionGroups` restores the flat assertions). */
       items: any[];
       /** true when matches remain *beyond this page* (`count > offset +
        *  items.length`) — page with `offset` (or narrow the filter) rather than
@@ -1063,6 +1066,15 @@ export const researchQuerySchema = {
     "a skipped item with no `skip_category`, whose `rationale` holds its skip " +
     "reason for research-exhaustiveness; every item of the active plan keeps its " +
     "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`.\n" +
+    "\n" +
+    "`assertions` items are grouped by persona: each run of consecutive assertions " +
+    "sharing `record_id`, `record_persona_id`, `record_role`, `source_id` and " +
+    "`log_entry_id` is one `{ <those keys>, facts: [...] }`, and each fact holds " +
+    "every other field of one assertion (its `id` included). A key absent from the " +
+    "group is absent from its assertions, not null. On a `questionId` read a fact " +
+    "omits `extracted_for_question_ids` when it is exactly `[questionId]`. `count`, " +
+    "`offset`, `nextOffset` and `countById` count assertions (facts), never groups; " +
+    "a persona split across pages repeats its keys on the next page.\n" +
     "\n" +
     "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +

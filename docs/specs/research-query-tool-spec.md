@@ -11,11 +11,15 @@
 > **Updated 2026-10-14 (T2.3):** `personId`, `assertionId`, `sourceId` and
 > `recordId` also take a list of ids, and a list call returns `countById`; every
 > non-string filter value is now rejected (§3, "Plural ids, not plural sections").
-> **Updated 2026-11-17 (#4411):** pages are sized by a 40 000-character budget
+> **Updated 2026-11-17 (budget paging):** pages are sized by a 40 000-character budget
 > (greedy fill to `MAX_ITEMS=50`) rather than a fixed count; the result now
 > carries `nextOffset` when `truncated` is true, and callers must use it rather
 > than stepping by a fixed number; offsets that do not land on a greedy page
 > boundary are refused with the nearest valid start.
+> **Updated 2026-11-17 (grouped assertions):** `assertions` items are grouped by
+> persona — the five keys a persona's facts repeat are hoisted onto one group,
+> and a `questionId` read drops the `[questionId]` echo. Lossless; counts still
+> count assertions (§2.2, "Assertions are grouped by persona").
 
 ```
 research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated, nextOffset?, countById? }
@@ -164,7 +168,8 @@ the principal personas of both records.
   section: string,
   count: number,      // total matches, BEFORE the page cap and any offset
   items: any[],        // the section's native snake_case fields, verbatim but
-                        // for the two omissions below — a read projection, not
+                        // for the two omissions below, and grouped by persona
+                        // on `assertions` (below) — a read projection, not
                         // a persisted document, so no camelCase rename
                         // (contrast project_context, whose fixed shape IS a
                         // wire surface)
@@ -177,6 +182,40 @@ the principal personas of both records.
 }
 // on failure: { ok: false, errors: string[] }
 ```
+
+**Assertions are grouped by persona.** On `assertions`, `items` is a list of
+groups. A group is a maximal run of *consecutive* matching assertions, in the
+section's order, that share all five of `record_id`, `record_persona_id`,
+`record_role`, `source_id` and `log_entry_id` — a key absent from an assertion is
+a different value from `null`:
+
+```typescript
+{ record_id?, record_persona_id?, record_role?, source_id?, log_entry_id?,
+  facts: [ { id, ...every other field of one assertion } ] }
+```
+
+- The group carries only the hoisted keys its assertions carry; an absent key
+  stays absent, never written as `null`.
+- Exactly those five are hoisted. `informant` and `informant_proximity` stay on
+  each fact: over the 15,793 assertions in `eval/runlogs/e2e/*/*.final-research.json`
+  (2026-11-17), `informant` differs inside 1,160 of the 2,062 multi-fact groups
+  whose `record_persona_id` is a value. `record_document_id` never varied inside a
+  group but is on only 1,410 of those assertions, so it stays per fact too.
+- On a `questionId` read, a fact omits `extracted_for_question_ids` when it is
+  exactly `[questionId]`. Every hit of that read contains `questionId` (the filter
+  is `contains`), so the omission is lossless.
+- `count`, `offset`, `nextOffset`, `countById` and `MAX_ITEMS` count assertions,
+  never groups. A persona split across a page boundary repeats its keys at the top
+  of the next page.
+- The page budget is measured on the groups actually emitted: opening a group
+  costs the whole one-fact group, continuing one costs a comma and the fact.
+- `flattenAssertionGroups` (exported from `research-query.ts`) is the inverse: it
+  returns the flat assertions, deep-equal to the stored ones, key order aside.
+  `replay_collapse.py`'s `_flatten_items` restates it for the replay harness.
+
+Measured over 653 recorded assertion answers (`make replay-sizes BASE=<pre-change>
+TOOLS=research_query SECTION=assertions`), the grouped answers are 20.1% smaller;
+a single-assertion read grows by the 14 characters of its one-fact wrapper.
 
 **Two fields are left out of `items`.** An item of a plan that is not active
 (`superseded` or `completed`) carries no `rationale`, except a `skipped` item
@@ -209,7 +248,8 @@ narrowed to those naming `assertionId` (any of them, for a list); omitted under 
 than `unresolved`, since an unregistered disagreement has no other status. The
 field does not page — `offset` and the 50-item cap apply to `items` alone.
 
-Each call returns at most 50 items (`MAX_ITEMS`) and at most `TOOL_RESULT_CHAR_BUDGET = 40 000` characters of JSON (measured as the cumulative `JSON.stringify` length of each item). The budget cap applies first: items are added greedily until adding one more would exceed the budget, so a page of large items may be fewer than 50. A caller that hits `truncated: true` either narrows the filter or **pages**: set `offset` to `nextOffset` (returned in the result) and repeat until `truncated: false`. `offset` skips the first N matches of the *filtered* set — it is pagination, not a filter, so it is absent from the §2.1 table and applies to every section uniformly. `count` stays the true total throughout. `offset` must be a non-negative whole number **and must land on a greedy page boundary** (i.e., be a valid `nextOffset` returned by a prior call, or 0); any other value is rejected with the nearest valid start below it — see §4. Omitting every filter returns the whole section, one budget-capped page at a time.
+Each call returns at most 50 items (`MAX_ITEMS`) and at most `TOOL_RESULT_CHAR_BUDGET = 40 000` characters of JSON (measured as the cumulative `JSON.stringify` length of each item as emitted — on
+`assertions`, of each group). The budget cap applies first: items are added greedily until adding one more would exceed the budget, so a page of large items may be fewer than 50. A caller that hits `truncated: true` either narrows the filter or **pages**: set `offset` to `nextOffset` (returned in the result) and repeat until `truncated: false`. `offset` skips the first N matches of the *filtered* set — it is pagination, not a filter, so it is absent from the §2.1 table and applies to every section uniformly. `count` stays the true total throughout. `offset` must be a non-negative whole number **and must land on a greedy page boundary** (i.e., be a valid `nextOffset` returned by a prior call, or 0); any other value is rejected with the nearest valid start below it — see §4. Omitting every filter returns the whole section, one budget-capped page at a time.
 
 ### 2.4 `external_collections`
 
@@ -418,6 +458,25 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
   `agents/proof-conclusion.md` both check `truncated` and page with
   `offset: nextOffset`. A tool-only fix would not have cleared the reported
   symptom on its own.
+
+- **Assertions grouped by persona, consecutive runs only — not columnar, not
+  merged across the page (2026-11-17).** Assertions are the largest share of what
+  `research_query` returns, and within one persona the five hoisted keys repeat on
+  every fact. Measured over 651 recorded assertion answers against the
+  pre-change build (`make replay-sizes … SECTION=assertions`):
+
+  | shape | smaller by |
+  |---|---|
+  | grouped, consecutive runs (shipped) | 20.1% |
+  | grouped, every same-persona assertion on the page merged | 20.3% |
+  | columnar, lossless (a group splits where the fact keys change) | 5.5% |
+  | columnar, an absent field written as `null` (whole-section estimate) | ~33% |
+
+  Merging across the page reorders assertions for 0.2 points, so a flattened
+  page would no longer be the stored order. Columnar saves little losslessly,
+  because assertions carry different optional fields; it nears its estimate only
+  by writing absent fields as `null`, which loses the absent/`null` difference
+  the grouped shape keeps.
 
 - **A cross-section filter on `log`, not a nested join (2026-10-06, T2.1).**
   `research-exhaustiveness` reads a question's log by walking it: one
