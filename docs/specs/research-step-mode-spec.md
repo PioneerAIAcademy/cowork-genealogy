@@ -350,7 +350,7 @@ choice. The alpha sends no `options`.
   which step is offered. `offered_step(text)` reads the turn's **last** line; a line that
   names no entry is no offer. `offer_line` and `offer_key` are the write side.
 - **One pure function picks the reply:** `next_auto_reply(state, turn_mode, prev_step,
-  turn_step, offered_step, outcome)` returns `{"reply", "state"}`.
+  turn_step, offered_step, outcome, *, research=None)` returns `{"reply", "state"}`.
   - Only a `job` turn (the researcher's "Keep going." or a host reply) gets a reply, so a
     "Continue." or "Wrap it up." turn ends the run.
   - **A planning round** is a research-plan turn whose `prev_step` is outside setup and
@@ -359,9 +359,17 @@ choice. The alpha sends no `options`.
     and a conflict's second evidence round.
   - Any other offer gets "Keep going.".
   - **It returns no reply, ending the run,** when the outcome is not `ok` or `completed`;
-    the turn has no offer; the offer is `wrap-up`; the turn ran proof-conclusion; the
-    (`turn_step`, `offered_step`) pair was already answered since the last planning round;
-    or `MAX_AUTO_REPLIES` (30) replies were sent.
+    the turn has no offer; the offer is `wrap-up`; the turn ran proof-conclusion and the
+    question it worked already has a proof summary (or `research` could not be read); the
+    (`turn_step`, `offered_step`) pair was already answered since the last planning round
+    or since the CURRENT question's active-plan items last grew in count; or
+    `MAX_AUTO_REPLIES` (30) replies were sent.
+  - The proof-conclusion check finds the question it worked with `_last_question_id`
+    (creation order), deliberately **not** `current_question`: a successful conclusion
+    resolves its own question in the same batch as the summary, so by the time this reads
+    `research.json` back, `current_question` has already moved past it. Known gap: creation
+    order names the wrong question when an EARLIER question is re-concluded in place while
+    a LATER one sits open and unresolved.
 - **In a "Keep going." turn** the router runs the step the last turn offered and passes
   person-evidence `userPresent: no`.
 
@@ -375,8 +383,11 @@ choice. The alpha sends no `options`.
   and Stop is unset. `release_next_held` sends it, which reuses the web tier's guard
   against a message posted at the same moment, recovery of a stranded held row, and the
   put-back after a failed send.
-- **Run state** (`{replies, planning_rounds, answered}`) lives in `sessions.auto_reply`.
-  The worker clears it when it claims an open turn not marked `auto`.
+- **Run state** (`{replies, planning_rounds, answered, touched_items}`) lives in
+  `sessions.auto_reply`. `touched_items` counts the current question's active-plan items
+  whose status is no longer `planned`; when it grows since the last turn, `answered`
+  clears, because that is real plan progress, not a repeated loop. The worker clears the
+  whole state when it claims an open turn not marked `auto`.
 - **`prev_step`** is the session's last closed turn with a non-null `turns.step`, so a
   turn that ran no step (section J) does not reset the chain.
 - **Stop and typing win.** A held `auto` row is never released while Stop is set; the
