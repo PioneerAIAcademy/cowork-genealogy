@@ -9,6 +9,7 @@ import {
   MAX_PERSONS,
 } from "../../src/tools/person-warnings.js";
 import type { PlaceCoordsResolver } from "../../src/utils/place-coords.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 import type { PersonWarningsList, PersonWarningsFound } from "../../src/types/person-warnings.js";
 
 // person_warnings' list form (#3713): one call checks several anchors, with the
@@ -240,10 +241,15 @@ describe("person_warnings list form", () => {
       expect(await listed()).not.toContain("tooManyFathers2");
     });
 
-    it("fails open to the count with no research.json, or one that does not parse", async () => {
+    it("fails open to the count with no research.json", async () => {
       await tree(twoFathers);
       await rm(join(dir, "research.json"));
       expect(await single()).toContain("tooManyFathers2");
+    });
+
+    it("fails open to the count with a research.json that does not parse", async () => {
+      fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
+      await tree(twoFathers);
       await writeFile(join(dir, "research.json"), "{not json", "utf-8");
       expect(await single()).toContain("tooManyFathers2");
     });
