@@ -161,8 +161,12 @@ naming a different item, and accepts any id-line spelling (`planItemId:`,
 
 `ut_research_uh1` clones `ut_research_fsh` on an `--autonomous` run: search-hints
 decides hints itself on every run, so the hand-off is the same.
-`delegates-user-present-no-external`, for `search-external-sites`, has no test yet: the router left the
-field out in 1 of 3 scratch runs, and issue #4554 tracks the fix and the test.
+`ut_research_ue1` clones `ut_research_es9` on an `--autonomous` run.
+`search-external-sites` reads a missing `userPresent` as `yes`, so on an
+autonomous run it would wait for a researcher who is not there.
+`delegates-user-present-no-external` asserts `userPresent: no` in the spawn,
+which the judge cannot see. SKILL.md states the rule at each routing row and
+dispatch list that reaches the agent, not only in the spawn-fields contract.
 
 ## What is NOT covered (and why)
 
