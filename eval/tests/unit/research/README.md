@@ -266,8 +266,9 @@ FamilySearch ID and no project runs init-project alone and ends on "Continue wit
 is planned (lead, 2026-11-10; feedback #4237 drifted at question-selection). It is
 deterministic through the `bounded-plan-after-init` tag and
 `test_bounded_plan_first_message_stops_after_init_project`, which reads the
-hand-off list, that the project exists with no question or plan, that init-project's
-next-step sentence was left out, and that the offer names that step.
+hand-off list, that the project exists with no question or plan, and that the offer
+names that step. Unlike `b4i`, the reply may keep init-project's next-step sentence,
+because on a plan ask the next step is the first research question.
 
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius

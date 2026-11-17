@@ -1165,8 +1165,9 @@ def test_bounded_plan_first_message_stops_after_init_project(
     PID and no project runs init-project and nothing else, then ends on "Continue
     with `setting up the project`?" (issue #2813, lead 2026-11-10): the researcher
     confirms the question before anything is planned, because question-selection
-    is where feedback #4237 drifted. The project exists with no question or plan,
-    and the reply drops init-project's next-step sentence."""
+    is where feedback #4237 drifted. The project exists with no question or plan.
+    Unlike the record ask, the reply may keep init-project's next-step sentence:
+    on a plan ask the next step is the first research question."""
     from harness.skill_runner import handoffs, load_step_boundary
 
     if "bounded-plan-after-init" not in test.get("tags", []):
@@ -1184,9 +1185,6 @@ def test_bounded_plan_first_message_stops_after_init_project(
     assert research is not None, "init-project made no project"
     written = [s for s in ("questions", "plans") if research.get(s)]
     assert not written, f"the turn that created the project wrote {written}"
-    assert "first research question" not in (text_response or ""), (
-        "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
-    )
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
     offered = load_step_boundary().offered_step(text_response)
     assert offered == "setup", (

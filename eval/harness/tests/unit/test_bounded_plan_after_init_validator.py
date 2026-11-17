@@ -87,10 +87,15 @@ def test_a_plan_written_in_the_turn_fails():
         _run(["init-project"], after={"research_json": {"plans": [{"id": "plan_001"}]}})
 
 
-def test_relaying_the_next_step_sentence_fails():
-    with pytest.raises(AssertionError, match="next-step sentence"):
-        _run(["init-project"],
-             text="The next step is the first research question.\n\n" + OFFER)
+def test_relaying_the_next_step_sentence_passes():
+    """On a plan ask the next step is the first research question, so init-project's
+    sentence may stay, in its words or the router's."""
+    _run(["init-project"],
+         text="Your objective is the overall goal: his parents. The next step is the "
+              "first research question: the single fact we go after first.\n\n" + OFFER)
+    _run(["init-project"],
+         text="The next step is to register the first research question and then "
+              "build a research plan for it.\n\n" + OFFER)
 
 
 def test_offering_the_plan_fails():
