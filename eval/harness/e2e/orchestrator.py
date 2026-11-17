@@ -59,6 +59,7 @@ from harness.context_policy import (
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
+    route_note_hook,  # single-ask only: the SHIPPED hook's decision(), not a copy
     sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
@@ -80,6 +81,7 @@ from harness.skill_invocation import (
 )
 
 from e2e import pricing
+from e2e.avoid_guard import read_starting_state
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
@@ -769,8 +771,10 @@ class Fixture:
     judge_model: str
     caps: FixtureCaps
     expected_findings: dict[str, Any]
-    starting_research_path: Path
-    starting_tree_path: Path
+    # None for a single-ask empty-folder fixture (e2e-test-spec §16.2): both or
+    # neither. `load_fixture` (autonomous e2e) always sets both.
+    starting_research_path: Path | None
+    starting_tree_path: Path | None
     # Extra tools denied for THIS fixture's runs, beyond the universal
     # BLOCKED_TREE_TOOLS — bare advertised names (e.g. "wiki_search").
     # For fixtures whose ground truth derives from a source an MCP tool
@@ -790,7 +794,8 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
 
-    # Subject person id(s) for the avoid-guard's subject exemption. Primary
+    # Subject person id(s): the avoid guard's edge check reads the forbidden
+    # role from the subject's side of an edge. Primary
     # source is starting-research.json's project.subject_person_ids; source_pid
     # is added when it's a real PID (not the "PID-TODO" marker).
     subject_ids: set[str] = set()
@@ -893,13 +898,16 @@ def build_workspace(
     setting_sources=["project"].
     """
     target = Path(target)
-    shutil.copy(fixture.starting_research_path, target / "research.json")
-    shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
-    # Also seed the write-once baseline the tree-encoding gate diffs against
-    # (issue #1490), matching what project_create writes in production. Without
-    # it the gate treats every seeded fact as new and manufactures the very
-    # mismatch it measures.
-    shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
+    # An empty-folder single-ask fixture has neither path and copies nothing.
+    if fixture.starting_research_path is not None:
+        shutil.copy(fixture.starting_research_path, target / "research.json")
+    if fixture.starting_tree_path is not None:
+        shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
+        # Also seed the write-once baseline the tree-encoding gate diffs against
+        # (issue #1490), matching what project_create writes in production. Without
+        # it the gate treats every seeded fact as new and manufactures the very
+        # mismatch it measures.
+        shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
 
     skills_target = target / ".claude" / "skills"
     skills_target.mkdir(parents=True, exist_ok=True)
@@ -1868,7 +1876,8 @@ async def _run_agent(
     blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
 
-    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn, and
+    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn with
+    Cowork's routing sentence beside ``SOURCES_NOTE`` (``route_note_hook``), and
     the universal live-tree block is lifted, since
     a single-ask fixture has no answer key to hide. ``user_message`` defaults
     to the autonomous ``/research --autonomous`` rendering.
@@ -2450,7 +2459,13 @@ async def _run_agent(
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             # Issue #4011: the sentence every production path carries, added as Cowork does.
-            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
+            # A single ask gets all of what Cowork sends, the routing sentence too (spec §16.3).
+            "UserPromptSubmit": [
+                HookMatcher(
+                    matcher=None,
+                    hooks=[route_note_hook if single_ask else sources_note_hook],
+                )
+            ],
         },
     )
 
@@ -2601,6 +2616,9 @@ async def _run_agent(
             mode = turn.mode = _turn_mode(turn)
             if turn.index == _answered_question.get("opened"):
                 mode = turn.mode = "job"
+            # Read once and reused below (`project_completed`) -- `research.json`
+            # does not change between the two checks in this same turn.
+            research = read_research_json(workspace)
             decision = _boundary.next_auto_reply(
                 _reply_state,
                 mode,
@@ -2608,6 +2626,7 @@ async def _run_agent(
                 turn.step,
                 _boundary.offered_step(_last_text(turn)) or turn.halt_offer,
                 outcome,
+                research=research,
             )
             _reply_state.clear()
             _reply_state.update(decision.get("state") or {})
@@ -2634,7 +2653,7 @@ async def _run_agent(
             if (not reply and not _answered_question["done"]
                     and outcome == "ok" and mode == "job"
                     and turn.step != "proof-conclusion"
-                    and not project_completed(read_research_json(workspace) or {})
+                    and not project_completed(research or {})
                     and ended_on_a_question(_boundary, _last_text(turn))):
                 _answered_question["done"] = True
                 _answered_question["opened"] = turn.index + 1
@@ -3641,12 +3660,19 @@ async def run_e2e_test(
                     model=fixture.judge_model,
                 )
                 # Deterministic §3.4.1 backstop: an `avoid` finding whose
-                # target is still in the final tree is forced to matched:
-                # "false" and the verdict recomputed (downgrade-only).
+                # forbidden record, edge or value is in the final tree but not
+                # the starting tree is forced to matched: "false" and the
+                # verdict recomputed (downgrade-only).
+                _, starting_research = read_starting_state(
+                    fixture.starting_research_path.parent
+                )
                 judge_output = judge_module.apply_avoid_guard(
                     judge_output,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    final_research=final_research,
+                    starting_tree=starting_tree,
+                    starting_research=starting_research,
                     subject_person_ids=fixture.subject_person_ids,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")

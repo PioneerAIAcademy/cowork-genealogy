@@ -10,6 +10,7 @@ from harness.workspace import (
     InvalidScenarioError,
     build_workspace,
     snapshot_files,
+    workspace_parent,
 )
 
 
@@ -346,3 +347,47 @@ def test_scenario_workspace_without_sidecar_directories_is_unaffected(tmp_path):
     assert (ws / "research.json").exists()
     assert not (ws / "evaluations").exists()
     assert not (ws / "uploads").exists()
+
+
+# --- Where workspaces are created -----------------------------------
+
+
+def test_workspace_parent_is_the_resolved_short_tmp_on_posix(tmp_path):
+    link = tmp_path / "tmp-link"
+    real = tmp_path / "real"
+    real.mkdir()
+    link.symlink_to(real, target_is_directory=True)
+    # Resolved: the SDK reports its cwd with symlinks followed, and the relay
+    # check compares the path character for character.
+    assert workspace_parent("posix", str(link)) == str(real.resolve())
+
+
+def test_workspace_parent_keeps_the_platform_default_off_posix(tmp_path):
+    assert workspace_parent("nt", str(tmp_path)) is None
+
+
+def test_workspace_parent_falls_back_when_the_short_tmp_is_unusable(tmp_path):
+    a_file = tmp_path / "not-a-dir"
+    a_file.write_text("x", encoding="utf-8")
+    assert workspace_parent("posix", str(tmp_path / "missing")) is None
+    assert workspace_parent("posix", str(a_file)) is None
+
+
+def test_workspace_parent_falls_back_when_the_short_tmp_is_read_only(tmp_path):
+    locked = tmp_path / "locked"
+    locked.mkdir()
+    locked.chmod(0o500)
+    try:
+        assert workspace_parent("posix", str(locked)) is None
+    finally:
+        locked.chmod(0o700)
+
+
+def test_the_default_workspace_parent_has_no_long_random_component():
+    """The defect this exists for: a 30-character random folder name in the
+    path a model has to type back."""
+    parent = workspace_parent()
+    if parent is None:
+        pytest.skip("no short temp directory on this platform")
+    assert max(len(part) for part in Path(parent).parts) <= 12, parent
+

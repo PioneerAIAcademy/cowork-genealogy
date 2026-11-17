@@ -1,0 +1,31 @@
+{
+  "id": "birth-no-pid-marie-brigard",
+  "message": "Locate the birth date of Marie Anne Brigard born in Hamm in 1895.",
+  "expected_owner": "init-project",
+  "expected_save": [
+    {
+      "section": "log",
+      "absent": true
+    }
+  ],
+  "required_tools": [
+    "project_context"
+  ],
+  "forbidden_tools": [
+    "record_search",
+    "person_search",
+    "fulltext_search",
+    "project_create"
+  ],
+  "must_not": "No search of any kind; ask for the FamilySearch person ID and create nothing",
+  "caps": {
+    "wall_clock_seconds": 600,
+    "inactivity_seconds": 300,
+    "progress_stall_seconds": 300,
+    "tool_calls": 20,
+    "max_turns": 20,
+    "max_cost_usd": 1.0
+  },
+  "is_plan_ask": false,
+  "known_issue": "#2813"
+}

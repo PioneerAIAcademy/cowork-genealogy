@@ -1,9 +1,10 @@
-// Single source of truth for the tool schemas advertised by the MCP
-// server. `index.ts` spreads this into its ListTools handler, and the
-// packaging drift test (tests/packaging/manifest.test.ts) imports it to
-// assert manifest.tools stays in sync with what's registered. Keeping it
-// in its own module means the test can read the list without importing
-// index.ts, which connects the stdio transport as a side effect.
+// The tool schemas every surface advertises, and the list manifest.tools must
+// equal. `server.ts` lists this in its ListTools handler, adding the two
+// connector-only tools (tools/project-view.ts) for a connector caller, so this
+// list binds the manifest and that handler does not. The packaging drift test
+// (tests/packaging/manifest.test.ts) imports it to assert manifest.tools stays
+// in sync. Keeping it in its own module means the test can read the list without
+// importing index.ts, which connects the stdio transport as a side effect.
 import { volumeBisectSchema } from "./tools/volume-bisect.js";
 import { catalogSearchSchema } from "./tools/catalog-search.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
@@ -40,6 +41,7 @@ import { wikiPlacePageSchema } from "./tools/wiki-place-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
+import { imageIndexSchema } from "./tools/image-index.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
 import { personQualityToolSchema } from "./tools/person-quality.js";
 import { mergeWarningsSchema } from "./tools/merge-warnings.js";
@@ -90,6 +92,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "external_links_search",
   "fulltext_search",
   "get_name_variants",
+  "image_index",
   "image_read",
   "image_search",
   "image_transcribe",
@@ -159,6 +162,7 @@ export const allToolSchemas = [
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
   imageSearchSchema,
+  imageIndexSchema,
   personWarningsToolSchema,
   personQualityToolSchema,
   mergeWarningsSchema,

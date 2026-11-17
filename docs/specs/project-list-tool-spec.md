@@ -164,6 +164,11 @@ because the person may be in a project the list left out. With no
 `project_list` tool at all (an expired connector sign-in, or a desktop extension
 older than this tool), it says the genealogy tools are not connected and stops.
 
+The folder-mode `message` and the hosted-mode "No project yet" `message` end
+with the routing rule: "While no project exists yet, a request about a named
+FamilySearch person starts a project first, through the research skill." A hosted listing that names any
+project, or is cut, does not carry it.
+
 ## 3. Tests
 
 - `tests/tools/project-list.test.ts` — folder mode on the process store, with no

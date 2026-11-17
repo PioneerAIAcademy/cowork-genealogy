@@ -109,13 +109,13 @@ Upload them, or conclude without them."
 
 **Under `wrapUp: yes`** skip: the exhaustiveness-evaluation confirmation above,
 this active-plan check when the question has no plan, and Step 0's
-`person_evidence` and tentative-value blocks. Keep the already-declared stop.
-Write the stop as §"Wrap it up" says.
+`person_evidence`, tentative-value and open-conflict blocks. Keep the
+already-declared stop. Write the stop as §"Wrap it up" says.
 
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
 depends on have not been identified in the tree. Before assessing the stop
-criteria, run two checks over the assertions tied to this question
+criteria, run these checks over the assertions tied to this question
 (via `extracted_for_question_ids`):
 
 - **Classification (hard block, all assertions).** Every assertion must have
@@ -151,10 +151,15 @@ criteria, run two checks over the assertions tied to this question
 
 Do not declare exhaustive while a blocking check fails.
 
+**Open conflict (hard block).** If an `unresolved` conflict lists this question
+in `blocks_question_ids`, stop: write the `blocked_by_conflict` stop as Step 4
+says, with every plan's `log_entry_ids`, and route to `conflict-resolution`.
+
 ## 1. Gather evidence
 
 Reached only when Step 0 neither stopped nor refused. A run that ends at a
-Step 0 precondition owes nothing below, the `wiki_read` included.
+Step 0 precondition owes nothing below, the registration `wiki_read` included,
+except the `not_reached` a stop it writes carries (§"Build `not_reached`").
 
 Read:
 - The question and its `search_stop`
@@ -172,14 +177,13 @@ otherwise. Do not begin Step 2 until both have returned or failed.
 ## 2. Assess the 7-Point Stop Criteria
 
 **This is the gate.** Assess the seven in the order below. **The verdict stops
-at the first that fails — name it. The record does not.** Write all seven either
-way, each a 1-2 sentence assessment tied to project state: what was met, what
+at the first that fails — name it. The assessment does not:** assess all seven
+either way, each 1-2 sentences tied to project state: what was met, what
 failed, and what the evidence could not reach. Where a criterion turns on
-whether a civil registration record could exist for this event, state the start
-date Step 1 read and the page it came from; "registration had not begun" is an
-assessment only when it rests on that fetched date. Declaring requires all seven met,
-written only in the call's arguments. A decline carries the same seven, honestly
-assessed, with the blocking criterion named in `justification`.
+whether a civil registration record could exist for this event, state the start date Step 1 read and the page it came from;
+"registration had not begun" is an assessment only when it rests on that fetched
+date. Declaring requires all seven met, written only in the call's arguments. A
+decline names the blocking criterion and its assessment in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -215,9 +219,8 @@ assessed, with the blocking criterion named in `justification`.
     is inaccessibility.
   - A present `skip_category` changes only two things: `premise_invalidated`
     means recommend `research-plan`; `inaccessible` makes the item eligible for
-    the exception below; `no_coverage` records the item in `not_reached` with
-    `kind: "skipped_plan_item"` and is treated as inaccessible for the exception
-    below, whose own conditions still decide.
+    the exception below; `no_coverage` is treated as inaccessible for the
+    exception below, whose own conditions still decide.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
@@ -259,9 +262,9 @@ and the tentative-value (b) path. Write:
   the active one — after "Search more" a question has two plans by design;
 - `justification`: open with the verdict, `Overturn risk: low` or
   `Overturn risk: high — <sources>`;
-- `not_reached`: one `deferred` entry per unsearched source that was never
-  planned (film, image or URL in `description`), and one `handed_to_user` entry
-  per item waiting on an upload.
+- `not_reached`: built per §"Build `not_reached`", plus one `deferred` entry
+  per unsearched source that was never planned (film, image or URL in
+  `description`).
 
 Then recommend from the verdict:
 
@@ -274,9 +277,8 @@ Then recommend from the verdict:
 ## Wrap it up
 
 Reached with `wrapUp: yes`. Record the stop and nothing else — no routing, no
-recommendation. Write `resources_spent`, with `not_reached` carrying: the items
-dispose skipped as `skipped_plan_item`, items waiting on an upload as
-`handed_to_user`, and any never-planned gaps as `deferred`. A question with no
+recommendation. Write `resources_spent`, with `not_reached` built per
+§"Build `not_reached`", plus any never-planned gaps as `deferred`. A question with no
 plan and no assertions is a valid wrap-up: write the stop naming the searches
 not run. End with no "Continue with …?" line.
 
@@ -295,6 +297,11 @@ alongside the entries §3 names.
   id, never the later entry's; `wiki_title: null`; `description` names the
   site, the `url_generated`, and what the search was for.
 - **`paywalled`** — only a paywalled hit that was never handed to the user.
+- **`skipped_plan_item`** — one entry per item on this question's plans that is
+  `skipped` with `skip_category` `user_declined`, `no_coverage` or
+  `inaccessible`, unless the item already has a `handed_to_user` entry or, for
+  `inaccessible`, an entry under §3's exception; `log_entry_id: null`;
+  `wiki_title: null`; `description` names the item and its `skip_reason`.
 - **`wiki_named_untouched`** — from a kept locality's `guide_markdown`. This
   needs the §1 `research_query` `section: "localities"` result; if that call
   has not been made, make it now — never conclude there is no guide without
@@ -318,8 +325,8 @@ writes atomically.
 `search_stop` in one call. Choose `stopped_because` based on why the search
 concluded: `question_answered` (convincing answer), `record_exhausted` (all
 sources searched), or `nothing_further_reachable` (some sources unreachable).
-`stop_criteria` is required for all gate values. Include `not_reached` entries
-for any source that could not be reached:
+`stop_criteria` is required for all gate values. Build `not_reached` per
+§"Build `not_reached`":
 
 ```
 research_append({
@@ -342,7 +349,7 @@ research_append({
         conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
         overturn_risk: "Low. No unexamined record type likely to name a different father."
       },
-      not_reached: []
+      not_reached: [<entries built per §"Build `not_reached`">]
     }
   }
 })
@@ -356,8 +363,8 @@ A `not_reached` entry for a hand-off the user never returned:
 
 **Early termination** (`resources_spent` or `blocked_by_conflict`) — leave
 `status` as `"in_progress"`; pass only `search_stop`, NOT `status`.
-`stop_criteria` must be `null` for non-gate values. Record in `not_reached`
-any sources that were identified but could not be reached:
+`stop_criteria` must be `null` for non-gate values. Build `not_reached` per
+§"Build `not_reached`":
 
 ```
 research_append({
@@ -441,10 +448,6 @@ the offending field — do not blindly retry the same payload.
 
 - **User wants to stop early:** §"Wrap it up". Do not inflate exhaustiveness
   to justify stopping.
-- **Plan items still in progress:** Refuse to declare when an **active**
-  plan item is `in_progress`; recommend completing the in-flight work first.
-  An item waiting only on an upload is not in-flight — it goes in
-  `not_reached` as `handed_to_user`.
 
 ## Re-invocation behavior
 

@@ -195,3 +195,17 @@ export interface VolumeRollup {
   byRecordType: VolumeRollupBucket[];
   untyped: Omit<VolumeRollupBucket, "group">;
 }
+
+/** A principal-bound full-text searchability lookup, injected into a writer tool
+ *  so that tool never imports auth (#4431). The same shape and the same reason as
+ *  `CollectionCatalogLoader` in `types/collection.ts`.
+ *
+ *  **Declared here, not beside the fetch that implements it.** `research_append`
+ *  needs this type and must not reach the FamilySearch token: it takes the loader
+ *  as an argument, and `server.ts` is what binds a principal into it. Importing
+ *  the type from `utils/fulltext-searchable.ts` would make it LOOK as though it
+ *  does — `apps/server`'s reauth-hook guard scans imports textually and does not
+ *  distinguish an erased `import type` from a value import, so a type-only import
+ *  there put `research_append` and every tool importing it into the set of tools
+ *  that reach the token. This module imports nothing, so it cannot. */
+export type FulltextSearchableLoader = (ids: string[]) => Promise<Set<string> | null>;

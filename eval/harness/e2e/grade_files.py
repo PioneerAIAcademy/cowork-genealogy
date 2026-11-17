@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 from e2e.env import ENV_FILE, load_env_file
+from e2e.avoid_guard import read_starting_state
 from e2e.judge import apply_avoid_guard, run_judge
 from e2e.orchestrator import DEFAULT_FIXTURES_ROOT, Fixture, load_fixture
 
@@ -83,10 +84,14 @@ def grade(
         final_research=final_research,
         model=model or fixture.judge_model,
     )
+    starting_tree, starting_research = read_starting_state(fixture.starting_tree_path.parent)
     return apply_avoid_guard(
         judge_output,
         expected_findings=fixture.expected_findings,
         final_tree=final_tree,
+        final_research=final_research,
+        starting_tree=starting_tree,
+        starting_research=starting_research,
         subject_person_ids=fixture.subject_person_ids,
     )
 

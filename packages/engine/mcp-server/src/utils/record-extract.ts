@@ -1009,10 +1009,13 @@ function factClassOf(factType: string, recordType: RecordType): FactClass {
   return eventFor[factType] === recordType ? "event" : "identity";
 }
 
-function fullName(p: SimplifiedPerson): string {
-  const n = p.names?.[0];
+function nameText(n: { given?: string; surname?: string } | undefined): string {
   if (!n) return "";
   return [n.given, n.surname].filter((x) => x && String(x).trim() !== "").join(" ").trim();
+}
+
+function fullName(p: SimplifiedPerson): string {
+  return nameText(p.names?.[0]);
 }
 
 // ─── the extractor ──────────────────────────────────────────────────────────
@@ -1395,16 +1398,24 @@ export function extractRecord(
     // Name — mandatory, and first. It is the identifying fact everything else
     // hangs on; a parent with a birthplace and no name is an incomplete
     // extraction.
-    const name = fullName(p);
-    if (name !== "") {
-      push(party, "name", name, {
+    // A document keeps every name it gives, each its own assertion carrying its
+    // own type and note, `names[0]` first (the preferred one downstream). An
+    // indexed record writes only `names[0]`, and never a type: the index types
+    // every persona BirthName whatever the record says (issue #4378).
+    const names = mode ? (p.names ?? []) : (p.names ?? []).slice(0, 1);
+    names.forEach((n, i) => {
+      const text = nameText(n);
+      if (text === "") return;
+      const marks = mode?.nameMarks.get(party.id)?.[i];
+      push(party, "name", text, {
         structured_value: {
-          given: p.names?.[0]?.given ?? "",
-          surname: p.names?.[0]?.surname ?? "",
+          given: n.given ?? "",
+          surname: n.surname ?? "",
+          ...(marks?.type ? { type: marks.type } : {}),
         },
-        ...(mode?.nameNotes.get(party.id) ? { informant_bias_notes: mode.nameNotes.get(party.id) } : {}),
+        ...(marks?.note ? { informant_bias_notes: marks.note } : {}),
       });
-    }
+    });
 
     // Sex, where the record gives one.
     const g = genderOf(p);

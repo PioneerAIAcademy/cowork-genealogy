@@ -3,6 +3,8 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "./fs-fetch.js";
 import type { FulltextGroupNumberResponse } from "../types/volume-search.js";
 import { isFsBudgetExhausted } from "./fs-budget.js";
+import { mapWithConcurrency } from "./place-resolver.js";
+import type { FulltextSearchableLoader } from "../types/volume-search.js";
 
 const FULLTEXT_GROUP_URL =
   "https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber";
@@ -47,4 +49,42 @@ export async function fetchFulltextSearchable(
     if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
+}
+
+export const FULLTEXT_BATCH = 100;
+const FULLTEXT_CONCURRENCY = 10;
+
+/** Which of these groups FamilySearch reports as full-text searchable, in
+ *  parallel batches; `null` (UNKNOWN) if ANY batch failed.
+ *
+ *  Lifted here from `volume-rollup.ts`, which had it private, when a second
+ *  caller needed it (CLAUDE.md § Code reuse: two near-duplicates is the signal
+ *  to consolidate). The single-request `fetchFulltextSearchable` puts every id
+ *  in one query string, so an unbounded list is either truncated by the
+ *  endpoint — ids past its cap come back absent, which a caller reading absence
+ *  as "not searchable" turns into a false refusal — or rejected outright with a
+ *  414. Any caller whose id list is not bounded by construction uses this. */
+export async function fetchFulltextSearchableBatched(
+  names: string[],
+  principal: Principal,
+): Promise<Set<string> | null> {
+  if (names.length === 0) return null;
+  const batches: string[][] = [];
+  for (let i = 0; i < names.length; i += FULLTEXT_BATCH) batches.push(names.slice(i, i + FULLTEXT_BATCH));
+  const sets = await mapWithConcurrency(batches, FULLTEXT_CONCURRENCY, (batch) =>
+    fetchFulltextSearchable(batch, principal),
+  );
+  if (sets.some((s) => s === null)) return null;
+  return new Set(sets.flatMap((s) => [...(s as Set<string>)]));
+}
+
+/** Built once per request in `server.ts` and passed to
+ *  `researchAppendFromCaller`; `null` where no caller supplies one. Batched,
+ *  because the ids come from a document that grows. The TYPE is declared in
+ *  `types/volume-search.ts` and re-exported here — see the note there for why a
+ *  writer tool must not import it from this module. */
+export type { FulltextSearchableLoader } from "../types/volume-search.js";
+
+export function fulltextSearchableLoader(principal: Principal): FulltextSearchableLoader {
+  return (ids: string[]) => fetchFulltextSearchableBatched(ids, principal);
 }

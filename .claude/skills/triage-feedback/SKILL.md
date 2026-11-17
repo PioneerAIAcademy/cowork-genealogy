@@ -234,6 +234,14 @@ Write into the body:
   rest of the run. Apply it to every later item it touches, and say so where you
   do.
 
+**A routing finding gets a single-ask fixture.** When the finding is about which
+unit answered a message (the router skipped, the wrong agent, a bounded ask run
+as a job), check `eval/tests/e2e-single-ask/` for a fixture of the same shape: an
+empty folder or a seeded project, a person ID or none, the same owner. When none
+has that shape, the written instructions say "add a single-ask fixture" from this
+bundle's message (`docs/specs/e2e-test-spec.md` §16.2). One fixture per failure
+shape, not per bundle.
+
 **Prefer a tool rule to skill prose.** If the thing can be decided by reading the
 project documents alone, it is a writer-tool precondition, where it binds
 everywhere and cannot be argued with — that is ADR-0011's test, and a prompt

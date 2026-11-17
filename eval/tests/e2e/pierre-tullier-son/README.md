@@ -1,4 +1,4 @@
-# Pierre Albert Tullier — additional son Pierre Jacques Dominique (b. 1796)
+# Pierre Albert Tullier — additional son Pierre Jacques Dominique (b. 1799)
 
 **Source PID:** `GPX7-28P`
 **Pierre Albert Tullier is deceased.** (FamilySearch ToS requires
@@ -7,7 +7,7 @@ all committed e2e fixtures to be about deceased persons.) Born
 
 ## Research question
 
-> Did Pierre Albert Tullier and his wife Constance Dorothé Leys have a son, Pierre Jacques Dominique, born 1796, in addition to their five children recorded from 1805 onward?
+> Did Pierre Albert Tullier and his wife Constance Dorothé Leys have a son, Pierre Jacques Dominique, born about 1799, in addition to the children recorded to them in Bambecque from 1801 onward?
 
 ## What was removed from the starting tree
 
@@ -24,52 +24,104 @@ identical to it so `snapshot --check` can audit upstream drift.
 
 ## Expected difficulty
 
-hard — a false-match adjudication (the answer is that the hint is wrong);
-see "Notes for reviewers" below for the evidence that decided it.
+hard: the hint's index gives the wrong birth year (1796), so the agent has
+to read past it to the 1799 Houtkerque birth and tie that to the couple.
+See "Notes for reviewers" below.
 
 ## Notes for reviewers
 
-**Resolved (issue #856): FALSE MATCH.** The hint — France, Nord, Parish and Civil Registration, 1524-1893: marriage entry, 21 June 1825, Bambecque, for Pierre Jacques Dominique Tuilier (b. 1796; parents named as "Pierre Tuilier" and "Constance Ley") and Constance Victoire Depuydt — does **not** establish a son of Pierre Albert Tullier and Constance Dorothé Leys. The 1796 groom is most consistent with a *different* Pierre-Tuilier/Constance-Ley couple in the same parish.
+**Resolved (issue #4445): TRUE MATCH, corrected birth year.** This replaces
+the issue #856 "FALSE MATCH" verdict. The hint is the 21 June 1825 Bambecque
+marriage of Pierre Jacques Dominique Tuilier and Anne Constance Victoire
+Depuydt (France, Nord, Parish and Civil Registration, 1524-1893). The hint
+persona `ark:/61903/1:1:8NJR-PD3Z` is the groom's **father**, "Pierre
+Tuilier", and he is the subject: the groom is a son of Pierre Albert Tullier
+and Constance Dorothé Leys, born 1 Nov 1799, registered 2 Nov, at Houtkerque. The index's
+"b. 1796" for the groom is wrong.
 
 What decided it:
-- **Timing conflict.** Pierre Albert Tullier married Constance Dorothé Leys on 24 September 1800; a son born 1796 predates that marriage by four years. Their own documented childbearing in Bambecque runs 1801–1816.
-- **The couple's own children name the parents in full.** Their birth registrations (same France, Nord collection) record the parents as "Pierre Albert Tuilier" and "Constance Dorothé Ley" — e.g. François Cornil Albert (b. 16 Nov 1801, not yet in the tree), Barbe Henriete Constance (1805), Reine Sophie (1808), Pierre Jacques Louis (1816). The 1825 marriage names the groom's parents only as bare "Pierre"/"Constance" — no "Albert," no "Dorothé."
-- **Demographics.** A groom born 1796 implies parents married in the early 1790s; Pierre Albert (b. 1777) was 19 and unmarried in 1796.
-- **Common names.** "Pierre"/"Constance" and the Tuilier/Tullier + Ley/Leys spelling variants are common in Bambecque, so a same-named different couple is the parsimonious reading.
+- **The 1796 is an index error.** The index derives the groom's birth from an
+  age, giving 1795-1796. The act (image `ark:/61903/3:1:3Q9M-C3WK-635R-H`)
+  reads "agé de vingt cinq ans né à houtkercke le dix brumaire an huit"
+  (1 Nov 1799) for the groom. The bride is "agée de vingt neuf ans", born
+  19 Germinal an IV (1796), so the indexer gave the groom the bride's age. The
+  same reading came back on two separate OCR passes. Independently of the
+  image, the groom's own death at Bambecque on 8 Sep 1877
+  (`ark:/61903/1:1:8NJL-KK3Z`, spouse Constance Victoire Depuydt, parents
+  Pierre Tuilier and Constance Ley) gives an age-derived birth of 1798-1799.
+  #856's "predates their marriage by four years" argument rested on the
+  1796, so it falls with it.
+- **The 1799 Houtkerque birth fits.** Pierre Jacques Dominique Tuiller was born
+  1 Nov 1799, registered 2 Nov, at Houtkerque, son of Pierre Tuiller (`ark:/61903/1:1:DPJ5-4QW2`;
+  mother indexed "Constance Coley"). The given names match the 1825 groom
+  exactly, and so do the place and the date. The
+  index's 2 Nov is the registration date (11 Brumaire an VIII), not the birth.
+- **Only one Pierre Tuilier × Constance Ley couple exists.** Searches of the
+  Nord collection (3216848) on Tuilier with a Constance and Ley spouse or
+  mother, 1795-1805 and later, return one couple: Pierre Albert Tuilier and
+  Constance Dorothé Ley. They married at Bambecque in the parish on
+  12 Mar 1800 (`ark:/61903/1:1:8NJ5-TT2M`) and had children there from 1801.
+  In 1825 the groom's parents were both "encore vivant(s)", which fits:
+  Constance Dorothé died in 1831 and Pierre Albert in 1846. The "bare names"
+  argument from #856 does not hold either. Her own children's records index
+  her as Constance Dorothé, Constance Reine and Reine Constance, so the
+  wording varies within this one couple.
+- **The couple lived at Houtkerque at the time.** The 12 Mar 1800 parish
+  marriage (image `ark:/61903/3:1:3Q9M-C3WK-8S3W-Y`) reads "pierre albert
+  tulier ... natif de staetel" and "Custance Dorothée Ley ... native de
+  bambeque", "tous deux domiciliés sur la paroisse d'Houtkerke". That is four
+  months after the Houtkerque birth.
 
-What was searched and came up empty: no birth/baptism record ties a 1796 Pierre Jacques Dominique specifically to Pierre Albert Tuilier + Constance Dorothé Ley, and the tree person carries no attached sources corroborating the hint. Accordingly `expected-findings.json` is a `polarity: "avoid"` guard (the agent must not attach the 1796 son to this couple) paired with a `required` documented-negative-conclusion finding.
+The four questions issue #4445 posed:
+1. *Where does the groom's 1796 come from?* The index took the bride's age;
+   see above.
+2. *Is there another Pierre Tuilier native of Stavele with a Constance
+   Ley(s)?* None was found in collection 3216848.
+3. *Does the 24 Sep 1800 civil marriage legitimate a child?* No. The act is
+   in browse-only film 008004587, sub-volume `008004587_005_M9M1-RBK`, images
+   `008004587_00946`-`00947` (2 Vendémiaire an IX). It names Pierre Albert
+   Tuilier, born at Stavele, son of the late Jacques and Anne Thérèse de Vloo,
+   and Constance Dorothée Ley, born at Bambecque, and carries no legitimation
+   or recognition clause. The 12 Mar 1800 parish marriage has none either. The
+   1799 birth act already calls the child "du légitime mariage", so its
+   parents declared themselves married before either act on file.
+4. *Is Marguerite Leys a documented sister?* No. The indexed daughters of
+   Jacques Ignace Ley and Rosalie Joseph Lejeune are Constance Dorothée,
+   Isabelle Thérèse Cornille, Rose Reine and Jeanne Rosalie (died at
+   Houtkerque in 1836). A fresh transcription of the 1799 page reads the
+   witness as "Regina Ley ... propre tante a matre", not Marguerite, which
+   would fit Rose Reine. That reading failed the licence check below, so it is
+   not relied on. The call does not depend on question 4.
 
-**On the 1799 Houtkerque record (pre-empting a re-run's counter-evidence).**
-A run of this fixture surfaced a birth record in Houtkerque, Nord (2 Nov 1799,
-ark `61903/1:1:DPJ5-4QW2`) for a "Pierre Jacques Dominique Tuiller" naming a
-father "Pierre Tuilier" said to be a native of Stavele and a mother "Constance
-Ley," with a "Marguerite Leys" recorded as the child's maternal aunt. Although
-the agent identified this 1799 record as father "Pierre Tuilier" from Stavele
-and mother "Constance Ley," this evidence was not considered sufficient to
-overturn the fixture's adjudicated false-match verdict. The record does not
-explicitly identify the parents as Pierre Albert Tullier and Constance Dorothé
-Leys, and the apparent similarities in names and locations are not enough to
-establish identity in a region where these names and spelling variants
-(Tuilier/Tullier, Ley/Leys) are common. Furthermore, the fixture's expected
-outcome requires the 1825 marriage hint to be rejected, and the agent did not
-provide evidence strong enough to disprove that adjudication. Therefore the
-1799 Houtkerque record is treated as an unresolved alternative hypothesis
-rather than confirmation that the groom belongs to the tree couple.
+**Image readings and the licence check.** All the image readings were made
+with `image_transcribe`, and none is licensed:
+- **1825 marriage page.** The only other entry is the Barbe Constance Verriele
+  birth of 22 Jun 1825 (`ark:/61903/1:1:8NJ1-JB6Z`). It matches the index on
+  child, father, mother and date, but it is fewer than the two entries the
+  check needs.
+- **12 Mar 1800 parish page.** The only other entry is the Dervo-Salomé
+  marriage of 6 Apr 1800 (`ark:/61903/1:1:8NJ5-2Z3Z`). It matches, but again
+  it is one entry.
+- **1799 Houtkerque page.** The Pinte birth (`ark:/61903/1:1:DPJ5-4QN2`)
+  differs from the index on the mother's surname: transcribed "baeye",
+  indexed "Breye". So that transcription is discarded, including the earlier
+  run's "Marguerite Leys" and "Constance ley".
+- **Civil-marriage film.** It is unindexed, so nothing on it can be checked.
 
-**2026-08-03: added a real ark for the disproving record (issue #970).**
-`expected-findings.json`'s "full middle names" citation now points at the
-one child's birth registration this fixture's own committed run log
-(`eval/runlogs/e2e/pierre-tullier-son/run-2026-07-27_21-34-22.final-research.json`,
-src_001) actually verified live against FamilySearch: François Jaques
-Albert Tullier, baptized 7 April 1803, Bambecque (`ark:/61903/1:1:8NJ2-XNN2`),
-naming the father in full as "Pierre Albert Tullier." The run log does not
-independently confirm the previously-stated "François Cornil Albert,
-b. 1801" — that detail is left in as unverified rather than removed, since
-nothing found here contradicts a second child by a similar name existing.
-No ark was found for the couple's own 24 Sep 1800 marriage (indexed search
-came up empty; the act is in an unindexed browse-only volume per the run
-log's q_001 notes) or for the 1796 birth claim itself — per spec §3.6.1,
-neither needs one, since the ark requirement attaches to the disproving
-record, not to the absence. The 1799 Houtkerque record and its disclaimer
-above are unchanged; this note only concerns the citation added for the
-already-adjudicated "full names vs. bare names" argument.
+The finding therefore stands on the index alone. The index has the groom's
+death-age birth year of 1798-1799, the 1 Nov 1799 Houtkerque birth (registered 2 Nov) with
+matching given names, and one candidate couple. The images agree with that
+index case. `image_basis` is set because the image arks are cited and the
+readings were used, not because they were needed.
+
+**How this was done.** Retrieval was tool-assisted: `record_read`,
+`record_search`, `volume_search`/`volume_bisect`/`image_search` and
+`image_transcribe`, run on 2026-11-12. Isaac (Paaboat) read the evidence and
+made the identity call. Issue #4445 asks for a second genealogist's opinion
+before this is relied on. EdmondOware reviewed this on 2026-11-13, re-read the
+records live, and confirmed the call.
+
+`expected-findings.json` is one required finding: the couple had a son Pierre
+Jacques Dominique, born 1 Nov 1799, registered 2 Nov, at Houtkerque. The #856 avoid guard and
+its documented-negative finding were removed, because they penalised the
+correct answer.
