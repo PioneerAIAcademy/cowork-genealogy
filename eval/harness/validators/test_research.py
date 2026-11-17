@@ -1141,6 +1141,131 @@ def test_bounded_transcription_is_delivered_in_place(
     )
 
 
+_READING_TAG = "index-vs-reading"
+_INDEX_READING_PREFIX = "index-reading:"
+_MACHINE_READING_PREFIX = "machine-reading:"
+_ON_LINE_PREFIX = "on-line:"
+_AS_WRITTEN_PREFIX = "as-written:"
+_AGREED_PREFIX_PREFIX = "agreed-prefix:"
+_SURNAME_PREFIX = "surname:"
+# `index-reading:blank` is an index entry with no given name at all.
+_BLANK_INDEX = re.compile(
+    r"\b(no|blank|without|empty|missing|omits?|left\s+out)\b[^.\n]{0,60}\bgiven[\s-]?name"
+    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\b(blank|empty|missing|not\s+indexed|left\s+(it\s+)?blank|absent)",
+    re.IGNORECASE,
+)
+# A single machine reading overruling the index, or a repeat pass counted as agreement.
+_VERDICT = re.compile(
+    r"\bis\s+clear\b|\bimage\s+(is|was)\s+clear\b"
+    r"|\bindex\s+(is|was)\s+(wrong|an\s+error|a\s+misread)"
+    r"|\bbadly\s+misread|\bpoor\s+attempt"
+    r"|\bboth\b[^.\n]*\bagree"
+    r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)\bconfirmed\b",
+    re.IGNORECASE,
+)
+# A record's name folded into another record's.
+_FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORECASE)
+_SEARCH_CALLEES = ("search-records", "search-images", "search-full-text")
+# `_field_values` stops a value at `*`, which is the wildcard this check looks for.
+_GIVEN_FIELD = re.compile(
+    r"(?<![A-Za-z])(?:given[\s_-]?names?|first[\s_-]?name)[`*\"']*\s*[:=][\s`*\"']*"
+    r"(?P<v>[A-Za-z][\w*?-]*)",
+    re.IGNORECASE,
+)
+
+
+def _one_tag_value(test: dict, prefix: str) -> str | None:
+    values = _data_tag_values(test, prefix)
+    assert len(values) <= 1, f"an {_READING_TAG} test names at most one {prefix} tag; got {values}"
+    return values[0] if values else None
+
+
+def test_index_and_machine_reading_shown_side_by_side(test, text_response):
+    """Tag-gated (``index-vs-reading``), issue #4578. When a record's index and a
+    single machine reading of its page disagree, the reply shows both, names the
+    line on the image, and calls neither the answer: no "the image is clear", no
+    "the index misread it", and no second pass of the same page counted as
+    agreement. Requiring the machine reading too is what stops a reply that hides
+    it from passing. With an ``as-written:`` tag, the reply also reports that
+    record's name as written, never as a rendering or variant of another record's.
+
+    Proven both ways in ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _READING_TAG not in test.get("tags", []):
+        pytest.skip(f"not an {_READING_TAG} test")
+    reply = _MD_LINK.sub(r"\1", text_response or "").replace("*", "").replace("_", " ")
+    index = _one_tag_value(test, _INDEX_READING_PREFIX)
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    line = _one_tag_value(test, _ON_LINE_PREFIX)
+    assert index and machine and line, (
+        f"an {_READING_TAG} test names {_INDEX_READING_PREFIX}, {_MACHINE_READING_PREFIX} "
+        f"and {_ON_LINE_PREFIX} tags; got {test.get('tags')}"
+    )
+    problems = []
+    if index == "blank":
+        if not _BLANK_INDEX.search(reply):
+            problems.append("it never says the index gives no given name")
+    elif not re.search(rf"\b{re.escape(index)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never shows the index reading {index!r}")
+    if not re.search(rf"\b{re.escape(machine)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never shows the machine reading {machine!r}")
+    if not re.search(rf"\bline\s*(no\.?|number|#)?\s*{re.escape(line)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never points to line {line} on the image")
+    verdicts = sorted({m.group(0) for m in _VERDICT.finditer(reply)})
+    if verdicts:
+        problems.append(f"it gives a verdict one machine reading cannot support: {verdicts}")
+    written = _one_tag_value(test, _AS_WRITTEN_PREFIX)
+    if written:
+        if not re.search(r"\s+".join(map(re.escape, written.split())), reply, re.IGNORECASE):
+            problems.append(f"it never reports the name as written, {written!r}")
+        folded = sorted({m.group(0) for m in _FOLDED.finditer(reply)})
+        if folded:
+            problems.append(f"it folds a record's name into another's: {folded}")
+    assert not problems, (
+        "a single machine reading must be shown beside the index reading, never "
+        "over it: " + "; ".join(problems)
+    )
+
+
+def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_calls):
+    """Tag-gated (``index-vs-reading``), issue #4578. A name only a machine reading
+    gives is not the subject's name: no search spawn (search-records, search-images,
+    search-full-text) writes it as a given name, beside the surname or in a
+    given-name field, and a given name a brief does search on is the wildcard on
+    the prefix every reading agrees on (``agreed-prefix:``). The disputed reading
+    may still appear in a brief as a reading in doubt.
+
+    Spawn prompts are read from the hook records, because the judge cannot see them
+    (``_spawn_prompts``). Proven both ways in
+    ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _READING_TAG not in test.get("tags", []):
+        pytest.skip(f"not an {_READING_TAG} test")
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    surname = _one_tag_value(test, _SURNAME_PREFIX)
+    prefix = _one_tag_value(test, _AGREED_PREFIX_PREFIX)
+    assert machine and surname and prefix, (
+        f"an {_READING_TAG} test names {_MACHINE_READING_PREFIX}, {_SURNAME_PREFIX} and "
+        f"{_AGREED_PREFIX_PREFIX} tags; got {test.get('tags')}"
+    )
+    m, s = re.escape(machine), re.escape(surname)
+    as_name = re.compile(rf"\b{m}\s+{s}\b|\b{s},?\s+{m}\b", re.IGNORECASE)
+    problems = []
+    for callee in _SEARCH_CALLEES:
+        for prompt in _spawn_prompts(builtin_tool_calls, callee):
+            if as_name.search(prompt):
+                problems.append(f"{callee} was briefed with {machine!r} as the subject's name")
+            for value in (g.group("v") for g in _GIVEN_FIELD.finditer(prompt)):
+                if value.lower() != prefix.lower():
+                    problems.append(
+                        f"{callee} was briefed to search the given name {value!r}, not {prefix!r}"
+                    )
+    assert not problems, (
+        "a name only a machine reading gives is a reading in doubt, not the subject's "
+        "name: " + "; ".join(problems)
+    )
+
+
 def test_bounded_first_message_runs_its_deliverable_after_init_project(
     skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
 ):
