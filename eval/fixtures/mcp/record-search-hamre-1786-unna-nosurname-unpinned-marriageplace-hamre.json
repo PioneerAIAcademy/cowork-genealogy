@@ -1,0 +1,44 @@
+{
+  "tool": "record_search",
+  "description": "Derived offline from captured rows (2026-11-17), place-filtered; not a live capture. Source: record-search-hamre-1786-unna-nosurname-unpinned, whose 50 captured rows (of 37756 matches) were filtered mechanically to rows with an event place containing 'Hamre': 1 kept (Unna Andersdatter, ark:/61903/1:1:8T1N-LK2M). totalMatches and returned are the filtered count. The bride NW44-PMK is not among them. The predicate matches any marriagePlace containing 'Hamre' (e.g. 'Hamre, Hordaland, Norway', 'Hamre prestegjeld, Hordaland, Norway'). Listed ahead of every place-less fixture, which cannot require marriagePlace to be absent. Shared by ut_search_records_022 and ut_search_records_023.",
+  "args": {
+    "givenName": "Unna",
+    "marriagePlace": "~Hamre"
+  },
+  "response": {
+    "query": {
+      "givenName": "Unna",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50,
+      "marriagePlace": "Hamre, Hordaland, Norway"
+    },
+    "totalMatches": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:8T1N-LK2M",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Hamre, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Andersdatter",
+        "sex": "Female",
+        "birthDate": "1796",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Lars Andersen",
+        "recordArk": "ark:/61903/1:2:4H6K-BFZM",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "3733603": "Norway, Census, 1801"
+    }
+  }
+}
