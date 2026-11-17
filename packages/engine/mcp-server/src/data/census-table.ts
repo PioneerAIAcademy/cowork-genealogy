@@ -35,9 +35,17 @@ export interface CensusRow {
   label: string;
   covers: readonly string[];
   collectionId: string;
-  /** The schedule names only the head of household (US 1790–1840). */
+  /** What the schedule recorded about household members; absent when unknown.
+   *  Each value beside a row is sourced in the comment next to it. */
+  schedule?: ScheduleContents;
+  /** The schedule names only the head of household: `schedule === "headsOnly"`. */
   headsOnly: boolean;
 }
+
+/** "headsOnly": names only the head; the others are counted, not named.
+ *  "everyone": names every person, with no relationship-to-head column.
+ *  "relationship": names every person and states each one's relationship to the head. */
+export type ScheduleContents = "headsOnly" | "everyone" | "relationship";
 
 export interface CensusFragment {
   year: number;
@@ -94,21 +102,32 @@ const federal = (
   year: number,
   collectionId: string,
   covers: readonly string[],
-): CensusRow => ({
-  year,
-  label: "United States",
-  covers,
-  collectionId,
-  headsOnly: HEAD_ONLY_US_CENSUS_YEARS.has(year),
-});
+): CensusRow =>
+  census(
+    year,
+    "United States",
+    covers,
+    collectionId,
+    HEAD_ONLY_US_CENSUS_YEARS.has(year)
+      ? "headsOnly"
+      : year >= US_RELATIONSHIP_COLUMN_FROM
+        ? "relationship"
+        : "everyone",
+  );
 
-const census = (
+function census(
   year: number,
   label: string,
   covers: readonly string[],
   collectionId: string,
-  headsOnly = false,
-): CensusRow => ({ year, label, covers, collectionId, headsOnly });
+  schedule?: ScheduleContents,
+): CensusRow {
+  return { year, label, covers, collectionId, ...(schedule ? { schedule } : {}), headsOnly: schedule === "headsOnly" };
+}
+
+/** England and Wales, and Scotland: no relationship column in 1841. */
+const british = (year: number): ScheduleContents =>
+  year >= BRITISH_RELATIONSHIP_COLUMN_FROM ? "relationship" : "everyone";
 
 const state = (name: string, ...extraForms: string[]): string[] => [`${name}, United States`, ...extraForms];
 
@@ -170,12 +189,16 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   // 264,435); Michigan 1894; New Jersey 1855 and 1865; New Mexico 1885; New York
   // 1865, 1875 and 1892 (FamilySearch's collection pages list 13, 12 and 20
   // counties missing); Wisconsin 1865 (FamilySearch wiki: 6 counties only).
-  census(1885, "Colorado", state("Colorado"), "1807096"), // 234k records
-  census(1885, "Florida", state("Florida"), "1457854"), // 309k records
+  // https://www.familysearch.org/en/wiki/Colorado,_State_Census,_1885_-_FamilySearch_Historical_Records
+  census(1885, "Colorado", state("Colorado"), "1807096", "relationship"), // 234k records
+  // https://www.familysearch.org/en/wiki/Florida,_State_Census,_1885_-_FamilySearch_Historical_Records
+  census(1885, "Florida", state("Florida"), "1457854", "relationship"), // 309k records
   census(1935, "Florida", state("Florida"), "1457856"), // 1.60m records
   census(1945, "Florida", state("Florida"), "1457855"), // 2.25m records
-  census(1855, "Illinois", state("Illinois"), "1803969", true), // heads only; 241k records
-  census(1865, "Illinois", state("Illinois"), "1803971", true), // heads only; 380k records
+  // https://www.familysearch.org/en/wiki/Illinois,_State_Census,_1855_-_FamilySearch_Historical_Records
+  census(1855, "Illinois", state("Illinois"), "1803969", "headsOnly"), // heads only; 241k records
+  // https://www.familysearch.org/en/wiki/Illinois,_State_Census,_1865_-_FamilySearch_Historical_Records
+  census(1865, "Illinois", state("Illinois"), "1803971", "headsOnly"), // heads only; 380k records
   census(1885, "Iowa", state("Iowa"), "1803643"), // 1.74m records
   census(1895, "Iowa", state("Iowa"), "1803957"), // 2.11m records
   census(1905, "Iowa", state("Iowa"), "2126961"), // 2.18m records
@@ -217,10 +240,14 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   census(1925, "South Dakota", state("South Dakota"), "1476077"), // 705k records
   census(1935, "South Dakota", state("South Dakota"), "1614831"), // 673k records
   census(1945, "South Dakota", state("South Dakota"), "1747589"), // 570k records
-  census(1855, "Wisconsin", state("Wisconsin"), "1443825", true), // heads only; 133k records
-  census(1875, "Wisconsin", state("Wisconsin"), "1443778", true), // heads only; 297k records
-  census(1885, "Wisconsin", state("Wisconsin"), "1443713", true), // heads only; 407k records
-  census(1895, "Wisconsin", state("Wisconsin"), "1443712", true), // heads only; 495k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1855_-_FamilySearch_Historical_Records
+  census(1855, "Wisconsin", state("Wisconsin"), "1443825", "headsOnly"), // heads only; 133k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1875_-_FamilySearch_Historical_Records
+  census(1875, "Wisconsin", state("Wisconsin"), "1443778", "headsOnly"), // heads only; 297k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1885_-_FamilySearch_Historical_Records
+  census(1885, "Wisconsin", state("Wisconsin"), "1443713", "headsOnly"), // heads only; 407k records
+  // https://www.familysearch.org/en/wiki/Wisconsin,_State_Census,_1895_-_FamilySearch_Historical_Records
+  census(1895, "Wisconsin", state("Wisconsin"), "1443712", "headsOnly"), // heads only; 495k records
   census(1905, "Wisconsin", state("Wisconsin"), "1443899"), // 2.23m records
 
   // Canada. No row: Lower and Upper Canada 1825-1842; Nova Scotia and Prince
@@ -249,21 +276,21 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
 
   // Britain and Ireland. No row: England and Wales 1851 (1,569,726 records, 9% of
   // 17,927,609). Ireland 1821-1851 are fragments.
-  census(1841, "England and Wales", ENGLAND_AND_WALES, "1493745"), // 15.8m records
-  census(1861, "England and Wales", ENGLAND_AND_WALES, "1493747"), // 19.6m records
-  census(1871, "England and Wales", ENGLAND_AND_WALES, "1538354"), // 22.9m records
-  census(1881, "England and Wales", ENGLAND_AND_WALES, "2562194"), // 26.1m records
-  census(1891, "England and Wales", ENGLAND_AND_WALES, "1865747"), // 29.0m records
-  census(1901, "England and Wales", ENGLAND_AND_WALES, "1888129"), // 34.1m records
-  census(1911, "England and Wales", ENGLAND_AND_WALES, "1921547"), // 36.4m records
-  census(1921, "England and Wales", ENGLAND_AND_WALES, "5000564"), // 38.4m records
-  census(1841, "Scotland", SCOTLAND, "2016000"), // 2.63m records
-  census(1851, "Scotland", SCOTLAND, "2028673"), // 2.91m records
-  census(1861, "Scotland", SCOTLAND, "2028677"), // 3.01m records
-  census(1871, "Scotland", SCOTLAND, "2028678"), // 3.35m records
-  census(1881, "Scotland", SCOTLAND, "2046756"), // 3.72m records
-  census(1891, "Scotland", SCOTLAND, "2046943"), // 4.02m records
-  census(1901, "Scotland", SCOTLAND, "3212239"), // 4.44m records
+  census(1841, "England and Wales", ENGLAND_AND_WALES, "1493745", british(1841)), // 15.8m records
+  census(1861, "England and Wales", ENGLAND_AND_WALES, "1493747", british(1861)), // 19.6m records
+  census(1871, "England and Wales", ENGLAND_AND_WALES, "1538354", british(1871)), // 22.9m records
+  census(1881, "England and Wales", ENGLAND_AND_WALES, "2562194", british(1881)), // 26.1m records
+  census(1891, "England and Wales", ENGLAND_AND_WALES, "1865747", british(1891)), // 29.0m records
+  census(1901, "England and Wales", ENGLAND_AND_WALES, "1888129", british(1901)), // 34.1m records
+  census(1911, "England and Wales", ENGLAND_AND_WALES, "1921547", british(1911)), // 36.4m records
+  census(1921, "England and Wales", ENGLAND_AND_WALES, "5000564", british(1921)), // 38.4m records
+  census(1841, "Scotland", SCOTLAND, "2016000", british(1841)), // 2.63m records
+  census(1851, "Scotland", SCOTLAND, "2028673", british(1851)), // 2.91m records
+  census(1861, "Scotland", SCOTLAND, "2028677", british(1861)), // 3.01m records
+  census(1871, "Scotland", SCOTLAND, "2028678", british(1871)), // 3.35m records
+  census(1881, "Scotland", SCOTLAND, "2046756", british(1881)), // 3.72m records
+  census(1891, "Scotland", SCOTLAND, "2046943", british(1891)), // 4.02m records
+  census(1901, "Scotland", SCOTLAND, "3212239", british(1901)), // 4.44m records
   census(1901, "Ireland", IRELAND, "1626180"), // 4.38m records
   census(1911, "Ireland", IRELAND, "2854327"), // 4.39m records
 
@@ -279,10 +306,16 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   census(1890, "Denmark", ["Denmark"], "2800928"), // 2.14m records
   census(1901, "Denmark", ["Denmark"], "2800929"), // 2.33m records
   census(1906, "Denmark", ["Denmark"], "2800931"), // 2.53m records
-  census(1801, "Norway", ["Norway"], "3733603"), // 879k records
-  census(1865, "Norway", ["Norway"], "3756102"), // 1.69m records
-  census(1891, "Norway", ["Norway"], "4067726"), // 2.73m records
-  census(1900, "Norway", ["Norway"], "3744863"), // 2.26m records
+  // Norway schedules, from each collection's FamilySearch wiki page, "What Can
+  // These Records Tell Me?": every person's name and position in family.
+  // https://www.familysearch.org/en/wiki/Norway_Census,_1801_-_FamilySearch_Historical_Records
+  census(1801, "Norway", ["Norway"], "3733603", "relationship"), // 879k records
+  // https://www.familysearch.org/en/wiki/Norway,_Census,_1865_-_FamilySearch_Historical_Records
+  census(1865, "Norway", ["Norway"], "3756102", "relationship"), // 1.69m records
+  // https://www.familysearch.org/en/wiki/Norway,_Census,_1891_-_FamilySearch_Historical_Records
+  census(1891, "Norway", ["Norway"], "4067726", "relationship"), // 2.73m records
+  // https://www.familysearch.org/en/wiki/Norway,_Census,_1900_-_FamilySearch_Historical_Records
+  census(1900, "Norway", ["Norway"], "3744863", "relationship"), // 2.26m records
   census(1835, "Iceland", ["Iceland"], "4380200"), // 76k records
   census(1860, "Iceland", ["Iceland"], "4460200"), // 66k records
 

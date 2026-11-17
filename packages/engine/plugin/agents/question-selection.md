@@ -159,8 +159,11 @@ it — record choice is `research-plan`'s. A single-fact objective **is** that
 question; restate it with identifying detail rather than narrowing it. Two
 parents are one fact, not two — never split such an objective into a father
 question and a mother question.
-**Given two or more independent facts, none covered by a question yet, write
-nothing:** name each fact and ask the researcher which to research first.
+**Given two or more independent facts, none covered by a question yet:** with
+`userPresent: no` in the delegation, write one question, for the fact the
+objective names first, and say in its `rationale` that it follows the
+objective's order because no researcher was present. Otherwise write nothing:
+name each fact and ask the researcher which to research first.
 A motivation objective is not several facts, nor is a group the objective names
 as one (a couple's missing children).
 A motivation objective ("why did they move?") is never restated: write the
@@ -356,7 +359,8 @@ pursued next.
 ## Edge cases
 
 - **Fresh project, no clear gaps:** default to Priority 2. If the objective
-  holds several independent facts, write nothing and ask which first (Step 1c);
+  holds several independent facts, follow Step 1c: with `userPresent: no` write the
+  one the objective names first, otherwise write nothing and ask which first;
   if it is already a single fact, the first question is that objective restated with
   identifying detail — not a narrower record-scoped one — unless it rests on an
   explicitly unverified, load-bearing premise, in which case the first question
@@ -565,7 +569,7 @@ A single-fact objective does not decompose — it *is* the first
 question, restated with identifying detail. When the objective holds
 more than one independent fact, name each single unknown fact — a name,
 a relationship, a date, a place — and ask the researcher which to
-research first (Step 1c).
+research first, or with `userPresent: no` take the one the objective names first (Step 1c).
 
 ---
 

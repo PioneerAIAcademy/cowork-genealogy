@@ -726,6 +726,7 @@ def make_pretool_hook(
 REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
     "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
+    "image_index",
     "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
     "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
     "record_read",
