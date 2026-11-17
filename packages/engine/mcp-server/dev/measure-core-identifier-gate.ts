@@ -24,6 +24,7 @@ import { join, dirname } from "node:path";
 import { execFileSync } from "node:child_process";
 import * as ra from "../src/tools/research-append.js";
 import * as rp from "../src/utils/record-persona.js";
+import * as sbd from "../src/utils/settled-birth-disputes.js";
 import { lookupWithin } from "../src/utils/place-coords.js";
 import { standardPlaceToCoords } from "../src/utils/place-resolver.js";
 
@@ -58,6 +59,9 @@ let links = 0, linksRelational = 0;
 let refused = 0, refusedRelational = 0, refusedPlace = 0, refusedDate = 0;
 let refusedWithoutConflicts = 0;
 let refusedAttached = 0;
+let conflictsBirthPlace = 0, conflictsAttachedRefused = 0;
+const conflictRule = (ra as any).attachedBirthConflictInvariants as ((c: any, r: any, t: any, l?: any) => string[]) | undefined;
+const isBirthPlace = (sbd as any).isBirthPlaceDispute as ((a: unknown) => boolean) | undefined;
 const judgedAttached = new Set<string>();
 const attachedOf = (ra as any).attachedBirthsOf as ((p: string, r: any, l?: any) => any[]) | undefined;
 let recheckRefusals = 0;
@@ -172,6 +176,18 @@ for (const { label, research, tree } of docs) {
     }
   }
 
+  // #4444: every resolved birthplace fact conflict, replayed through the rule
+  // that refuses resolving one across a person's contradicting attached births.
+  if (conflictRule && isBirthPlace) {
+    for (const c of (research.conflicts ?? []) as any[]) {
+      if (c?.conflict_type !== "fact" || c?.status !== "resolved" || !isBirthPlace(c.disputed_attribute)) continue;
+      conflictsBirthPlace += 1;
+      if (conflictRule(c, research, tree, personLinks).length === 0) continue;
+      conflictsAttachedRefused += 1;
+      if (LIST) lines.push(`CONFLICT-ATTACHED\t${label}\t${c.id}\t${(c.competing_assertion_ids ?? []).join(",")}\tpreferred ${c.preferred_assertion_id}`);
+    }
+  }
+
   if (containment) {
     for (const c of (research.conflicts ?? []) as any[]) {
       if (!c || c.conflict_type !== "fact") continue;
@@ -191,6 +207,7 @@ console.log(`  refused by the gate                       : ${refused} (${refused
 console.log(`  refused with every conflict removed       : ${refusedWithoutConflicts}`);
 console.log(`  refused by the attached-births arm (#4444): ${attachedOf ? refusedAttached : "-"}${absent(attachedOf)}`);
 console.log(`people with two or more attached births    : ${attachedOf ? judgedAttached.size : "-"}${absent(attachedOf)}`);
+console.log(`resolved birthplace conflicts / refused    : ${conflictRule ? `${conflictsBirthPlace} / ${conflictsAttachedRefused}` : "-"}${absent(conflictRule)}`);
 console.log(`one-party links the re-check refuses        : ${recheck ? recheckRefusals : "-"}${absent(recheck)}`);
 console.log(`fact conflicts / refused as one place       : ${containment ? `${conflictsChecked} / ${conflictsRefused}` : "-"}${absent(containment)}`);
 console.log(`record+role groups with mixed persona ids   : ${mixedGroups}`);

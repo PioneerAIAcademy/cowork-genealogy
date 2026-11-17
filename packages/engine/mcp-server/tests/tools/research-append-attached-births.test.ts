@@ -268,15 +268,17 @@ describe("a birthplace conflict across a person's self-contradicting attached bi
     expect(judge(conflict(["a_001", "a_004"]), research, tree)).toEqual([]);
   });
 
-  it("refuses the write through research_append on run 2026-11-16's own documents", async () => {
+  // Run 2026-11-09 resolved c_001 (the 1880 census against the Irish civil
+  // registration) toward the registration; the rule refuses that write.
+  it("refuses the write through research_append on run 2026-11-09's own documents", async () => {
     const dir = await mkdtemp(join(tmpdir(), "attached-conflict-"));
     try {
-      const base = join(__dirname, "../../../../../eval/runlogs/e2e/thomas-hanrahan-marriage/run-2026-11-16_15-55-51");
+      const base = join(__dirname, "../../../../../eval/runlogs/e2e/thomas-hanrahan-marriage/run-2026-11-09_12-14-54");
       await cp(`${base}.final-research.json`, join(dir, "research.json"));
       await cp(`${base}.final-tree.gedcomx.json`, join(dir, "tree.gedcomx.json"));
       const r: any = await researchAppend({
         projectPath: dir, section: "conflicts", op: "update", entryId: "c_001",
-        fields: { status: "resolved", preferred_assertion_id: "a_074" },
+        fields: { status: "resolved", preferred_assertion_id: "a_145" },
       } as any);
       expect(r.ok).toBe(false);
       expect((r.errors as string[]).join(" ")).toContain("cannot be 'resolved' by preferring one side");
