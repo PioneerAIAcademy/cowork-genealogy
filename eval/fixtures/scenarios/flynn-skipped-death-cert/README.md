@@ -1,6 +1,6 @@
 # flynn-skipped-death-cert
 
-> **Parent rebuilt 2026-11-17.** This fork was taken from `flynn-exhaustive-ready` as it stood before that date (later censuses skipped, negative probate search, no Irish search); see the parent's README. This scenario's data is unchanged.
+> **Updated 2026-11-17, with the parent.** This fork already held the will and the later censuses. It now also carries the parent's Irish baptism index search (`pli_010`, `log_009`) and naturalization search (`pli_009`, `log_010`), the question no longer says Pennsylvania, and `ps_001.shortfall` is `ceiling`. Reason: on the unchanged fork the agent declined 2 runs in 10 of `ut_research_exhaustiveness_012`, once on the unsearched Irish registers, the hole two genealogists named in the parent. The one skipped item is now the death certificate, which is what 012 tests.
 
 Fork of `flynn-exhaustive-ready` with four plan-item changes:
 
