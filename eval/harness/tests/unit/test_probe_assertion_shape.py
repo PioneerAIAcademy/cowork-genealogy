@@ -79,3 +79,12 @@ def test_decide_blocks_a_persona_id_misread_only_grouped_even_when_totals_favour
     rows = _rows(model, "flat", 5) + _rows(model, "grouped", 0, persona_miss=("a_7",))
     ships, reasons = p.decide(rows)
     assert not ships and "record_persona_id" in reasons[0] and "a_7" in reasons[0]
+
+
+def test_each_arm_reads_its_own_builds_description():
+    """The grouped shape is explained only in the description; a probe without it
+    measures a shape nobody told the model about."""
+    build = Path(__file__).resolve().parents[4] / "packages/engine/mcp-server/build"
+    desc = p.tool_description(build)
+    assert "grouped by persona" in desc
+    assert desc in p.system_prompt(desc)

@@ -218,6 +218,37 @@ SECTION=assertions` over the 651 recorded assertion reads that answered (of 653
 replayed), the grouped answers are 20.1% smaller;
 a single-assertion read grows by the 14 characters of its one-fact wrapper.
 
+**Misreads (probe, 2026-11-17).** `eval/harness/scripts/probe_assertion_shape.py`
+replays the 24 largest recorded assertion reads (at most two per run) on the pre-change build (flat)
+and on this one (grouped), and asks each assertion reader's model, by assertion
+id, for `information_quality`, `record_basis`, `informant`,
+`informant_proximity` and `record_persona_id` on 192 sampled assertions: 960
+answers per shape per model. Misreads out of 960:
+
+| model (effort) | system prompt holds the tool description | flat | grouped |
+|---|---|---|---|
+| claude-sonnet-5 (medium) | no | 0 | 0 |
+| claude-sonnet-5-5 (medium) | no | 1 | 0 |
+| claude-haiku-5-5 (low) | no | 0 | 11 |
+| claude-sonnet-5 (medium) | yes | 1 | 3 |
+| claude-sonnet-5-5 (medium) | yes | 0 | 3 |
+| claude-haiku-5-5 (low) | yes | 0 | 1 |
+
+Without the description, Haiku read a group's `record_persona_id` as absent on
+every fact of one page (8 of its 11). With it — as every real reader has it — the
+grouped misreads are one adjacent persona id and a single pattern: the one fact
+in a group whose informant differs from the rest (a census residence attested by
+the enumerator among facts from a household member) read with the group's
+majority values. That is why the description says each fact holds its own fields.
+
+**Eval gate.** All eight `assertions` readers gate the shape, since
+`research_query` runs live from the compiled build in the unit harness: a new fail
+in any of them sends assertions back to flat. Scratch runs on this build, against
+each suite's committed rate (`make eval-health`): research-exhaustiveness 20,
+timeline 13, conflict-resolution 14, search-hints 11, search-full-text 18 — 69
+pass, 7 partial, no fail or abort. Committed runs: proof-conclusion,
+person-evidence and gps-mentor (their bodies changed with this shape).
+
 **Two fields are left out of `items`.** An item of a plan that is not active
 (`superseded` or `completed`) carries no `rationale`, except a `skipped` item
 with no `skip_category`. Every item of an active plan keeps its `rationale`,

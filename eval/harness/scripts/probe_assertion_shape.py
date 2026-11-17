@@ -10,21 +10,23 @@ assertions before any model sees them.
 For each page a fixed set of assertions is sampled — deep inside a group, a
 different informant from the group's first fact, a missing record_persona_id —
 and the model is asked, by assertion id, for information_quality,
-record_basis, informant, informant_proximity and record_persona_id. The right
+record_basis, informant, informant_proximity and record_persona_id, with the
+tool's own description in its system prompt, each arm its own build's. The right
 answer is read from the flat answer, so scoring is exact: the JSON value, or
 ABSENT when the assertion has no such key.
 
 Models are the assertion readers' own pins: claude-sonnet-5 (medium),
-claude-sonnet-5-5 (medium), claude-haiku-5-5 (low). The ship rule, from the
-plan: grouped ships iff, per model, its total misreads are <= flat's and no
-fact misread grouped on record_persona_id was read right flat.
+claude-sonnet-5-5 (medium), claude-haiku-5-5 (low). It reports a strict check —
+per model, grouped misreads <= flat's, and no record_persona_id misread grouped
+that flat read right. The shape itself is gated by the eval suites
+(research-query-tool-spec.md §2.2); this records the misreads beside them.
 
 Costs money (Anthropic API, ANTHROPIC_API_KEY or eval/.env). `--dry-run`
 builds the pages and questions and prints a size estimate with no model call.
 
     uv run python scripts/probe_assertion_shape.py --base-build <dir> --out <scratch.json> [--dry-run]
 
-Exit codes: 0 grouped ships · 1 grouped does not ship · 2 usage/selection error ·
+Exit codes: 0 the strict check passes · 1 it does not · 2 usage/selection error ·
 3 integrity error (the two shapes disagree, a model refused, malformed output).
 """
 
@@ -34,6 +36,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
@@ -218,6 +221,23 @@ async def build_pages(base: Path, candidate: Path, n_pages: int) -> list[dict[st
     return pages
 
 
+def tool_description(build: Path) -> str:
+    """research_query's description as that build advertises it — what a reader
+    of its answers sees, so each arm is read with its own build's explanation."""
+    module = (build / "tools" / "research-query.js").resolve().as_uri()
+    out = subprocess.run(
+        ["node", "-e", f"import({json.dumps(module)}).then(m => process.stdout.write(m.researchQuerySchema.description))"],
+        capture_output=True, text=True, encoding="utf-8", check=False,
+    )
+    if out.returncode != 0 or not out.stdout.strip():
+        raise IntegrityError(f"could not read research_query's description from {build}: {out.stderr[:200]}")
+    return out.stdout
+
+
+def system_prompt(description: str) -> str:
+    return f"{SYSTEM}\n\n<tool name=\"research_query\">\n{description}\n</tool>"
+
+
 def _prompt(text: str, asked: list[str]) -> str:
     qs = "\n".join(f"- {aid}: {', '.join(FIELDS)}" for aid in asked)
     return f"<tool_result>\n{text}\n</tool_result>\n\nFor each assertion id below, give each listed field:\n{qs}"
@@ -228,14 +248,14 @@ def _prompt(text: str, asked: list[str]) -> str:
 # --------------------------------------------------------------------------
 
 
-def ask(client: Any, model: str, effort: str, text: str, asked: list[str]) -> tuple[list[dict], Any]:
+def ask(client: Any, model: str, effort: str, system: str, text: str, asked: list[str]) -> tuple[list[dict], Any]:
     import anthropic
 
     try:
         response = client.messages.create(
             model=model,
             max_tokens=16000,
-            system=[{"type": "text", "text": SYSTEM, "cache_control": {"type": "ephemeral"}}],
+            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
             output_config={"effort": effort, "format": {"type": "json_schema", "schema": ANSWER_SCHEMA}},
             messages=[{"role": "user", "content": _prompt(text, asked)}],
         )
@@ -276,6 +296,8 @@ def main(argv: list[str] | None = None) -> int:
         if not (args.base or args.base_build):
             raise UsageError("pass --base <ref> or --base-build <dir>: the flat arm is a pre-#4412 build")
         base = args.base_build or ensure_build_at(args.base)
+        systems = {"flat": system_prompt(tool_description(base)),
+                   "grouped": system_prompt(tool_description(args.candidate_build))}
         pages = asyncio.run(build_pages(base, args.candidate_build, args.pages))
     except UsageError as exc:
         print(f"probe: {exc}", file=sys.stderr)
@@ -302,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
         for model, effort in MODELS:
             for p in pages:
                 for shape in SHAPES:
-                    answers, u = ask(client, model, effort, p[f"{shape}_text"], p["asked"])
+                    answers, u = ask(client, model, effort, systems[shape], p[f"{shape}_text"], p["asked"])
                     usage[(model, "in")] += u.input_tokens + (u.cache_read_input_tokens or 0) + (u.cache_creation_input_tokens or 0)
                     usage[(model, "out")] += u.output_tokens
                     for row in score(p["flat"], answers, p["asked"]):
@@ -322,7 +344,7 @@ def main(argv: list[str] | None = None) -> int:
     print("\nmisreads out of", questions, "answers per row; tokens:",
           ", ".join(f"{m} {usage[(m, 'in')]:,} in / {usage[(m, 'out')]:,} out" for m, _ in MODELS))
     ships, reasons = decide(results)
-    print("\nGROUPED SHIPS" if ships else "\nGROUPED DOES NOT SHIP:\n  " + "\n  ".join(reasons))
+    print("\nSTRICT CHECK PASSES" if ships else "\nSTRICT CHECK FAILS:\n  " + "\n  ".join(reasons))
     return 0 if ships else 1
 
 
