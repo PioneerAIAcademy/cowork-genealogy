@@ -558,7 +558,8 @@ router sentence: plan at most one extra round, then wrap up.
   says so in that question's `rationale`. Nobody is there to answer, and the objective's
   order is a basis the agent can state and the same project picks the same way every
   run; "the highest-value fact" is neither. One question, not one per fact:
-  `newQuestionWhileAnotherIsOpenInvariants` refuses a second open question. A "Keep
+  `newQuestionWhileAnotherIsOpenInvariants` refuses a second open question written in a
+  later call, and `secondQuestionInOneCallInvariants` one written in the same call. A "Keep
   going." turn leaves the field out, because a researcher is there to answer.
 - **The objective row.** When every question is resolved, the router names any uncovered
   part of the objective as a suggested next question and offers setup.

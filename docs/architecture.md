@@ -2389,10 +2389,9 @@ decides, not what the run can reach.** `question-selection` applies the same sha
 with nobody waiting to answer, skip the ask and take the action.
 
 Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
-"can a human act on this right now?". Three bodies keep a genuine two-sided answer because
+"can a human act on this right now?". Two bodies keep a genuine two-sided answer because
 a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
-`agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
-can), `search-external-sites` (a user who named the plan item will capture it; mid-run
+`search-external-sites` (a user who named the plan item will capture it; mid-run
 nobody will) and `agents/question-selection.md` (a user can pick which fact of the
 objective first; mid-run nobody can). `search-hints` decides hints itself on every run. Each has eval fixtures on
 each side. The mode difference survives in the router, which sets that field from the

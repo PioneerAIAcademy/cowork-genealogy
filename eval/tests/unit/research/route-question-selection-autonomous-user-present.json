@@ -71,7 +71,7 @@
   },
   "judge_context": [
     "This is a ROUTING test and the hand-off is asserted deterministically. Do NOT grade routing, and do NOT grade whether the research was driven to completion.",
-    "Every callee here is STUBBED, and each stub tells the router its delegation 'changed no project state' and not to walk further down the routing table. So one hand-off and a summary is the only outcome the harness permits. The v8 run failed this test for 'did not drive the research to completion', which no behaviour could have satisfied.",
+    "Every callee here is STUBBED, and each stub tells the router its delegation 'changed no project state' and not to walk further down the routing table. So one hand-off and a summary is the only outcome the harness permits.",
     "Do not penalise the reply for reporting what the stubbed callee did, and do not reward it for claiming project state changed when the stub said it did not.",
     "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists.",
     "This run was opened with --autonomous, so nobody answers a pause. Whether the question-selection spawn carries userPresent: no is asserted by test_spawn_carries_its_step_mode_fields from the hook records; do not grade it."
