@@ -1866,12 +1866,14 @@ _UNEXPLAINED = (
     r"|\bnot\s+disclosed\b|\b(?:does\s+not|doesn['’]t)\s+(?:say|explain|mention\s+why)\b"
     r"|\bno\s+rationale\s+for\b"
     r"|\bnot\s+(?:recorded|obtained|stated|explained|computed)\b|\bno\s+disclosure\b"
-    r"|\bmentions\s+no\b|\bnever\s+computed\b|\bno\s+account\b)"
+    r"|\bmentions\s+no\b|\bnever\s+computed\b|\bno\s+account\b"
+    r"|\bnor\s+(?:says|explains|states|gives)\s+why\b|\bwhy\s+none\s+was\b)"
 )
 _SCORE_UNEXPLAINED = re.compile(
     _SCORE_TERM + r"[^\n]{0,80}?" + _UNEXPLAINED
     + r"|" + _UNEXPLAINED + r"[^\n]{0,80}?" + _SCORE_TERM
     + r"|\bno\s+(?:`?same_person`?\s+score|match\s+score|`?match_score`?)\b"
+    + r"|\bno\s+score\s+(?:disclosed|stated|given|recorded|reported)\b"
     + r"|" + _SCORE_TERM + r"\s+is\s+missing\b",
     re.IGNORECASE,
 )

@@ -2442,6 +2442,11 @@ def test_review_gaps_passes_a_review_naming_both():
     "pe_005 has a null match_score and the rationale does not mention why.",
     "A link from a_013 to Thomas (I2) hasn't been created. "
     "The match_score field is empty, with no rationale for it.",
+    # "neither ... nor says why", and a "No score disclosed." heading (#4548 suite run).
+    "a_013 has no pe_ link to I2. `match_score` is null and the rationale neither "
+    "gives a `same_person` score nor says why none was obtained.",
+    "a_013 names Thomas Flynn as father, but no pe_ entry links it to I2. "
+    "**No score disclosed.** The rest of the rationale reads well.",
 ])
 def test_review_gaps_accepts_other_wordings(text):
     _gaps(text)
@@ -2492,6 +2497,11 @@ _SCORE_OK = "The match_score is null and the rationale never says why."
      "match_score"),
     (_I2_OK + "The rationale is silent on competing candidates; the score is 0.91.",
      "match_score"),
+    # "nor says why" about something other than the score, or beside a real number.
+    (_I2_OK + "The census entry is undated, and the rationale neither cites it nor says why.",
+     "match_score"),
+    (_I2_OK + "The score is 0.88, and the rationale neither cites it nor says why.",
+     "match_score"),
 ])
 def test_review_gaps_fails_a_review_missing_a_point(text, missing):
     with pytest.raises(AssertionError, match=missing):
@@ -2520,12 +2530,16 @@ _NAMES_I2_GAP = {
     # Human-held 3 on both dimensions.
     "v11_2026-11-15_18-32-11_run0", "v11_2026-11-16_06-41-17_run0",
     "v11_2026-11-15_21-52-22_run1", "v11_2026-11-15_21-52-22_run2",
+    # From the first post-change suite run, replaced by a re-run after r0's score
+    # wording ("neither gives ... nor says why") was found missed.
+    "v11_2026-11-16_22-27-12_run0", "v11_2026-11-16_22-27-12_run1",
 }
 # v2 and v6: Score discipline raised to 3, but Multi-person awareness was N/A
 # under the rubric of the day, and neither reply names the gap.
 _OMITS_I2_GAP = {
     "v2_run0", "v3_run0", "v5_run0", "v6_run0", "v9_run0",
     "v11_2026-11-15_21-52-22_run0", "v11_2026-11-15_21-52-22_run3",
+    "v11_2026-11-16_22-27-12_run2",
 }
 
 
