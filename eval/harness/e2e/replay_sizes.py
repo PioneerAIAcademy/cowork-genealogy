@@ -231,8 +231,12 @@ def _is_harness_denial(call: dict) -> bool:
 
 
 def build_items(
-    run_path: Path, log: dict, tools: set[str], skipped: Counter, skipped_chars: Counter
+    run_path: Path, log: dict, tools: set[str], skipped: Counter, skipped_chars: Counter,
+    sections: frozenset[str] | None = None,
 ) -> RunItems | None:
+    """The run's replayable calls. `sections`, when given, keeps only calls whose
+    `args.section` is one of them (a `research_query` section), so one section's
+    answers can be measured on their own."""
     slug = run_path.parent.name
     fixture = E2E_TESTS / slug
     starting = _read_json(fixture / "starting-research.json") or {}
@@ -264,6 +268,8 @@ def build_items(
                 reason = "not-on-local-allow-list"
         elif name not in tools:
             reason = "filtered-out (--tools)"
+        elif sections is not None and (call.get("args") or {}).get("section") not in sections:
+            reason = "filtered-out (--section)"
         elif not isinstance(call.get("result_chars"), int):
             reason = "unclassifiable"
         elif _is_harness_denial(call):
@@ -674,6 +680,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-build", type=Path, default=ENGINE_DIR / "build")
     parser.add_argument("--test", help="one fixture slug")
     parser.add_argument("--tools", help="comma-separated subset of the replayable tools")
+    parser.add_argument("--section", help="comma-separated research_query sections; only calls on them are replayed")
     parser.add_argument("--tracked-only", action="store_true", help="only runs committed to git")
     parser.add_argument("--json", type=Path, help="write per-call rows here (not under eval/runlogs/)")
     args = parser.parse_args(argv)
@@ -696,9 +703,21 @@ async def _main(args: argparse.Namespace) -> int:
         tools = asked & REPLAYABLE
         if not tools:
             raise UsageError(f"--tools {args.tools!r} matches no replayable tool ({', '.join(sorted(REPLAYABLE))})")
+    sections = None
+    if args.section is not None:
+        sections = frozenset(x.strip() for x in args.section.split(",") if x.strip())
+        if not sections:
+            raise UsageError(f"--section {args.section!r} names no section")
     runs_logs, untracked = select_runs(args.test, args.tracked_only)
     if not runs_logs:
         raise UsageError("no committed run carries tool_calls[].result_chars for this selection")
+    if sections is not None:
+        recorded = {
+            (c.get("args") or {}).get("section")
+            for _, log in runs_logs for c in log["tool_calls"] if isinstance(c, dict)
+        }
+        if not sections & recorded:
+            raise UsageError(f"--section {args.section!r} matches no recorded call's section")
 
     candidate = args.candidate_build
     cand_version = build_version(candidate)
@@ -720,7 +739,7 @@ async def _main(args: argparse.Namespace) -> int:
             if isinstance(c, dict) and str(c.get("tool", "")).startswith("mcp__")
             and isinstance(c.get("result_chars"), int)
         )
-        run = build_items(path, log, tools, skipped, skipped_chars)
+        run = build_items(path, log, tools, skipped, skipped_chars, sections)
         if run and run.items:
             runs.append(run)
     if not any(r.items for r in runs):
@@ -741,6 +760,7 @@ async def _main(args: argparse.Namespace) -> int:
         f"runs: {len(runs_logs)} carrying result_chars"
         + (f" ({untracked} untracked)" if untracked else " (all tracked)")
         + (" · --tracked-only" if args.tracked_only else "")
+        + (f" · --section {','.join(sorted(sections))}" if sections else "")
     )
     print(render(
         header=header, stats=stats, rows=rows, skipped=skipped, skipped_chars=skipped_chars,

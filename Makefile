@@ -948,7 +948,7 @@ e2e-relay-fidelity: ## How much of a subagent's return survives the relay on a R
 	cd eval/harness && uv run python scripts/relay_fidelity_report.py --production $(if $(SINCE),--since $(SINCE),) $(if $(TEST),--test $(TEST),)
 
 .PHONY: replay-sizes
-replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
+replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [SECTION=a,b] [TRACKED_ONLY=1] [JSON=<path>]
 	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
 	# local-state read tools (research_query, project_context, person_warnings,
 	# merge_warnings, validate_research_schema — ~36% of recorded answer chars)
@@ -961,7 +961,7 @@ replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base 
 	# Exit 2: selection, usage or build error. Exit 3: the replay is not
 	# measuring what it claims (rebase broke, state errors over the margin, a
 	# read wrote files, a network call) — it refuses to print a misleading 0%.
-	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(SECTION),--section $(SECTION),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: replay-collapse
 replay-collapse: $(ENGINE_BUILD) ## Replay recorded research_query walks against the one call that replaces each — rule plan-log (log×planItemId walk -> log×questionId, T2.1) and rule plural-id (one-id walks -> one call with a list of ids, T2.3) — zero model calls: make replay-collapse [RULE=plan-log|plural-id] [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
