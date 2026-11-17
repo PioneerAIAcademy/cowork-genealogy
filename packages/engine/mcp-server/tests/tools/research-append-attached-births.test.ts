@@ -21,7 +21,13 @@ vi.mock("../../src/utils/place-api.js", async (importOriginal) => ({
 }));
 import { readFileSync } from "fs";
 import { join } from "path";
-import { attachedBirthConflictInvariants, coreIdentifierContradictionInvariants, researchAppend, type PersonLink } from "../../src/tools/research-append.js";
+import {
+  attachedBirthConflictInvariants,
+  birthPlaceLookups,
+  coreIdentifierContradictionInvariants,
+  researchAppend,
+  type PersonLink,
+} from "../../src/tools/research-append.js";
 import { cp, mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
@@ -156,9 +162,11 @@ describe("core-identifier gate — a tree person's attached births disagree (#44
     });
     const r = judge(link("a_003"), research, tree);
     expect(r).toHaveLength(1);
-    expect(r[0]).toContain("the researcher ruled is not this person");
-    // The rejection exists already: asking for one would lift nothing.
+    expect(r[0]).toContain("the researcher ruled an attached record not this person");
+    // The rejection exists already: asking for one would lift nothing, and nor
+    // would the fact conflict the generic advice names.
     expect(r[0]).not.toContain("a fact conflict between them does not lift this");
+    expect(r[0]).toContain("no conflict lifts this either");
   });
 
   it("refuses raising one of the two contradicting attachments", () => {
@@ -207,6 +215,21 @@ describe("core-identifier gate — a tree person's attached births disagree (#44
     const name = { ...IRISH, fact_type: "name", value: "John Hanrahan", place: undefined };
     const { research, tree } = project({ assertions: [CENSUS, BAPTISM, name] });
     expect(judge(link("a_003"), research, tree)).toEqual([]);
+  });
+
+  it("looks up the attached births' places only for a record stating a birthplace", () => {
+    const std = (a: any, standard_place: string) => ({ ...a, standard_place });
+    const census = std(CENSUS, "New York, United States");
+    const baptism = std(BAPTISM, "Ardfinnan, County Tipperary, Ireland");
+    const name = { ...IRISH, fact_type: "name", value: "John Hanrahan", place: undefined };
+    const silent = project({ assertions: [census, baptism, name] });
+    expect(birthPlaceLookups(link("a_003"), silent.research, silent.tree, linksOf(silent.research))).toEqual({
+      coordNames: [],
+      aliasNames: [],
+    });
+    const stating = project({ assertions: [census, baptism, std(IRISH, "Ireland")] });
+    const { coordNames } = birthPlaceLookups(link("a_003"), stating.research, stating.tree, linksOf(stating.research));
+    expect(coordNames).toEqual(expect.arrayContaining(["New York, United States", "Ardfinnan, County Tipperary, Ireland"]));
   });
 
   it("is silent when the record's birthplace sides with neither attached birth", () => {

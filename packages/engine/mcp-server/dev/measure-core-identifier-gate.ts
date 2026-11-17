@@ -126,9 +126,20 @@ for (const { label, research, tree } of docs) {
   if (COORDS) {
     const names = new Set<string>();
     const withNames = new Set<string>();
-    for (const e of live) for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
-    const attachedNames = ((ra as any).birthPlaceNameLookups ?? (ra as any).attachedBirthPlaceNames) as ((e: any, r: any, t: any, l?: any) => string[]) | undefined;
-    if (attachedNames) for (const e of live) for (const n of attachedNames(e, research, tree, personLinks)) withNames.add(n);
+    // One read of each link's scope gives both lists; a revision before the
+    // other-names read exports only the coordinate names.
+    const lookups = (ra as any).birthPlaceLookups as
+      | ((e: any, r: any, t: any, l?: any) => { coordNames: string[]; aliasNames: string[] })
+      | undefined;
+    for (const e of live) {
+      if (!lookups) {
+        for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
+        continue;
+      }
+      const { coordNames, aliasNames } = lookups(e, research, tree, personLinks);
+      for (const n of coordNames) names.add(n);
+      for (const n of aliasNames) withNames.add(n);
+    }
     if (conflictNames) for (const c of (research.conflicts ?? []) as any[]) for (const n of conflictNames(c, research, personLinks)) withNames.add(n);
     const info = (ra as any).birthPlaceInfo as ((n: string, w: boolean) => Promise<any>) | undefined;
     for (const n of withNames) names.add(n);

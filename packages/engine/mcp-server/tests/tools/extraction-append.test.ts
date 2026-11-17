@@ -1466,16 +1466,23 @@ describe("extraction_append: personId extracts and links a person's attachments"
       expect(r.summary).toContain("call extraction_append again with personId 'I1'");
     });
 
-    it("for good, says calling again will not change that", async () => {
+    it("otherwise, points to the record's own summary for what to do", async () => {
       const r = await read(() => new Error("FamilySearch API error: 404 Not Found"));
       expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain("404");
       expect(r.summary).not.toContain("call extraction_append again");
-      expect(r.summary).toContain("calling again will not change that");
+      expect(r.summary).toContain("its summary says why, and what, if anything, to do before calling again");
     });
 
-    it("on a rate limit, does not advise calling again", async () => {
-      const r = await read(() => new Error("FamilySearch recapi error: 429"));
+    // record_read's own 429 says to wait and try again, and its 401 to log in:
+    // the person-mode summary must not tell the agent the record is lost.
+    it.each([
+      ["a rate limit", "FamilySearch rate limit reached and did not clear within the retry budget. Wait a minute and try again."],
+      ["a rejected token", "Your FamilySearch session has expired. Call the login tool to authenticate."],
+    ])("on %s, neither advises an immediate retry nor says calling again cannot read it", async (_, message) => {
+      const r = await read(() => new Error(message));
+      expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain(message);
       expect(r.summary).not.toContain("call extraction_append again");
+      expect(r.summary).not.toMatch(/will not change/);
     });
   });
 

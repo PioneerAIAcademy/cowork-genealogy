@@ -194,7 +194,8 @@ const DEFAULT_DEPS: ExtractionAppendDeps = { readRecord: recordReadTool };
  *  read: Node's fetch rejects every transport failure with "fetch failed", a
  *  timeout is `fetchWithTimeout`'s own, and a 5xx that outlasted `record_read`'s
  *  retries is its "FamilySearch recapi error: 5xx". A refusal, a rate limit, a
- *  missing record or a staging fault is not. */
+ *  rejected token, a missing record or a staging fault is not retried here; its
+ *  own message says what, if anything, lets a later call read it. */
 function isTransientReadError(e: unknown): boolean {
   if (isFetchTimeout(e)) return true;
   if (e instanceof TypeError && e.message === "fetch failed") return true;
@@ -933,7 +934,7 @@ async function personIdMode(
     parts.push(
       `${plural(lasting.length, "record", "records")} could not be read (${lasting.join(", ")}), so nothing from ` +
         `${them(lasting.length)} extracted or linked; ${lasting.length === 1 ? "its summary says" : "their summaries say"} ` +
-        `why, and calling again will not change that`,
+        `why, and what, if anything, to do before calling again`,
     );
   }
   return {

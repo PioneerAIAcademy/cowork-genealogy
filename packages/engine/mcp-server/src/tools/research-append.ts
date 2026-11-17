@@ -1979,11 +1979,7 @@ function contradictionScope(
     : own === null ? [] : [own];
   if (parties.length === 0) return null;
 
-  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
-  if (!person) return null;
-  const birth = ((person.facts ?? []) as any[]).find(
-    (f: any) => String(f?.type ?? "").toLowerCase() === "birth",
-  );
+  const birth = treeBirthFact(tree, entry.person_id);
   if (!birth) return null;
 
   // Every assertion this record makes about THE SAME PARTY as the link.
@@ -1997,7 +1993,11 @@ function contradictionScope(
     birth,
     sameRecord,
     resolvedAgainst: resolvedAgainstIds(research, assertionById),
-    attached: attachedBirths(entry.person_id, research, assertionById, personLinks),
+    // Only a record stating a birth place can side with an attached birth, so
+    // only then are they read, and only then are their places looked up.
+    attached: sameRecord.some(readableBirthPlace)
+      ? attachedBirths(entry.person_id, research, assertionById, personLinks)
+      : [],
   };
 }
 
@@ -2131,15 +2131,15 @@ function contradictingAttachedPairs(
   return pairs;
 }
 
-/** A tree person's live attached births that contradict each other, as the gate
- *  reads them: for the live walk in `dev/measure-attached-birth-conflicts.ts`.
- *  Empty when the person has no Birth fact, which the gate needs for scope. */
 /** The tree person's Birth fact, which the arms take the year from. */
 function treeBirthFact(tree: any, personId: string): any {
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   return ((person?.facts ?? []) as any[]).find((f: any) => String(f?.type ?? "").toLowerCase() === "birth");
 }
 
+/** A tree person's live attached births that contradict each other, as the gate
+ *  reads them: for the live walk in `dev/measure-attached-birth-conflicts.ts`.
+ *  Empty when the person has no Birth fact, which the gate needs for scope. */
 export function attachedBirthConflictsOf(
   personId: string,
   research: any,
@@ -2156,6 +2156,10 @@ export function attachedBirthConflictsOf(
 /** How the attached-births arm's pair finding begins: the only finding a
  *  rejection of one attachment lifts. Matched at the start, where no place text is. */
 const ATTACHED_PAIR_FINDING = "the tree person's own attached records disagree on birthplace";
+
+/** How the arm's ruled-out finding begins: the rejection already exists, so no
+ *  conflict and no further rejection lifts it. Matched at the start. */
+const RULED_OUT_FINDING = "the researcher ruled an attached record not this person";
 
 /** The record's birth places that side with one of the tree person's
  *  contradicting attached births, or with one the researcher ruled not theirs
@@ -2189,8 +2193,8 @@ function attachedBirthFinding(
     const z = ruledOut.find((r) => near(b, r) && live.every((l) => !near(b, l)));
     if (z) {
       return (
-        `the record states '${b.place}' (assertion '${b.id}'), which agrees with the birthplace of ` +
-        `an attached record the researcher ruled is not this person ('${z.place}', assertion '${z.id}')`
+        `${RULED_OUT_FINDING} ('${z.place}', assertion '${z.id}'), and the record states ` +
+        `'${b.place}' (assertion '${b.id}'), which agrees with that birthplace and with none still attached`
       );
     }
   }
@@ -2261,17 +2265,6 @@ export function birthPlaceCoordNames(
   batchAssertions?: Map<string, any>,
 ): string[] {
   return birthPlaceLookups(entry, research, tree, personLinks, batchAssertions).coordNames;
-}
-
-/** `birthPlaceLookups`' alias names alone, for the dev measurements. */
-export function birthPlaceNameLookups(
-  entry: any,
-  research: any,
-  tree: any,
-  personLinks?: ReadonlyArray<PersonLink>,
-  batchAssertions?: Map<string, any>,
-): string[] {
-  return birthPlaceLookups(entry, research, tree, personLinks, batchAssertions).aliasNames;
 }
 
 /** What contradicts the tree person's birth on this link's record party, one
@@ -2369,6 +2362,10 @@ export function coreIdentifierContradictionInvariants(
           `does not lift this: what does is the researcher's own rejection of the attachment that ` +
           `is not this person's (a rejected_links entry carrying their words). Until then the ` +
           `link is 'speculative'.`
+        : "") +
+      (findings.some((f) => f.startsWith(RULED_OUT_FINDING))
+        ? ` Where the record agrees with an attachment the researcher ruled is not this person, no ` +
+          `conflict lifts this either: the researcher has already ruled, and the link is 'speculative'.`
         : ""),
   ];
 }
