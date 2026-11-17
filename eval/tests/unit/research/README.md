@@ -255,6 +255,16 @@ fails here: it stops for the researcher's verdict
 and writes no offer. **They put init-project's full body in this
 suite's snapshot**, so an init-project body edit now owes a research run.
 
+`ut_research_b4p` (`bounded-plan-first-message-stops-after-setup.json`) is the
+one bounded deliverable that does not run in the setup turn: a research plan with a
+FamilySearch ID and no project runs init-project alone and ends on "Continue with
+`setting up the project`?", so the researcher confirms the question before anything
+is planned (lead, 2026-11-10; feedback #4237 drifted at question-selection). It is
+deterministic through the `bounded-plan-after-init` tag and
+`test_bounded_plan_first_message_stops_after_init_project`, which reads the
+hand-off list, that the project exists with no question or plan, that init-project's
+next-step sentence was left out, and that the offer names that step.
+
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius
 Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request

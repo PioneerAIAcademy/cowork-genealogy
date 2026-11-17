@@ -1,0 +1,60 @@
+{
+  "test": {
+    "id": "ut_research_b4p",
+    "skill": "research",
+    "name": "A bounded plan ask with a PID and no project stops after init-project",
+    "type": "positive",
+    "description": "Issue #2813, lead 2026-11-10: a bounded research-plan ask with a PID and no project runs init-project and nothing else, then ends on \"Continue with `setting up the project`?\", so the researcher confirms the question before anything is planned. Feedback #4237 drifted at question-selection in the turn that created the project. init-project runs live so the router sees a real new project. Pairs with ut_research_b4i, the record ask that runs its search in the same turn.",
+    "tags": [
+      "routing",
+      "routes-to:init-project",
+      "bounded-request",
+      "bounded-plan-after-init"
+    ]
+  },
+  "input": {
+    "user_message": "/research Create a research plan for finding the parents of Patrick Flynn, FamilySearch ID LZNY-BRF, but leave it at that.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "A bounded first message (a research plan) with a FamilySearch ID and no project. The router creates the project with init-project, which runs for real here, and then stops: no question-selection, locality-guide or research-plan in the turn that created the project. The researcher confirms the question first (issue #2813, lead 2026-11-10).",
+    "The hand-offs, the absence of a question or plan in research.json, the omitted init-project next-step sentence and the closing \"Continue with `setting up the project`?\" line are all checked deterministically by test_bounded_plan_first_message_stops_after_init_project. Do not re-grade them.",
+    "Grade the reply on saying the project was made and on telling the researcher, in the sentence before the offer, that the next step settles the question the plan will serve. Do not mark it down for not producing the plan: in this turn that is correct, and producing one is the failure this test exists to catch."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_agents": [
+      "init-project"
+    ],
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  }
+}

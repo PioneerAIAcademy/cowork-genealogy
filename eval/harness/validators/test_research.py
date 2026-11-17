@@ -1158,6 +1158,43 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
     )
 
 
+def test_bounded_plan_first_message_stops_after_init_project(
+    skills_invoked, builtin_tool_calls, text_response, after_state, test
+):
+    """Tag-gated (``bounded-plan-after-init``). A bounded research-plan ask with a
+    PID and no project runs init-project and nothing else, then ends on "Continue
+    with `setting up the project`?" (issue #2813, lead 2026-11-10): the researcher
+    confirms the question before anything is planned, because question-selection
+    is where feedback #4237 drifted. The project exists with no question or plan,
+    and the reply drops init-project's next-step sentence."""
+    from harness.skill_runner import handoffs, load_step_boundary
+
+    if "bounded-plan-after-init" not in test.get("tags", []):
+        pytest.skip("not a bounded-plan-first-message test")
+    skill_under_test = test.get("skill")
+    taken: list[str] = []
+    for name in handoffs(skills_invoked, builtin_tool_calls):
+        if name != skill_under_test and name not in taken:
+            taken.append(name)
+    assert taken == ["init-project"], (
+        f"a bounded plan ask with no project hands off to init-project and nothing "
+        f"else; got {taken}"
+    )
+    research = after_state.get("research_json")
+    assert research is not None, "init-project made no project"
+    written = [s for s in ("questions", "plans") if research.get(s)]
+    assert not written, f"the turn that created the project wrote {written}"
+    assert "first research question" not in (text_response or ""), (
+        "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
+    )
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    offered = load_step_boundary().offered_step(text_response)
+    assert offered == "setup", (
+        f"the reply must end on \"Continue with `setting up the project`?\"; "
+        f"it offers {offered!r}: {lines[-1:]}"
+    )
+
+
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
 
 

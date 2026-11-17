@@ -232,6 +232,11 @@ ends on one: offer `@plugin:search-external-sites`, naming no site or collection
 that no tool returned, with "Continue with `running the searches`?". This paragraph does not apply to the
 record-set and transcription paths with no project.
 
+**A bounded research plan that names a FamilySearch person ID and finds no project**
+spawns `@plugin:init-project` and nothing else: relay its report without its
+next-step sentence, then end on "Continue with `setting up the project`?". The next
+"Continue." takes the job's routing table from "Objective but no questions".
+
 **Start from what is already attached.** Before routing to any search —
 on a bounded request or a job alike — when the project holds a FamilySearch
 link for the person, read what they already have: `person_read` for the
