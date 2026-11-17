@@ -1,0 +1,199 @@
+{
+  "tool": "record_read",
+  "description": "record_read for a source attached to Orpha (Brooks) Wheaton (LZPF-WMT). Michigan Deaths and Burials: Silas W. Wheaton d. 1896, naming parents William and Orpha Wheaton. Captured live 2026-11-17 for issue #4584 (feedback #4507/#4508: Orpha (Brooks) Wheaton, LZPF-WMT), re-captured on main rather than copied from the 2381ff72c bundle. Verbatim.",
+  "args": {
+    "recordId": "~FHLZ-S99"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_11146681829",
+        "ark": "ark:/61903/1:1:FHLZ-SM1",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "f8ea50b2-254e-4091-9f8c-278fca1d6862",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "Silas W."
+          }
+        ],
+        "facts": [
+          {
+            "id": "e981cd8f-e670-487e-97dd-a6434b083789",
+            "type": "Death",
+            "primary": true,
+            "date": "11 Nov 1896",
+            "standard_date": "11 Nov 1896",
+            "place": "Reed City, Osceola, Mi",
+            "standard_place": "Reed City, Osceola, Michigan, United States"
+          },
+          {
+            "id": "31ea5c2e-0126-402a-a225-5d572e50272f",
+            "type": "Birth",
+            "date": "1817",
+            "standard_date": "1817",
+            "place": "Ny"
+          },
+          {
+            "type": "Occupation",
+            "value": "Laborer"
+          },
+          {
+            "type": "Ethnicity",
+            "value": "American"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11146681830",
+        "ark": "ark:/61903/1:1:FHLZ-S9M",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "4fc2e99c-3c98-451d-b46e-819672bda2ef",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "William"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11146681831",
+        "ark": "ark:/61903/1:1:FHLZ-S99",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "1f6d083d-1d25-4fae-8d93-0ec5b2295489",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "Orpha"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "075bd4e0-df8c-452a-9a00-552ab26b29d4",
+        "type": "Couple",
+        "person1": "p_11146681830",
+        "person2": "p_11146681831"
+      },
+      {
+        "id": "e3bfecca-e6dd-476a-8626-d07db6af5fc7",
+        "type": "ParentChild",
+        "parent": "p_11146681830",
+        "child": "p_11146681829"
+      },
+      {
+        "id": "01007739-86d0-470e-8cc0-b85fa45f66c2",
+        "type": "ParentChild",
+        "parent": "p_11146681831",
+        "child": "p_11146681829"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_744824463",
+        "resource_type": "Record",
+        "title": "Entry for Silas W. Wheaton, \"Michigan, Deaths and Burials, 1800-1995\"",
+        "citation": "\"Michigan, Deaths and Burials, 1800-1995\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHLZ-SM1 : Thu Oct 15 19:54:37 UTC 2026), Entry for Silas W. Wheaton and William Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MKN-SG3",
+        "coverage": {
+          "place_rep_id": "5446043",
+          "date_range": "11 Nov 1896",
+          "record_type": "Death",
+          "standard_place": "Reed City, Osceola, Michigan, United States"
+        }
+      },
+      {
+        "id": "sd_c_1675357",
+        "resource_type": "Collection",
+        "title": "Michigan, Deaths and Burials, 1800-1995",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1675357",
+        "coverage": {
+          "place_rep_id": "332",
+          "date_range": "1800/1995",
+          "record_type": "Death",
+          "standard_place": "Michigan, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9VS-34VF",
+        "coverage": {
+          "place_rep_id": "392785",
+          "date_range": "1869–1905",
+          "record_type": "Death",
+          "standard_place": "Osceola, Michigan, United States"
+        }
+      },
+      {
+        "id": "sd_p_11146681830",
+        "resource_type": "Person",
+        "title": "William Wheaton, \"Michigan, Deaths and Burials, 1800-1995\"",
+        "citation": "\"Michigan, Deaths and Burials, 1800-1995\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHLZ-S9M : Thu Oct 15 19:54:37 UTC 2026), William Wheaton in entry for Silas W. Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:FHLZ-S9M"
+      },
+      {
+        "id": "sd_p_11146681831",
+        "resource_type": "Person",
+        "title": "Orpha Wheaton, \"Michigan, Deaths and Burials, 1800-1995\"",
+        "citation": "\"Michigan, Deaths and Burials, 1800-1995\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHLZ-S99 : Thu Oct 15 19:54:37 UTC 2026), Orpha Wheaton in entry for Silas W. Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:FHLZ-S99"
+      },
+      {
+        "id": "sd_p_11146681829",
+        "resource_type": "Person",
+        "title": "Silas W. Wheaton, \"Michigan, Deaths and Burials, 1800-1995\"",
+        "citation": "\"Michigan, Deaths and Burials, 1800-1995\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHLZ-SM1 : Thu Oct 15 19:54:37 UTC 2026), Silas W. Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:FHLZ-SM1"
+      },
+      {
+        "id": "sd_auto_M9J1-SN9",
+        "resource_type": "auto",
+        "title": "United States, Michigan, Deaths, from 0123 to 9167",
+        "coverage": {
+          "place_rep_id": "332",
+          "date_range": "+0123-01-01T00:00:00Z/+9167-12-31T23:59:59Z",
+          "standard_place": "Michigan, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_5446043"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QS7-L9VS-34VF",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9VS-34VF",
+    "birthRanges": {
+      "p_11146681829": "Bet 1816 and 1817"
+    }
+  }
+}
