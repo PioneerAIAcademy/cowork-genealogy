@@ -246,8 +246,10 @@ majority values. That is why the description says each fact holds its own fields
 in any of them sends assertions back to flat. Scratch runs on this build, against
 each suite's committed rate (`make eval-health`): research-exhaustiveness 20,
 timeline 13, conflict-resolution 14, search-hints 11, search-full-text 18 — 69
-pass, 7 partial, no fail or abort. Committed runs: proof-conclusion,
-person-evidence and gps-mentor (their bodies changed with this shape).
+pass, 7 partial, no fail or abort — and person-evidence 36 — 29 pass, 7 partial,
+no fail. Committed runs, for the two agents whose paging line this shape
+reworded: proof-conclusion 26 (23 pass, 3 partial, no fail) and gps-mentor 2
+(2 pass).
 
 **Two fields are left out of `items`.** An item of a plan that is not active
 (`superseded` or `completed`) carries no `rationale`, except a `skipped` item
