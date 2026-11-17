@@ -35,6 +35,7 @@ import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
+import { unlinkedPartyRows, type UnlinkedPartyRow } from "../utils/unlinked-parties.js";
 
 const MAX_ITEMS = 50;
 
@@ -171,6 +172,10 @@ export type ResearchQueryResult =
        *  here and never calls `same_person`, so this is where it learns a
        *  disagreement is settled. Absent when there is none. */
       settledConflicts?: SettledConflictRow[];
+      /** `person_evidence` only: for the live links on this page, each two-party
+       *  assertion linked to one tree person while the tree names the other
+       *  party, who has no link to it (§2.7). Absent when there is none. */
+      unlinkedParties?: UnlinkedPartyRow[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -223,6 +228,18 @@ async function settledConflictRows(
     rows.set(key, row);
   }
   return [...rows.values()];
+}
+
+/** `unlinkedPartyRows` over the tree. Never throws: an unreadable tree yields none. */
+async function unlinkedPartiesFor(projectPath: string, research: any, links: any[]): Promise<UnlinkedPartyRow[]> {
+  if (links.length === 0) return [];
+  let tree: any;
+  try {
+    tree = await readProjectJson(projectPath, "tree.gedcomx.json");
+  } catch {
+    return [];
+  }
+  return unlinkedPartyRows(research, tree, links);
 }
 
 class ResearchQueryError extends Error {}
@@ -827,6 +844,8 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     if (section === "person_evidence") {
       const settled = await settledConflictRows(projectPath, research, ordered.slice(start, start + MAX_ITEMS));
       if (settled.length > 0) page.settledConflicts = settled;
+      const unlinked = await unlinkedPartiesFor(projectPath, research, ordered.slice(start, start + MAX_ITEMS));
+      if (unlinked.length > 0) page.unlinkedParties = unlinked;
     }
     // Per id over the whole match set, so a page answers "0 means none" for
     // every id it was asked about, not only for the ids its items carry.
