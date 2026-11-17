@@ -2412,6 +2412,8 @@ _VARIANT_LIVE = (
     "Orfey is without a doubt a misread.",
     "1. Orphy Wheaton, 1865 census — indexing error. Next: re-read the page "
     "and correct the index.",
+    "Orfey: likely an indexing mistake.",
+    "Orfey looks like an indexer's mistake. Submit a correction on FamilySearch.",
 ])
 def test_variant_called_an_error_fails(reply):
     with pytest.raises(AssertionError, match="(?i)orfey|orphy"):
@@ -2424,6 +2426,11 @@ def test_variant_called_an_error_fails(reply):
     "Orphy does not need an index correction.",
     "Orfey is not an indexing error.",
     "Orphy is a spelling of Orpha the record states, rather than an index error.",
+    "Orfey is not an indexing error or a transcription error.",
+    "Orfey is a spelling the record states. It is not a transcription error or a "
+    "misreading of the handwriting.",
+    "Orfey is neither a misread nor an index error.",
+    "Orfey is not an index error, so do not submit a correction.",
     # A correct report: the variant in one passage, a real correction for a
     # different source in another.
     "Name forms the records state: Orfey (1850 census), Orphy (1865 census).\n\n"

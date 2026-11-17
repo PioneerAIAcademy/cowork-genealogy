@@ -1381,10 +1381,13 @@ skipping.
 
 Scoped to the declared names because a reply-wide check cannot express the
 rule: a correct report of the same person can recommend an index correction for
-some other source. Two limits, both lexical: a passage that names a variant and
-also correctly recommends an index correction for a *different* field of that
-source fails the guard, and a reply that discusses the variant without spelling
-it out is not seen. The rubric's Remediation doctrine bar is the judgement
+some other source. A denial covers every error term it joins with "or" or
+"nor" ("not an indexing error or a transcription error"). Three limits, all
+lexical: a passage that names a variant and also correctly recommends an index
+correction for a *different* field of that source fails the guard; a reply that
+discusses the variant without spelling it out is not seen; and a defect worded
+outside the term list ("a misspelling by the indexer … fix the name") is not
+seen. The rubric's Remediation doctrine bar is the judgement
 backstop for both.
 
 Like § 5.12's field, this is top-level and reaches the validator only through

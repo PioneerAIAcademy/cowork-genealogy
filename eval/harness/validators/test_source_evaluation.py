@@ -1543,7 +1543,8 @@ def test_age_derived_birth_is_not_a_conflict(text_response, test, agent_returns=
 # recommend an index correction for some other source. unit-test-spec.md § 5.13.
 
 _VARIANT_ERROR_TERM = re.compile(
-    r"\bindex(?:ing)?\s+(?:errors?|corrections?)\b"
+    r"\bindex(?:ing|er'?s?)?\s+(?:errors?|mistakes?|corrections?)\b"
+    r"|\bsubmit\s+(?:an?\s+)?(?:index\s+)?correction\b"
     r"|\btranscription\s+(?:errors?|mistakes?)\b"
     r"|\bmis-?transcri\w*"
     r"|\bmis-?read(?:s|ing)?\b"
@@ -1554,10 +1555,12 @@ _VARIANT_ERROR_TERM = re.compile(
 # `no` counts here, unlike the detach guards: "no index correction is needed"
 # is how the body's own rule is phrased back.
 _VARIANT_NEGATOR = re.compile(
-    r"\b(?:" + "|".join(re.escape(n) for n in _NEGATORS + ("no",)) + r")\b",
+    r"\b(?:" + "|".join(re.escape(n) for n in _NEGATORS + ("no", "neither", "nor")) + r")\b",
     re.IGNORECASE,
 )
 _VARIANT_NEGATOR_REACH = re.compile(r"^(?:\s+[\w'-]+){0,3}\s*$")
+# "not an indexing error or a transcription error": one denial covers both.
+_VARIANT_OR_JOIN = re.compile(r"\s+(?:or|nor)\s+(?:an?\s+|the\s+)?", re.IGNORECASE)
 # "no doubt a misread", "without a doubt": emphasis, not negation.
 _VARIANT_EMPHASIS = re.compile(r"^\s+(?:a\s+)?(?:doubt|question)\b", re.IGNORECASE)
 
@@ -1583,9 +1586,17 @@ def _variant_error_passage(reply: str, names: list[str]) -> str | None:
     for passage in _passages(_unemphasised(reply)):
         if not name_re.search(passage):
             continue
+        prev_end, prev_negated = None, False
         for m in _VARIANT_ERROR_TERM.finditer(passage):
-            if not _variant_term_negated(passage, m.start()):
+            joined = prev_end is not None and _VARIANT_OR_JOIN.fullmatch(
+                passage[prev_end:m.start()]
+            )
+            negated = (prev_negated and bool(joined)) or _variant_term_negated(
+                passage, m.start()
+            )
+            if not negated:
                 return passage
+            prev_end, prev_negated = m.end(), negated
     return None
 
 
