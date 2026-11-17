@@ -179,11 +179,9 @@
           "jurisdiction": "Schuylkill County, Pennsylvania",
           "date_range": "1850-1880",
           "repository": "FamilySearch",
-          "rationale": "Thomas Flynn's naturalization papers would record his own arrival and allegiance. Naturalization papers of this period rarely name children.",
+          "rationale": "Patrick came to Pennsylvania as a child, so he would have become a citizen through his father. Thomas Flynn's naturalization papers in the Schuylkill County court records are searched for any statement of his family or his place of origin.",
           "fallback_for": null,
-          "status": "skipped",
-          "skip_category": "answered",
-          "skip_reason": "Naturalization papers of this period rarely name children, and Thomas Flynn's own will already names Patrick as his eldest son. It would not change the answer."
+          "status": "completed"
         },
         {
           "id": "pli_010",
@@ -192,9 +190,22 @@
           "jurisdiction": "Ireland",
           "date_range": "1844-1846",
           "repository": "Findmypast",
-          "rationale": "The censuses give Ireland as Patrick's birthplace. No record names the county or parish, so the indexed Irish Catholic baptism registers are searched by his name and his father's name.",
+          "rationale": "The censuses give Ireland as Patrick's birthplace. No record names the county or parish, so the indexed Irish Catholic baptism registers are searched by his name, his father's name, and his mother's given name (Bridget, from the 1850 household).",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 8,
+          "record_type": "directory",
+          "jurisdiction": "Pottsville, Schuylkill County, Pennsylvania",
+          "date_range": "1870-1908",
+          "repository": "FamilySearch",
+          "rationale": "Pottsville city directories would place Patrick and Thomas Flynn at addresses year by year.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Directories list heads of household and addresses, not relationships. The 1880 and 1900 censuses already place Patrick in his own household, and Thomas's will states the relationship directly, so a directory could not add to the parentage question."
         }
       ]
     }
@@ -214,7 +225,7 @@
       },
       "outcome": "positive",
       "results_examined": 8,
-      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
+      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. The household is Thomas 32, Bridget 30 and Patrick 5, all born Ireland. Three other Flynn results examined — ages and locations don't match.",
       "external_site": null
     },
     {
@@ -353,17 +364,35 @@
         "given": "Patrick",
         "birth_year": 1845,
         "birth_place": "Ireland",
-        "father_given": "Thomas"
+        "father_given": "Thomas",
+        "mother_given": "Bridget"
       },
       "outcome": "negative",
       "results_examined": 14,
-      "notes": "Findmypast index of Irish Catholic parish baptisms searched for Patrick Flynn, 1844-1846, father Thomas, all counties. Fourteen entries examined; four name a father Thomas Flynn, in three different counties (Cork, Mayo, Roscommon). Each was compared on the mother's given name and on later baptisms of a Mary and a John to the same couple (the siblings named in Thomas Flynn's will); none can be told apart from the others on those points, and no record in this project names the family's county of origin. No entry can be identified as this Patrick. Searched negative.",
+      "notes": "Findmypast index of Irish Catholic parish baptisms searched for Patrick Flynn, 1844-1846, father Thomas, all counties. Fourteen entries examined; four name a father Thomas Flynn: (1) IE-RC-BAP-2204117, Mallow parish, Co. Cork, bap. 16 Mar 1845, mother Mary Sheehan; (2) IE-RC-BAP-3381902, Kilmovee parish, Co. Mayo, bap. 2 Feb 1845, mother Bridget Duffy; (3) IE-RC-BAP-4410356, Elphin parish, Co. Roscommon, bap. 9 Nov 1845, mother Bridget Kelly; (4) IE-RC-BAP-5127740, Boyle parish, Co. Roscommon, bap. 21 Jun 1844, mother Catherine Beirne. The mother's given name (Bridget, 1850 household; the will does not name her and the death certificate gives the mother as unknown) removes candidates 1 and 4 and leaves 2 and 3, which it cannot separate. Later baptisms of a Mary and a John to the same couple (the siblings named in Thomas Flynn's will) were looked for under both: each couple has a later Mary, neither a John, so the siblings do not separate them either. Coverage: the Kilmovee and Elphin registers both survive for 1845, but many Irish Catholic registers begin after 1845, so the right baptism may be in a register that does not survive. No entry can be identified as this Patrick, and no record in the project names the family's county of origin. Searched negative. This leaves Patrick's Irish place of origin open; it does not bear on who his father was, which rests on Thomas Flynn's will and the 1850-1870 households.",
       "external_site": {
         "site": "findmypast",
         "url_generated": "https://www.findmypast.com/search/results?sourcecategory=life%20events&collection=parish%20baptisms&firstname=patrick&lastname=flynn&yearofbirth=1845&yearofbirth_offset=1&keywordsplace=ireland",
         "capture_received": true,
         "capture_filename": "findmypast-irish-baptisms-flynn-1844-1846.pdf"
       }
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_009",
+      "performed": "2026-05-06T11:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Flynn",
+        "given": "Thomas",
+        "jurisdiction": "Schuylkill County, Pennsylvania",
+        "date_range": "1850-1880",
+        "collection": "Schuylkill County Court of Common Pleas — naturalization records"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "notes": "Thomas Flynn's naturalization found in the Schuylkill County Court of Common Pleas, admitted 1856. The record gives his former allegiance as the Queen of Great Britain and Ireland and his origin as 'Ireland' only — no county or town, as is usual before 1906. It names no wife or children. No separate papers for Patrick, who derived citizenship as Thomas's minor child. The record adds nothing on the parentage question or on the Irish place of origin.",
+      "external_site": null
     }
   ],
   "sources": [
@@ -1050,8 +1079,8 @@
       "resolved_conflict_ids": [
         "c_001"
       ],
-      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), probate records 1860-1890 (FamilySearch — log_006, will found), the Pottsville baptismal register 1845-1850 (log_007, negative), the 1870, 1880 and 1900 censuses (FamilySearch — log_008), and the indexed Irish Catholic baptisms 1844-1846 (Findmypast — log_009, negative).",
-      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845-1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\n1. **Will of Thomas Flynn, made 1881, filed 1882** (Original Source). Thomas Flynn names 'my eldest son Patrick Flynn' as principal heir. Direct evidence, primary information from the father himself.\n\n2. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate names Thomas Flynn as his father. Direct evidence, secondary informant (son-in-law James Brown).\n\n3. **1850, 1860 and 1870 U.S. Censuses** (Original Sources). Patrick Flynn, born Ireland, appears at ages 5, 15 and 25 in the household of Thomas Flynn in Schuylkill County. Indirect evidence of parentage, three enumerations.\n\nThe 1880 and 1900 censuses show Patrick heading his own household and state nothing about his father. No baptism was found in the Pottsville register (1845-1850) or in the indexed Irish Catholic registers (1844-1846).\n\n### Conflict Resolution\n\nBirthplace conflict resolved: Ireland (censuses) over Pennsylvania (death cert) per informant proximity and source independence.\n\n### Assessment\n\nRated **Probable** rather than Proved: the will is direct evidence, and identifying its testator with the Thomas Flynn who headed Patrick's household in 1850-1870 rests on name and county. Every reachable record has been searched."
+      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), probate records 1860-1890 (FamilySearch — log_006, will found), the Pottsville baptismal register 1845-1850 (log_007, negative), the 1870, 1880 and 1900 censuses (FamilySearch — log_008), and the indexed Irish Catholic baptisms 1844-1846 (Findmypast — log_009, negative), and Thomas Flynn's naturalization (Schuylkill County court records — log_010, gives 'Ireland' only). Pottsville city directories were skipped: they list addresses, not relationships.",
+      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845-1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\n1. **Will of Thomas Flynn, made 1881, filed 1882** (Original Source). Thomas Flynn names 'my eldest son Patrick Flynn' as principal heir. Direct evidence, primary information from the father himself.\n\n2. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate names Thomas Flynn as his father. Direct evidence, secondary informant (son-in-law James Brown).\n\n3. **1850, 1860 and 1870 U.S. Censuses** (Original Sources). Patrick Flynn, born Ireland, appears at ages 5, 15 and 25 in the household of Thomas Flynn in Schuylkill County. Indirect evidence of parentage, three enumerations.\n\nThe 1880 and 1900 censuses show Patrick heading his own household and state nothing about his father. No baptism was found in the Pottsville register (1845-1850) or in the indexed Irish Catholic registers (1844-1846). Thomas Flynn's naturalization (1856) gives his origin as Ireland and names no children.\n\n### Conflict Resolution\n\nBirthplace conflict resolved: Ireland (censuses) over Pennsylvania (death cert) per informant proximity and source independence.\n\n### Identity\n\nThe Patrick Flynn of the will is the subject. One Patrick Flynn appears in Thomas Flynn's household in 1850, 1860 and 1870, in the same county where the will was filed, and 'eldest son' fits a son born about 1845 to a father born about 1818.\n\n### Assessment\n\nRated **Probable** pending the exhaustiveness declaration. Every reachable record has been searched. The unidentified Irish baptism leaves the family's Irish place of origin open, not the father."
     }
   ],
   "evaluations": []

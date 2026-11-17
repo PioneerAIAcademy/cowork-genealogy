@@ -18,18 +18,20 @@ Plan `pl_002`, all items closed:
 | `pli_006` | probate 1860-1890 | Thomas Flynn's will, made 1881, filed 1882, names "my eldest son Patrick Flynn" (`log_006`) |
 | `pli_007` | censuses 1870, 1880, 1900 | 1870 in Thomas's household; 1880 and 1900 head of his own; all give Ireland (`log_008`) |
 | `pli_008` | Pottsville baptismal register 1845-1850 | read page by page, no entry (`log_007`) |
-| `pli_009` | naturalization | `skipped`, `skip_category: "answered"`, with a recorded reason |
-| `pli_010` | indexed Irish Catholic baptisms 1844-1846 | several candidates, none identifiable (`log_009`) |
+| `pli_009` | Thomas Flynn's naturalization | found, 1856; gives "Ireland" only, names no children (`log_010`) |
+| `pli_010` | indexed Irish Catholic baptisms 1844-1846 | four candidates listed, two left after the mother's name, not separable (`log_009`) |
+| `pli_011` | Pottsville city directories | `skipped`, `skip_category: "answered"`, with a recorded reason |
 
 The birthplace conflict `c_001` (Ireland in the censuses, Pennsylvania on
 the death certificate) is resolved to Ireland. `ps_001` sits at `probable`
-with `shortfall: "ceiling"`: the will is direct evidence, and identifying
-its testator with the 1850-1870 head of household rests on name and county.
+with `shortfall: "ceiling"`, pending the declaration: the will is direct
+evidence, and the summary states why its Patrick is the subject (one Patrick
+in the household 1850-1870, same county, "eldest" fits his age).
 
 ## Used by
 
 - `ut_research_exhaustiveness_d5e`: the agent evaluates `q_001` and declares.
-  The one skipped item, `pli_009`, carries a recorded reason, which the agent
+  The one skipped item, `pli_011`, carries a recorded reason, which the agent
   accepts as written.
 - `ut_research_exhaustiveness_013`: the same declaration, reached past
   several unlinked assertions that only corroborate linked ones.
@@ -56,6 +58,10 @@ was the defect. The later censuses and the Irish index are now searched,
 the probate search finds the will that `flynn-skipped-death-cert` already
 uses for this family, `pli_008` and `log_007` state the purpose above, and
 the proof summary's `shortfall` moved from `gap` to `ceiling`.
+
+The skip (city directories), the way the Irish search is closed (candidates
+listed, mother's name and siblings used, register coverage noted) and the
+naturalization search follow the same genealogists' answers.
 
 Scenarios forked from this one before 2026-11-17 (`flynn-planned-item-blocks`,
 `flynn-skipped-death-cert`, `flynn-unresolved-conflict`) keep the earlier
