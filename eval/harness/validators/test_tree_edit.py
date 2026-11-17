@@ -93,27 +93,34 @@ def test_verification_reads_the_tree(tool_calls, test):
     """Tag-gated (reads-tree): the delegation states the values it wants
     confirmed, so a reply can repeat them without looking. tree-edit reads the
     tree only through ``tree_query`` (it holds no ``Read``), so the check passes
-    on a ``tree_query`` call that was served (``ok`` with persons) and that
-    covered I1, by naming it in ``personIds`` or by reading the whole tree.
-
-    "Covered I1" is read from the call's arguments, not its answer: a whole-tree
-    answer cut short with I1 in ``omittedPersonIds`` still passes, and a query
-    naming I1 by its FamilySearch id fails."""
+    on a ``tree_query`` whose answer was ``ok`` and returned I1 with fact F1.
+    It reads the answer, not the arguments: I1 listed only as missing, or a
+    ``factTypes`` filter that drops F1, fails; a lookup by FamilySearch id
+    passes, since the answer names the tree person I1 (issue #4484)."""
     if "reads-tree" not in test.get("tags", []):
         pytest.skip("not a reads-tree scenario")
     calls = tool_calls or []
-    covering = []
-    for c in calls:
-        if bare_tool_name(str(c.get("tool") or "")) != "tree_query":
-            continue
-        response = as_mapping(c.get("response"))
-        if response.get("ok") is not True or not response.get("persons"):
-            continue
-        person_ids = as_mapping(c.get("args") or c.get("input")).get("personIds")
-        if not person_ids or "I1" in person_ids:
-            covering.append(c)
-    assert covering, (
-        "The agent reported on the tree without a served tree_query covering I1; "
+
+    def returns_i1_with_f1(call):
+        response = as_mapping(call.get("response"))
+        if response.get("ok") is not True:
+            return False
+        persons = response.get("persons")
+        if not isinstance(persons, list):
+            return False
+        for person in map(as_mapping, persons):
+            facts = person.get("facts")
+            if person.get("id") == "I1" and isinstance(facts, list):
+                if any(as_mapping(f).get("id") == "F1" for f in facts):
+                    return True
+        return False
+
+    served = [
+        c for c in calls
+        if bare_tool_name(str(c.get("tool") or "")) == "tree_query" and returns_i1_with_f1(c)
+    ]
+    assert served, (
+        "The agent reported on the tree without a served tree_query returning I1 with F1; "
         f"its tool calls were {[bare_tool_name(str(c.get('tool') or '')) for c in calls][:5]}"
     )
 
