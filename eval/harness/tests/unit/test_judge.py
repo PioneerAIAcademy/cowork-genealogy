@@ -2616,8 +2616,10 @@ def test_writer_tools_classifies_every_ownership_writer():
     """A new writer tool must not silently leak its refused draft to the judge.
 
     `docs/specs/schemas/ownership.json` is the repo's own register of which tool
-    may perform a write. Every tool it authorizes must be classified here —
-    blanked, or named in `_WRITER_ARGS_ALWAYS_KEPT` with the rule that keeps it.
+    may perform a write. Every tool it authorizes must be classified in one of
+    three places — blanked by `_WRITER_TOOLS`, named in
+    `_WRITER_ARGS_ALWAYS_KEPT` with the rule that keeps its args, or named in
+    `_WRITER_NO_REFUSAL_PATH` because it has no refusal to render at all.
     A blind sync would be wrong (some writers' args are themselves graded), so
     this asserts the classification exists, not that the sets are equal.
     """
@@ -2627,8 +2629,43 @@ def test_writer_tools_classifies_every_ownership_writer():
     repo = _Path(__file__).resolve().parents[4]
     rows = _json.loads((repo / "docs/specs/schemas/ownership.json").read_text(encoding="utf-8"))
     authorized = {t for row in rows.get("rows", []) for t in (row.get("writerTools") or [])}
-    unclassified = authorized - judge._WRITER_TOOLS - set(judge._WRITER_ARGS_ALWAYS_KEPT)
+    unclassified = (
+        authorized
+        - judge._WRITER_TOOLS
+        - set(judge._WRITER_ARGS_ALWAYS_KEPT)
+        - set(judge._WRITER_NO_REFUSAL_PATH)
+    )
     assert not unclassified, (
         f"ownership.json authorizes {sorted(unclassified)} to write, but judge.py "
         f"neither blanks their refused args nor records why it keeps them"
     )
+
+
+def test_no_refusal_path_writers_are_inert():
+    """`_WRITER_NO_REFUSAL_PATH` may only hold tools `_is_refused_writer` ignores.
+
+    That set exists to classify a writer WITHOUT moving `judge_render_hash`,
+    which is sound only while nothing in the render graph consults it. The
+    claim each entry makes is that the tool is absent from `_WRITER_TOOLS`, so
+    `_is_refused_writer` is False for it however a call answers — i.e. the
+    entry is inert and the fingerprint is right to ignore it.
+
+    The moment someone wants one of these drafts blanked they must move the
+    name into `_WRITER_TOOLS`, which moves the hash and bills the regrade then.
+    This is that trip-wire: without it the two sets could disagree silently and
+    a blanked draft would be rendered under a stale fingerprint.
+    """
+    overlap = set(judge._WRITER_NO_REFUSAL_PATH) & judge._WRITER_TOOLS
+    assert not overlap, (
+        f"{sorted(overlap)} is in both `_WRITER_NO_REFUSAL_PATH` and `_WRITER_TOOLS`. "
+        f"A blanked draft is a rendering decision, so move it out of the former "
+        f"and run `make judge-regrade`"
+    )
+    for tool, reason in judge._WRITER_NO_REFUSAL_PATH.items():
+        assert isinstance(reason, str) and reason.strip(), (
+            f"`_WRITER_NO_REFUSAL_PATH[{tool!r}]` must record why the tool cannot "
+            f"refuse, as the two sets above record their rules"
+        )
+        assert not judge._is_refused_writer(
+            {"tool": f"mcp__genealogy__{tool}", "response": {"ok": False}, "args": {"a": 1}}
+        ), f"{tool} is treated as a refused writer, so its classification is not inert"
