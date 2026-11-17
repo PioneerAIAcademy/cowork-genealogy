@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_019",
+    "skill": "research-exhaustiveness",
+    "name": "A plan item the researcher struck is listed in not_reached as skipped_plan_item",
+    "type": "positive",
+    "description": "flynn-skip-user-declined is flynn-exhaustive-ready with pli_009 (naturalization, never searched) skipped with skip_category user_declined: the researcher struck it at 'Continue with running the searches?', which is what research-plan's edit mode writes. Before issue #4551 only a no_coverage skip reached not_reached on the declare path, and the decline listed only deferred and handed_to_user, so a source nobody searched vanished from the proof's 'Not yet reached' list. Build not_reached now governs every search_stop write and names user_declined and no_coverage skips; this test grades the assess path, whichever way the agent stops. pli_007 (skipped, no skip_category) is the control: a skip with no category is not required in not_reached. pli_010 (newspaper, skipped inaccessible) checks the same rule's inaccessible arm.",
+    "tags": [
+      "research-exhaustiveness",
+      "not-reached",
+      "not-reached-skipped-item"
+    ]
+  },
+  "input": {
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording the decline if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-skip-user-declined"
+  },
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
+  ],
+  "judge_context": [
+    "The evidence is exactly flynn-exhaustive-ready's: three independent sources converge on Thomas Flynn as Patrick's father, the birthplace conflict is resolved, probate and the 1845-1850 church register were searched with negative results. The one change is pli_009 (naturalization, Schuylkill County, 1850-1880): status skipped, skip_category user_declined, skip_reason quoting the researcher's 'skip the naturalization search'. No log entry ever searched it.",
+    "pli_010 (newspaper: Thomas Flynn's obituary in the Pottsville Republican, 1880-1890) is skipped with skip_category inaccessible: the paper is held only on microfilm. REQUIRED: not_reached also names this newspaper item, as a skipped_plan_item entry; on a nothing_further_reachable declaration §3's exception may list it under its own kind (for example browse_only) instead. A missing entry for it is a failure.",
+    "Either outcome is acceptable: a declaration (a stop-gate stopped_because, status exhaustive_declared) or a decline (resources_spent, status unchanged). Do not grade which one the agent chose; grade the not_reached it wrote.",
+    "REQUIRED: q_001.search_stop.not_reached contains a skipped_plan_item entry for the naturalization search, with log_entry_id null, wiki_title null, and a description naming the naturalization item and that the researcher declined it.",
+    "FAILURE MODES: (a) no not_reached entry for the naturalization search; (b) it is listed as nil_search, as though a search ran and returned nothing; (c) it is listed as deferred, as though it was never planned; (d) the agent re-plans or runs the naturalization search the researcher struck; (e) pli_007 (census, skipped with no skip_category) is described as declined by the researcher.",
+    "Listing pli_007 in not_reached is neither required nor a failure.",
+    "Tool Arguments: grade the research_append update on q_001 and the research_query reads. A separate validate_research_schema call is not needed; do not penalize its absence."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 900
+  }
+}
