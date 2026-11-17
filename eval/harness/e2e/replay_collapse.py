@@ -314,7 +314,7 @@ async def evaluate_group(g: Group, base, candidate, project: Path, tree: dict | 
 
     expected = oracle(g.state, g.question)
     expected_by_id = {e.get("id"): e for e in expected}
-    cap = math.ceil(len(expected) / PAGE) + 1
+    cap = len(expected) + 1
     returned: list[dict[str, Any]] = []
     offset, pages = 0, 0
     while True:
@@ -339,7 +339,7 @@ async def evaluate_group(g: Group, base, candidate, project: Path, tree: dict | 
         out.replacement_chars += measure(content, False)
         if not body.get("truncated"):
             break
-        offset += len(page)
+        offset = body.get("nextOffset", offset + len(page))
     out.replacement_calls = pages
 
     ids = [e.get("id") for e in returned]
@@ -586,11 +586,11 @@ async def _singular_pages(arm, args: dict[str, Any], where: str) -> list[dict[st
             raise IntegrityError(f"{where} [{arm.label}]: the singular call failed on the rebuilt state")
         page = [e for e in body.get("items") or [] if isinstance(e, dict)]
         items.extend(page)
-        if pages > math.ceil((body.get("count") or 0) / PAGE) + 1:
+        if pages > (body.get("count") or 0) + 1:
             raise IntegrityError(f"{where} [{arm.label}]: singular paging passed its page cap")
         if not body.get("truncated"):
             return items
-        offset += len(page)
+        offset = body.get("nextOffset", offset + len(page))
 
 
 def _classify(g: PluralGroup, call: PluralCall, replayed: int, found: list[dict[str, Any]]) -> str:
@@ -649,7 +649,7 @@ def _plural_diffs(
 
 async def _plural_pages(arm, args: dict[str, Any], n: int, where: str) -> tuple[list[Any], list[str], bool]:
     """`(bodies, texts, capped)` of a list call paged until `truncated` is false."""
-    cap = math.ceil(n / PAGE) + 1
+    cap = n + 1
     bodies: list[Any] = []
     texts: list[str] = []
     offset = 0
@@ -662,7 +662,7 @@ async def _plural_pages(arm, args: dict[str, Any], n: int, where: str) -> tuple[
         texts.append(text)
         if is_error or not isinstance(body, dict) or not body.get("truncated"):
             return bodies, texts, False
-        offset += len(body.get("items") or [])
+        offset = body.get("nextOffset", offset + len(body.get("items") or []))
 
 
 async def evaluate_plural_group(

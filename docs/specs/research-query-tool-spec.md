@@ -11,9 +11,14 @@
 > **Updated 2026-10-14 (T2.3):** `personId`, `assertionId`, `sourceId` and
 > `recordId` also take a list of ids, and a list call returns `countById`; every
 > non-string filter value is now rejected (§3, "Plural ids, not plural sections").
+> **Updated 2026-11-17 (#4411):** pages are sized by a 40 000-character budget
+> (greedy fill to `MAX_ITEMS=50`) rather than a fixed count; the result now
+> carries `nextOffset` when `truncated` is true, and callers must use it rather
+> than stepping by a fixed number; offsets that do not land on a greedy page
+> boundary are refused with the nearest valid start.
 
 ```
-research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated, countById? }
+research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated, nextOffset?, countById? }
 ```
 
 ---
@@ -157,14 +162,14 @@ the principal personas of both records.
 {
   ok: true,
   section: string,
-  count: number,      // total matches, BEFORE the 50-item page cap and any offset
+  count: number,      // total matches, BEFORE the page cap and any offset
   items: any[],        // the section's native snake_case fields, verbatim but
                         // for the two omissions below — a read projection, not
                         // a persisted document, so no camelCase rename
                         // (contrast project_context, whose fixed shape IS a
                         // wire surface)
   truncated: boolean,  // true when matches remain beyond this page
-                        // (count > offset + items.length)
+  nextOffset?: number, // next valid page start; present iff truncated is true
   countById?: { [id: string]: number },
                         // list calls only — see below
   unregisteredDisagreements?: { personId, fact, assertionIds }[],
@@ -204,15 +209,7 @@ narrowed to those naming `assertionId` (any of them, for a list); omitted under 
 than `unresolved`, since an unregistered disagreement has no other status. The
 field does not page — `offset` and the 50-item cap apply to `items` alone.
 
-Each call returns at most 50 items (`MAX_ITEMS` in `research-query.ts`). A
-caller that hits `truncated: true` either narrows the filter or **pages**: set
-`offset` to 50, then 100, and so on, until `truncated: false`. `offset` skips
-the first N matches of the *filtered* set — it is pagination, not a filter, so
-it is absent from the §2.1 table and applies to every section uniformly.
-`count` stays the true total throughout, so the next page's `offset` is simply
-`offset + items.length`. `offset` must be a non-negative whole number and is
-rejected (not coerced) otherwise — see §4. Omitting every filter returns the
-whole section, one 50-item page at a time.
+Each call returns at most 50 items (`MAX_ITEMS`) and at most `TOOL_RESULT_CHAR_BUDGET = 40 000` characters of JSON (measured as the cumulative `JSON.stringify` length of each item). The budget cap applies first: items are added greedily until adding one more would exceed the budget, so a page of large items may be fewer than 50. A caller that hits `truncated: true` either narrows the filter or **pages**: set `offset` to `nextOffset` (returned in the result) and repeat until `truncated: false`. `offset` skips the first N matches of the *filtered* set — it is pagination, not a filter, so it is absent from the §2.1 table and applies to every section uniformly. `count` stays the true total throughout. `offset` must be a non-negative whole number **and must land on a greedy page boundary** (i.e., be a valid `nextOffset` returned by a prior call, or 0); any other value is rejected with the nearest valid start below it — see §4. Omitting every filter returns the whole section, one budget-capped page at a time.
 
 ### 2.4 `external_collections`
 
@@ -392,13 +389,16 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
   `research.json` re-reads specifically; tree re-reads were an order of
   magnitude lower in the same runs. Out of scope until evidence says
   otherwise.
-- **50-item page cap + `offset` pagination — not a raised cap, a `fields`
-  projection, or a staged-to-disk fallback.** The page size stays 50
-  (`MAX_ITEMS`); `offset` reaches items 51+. This closes a silent-wrong-answer
-  path: proof-conclusion's "collect every assertion" gate once read 50 of 57
-  matches and could write a proof summary from the truncated set, with neither
-  the skill, the validator, nor the judge able to tell. Three alternatives were
-  weighed and rejected:
+- **50-item cap + 40 000-character budget paging — not a raised cap, a `fields`
+  projection, or a staged-to-disk fallback.** The item cap stays 50 (`MAX_ITEMS`);
+  pages are also bounded by `TOOL_RESULT_CHAR_BUDGET = 40 000` characters of JSON
+  (measured as cumulative `JSON.stringify` length), so a page of large items may
+  be fewer than 50. `offset` reaches later pages; callers must use `nextOffset`
+  from the result rather than stepping by a fixed number, because page sizes vary
+  with item size. This closes a silent-wrong-answer path: proof-conclusion's
+  "collect every assertion" gate once read 50 of 57 matches and could write a
+  proof summary from the truncated set, with neither the skill, the validator, nor
+  the judge able to tell. Three alternatives were weighed and rejected:
   - **`limit` + `offset`** reopens "just raise the cap," which this section
     already decided against — the source of truth is on disk, so an unbounded
     page is only a second copy of data the caller already has file access to.
@@ -412,11 +412,12 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
     source is a live one-shot API response) is unwarranted
     here for the same on-disk reason.
 
-  `offset` is typed `number` and rejected loudly when it is not a non-negative
-  whole number (§4). The **tool** supports paging, and the **skill half**
-  has landed: `research/SKILL.md` and `agents/proof-conclusion.md`
-  both check `truncated` and page with `offset`. A tool-only fix would not have
-  cleared the reported symptom on its own.
+  `offset` is typed `number`, rejected when not a non-negative whole number, and
+  rejected when it does not land on a greedy page boundary (§4). The **tool**
+  supports paging, and the **skill half** has landed: `research/SKILL.md` and
+  `agents/proof-conclusion.md` both check `truncated` and page with
+  `offset: nextOffset`. A tool-only fix would not have cleared the reported
+  symptom on its own.
 
 - **A cross-section filter on `log`, not a nested join (2026-10-06, T2.1).**
   `research-exhaustiveness` reads a question's log by walking it: one
@@ -516,9 +517,10 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 | `log` × `questionId`, `plans` missing or not an array | `{ ok: false, errors }` — `plans` is a required section, so its absence is a corrupt document, never a `count: 0` |
 | `log` × `questionId`, an entry with `plan_item_id: null` | never matches (the walk could not reach it either) |
 | `log` × `questionId`, a plan item on a non-`active` plan | included — `research-exhaustiveness` treats those as audit trail and filters itself |
-| No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
+| No filters supplied | the whole section, one budget-capped page (page with `offset: nextOffset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |
-| More than 50 matches, no `offset` | `items` is the first 50; `count` is the true total; `truncated: true` |
+| More than 50 matches, or first page exceeds budget, no `offset` | `items` is the first budget-capped page (at most 50 items); `count` is the true total; `truncated: true`; `nextOffset` names the next valid start |
 | `offset` present and not a non-negative whole number — **including a string like `"50"`** | `{ ok: false, errors }`, rejected loudly, **not coerced**. `index.ts` passes tool arguments through without type-coercion, so a model that sends `offset: "50"` (as one did — hannah-earnest-children idx 79) reaches the tool as a string and `Number.isInteger` rejects it. This mirrors `person_search.offset`'s validation. The old behavior silently ignored the unknown key and returned the *first* page — a wrong answer wearing `ok: true`; the loud rejection is the fix, and the caller (once the skill half teaches it) sends a real number. |
+| `offset` present but not a valid greedy page boundary (not 0 or a `nextOffset` a prior call returned) | `{ ok: false, errors }` naming the nearest valid start below `offset` — prevents callers from stepping by a fixed number and landing mid-page |
 | `offset` past the last match | `{ ok: true, count: <total>, items: [], truncated: false }` — a legitimate empty page, not an error |
-| `offset` set, matches remain beyond the returned page | `items` is the (≤50) slice at `[offset, offset+50)`; `count` is the true total; `truncated: true` |
+| `offset` set, matches remain beyond the returned page | `items` is the budget-capped greedy slice starting at `offset` (at most 50 items); `count` is the true total; `truncated: true`; `nextOffset` names the next valid start |

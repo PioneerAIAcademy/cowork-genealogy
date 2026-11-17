@@ -709,7 +709,8 @@ not abstract.
   with their record ids, locality knowledge. See **Reading project state**.
 - **`research_query`** — Every specific lookup, one section per call.
   Replaces reading `research.json`. Remember the unfiltered `conflicts` /
-  `hypotheses` count checks, and check `count` against the 50-item cap.
+  `hypotheses` count checks, and check `truncated` to know whether you hold the
+  full set — page with `offset: nextOffset` while it is true.
 - **`sidecar_read`** — A prior verdict body: `ref` is the `evaluations[]`
   entry's `file_path` as stored.
 - **`collections_search`** — When flagging missing record types,
