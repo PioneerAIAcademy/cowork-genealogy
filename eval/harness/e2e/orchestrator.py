@@ -81,6 +81,7 @@ from harness.skill_invocation import (
 )
 
 from e2e import pricing
+from e2e.avoid_guard import read_starting_state
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
@@ -793,7 +794,8 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
 
-    # Subject person id(s) for the avoid-guard's subject exemption. Primary
+    # Subject person id(s): the avoid guard's edge check reads the forbidden
+    # role from the subject's side of an edge. Primary
     # source is starting-research.json's project.subject_person_ids; source_pid
     # is added when it's a real PID (not the "PID-TODO" marker).
     subject_ids: set[str] = set()
@@ -2614,6 +2616,9 @@ async def _run_agent(
             mode = turn.mode = _turn_mode(turn)
             if turn.index == _answered_question.get("opened"):
                 mode = turn.mode = "job"
+            # Read once and reused below (`project_completed`) -- `research.json`
+            # does not change between the two checks in this same turn.
+            research = read_research_json(workspace)
             decision = _boundary.next_auto_reply(
                 _reply_state,
                 mode,
@@ -2621,6 +2626,7 @@ async def _run_agent(
                 turn.step,
                 _boundary.offered_step(_last_text(turn)) or turn.halt_offer,
                 outcome,
+                research=research,
             )
             _reply_state.clear()
             _reply_state.update(decision.get("state") or {})
@@ -2647,7 +2653,7 @@ async def _run_agent(
             if (not reply and not _answered_question["done"]
                     and outcome == "ok" and mode == "job"
                     and turn.step != "proof-conclusion"
-                    and not project_completed(read_research_json(workspace) or {})
+                    and not project_completed(research or {})
                     and ended_on_a_question(_boundary, _last_text(turn))):
                 _answered_question["done"] = True
                 _answered_question["opened"] = turn.index + 1
@@ -3654,12 +3660,19 @@ async def run_e2e_test(
                     model=fixture.judge_model,
                 )
                 # Deterministic §3.4.1 backstop: an `avoid` finding whose
-                # target is still in the final tree is forced to matched:
-                # "false" and the verdict recomputed (downgrade-only).
+                # forbidden record, edge or value is in the final tree but not
+                # the starting tree is forced to matched: "false" and the
+                # verdict recomputed (downgrade-only).
+                _, starting_research = read_starting_state(
+                    fixture.starting_research_path.parent
+                )
                 judge_output = judge_module.apply_avoid_guard(
                     judge_output,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    final_research=final_research,
+                    starting_tree=starting_tree,
+                    starting_research=starting_research,
                     subject_person_ids=fixture.subject_person_ids,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")

@@ -117,6 +117,7 @@ import {
   missingGuideHeadings,
 } from "../../src/tools/research-append.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
+import { GUIDE_SECTION_MAX_CHARS } from "../../src/utils/locality-guide-sections.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -18947,10 +18948,9 @@ describe("research_append: a localities first place must be in the place standar
   });
 });
 
-// research-append-tool-spec §5.14: a guide written into a project carries the
-// template's three level-two headings, matched as the eval validator's `_heading()`
-// matches them (eval/harness/validators/test_locality_guide.py).
-describe("research_append: a localities guide carries the template's three headings (#4479)", () => {
+// research-append-tool-spec §5.14: a locality guide is saved one `guideSection` per
+// call, and this tool builds `guide_markdown` from them (issue #4588).
+describe("research_append: a localities guide is saved one section per call (#4588)", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "research-append-guide-test-"));
@@ -18964,209 +18964,400 @@ describe("research_append: a localities guide carries the template's three headi
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
-  const GUIDE = [
-    "# Locality Guide: Funchal, Madeira (1840-1900)",
-    "",
-    "## Jurisdiction overview",
-    "- **Formed:** 1835 as a district of Madeira",
-    "",
-    "## Available record types",
-    "### Church records",
-    "- Parish registers from 1539 (Funchal, Se).",
-    "",
-    "## Research tips",
-    "- Search the parish, not the district.",
-  ].join("\n");
-  /** GUIDE with one heading renamed the way Sonnet renamed it on ut_locality_guide_010. */
-  const without = (title: string) =>
-    GUIDE.replace(`## ${title}`, "## Where to look for copies or substitutes");
-  const entry = (guide?: unknown) => ({
+  const savedGuide = async (i = 0) => (await readResearch()).localities[i].guide_markdown as string;
+  const OVERVIEW = "## Jurisdiction overview\n- **Formed:** 1835 as a district of Madeira";
+  const CHURCH = "### Church records\n- Parish registers from 1539 (Funchal, Se).";
+  const TIPS = '## Research tips\n- Search the parish, not the district: the wiki says "early to 1911".';
+  const entry = (extra: Record<string, unknown> = {}) => ({
     place: "Portugal",
     for_place: "Funchal, Madeira, Portugal",
+    time_period: "1840-1900",
     jurisdictions: [{ name: "Funchal, Madeira, Portugal", date_range: "1835-" }],
     collections: [],
     quirks: ["Indexed only at district level."],
     pages_read: [{ section: "home", url: "u1", found: true }],
     source: "locality-guide",
-    ...(guide === undefined ? {} : { guide_markdown: guide }),
+    ...extra,
   });
-  const append = (guide?: unknown) =>
-    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(guide) });
+  const append = (extra: Record<string, unknown> = {}) =>
+    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(extra) });
+  const section = (guideSection: unknown, entryId = "loc_001") =>
+    researchAppend({ projectPath: dir, section: "localities", op: "update", entryId, guideSection } as never);
   /** The refusal lines alone: a single-op failure also carries the section's worked example. */
   const refusals = (r: Awaited<ReturnType<typeof researchAppend>>) =>
     failure(r).errors.filter((line) => !line.startsWith("worked example for"));
+  const guideOf = (r: Awaited<ReturnType<typeof researchAppend>>) => (r as { guide?: unknown }).guide as
+    | { entryId: string; missing: string[]; next?: string }[]
+    | undefined;
 
-  it.each([...LOCALITY_GUIDE_HEADINGS])(
-    "refuses a guide missing '## %s', names only that heading, writes nothing, looks nothing up",
-    async (title) => {
-      await writeProject();
-      const r = await append(without(title));
-      expect(r.ok).toBe(false);
-      expect(refusals(r)).toHaveLength(1);
-      const msg = refusals(r).join(" ");
-      expect(msg).toContain(`heading '## ${title}'. Add it as its own line`);
-      for (const other of LOCALITY_GUIDE_HEADINGS.filter((t) => t !== title)) {
-        expect(msg).not.toContain(`'## ${other}'`);
-      }
-      expect((await readResearch()).localities ?? []).toHaveLength(0);
-      expect(checkFirstPlace).not.toHaveBeenCalled();
-    },
-  );
-
-  it("accepts a guide carrying all three headings", async () => {
+  it("an append with no guide saves, and says which headings the guide lacks and how to send them", async () => {
     await writeProject();
-    const r = await append(GUIDE);
+    const r = await append();
     expect(r.ok).toBe(true);
-    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+    const guide = guideOf(r)!;
+    expect(guide).toHaveLength(1);
+    expect(guide[0].entryId).toBe("loc_001");
+    expect(guide[0].missing).toEqual(LOCALITY_GUIDE_HEADINGS.map((t) => `## ${t}`));
+    expect(guide[0].next).toMatch(/op 'update'.*guideSection/);
+    expect(guide[0].next).toContain(`${GUIDE_SECTION_MAX_CHARS} characters`);
   });
 
-  it("accepts a guide with sections beyond the three", async () => {
+  it("builds the guide from sections, with the title line from the entry", async () => {
     await writeProject();
-    const r = await append(
-      `${GUIDE}\n\n## Record-type reminders\n- Tithe books.\n\n## Where to look for copies or substitutes\n- The district archive.`,
+    await append();
+    expect((await section(OVERVIEW)).ok).toBe(true);
+    expect((await section(CHURCH)).ok).toBe(true);
+    const last = await section(TIPS);
+    expect(last.ok).toBe(true);
+    expect(guideOf(last)).toEqual([{ entryId: "loc_001", missing: [] }]);
+    expect(await savedGuide()).toBe(
+      [
+        "# Locality Guide: Funchal, Madeira, Portugal (1840-1900)",
+        OVERVIEW,
+        "## Available record types",
+        CHURCH,
+        TIPS,
+      ].join("\n\n"),
     );
-    expect(r.ok).toBe(true);
   });
 
-  it("accepts a heading in any case, with a suffix", async () => {
+  it("lists what is still missing after each section", async () => {
     await writeProject();
-    const r = await append(GUIDE.replace("## Available record types", "## AVAILABLE RECORD TYPES (1840-1900)"));
-    expect(r.ok).toBe(true);
+    await append();
+    expect(guideOf(await section(TIPS))![0].missing).toEqual(["## Jurisdiction overview", "## Available record types"]);
+    expect(guideOf(await section(CHURCH))![0].missing).toEqual(["## Jurisdiction overview"]);
   });
 
-  it("refuses a level-three heading standing in for a level-two one", async () => {
+  it("places sections in template order whatever order they arrive in", async () => {
     await writeProject();
-    const r = await append(GUIDE.replace("## Available record types", "### Available record types"));
+    await append();
+    for (const s of [
+      TIPS,
+      "### Online repositories\n| Repository |\n|---|\n| FamilySearch |",
+      "### Tax records\n- Decima books.",
+      "## Boundary changes\n- None in the period.",
+      CHURCH,
+      "### Vital records (civil registration)\n- From 1911.",
+      OVERVIEW,
+    ]) {
+      expect((await section(s)).ok).toBe(true);
+    }
+    const headings = (await savedGuide()).split("\n").filter((l) => /^#{1,3} /.test(l));
+    expect(headings).toEqual([
+      "# Locality Guide: Funchal, Madeira, Portugal (1840-1900)",
+      "## Jurisdiction overview",
+      "## Boundary changes",
+      "## Available record types",
+      "### Vital records (civil registration)",
+      "### Church records",
+      "### Tax records",
+      "## Repository guide",
+      "### Online repositories",
+      "## Research tips",
+    ]);
+  });
+
+  it("a section sent again replaces the one with the same heading, and only that one", async () => {
+    await writeProject();
+    await append();
+    await section(OVERVIEW);
+    await section(CHURCH);
+    await section(TIPS);
+    expect((await section("### church records\n- Registers from 1539, at the district archive.")).ok).toBe(true);
+    const guide = await savedGuide();
+    expect(guide).toContain("- Registers from 1539, at the district archive.");
+    expect(guide).not.toContain("(Funchal, Se)");
+    expect(guide.match(/^### /gm)).toHaveLength(1);
+    expect(guide).toContain(OVERVIEW);
+    expect(guide).toContain(TIPS);
+  });
+
+  it("a '## ' section sent again keeps the '### ' subsections under it", async () => {
+    await writeProject();
+    await append();
+    await section(CHURCH);
+    expect((await section("## Available record types\nHeld at parish level throughout.")).ok).toBe(true);
+    const guide = await savedGuide();
+    expect(guide).toContain("## Available record types\nHeld at parish level throughout.\n\n### Church records");
+  });
+
+  it("puts a '### ' the template does not name under Available record types, after the named ones", async () => {
+    await writeProject();
+    await append();
+    await section("### Naturalization records\n- District court, from 1911.");
+    await section(CHURCH);
+    const headings = (await savedGuide()).split("\n").filter((l) => /^#{2,3} /.test(l));
+    expect(headings).toEqual(["## Available record types", "### Church records", "### Naturalization records"]);
+  });
+
+  it("puts a '### ' under the '## ' sent above it in the same call", async () => {
+    await writeProject();
+    await append();
+    await section("## Records NOT online\n### Notarial records\n- At the district archive only.");
+    expect(await savedGuide()).toContain("## Records NOT online\n\n### Notarial records");
+  });
+
+  it("keeps a '## ' section the template does not name, after the template's", async () => {
+    await writeProject();
+    await append();
+    await section("## Where to look for copies\n- The district archive.");
+    await section(TIPS);
+    const headings = (await savedGuide()).split("\n").filter((l) => /^## /.test(l));
+    expect(headings).toEqual(["## Research tips", "## Where to look for copies"]);
+    expect(guideOf(await section(OVERVIEW))![0].missing).toEqual(["## Available record types"]);
+  });
+
+  it("saves text that JSON would need escaped, character for character", async () => {
+    await writeProject();
+    await append();
+    const tricky = '## Research tips\n- Marriages "early to 1911" (C:\\registers\\Sé)\t— see the note.';
+    expect((await section(tricky)).ok).toBe(true);
+    expect(await savedGuide()).toContain(tricky);
+  });
+
+  it("refuses a guide sent whole on an append, says how to send it, and writes nothing", async () => {
+    await writeProject();
+    const r = await append({ guide_markdown: [OVERVIEW, "## Available record types", CHURCH, TIPS].join("\n\n") });
     expect(r.ok).toBe(false);
-    expect(refusals(r).join(" ")).toContain("'## Available record types'");
+    expect(refusals(r)).toHaveLength(1);
+    const msg = refusals(r)[0];
+    expect(msg).toContain("guide_markdown is not written directly");
+    expect(msg).toContain("Append this entry without it");
+    expect(msg).toMatch(/op 'update'.*guideSection/);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
   });
 
-  it("refuses the heading's words in mid-line", async () => {
+  it("refuses an update that sets guide_markdown, and leaves the saved guide as it was", async () => {
     await writeProject();
-    const r = await append(GUIDE.replace("## Research tips", "See also: ## Research tips"));
+    await append();
+    await section(TIPS);
+    const before = await savedGuide();
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { guide_markdown: "## Funchal\nThe registers are at the district archive." },
+    });
     expect(r.ok).toBe(false);
-    expect(refusals(r).join(" ")).toContain("'## Research tips'");
+    expect(refusals(r)[0]).toContain("Leave it out of `fields`");
+    expect(await savedGuide()).toBe(before);
   });
 
-  it("refuses an empty guide, naming all three headings", async () => {
+  it.each([
+    ["a number", 5],
+    ["an array of lines", ["## Jurisdiction overview"]],
+    ["an object", { text: OVERVIEW }],
+  ])("refuses a guide_markdown that is %s", async (_label, guide) => {
     await writeProject();
-    const msg = refusals(await append("")).join(" ");
-    for (const title of LOCALITY_GUIDE_HEADINGS) expect(msg).toContain(`'## ${title}'`);
-    expect(msg).toContain("headings '## Jurisdiction overview', '## Available record types', '## Research tips'. Add each as its own line");
+    const r = await append({ guide_markdown: guide });
+    expect(r.ok).toBe(false);
+    expect(refusals(r)[0]).toContain("guide_markdown is not written directly");
   });
 
-  it("does not check a null guide or an absent one", async () => {
+  it("does not refuse a null guide_markdown or an absent one", async () => {
     await writeProject();
-    expect((await append(null)).ok).toBe(true);
+    expect((await append({ guide_markdown: null })).ok).toBe(true);
     expect((await append()).ok).toBe(true);
-    const locs = (await readResearch()).localities;
-    expect(locs).toHaveLength(2);
-    expect(locs[0].guide_markdown).toBeNull();
-    expect(Object.hasOwn(locs[1], "guide_markdown")).toBe(false);
+    const cleared = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_002", fields: { guide_markdown: null },
+    });
+    expect(cleared.ok).toBe(true);
   });
 
-  it("leaves a persisted heading-less guide alone on an update that does not set it", async () => {
+  it("leaves a guide saved before the rule alone on an update that does not touch it", async () => {
     const research: any = baseResearch();
-    research.localities = [{ id: "loc_001", ...entry("Prose only, written before the rule."), created: "2026-01-01" }];
+    research.localities = [{ id: "loc_001", ...entry({ guide_markdown: "Prose only, written before the rule." }), created: "2026-01-01" }];
     await writeProject(research);
     const r = await researchAppend({
       projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
       fields: { collections: [{ id: "4237104", title: "Portugal, Church Books", date_range: "1539-1911" }] },
     });
     expect(r.ok).toBe(true);
-    const loc = (await readResearch()).localities[0];
-    expect(loc.collections).toHaveLength(1);
-    expect(loc.guide_markdown).toBe("Prose only, written before the rule.");
+    expect(await savedGuide()).toBe("Prose only, written before the rule.");
   });
 
-  it("refuses an update that sets a heading-less guide, and accepts one that sets it to null", async () => {
-    await writeProject();
-    expect((await append(GUIDE)).ok).toBe(true);
-    const bad = await researchAppend({
-      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
-      fields: { guide_markdown: "## Funchal\nThe registers are at the district archive." },
-    });
-    expect(bad.ok).toBe(false);
-    expect(refusals(bad).join(" ")).toContain("'## Jurisdiction overview'");
-    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
-    const cleared = await researchAppend({
-      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
-      fields: { guide_markdown: null },
-    });
-    expect(cleared.ok).toBe(true);
+  it("adds a section to a guide saved whole before the rule, keeping its text", async () => {
+    const research: any = baseResearch();
+    const old = `# Locality Guide: Funchal (1840-1900)\n\n${OVERVIEW}\n\n## Available record types\n${CHURCH}`;
+    research.localities = [{ id: "loc_001", ...entry({ guide_markdown: old }), created: "2026-01-01" }];
+    await writeProject(research);
+    const r = await section(TIPS);
+    expect(guideOf(r)).toEqual([{ entryId: "loc_001", missing: [] }]);
+    const guide = await savedGuide();
+    expect(guide.startsWith("# Locality Guide: Funchal (1840-1900)\n\n## Jurisdiction overview")).toBe(true);
+    expect(guide.endsWith(TIPS)).toBe(true);
   });
 
-  it("in a batch, names only the refused op, writes nothing and makes no place lookup", async () => {
+  it("refuses a section over the size limit, says to split it, and saves nothing of it", async () => {
     await writeProject();
-    const r = await researchAppend({
-      projectPath: dir,
-      ops: [
-        { section: "localities", op: "append", entry: entry(GUIDE) },
-        { section: "localities", op: "append", entry: entry(without("Research tips")) },
-      ],
-    });
+    await append();
+    const long = `## Research tips\n${"- A tip that runs on.\n".repeat(Math.ceil(GUIDE_SECTION_MAX_CHARS / 22) + 1)}`;
+    expect(long.length).toBeGreaterThan(GUIDE_SECTION_MAX_CHARS);
+    const r = await section(long);
     expect(r.ok).toBe(false);
-    const errors = failure(r).errors;
-    expect(errors.join(" ")).toMatch(/ops\[1\]: .*'## Research tips'/);
-    expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
-    expect((await readResearch()).localities ?? []).toHaveLength(0);
-    expect(checkFirstPlace).not.toHaveBeenCalled();
+    expect(refusals(r)[0]).toContain(`at most ${GUIDE_SECTION_MAX_CHARS}`);
+    expect(refusals(r)[0]).toContain("each '### ' subsection");
+    expect((await readResearch()).localities[0].guide_markdown).toBeUndefined();
   });
 
-  it("in a batch, names every refused guide, not only the first", async () => {
+  it("accepts a section exactly at the size limit", async () => {
     await writeProject();
-    const r = await researchAppend({
-      projectPath: dir,
-      ops: [
-        { section: "localities", op: "append", entry: entry(without("Jurisdiction overview")) },
-        { section: "localities", op: "append", entry: entry(without("Research tips")) },
-      ],
-    });
-    const errors = failure(r).errors;
-    expect(errors.filter((e) => e.startsWith("ops[0]: guide_markdown"))).toHaveLength(1);
-    expect(errors.filter((e) => e.startsWith("ops[1]: guide_markdown"))).toHaveLength(1);
-  });
-
-  it("returns a refusal an earlier check collected together with the guide's", async () => {
-    await writeProject();
-    const { id: _omit, ...sourceNoId } = validSource("x");
-    const r = await researchAppend({
-      projectPath: dir,
-      ops: [
-        { section: "sources", op: "append", entry: { ...sourceNoId, gedcomx_source_description_id: "S999" } },
-        { section: "localities", op: "append", entry: entry(without("Research tips")) },
-      ],
-    });
-    const msg = failure(r).errors.join(" ");
-    expect(msg).toMatch(/ops\[0\]: gedcomx_source_description_id 'S999' not found/);
-    expect(msg).toMatch(/ops\[1\]: guide_markdown lacks .*'## Research tips'/);
+    await append();
+    const head = "## Research tips\n";
+    const r = await section(head + "x".repeat(GUIDE_SECTION_MAX_CHARS - head.length));
+    expect(r.ok).toBe(true);
   });
 
   it.each([
-    ["a number", 5, "a number"],
-    ["an array of lines", ["## Jurisdiction overview", "## Available record types", "## Research tips"], "an array"],
-    ["an object", { text: GUIDE }, "an object"],
-  ])("refuses a guide that is %s, which the schema check does not type", async (_label, guide, got) => {
+    ["text with no heading", "Search the parish, not the district."],
+    ["text before the heading", "Here is the section.\n## Research tips\n- Search the parish."],
+    ["a level-four heading alone", "#### Research tips\n- Search the parish."],
+    ["an empty string", ""],
+    ["only the guide's title line", "# Locality Guide: Funchal (1840-1900)"],
+  ])("refuses %s as a section", async (_label, text) => {
     await writeProject();
-    const r = await append(guide);
+    await append();
+    const r = await section(text);
     expect(r.ok).toBe(false);
-    expect(refusals(r).join(" ")).toContain(`guide_markdown must be the whole guide as one markdown string, not ${got}`);
+    expect(refusals(r)[0]).toContain("must begin with the section's own heading line");
+  });
+
+  it("takes the guide's title line when a section carries one", async () => {
+    await writeProject();
+    await append();
+    await section(`# Locality Guide: Funchal and Câmara de Lobos (1840-1900)\n\n${OVERVIEW}`);
+    expect((await savedGuide()).startsWith("# Locality Guide: Funchal and Câmara de Lobos (1840-1900)\n\n## Juris")).toBe(true);
+  });
+
+  it.each([
+    ["a number", 7, "must be a string"],
+    ["an array", [OVERVIEW], "must be a string"],
+  ])("refuses a guideSection that is %s", async (_label, value, want) => {
+    await writeProject();
+    await append();
+    const r = await section(value);
+    expect(r.ok).toBe(false);
+    expect(refusals(r)[0]).toContain(want);
+  });
+
+  it("refuses guideSection on an append, on another section, and without a known entry", async () => {
+    await writeProject();
+    const onAppend = await researchAppend({
+      projectPath: dir, section: "localities", op: "append", entry: entry(), guideSection: OVERVIEW,
+    } as never);
+    expect(refusals(onAppend)[0]).toContain("applies only to an update of `localities`");
+    const elsewhere = await researchAppend({
+      projectPath: dir, section: "questions", op: "update", entryId: "q_001", guideSection: OVERVIEW,
+    } as never);
+    expect(refusals(elsewhere)[0]).toContain("applies only to an update of `localities`");
+    const unknown = await section(OVERVIEW, "loc_009");
+    expect(refusals(unknown)[0]).toContain("'loc_009' is not one");
     expect((await readResearch()).localities ?? []).toHaveLength(0);
   });
 
-  it("refuses an update that sets a non-string guide", async () => {
+  it("refuses guideSection beside a guide_markdown in fields", async () => {
     await writeProject();
-    expect((await append(GUIDE)).ok).toBe(true);
+    await append();
     const r = await researchAppend({
-      projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { guide_markdown: 7 },
-    });
-    expect(refusals(r).join(" ")).toContain("not a number");
-    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      guideSection: OVERVIEW, fields: { guide_markdown: OVERVIEW },
+    } as never);
+    expect(refusals(r)[0]).toContain("send the guide through `guideSection` only");
+  });
+
+  it("changes other fields in the same call as a section", async () => {
+    await writeProject();
+    await append();
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      guideSection: OVERVIEW, fields: { quirks: ["Search the parish."] },
+    } as never);
+    expect(r.ok).toBe(true);
+    const loc = (await readResearch()).localities[0];
+    expect(loc.quirks).toEqual(["Search the parish."]);
+    expect(loc.guide_markdown).toContain(OVERVIEW);
+  });
+
+  it("in a batch, places several sections of one entry, each on the one before", async () => {
+    await writeProject();
+    await append();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: TIPS },
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: OVERVIEW },
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: CHURCH },
+      ],
+    } as never);
+    expect(r.ok).toBe(true);
+    expect(guideOf(r)).toEqual([{ entryId: "loc_001", missing: [] }]);
+    const guide = await savedGuide();
+    expect(guide.indexOf("## Jurisdiction overview")).toBeLessThan(guide.indexOf("### Church records"));
+    expect(guide.indexOf("### Church records")).toBeLessThan(guide.indexOf("## Research tips"));
+  });
+
+  it("refuses a batch whose sections together pass the size limit, and says to send each alone", async () => {
+    await writeProject();
+    await append();
+    const big = (title: string) => `## ${title}\n${"- A line of the guide.\n".repeat(Math.floor(GUIDE_SECTION_MAX_CHARS / 46))}`;
+    const ops = ["Jurisdiction overview", "Boundary changes", "Research tips"].map((t) => ({
+      section: "localities", op: "update", entryId: "loc_001", guideSection: big(t),
+    }));
+    expect(ops.every((o) => o.guideSection.length < GUIDE_SECTION_MAX_CHARS)).toBe(true);
+    const r = await researchAppend({ projectPath: dir, ops } as never);
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors.filter((e) => e.includes("characters of guide in 3 sections (ops 0, 1, 2)"));
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("not in `ops`");
+    expect((await readResearch()).localities[0].guide_markdown).toBeUndefined();
+  });
+
+  it("the size limit of a batch counts guide sections only", async () => {
+    await writeProject();
+    await append();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: TIPS },
+        { section: "localities", op: "update", entryId: "loc_001", fields: { quirks: ["x".repeat(GUIDE_SECTION_MAX_CHARS)] } },
+      ],
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("in a batch, a refused section names its op and nothing is written", async () => {
+    await writeProject();
+    await append();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: TIPS },
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: "No heading here." },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors.join(" ")).toMatch(/ops\[1\]: guideSection must begin/);
+    expect((await readResearch()).localities[0].guide_markdown).toBeUndefined();
+  });
+
+  it("sections sent at once to one entry all land", async () => {
+    await writeProject();
+    await append();
+    const sent = [OVERVIEW, CHURCH, TIPS, "## Boundary changes\n- None.", "### Tax records\n- Decima books."];
+    const results = await Promise.all(sent.map((s) => section(s)));
+    expect(results.every((r) => r.ok)).toBe(true);
+    const guide = await savedGuide();
+    for (const s of sent) expect(guide).toContain(s);
+    expect(missingGuideHeadings(guide)).toEqual([]);
+  });
+
+  it("the localities worked example carries no guide_markdown, so a refused append is not taught to send one", async () => {
+    await writeProject();
+    const r = await append({ guide_markdown: OVERVIEW });
+    expect(failure(r).errors.some((line) => line.startsWith("worked example for 'localities'"))).toBe(true);
+    expect(Object.hasOwn(JSON.parse(__testing.EXAMPLES.localities), "guide_markdown")).toBe(false);
   });
 
   it("still reads the collection catalog on a call it refuses, which warms it for the re-send", async () => {
-    // Deliberate (spec §5.14, "Not covered"): skipping the read would leave a cold
-    // cache for the corrected re-send, whose counts research-plan reads.
     await writeProject();
     const loader = vi.fn(async () => new Map());
     const refused = await researchAppendFromCaller(
@@ -19174,10 +19365,10 @@ describe("research_append: a localities guide carries the template's three headi
         projectPath: dir,
         section: "localities",
         op: "append",
-        entry: {
-          ...entry(without("Research tips")),
+        entry: entry({
+          guide_markdown: OVERVIEW,
           collections: [{ id: "4237104", title: "Portugal, Church Books", date_range: "1539-1911" }],
-        },
+        }),
       } as never,
       loader,
     );
@@ -19185,19 +19376,55 @@ describe("research_append: a localities guide carries the template's three headi
     expect(loader).toHaveBeenCalledTimes(1);
   });
 
-  it("tells the agent to add the heading and re-send, never to drop the guide", async () => {
-    await writeProject();
-    const msg = refusals(await append(without("Available record types"))).join(" ");
-    expect(msg).toMatch(/guide_markdown/);
-    expect(msg).toMatch(/re-send/);
-    expect(msg).not.toMatch(/omit|null|leave (it )?out|drop|remove|shorten|skip/i);
+  const reg = (level: unknown, extra: Record<string, unknown> = {}) => ({
+    event: "birth", level, year: 1852, source_url: "https://www.familysearch.org/en/wiki/Kentucky_Vital_Records", ...extra,
   });
 
-  it("attaches the localities worked example, and that example passes the rule", async () => {
+  it("an append reads a level with a note, two joined levels and a -wide form into the list, and saves", async () => {
     await writeProject();
-    const r = await append(without("Jurisdiction overview"));
-    expect(failure(r).errors.some((line) => line.startsWith("worked example for 'localities'"))).toBe(true);
-    expect(missingGuideHeadings(JSON.parse(__testing.EXAMPLES.localities).guide_markdown)).toEqual([]);
+    const r = await append({ registration_start: [reg("national (GRO)"), reg("county/town"), reg("statewide")] });
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).localities[0].registration_start).toEqual([
+      reg("national", { note: "national (GRO)" }),
+      reg("county"),
+      reg("town"),
+      reg("state"),
+    ]);
+  });
+
+  it("an update of registration_start reads its levels the same way", async () => {
+    await writeProject();
+    await append();
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { registration_start: [reg("county (Philadelphia only)")] },
+    });
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).localities[0].registration_start).toEqual([
+      reg("county", { note: "county (Philadelphia only)" }),
+    ]);
+  });
+
+  it("still refuses a level that names none in the list, with the list in the message", async () => {
+    await writeProject();
+    const r = await append({ registration_start: [reg("non-Catholic civil registry (parallel to parish)")] });
+    expect(r.ok).toBe(false);
+    expect(refusals(r)[0]).toContain("is not a valid registration_level");
+    expect(refusals(r)[0]).toContain("province");
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+
+  it("accepts province, district and municipality as written", async () => {
+    await writeProject();
+    const r = await append({ registration_start: [reg("province"), reg("district"), reg("municipality")] });
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses a registration_start note that is not a string", async () => {
+    await writeProject();
+    const r = await append({ registration_start: [reg("state", { note: 7 })] });
+    expect(r.ok).toBe(false);
+    expect(refusals(r)[0]).toContain("note must be a string");
   });
 });
 

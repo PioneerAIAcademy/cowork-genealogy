@@ -3192,7 +3192,7 @@ describe("Research closed shapes", () => {
     it("rejects a registration_start entry with a bad event, level or year, or no source_url", async () => {
       const research = maximalResearch();
       research.localities[0].registration_start = [
-        { event: "baptism", level: "province", year: "1876" },
+        { event: "baptism", level: "federal", year: "1876" },
       ];
       const result = await validateParsed(research, maximalTree);
       const msgs = result.errors
@@ -3200,7 +3200,7 @@ describe("Research closed shapes", () => {
         .map((e) => e.message)
         .join(" | ");
       expect(msgs).toMatch(/'baptism' is not a valid registration_event/);
-      expect(msgs).toMatch(/'province' is not a valid registration_level/);
+      expect(msgs).toMatch(/'federal' is not a valid registration_level/);
       expect(msgs).toMatch(/year must be an integer/);
       expect(msgs).toMatch(/source_url/);
     });
