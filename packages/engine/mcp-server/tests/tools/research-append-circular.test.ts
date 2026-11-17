@@ -152,10 +152,14 @@ function startingTree(edges: { father?: string[]; mother?: string[]; couple?: st
   };
 }
 
+// Every successful call via this helper already requires `attest()` for the
+// pairing (the pre-#4549 score gate), which records 0.9 -- so carry that
+// score by default rather than null; a refusal path that never attests is
+// unaffected either way.
 const link = (assertionId: string, personId: string, confidence = "probable") => ({
   section: "person_evidence",
   op: "append",
-  entry: { assertion_id: assertionId, person_id: personId, confidence, rationale: "test link", superseded_by: null },
+  entry: { assertion_id: assertionId, person_id: personId, confidence, match_score: 0.9, rationale: "test link", superseded_by: null },
 });
 const standing = (id: string, assertionId: string, personId: string, confidence = "probable") => ({
   id,
