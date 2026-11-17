@@ -2385,3 +2385,69 @@ def test_a_denial_before_the_conflict_word_still_clears_it():
         "The 1850 census birth year is consistent with the profile's birth date, so there is no conflict."
         + _TAIL_CONFLICT
     )
+
+
+# --- a stated name variant is not an index error (issue #4584) ---------------
+
+_variant_check = _VALIDATOR.test_name_variant_not_called_index_error
+_VARIANT_TEST = {
+    "tags": ["name-variant"],
+    "type": "positive",
+    "variant_names": ["Orfey", "Orphy"],
+}
+
+# The live reply's own shape, from feedback #4507: the name in one sentence,
+# the mechanism and the remedy in the next ones.
+_VARIANT_LIVE = (
+    'The 1850 census indexes her as "Orfey Wheaton". This is almost certainly a '
+    "transcription misread of cursive handwriting. **Action:** submit an index "
+    "correction through FamilySearch."
+)
+
+
+@pytest.mark.parametrize("reply", [
+    _VARIANT_LIVE,
+    "Orfey is not a variant — submit an index correction.",
+    "Orfey is no doubt a transcription error.",
+    "Orfey is without a doubt a misread.",
+    "1. Orphy Wheaton, 1865 census — indexing error. Next: re-read the page "
+    "and correct the index.",
+])
+def test_variant_called_an_error_fails(reply):
+    with pytest.raises(AssertionError, match="(?i)orfey|orphy"):
+        _variant_check(reply, _VARIANT_TEST)
+
+
+@pytest.mark.parametrize("reply", [
+    "Orfey is a variant the record states; no index correction is needed.",
+    "Orfey is how the 1850 census spells her name. Do not submit an index correction for Orfey.",
+    "Orphy does not need an index correction.",
+    "Orfey is not an indexing error.",
+    "Orphy is a spelling of Orpha the record states, rather than an index error.",
+    # A correct report: the variant in one passage, a real correction for a
+    # different source in another.
+    "Name forms the records state: Orfey (1850 census), Orphy (1865 census).\n\n"
+    "1. Michigan, Deaths — indexing error. The indexed death year 1897 "
+    "disagrees with 1896. Next: re-read the original page and correct the index.",
+    # The same, as list items: each bullet is its own passage.
+    "- Orphy: the name as recorded, a variant.\n"
+    "- Death year 1854: likely mis-keyed; correct the index.",
+])
+def test_variant_reported_as_a_variant_passes(reply):
+    _variant_check(reply, _VARIANT_TEST)
+
+
+def test_variant_guard_grades_the_agents_return_not_the_relay():
+    returns = [{"subagent_type": "source-evaluation", "text": _VARIANT_LIVE}]
+    with pytest.raises(AssertionError):
+        _variant_check("Orfey is a variant; nothing to correct.", _VARIANT_TEST, returns)
+
+
+def test_variant_guard_without_names_fails_rather_than_skipping():
+    with pytest.raises(AssertionError, match="variant_names"):
+        _variant_check("anything", {"tags": ["name-variant"], "type": "positive"})
+
+
+def test_variant_guard_skips_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        _variant_check(_VARIANT_LIVE, {"type": "positive", "variant_names": ["Orfey"]})
