@@ -1,0 +1,11 @@
+{
+  "tool": "same_person",
+  "description": "same_person — a call for the father of flynn-baptism-mother-surname-only's baptism, which names none. The tool's own answer, taken from its project arm on that scenario on 2026-11-15.",
+  "args": {
+    "treePersonId": "I2"
+  },
+  "is_error": true,
+  "response": {
+    "error": "same_person: record 'https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q' holds no persona for role 'father'. Available roles: child, mother. If the record holds no persona for the party this link is about, leave match_score null and say so."
+  }
+}

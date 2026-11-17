@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 import json
+import string
 
 import pytest
 
@@ -376,29 +377,28 @@ def test_no_browse_executed_on_indexed_search(
     )
 
 
-def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_tool_calls, tool_calls, test):
-    """After a hint triage the router relays it and stops: whether to accept a
-    hint is the researcher's call (research/SKILL.md, "Hint review"). Spawning
-    search-hints a second time in the same run can only carry verdicts the
-    researcher never stated, and logging the hints itself skips the agent.
+def test_hint_review_runs_once(skills_invoked, builtin_tool_calls, tool_calls, test):
+    """A hint review is one step (research/SKILL.md, "Hint review"): search-hints
+    decides and logs the hints itself, and the router relays it and ends the
+    turn. A second spawn in the same run could only carry verdicts the researcher
+    never stated, and the router logging the hints itself skips the agent.
 
-    Tag-gated on ``stops-for-verdicts``. The test's search-hints stub returns a
-    realistic triage ending in "Awaiting verdicts", so the pull toward a second
-    spawn is real (issue #2029).
+    Tag-gated on ``hint-review-once``. The test's search-hints stub returns a
+    realistic review with its decisions logged.
     """
     from harness.skill_runner import handoffs
 
-    if "stops-for-verdicts" not in test.get("tags", []):
-        pytest.skip("not a hint-review stop test")
+    if "hint-review-once" not in test.get("tags", []):
+        pytest.skip("not a hint-review test")
     spawns = [h for h in handoffs(skills_invoked, builtin_tool_calls) if h == "search-hints"]
     assert len(spawns) == 1, (
-        f"search-hints was handed off {len(spawns)} time(s); the router spawns it once for "
-        "triage and then stops for the researcher's verdicts"
+        f"search-hints was handed off {len(spawns)} time(s); the router spawns it once and "
+        "ends the turn on its report"
     )
     logs = [c for c in (tool_calls or []) if str(c.get("tool", "")).endswith("__research_log_append")]
     assert not logs, (
-        f"the router logged {len(logs)} entry/entries itself after a hint triage; verdicts are "
-        "the researcher's, and recording them is search-hints' second spawn"
+        f"the router logged {len(logs)} entry/entries itself after a hint review; search-hints "
+        "logs its own decisions"
     )
 
 
@@ -799,6 +799,8 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
 # tag -> (callee, field, value pattern) lines its spawn prompt must carry.
 _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
+    "delegates-user-present-no-external": (("search-external-sites", "userPresent", r"no"),),
+    "delegates-qs-user-present-no": (("question-selection", "userPresent", r"no"),),
     "delegates-wrap-up": (
         ("research-plan", "planItemIds", r".*pli_\w+"),
         ("research-exhaustiveness", "wrapUp", r"yes"),
@@ -808,9 +810,10 @@ _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
 
 
 def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
-    """Tag-gated (``delegates-user-present-no``, ``delegates-wrap-up``). The
-    fields research/SKILL.md's spawn rule passes on a "Keep going." or "Wrap it
-    up." turn sit in the spawn prompt, which the judge cannot see, so they are
+    """Tag-gated (``delegates-user-present-no``,
+    ``delegates-user-present-no-external``, ``delegates-qs-user-present-no``,
+    ``delegates-wrap-up``). The fields research/SKILL.md's spawn rule passes on a
+    "Keep going." or "Wrap it up." turn, or in an autonomous run, sit in the spawn prompt, which the judge cannot see, so they are
     read from the hook records. A field is matched as ``name: value`` on any
     line, case-insensitively, with optional backticks around either side."""
     rules = [r for tag in (test.get("tags") or []) for r in _SPAWN_FIELD_TAGS.get(tag, ())]
@@ -972,6 +975,21 @@ def _hosted_listing(tool_calls) -> dict:
     return {}
 
 
+def _project_context_paths(tool_calls) -> list:
+    """The ``projectPath`` of every ``project_context`` call, None where a call sent none."""
+    return [
+        (c.get("args") or {}).get("projectPath")
+        for c in tool_calls or []
+        if bare_tool_name(str(c.get("tool") or "")) == "project_context"
+    ]
+
+
+def _listed_paths_named(listing: dict, handoff: str) -> list[str]:
+    """The listed projects' paths that ``handoff`` names."""
+    listed = [p.get("projectPath") for p in listing.get("projects") or [] if p.get("projectPath")]
+    return [p for p in listed if p in handoff]
+
+
 def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
     """The first main-thread hand-off to ``callee``, a ``Skill`` call or a spawn,
     as JSON text; None when there is none."""
@@ -1030,8 +1048,29 @@ def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_ca
     handoff = _first_handoff_args(callee, builtin_tool_calls)
     assert handoff is not None, f"no hand-off to '{callee}' to read a projectPath from"
     assert new_path in handoff, f"the '{callee}' hand-off must name newProjectPath {new_path!r}; got {handoff[:300]}"
-    listed = [p.get("projectPath") for p in listing.get("projects") or [] if p.get("projectPath")]
-    named = [p for p in listed if p in handoff]
+    named = _listed_paths_named(listing, handoff)
+    assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
+
+
+def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_calls):
+    """Tag-gated (``no-wrong-project-path``). The hosted ``project_list`` answer
+    gives a ``newProjectPath``, so the router reads project state there or not at
+    all, never at another path, the working folder included. The first hand-off
+    goes to tree-survey, which takes no ``projectPath``, so it names neither
+    ``newProjectPath`` nor a listed project's path."""
+    if "no-wrong-project-path" not in (test.get("tags") or []):
+        pytest.skip("not a no-wrong-project-path test")
+    listing = _hosted_listing(tool_calls)
+    new_path = listing.get("newProjectPath")
+    assert new_path, f"the router never received a hosted project_list answer with a newProjectPath: {listing}"
+    read_paths = _project_context_paths(tool_calls)
+    other = [p for p in read_paths if p != new_path]
+    assert not other, f"project_context was called at a path other than newProjectPath {new_path!r}: {other}"
+    callee = _expected_skill(test)
+    handoff = _first_handoff_args(callee, builtin_tool_calls)
+    assert handoff is not None, f"no hand-off to '{callee}'"
+    assert new_path not in handoff, f"the '{callee}' hand-off names newProjectPath {new_path!r}: {handoff[:300]}"
+    named = _listed_paths_named(listing, handoff)
     assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
 
 
@@ -1045,11 +1084,7 @@ def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_to
     projects = _hosted_listing(tool_calls).get("projects") or []
     assert len(projects) == 1, f"expected a hosted project_list answer listing one project; got {projects}"
     path, url = projects[0].get("projectPath"), projects[0].get("projectUrl")
-    read_paths = [
-        (c.get("args") or {}).get("projectPath")
-        for c in tool_calls or []
-        if bare_tool_name(str(c.get("tool") or "")) == "project_context"
-    ]
+    read_paths = _project_context_paths(tool_calls)
     assert path in read_paths, f"project_context was never called with the listed projectPath {path!r}: {read_paths}"
     callee = _expected_skill(test)
     handoff = _first_handoff_args(callee, builtin_tool_calls)
@@ -1157,6 +1192,41 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
     )
 
 
+def test_bounded_plan_first_message_stops_after_init_project(
+    skills_invoked, builtin_tool_calls, text_response, after_state, test
+):
+    """Tag-gated (``bounded-plan-after-init``). A bounded research-plan ask with a
+    PID and no project runs init-project and nothing else, then ends on "Continue
+    with `setting up the project`?" (issue #2813, lead 2026-11-10): the researcher
+    confirms the question before anything is planned, because question-selection
+    is where feedback #4237 drifted. The project exists with no question or plan.
+    Unlike the record ask, the reply may keep init-project's next-step sentence:
+    on a plan ask the next step is the first research question."""
+    from harness.skill_runner import handoffs, load_step_boundary
+
+    if "bounded-plan-after-init" not in test.get("tags", []):
+        pytest.skip("not a bounded-plan-first-message test")
+    skill_under_test = test.get("skill")
+    taken: list[str] = []
+    for name in handoffs(skills_invoked, builtin_tool_calls):
+        if name != skill_under_test and name not in taken:
+            taken.append(name)
+    assert taken == ["init-project"], (
+        f"a bounded plan ask with no project hands off to init-project and nothing "
+        f"else; got {taken}"
+    )
+    research = after_state.get("research_json")
+    assert research is not None, "init-project made no project"
+    written = [s for s in ("questions", "plans") if research.get(s)]
+    assert not written, f"the turn that created the project wrote {written}"
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    offered = load_step_boundary().offered_step(text_response)
+    assert offered == "setup", (
+        f"the reply must end on \"Continue with `setting up the project`?\"; "
+        f"it offers {offered!r}: {lines[-1:]}"
+    )
+
+
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
 
 
@@ -1192,28 +1262,23 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
                 plan_of[item["id"]] = plan["id"]
                 question_of[item["id"]] = plan.get("question_id")
     assert items, "Scenario drift: no active plan item to hand over."
-    decoder = json.JSONDecoder()
+    by_id = {i["id"]: i for i in items}
     problems = []
     for prompt in prompts:
-        named = [i for i in items if i["id"] in prompt]
-        if not named:
-            problems.append(f"names no plan item id: {prompt[:120]!r}")
+        handed, problem = _handed_plan_item(prompt)
+        if problem:
+            problems.append(problem)
             continue
-        item = named[0]
+        item = by_id.get(handed.get("id"))
+        if item is None:
+            problems.append(
+                f"plan_item block hands {handed.get('id')!r}, not an open item of an active plan {sorted(by_id)}"
+            )
+            continue
         if plan_of[item["id"]] not in prompt:
             problems.append(
                 f"does not hand the parent plan id {plan_of[item['id']]} for {item['id']}"
             )
-        marker = prompt.find("plan_item")
-        brace = prompt.find("{", marker) if marker != -1 else -1
-        if brace == -1:
-            problems.append(f"no plan_item JSON block for {item['id']}: {prompt[:160]!r}")
-            continue
-        try:
-            handed, _ = decoder.raw_decode(prompt[brace:])
-        except ValueError:
-            problems.append(f"plan_item block for {item['id']} is not valid JSON")
-            continue
         if handed != item:
             missing = object()  # a dropped key whose value was null must still be named
             diff = sorted(
@@ -1233,6 +1298,88 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
                 f"{qid!r}, which does not ask about a parent: {question_text.get(qid, '')!r}"
             )
         problems.extend(_handed_parents_problems(subject, tree, parents_question))
+    assert not problems, "; ".join(problems)
+
+
+# `plan_item:` as a field, not inside `plan_item_id` or `plan_items`.
+_PLAN_ITEM_BLOCK = re.compile(r"(?<![A-Za-z_])plan_item(?![A-Za-z_])[`*\"']*\s*[:=]")
+# Router prompts write the id line as `planItemId:`, `Plan item ID:` or
+# `plan_item_id:`; `planItemIds:` (a disposal list) is a different field.
+_PLAN_ITEM_ID_NAME = r"plan[\s_]*item[\s_]*id(?!s)"
+
+
+def _handed_plan_item(prompt: str) -> tuple[dict | None, str | None]:
+    """The one plan item a search spawn hands over, read from its `plan_item:`
+    JSON block, or why it hands no single item: no block, two blocks, a block
+    that is not a JSON object, two id lines, or an id line naming another item.
+    A prompt with no id line is fine: the block's own `"id"` names the item."""
+    blocks = list(_PLAN_ITEM_BLOCK.finditer(prompt))
+    if len(blocks) > 1:
+        return None, f"carries {len(blocks)} plan_item blocks; a spawn hands one item: {prompt[:160]!r}"
+    brace = prompt.find("{", blocks[0].end()) if blocks else -1
+    if brace == -1:
+        return None, f"no plan_item JSON block: {prompt[:160]!r}"
+    try:
+        handed, _ = json.JSONDecoder().raw_decode(prompt[brace:])
+    except ValueError:
+        return None, "plan_item block is not valid JSON"
+    if not isinstance(handed, dict):
+        return None, "plan_item block is not a JSON object"
+    ids = _field_values(prompt, "planItemId", name_regex=_PLAN_ITEM_ID_NAME)
+    if len(ids) > 1:
+        return None, f"carries {len(ids)} plan item id lines {ids}; a spawn hands one item"
+    if ids and ids[0] != handed.get("id"):
+        return None, f"id line names {ids[0]!r} but the plan_item block is {handed.get('id')!r}"
+    return handed, None
+
+
+_FANS_OUT_TAG = "fans-out-plan-items"
+_RELAYED_WORDS = 6
+
+
+def _words(text: str) -> list[str]:
+    words = (w.strip(string.punctuation) for w in _quote_and_space_normal(text).lower().split())
+    return [w for w in words if w]
+
+
+def _word_runs(words: list[str], n: int) -> set[tuple[str, ...]]:
+    return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def test_search_spawns_cover_each_open_item(test, builtin_tool_calls, before_state):
+    """Tag-gated (``fans-out-plan-items``). On a job, research/SKILL.md's search
+    step dispatches one search agent per open item of the active plan, each
+    handed that one item and never the researcher's words (issue #4441). Read
+    from the hook records: one search-records spawn per open item with no
+    ``fallback_for``, the handed ids equal to those items, and no spawn carrying
+    6 or more consecutive words of the user message. Whether the spawns share
+    one assistant message is not checked: no record says which message a spawn
+    came from."""
+    if _FANS_OUT_TAG not in (test.get("tags") or []):
+        pytest.skip("not a fans-out test")
+    research = before_state.get("research_json") or {}
+    expected = sorted(
+        item["id"]
+        for plan in research.get("plans", [])
+        if plan.get("status") == "active"
+        for item in plan.get("items", [])
+        if item.get("status") in ("planned", "in_progress") and not item.get("fallback_for")
+    )
+    assert len(expected) > 1, f"Scenario drift: a fans-out test needs two or more open items; got {expected}"
+    prompts = _spawn_prompts(builtin_tool_calls, "search-records")
+    problems = []
+    if len(prompts) != len(expected):
+        problems.append(f"{len(prompts)} search-records spawns for {len(expected)} open plan items {expected}")
+    handed = sorted(str((_handed_plan_item(p)[0] or {}).get("id")) for p in prompts)
+    if handed != expected:
+        problems.append(f"handed plan items {handed}, open plan items {expected}")
+    message = re.sub(r"^/research\b", "", (test.get("user_message") or "").strip())
+    banned = _word_runs(_words(message), _RELAYED_WORDS)
+    for prompt in prompts:
+        if banned & _word_runs(_words(prompt), _RELAYED_WORDS):
+            problems.append(
+                f"a search-records spawn carries {_RELAYED_WORDS}+ consecutive words of the researcher's message: {prompt[:160]!r}"
+            )
     assert not problems, "; ".join(problems)
 
 
@@ -1444,13 +1591,17 @@ _UNCONFIRMED = re.compile(
 )
 
 
-def _field_values(prompt: str, field: str) -> list[str]:
+def _field_values(prompt: str, field: str, *, name_regex: str | None = None) -> list[str]:
     """Every value written for ``field`` in a spawn prompt, in any markup the
     router uses: ``field: v``, ``**field:** v``, ``"field": "v"``, ``field=v``,
     and in prose, where a value can end a sentence or a parenthesis
-    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped."""
+    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped.
+    ``name_regex``, when given, matches the field name instead of ``field``,
+    case-insensitively, for a field routers spell several ways."""
+    name = name_regex or re.escape(field)
     pattern = re.compile(
-        rf"(?<![A-Za-z]){re.escape(field)}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)"
+        rf"(?<![A-Za-z]){name}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)",
+        re.IGNORECASE if name_regex else 0,
     )
     values = (m.group("v").rstrip(".)") for m in pattern.finditer(prompt))
     return [v for v in values if v]

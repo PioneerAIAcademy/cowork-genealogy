@@ -23,6 +23,7 @@ from test_search_hints import (  # noqa: E402
     test_hints_item_ends_as_tagged as check_ending,
     test_image_read_before_reject as check_image,
     test_record_mode_logs_each_verdict as check_record,
+    test_review_logs_its_decisions as check_review,
     test_thin_hint_is_not_enough_information as check_thin,
     test_triage_writes_only_item_status as check_writes,
 )
@@ -377,13 +378,92 @@ def test_record_fails_a_return_without_the_accepted_log_id():
         check_record(_state([]), _state(_GOOD), _returns("M70C accepted, M80C rejected."), "", RECORD)
 
 
+# --- review logs its own decisions -----------------------------------------
+
+REVIEW = {"type": "positive", "tags": ["triage", "records-decisions"], "delegation": "personId: LZNY-BRF"}
+REVIEW_HELD = {**REVIEW, "delegation": "personId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002"}
+_REVIEW_RETURN = (
+    "Hint ark:/61903/1:1:M70C: accept → log_006 — 1870 census, confidence 3\n"
+    "Hint ark:/61903/1:1:M80C: reject → log_007 — 1880 census, confidence 2\n"
+    "Hint ark:/61903/1:1:MTHN: not enough information to judge — naturalization index\n"
+    "Hint ark:/61903/1:1:MDEF: already linked by pe_005 — death certificate"
+)
+
+
+def _extracted(pid):
+    return {"research_json": {"log": [], "assertions": [{"id": "a_001", "record_id": f"ark:/61903/1:1:{pid}"}]}}
+
+
+def test_review_passes_an_entry_per_accept_and_reject():
+    check_review(_state([]), _state(_GOOD), [], _returns(_REVIEW_RETURN), "", REVIEW)
+
+
+def test_review_passes_entries_naming_the_held_item():
+    check_review(_state([]), _state(_HELD), [], _returns(_REVIEW_RETURN), "", REVIEW_HELD)
+
+
+def test_review_passes_a_bold_verdict_and_a_bare_id():
+    text = "Hint **M70C**: **accept** → log_006\nHint `M80C`: reject → log_007"
+    check_review(_state([]), _state(_GOOD), [], _returns(text), "", REVIEW)
+
+
+def test_review_passes_an_accept_of_an_extracted_record_with_no_entry():
+    text = "Hint ark:/61903/1:1:MDEF: accept — extracted as src_004, not linked"
+    check_review(_extracted("MDEF"), _extracted("MDEF"), [], _returns(text), "", REVIEW)
+
+
+def test_review_fails_an_accept_never_logged():
+    with pytest.raises(AssertionError, match="M70C: the review decided accept but logged 0"):
+        check_review(_state([]), _state(_GOOD[1:]), [], _returns(_REVIEW_RETURN), "", REVIEW)
+
+
+def test_review_fails_an_outcome_against_its_own_verdict():
+    log = [_entry("log_006", "M70C", "positive"), _entry("log_007", "M80C", "positive")]
+    with pytest.raises(AssertionError, match="does not follow the review's reject"):
+        check_review(_state([]), _state(log), [], _returns(_REVIEW_RETURN), "", REVIEW)
+
+
+def test_review_fails_logging_a_hint_it_could_not_judge():
+    log = _GOOD + [_entry("log_008", "MTHN", "negative")]
+    with pytest.raises(AssertionError, match="MTHN: a hint decided 'not enough information to judge'"):
+        check_review(_state([]), _state(log), [], _returns(_REVIEW_RETURN), "", REVIEW)
+
+
+def test_review_fails_logging_an_accept_of_an_extracted_record():
+    text = "Hint ark:/61903/1:1:MDEF: accept — extracted as src_004, not linked"
+    after = {"research_json": {**_extracted("MDEF")["research_json"], "log": [_entry("log_006", "MDEF", "positive")]}}
+    with pytest.raises(AssertionError, match="already extracted was logged"):
+        check_review(_extracted("MDEF"), after, [], _returns(text), "", REVIEW)
+
+
+def test_review_fails_an_entry_with_no_held_item():
+    with pytest.raises(AssertionError, match="expected 'pli_007'"):
+        check_review(_state([]), _state(_GOOD), [], _returns(_REVIEW_RETURN), "", REVIEW_HELD)
+
+
+def test_review_fails_an_evidence_write():
+    call = _call("research_append", section="person_evidence", op="append")
+    with pytest.raises(AssertionError, match="plan_items"):
+        check_review(_state([]), _state(_GOOD), [call], _returns(_REVIEW_RETURN), "", REVIEW)
+
+
+def test_review_fails_a_return_with_no_hint_line():
+    with pytest.raises(AssertionError, match="no `Hint <ark>: <verdict>` line"):
+        check_review(_state([]), _state(_GOOD), [], _returns("Two hints accepted."), "", REVIEW)
+
+
+def test_review_skips_other_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_review(_state([]), _state([]), [], _returns(""), "", TRIAGE)
+
+
 # --- how triage leaves the hints item -------------------------------------
 
 _DELEGATION = "personId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nprojectPath: <workspace>"
 
 
-def _ends(status):
-    return {"type": "positive", "tags": ["triage", f"item-ends:{status}"], "delegation": _DELEGATION}
+def _ends(status, *tags):
+    return {"type": "positive", "tags": ["triage", f"item-ends:{status}", *tags], "delegation": _DELEGATION}
 
 
 def _item_state(log, status, **fields):
@@ -395,35 +475,37 @@ _NO_HINTS_LOG = [{"id": "log_006", "plan_item_id": "pli_007", "outcome": "negati
 
 
 def test_ending_passes_no_hints_completed_through_a_negative_entry():
-    check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "completed"), _ends("completed"))
+    check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "completed"), _ends("completed", "no-hints"))
 
 
 def test_ending_fails_completed_with_no_entry_naming_it():
-    with pytest.raises(AssertionError, match="one negative log entry"):
+    with pytest.raises(AssertionError, match="needs a log entry naming it"):
         check_ending(_item_state([], "planned"), _item_state([], "completed"), _ends("completed"))
 
 
 def test_ending_fails_no_hints_logged_positive():
     log = [{**_NO_HINTS_LOG[0], "outcome": "positive"}]
     with pytest.raises(AssertionError, match="one negative log entry"):
-        check_ending(_item_state([], "planned"), _item_state(log, "completed"), _ends("completed"))
+        check_ending(_item_state([], "planned"), _item_state(log, "completed"), _ends("completed", "no-hints"))
 
 
-def test_ending_passes_hints_found_waiting():
-    check_ending(_item_state([], "planned"), _item_state([], "in_progress"), _ends("in_progress"))
+def test_ending_passes_hints_decided_completed_through_their_entries():
+    log = [{"id": "log_006", "plan_item_id": "pli_007", "outcome": "positive"},
+           {"id": "log_007", "plan_item_id": "pli_007", "outcome": "negative"}]
+    check_ending(_item_state([], "planned"), _item_state(log, "completed"), _ends("completed"))
 
 
-def test_ending_fails_hints_found_left_planned():
+def test_ending_fails_hints_decided_left_planned():
     # A `planned` hints item is what the router routes to search-hints, so
-    # leaving it there re-runs triage every turn.
+    # leaving it there re-runs the review every turn.
     with pytest.raises(AssertionError, match="ended 'planned'"):
-        check_ending(_item_state([], "planned"), _item_state([], "planned"), _ends("in_progress"))
+        check_ending(_item_state([], "planned"), _item_state([], "planned"), _ends("completed"))
 
 
-def test_ending_fails_hints_found_with_an_entry_naming_the_item():
+def test_ending_fails_hints_decided_left_waiting():
     log = [{"id": "log_006", "plan_item_id": "pli_007", "outcome": "positive"}]
-    with pytest.raises(AssertionError, match="nothing logged"):
-        check_ending(_item_state([], "planned"), _item_state(log, "in_progress"), _ends("in_progress"))
+    with pytest.raises(AssertionError, match="ended 'in_progress'"):
+        check_ending(_item_state([], "planned"), _item_state(log, "in_progress"), _ends("completed"))
 
 
 def test_ending_passes_skipped_inaccessible():
@@ -442,9 +524,35 @@ def test_ending_fails_completed_when_skipped_is_forced():
         check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "completed"), _ends("skipped"))
 
 
+def test_ending_passes_a_sign_in_message_leaving_the_item_untouched():
+    check_ending(_item_state([], "planned"), _item_state([], "planned"), _ends("untouched"))
+
+
+def test_ending_fails_a_sign_in_message_recorded_as_inaccessible():
+    after = _item_state([], "skipped", skip_category="inaccessible", skip_reason="not logged in")
+    with pytest.raises(AssertionError, match="leaves the hints item pli_007 as it was"):
+        check_ending(_item_state([], "planned"), after, _ends("untouched"))
+
+
+def test_ending_fails_a_sign_in_message_that_adds_a_field_but_keeps_the_status():
+    after = _item_state([], "planned", skip_reason="not logged in")
+    with pytest.raises(AssertionError, match="leaves the hints item pli_007 as it was"):
+        check_ending(_item_state([], "planned"), after, _ends("untouched"))
+
+
+def test_ending_fails_a_sign_in_message_logged_against_the_item():
+    with pytest.raises(AssertionError, match="logs nothing against the hints item"):
+        check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "planned"), _ends("untouched"))
+
+
+def test_ending_fails_untouched_with_no_starting_item_to_compare():
+    with pytest.raises(AssertionError, match="not in the starting plans"):
+        check_ending(_state([]), _item_state([], "planned"), _ends("untouched"))
+
+
 def test_ending_fails_a_test_with_no_plan_item_handed_over():
     with pytest.raises(AssertionError, match="must hand over a planItemId"):
-        check_ending(_item_state([], "planned"), _item_state([], "in_progress"), {**_ends("in_progress"), "delegation": "x"})
+        check_ending(_item_state([], "planned"), _item_state([], "completed"), {**_ends("completed"), "delegation": "x"})
 
 
 def test_ending_skips_other_tests():
@@ -452,13 +560,13 @@ def test_ending_skips_other_tests():
         check_ending(_state([]), _state([]), TRIAGE)
 
 
-# --- the router stops after a hint triage (research suite) ---------------
+# --- the router runs a hint review once (research suite) -----------------
 
 from test_research import (  # noqa: E402
-    test_hint_review_stops_for_the_researchers_verdicts as check_router_stops,
+    test_hint_review_runs_once as check_router_stops,
 )
 
-STOPS = {"type": "positive", "tags": ["routing", "routes-to:search-hints", "stops-for-verdicts"]}
+STOPS = {"type": "positive", "tags": ["routing", "routes-to:search-hints", "hint-review-once"]}
 
 
 def _spawn(prompt="personId: LZNY-BRF"):

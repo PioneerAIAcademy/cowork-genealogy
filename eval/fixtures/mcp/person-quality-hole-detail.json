@@ -11,38 +11,40 @@
     "overallScore": 0.97,
     "issueCount": 2,
     "categories": [
-      { "scoreType": "COMPLETENESS", "count": 1, "score": 0.96 },
-      { "scoreType": "VERIFIABILITY", "count": 1, "score": 0.95 },
-      { "scoreType": "CONSISTENCY", "count": 0, "score": 1.0 },
-      { "scoreType": "COHERENCE", "count": 0, "score": 1.0 }
+      {
+        "scoreType": "COMPLETENESS",
+        "count": 1,
+        "score": 0.96
+      },
+      {
+        "scoreType": "VERIFIABILITY",
+        "count": 1,
+        "score": 0.95
+      },
+      {
+        "scoreType": "CONSISTENCY",
+        "count": 0,
+        "score": 1
+      },
+      {
+        "scoreType": "COHERENCE",
+        "count": 0,
+        "score": 1
+      }
     ],
     "issues": [
       {
         "sentence": "A marriage place is missing a city.",
         "conclusionType": "MARRIAGE",
-        "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
         "scoreType": "COMPLETENESS"
       },
       {
         "sentence": "The marriage has no tagged sources.",
         "conclusionType": "MARRIAGE",
-        "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
         "scoreType": "VERIFIABILITY"
       }
     ],
     "detail": {
-      "facts": [
-        {
-          "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
-          "conclusionType": "MARRIAGE",
-          "score": 0.91,
-          "issues": [
-            "A marriage place is missing a city.",
-            "The marriage has no tagged sources."
-          ],
-          "sources": []
-        }
-      ],
       "conflicts": []
     }
   }

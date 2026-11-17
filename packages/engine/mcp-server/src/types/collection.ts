@@ -46,6 +46,9 @@ export interface FSCollectionsResponse {
 export interface CollectionCounts {
   personCount: number;
   recordCount: number;
+  /** The collection's title and years, for `research_append`'s locality fill. */
+  title?: string;
+  dateRange?: string | null;
 }
 
 /** Reads FamilySearch's collection catalog as counts by id. */

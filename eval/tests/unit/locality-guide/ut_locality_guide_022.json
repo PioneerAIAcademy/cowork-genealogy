@@ -45,7 +45,9 @@
     "volume-search-schuylkill",
     "volume-search-pennsylvania",
     "volume-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "The skill MUST call wiki_read at least once (or wiki_place_page; both are acceptable) — the request explicitly asks the skill to read a coal-region wiki page. Returning a guide without invoking either reading tool is a failure regardless of how plausible the guide reads, because the migration target is the server-side fetch path.",

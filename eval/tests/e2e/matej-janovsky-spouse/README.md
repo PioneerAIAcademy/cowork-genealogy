@@ -83,7 +83,8 @@ grooms who married a Marie before 1874 are the hint's candidates.
   `target_person` is "Marie Janovská", the wrong wife under her married name (with "Marie Janovsky",
   the unaccented spelling the starting tree uses for the family, as `alternate_name`), rather than Josef,
   because the starting tree already holds Matěj's brother **Josef Janovský** (`LZG9-NLS`); naming
-  Josef would make the avoid-guard's name matcher fire on the brother in every run. The judge still
+  Josef would have made the retired name matcher fire on the brother in every run. The rebuilt guard
+  reads f3's `wrong_candidate.records` and a new Couple to a person of that name instead. The judge still
   grades the Josef half from the description.
 
 Other Matěj-and-Marie baptisms at Malšice belong to the same other family and are not the tree

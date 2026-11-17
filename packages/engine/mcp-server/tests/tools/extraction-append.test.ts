@@ -64,7 +64,7 @@ const validSource = (id: string) => ({
   gedcomx_source_description_id: "SD-001",
   citation: "1850 U.S. Census, Schuylkill County, PA",
   citation_detail: citationDetail,
-  source_classification: "original",
+  source_classification: "derivative",
   repository: "NARA",
   access_date: "2026-01-01",
 });
@@ -362,6 +362,7 @@ describe("extraction_append: only the three call shapes", () => {
         assertion_id: "a_001",
         person_id: "I1",
         confidence: "probable",
+        match_score: 0.9,
         rationale: "name + age match",
         superseded_by: null,
       },
@@ -1882,6 +1883,31 @@ describe("research_append: the attachment-link score exemption is code-only", ()
   it("accepts it only on the internal flag", async () => {
     const r = await researchAppend(
       { projectPath: dir, ops: [await annaLink()] } as any,
+      { allowedSections: new Set(["person_evidence"]), toolName: "extraction_append", attachmentLink: true },
+    );
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  // #4549's null-vs-recorded refusal must not reach the attachment-link
+  // exemption: the internal flag skips the whole gate, so a null attachment
+  // link is accepted even when same_person happened to score the same pair.
+  it("accepts the unscored attachment link on the internal flag, even beside a recorded score", async () => {
+    const pe = await annaLink();
+    const a = (await research()).assertions.find((x: any) => x.id === pe.entry.assertion_id);
+    await recordMatchScore(dir, {
+      record_id: a.record_id,
+      record_persona_id: a.record_persona_id ?? null,
+      record_role: a.record_role ?? "principal",
+      tree_person_id: "I1",
+      score: 0.9,
+      scorer: "familysearch",
+      model: null,
+      assertion_id: a.id,
+      record_source: "record_read",
+      computed: "2026-10-26T00:00:00Z",
+    });
+    const r = await researchAppend(
+      { projectPath: dir, ops: [pe] } as any,
       { allowedSections: new Set(["person_evidence"]), toolName: "extraction_append", attachmentLink: true },
     );
     expect(r.ok, JSON.stringify(r)).toBe(true);

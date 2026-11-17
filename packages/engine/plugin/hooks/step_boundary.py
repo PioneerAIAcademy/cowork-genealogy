@@ -361,6 +361,24 @@ def current_question(research: dict) -> dict | None:
     return None
 
 
+def _active_plan_items(research: dict, question_id) -> list:
+    """Every item dict on the ACTIVE plan for `question_id`, plan order then item
+    order. Shared by `step_ctx` (open items not awaiting upload) and
+    `_touched_items_count` (how many have left `planned`), so "what counts as
+    the active plan" has exactly one definition."""
+    plans = research.get("plans") if isinstance(research, dict) else None
+    items = []
+    for plan in plans if isinstance(plans, list) else []:
+        if not isinstance(plan, dict):
+            continue
+        if plan.get("question_id") != question_id or plan.get("status") != "active":
+            continue
+        for item in plan.get("items") if isinstance(plan.get("items"), list) else []:
+            if isinstance(item, dict):
+                items.append(item)
+    return items
+
+
 def step_ctx(research: dict) -> dict:
     """What the turn's steps cannot show, computed from `research.json`.
 
@@ -374,25 +392,10 @@ def step_ctx(research: dict) -> dict:
 
     question_id = question.get("id")
     waiting = awaiting_upload_item_ids(research)
-    plans = research.get("plans") if isinstance(research, dict) else None
-    open_items = False
-    for plan in plans if isinstance(plans, list) else []:
-        if not isinstance(plan, dict):
-            continue
-        if plan.get("question_id") != question_id or plan.get("status") != "active":
-            continue
-        for item in plan.get("items") if isinstance(plan.get("items"), list) else []:
-            if not isinstance(item, dict):
-                continue
-            if item.get("status") not in ("planned", "in_progress"):
-                continue
-            if item.get("id") in waiting:
-                continue
-            open_items = True
-            break
-        if open_items:
-            break
-
+    open_items = any(
+        item.get("status") in ("planned", "in_progress") and item.get("id") not in waiting
+        for item in _active_plan_items(research, question_id)
+    )
     return {"open_items": open_items, "question_id": question_id}
 
 
@@ -424,6 +427,32 @@ def _has_proof_summary(research: dict, question_id) -> bool:
         if isinstance(summary, dict) and summary.get("question_id") == question_id:
             return True
     return False
+
+
+def _last_question_id(research: dict):
+    """The most recently CREATED question, regardless of status.
+
+    `proof-conclusion` resolves the question it concludes in the same batch as
+    writing its summary (its own contract), so by the time this reads
+    `research.json` back, a successful conclusion's question is no longer
+    `current_question`'s "last unresolved entry" -- `current_question` has
+    already moved past it, to a different question or to None. Array order is
+    creation order (`current_question`'s own docstring), and question-selection
+    only appends, so the last entry names the question this turn worked on in
+    the ordinary case.
+
+    Known gap (issue #4601): this assumes the question just concluded is also
+    the most recently CREATED one. `question-selection.md`'s own exemption
+    lets a second question open while an earlier one sits unresolved with a
+    `not_proved` summary (an identity conflict); if THAT earlier question is
+    later re-concluded in place, array order no longer names it. Bounded
+    impact -- the gate falls through to "keep going" one extra turn instead of
+    ending immediately, backstopped by `MAX_AUTO_REPLIES` -- not fixed here."""
+    questions = research.get("questions") if isinstance(research, dict) else None
+    if not isinstance(questions, list) or not questions:
+        return None
+    last = questions[-1]
+    return last.get("id") if isinstance(last, dict) else None
 
 
 # The verdict research-exhaustiveness opens a `resources_spent` justification with.
@@ -527,17 +556,28 @@ def reply_options(offered_step, research: dict | None = None) -> list[str]:
     return options
 
 
-def _auto_reply_state(state: dict | None) -> tuple[int, int, list]:
+def _auto_reply_state(state: dict | None) -> tuple[int, int, list, int]:
     state = state if isinstance(state, dict) else {}
     replies = state.get("replies")
     rounds = state.get("planning_rounds")
     answered = state.get("answered")
+    touched = state.get("touched_items")
     return (
         replies if isinstance(replies, int) and replies > 0 else 0,
         rounds if isinstance(rounds, int) and rounds > 0 else 0,
         [tuple(pair) for pair in answered if isinstance(pair, (list, tuple))]
         if isinstance(answered, list)
         else [],
+        touched if isinstance(touched, int) and touched > 0 else 0,
+    )
+
+
+def _touched_items_count(research: dict, question_id) -> int:
+    """How many of the current question's ACTIVE plan items are no longer
+    `planned` -- a count, not a boolean, so growth between turns is visible."""
+    return sum(
+        1 for item in _active_plan_items(research, question_id)
+        if item.get("status") != "planned"
     )
 
 
@@ -548,6 +588,8 @@ def next_auto_reply(
     turn_step,
     offered_step,
     outcome: str,
+    *,
+    research: dict | None = None,
 ) -> dict:
     """The reply the host sends for the researcher, or None to end the run.
 
@@ -555,22 +597,30 @@ def next_auto_reply(
     the returned state and never mutates the one it passed in.
 
     Ends the run when the turn did not finish cleanly, made no offer, offered
-    `wrap-up` (only the researcher answers that), ran proof-conclusion, repeated
-    a (step, offer) pair already answered since the last planning round, or hit
-    `MAX_AUTO_REPLIES`.
+    `wrap-up` (only the researcher answers that), ran proof-conclusion and the
+    question it worked already has a proof summary (or `research` could not be
+    read), repeated a (step, offer) pair already answered since the last
+    planning round or since the current question's active-plan items last grew
+    in count, or hit `MAX_AUTO_REPLIES`.
     """
-    replies, rounds, answered = _auto_reply_state(state)
+    replies, rounds, answered, touched = _auto_reply_state(state)
     step = bare_name(turn_step) if turn_step else ""
     offer = offer_key(offered_step)
     prev = bare_name(prev_step) if prev_step else ""
 
-    def done(reply, rounds=rounds, answered=answered):
+    # `rounds`/`answered`/`touched` are read fresh on every call -- none of them
+    # is ever reassigned from inside `done`, so Python resolves each as a free
+    # variable against `next_auto_reply`'s current locals, never a value frozen
+    # at `done`'s own definition. A call after `rounds += 1`/`answered = []`
+    # sees the updated value with nothing to re-pass.
+    def done(reply):
         return {
             "reply": reply,
             "state": {
                 "replies": replies + (1 if reply else 0),
                 "planning_rounds": rounds,
                 "answered": [list(pair) for pair in answered],
+                "touched_items": touched,
             },
         }
 
@@ -583,7 +633,17 @@ def next_auto_reply(
     if not offer or offer == WRAP_UP:
         return done(None)
     if step == "proof-conclusion":
-        return done(None)
+        # The LAST-created question, not `step_ctx`'s "current" one: a
+        # successful conclusion resolves this turn's question in the same
+        # batch as its summary, so by now `current_question` has already moved
+        # past it (to a different question, or to None) -- array order still
+        # names it, since question-selection only appends. Deliberately a
+        # DIFFERENT "which question" than the growth check just below, which
+        # wants the CURRENT (not-yet-resolved) one -- don't collapse the two
+        # into one lookup (issue #4601 names the known gap in this one).
+        if research is None or _has_proof_summary(research, _last_question_id(research)):
+            return done(None)
+        # else: blocked proof-conclusion, no proof written -- fall through
     if replies >= MAX_AUTO_REPLIES:
         return done(None)
 
@@ -595,6 +655,16 @@ def next_auto_reply(
         rounds += 1
         answered = []
 
+    if research is not None:
+        # The CURRENT question, not the proof-conclusion gate's last-created
+        # one above -- this tracks ongoing plan progress on whichever question
+        # is actually open now.
+        question = current_question(research)
+        current = _touched_items_count(research, question.get("id") if question else None)
+        if current > touched:
+            answered = []
+        touched = current
+
     pair = (step, offer)
     if pair in answered:
         # A link-and-assess cycle that never plans.
@@ -602,8 +672,8 @@ def next_auto_reply(
     answered = answered + [pair]
 
     if offer == "plan" and rounds >= 1:
-        return done(REPLY_WRAP_UP, rounds, answered)
-    return done(REPLY_KEEP_GOING, rounds, answered)
+        return done(REPLY_WRAP_UP)
+    return done(REPLY_KEEP_GOING)
 
 
 # What a step arrives as. Cowork's spawn tool is `Agent`; the SDK path uses `Task`;

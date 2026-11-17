@@ -83,8 +83,8 @@ entry says so.
 22. **`--autonomous` stays as e2e's opening. Rescinded by the lead on 2026-11-10;** it was
     to be retired once e2e ran on the host's replies. The e2e orchestrator opens every run
     with `/research --autonomous <question>` (`_render_user_message` in
-    `eval/harness/e2e/orchestrator.py`), and that flag gives search-external-sites and
-    search-hints `userPresent: no` in e2e. The orchestrator writes no delegation, so it
+    `eval/harness/e2e/orchestrator.py`), and that flag gives search-external-sites
+    `userPresent: no` in e2e. The orchestrator writes no delegation, so it
     cannot pass `userPresent: no` itself, and production routing is measured by the
     single-ask panel (`make e2e-single-ask`), not e2e. The ruling also rests on the routing
     failures recorded from alpha feedback: all but one began from a single ask, not an
@@ -350,7 +350,7 @@ choice. The alpha sends no `options`.
   which step is offered. `offered_step(text)` reads the turn's **last** line; a line that
   names no entry is no offer. `offer_line` and `offer_key` are the write side.
 - **One pure function picks the reply:** `next_auto_reply(state, turn_mode, prev_step,
-  turn_step, offered_step, outcome)` returns `{"reply", "state"}`.
+  turn_step, offered_step, outcome, *, research=None)` returns `{"reply", "state"}`.
   - Only a `job` turn (the researcher's "Keep going." or a host reply) gets a reply, so a
     "Continue." or "Wrap it up." turn ends the run.
   - **A planning round** is a research-plan turn whose `prev_step` is outside setup and
@@ -359,9 +359,17 @@ choice. The alpha sends no `options`.
     and a conflict's second evidence round.
   - Any other offer gets "Keep going.".
   - **It returns no reply, ending the run,** when the outcome is not `ok` or `completed`;
-    the turn has no offer; the offer is `wrap-up`; the turn ran proof-conclusion; the
-    (`turn_step`, `offered_step`) pair was already answered since the last planning round;
-    or `MAX_AUTO_REPLIES` (30) replies were sent.
+    the turn has no offer; the offer is `wrap-up`; the turn ran proof-conclusion and the
+    question it worked already has a proof summary (or `research` could not be read); the
+    (`turn_step`, `offered_step`) pair was already answered since the last planning round
+    or since the CURRENT question's active-plan items last grew in count; or
+    `MAX_AUTO_REPLIES` (30) replies were sent.
+  - The proof-conclusion check finds the question it worked with `_last_question_id`
+    (creation order), deliberately **not** `current_question`: a successful conclusion
+    resolves its own question in the same batch as the summary, so by the time this reads
+    `research.json` back, `current_question` has already moved past it. Known gap: creation
+    order names the wrong question when an EARLIER question is re-concluded in place while
+    a LATER one sits open and unresolved.
 - **In a "Keep going." turn** the router runs the step the last turn offered and passes
   person-evidence `userPresent: no`.
 
@@ -375,8 +383,11 @@ choice. The alpha sends no `options`.
   and Stop is unset. `release_next_held` sends it, which reuses the web tier's guard
   against a message posted at the same moment, recovery of a stranded held row, and the
   put-back after a failed send.
-- **Run state** (`{replies, planning_rounds, answered}`) lives in `sessions.auto_reply`.
-  The worker clears it when it claims an open turn not marked `auto`.
+- **Run state** (`{replies, planning_rounds, answered, touched_items}`) lives in
+  `sessions.auto_reply`. `touched_items` counts the current question's active-plan items
+  whose status is no longer `planned`; when it grows since the last turn, `answered`
+  clears, because that is real plan progress, not a repeated loop. The worker clears the
+  whole state when it claims an open turn not marked `auto`.
 - **`prev_step`** is the session's last closed turn with a non-null `turns.step`, so a
   turn that ran no step (section J) does not reset the chain.
 - **Stop and typing win.** A held `auto` row is never released while Stop is set; the
@@ -446,14 +457,16 @@ router sentence: plan at most one extra round, then wrap up.
   1. research-plan's dispose completes every open item whose search ran and skips the
      rest with `skip_category: "user_declined"`. It leaves an item waiting on an upload
      hand-off alone.
-  2. person-evidence links the question's unlinked assertions, when there are any, with
-     `userPresent: no`, so it resolves weak matches downward instead of pausing. Both
-     research-exhaustiveness and proof-conclusion refuse while a relied-upon person is
-     unidentified. An absent `userPresent` means a researcher is present.
+  2. person-evidence links the question's unlinked assertions, when there are any. The
+     router passes `userPresent: no`, which the agent does not read: a weak match gets no
+     link on every run, so nothing pauses. Both research-exhaustiveness and
+     proof-conclusion refuse while a relied-upon person is unidentified.
   3. conflict-resolution settles any blocking unresolved conflict it can from the evidence
      in hand.
   4. research-exhaustiveness, with `wrapUp: yes`, records the stop: `resources_spent`,
-     skipped items as `skipped_plan_item`, waiting items as `handed_to_user`, never-planned
+     items skipped `user_declined`, `no_coverage` or `inaccessible` as `skipped_plan_item`
+     (the rule research-exhaustiveness's "Build `not_reached`" applies to every stop it
+     writes), waiting items as `handed_to_user`, never-planned
      gaps (including the tentative-value (b) path's alternative) as `deferred`. Under
      `wrapUp` it skips its scope check and the blocks that would refuse, but keeps the
      "already declared" stop.
@@ -504,9 +517,9 @@ router sentence: plan at most one extra round, then wrap up.
 - **External-site items join the same fan-out,** one `search-external-sites` spawn per
   item (section I).
 - **A hints plan item** (`record_type: "fs_hints"`) runs through `search-hints` as an
-  errand: triage's recommendations go in the step report as statements, the step still
-  offers linking, and the researcher's verdicts come back as a later reply. A hints item
-  awaiting verdicts is not "next" in `project_context`. The router dispatches it after the
+  errand: search-hints decides the hints, logs its decisions and completes the item, and
+  its decisions go in the step report. A researcher who disagrees overrules a hint in a
+  later reply. The router dispatches it after the
   step's first search-group spawn, because a turn that search-hints opens admits no
   search.
 - **An agent's `Hand-back:` line is routed by step group** (lead-accepted
@@ -553,7 +566,15 @@ router sentence: plan at most one extra round, then wrap up.
   search to research-plan, not question-selection. The conflict step names the record
   that could settle it and ends "Continue with planning the searches?".
 - **Given more than one fact to research,** question-selection writes no question and asks
-  the researcher to pick one.
+  the researcher to pick one. With `userPresent: no`, which the router sends only on an
+  autonomous run, it writes one question, for the fact the objective names first, and
+  says so in that question's `rationale`. Nobody is there to answer, and the objective's
+  order is a basis the agent can state and the same project picks the same way every
+  run; "the highest-value fact" is neither. One question, not one per fact:
+  `newQuestionWhileAnotherIsOpenInvariants` refuses a second open question written in a
+  later call, and `secondQuestionInOneCallInvariants` one written in the same call. A "Keep
+  going." turn on a run that did not open with `--autonomous` leaves the field out,
+  because a researcher is there to answer.
 - **The objective row.** When every question is resolved, the router names any uncovered
   part of the objective as a suggested next question and offers setup.
 - **Ladder: a conflict's evidence round.** When every conflict in `openConflictIds`
