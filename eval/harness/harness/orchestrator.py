@@ -766,6 +766,11 @@ async def _execute_single_run(
             # test_index_discrepancy_does_not_recommend_detaching
             # (issue #1606; unit-test-spec.md § 5.12 `index_error_source`).
             "index_error_source": spec.raw.get("index_error_source"),
+            # Also threaded in: `variant_names`, the name spellings a test
+            # declares to be variants the records state — ground truth for
+            # test_name_variant_not_called_index_error (issue #4584;
+            # unit-test-spec.md § 5.13 `variant_names`).
+            "variant_names": spec.raw.get("variant_names"),
             # Also threaded in: `execution`, so test_tool_allowlist can widen
             # by the same `run_skills` rule the session allowlist used. A
             # callee's calls land in this run's tool_calls log, and without
