@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page getting_started for \"Lincolnshire, England, United Kingdom\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests); the real answer is this error. Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Lincolnshire",
+    "section": "getting_started"
+  },
+  "response": {
+    "error": "No wiki page found for \"Lincolnshire, England, United Kingdom\"."
+  }
+}

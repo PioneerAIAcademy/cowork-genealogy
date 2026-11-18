@@ -109,12 +109,12 @@ so implementation doesn't re-litigate:
 | 4 | Who decides which persons merge | **The caller does.** merge_gedcomx "should be told which people to merge by taking a list of id-pairs to merge." Two modes (§ signature). |
 | 5 | `ark` conflict on a merged person | **Keep target's ark.** |
 | 6 | Integration shape (cross-doc vs in-tree) | **Whole-tree target + whole-tree candidate** (cross-document). Plus a same-document mode (candidate = null) for merging two persons already in the target. |
-| 7 | Conflicting facts — keep both or pick best | **Keep both, but mark one as primary/preferred.** Never throw names or facts away. *Additionally:* **merge equivalent** names/facts (one is a less-specific version of the other) and take the more-specific value. For **Birth/Death/Christening/Burial** mark the single best fact `primary`. |
+| 7 | Conflicting facts — keep both or pick best | **Keep both, but mark one as primary/preferred.** Never throw names or facts away. *Additionally:* **merge equivalent** names/facts (one is a less-specific version of the other) and take the more-specific value. A merge marks no fact `primary`: `primary` follows a claim (Decision 34 of `docs/plan/conclusion-tree.md`). It keeps each input's flag, and for **Birth/Death/Christening/Burial** never leaves two (the survivor's own keeps it). |
 
 Richard's clarification (confirmed by Dallan): SimplifiedGedcomX allows multiple
-facts of a type, even Birth/Death, with a `primary` marker. Identify the "best"
-fact as the **preferred (primary)** fact for Birth, Death, Christening, Burial
-(single-occurrence events). For other fact types, just merge equivalents.
+facts of a type, even Birth/Death, with a `primary` marker. Which one is primary
+is a conclusion, so the merge leaves it to a claim (Decision 34 of `docs/plan/conclusion-tree.md`); it only keeps
+one flag per single-occurrence vital type. For every type, merge equivalents.
 **Never discard unmerged names/facts.**
 
 **Amendment to #2 (2026-06-19, Dallan).** "Util only, no separate merge-gedcomx
@@ -355,7 +355,7 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
     survivorId: string,
     namesMerged: number, namesKept: number,
     factsMerged: number, factsKept: number,
-    primarySet: string[],              // fact types given a new primary, e.g. ["Birth"]
+    primarySet: string[],              // vital fact types holding a carried-over primary after the merge (a merge sets none)
     genderConflictKeptSurvivor: boolean,
   }>,
   newRelatives: string[],              // Mode 1 — ids of carried-in new relatives
@@ -433,8 +433,8 @@ survivor (survivor id is kept):
 - **Names** — union, then **merge equivalent names** and **keep all distinct
   names** (§7.1). Exactly one resulting name is marked `preferred`.
 - **Facts** — union (person facts), then **merge equivalent facts** and **keep
-  all distinct facts** (§7.2). For Birth/Death/Christening/Burial, mark the one
-  best fact `primary`.
+  all distinct facts** (§7.2). No fact is marked `primary`; at most one input
+  flag per Birth/Death/Christening/Burial survives.
 - **Person source refs** — union, remapped through the source id map (Mode 1),
   then deduped by `ref`+`page`, the same rule relationship refs follow. A
   carried (non-paired) candidate person keeps its remapped refs. Mode 2 folds
@@ -556,12 +556,10 @@ catalogued in §12.
   group's source refs. There are **no** "most-common" / "longest-display-text"
   tiebreaks — the width/length heuristics are the whole rule.
 - **Distinct** (non-equivalent) facts are **all kept**.
-- **Primary marking** (`mergeFacts`) — for `type ∈ {Birth, Death, Christening,
-  Burial}` (`VITAL_PRIMARY_TYPES`), after merging, clear any inherited `primary` in
-  that type's group and mark the single **most-complete** surviving fact
-  `primary: true` (`factMoreComplete`: narrower day range first, then longer place
-  chain). Other types get no primary from this pass — they keep an input `primary`
-  if one was set.
+- **No primary marking** (`mergeFacts`) (Decision 34 of `docs/plan/conclusion-tree.md`) — a merge never sets
+  `primary`. Each fact keeps an input flag; for `type ∈ {Birth, Death, Christening,
+  Burial}` (`VITAL_PRIMARY_TYPES`), when two surviving facts would both carry it,
+  the one with a flag from the survivor's own facts keeps it, else the first.
 
 ### 7.3 Gender
 Survivor's gender wins (§6.3). (MobMergeUtil uses majority vote across many
@@ -615,9 +613,11 @@ Tool-level (the rows above are the pure core's throws):
 - **Name equivalence** — `J Flynn` + `James Flynn` → one name `James Flynn`
   preferred; a genuinely different name kept as non-preferred.
 - **Fact equivalence (merge)** — `Birth 1900 / Utah` + `Birth 10 Jan 1900 /
-  Provo, Utah` → one Birth `10 Jan 1900 / Provo, Utah`, `primary: true`.
+  Provo, Utah` → one Birth `10 Jan 1900 / Provo, Utah`, no `primary` unless an
+  input carried it.
 - **Fact conflict (keep both)** — `Birth 1900 Utah` + `Birth 1888 Ohio` → both
-  kept, the better one marked `primary`.
+  kept, neither marked `primary`; when both inputs carried it, the survivor's keeps
+  it.
 - **Non-primary type** — two compatible Residence facts merge; two different
   Residence facts both kept, neither marked primary.
 - **Relationship dedup** — same ParentChild pair from both docs → one; collapse
@@ -651,8 +651,8 @@ Tool-level (wrappers over the pure core):
   shared `validateGedcomx` before any merge or write.
 - **Stale `merges`** — a survivor id not in the on-disk tree returns the staleness
   error and writes nothing.
-- **Return summary** — names/facts merged-vs-kept counts and `primarySet` match the
-  merged tree.
+- **Return summary** — names/facts merged-vs-kept counts and `primarySet` (the
+  vital types still holding a carried-over primary) match the merged tree.
 
 Pair and namesake checks (`tests/tools/merge-tree-persons.test.ts`; every refusal
 also asserts both files are byte-unchanged):
@@ -838,7 +838,7 @@ Deliberately simplified for v1 (note as limitations):
 - **Name matching** uses normalized subset + initials; we omit the Jaro-Winkler
   scorer and the `std_given.txt`/`std_surname.txt` lookup tables (nickname/
   spelling-variant maps) — exact/normalized compare for v1, extendable later.
-- **No "manufacture one best fact and drop the rest"** — we keep all facts and
-  only *mark* one primary, per §4 #7 ("never throw facts away").
+- **No "manufacture one best fact and drop the rest"** — we keep all facts, per
+  §4 #7 ("never throw facts away"), and mark none primary (Decision 34 of `docs/plan/conclusion-tree.md`).
 - **No father-surname inference** for surname-less children (`addFatherSurname*`)
   — too domain-specific for the first cut.

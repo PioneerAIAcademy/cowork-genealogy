@@ -144,6 +144,10 @@ import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import type { FulltextSearchableLoader } from "../types/volume-search.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
+import { claimRuleFindings, questionCapFindings } from "../validation/claim-rules.js";
+import { owedFindings } from "../utils/owed-findings.js";
+import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
+import { clearUnclaimedPrimary, primaryTarget, type PrimaryClearResult } from "../utils/primary-claim.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -2351,6 +2355,55 @@ function personEvidenceScoreInvariants(
   // prove -- and refusing it left a bad score unremovable on any reachable
   // link while still letting `confidence` be escalated on it.
   if (!isAppend && entry.match_score == null) return [];
+
+  // Exact lookup on (assertion, tree person) first -- the pair the writer was
+  // called with and the pair this entry carries. Keying on the PARTY instead
+  // could not see a score written by the fetched route, which resolves a real
+  // persons[].id where the assertion carries null. Then the persona arm: a score
+  // that compared this assertion's party with this tree person answers for every
+  // fact of that party (#3552; match-scores.ts header). A second party of the
+  // record is a different party, so ADR-0009 constraint 3 holds.
+  //
+  // Computed here, BEFORE reachability, so the two uses below share one
+  // lookup rather than querying twice: the null-vs-recorded refusal right
+  // after this, and the ordinary presence check further down. The exact-key
+  // lookup is a cheap map read; `scoredPersonaOf` -- a scan of this record's
+  // assertions -- runs only when that lookup misses, same as before this
+  // reordering (it is also needed below for the refusal's personaHint even
+  // when no score exists at all, so it cannot be skipped on `file` alone).
+  const file = matchScores.get(recordId) ?? null;
+  const exactScore = findRecordedScore(file, entry.assertion_id, entry.person_id);
+  const persona = exactScore
+    ? null
+    : scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
+  const recorded = exactScore ?? (persona ? findRecordedScore(file, null, entry.person_id, persona) : null);
+
+  // The writer records what same_person returns; a link for a pairing it
+  // already scored must carry that attestation, not drop it. A null here
+  // reads as unscored even though a number was obtained -- seen twice in
+  // production (ut_person_evidence_010; #3552's panel analysis). Reachability
+  // has no bearing: it excuses a MISSING score, never one that was actually
+  // obtained. A genuine retraction goes through an UPDATE, which the isAppend
+  // check above already lets through.
+  //
+  // `recorded` may answer via the persona arm rather than this exact
+  // assertion -- the message says so, or it reads as "same_person was called
+  // on THIS assertion" when it was really called on a sibling fact of the
+  // same persona.
+  if (entry.match_score == null && recorded !== null) {
+    const scoredWhat = exactScore
+      ? "this pairing"
+      : persona?.personaId !== null && persona?.personaId !== undefined
+        ? `persona '${persona.personaId}' for this tree person`
+        : `this record's other party for this tree person`;
+    return [
+      `person_evidence for '${entry.person_id}' (assertion '${entry.assertion_id}') carries ` +
+        `match_score: null, but same_person already scored ${scoredWhat} at ${recorded.score}. ` +
+        `Write that score on the link -- a null here reads as unscored even though a number was ` +
+        `obtained. To retract a score instead of recording it, use an update, not an append.`,
+    ];
+  }
+
   // Reachability excuses a MISSING score, never a fabricated one. Gating the
   // whole arm on it left ut_person_evidence_014's actual defect open: a stub
   // minted by `tree_edit add_person` carries no source ref, so the circular walk
@@ -2370,17 +2423,7 @@ function personEvidenceScoreInvariants(
       : research;
   if (entry.match_score == null && !personaReachable(entry, reachabilityView)) return [];
 
-  // Exact lookup on (assertion, tree person) first -- the pair the writer was
-  // called with and the pair this entry carries. Keying on the PARTY instead
-  // could not see a score written by the fetched route, which resolves a real
-  // persons[].id where the assertion carries null. Then the persona arm: a score
-  // that compared this assertion's party with this tree person answers for every
-  // fact of that party (#3552; match-scores.ts header). A second party of the
-  // record is a different party, so ADR-0009 constraint 3 holds.
-  const file = matchScores.get(recordId) ?? null;
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
-  const persona = scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
-  if (persona && findRecordedScore(file, null, entry.person_id, persona) !== null) return [];
+  if (recorded !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
@@ -7958,6 +8001,10 @@ function treeEncodingCompletionWarnings(
   const warnings: string[] = [];
   for (const ps of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
     if (!ps || (ps.tier !== "proved" && ps.tier !== "probable")) continue;
+    // A summary that states claims is judged claim by claim (owed `encode`
+    // items); this shape match is Decision 24's legacy reading of one that does
+    // not, kept until Stage 1b's part 4 bodies write claims.
+    if (Array.isArray(ps.claims) && ps.claims.length > 0) continue;
     const supporting = new Set(
       Array.isArray(ps.supporting_assertion_ids) ? ps.supporting_assertion_ids : [],
     );
@@ -7976,6 +8023,16 @@ function treeEncodingCompletionWarnings(
     );
   }
   return warnings;
+}
+
+/** Decision 33: completing a project while it still owes a blocking finding (a
+ *  question with tied assertions and no summary; a supported hypothesis with no
+ *  summary), or an `encode` item (a likely claim no tree object carries), warns.
+ *  It never refuses until Stage 1c measures the rate. */
+function owedCompletionWarnings(research: any, tree: SimplifiedGedcomX): string[] {
+  return owedFindings(research, tree)
+    .filter((f) => f.blocksCompletion || f.kind === "encode")
+    .map((f) => `the project is completed while it still owes ${f.kind} ${f.ref}: ${f.nextStep}.`);
 }
 
 /** Next `<prefix>NNN` id (max + 1, zero-padded to 3) for a research section.
@@ -8044,6 +8101,56 @@ interface AppliedOp extends AppliedByApplyOne {
   opIndex: number;
 }
 
+/** The claim rules (issue #3032 Stage 1b, `src/validation/claim-rules.ts`) for
+ *  one batch: each summary an op appended or whose `tier`, `claims` or
+ *  `supporting_assertion_ids` it set (a narrative-only edit of a legacy summary
+ *  never runs them, Decision 24), and each question an op set resolved. Read
+ *  against the final in-batch summaries, the pre-call research and the pre-call
+ *  tree. Each finding goes through its rule's mode. */
+function claimRuleOutcome(
+  ops: readonly any[],
+  applied: readonly AppliedOp[],
+  research: any,
+  beforeResearch: any,
+  beforeTree: any,
+): { errors: string[]; warnings: string[] } {
+  const RULE_FIELDS = ["tier", "claims", "supporting_assertion_ids"];
+  const summaryIds = new Set<string>();
+  const questionIds = new Set<string>();
+  for (const a of applied) {
+    const op = ops[a.opIndex];
+    const fields = op?.fields ?? {};
+    const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
+    if (a.section === "proof_summaries" && (a.op === "append" || RULE_FIELDS.some(has))) summaryIds.add(a.entryId);
+    if (a.section === "questions") {
+      const entry = a.op === "append" ? op?.entry : fields;
+      if (entry?.status === "resolved" || entry?.resolved === true) questionIds.add(a.entryId);
+    }
+  }
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  if (summaryIds.size === 0 && questionIds.size === 0) return { errors, warnings };
+  const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+  const ctx = { summaries, preCallResearch: beforeResearch, tree: beforeTree };
+  const take = (id: string, summaryId: string, messages: readonly string[]) => {
+    const outcome = applyRuleMode(ruleMode(id), summaryConcern(summaryId), messages);
+    errors.push(...outcome.errors);
+    warnings.push(...outcome.warnings);
+  };
+  for (const id of summaryIds) {
+    const summary = summaries.find((s: any) => s?.id === id);
+    if (!summary) continue;
+    for (const [rule, messages] of claimRuleFindings(summary, ctx)) take(rule, id, messages);
+  }
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  for (const id of questionIds) {
+    const question = questions.find((q: any) => q?.id === id);
+    if (!question) continue;
+    for (const { summaryId, messages } of questionCapFindings(question, ctx)) take("claims-capped-open", summaryId, messages);
+  }
+  return { errors, warnings };
+}
+
 // ─── #2472: carry an assertion correction onto the fact it minted ────────────
 
 interface FactRewriteResult {
@@ -8060,6 +8167,9 @@ interface FactRewriteResult {
   mutationWarnings: string[];
   /** Restore every touched fact to its pre-rewrite attributes. */
   undo: () => void;
+  /** The advisory for each rewritten fact marked `primary`, kept apart from
+   *  `mutationWarnings` so a fact the `primary` clear then clears drops it. */
+  concluded: Map<SimplifiedFact, string>;
 }
 
 /**
@@ -8303,8 +8413,10 @@ function rewriteLinkedFacts(
     }
   }
 
+  const concluded = new Map<SimplifiedFact, string>();
   for (const fact of concludedTouched) {
-    mutationWarnings.push(
+    concluded.set(
+      fact,
       `fact '${fact.id}' is marked primary (a concluded value) and was rewritten from its ` +
         "assertion. Re-read the proof summary that cites it: the conclusion was written against " +
         "the earlier reading.",
@@ -8319,7 +8431,7 @@ function rewriteLinkedFacts(
       }
     }
   };
-  return { mutated, warnings, mutationWarnings, undo };
+  return { mutated, warnings, mutationWarnings, undo, concluded };
 }
 
 // ─── #3601: a rejection undoes its link ──────────────────────────────────────
@@ -13214,9 +13326,24 @@ export async function researchAppend(
       return fail(originalRefusals.map((r) => fmt(r.opIndex, r.message)));
     }
 
+    // #3032 Stage 1b: the claim rules, once per batch against the final in-batch
+    // summaries, so a later op that revises a disproved claim or adds the Couple
+    // claim is seen. Warn mode until Stage 1c.
+    const claimRules = claimRuleOutcome(ops, applied, research, beforeResearch, beforeTree);
+    if (claimRules.errors.length > 0) return fail(claimRules.errors);
+
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+    // #3032 Stage 1b (Decision 34): `primary` follows its claim. Rides the
+    // rewrite's tree write and rollback.
+    let primaryClear = clearUnclaimedPrimary(beforeResearch, research, beforeTree, tree);
+    const primaryClearWarnings = (c: PrimaryClearResult) =>
+      c.cleared.map(
+        (x) =>
+          `${treeConcern(primaryTarget(x))}: \`primary\` cleared, because no live affirmed claim at probable or better ` +
+          "covers this fact any more.",
+      );
     // #3601: a rejection retires its pair's live link and that link's facts,
     // in this same all-or-nothing write.
     const retire = retireRejectedLinks(applied, research, tree);
@@ -13252,8 +13379,14 @@ export async function researchAppend(
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
-    let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated || removedPersons;
-    let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
+    let treeMutated = prep.treeMutated || rewrite.mutated || primaryClear.mutated || retire.mutated || removedPersons;
+    const clearedFacts = new Set(primaryClear.cleared.map((x) => x.fact));
+    let rewriteWarnings = [
+      ...rewrite.warnings,
+      ...rewrite.mutationWarnings,
+      ...[...rewrite.concluded].filter(([f]) => !clearedFacts.has(f)).map(([, m]) => m),
+      ...primaryClearWarnings(primaryClear),
+    ];
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
@@ -13266,8 +13399,10 @@ export async function researchAppend(
     );
     let treeEncodingWarnings: string[] = [];
     if (completingNow) {
-      const startingTree = await readStartingTree(projectPath);
-      treeEncodingWarnings = treeEncodingCompletionWarnings(research, tree, startingTree);
+      treeEncodingWarnings = [
+        ...treeEncodingCompletionWarnings(research, tree, prep.startingTree ?? null),
+        ...owedCompletionWarnings(research, tree),
+      ];
     }
 
     // A planned next action unlikely to be usable: a jurisdiction outside every
@@ -13340,10 +13475,14 @@ export async function researchAppend(
       // already failing, so it costs nothing in the normal case.
       if (!validation.valid && rewrite.mutated) {
         rewrite.undo();
+        // The clear never fails validation; re-run it on the restored facts, so a
+        // claim this call lowered still clears its fact.
+        primaryClear.undo();
+        primaryClear = clearUnclaimedPrimary(beforeResearch, research, beforeTree, tree);
         const retry = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
         if (retry.valid) {
           validation = retry;
-          treeMutated = prep.treeMutated || retire.mutated || removedPersons;
+          treeMutated = prep.treeMutated || primaryClear.mutated || retire.mutated || removedPersons;
           // The mutation half described a tree change that no longer exists.
           rewriteWarnings = [
             ...rewrite.warnings,
@@ -13351,6 +13490,7 @@ export async function researchAppend(
               "fact failed validation, so the fact rewrite was rolled back. The assertion is " +
               "corrected; the fact still holds the earlier reading. (Any other write this call " +
               "made, including a composite source description, still landed — see filesWritten.)",
+            ...primaryClearWarnings(primaryClear),
           ];
         }
       }
@@ -13416,7 +13556,7 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...claimRules.warnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<
       BatchSuccess,

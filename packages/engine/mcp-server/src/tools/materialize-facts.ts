@@ -30,8 +30,9 @@
 // incompatible date/place OR a different value coexist as separate facts. A
 // competing value of a single-valued/vital type (VITAL_PRIMARY_TYPES) is surfaced
 // in conflicts_surfaced; multi-valued types (Occupation, Residence, Census, …)
-// coexist silently. materialize_facts NEVER sets `primary`/`preferred` — only
-// proof-conclusion does — and never writes relationships or `conflicts` entries.
+// coexist silently. materialize_facts NEVER sets `primary`/`preferred` — a writer
+// sets `primary` only on a fact a probable claim covers (Decision 34) — and never
+// writes relationships or `conflicts` entries.
 //
 // The write tail (sanitizeTree → read research → apply → validateIntroduced →
 // atomicWriteJson) mirrors tree_edit's executeTreeOps; it is a
@@ -1496,7 +1497,7 @@ export const materializeFactsSchema = {
     "Christening, Burial) is reported in conflicts_surfaced for conflict-resolution; " +
     "multi-valued types (Occupation, Residence, Census, …) coexist silently.\n" +
     "\n" +
-    "materialize_facts NEVER sets primary/preferred (only proof-conclusion does), " +
+    "materialize_facts NEVER sets primary/preferred (primary marks a value a proof-summary claim concludes), " +
     "never resolves conflicts, never writes relationships (use tree_edit " +
     "add_relationship), never writes research.json, and silently skips `marriage` " +
     "assertions (a Couple-relationship event — never a correct person-level fact; " +

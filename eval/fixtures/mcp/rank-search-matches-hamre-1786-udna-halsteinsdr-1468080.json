@@ -1,0 +1,34 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Live rank_search_matches (2026-11-17, FamilySearch matcher) of the staged results of record-search-hamre-1786-udna-halsteinsdr-1468080 against subject KZHH-VTX (Unna Halsteinsdatter). Top match Halstensdr (ark:/61903/1:1:NWD5-3L9) at 0.0008429985; the bride NW44-PMK is not in the pool. Keyed like its search fixture so it pairs with that search. Shared by ut_search_records_022 and ut_search_records_023.",
+  "args": {
+    "subjectId": "~KZHH-VTX",
+    "givenName": "Udna",
+    "surname": "Halsteinsdr",
+    "collectionId": "1468080"
+  },
+  "response": {
+    "subjectId": "KZHH-VTX",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:NWD5-3L9",
+        "matchScore": 0.0008429985,
+        "primaryId": "p_11820171331",
+        "personName": "Halstensdr",
+        "sex": "Female",
+        "collectionTitle": "Norway, Marriages, 1660-1926",
+        "recordArk": "ark:/61903/1:2:MY3K-SBX",
+        "batchNumber": "M42205-1",
+        "candidateFactCount": 1
+      }
+    ],
+    "subjectResolvable": false,
+    "diagnostic": "Subject 'KZHH-VTX' is scoreable (2 dated/placed fact(s)), but no candidate in this pool scored above 0.01. Treat that as a real negative for this query — page deeper (offset) or narrow the query; do not hand-triage the stubs."
+  }
+}

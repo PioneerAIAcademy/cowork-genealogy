@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_plan_q4n",
+    "skill": "research-plan",
+    "name": "Norway marriage plan carries the given-name spelling quirk into the marriage-index item's rationale",
+    "type": "positive",
+    "description": "norway-given-name-spelling-quirk-first-plan: q_001 has no plan yet, and the localities entry loc_001 already carries a collection quirk from the FamilySearch Wiki (https://www.familysearch.org/en/wiki/Norway_Church_Records). Issue #4516 removes that rule from the search-records body, so it now reaches a search only through the plan item: research-plan must write it into the affected item's persisted rationale.",
+    "tags": [
+      "planning",
+      "reads-localities-entry",
+      "first-plan",
+      "collection-quirks",
+      "wiki-quirk-route",
+      "norway",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — whom did Unna Halsteinsdatter (b. May 1745, Hestdal, Meland, Hordaland, Norway) marry, and when?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "norway-given-name-spelling-quirk-first-plan"
+  },
+  "mcp_fixtures": [
+    "wiki-read-norway-naming-customs",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "A `localities` entry (loc_001) is ALREADY in research.json — the orchestrator ran locality-guide before research-plan. The skill should READ that entry and use its quirks; it should NOT call wiki_search / wiki_place_page / place_population (research-plan does not hold those tools). Do NOT fail it for not surveying.",
+    "The quirk under test is loc_001's: \"Norwegian name spellings were set by the recorder and vary between records (the wiki's example: the given name Sivert written as Syver, Sjur, Siver, Sifuer or Siffuer) — search given-name spelling variants, not just the tree's spelling, before concluding a nil. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Church_Records)\"",
+    "The persisted `plan_items[].rationale` is the only place that counts — narration is not persisted and search-records never sees it. Correctness turns on the plan item that searches the Norway marriage index (collection 1468080) for Unna: its persisted rationale must state that given-name spellings vary by recorder, so the search must try spelling variants of 'Unna', not only the exact spelling. A plan whose reply mentions the quirk while that item's rationale does not fails this point. Paraphrase is fine.",
+    "Plan items must include rationale explaining why each record type was chosen for the question — generic rationale ('more records would help') is a fail."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

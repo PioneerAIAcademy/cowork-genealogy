@@ -14,3 +14,8 @@ identical: one stub person, no questions, no plans, no log, no evidence.
 - `question-selection` (`two-fact-objective-asks-first.json`): given two
   independent facts and no question yet, the agent writes nothing and asks the
   researcher which to research first (step mode, section E).
+- `question-selection` (`two-fact-objective-autonomous-first-fact.json`): the
+  same, with `userPresent: no`: the agent writes one question, for the burial,
+  the fact the objective names first.
+- `research` (`route-question-selection-autonomous-user-present.json`): on an
+  `--autonomous` run the router spawns question-selection with `userPresent: no`.

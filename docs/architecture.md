@@ -294,8 +294,9 @@ how to word it:
 > **Direction.** Both gates the §4 law named moved into the tool: the
 > **mentor gate** as a refusal — since removed, with gps-mentor off the default
 > `/research` path — and the **tree-encoding gate** as a warning on
-> `opWarnings`, which diffs the final tree against a write-once
-> `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
+> `opWarnings`: owed findings (an `encode` item for a likely claim no tree object
+> carries) plus, for a summary with no claims, a diff of the final tree against a
+> write-once `starting-tree.gedcomx.json` baseline. It ships warn-only rather than as a
 > refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
 > hard-block correct work when a wrong refusal has no override). **If you are
 > adding a new cross-turn invariant, do not add it as prose.** If it cannot be
@@ -888,11 +889,11 @@ There **is** an orchestrator, and it is a skill:
    since come to read it again: besides the trigger in its description, an
    autonomous message is always a job, never a bounded ask, and the router hands
    `userPresent: no` to
-   `search-external-sites` and `search-hints`, which get it on no other run, and to
-   `person-evidence`, which also gets it on a "Keep going." or "Wrap it up." turn
-   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those agents read that
-   field, not the string. `agents/person-evidence.md` was left out of the folding; its
-   resolve-downward rule now applies when its delegation says `userPresent: no`.
+   `search-external-sites` and `question-selection`, which get it on no other run
+   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those two read that field,
+   not the string (§9.5 below). The router also sends it to `person-evidence`, on a "Keep
+   going." or "Wrap it up." turn as well, but `agents/person-evidence.md` no longer
+   reads it.
    `agents/search-records.md` hands back `userPresent: no` for
    search-external-sites only when its delegation says the search is part of an
    autonomous run, which the router's search-records delegation does not carry;
@@ -901,8 +902,9 @@ There **is** an orchestrator, and it is a skill:
    `opening_prompt` in `apps/server/proto/demo.py`, the prototype's default opener
    (`make proto-demo` when no `--prompt` is given, and the `cap_main_real` and
    `concurrent_rss_heavy` cases of `make proto-bounds`; their `-aws` twins run the
-   same scripts); and by the two research unit tests that pin the trigger and the
-   always-a-job rule (`ut_research_005`, `ut_research_023`).
+   same scripts); and by the research unit tests that open with it: `ut_research_005`
+   and `ut_research_023`, which pin the trigger and the always-a-job rule, and
+   `ut_research_ue1`, `ut_research_uh1` and `ut_research_uq1`.
    Offline suites pin that the flag is sent; none can see what the router does
    with it. Only the paid eval runs do.
    **gps-mentor runs only when the user asks for a second opinion, and the router
@@ -1634,7 +1636,10 @@ one:** `research_append`'s assertion-`update` op also rewrites the tree fact
 that assertion minted, and a rewrite that fails validation is rolled back and
 degraded to a warning rather than refusing the assertion correction, which is
 the legitimate write the caller asked for. So that call writes `research.json`
-and not the tree. `tree-materialization-spec.md` §4.4 says why refusing would be
+and not the tree. The `primary` clear (Decision 34 of
+`docs/plan/conclusion-tree.md`: `primary` comes off a fact whose covering claim
+the call lowered or removed) rides the same write and rollback, re-run on the
+restored facts. `tree-materialization-spec.md` §4.4 says why refusing would be
 wrong. The tools assign all ids; callers never predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the
@@ -2391,9 +2396,9 @@ with nobody waiting to answer, skip the ask and take the action.
 Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
 "can a human act on this right now?". Two bodies keep a genuine two-sided answer because
 a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
-`agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
-can) and `search-external-sites` (a user who named the plan item will capture it; mid-run
-nobody will). `search-hints` decides hints itself on every run. Each has eval fixtures on
+`search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will) and `agents/question-selection.md` (a user can pick which fact of the
+objective first; mid-run nobody can). `search-hints` decides hints itself on every run. Each has eval fixtures on
 each side. The mode difference survives in the router, which sets that field from the
 flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
 where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
@@ -2459,8 +2464,8 @@ CI covered you (§9.4).
 things it removes: a pause, or a capability (§9.5). Note that no agent reads
 `--autonomous`: key an agent's rule on the `userPresent` field of its delegation, not on a
 string in the message. The router sets that field per agent: in its spawn-fields paragraph
-(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-hints, in its
-routing-table row; a new agent that needs it also needs its own line in the router.
+(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-external-sites
+and question-selection, at the routing rows that reach them; a new agent that needs it also needs its own line in the router.
 Removing the pause is the established shape and is fine: decide instead of asking, and
 log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
