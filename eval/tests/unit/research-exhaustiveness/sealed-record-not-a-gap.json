@@ -2,18 +2,15 @@
   "test": {
     "id": "ut_research_exhaustiveness_017",
     "skill": "research-exhaustiveness",
-    "name": "An obituary in hand does not excuse a death certificate the project never mentions",
+    "name": "A privacy-sealed record is not an exhaustiveness gap and must not be recommended",
     "type": "positive",
-    "description": "q_001 (parents of Alan Glen Applegarth, b. 1936) in recent-birth-sealed is supported by the 1940 and 1950 censuses, the 1926 marriage and Alan's 2023 obituary naming both parents. His 1936 Utah birth certificate (pli_004) is privacy-sealed and recorded so in prose. His 2023 death certificate appears nowhere in the project: no plan item, no log entry, no skip. A decisive record the project never mentions blocks the declaration even when the obituary is held, so the agent declines, names the death certificate and leaves the choice to the researcher (Promise, 2026-11-18, applying the lead's 2026-11-17 ruling that an unexamined death certificate leaves research not exhaustive and that the agent may ask). The sealed birth certificate is still not a gap and must not be recommended. Until 2026-11-18 this test expected a declaration; ut_research_exhaustiveness_018 and _d8h keep that half, on projects that record the death certificate as closed by law.",
+    "description": "q_001 (parents of Alan Glen Applegarth, b. 1936) in recent-birth-sealed is established from the 1940 and 1950 censuses and the 1926 marriage. The one undone plan item (pli_004) is Alan's own 1936 Utah birth certificate, which is privacy-sealed (~100 years; public ~2036; released before then only to the registrant or a direct heir). The skill must treat that record as NOT reasonably available: it must not refuse to declare exhaustive on account of it, must not list it as an outstanding searchable gap, and must not recommend obtaining it as a routine next step. Guards the record-access privacy rule surfaced by the applegarth-parents-1936 e2e run.",
     "tags": [
       "research-exhaustiveness",
       "record-access",
       "privacy-sealed",
       "100-year-rule",
-      "decisive-record",
-      "death-record",
-      "no-exhaustive-declaration",
-      "death-certificate-gap"
+      "reasonably-available"
     ]
   },
   "input": {
@@ -21,15 +18,14 @@
     "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording the decline if they are not. The researcher reports the census and marriage searches done and the parents established.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "judge_context": [
-    "The project holds Alan's 2023 obituary naming both parents (pli_005, log_005), so he died in 2023. His death certificate appears nowhere: no plan item or log entry searches, skips or mentions it. The Utah Vital Records wiki page the agent fetches shows statewide death registration from 1905, so a 2023 death certificate exists.",
-    "Claude must NOT declare q_001 reasonably exhaustive. The death certificate is a decisive record for a parentage question and the project never accounts for it; the obituary in hand does not excuse it. A stop-gate value (`question_answered`, `record_exhausted`, `nothing_further_reachable`) or `exhaustive_declared` is a FAIL.",
-    "A decline WRITES the stop: every item on the active plan is closed, so `stopped_because` is `resources_spent` with `stop_criteria: null` and `status` left `in_progress`. Writing nothing is a miss.",
-    "Claude must name Alan's death certificate (or death record) as what is unaccounted for. A decline that names no specific source, names only the sealed birth certificate, or rests only on some other record is a FAIL.",
-    "The sealed 1936 birth certificate (pli_004) is still NOT a gap: Utah seals birth records for ~100 years, documented in pli_004's rationale and log_004. The recorded reason is fact. Claude must not list it as an outstanding searchable record and must not recommend obtaining it. Recording it in `not_reached` as `privacy_sealed` or `skipped_plan_item` is correct.",
-    "Do NOT penalize Claude for declining even though four sources agree on the parents. `justification` must open with `Overturn risk: high — <sources>` or `Overturn risk: low`; either verdict is acceptable.",
-    "The reply's LAST line is exactly \"Continue with planning the searches?\" on a high verdict or \"Continue with writing the conclusion?\" on a low one.",
-    "Claude must not claim the death certificate or the birth certificate was examined, or invent their contents.",
-    "Tool Arguments: `## 1. Gather evidence` names a wiki_read unconditionally; grade this dimension on the calls that were made."
+    "The one undone plan item (pli_004) — Alan's own 1936 Utah birth certificate — is privacy-sealed: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. This is documented in pli_004's rationale and in log_004. The skill must treat it as a record that is NOT reasonably available, not as an outstanding search gap.",
+    "FAILURE MODES this guards against: (a) refusing to declare exhaustive SOLELY because the 1936 birth certificate was not obtained; (b) listing the sealed birth certificate as an outstanding searchable record still to be pursued; (c) recommending the researcher obtain the sealed birth certificate as a next step to advance the tier. Any of these is a fail.",
+    "The parents (John Obrien Applegarth and Olive Annie Harvey) are established by independent sources: the 1940 and 1950 U.S. censuses (Alan in the household) the 1926 Weber County marriage (the parental couple and the mother's maiden name), and Alan's 2023 obituary, which names both parents (pli_005, log_005). On this evidence the skill MAY declare q_001 reasonably exhaustive; if it does, that is correct and the sealed birth record does not block it.",
+    "Contrast (do not conflate): a record that is merely unsearched-but-accessible WOULD gate a declaration under the decisive-record rule. This birth certificate is unobtainable by privacy law, so it does NOT gate the declaration. The distinction is exactly the point of this test.",
+    "The skill must NOT claim the birth certificate was examined or invent its contents.",
+    "Acceptable pass: (a) declares q_001 reasonably exhaustive, noting the sealed birth record as an access limitation rather than a gap; OR (b) if it declines for a DIFFERENT legitimate reason, it still does not cite the sealed birth certificate as the outstanding searchable gap and does not recommend obtaining it. His 2023 death certificate is recorded as closed by law (pli_010), so with the obituary in the project a decline that rests on the death certificate is a miss.",
+    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema). A review/decline still makes MCP calls — `## 1. Gather evidence` names a wiki_read unconditionally — so grade this dimension on the calls that were made.",
+    "pli_010 is Alan's 2023 Utah death certificate, skipped because Utah keeps death certificates closed for 50 years (public 2073). It is recorded as not obtainable, the same as the birth certificate: declining on account of it, or recommending the researcher obtain it, is a miss."
   ],
   "execution": {
     "max_turns": 40,

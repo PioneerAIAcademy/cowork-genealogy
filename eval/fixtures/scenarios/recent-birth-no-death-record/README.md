@@ -31,11 +31,13 @@ right outcome.
 ## Fork
 
 Forked 2026-11-17 from `recent-birth-sealed`, which also holds Alan's 2023
-obituary naming both parents (`ut_research_exhaustiveness_017`, which since 2026-11-18
-also declines, because the death certificate is never mentioned there either).
+obituary naming both parents and records his death certificate as closed by law, and is declared on
+(`ut_research_exhaustiveness_017`).
 Removed here: the obituary's plan item, log entry, source, assertion and
 person-evidence link, and its source and references in the tree. Added: the
 death year in the objective and the question. `pli_004` carries the seal in
 `skip_category` and `skip_reason`, not in prose, and `log_004` is removed: reading a
 seal out of prose is what `ut_research_exhaustiveness_018` tests, and three early runs of
 022 doubted the prose seal and declined on the birth certificate.
+
+The 1926 marriage (`src_003`) is the county record viewed as a digital image on FamilySearch. Until 2026-11-18 its assertions carried an `ancestry:` record id while the source said `original` on FamilySearch; an agent read the id as an index-only source and declined on `original_substitution` about 1 run in 14.

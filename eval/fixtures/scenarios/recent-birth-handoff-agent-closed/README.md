@@ -24,3 +24,5 @@ the sealed-record rule this scenario tests. The unsearched version is
 `sealed-birth-open-index-unsearched`.
 
 `pli_010` records Alan's 2023 Utah death certificate as skipped: Utah keeps death certificates closed for 50 years. Added 2026-11-18 so that every decisive record for the parentage question is accounted for in the project.
+
+The 1926 marriage (`src_003`) is the county record viewed as a digital image on FamilySearch. Until 2026-11-18 its assertions carried an `ancestry:` record id while the source said `original` on FamilySearch; an agent read the id as an index-only source and declined on `original_substitution` about 1 run in 14.
