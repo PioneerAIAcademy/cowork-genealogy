@@ -12,7 +12,7 @@ description: >-
   (use research-plan), or extracting facts from an image already in hand (use
   the record-structurer agent). With no project, reads a record set and returns
   its names, cited by image, or finds the catalog item and DGS numbers for a
-  named title.
+  named title, or compares a page's names with FamilySearch's index of that page.
 model: claude-haiku-5-5
 effort: medium
 tools:
@@ -32,6 +32,9 @@ tools:
   - mcp__genealogy__volume_bisect
   - mcp__remote-devices__Genealogy_Research__volume_bisect
   - mcp__Genealogy_Research__volume_bisect
+  - mcp__genealogy__image_index
+  - mcp__remote-devices__Genealogy_Research__image_index
+  - mcp__Genealogy_Research__image_index
   - mcp__genealogy__image_transcribe
   - mcp__remote-devices__Genealogy_Research__image_transcribe
   - mcp__Genealogy_Research__image_transcribe
@@ -117,7 +120,8 @@ failure of this gate, not a thorough reading of the request.
   search-external-sites' job — even if a plan item targets that site, you do
   not execute it here.
 - **Indexed name/date/place search** ("search the census index for…"): say
-  "That's an indexed search — please use search-records," and stop.
+  "That's an indexed search — please use search-records," and stop. Re-indexing
+  one page, or comparing a page with its FamilySearch index, is not one: proceed.
 - **Full-text / transcript search** ("find X mentioned as a witness…"): say
   "That's a full-text search — please use search-full-text," and stop.
 - **Planning what to browse** ("which volumes/records should I browse next?",
@@ -149,7 +153,8 @@ proceed to the steps below.
 Browse only when the volume is **digitized but not searchable** —
 `volume_search` reports `recordSearchablePercent: 0` (or very low) and
 `fulltextSearchable: false`. If it's indexed use search-records; if full-text
-transcribed use search-full-text (both are faster than reading pages).
+transcribed use search-full-text (both are faster than reading pages). A
+re-index of one page is the exception (**No project**).
 
 | MCP tool | Input | Purpose |
 |----------|-------|---------|
@@ -157,6 +162,7 @@ transcribed use search-full-text (both are faster than reading pages).
 | `image_search` | `imageGroupNumber` (a volume id); bare film + `item`, `itemImage` | Count ONE group's images and give their id ranges (`imageCount`, `imageIdRanges`: `[firstId, lastId]` per unbroken run); with `item`, one item of a film and that item's `imageGroupNumber` |
 | `volume_bisect` | `imageGroupNumber` (split name), `targetYear`, `readings`, `projectPath` | Read ONE probe page per call toward a year; returns `bracket`, `reading`, `nextImageId` or `stopped` |
 | `catalog_search` | `title`, `keywords`, `standardPlace` | Find a filmed record set in the FamilySearch Catalog; a hit's `filmNotes[].imageGroupNumber` goes to `image_search` |
+| `image_index` | `imageId`, `collectionId`, `offset` | The records FamilySearch indexed on ONE page: `entries[].personas[].name`; `nextOffset` while more remain; `ordered: false`, so list position is not page order |
 | `image_transcribe` | `imageId`, `projectPath` | OCR ONE page host-side; returns `staged.resultsRef`, `digest` and `found`, not the text. With no `projectPath`, returns `transcription` inline and stages nothing |
 | `sidecar_read` | `projectPath`, `ref` | Read a staged page's text by its `staged.resultsRef` |
 
@@ -182,6 +188,17 @@ contract:
 - Read pages with `image_transcribe({ imageId })` and no `projectPath`. The page
   text comes back as `transcription`. Read the pages the ask needs, not the
   whole film.
+- **Re-index one page** (compare a page with FamilySearch's index of it): call
+  `image_index({ imageId })`, again with each `nextOffset` until it is absent;
+  then `image_transcribe({ imageId })` once. Pair an index entry with a
+  transcribed line when their given names or their surnames are the same or
+  differ by a letter or two (Mila/Milo, Barry/Berry), and the lines on either
+  side also pair; only an entry with no such line is unmatched. After `---`,
+  give a table in transcription order, one row per line: the index reading, the
+  new reading, and `same` or `differ — check this line on the image`, each row
+  cited by the image id. Never call either reading the error, never state a
+  correction, and never write that a name is missing from the index; an entry
+  with no pair is `unmatched`. Exempt from the searchable-volume decline below.
 - A searchable volume is still declined (step 2), with nothing logged. A page
   that cannot be read, including a cap refusal, is `NOT READ: <imageId>` with
   the tool's error quoted.
@@ -193,8 +210,8 @@ contract:
     each fact followed by the image id it came from (e.g. `004567123_00058`).
     State which pages were read and which were not. No other line in it is
     only `---`. This block replaces `summary_for_user` and may carry image ids.
-- Never state a name, rank or date that is not in a `transcription` you
-  received.
+- Never state a name, rank or date that is not in a `transcription` or an
+  `image_index` entry you received.
 
 ## Steps
 
