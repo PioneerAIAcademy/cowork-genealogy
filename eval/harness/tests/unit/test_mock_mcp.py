@@ -3057,14 +3057,14 @@ def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path)
         assert key not in body
 
 
-def _messy_page_server(tmp_path, transcription):
+def _messy_page_server(tmp_path, transcription, match=None):
     """A mock server over one canned page carrying production's in-process
     extras (`metadata`, `nameExpansion`), with the workspace at `tmp_path`."""
     fixtures = tmp_path / "fixtures"
     fixtures.mkdir()
     (fixtures / "page.json").write_text(json.dumps({
         "tool": "image_transcribe",
-        "args": {"imageId": "~"},
+        "args": match or {"imageId": "~"},
         "response": {
             "transcription": transcription,
             "found": "FOUND",
@@ -3091,7 +3091,7 @@ def test_image_transcribe_staged_page_is_cleaned_before_staging_and_digested_by_
     envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
     assert envelope["payload"]["results"][0]["transcription"] == cleaned
     assert body["digest"] == {"id": "004884748_02613", "chars": len(cleaned), "excerpt": "Name\nAnna Weber\nPeter Weber"}
-    assert sorted(body) == ["digest", "found", "staged"]
+    assert sorted(body) == ["digest", "found", "readingNote", "staged"]
 
 
 @pytest.mark.requires_engine_build
@@ -3454,3 +3454,23 @@ def test_staged_record_read_keeps_birth_ranges_out_of_the_staged_gedcomx(tmp_pat
     [element] = envelope["payload"]["results"]
     assert "birthRanges" not in element["gedcomx"]
     assert element["indexFields"] == {"p1": {"age": "11"}}
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_puts_the_held_records_index_beside_the_reading(tmp_path):
+    """Issue #4578: the mock adds the index beside a page read through the same
+    compiled `attachIndexReadings` production calls, joined on the source's
+    `image_ark`, and a `file` read gets the note alone."""
+    ark = "ark:/61903/3:1:S3HT-DTXQ-WTP"
+    _copy_scenario(tmp_path)
+    research = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    research["sources"] = [{**s, "image_ark": ark} if i == 0 else s for i, s in enumerate(research.get("sources") or [{"id": "src_001"}])]
+    sid = research["sources"][0]["id"]
+    research["assertions"] = [{"id": "a_901", "source_id": sid, "record_id": "r", "record_role": "head",
+                               "fact_type": "name", "value": "Tyler"}]
+    (tmp_path / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    tools_by_name = _messy_page_server(tmp_path, "23 Tyler Anthony", match={"ark": "~S3HT-DTXQ-WTP"})
+    body = _extract_response_dict(_invoke(tools_by_name, "image_transcribe", {"ark": ark, "projectPath": str(tmp_path)}))
+    assert body.get("staged"), body.get("stagingError")
+    assert body["indexReadings"] == [{"sourceId": sid, "recordId": "r", "role": "head", "name": "Tyler"}]
+    assert "one machine reading" in body["readingNote"]

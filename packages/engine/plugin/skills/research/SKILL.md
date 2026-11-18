@@ -204,8 +204,9 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
 `projectPath` when a project exists, however new or empty — and read the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`. Before you write the reply:
 
-1. For a page of a record the project holds, read its indexed names with
-   `research_query({ section: "assertions", recordId })`; a name with no given name is an
+1. Follow the answer's `readingNote`. Show its `indexReadings` beside the page text; with
+   none, the index the researcher names, or the held record's names from
+   `research_query({ section: "assertions", recordId })`. A name with no given name is an
    index reading too.
 2. The page text is one machine reading. Label it so, never "the image shows", "the image
    reads" or "is clear": you have not seen the image.
@@ -503,9 +504,12 @@ message.
       `research_query({ section: "assertions", assertionId: [those ids] })`.
    2. A tree given name that none of those `name` assertions carries is a machine reading, not
       her or his name.
-   3. Then `names` keeps the surname alone, the given name goes in the brief as plain text, a
-      reading in doubt beside the index reading, and a search on it uses a wildcard on the part
-      every reading agrees on (`An*`). Never drop the name, and never send the disputed reading.
+   3. Then `names` keeps the surname alone, and the given name goes in the brief as plain text, a
+      reading in doubt beside the index reading. Gather every given name the project holds for
+      her or him: the machine reading, each index, and each other record's name (the `name`
+      assertions of the project's other sources). The brief asks for the given name as a
+      wildcard on the letters all of them share (`An*` for Anthony and Ann Tone). Never brief
+      the surname alone, and never send the disputed reading as the name.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and

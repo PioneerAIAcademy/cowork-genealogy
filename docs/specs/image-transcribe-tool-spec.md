@@ -733,6 +733,35 @@ Hungary; Slovakia, Hungary and Czechoslovakia, twice), which is why the place is
 shared one rather than `coverages[0]`. Of 117 image ARKs, 102 named their image, 11 were
 refused (403) and 4 answered 400.
 
+#### Index readings
+
+In a project, every answer across the MCP boundary carries `readingNote`, and, when held
+records sit on the page read, `indexReadings`. Added by `attachIndexReadings`
+(`src/utils/index-readings.ts`) after the compactor, on the project legs of
+`imageTranscribeMcpTool` only: never with no project, and never on person_read's
+in-process call.
+
+- `indexReadings`: `{ sourceId, recordId, role, name }` for each live `fact_type: "name"`
+  assertion of every source whose `image_ark` names the page read, joined on
+  `pageKey` (`src/utils/waiting-pages.ts`), the same key `waitingPages` uses. So a `cc=`
+  query on either side still matches, and an `i=` or `groupId=` ARK matches nothing. A
+  given name the index left blank is simply absent from `name`. Joined for an `ark` (or
+  its `imageArk` alias) only: an `imageId` and a `file` name no `image_ark`.
+- `readingNote` (`READING_NOTE`): the transcription is one machine reading, not a sight
+  of the page. Where it and the index differ, show both side by side, say they differ,
+  name the line, and give `viewerUrl`. Call neither the answer, never call the index
+  wrong or a misread, and never count a second transcription of the same page as
+  agreement.
+
+Never an error: an unreadable `research.json` gives the note alone. The unit harness
+calls the same compiled function on its staged canned answers (`_stage_image_transcribe`).
+
+Why a tool and not prose: the same rules as `research/SKILL.md` lines were followed in
+4 of 5 runs of `ut_research_iv1` in one round and 0 of 5 in the next, with the text
+unchanged. Four of those five runs skipped the index lookup the lines asked for
+(scratch 2026-11-18). In the tool result, the index is in front of the model when it
+writes the reply, with no lookup to forget.
+
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
 | Condition | Message shape |
