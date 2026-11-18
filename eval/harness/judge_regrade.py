@@ -4,8 +4,8 @@ A judge-prompt edit (`eval/harness/judge/prompt.md`) does not change what the
 skill under test produced — only how that output is graded. Re-running every
 touched skill would cost roughly $95 of skill spend to answer a question that
 needs no skill run: did the current prompt change the scores? This target
-answers it for roughly $37 of judge-only spend across every suite (about $0.70
-a suite, Sonnet 4.6 judge, measured 2026-11-16), which is why rule 2b now blocks
+answers it for roughly $30 of judge-only spend across every suite's latest log
+(about $1 a suite, Sonnet 4.6 judge, measured 2026-11-16), which is why rule 2b now blocks
 on a judge-prompt mismatch — the gate has a cheap satisfaction path.
 
 Hard requirement: **the judge prompt is re-rendered from disk on every call.**
