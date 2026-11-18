@@ -144,6 +144,8 @@ import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import type { FulltextSearchableLoader } from "../types/volume-search.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
+import { claimRuleFindings, questionCapFindings } from "../validation/claim-rules.js";
+import { applyRuleMode, ruleMode, summaryConcern } from "../validation/rule-modes.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -8083,6 +8085,56 @@ interface AppliedOp extends AppliedByApplyOne {
   opIndex: number;
 }
 
+/** The claim rules (issue #3032 Stage 1b, `src/validation/claim-rules.ts`) for
+ *  one batch: each summary an op appended or whose `tier`, `claims` or
+ *  `supporting_assertion_ids` it set (a narrative-only edit of a legacy summary
+ *  never runs them, Decision 24), and each question an op set resolved. Read
+ *  against the final in-batch summaries, the pre-call research and the pre-call
+ *  tree. Each finding goes through its rule's mode. */
+function claimRuleOutcome(
+  ops: readonly any[],
+  applied: readonly AppliedOp[],
+  research: any,
+  beforeResearch: any,
+  beforeTree: any,
+): { errors: string[]; warnings: string[] } {
+  const RULE_FIELDS = ["tier", "claims", "supporting_assertion_ids"];
+  const summaryIds = new Set<string>();
+  const questionIds = new Set<string>();
+  for (const a of applied) {
+    const op = ops[a.opIndex];
+    const fields = op?.fields ?? {};
+    const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
+    if (a.section === "proof_summaries" && (a.op === "append" || RULE_FIELDS.some(has))) summaryIds.add(a.entryId);
+    if (a.section === "questions") {
+      const entry = a.op === "append" ? op?.entry : fields;
+      if (entry?.status === "resolved" || entry?.resolved === true) questionIds.add(a.entryId);
+    }
+  }
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  if (summaryIds.size === 0 && questionIds.size === 0) return { errors, warnings };
+  const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+  const ctx = { summaries, preCallResearch: beforeResearch, tree: beforeTree };
+  const take = (id: string, summaryId: string, messages: readonly string[]) => {
+    const outcome = applyRuleMode(ruleMode(id), summaryConcern(summaryId), messages);
+    errors.push(...outcome.errors);
+    warnings.push(...outcome.warnings);
+  };
+  for (const id of summaryIds) {
+    const summary = summaries.find((s: any) => s?.id === id);
+    if (!summary) continue;
+    for (const [rule, messages] of claimRuleFindings(summary, ctx)) take(rule, id, messages);
+  }
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  for (const id of questionIds) {
+    const question = questions.find((q: any) => q?.id === id);
+    if (!question) continue;
+    for (const { summaryId, messages } of questionCapFindings(question, ctx)) take("claims-capped-open", summaryId, messages);
+  }
+  return { errors, warnings };
+}
+
 // ─── #2472: carry an assertion correction onto the fact it minted ────────────
 
 interface FactRewriteResult {
@@ -13253,6 +13305,12 @@ export async function researchAppend(
       return fail(originalRefusals.map((r) => fmt(r.opIndex, r.message)));
     }
 
+    // #3032 Stage 1b: the claim rules, once per batch against the final in-batch
+    // summaries, so a later op that revises a disproved claim or adds the Couple
+    // claim is seen. Warn mode until Stage 1c.
+    const claimRules = claimRuleOutcome(ops, applied, research, beforeResearch, beforeTree);
+    if (claimRules.errors.length > 0) return fail(claimRules.errors);
+
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
@@ -13455,7 +13513,7 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...claimRules.warnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<
       BatchSuccess,
