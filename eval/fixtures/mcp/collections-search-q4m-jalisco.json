@@ -1,0 +1,26 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for \"Jalisco, Mexico\", 1880-1920, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Jalisco"
+  },
+  "response": {
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
+    "scope": "Mexico, Jalisco",
+    "totalForPlace": 2,
+    "results": [
+      {
+        "id": "1874591",
+        "title": "Mexico, Jalisco, Catholic Church Records, 1590-2022",
+        "dateRange": "1590-2022",
+        "personCount": 79657362
+      },
+      {
+        "id": "1918187",
+        "title": "Mexico, Jalisco, Civil Registration, 1857-2000",
+        "dateRange": "1857-2000",
+        "personCount": 28607850
+      }
+    ]
+  }
+}

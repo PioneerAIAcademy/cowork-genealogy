@@ -1,0 +1,45 @@
+{
+  "test": {
+    "id": "ut_research_plan_q4e",
+    "skill": "research-plan",
+    "name": "England parentage plan carries the partial-Legacy-index quirk into the indexed-christenings item's rationale",
+    "type": "positive",
+    "description": "england-christening-index-quirk-first-plan: q_001 has no plan yet, and the localities entry loc_001 already carries a collection quirk from the FamilySearch Wiki (https://www.familysearch.org/en/wiki/England,_Births_and_Christenings_-_FamilySearch_Historical_Records). Issue #4516 removes that rule from the search-records body, so it now reaches a search only through the plan item: research-plan must write it into the affected item's persisted rationale.",
+    "tags": [
+      "planning",
+      "reads-localities-entry",
+      "first-plan",
+      "collection-quirks",
+      "wiki-quirk-route",
+      "england",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — who were the parents of Mary Dawson (b. about 1772, Lincolnshire, England)?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "england-christening-index-quirk-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "A `localities` entry (loc_001) is ALREADY in research.json — the orchestrator ran locality-guide before research-plan. The skill should READ that entry and use its quirks; it should NOT call wiki_search / wiki_place_page / place_population (research-plan does not hold those tools). Do NOT fail it for not surveying.",
+    "The quirk under test is loc_001's: \"FamilySearch's 'England, Births and Christenings' collection (1473014) is a partial Legacy index: it does not index all records for this place or period, and no records or corrections are being added — a nil there is a statement about the index, not proof that no christening exists; search the parish register itself before concluding absence. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/England,_Births_and_Christenings_-_FamilySearch_Historical_Records)\"",
+    "The persisted `plan_items[].rationale` is the only place that counts — narration is not persisted and search-records never sees it. Correctness turns on the plan item that searches the indexed christenings (collection 1473014, 'England, Births and Christenings'): its persisted rationale must state that the collection is a partial / Legacy index that is not corrected, so a nil there does not prove the christening is absent (and, ideally, that the parish register itself is the fallback). A plan whose reply mentions the quirk while that item's rationale does not fails this point. Paraphrase is fine.",
+    "Plan items must include rationale explaining why each record type was chosen for the question — generic rationale ('more records would help') is a fail."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

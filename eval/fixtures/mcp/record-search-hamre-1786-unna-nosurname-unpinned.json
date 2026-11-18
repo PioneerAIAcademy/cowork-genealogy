@@ -1,0 +1,850 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Unna, no surname (recordCountry Norway), no collection, marriage 1770-1800, count 50. 37756 matches; the bride NW44-PMK is not among the 50 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-unna-nosurname-unpinned, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023. The predicate cannot require surname or collectionId to be absent, so it is listed after every pinned and surname-specific fixture.",
+  "args": {
+    "givenName": "Unna"
+  },
+  "response": {
+    "query": {
+      "givenName": "Unna",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50
+    },
+    "totalMatches": 37756,
+    "returned": 50,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NW9Q-BTP",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Jun 1785",
+            "place": "Etne, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Rasmusdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torbjorn Abramssen",
+        "recordArk": "ark:/61903/1:2:MYSJ-W74",
+        "batchNumber": "M42907-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4F-JH9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20 Jul 1783",
+            "place": "Myking, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Magnesen",
+        "recordArk": "ark:/61903/1:2:MY3L-M49",
+        "batchNumber": "M42071-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4S-K6K",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "20 Jun 1770",
+            "place": "Eidfjord, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Siursdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Rasmus Asbiornsen",
+        "recordArk": "ark:/61903/1:2:MY32-9PY",
+        "batchNumber": "M42338-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:DX72-1JZM",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Census",
+            "date": "1865",
+            "place": "Lindås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Kolbeindatter",
+        "sex": "Female",
+        "birthDate": "1804",
+        "birthPlace": "Lindaas Prgj.",
+        "collectionId": "3756102",
+        "recordTitle": "Household of Unna Kolbeindatter",
+        "recordArk": "ark:/61903/1:2:4JXK-19MM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687C-PLPC",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "12 Dec 1833",
+            "place": "Indre Arna, Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Nielsdr Mæhle",
+        "sex": "Female",
+        "birthDate": "1780",
+        "deathDate": "8 December 1833",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BF9-3PDX",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687C-RFMY",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "12 Dec 1833",
+            "place": "Indre Arna, Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Nielsdatt",
+        "sex": "Female",
+        "birthDate": "1780",
+        "deathDate": "8 December 1833",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BF9-9655",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-VT5J",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "22 Nov 1866",
+            "place": "Arna, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Andersdatter",
+        "deathDate": "November 0016",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-ZX8Y",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHH3-TYH",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "3 Apr 1752",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-V3W",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687C-YW41",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "3 Jan 1835",
+            "place": "Voss Kyrkje, Voss, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Edvarsdatter Hauge",
+        "sex": "Female",
+        "birthDate": "1780",
+        "deathDate": "December 0014",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BF9-QBB7",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N4BJ-T3L",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "29 Nov 1751",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-FY5",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687H-M1FM",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "28 Apr 1863",
+            "place": "Vossestrand, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Johnsdtr Ulvensøen",
+        "deathDate": "21 April 1863",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFM-NGJT",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687C-T71H",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "9 Mar 1822",
+            "place": "Skånevik Kyrkjegard, Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Johannesdt Yttre Bauge",
+        "sex": "Female",
+        "deathDate": "2 March 1822",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFM-BCX9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWJQ-XVM",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Mar 1806",
+            "place": "Voss, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSX-X1H",
+        "batchNumber": "C02523-8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68Q7-Q9GG",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "5 Mar 1820",
+            "place": "Rennesøy, Rogaland, Norge"
+          }
+        ],
+        "personName": "Unna Halvorsdr",
+        "sex": "Female",
+        "birthDate": "1740",
+        "deathDate": "29 February 1820",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BX2-2QQ9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-24NK",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "30 Sep 1826",
+            "place": "Etne Kyrke, Etne, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Tollefsdr Løvereide",
+        "sex": "Female",
+        "deathDate": "September 0025",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-8V7Q",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N756-YMB",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "27 Sep 1789",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSC-RR5",
+        "batchNumber": "C42143-3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6832-Q1P2",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "1819",
+            "place": "Flå, Nes, Buskerud, Norge"
+          }
+        ],
+        "personName": "Unna Bjørnsdatter",
+        "sex": "Female",
+        "birthDate": "1741",
+        "deathDate": "January 0018",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXX-6Y9M",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N75X-6RX",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "1 Jan 1802",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSC-YZG",
+        "batchNumber": "C42143-3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N75X-7R2",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "11 Feb 1795",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSC-YHH",
+        "batchNumber": "C42143-3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NCQK-22Q",
+        "personName": "Unna",
+        "sex": "Female",
+        "birthDate": "15 August 1766",
+        "birthPlace": "Lødingen, Nordland, Norway",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJHX-2V5",
+        "batchNumber": "C42748-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:DXCH-1CPZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1865",
+            "place": "Haus, Hordaland, Norge"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          }
+        ],
+        "personName": "Unna Andersdatter",
+        "sex": "Female",
+        "birthDate": "1788",
+        "birthPlace": "Haus Prgj.",
+        "collectionId": "3756102",
+        "recordTitle": "Household of Unna Andersdatter",
+        "recordArk": "ark:/61903/1:2:4JV7-31MM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:DXW3-XY6Z",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1865",
+            "place": "Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Andersdatter",
+        "sex": "Female",
+        "birthDate": "1801",
+        "birthPlace": "Haus Prgj.",
+        "collectionId": "3756102",
+        "recordTitle": "Household of Lars Anderssen",
+        "recordArk": "ark:/61903/1:2:4JX1-RMT2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW37-4VV",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "7 Sep 1766",
+            "place": "Lødingen, Nordland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "birthDate": "15 August 1766",
+        "birthPlace": "Lødingen, Nordland, Norway",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSG-8CP",
+        "batchNumber": "C42748-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8T1N-LK2M",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Hamre, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Andersdatter",
+        "sex": "Female",
+        "birthDate": "1796",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Lars Andersen",
+        "recordArk": "ark:/61903/1:2:4H6K-BFZM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8Y9N-8M3Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Lindås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Andersdatter",
+        "sex": "Female",
+        "birthDate": "1755",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Brita Hansdatter",
+        "recordArk": "ark:/61903/1:2:4HXD-HD6Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-QW7Z",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "21 Dec 1881",
+            "place": "Arna, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Andersdtr",
+        "sex": "Female",
+        "birthDate": "1802",
+        "birthPlace": "Borge Gjerstad",
+        "deathDate": "December 0015",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-7PP1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N75X-9VL",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Jun 1792",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSC-TTX",
+        "batchNumber": "C42143-3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687H-MQYS",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "6 Jun 1821",
+            "place": "Indre Arna, Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Nielsdtr Skulstad",
+        "birthDate": "1745",
+        "deathDate": "3 June 1821",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFM-8RCL",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N75X-JYY",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "22 Sep 1798",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSC-TD3",
+        "batchNumber": "C42143-3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWV1-325",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "6 Jun 1821",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Nielsdatter Skulstae",
+        "sex": "Female",
+        "birthDate": "1745",
+        "deathDate": "3 June 1821",
+        "collectionId": "1468081",
+        "recordArk": "ark:/61903/1:2:MXMT-2PK",
+        "batchNumber": "B05188-5",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8Y9F-RLW2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Lindås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Olsdatter",
+        "sex": "Female",
+        "birthDate": "1764",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Olea Aamundsdatter",
+        "recordArk": "ark:/61903/1:2:4HXD-HWPZ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8YSD-1G3Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Sund, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Olsdatter",
+        "sex": "Female",
+        "birthDate": "1794",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Peder Torkildsen",
+        "recordArk": "ark:/61903/1:2:4HXV-F43Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6874-15NV",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "25 Jul 1850",
+            "place": "Indre Arna, Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Olsdatter",
+        "birthDate": "1798",
+        "deathDate": "July 0025",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFM-DVLW",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6876-V6W9",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "29 Apr 1882",
+            "place": "Vik, Nordre Bergenhus, Norge"
+          }
+        ],
+        "personName": "Unna Olsdatter",
+        "sex": "Female",
+        "birthDate": "18 April 1882",
+        "birthPlace": "Ovrid",
+        "deathDate": "April 0025",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFS-VNPM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWJQ-4JY",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "23 May 1802",
+            "place": "Voss, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSX-X9N",
+        "batchNumber": "C02523-8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWT-GMB",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "2 May 1802",
+            "place": "Gjerstad, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSC-58X",
+        "batchNumber": "C42900-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWV1-VWB",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "12 Dec 1833",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Nielsdatter M?hle",
+        "sex": "Female",
+        "birthDate": "1780",
+        "deathDate": "8 December 1833",
+        "collectionId": "1468081",
+        "recordArk": "ark:/61903/1:2:MXMT-KK4",
+        "batchNumber": "B05188-5",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VWLY-6G6",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "17 Apr 1747",
+            "place": "Eidfjord Gamle Kyrkjegard, Ullensvang, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna Niclasson",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJCF-RGD",
+        "batchNumber": "C42338-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8T1F-6LW2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Fjelberg, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Hansdatter",
+        "sex": "Female",
+        "birthDate": "1789",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Lars Hansen*",
+        "recordArk": "ark:/61903/1:2:4H6V-2B3Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-JNBX",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "30 Sep 1826",
+            "place": "Etne Kyrke, Etne, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Tollevsdatter",
+        "sex": "Female",
+        "deathDate": "September 0025",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-4TCH",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68Q4-KGKR",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "26 May 1839",
+            "place": "Indre Arna, Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna",
+        "birthDate": "11 May 1739",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXL-5CS9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687H-7SC4",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "23 Jan 1831",
+            "place": "Voss Kyrkje, Voss, Hordaland, Norge"
+          }
+        ],
+        "personName": "Ünna Jacobsdatter",
+        "birthDate": "1829",
+        "birthPlace": "Holse, Ejby, Fyn, Denmark",
+        "deathDate": "January 0016",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFM-JFRH",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8Y9X-GK3Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Fjelberg, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "birthDate": "1751",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Elias Christophersen*",
+        "recordArk": "ark:/61903/1:2:4H6V-FTMM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8YS7-GDN2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Nielsdatter",
+        "sex": "Female",
+        "birthDate": "1780",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Niels Einersen",
+        "recordArk": "ark:/61903/1:2:4HXL-2H6Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWJQ-X84",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "23 Feb 1806",
+            "place": "Voss, Hordaland, Norway"
+          }
+        ],
+        "personName": "Unna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSX-XS3",
+        "batchNumber": "C02523-8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8T1H-QCPZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Lødingen, Nordland, Norge"
+          }
+        ],
+        "personName": "Unna Amundsdatter",
+        "sex": "Female",
+        "birthDate": "1768",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Unna Amundsdatter",
+        "recordArk": "ark:/61903/1:2:4H68-JR2M",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8YS3-6GW2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Lindås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Unna Monsdatter",
+        "sex": "Female",
+        "birthDate": "1745",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Tron Kolbensen",
+        "recordArk": "ark:/61903/1:2:4HFS-TMT2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VWG6-HL3",
+        "personName": "Unna Colbensdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for <Unknown>",
+        "recordArk": "ark:/61903/1:2:MJZC-2H2",
+        "batchNumber": "C42031-6",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VWG8-R93",
+        "personName": "Unna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Ole Nielssen",
+        "recordArk": "ark:/61903/1:2:MJCJ-XX6",
+        "batchNumber": "C30001-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHHG-WZY",
+        "personName": "Unna Haldorsdr",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordTitle": "Entry for Lisbeth",
+        "recordArk": "ark:/61903/1:2:MJS8-NW9",
+        "batchNumber": "C42918-1",
+        "role": "Mother"
+      }
+    ],
+    "collections": {
+      "1467014": "Norway, Baptisms, 1634-1927",
+      "1468080": "Norway, Marriages, 1660-1926",
+      "1468081": "Norway, Burials, 1666-1927",
+      "3733603": "Norway, Census, 1801",
+      "3756102": "Norway, Census, 1865",
+      "4237104": "Norway, Church Books, 1797-1958"
+    }
+  }
+}
