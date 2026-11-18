@@ -1,6 +1,6 @@
 {
-  "run_log": "v7_2026-11-16_08-54-11.json",
-  "annotator": "Francisbucci2@gmail.com",
+  "run_log": "v7_2026-11-12_08-34-00.json",
+  "annotator": "itacollins333@gmail.com",
   "corrections": [
     {
       "test_id": "ut_conflict_resolution_001",
@@ -30,9 +30,9 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Generic-depth complaint (does not name the likely informant explicitly) -- the same pre-existing noise pattern confirmed present on a baseline run with none of this PR's changes applied. Not the hedge-upgrade defect this PR fixes."
     },
     {
       "test_id": "ut_conflict_resolution_001",
@@ -51,23 +51,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Resolution completeness",
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence weighing",
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_015",
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_002",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
       "llm_score": 3,
@@ -75,25 +83,17 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -147,31 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 2,
-      "comment": "2 is the correct grade"
-    },
-    {
-      "test_id": "ut_conflict_resolution_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "2 is the correct grade"
-    },
-    {
-      "test_id": "ut_conflict_resolution_017",
+      "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -179,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_017",
+      "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_017",
+      "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,36 +171,36 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_017",
+      "test_id": "ut_conflict_resolution_005",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence weighing",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Resolution completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "judge is right"
+      "comment": "Same generic-depth complaint as 001 (single-assertion case, reasoning present but shallow). Confirmed pre-existing: this test was not touched by, and shows no relation to, this PR's two fixes."
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_006",
@@ -252,14 +228,62 @@
     },
     {
       "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Generic-depth complaint (conflates two distinct independence questions). Confirmed pre-existing noise, not the same-side-assertion or hedge defects this PR targets -- this test passed cleanly in some runs and partialed in others with no code change between them, consistent with the suite's measured baseline variance."
+    },
+    {
+      "test_id": "ut_conflict_resolution_016",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "judge is right"
+      "comment": "Same generic-depth pattern as the independence dimension above on this test."
     },
     {
-      "test_id": "ut_conflict_resolution_006",
+      "test_id": "ut_conflict_resolution_016",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "llm_score": 3,
@@ -267,39 +291,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_uc1",
-      "dimension_source": "rubric",
-      "dimension_name": "Resolution completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_uc1",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence weighing",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_uc1",
-      "dimension_source": "rubric",
-      "dimension_name": "Source independence analysis",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_uc1",
+      "test_id": "ut_conflict_resolution_rt1",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_uc1",
+      "test_id": "ut_conflict_resolution_rt1",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -307,9 +307,33 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_uc1",
+      "test_id": "ut_conflict_resolution_rt1",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_rt1",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
