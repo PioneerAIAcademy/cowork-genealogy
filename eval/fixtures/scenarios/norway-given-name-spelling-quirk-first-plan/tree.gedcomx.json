@@ -1,0 +1,25 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Unna",
+          "surname": "Halsteinsdatter"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "May 1745",
+          "place": "Hestdal, Meland, Hordaland, Norway"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

@@ -38,10 +38,11 @@ import { readStartingTree } from "../utils/starting-tree.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
-/** The closed set of extra lists `include` may name. Open PR #4497 adds
- *  "persons" and "sources" to the same list; whichever lands second merges the
- *  values. */
-export const PROJECT_CONTEXT_INCLUDE = ["status"] as const;
+/** The closed set of lists `include` may name. A list, not `includeX` booleans,
+ *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
+ *  "persons" and "sources" are returned regardless of `include` until #4422
+ *  stage 3 flips the default; "status" is returned only when named. */
+export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status"] as const;
 export type ProjectContextInclude = (typeof PROJECT_CONTEXT_INCLUDE)[number];
 
 export interface ProjectContextInput {
@@ -304,14 +305,24 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // Primary surface for "which build is this?" — 8 skills call project_context,
   // 0 call auth_status — so it rides on every return branch, no-project included.
   const buildId = readBuildInfo().version;
-  // `include` is a closed list: an unknown value is a clear error, not a silent no-op.
-  if (
-    input.include !== undefined &&
-    (!Array.isArray(input.include) ||
-      !input.include.every((v) => (PROJECT_CONTEXT_INCLUDE as readonly string[]).includes(v)))
-  ) {
-    return { ok: false, errors: [`include must be an array of: ${PROJECT_CONTEXT_INCLUDE.join(", ")}.`], buildId };
+
+  // `include` is a closed list; an unknown value is a clear error, not a silent
+  // no-op. Validated before the file reads — a malformed request is refused
+  // whatever the project state. "persons" and "sources" are returned by default
+  // until #4422 stage 3; only "status" is branched on below.
+  if (input.include !== undefined) {
+    const bad =
+      !Array.isArray(input.include) ||
+      !input.include.every((v) => (PROJECT_CONTEXT_INCLUDE as readonly string[]).includes(v));
+    if (bad) {
+      return {
+        ok: false,
+        errors: [`include must be an array of: ${PROJECT_CONTEXT_INCLUDE.join(", ")}.`],
+        buildId,
+      };
+    }
   }
+
   let research: any;
   let tree: any;
   try {
@@ -590,7 +601,9 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. Returns projectStatus; " +
+    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
+    "larger lists you read; persons and sources are returned whether or not you pass it, and status only when named. " +
+    "Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
@@ -666,9 +679,10 @@ export const projectContextSchema = {
         type: "array",
         items: { type: "string", enum: [...PROJECT_CONTEXT_INCLUDE] },
         description:
-          'Optional closed list naming extra lists to return. "status": every tree fact and relationship with ' +
-          "its status read from proof-summary claims (well established, likely, tentative, ruled out, set aside, " +
-          "from your starting tree, found in a record, …).",
+          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status". ' +
+          '"persons" and "sources" are returned whether or not you pass include. "status": every tree fact and ' +
+          "relationship with its status read from proof-summary claims (well established, likely, tentative, " +
+          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named.",
       },
     },
     required: ["projectPath"],
