@@ -213,7 +213,11 @@ decline names the blocking criterion and its assessment in `justification`.
   is closed instead, this is the DECLINE (§"The decline"), which writes the
   stop and offers the researcher the choice rather than picking for them. **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
-  - A skipped item's recorded reason is **fact**. Accept it as written. Most
+  - A skipped item's recorded reason is **fact** when it says what happened
+    (`inaccessible`, `no_coverage`, `user_declined`,
+    `fallback_not_triggered`). Accept it as written. `answered` is a claim,
+    not a fact: test it against the seven criteria with that record
+    unsearched, and decline when one fails. Most
     skipped items carry no `skip_category`; its absence says nothing. A
     skipped **decisive** record still gates (below) unless its recorded reason
     is inaccessibility.
