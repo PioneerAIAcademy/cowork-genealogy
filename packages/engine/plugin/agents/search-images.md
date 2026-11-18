@@ -192,8 +192,9 @@ contract:
   `image_index({ imageId })`, again with each `nextOffset` until it is absent;
   then `image_transcribe({ imageId })` once. Pair an index entry with a
   transcribed line when their given names or their surnames are the same or
-  differ by a letter or two (Mila/Milo, Barry/Berry), and the lines on either
-  side also pair; only an entry with no such line is unmatched. After `---`,
+  differ by a letter or two (Mila/Milo, Barry/Berry); a line left between two
+  paired lines pairs with the one entry left between them, even when no name
+  agrees. Only an entry with no such line is unmatched. After `---`,
   give a table in transcription order, one row per line: the index reading, the
   new reading, and `same` or `differ — check this line on the image`, each row
   cited by the image id. Never call either reading the error, never state a
