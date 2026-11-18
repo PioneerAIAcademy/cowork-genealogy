@@ -1,0 +1,352 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for \"Württemberg, Germany\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~rttemberg"
+  },
+  "response": {
+    "totalHits": 2651,
+    "returned": 25,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "koha:358118",
+        "title": "10 Schwaben - 1000 Jahre: Lebensgeschichte von 10 Jahrhundertschwaben/ erzählt von Julius Bazlen",
+        "creator": "Bazlen, Julius",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Short biographies of ten Swabian centenarians of Württemberg, Germany."
+        ],
+        "subjects": [
+          "Germany, Schwaben (Herzogtum) - Biography",
+          "Germany, Württemberg - Biography"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:471297",
+        "title": "1000 Jahre Heutingsheim, jetzt Gemeinde Freiberg am Neckar : 972-1972/ herausgegeben von Heinz Erich Walter ... [et al.]",
+        "creator": "Walter, Heinz Erich",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Anderer Titel: Das Ortsbuch von Heutingsheim.",
+          "Mit Index.",
+          "History of Heutingsheim, Württemberg, Germany; since 1972, incorporated with Beihingen am Neckar and Geisingen am Neckar into Freiberg am Neckar. Includes biographies of prominent citizens, historical background on local families, a transcription of a 1560 tax census, an alphabetical list of emigrants, and a historical gazetteer of place names. Includes index."
+        ],
+        "subjects": [
+          "Germany, Württemberg, Freiberg am Neckar - History",
+          "Germany, Württemberg, Heutingsheim - History"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:1344947",
+        "title": "1000 Jahre, Kuppingen",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [],
+        "subjects": [
+          "Germany, Württemberg, Kuppingen - History"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:471276",
+        "title": "1200 Jahre Gültstein/ herausgegeben von Heinz Erich Walter ... [et al.]",
+        "creator": "Walter, Heinz Erich",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Anderer Titel: Das Ortsbuch von Gültstein (Kreis Böblingen).",
+          "History of Gültstein, Württemberg, Germany. Includes history of the local churches, some biographies and genealogies of prominent citizens, chronology of emigration, with names and destinations; and the names of local families with their places of origin."
+        ],
+        "subjects": [
+          "Germany, Württemberg, Gültstein - History"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:471306",
+        "title": "1200 Jahre Horrheim : (Kreis Vaihingen/Enz)/ Friedrich Wissmann ; mit Beiträgen von Adalbert Bartsch ... [et al.]",
+        "creator": "Bartsch, Adalbert",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Mit Anhang: Otto von Horrheim und die Nonne von Rechentshofen.",
+          "Mit Index.",
+          "Landkarte im Einband.",
+          "History of Horrheim, Württemberg, Germany."
+        ],
+        "subjects": [
+          "Germany, Württemberg, Horrheim - History"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:559766",
+        "title": "1200 Jahre Nagold",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Articles on the history and description of Nagold, Württemberg, Germany."
+        ],
+        "subjects": [
+          "Germany, Württemberg, Nagold - Description and travel",
+          "Germany, Württemberg, Nagold - History"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:571994",
+        "title": "1200 Jahre Olnhausen II : 788-1988/ von Hermann von Olnhausen",
+        "creator": "Olnhausen, Hermann von",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "In: 150 Jahre Liederkranz Olnhausen e. V., 25 Jahre Gemischter Chor vom 27.-29. Mai 1988.",
+          "Early historical annals of Olnhausen, Württemberg, with a list of early archival documents. Olnhausen merged with Jagsthausen in 1972. Includes English translation.",
+          "Mikrofilme aufgenommen von Photokopie des Originals: Olnhausen : Verlag des Gesangvereins, 1988. S. 51-68, 1-5."
+        ],
+        "subjects": [
+          "Germany, Württemberg, Olnhausen - History"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1183646",
+            "imageGroupNumber": "7964381",
+            "text": "1200 Jahre Olnhausen II"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:561679",
+        "title": "150 Jahre Liederkranz Olnhausen e. V. : 25 Jahre Gemischter Chor vom 27.-29. Mai 1988",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Program commemorating the one hundred fiftieth anniversary of the Liederkranz Olnhausen Choral Society and twenty-fifth anniversary of the Mixed Choir of Olnhausen, Württemberg. Includes early historical information about Olnhausen.",
+          "Also available on microfilm."
+        ],
+        "subjects": [
+          "Germany, Württemberg, Olnhausen - History",
+          "Germany, Württemberg, Olnhausen - Societies"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1183646",
+            "imageGroupNumber": "7964381",
+            "text": "Auch auf Mikrofilm. Salt Lake City : Gefilmt durch The Genealogical Society of Utah, 1990. auf 1 Mikrofilmrolle ; 35 mm."
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:2134847",
+        "title": "450 Jahre Reformation : in Stadt und Amt Herrenberg/ Brigitte Zabel-Wittoch",
+        "creator": "Zabel-Wittoch, Brigitte",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [],
+        "subjects": [
+          "Germany, Württemberg, Herrenberg (Oberamt) - Church history",
+          "Germany, Württemberg, Herrenberg - Church history"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:327946",
+        "title": "50 Jahre Familienforschung in Südwestdeutschland : Festschrift zum fünfzigjährigen Bestehen des Vereins für Familien- und Wappenkunde in Württemberg und Baden, 1920-1970/ herausgegeben von Gustav Hahn",
+        "creator": "Hahn, Gustav",
+        "repositoryCalls": [
+          "HSB (Headquarters Storage Building)",
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Articles on Baden and Württemberg genealogy, including data on the Hölderlin, Hirschmann, Kindler and Scheler families."
+        ],
+        "subjects": [
+          "Kindler",
+          "Scheler",
+          "Germany, Baden - Genealogy",
+          "Germany, Württemberg - Genealogy"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:1044060",
+        "title": "700 Jahre Gemeinde Garrweiler : Festschrift herausgegeben von der Stadt Altensteig",
+        "creator": "Kühbauch, Friedrich",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:39276",
+        "title": "900 Jahre Haus Württemberg : Leben und Leistung für Land und Volk/ herausgegeben von Robert Uhland",
+        "creator": "Uhland, Robert",
+        "repositoryCalls": [
+          "HSB (Headquarters Storage Building)",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:832083",
+        "title": "900 Jahre Pliezhausen 1092-1992 : Heimat zwischen Neckar und Schönbuch",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:1139384",
+        "title": "Addressbücher, 1870-1950",
+        "creator": "Tübingen (Württemberg). Oberamt",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:170834",
+        "title": "Der Adel des Königreichs Württemberg : neu bearbeitetes Wappenbuch mit genealogischen und historischen Nortizen/ herausgegeben von Edmund von der Becke-Klüchtzner",
+        "creator": "Becke-Klüchtzner, Edmund von der",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "HSB (Headquarters Storage Building)",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:354077",
+        "title": "Adel und Landesherren im Nordlichen Schwarzwald, von der Mitte des 14. bis zum Beginn des 16. Jahrhunderts/ Wilhelm Hofmann",
+        "creator": "Hofmann, Wilhelm",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:201063",
+        "title": "Adress-und Geschäfts-Handbuch der Stadt Heilbronn",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:243097",
+        "title": "Adressbuch der Stadt Stuttgart 1959",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Oakland California FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:1144703",
+        "title": "Adressbücher, 1826-1949",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Granite Mountain Record Vault",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:2059878",
+        "title": "Adreß und Geschäfts-handbuch der Königl. Württ. Kreis-hauptstadt Ulm und der Kgl. Bayr. Stadt Neu-Ulm : mit einem Plan der beiden Städte",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:1522523",
+        "title": "Adreß- und Geschäfts-Handbuch der Oberamtsstadt Schwäbisch Hall, 1886-1920",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:1203354",
+        "title": "Adreßbuch von Stadt und Bezirk Tübingen 1926",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:1269427",
+        "title": "Adreßbücher Ebingen, 1889-1937",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:427243",
+        "title": "Ahnen von Paul Friedrich Roth (1852-1927) und Eva Rosine Flaig (1852-1922) von Köngen, Württemberg",
+        "creator": "Wißmann, Hermann",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:1137569",
+        "title": "Ahnenlisten/Stammtafeln, 1500-2000/ Alfred Klumpp",
+        "creator": "Klumpp, Alfred",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      }
+    ]
+  }
+}

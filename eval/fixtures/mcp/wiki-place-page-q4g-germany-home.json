@@ -1,0 +1,44 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page home for \"Germany\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "Germany",
+    "section": "home"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Germany_Genealogy",
+    "content": "# Germany Genealogy\n\n\n\n[Europe](https://www.familysearch.org/en/wiki/Europe \"Europe\")\n\nGermany\n\nGuide to **Germany ancestry, family history and genealogy**: parish registers, transcripts, census records, birth records, marriage records, and death records.\n***NOTE: If researching before 1945, see [German Empire](https://www.familysearch.org/en/wiki/German_Empire_Genealogy \"German Empire Genealogy\").***\n\n## Information\n\nGermany is a vibrant country with a rich history and heritage. As with many countries of Europe, Germany has seen dramatic changes to its borders and even its internal regions. Over the centuries, Germany consisted of numerous independent kingdoms, duchies, principalities, and states. Then in 1871, all German-speaking states except the Austrian states were consolidated into the German Empire. [[1]](#cite_note-1)\n\n[Germany Online Genealogy Records](https://www.familysearch.org/en/wiki/Germany_Online_Genealogy_Records \"Germany Online Genealogy Records\")\n\n[Online  \nResearch Help](https://www.familysearch.org/en/wiki/Online_Research_Help \"Online Research Help\")\n\n[Getting  \nStarted](https://www.familysearch.org/en/wiki/Germany_Getting_Started \"Germany Getting Started\")\n\n## Germany Map\n\nThe map below covers Germany jurisdictions from 1945 onward. Click on the location on the image below for more information.\n\n|  |  |  |  |\n| --- | --- | --- | --- |\n| |  |  |  | | --- | --- | --- | | Germany states--Modern.png | |  | | --- | | **Modern States of Germany**  *English (German, if different)*   * [Baden-Württemberg](https://www.familysearch.org/en/wiki/Baden-W%C3%BCrttemberg,_Germany_Genealogy \"Baden-Württemberg, Germany Genealogy\") * [Bavaria (Bayern)](https://www.familysearch.org/en/wiki/Bavaria,_Germany_Genealogy \"Bavaria, Germany Genealogy\") * [Berlin](https://www.familysearch.org/en/wiki/Berlin,_Germany_Genealogy \"Berlin, Germany Genealogy\") * [Brandenburg](https://www.familysearch.org/en/wiki/Brandenburg,_Germany_Genealogy \"Brandenburg, Germany Genealogy\") * [Bremen](https://www.familysearch.org/en/wiki/Bremen,_Germany_Genealogy \"Bremen, Germany Genealogy\") * [Hamburg](https://www.familysearch.org/en/wiki/Hamburg,_Germany_Genealogy \"Hamburg, Germany Genealogy\") * [Hesse (Hessen)](https://www.familysearch.org/en/wiki/Hesse_(Hessen),_Germany_Genealogy \"Hesse (Hessen), Germany Genealogy\") * [Mecklenburg-Western Pomerania (Mecklenburg-Vorpommern)](https://www.familysearch.org/en/wiki/Mecklenburg-Western_Pomerania_(Mecklenburg-Vorpommern),_Germany_Genealogy \"Mecklenburg-Western Pomerania (Mecklenburg-Vorpommern), Germany Genealogy\") * [Lower Saxony (Niedersachsen)](https://www.familysearch.org/en/wiki/Lower_Saxony,_Germany_Genealogy \"Lower Saxony, Germany Genealogy\") * [North Rhine-Westphalia (Nordrhein-Westfalen)](https://www.familysearch.org/en/wiki/North_Rhine-Westphalia_(Nordrhein-Westfalen),_Germany_Genealogy \"North Rhine-Westphalia (Nordrhein-Westfalen), Germany Genealogy\") * [Rhineland-Palatinate (Rheinland-Pfalz)](https://www.familysearch.org/en/wiki/Rhineland-Palatinate_(Rheinland-Pfalz),_Germany_Genealogy \"Rhineland-Palatinate (Rheinland-Pfalz), Germany Genealogy\") * [Saarland](https://www.familysearch.org/en/wiki/Saarland,_Germany_Genealogy \"Saarland, Germany Genealogy\") * [Saxony (Sachsen)](https://www.familysearch.org/en/wiki/Saxony_(Sachsen),_Germany_Genealogy \"Saxony (Sachsen), Germany Genealogy\") * [Saxony-Anhalt (Sachsen-Anhalt)](https://www.familysearch.org/en/wiki/Saxony-Anhalt_(Sachsen-Anhalt),_Germany_Genealogy \"Saxony-Anhalt (Sachsen-Anhalt), Germany Genealogy\") * [Schleswig-Holstein](https://www.familysearch.org/en/wiki/Schleswig-Holstein,_Germany_Genealogy \"Schleswig-Holstein, Germany Genealogy\") * [Thuringia (Thüringen)](https://www.familysearch.org/en/wiki/Thuringia_(Th%C3%BCringen),_Germany_Genealogy \"Thuringia (Thüringen), Germany Genealogy\") | |  Territory Changes Between 1918-1946 Due to the treaties at the end of World War I and II, portions of German territory were granted to other countries. This map summarizes the changes.  [German territorial losses 1919 and 1945-1](https://www.familysearch.org/en/wiki/index.php?title=File:1920px-German_territorial_losses_1919_and_1945.svg-1.png&filetimestamp=20190325010740&) References 1. [↑](#cite_ref-1) Wikipedia contributors, \"Germany,\" in *Wikipedia: the Free Encyclopedia*, <https://en.wikipedia.org/wiki/Germany>, accessed 23 March 2016. |\n\n",
+    "standardPlace": "Germany",
+    "placeName": "Germany",
+    "topicPages": [
+      {
+        "topic": "Church Records",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Church_Records"
+      },
+      {
+        "topic": "Naming Customs",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Naming_Customs"
+      },
+      {
+        "topic": "Civil Registration",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Civil_Registration"
+      },
+      {
+        "topic": "Census",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Census"
+      },
+      {
+        "topic": "Probate Records",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Probate_Records"
+      },
+      {
+        "topic": "Land and Property",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Land_and_Property"
+      },
+      {
+        "topic": "Military Records",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Military_Records"
+      }
+    ]
+  }
+}

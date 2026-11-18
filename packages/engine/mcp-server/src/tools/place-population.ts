@@ -54,7 +54,13 @@ export async function populationTool(
     );
   }
 
-  return response.json() as Promise<PopulationResponse>;
+  const body = (await response.json()) as PopulationResponse | { error?: unknown; place?: unknown };
+  // Pop Stats answers a place it has no data for with HTTP 200 and `{ error, place_id }`
+  // and no `place`; that is a missing place, not a PopulationResponse.
+  if (body && typeof body === "object" && "error" in body && !("place" in body)) {
+    throw new Error(`No population data found for "${input.standardPlace}".`);
+  }
+  return body as PopulationResponse;
 }
 
 export const populationToolSchema = {

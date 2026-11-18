@@ -1,0 +1,33 @@
+{
+  "tool": "rank_search_matches",
+  "description": "derived offline from captured rows (2026-11-17), surname-filtered; not a live capture. Source: rank-search-matches-hamre-1786-urna-nosurname-1468080, filtered to the rows kept in record-search-hamre-1786-urna-halsteins-wildcard-1468080; matchScore and every other field copied from the capture, with matchRank and searchRank renumbered within the filtered rows. Keyed like its search fixture and listed ahead of the surname-free ranking fixtures. Shared by ut_search_records_022 and ut_search_records_023.",
+  "args": {
+    "subjectId": "~KZHH-VTX",
+    "givenName": "Urna",
+    "collectionId": "1468080",
+    "surname": "Halsteins*"
+  },
+  "response": {
+    "subjectId": "KZHH-VTX",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:NW44-PMK",
+        "matchScore": 0.20616198,
+        "primaryId": "p_11815679719",
+        "personName": "Urna Halsteinsdr",
+        "sex": "Female",
+        "collectionTitle": "Norway, Marriages, 1660-1926",
+        "recordArk": "ark:/61903/1:2:MY3L-FH3",
+        "batchNumber": "M42039-1",
+        "candidateFactCount": 1
+      }
+    ],
+    "surnameNote": "Rows with `surnameNotOnSubject` carry a surname (`candidateSurname`) that this person bears nowhere in the project: not on the tree person, not in linked evidence, and not on a tree spouse, parent or child. The match score does not account for this. Each such row is `needs-review`: report it as consistent with that name, never as a confirmed match, as cleared, or as ready to extract as this person's record. That holds when the surname is the one the research is trying to establish: finding a same-named person under it is not evidence this person bore it. Name the record that would tie this person to that surname (a marriage, or a record giving both surnames for this person)."
+  }
+}
