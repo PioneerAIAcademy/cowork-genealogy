@@ -1134,8 +1134,12 @@ def test_bounded_transcription_is_delivered_in_place(
         if args.get("ref") in refs or set(args.get("refs") or []) & refs:
             return True
         response = call.get("response") or {}
+        ref = str(args.get("ref") or "")
+        near_copy = any(
+            len(ref) == len(r) and sum(a != b for a, b in zip(ref, r)) <= 2 for r in refs
+        )
         return (
-            str(args.get("ref") or "").startswith("results/.staging/")
+            near_copy
             and response.get("ok") is True
             and response.get("totalChars") in staged_chars
         )
@@ -1187,6 +1191,15 @@ _INDEX_MISREAD = re.compile(
     r"\bindex(?:er|ing)?\b(?P<gap>(?:\s+[\w'-]+){0,5}?)\s+misread", re.IGNORECASE
 )
 _GAP_NEGATION = re.compile(r"\b(?:not|never|no)\b|n't\b", re.IGNORECASE)
+_NEGATION_WORD = re.compile(r"^(?:not|never|no|cannot|can't|won't|don't|isn't|wasn't)$", re.IGNORECASE)
+
+
+def _negated_just_before(text: str, start: int, words: int = 4) -> bool:
+    """A negation among the last few words before `start`, in the same clause:
+    "I can't say the index is wrong" denies the verdict. Adjacent only, so a
+    negation earlier in a long clause cannot excuse a verdict after it."""
+    clause = _CLAUSE_BREAK.split(text[:start])[-1]
+    return any(_NEGATION_WORD.match(w.strip("\"'*_")) for w in clause.split()[-words:])
 # A record's name folded into another record's.
 _FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORECASE)
 # A fold named only to deny it ("neither can be called a variant of the other") is not one.
@@ -1240,10 +1253,12 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
         problems.append(f"it never points to line {line} on the image")
     verdicts = sorted(
         {m.group(0) for m in _VERDICT.finditer(reply)
-         if m.group(0).lower() != "confirmed"
-         or not _NEGATED_CLAUSE.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1])}
+         if not _negated_just_before(reply, m.start())
+         and (m.group(0).lower() != "confirmed"
+              or not _NEGATED_CLAUSE.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1]))}
         | {m.group(0) for m in _INDEX_MISREAD.finditer(reply)
-           if not _GAP_NEGATION.search(m.group("gap"))}
+           if not _GAP_NEGATION.search(m.group("gap"))
+           and not _negated_just_before(reply, m.start())}
     )
     if verdicts:
         problems.append(f"it gives a verdict one machine reading cannot support: {verdicts}")
@@ -1315,10 +1330,12 @@ def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_call
             for hit in as_name.finditer(prompt)
         ):
             problems.append(f"{callee} was briefed with {machine!r} as the subject's name")
-        for value in (g.group("v") for g in _GIVEN_FIELD.finditer(prompt)):
-            if value.lower() != prefix.lower():
+        for g in _GIVEN_FIELD.finditer(prompt):
+            if g.group("v").lower() == machine.lower() and not _IN_DOUBT.search(
+                _sentence_around(prompt, g.start(), g.end())
+            ):
                 problems.append(
-                    f"{callee} was briefed to search the given name {value!r}, not {prefix!r}"
+                    f"{callee} was briefed to search the given name {machine!r}, not {prefix!r}"
                 )
     wildcard = re.compile(rf"(?<![A-Za-z]){re.escape(prefix)}", re.IGNORECASE)
     if not any(wildcard.search(prompt) for _, prompt in briefs):

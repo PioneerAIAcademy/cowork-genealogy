@@ -566,7 +566,10 @@ async function withIndexReadings(
   out: ImageTranscribeToolResponse | NoProjectResult,
 ): Promise<ImageTranscribeToolResponse | NoProjectResult> {
   if ("ok" in out || typeof input.projectPath !== "string") return out;
-  return attachIndexReadings(input.projectPath, out, input.file === undefined ? (input.ark || input.imageArk) : undefined);
+  if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
+  // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
+  const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
+  return attachIndexReadings(input.projectPath, out, ark);
 }
 
 function compactOrPass(

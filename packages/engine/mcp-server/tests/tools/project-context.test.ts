@@ -201,12 +201,16 @@ describe("project_context", () => {
           name("a_003", "anthony TYLER"),
           { ...name("a_004", "Anthony Tyler"), superseded_by: "a_001" },
           { id: "a_005", source_id: "src_001", record_id: "r", fact_type: "sex", value: "Female" },
+          name("a_006", "Wm. Tyler"),
+          name("a_007", "Anthony Tyler"), // a namesake's record, linked to I1 once and revised away
         ],
         person_evidence: [
           link(1, "I1", "a_001"), link(2, "I1", "a_004"), link(3, "I1", "a_005"),
+          { ...link(8, "I1", "a_007"), superseded_by: "pe_009" }, link(9, "I8", "a_007"),
           link(4, "I2", "a_002"),
           link(5, "I3", "a_003"),
           link(6, "I5", "a_005"),
+          link(7, "I7", "a_006"),
         ],
       },
       {
@@ -217,6 +221,8 @@ describe("project_context", () => {
           person("I4", "Anthony"), // no linked name at all: not judged
           person("I5", "Anthony"), // a linked sex, no linked name: not judged
           person("I6", ""), // no given name to judge
+          person("I7", "Wm."), // an abbreviation, carried as written
+          person("I8", "Anthony"), // carried by the namesake's live link
         ],
         relationships: [],
         sources: [],
@@ -228,7 +234,7 @@ describe("project_context", () => {
     const flags = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.unsupportedGivenName ?? null]));
     expect(flags).toEqual({
       I1: { given: "Anthony", searchAs: "A*" },
-      I2: null, I3: null, I4: null, I5: null, I6: null,
+      I2: null, I3: null, I4: null, I5: null, I6: null, I7: null, I8: null,
     });
   });
 

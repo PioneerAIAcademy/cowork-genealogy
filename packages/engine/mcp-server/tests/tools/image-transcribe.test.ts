@@ -1667,6 +1667,18 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(r.readingNote).toMatch(/one machine reading/);
   });
 
+  it("joins on the imageArk alias when ark is blank, as the read folds it", async () => {
+    const ARK = "ark:/61903/3:1:S3HT-DTXQ-WTP";
+    await writeFile(join(dir, "research.json"), JSON.stringify({
+      sources: [{ id: "src_001", image_ark: ARK }],
+      assertions: [{ id: "a_001", source_id: "src_001", record_id: "r", record_role: "head", fact_type: "name", value: "Tyler" }],
+    }));
+    mockOpenRouterOk("23 | Tyler Anthony");
+    const r = await imageTranscribeMcpTool({ ark: " ", imageArk: ARK, projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.indexReadings?.map((x) => x.name)).toEqual(["Tyler"]);
+  });
+
   it("gives a page no held source names the note alone", async () => {
     mockOpenRouterOk("page");
     const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);

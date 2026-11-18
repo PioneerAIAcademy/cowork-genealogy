@@ -145,6 +145,32 @@ def test_a_misread_not_laid_on_the_index_passes(reply):
     check_reply(T1880, reply)
 
 
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1880 + " I can't say the index is wrong.",
+        GOOD_1880 + " The two readings do not both agree.",
+        GOOD_1880 + " I won't say the indexer misread line 43.",
+    ],
+)
+def test_a_verdict_denied_just_before_it_passes(reply):
+    check_reply(T1880, reply)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        # the denial sits in another clause, or too far back, so the verdict stands
+        GOOD_1880 + " I do not doubt it: the index is wrong.",
+        GOOD_1880 + " There is no question at all that, having looked twice, the index was wrong.",
+        GOOD_1880 + " It isn't hard to see; the image is clear.",
+    ],
+)
+def test_a_denial_away_from_the_verdict_does_not_excuse_it(reply):
+    with pytest.raises(AssertionError, match="verdict"):
+        check_reply(T1880, reply)
+
+
 def test_an_untagged_test_is_skipped():
     with pytest.raises(pytest.skip.Exception):
         check_reply({"skill": "research", "tags": ["transcribes-in-place"]}, "anything")
@@ -172,6 +198,18 @@ def _spawn(callee: str, prompt: str) -> dict:
     ],
 )
 def test_a_brief_holding_the_reading_in_doubt_passes(calls):
+    check_brief(BRIEF, calls)
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        [_spawn("search-records", "given name: Anthony (a machine reading in doubt), search as A*")],
+        [_spawn("search-records", 'subject: {"names": ["Tyler"]}\nGiven name: A*\n'
+                "Household: father given name: John, mother given name: Sarah.")],
+    ],
+)
+def test_other_given_names_and_a_doubted_field_pass(calls):
     check_brief(BRIEF, calls)
 
 

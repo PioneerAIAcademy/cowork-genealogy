@@ -87,6 +87,8 @@ def test_a_near_copy_ref_that_served_the_staged_page_passes():
     _served("results/.staging/abd.json", ok=False),
     _served("results/.staging/abd.json", chars=120),
     _served("results/other.json"),
+    # another staged page of the same length is not a near copy of this one
+    _served("results/.staging/xyz.json"),
     {**_read("results/.staging/abd.json"), "response": {"ok": True, "ref": "x"}},
 ])
 def test_a_read_that_did_not_serve_the_staged_page_fails(read):

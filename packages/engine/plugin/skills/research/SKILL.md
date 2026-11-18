@@ -209,7 +209,7 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
    `research_query({ section: "assertions", recordId })`. A name with no given name is an
    index reading too.
 2. The page text is one machine reading. Label it so, never "the image shows", "the image
-   reads" or "is clear": you have not seen the image.
+   reads" or "is clear".
 3. Where the index and the machine reading disagree, show both side by side, say they differ,
    name the line, and give `viewerUrl` as the link to check it. Never call the index wrong or a
    misread, never prefer either reading, and never state a correction.
@@ -500,9 +500,9 @@ message.
    block.**
 
    **When the subject's `project_context` person carries `unsupportedGivenName`:** `names`
-   keeps the surname alone; the brief gives its `given` as plain text, a reading in doubt beside
-   the index reading, and asks for the given name to be searched as its `searchAs`. Never brief
-   the surname alone, and never send `given` as the name.
+   carries the surname with its `searchAs` as the given name, and the brief gives its `given`
+   only as plain text, a reading in doubt beside the index reading. Never leave the given name
+   out, and never send `given` as the name.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and

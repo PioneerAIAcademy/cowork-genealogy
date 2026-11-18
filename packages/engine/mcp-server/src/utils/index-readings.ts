@@ -8,9 +8,8 @@
 // Spec: docs/specs/image-transcribe-tool-spec.md, "Index readings".
 
 import type { ImageTranscribeToolResponse, IndexReading } from "../types/image-transcribe.js";
-import { isLiveAssertion } from "./assertion-liveness.js";
 import { readProjectJson } from "./project-io.js";
-import { pageKey } from "./waiting-pages.js";
+import { pageKey, sourceIndex } from "./waiting-pages.js";
 
 export const READING_NOTE =
   "The transcription is one machine reading of the page, not a sight of it: never say the " +
@@ -34,17 +33,11 @@ export function indexReadingsForPage(research: any, ark: string): IndexReading[]
       s.image_ark !== "" &&
       pageKey(s.image_ark) === key,
   );
-  if (sources.length === 0) return [];
-  const ids = new Set(sources.map((s: any) => s.id));
-  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
-  return assertions
-    .filter((a) => ids.has(a?.source_id) && a?.fact_type === "name" && isLiveAssertion(a))
-    .map((a) => ({
-      sourceId: String(a.source_id),
-      recordId: String(a.record_id ?? ""),
-      role: String(a.record_role ?? ""),
-      name: String(a.value ?? ""),
-    }));
+  return sources.flatMap((s: any) =>
+    sourceIndex(research, s.id)
+      .filter((e) => e.factType === "name")
+      .map((e) => ({ sourceId: s.id as string, recordId: e.recordId, role: e.role, name: e.value })),
+  );
 }
 
 /**

@@ -95,16 +95,19 @@ export function unsupportedGivenName(
   const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
   const raw = preferredName(names)?.given;
   const given = typeof raw === "string" ? raw.trim() : "";
-  const first = given.split(/\s+/)[0] ?? "";
-  if (!/^\p{L}/u.test(first)) return undefined;
-  const word = first.toLowerCase();
-  const carried = linkedNameValues.some((v) =>
-    v.toLowerCase().split(/[^\p{L}'-]+/u).includes(word),
-  );
-  return carried ? undefined : { given, searchAs: `${first[0].toUpperCase()}*` };
+  const word = nameWords(given)[0];
+  if (word === undefined) return undefined;
+  const carried = linkedNameValues.some((v) => nameWords(v).includes(word));
+  return carried ? undefined : { given, searchAs: `${word[0].toUpperCase()}*` };
 }
 
-/** Each person's linked live `name` assertion values, from person_evidence. */
+/** A name's words, lower-cased, split the same way on both sides of a comparison. */
+function nameWords(value: string): string[] {
+  return value.toLowerCase().split(/[^\p{L}'-]+/u).filter((w) => /^\p{L}/u.test(w));
+}
+
+/** Each person's live linked `name` assertion values: live rows of person_evidence
+ *  (no `superseded_by`) pointing at live assertions. */
 function linkedNameValuesByPerson(research: any): Map<string, string[]> {
   const nameById = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
@@ -115,7 +118,7 @@ function linkedNameValuesByPerson(research: any): Map<string, string[]> {
   const out = new Map<string, string[]>();
   for (const pe of Array.isArray(research?.person_evidence) ? research.person_evidence : []) {
     const value = typeof pe?.assertion_id === "string" ? nameById.get(pe.assertion_id) : undefined;
-    if (value === undefined || typeof pe.person_id !== "string") continue;
+    if (value === undefined || typeof pe.person_id !== "string" || pe.superseded_by != null) continue;
     const list = out.get(pe.person_id) ?? [];
     list.push(value);
     out.set(pe.person_id, list);
