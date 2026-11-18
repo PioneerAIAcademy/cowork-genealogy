@@ -194,10 +194,13 @@ contract:
   transcribed line when their given names or their surnames are the same or
   differ by a letter or two (Mila/Milo, Barry/Berry); a line left between two
   paired lines pairs with the one entry left between them, even when no name
-  agrees. Only an entry with no such line is unmatched. After `---`,
-  give a table in transcription order, one row per line: the index reading, the
-  new reading, and `same` or `differ — check this line on the image`, each row
-  cited by the image id. Never call either reading the error, never state a
+  agrees. Only an entry with no such line is unmatched. When `rateLimited` or
+  `hydrationTimedOut` is true, or an entry has `hydrated: false`, call `image_index` no
+  more, say the index list is incomplete, and mark nothing unmatched. After `---`,
+  give a table in transcription order, one row per line, then one `unmatched`
+  row per index entry left over: the index reading, the new reading, and
+  `same` or `differ — check this line on the image`, each row cited by the
+  image id. Never call either reading the error, never state a
   correction, and never write that a name is missing from the index; an entry
   with no pair is `unmatched`. Exempt from the searchable-volume decline below.
 - A searchable volume is still declined (step 2), with nothing logged. A page

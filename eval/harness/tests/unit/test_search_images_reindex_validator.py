@@ -136,3 +136,32 @@ def test_the_agents_own_return_is_graded_over_the_relay():
     returns = [{"subagent_type": "search-images", "text": BAD_REPLIES["image is clear"]}]
     with pytest.raises(AssertionError):
         check_reply(returns, GOOD, TEST)
+
+
+# --- code-review round (2026-11-18): the guard's reach ----------------------
+
+AFFIRMED_VERDICTS = {
+    "without doubt": GOOD + "Without doubt the index was wrong on line 1.\n",
+    "no question": GOOD + "There is no question the index was wrong on line 1.\n",
+    "negation joined by and": GOOD + "It is not Barry and the index was wrong.\n",
+    "negation far back in the clause": GOOD
+    + "No careful reader of this old hand could miss that the index was wrong on line 1\n",
+}
+
+
+@pytest.mark.parametrize("name", sorted(AFFIRMED_VERDICTS))
+def test_a_verdict_a_distant_or_idiomatic_negation_does_not_hide(name):
+    with pytest.raises(AssertionError):
+        check_reply([], AFFIRMED_VERDICTS[name], TEST)
+
+
+def test_a_conditional_pointer_to_the_image_passes():
+    check_reply([], GOOD + "Line 15: if the image is clear at this line, decide from it.\n", TEST)
+
+
+def test_a_silent_agent_on_the_direct_arm_fails_even_when_the_relay_is_right():
+    """subject_reply_text: on a direct test the agent's empty return grades as
+    nothing; the dispatcher's correct-looking relay does not stand in for it."""
+    direct = {**TEST, "delegation": "No project exists in this folder."}
+    with pytest.raises(AssertionError, match="no block after"):
+        check_reply([{"subagent_type": "search-images", "text": ""}], GOOD, direct)

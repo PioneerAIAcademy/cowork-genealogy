@@ -401,8 +401,16 @@ _REINDEX_VERDICT = re.compile(
 
 # A clause ends at sentence punctuation, a table cell or a line break; a
 # negation counts only inside the verdict's own clause.
-_REINDEX_CLAUSE_BREAK = re.compile(r"[.;:!?|\n]")
+_REINDEX_CLAUSE_BREAK = re.compile(r"[.,;:!?|\n]|\b(?:and|but|so|because|while|although)\b", re.IGNORECASE)
 _REINDEX_NEGATION = re.compile(r"\b(?:not|never|no|neither|nor|without)\b|n't\b", re.IGNORECASE)
+# Inside the verdict's own clause a negation counts only within the few words
+# just before it; an idiom that affirms ("no question", "without doubt") is not
+# one, and a conditional ("if the image is clear") asserts nothing.
+_REINDEX_AFFIRMING_IDIOM = re.compile(
+    r"\b(?:no\s+(?:question|doubt)|without\s+(?:a\s+)?(?:doubt|question)|not\s+surprisingly)\b", re.IGNORECASE
+)
+_REINDEX_CONDITIONAL = re.compile(r"\b(?:if|whether|unless)\b", re.IGNORECASE)
+_REINDEX_NEGATION_WINDOW = 6
 
 
 def _after_final_rule(text: str) -> str | None:
@@ -417,7 +425,10 @@ def _reindex_verdicts(text: str) -> list[str]:
         head = text[: m.start()]
         breaks = list(_REINDEX_CLAUSE_BREAK.finditer(head))
         clause = head[breaks[-1].end() :] if breaks else head
-        if _REINDEX_NEGATION.search(clause):
+        if _REINDEX_CONDITIONAL.search(clause):
+            continue
+        near = " ".join(_REINDEX_AFFIRMING_IDIOM.sub(" ", clause).split()[-_REINDEX_NEGATION_WINDOW:])
+        if _REINDEX_NEGATION.search(near):
             continue
         hits.append(m.group(0))
     return hits
@@ -453,9 +464,9 @@ def test_reindex_reply_pairs_readings_without_a_verdict(agent_returns, text_resp
     the index wrong, a name missing from the index, or the image clear."""
     if "reindex" not in test.get("tags", []):
         pytest.skip("not a re-index test")
-    from harness.skill_runner import agent_return_text
+    from harness.skill_runner import subject_reply_text
 
-    reply = agent_return_text(agent_returns, "search-images") or (text_response or "")
+    reply = subject_reply_text(agent_returns, text_response, "search-images", test)
     block = _after_final_rule(reply)
     assert block is not None and block.strip(), "the reply has no block after a final `---`"
     for left, right in _REINDEX_PAIRS:
