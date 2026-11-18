@@ -146,7 +146,8 @@ import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 import { claimRuleFindings, questionCapFindings } from "../validation/claim-rules.js";
 import { owedFindings } from "../utils/owed-findings.js";
-import { applyRuleMode, ruleMode, summaryConcern } from "../validation/rule-modes.js";
+import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
+import { clearUnclaimedPrimary, primaryTarget, type PrimaryClearResult } from "../utils/primary-claim.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -8166,6 +8167,9 @@ interface FactRewriteResult {
   mutationWarnings: string[];
   /** Restore every touched fact to its pre-rewrite attributes. */
   undo: () => void;
+  /** The advisory for each rewritten fact marked `primary`, kept apart from
+   *  `mutationWarnings` so a fact the `primary` clear then clears drops it. */
+  concluded: Map<SimplifiedFact, string>;
 }
 
 /**
@@ -8409,8 +8413,10 @@ function rewriteLinkedFacts(
     }
   }
 
+  const concluded = new Map<SimplifiedFact, string>();
   for (const fact of concludedTouched) {
-    mutationWarnings.push(
+    concluded.set(
+      fact,
       `fact '${fact.id}' is marked primary (a concluded value) and was rewritten from its ` +
         "assertion. Re-read the proof summary that cites it: the conclusion was written against " +
         "the earlier reading.",
@@ -8425,7 +8431,7 @@ function rewriteLinkedFacts(
       }
     }
   };
-  return { mutated, warnings, mutationWarnings, undo };
+  return { mutated, warnings, mutationWarnings, undo, concluded };
 }
 
 // ─── #3601: a rejection undoes its link ──────────────────────────────────────
@@ -13329,6 +13335,15 @@ export async function researchAppend(
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+    // #3032 Stage 1b (Decision 34): `primary` follows its claim. Rides the
+    // rewrite's tree write and rollback.
+    let primaryClear = clearUnclaimedPrimary(beforeResearch, research, beforeTree, tree);
+    const primaryClearWarnings = (c: PrimaryClearResult) =>
+      c.cleared.map(
+        (x) =>
+          `${treeConcern(primaryTarget(x))}: \`primary\` cleared, because no live affirmed claim at probable or better ` +
+          "covers this fact any more.",
+      );
     // #3601: a rejection retires its pair's live link and that link's facts,
     // in this same all-or-nothing write.
     const retire = retireRejectedLinks(applied, research, tree);
@@ -13364,8 +13379,14 @@ export async function researchAppend(
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
-    let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated || removedPersons;
-    let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
+    let treeMutated = prep.treeMutated || rewrite.mutated || primaryClear.mutated || retire.mutated || removedPersons;
+    const clearedFacts = new Set(primaryClear.cleared.map((x) => x.fact));
+    let rewriteWarnings = [
+      ...rewrite.warnings,
+      ...rewrite.mutationWarnings,
+      ...[...rewrite.concluded].filter(([f]) => !clearedFacts.has(f)).map(([, m]) => m),
+      ...primaryClearWarnings(primaryClear),
+    ];
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
@@ -13454,10 +13475,14 @@ export async function researchAppend(
       // already failing, so it costs nothing in the normal case.
       if (!validation.valid && rewrite.mutated) {
         rewrite.undo();
+        // The clear never fails validation; re-run it on the restored facts, so a
+        // claim this call lowered still clears its fact.
+        primaryClear.undo();
+        primaryClear = clearUnclaimedPrimary(beforeResearch, research, beforeTree, tree);
         const retry = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
         if (retry.valid) {
           validation = retry;
-          treeMutated = prep.treeMutated || retire.mutated || removedPersons;
+          treeMutated = prep.treeMutated || primaryClear.mutated || retire.mutated || removedPersons;
           // The mutation half described a tree change that no longer exists.
           rewriteWarnings = [
             ...rewrite.warnings,
@@ -13465,6 +13490,7 @@ export async function researchAppend(
               "fact failed validation, so the fact rewrite was rolled back. The assertion is " +
               "corrected; the fact still holds the earlier reading. (Any other write this call " +
               "made, including a composite source description, still landed — see filesWritten.)",
+            ...primaryClearWarnings(primaryClear),
           ];
         }
       }

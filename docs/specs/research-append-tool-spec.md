@@ -189,7 +189,8 @@ camelCase convenience fields the same way `research_log_append` does.
     resulting `place`/`standard_place` pair that contradicts on country clears
     the fact's `standard_place` and warns, matching `tree_edit`.
   - **One more advisory, non-blocking.** A rewritten fact marked `primary` is a
-    concluded value a proof summary may cite, so it is named. A `place` corrected
+    concluded value a proof summary may cite, so it is named, unless §5.16 clears
+    that fact's `primary` in the same call, which reports it instead. A `place` corrected
     without its `standard_place` no longer keeps the old value: §3.6 re-resolves
     it on the update, or clears it, before the rewrite runs.
 
@@ -2503,6 +2504,18 @@ Two ParentChild claims are one object for rule 9 only when their subtypes agree,
 claims study's 45 hand-labelled proofs holds at `possible` 8 of 89 relationships, 0 of 25 facts and 1 of 11 couple
 facts (`tests/tools/research-append-claim-grounding.test.ts`, vectors built by
 `dev/build-claim-grounding-vectors.ts`).
+
+### 5.16 `primary` follows its claim
+
+After the ops apply, `research_append` clears `primary` on each tree fact, person or Couple, that a live affirmed
+claim at `probable` or better covered before the call (the fact as it stood then, by Decision 31's join) and none
+covers after it, whether the claim was lowered, denied, disproved or removed (Decision 34 of
+`docs/plan/conclusion-tree.md`). A `primary` no claim covered before the call (legacy or imported) is untouched
+(Decision 24). The response names each cleared fact in `validation.warnings` as `personId <id>, factId <id>:` (or
+`relationshipId <id>, factId <id>:`). The clear rides the assertion rewrite's tree write and rollback: when the
+rewrite is rolled back, the clear is re-run on the restored facts, so a claim the call lowered still clears its fact
+and a fact only the rolled-back rewrite had moved keeps its flag. It is the second route by which `research_append`
+writes tree `persons`, and its only route to tree `relationships` (`ownership.json`).
 
 ## 6. Decisions recorded
 
