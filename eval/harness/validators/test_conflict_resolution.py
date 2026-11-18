@@ -1302,3 +1302,23 @@ def test_resolved_competing_fathers(after_state, test):
     _assert_identity_resolved(
         target, f"parentage conflict {target.get('id')}", _SCHUYLKILL_SIDE
     )
+
+
+def test_unresolved_flynn_identity_thin(after_state, test):
+    """007: only the 1850 census is on file, so c_002 stays open.
+
+    The other half of `test_resolved_flynn_identity`: a pass that resolves
+    c_002 here forced an answer the evidence cannot carry (#4326 review).
+    """
+    if "stays-unresolved-flynn-identity" not in (test.get("tags") or []):
+        pytest.skip("not a stays-unresolved-flynn-identity scenario")
+    c = _conflicts_by_id(after_state.get("research_json") or {}).get("c_002")
+    assert c is not None, "c_002 is gone from conflicts[]"
+    assert c.get("status") != "resolved", (
+        "c_002 was resolved on one 1850 census record; with nothing placing "
+        "the subject it stays unresolved"
+    )
+    assert c.get("preferred_assertion_id") is None, (
+        f"c_002 names a preferred assertion {c.get('preferred_assertion_id')!r} "
+        "with nothing placing the subject"
+    )

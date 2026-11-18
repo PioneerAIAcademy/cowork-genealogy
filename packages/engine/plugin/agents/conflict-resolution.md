@@ -322,7 +322,9 @@ research_append({
 If the call returns `{ ok: false, errors }`, nothing was written —
 read the errors (a half-filled "resolved", or a `preferred_assertion_id`
 not among the competing set, will be rejected here), correct the
-`fields`, and call again. Do not retry blindly.
+`fields`, and call again. Do not retry blindly. Resend every field of
+the resolving write, `status: "resolved"` and `resolution_kind` included:
+a retry that drops `status` leaves the conflict open.
 
 The `resolution_rationale` must follow the **four-part structure**
 (keep it to **~250 words or fewer** for the common two-way conflict; see
@@ -453,8 +455,10 @@ and name the record that would decide it. When positive evidence does
 place the subject and nothing on file supports the rival candidate,
 resolve, preferring the assertion that carries the placement.
 
-- A rival described only in the conflict's own description, with no
-  assertion of its own, is not on file: it cannot hold the conflict open.
+- Once records place your subject (above), a rival described only in
+  the conflict's own description, with no assertion of its own, cannot
+  hold the conflict open. With one record on file nothing has placed the
+  subject: stay unresolved.
 - An identity conflict asks whether two records name one person. A
   parent's name on one record agreeing with the household head on the
   other is corroboration of that identity, not circular, when a

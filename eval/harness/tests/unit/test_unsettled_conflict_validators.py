@@ -203,3 +203,25 @@ def test_fathers_no_conflict_recorded_fails():
 def test_fathers_birthplace_conflict_alone_is_not_the_parentage_conflict():
     msg = _fails(_cr.test_resolved_competing_fathers, _with_fathers_conflict(ctype="fact", competing=("a_018", "a_004")), _FATHERS)
     assert "no identity conflict" in msg
+
+
+_THIN = {"tags": ["stays-unresolved-flynn-identity"]}
+
+
+def test_thin_left_open_passes():
+    _cr.test_unresolved_flynn_identity_thin(_state("flynn-identity-geographic-thin"), _THIN)
+
+
+def test_thin_resolved_fails():
+    msg = _fails(_cr.test_unresolved_flynn_identity_thin, _resolve_c002(_state("flynn-identity-geographic-thin")), _THIN)
+    assert "stays unresolved" in msg
+
+
+def test_thin_open_with_a_preferred_assertion_fails():
+    after = _resolve_c002(_state("flynn-identity-geographic-thin"), status="unresolved")
+    msg = _fails(_cr.test_unresolved_flynn_identity_thin, after, _THIN)
+    assert "a_001" in msg
+
+
+def test_thin_untagged_skips():
+    _skips(_cr.test_unresolved_flynn_identity_thin, _state("flynn-identity-geographic-thin"), {"tags": []})
