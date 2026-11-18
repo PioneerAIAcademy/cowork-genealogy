@@ -203,7 +203,9 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
 `projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
-link. Where the record's index and the machine reading disagree, show both side by side, say
+link. For a page of a record the project holds, first read its indexed names with
+`research_query({ section: "assertions", recordId })`; a name with no given name is an index
+reading too. Where the record's index and the machine reading disagree, show both side by side, say
 they differ, and name the line to check on the image; never call the index wrong, never say the
 image is clear or was seen, and never state a correction. A second pass over the same image, or
 a reading made after declining to read, confirms nothing; only a different record or a different
@@ -488,7 +490,9 @@ message.
    `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. **When the
    question or request a search serves asks about the subject's parentage, even one parent (who a
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
-   block.** A given name only a machine reading gives goes in that brief as plain text, a reading
+   block.** Before that brief, read the subject's linked `name` assertions (`research_query`
+   `person_evidence` by `personId`, then `assertions` by those `assertionId`s): a tree given name
+   none of them carries is a machine reading. A given name only a machine reading gives goes in that brief as plain text, a reading
    in doubt beside the index reading, never in `names`, which keep the surname alone; a search on it uses a wildcard on the part
    every reading agrees on (`An*`), and never drops the name. In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and

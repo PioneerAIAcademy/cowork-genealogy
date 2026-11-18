@@ -1122,11 +1122,27 @@ def test_bounded_transcription_is_delivered_in_place(
         for c in transcribes
     } - {None}
     assert refs, "no image_transcribe call staged its page (no staged.resultsRef came back)"
+    # sidecar_read corrects a near-copy of a staged ref (`locateStagedRef`), so a
+    # read under a mistyped ref still served the staged page when it answered with
+    # that page's length.
+    staged_chars = {
+        ((c.get("response") or {}).get("digest") or {}).get("chars") for c in transcribes
+    } - {None}
+
+    def _reads_staged_page(call: dict) -> bool:
+        args = call.get("args") or {}
+        if args.get("ref") in refs or set(args.get("refs") or []) & refs:
+            return True
+        response = call.get("response") or {}
+        return (
+            str(args.get("ref") or "").startswith("results/.staging/")
+            and response.get("ok") is True
+            and response.get("totalChars") in staged_chars
+        )
+
     read = [
         c for c in (tool_calls or [])
-        if bare_tool_name(c.get("tool", "")) == "sidecar_read"
-        and ((c.get("args") or {}).get("ref") in refs
-             or set((c.get("args") or {}).get("refs") or []) & refs)
+        if bare_tool_name(c.get("tool", "")) == "sidecar_read" and _reads_staged_page(c)
     ]
     assert read, (
         f"the staged page was never read: no sidecar_read on {sorted(refs)}, so "
@@ -1160,11 +1176,21 @@ _VERDICT = re.compile(
     r"|\bindex\s+(is|was)\s+(wrong|an\s+error|a\s+misread)"
     r"|\bbadly\s+misread|\bpoor\s+attempt"
     r"|\bboth\b[^.\n]*\bagree"
-    r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)\bconfirmed\b",
+    r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)\bconfirmed\b"
+    r"|\bmore\s+(?:plausible|likely|accurate)\s+reading\b"
+    r"|\b(?:image|scan)\s+reads\b",
     re.IGNORECASE,
 )
+# The index called a misread, with nothing denying it between the two words.
+_INDEX_MISREAD = re.compile(
+    r"\bindex(?:er|ing)?\b(?P<gap>(?:\s+[\w'-]+){0,5}?)\s+misread", re.IGNORECASE
+)
+_GAP_NEGATION = re.compile(r"\b(?:not|never|no)\b|n't\b", re.IGNORECASE)
 # A record's name folded into another record's.
 _FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORECASE)
+# A fold named only to deny it ("neither can be called a variant of the other") is not one.
+_NEGATED_CLAUSE = re.compile(r"\b(?:not|neither|nor|never|no)\b|n't\b", re.IGNORECASE)
+_CLAUSE_BREAK = re.compile(r"[.!?;:\n—,]")
 _SEARCH_CALLEES = ("search-records", "search-images", "search-full-text")
 # `_field_values` stops a value at `*`, which is the wildcard this check looks for.
 _GIVEN_FIELD = re.compile(
@@ -1211,14 +1237,21 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
         problems.append(f"it never shows the machine reading {machine!r}")
     if not re.search(rf"\bline\s*(no\.?|number|#)?\s*{re.escape(line)}\b", reply, re.IGNORECASE):
         problems.append(f"it never points to line {line} on the image")
-    verdicts = sorted({m.group(0) for m in _VERDICT.finditer(reply)})
+    verdicts = sorted(
+        {m.group(0) for m in _VERDICT.finditer(reply)}
+        | {m.group(0) for m in _INDEX_MISREAD.finditer(reply)
+           if not _GAP_NEGATION.search(m.group("gap"))}
+    )
     if verdicts:
         problems.append(f"it gives a verdict one machine reading cannot support: {verdicts}")
     written = _one_tag_value(test, _AS_WRITTEN_PREFIX)
     if written:
         if not re.search(r"\s+".join(map(re.escape, written.split())), reply, re.IGNORECASE):
             problems.append(f"it never reports the name as written, {written!r}")
-        folded = sorted({m.group(0) for m in _FOLDED.finditer(reply)})
+        folded = sorted({
+            m.group(0) for m in _FOLDED.finditer(reply)
+            if not _NEGATED_CLAUSE.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1])
+        })
         if folded:
             problems.append(f"it folds a record's name into another's: {folded}")
     assert not problems, (

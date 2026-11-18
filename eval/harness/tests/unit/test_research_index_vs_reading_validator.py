@@ -80,6 +80,12 @@ def test_the_1900_bundle_shapes_fail(reply):
         "Line 43: index Armtogne, machine Armistead. 'Ann Tone' is a two-word phonetic rendering of Antoine.",
         "Line 43: index Armtogne, machine Armistead. The registrar split Antoine into Ann Tone.",
         "Line 43: index Armtogne, machine Armistead. The certificate gives Antone.",
+        GOOD_1880 + " This is no misprint, it is a variant of Antoine.",
+        # scratch_2026-11-17_17-34-55, ut_research_iv2 runs 3 and 4
+        GOOD_1880 + " The index reading is a machine-transcription misread of a cursive Armistead.",
+        GOOD_1880 + " The two share the letters Arm-, suggesting the indexer misread the same word.",
+        GOOD_1880 + " Armistead is the more plausible reading of the two.",
+        GOOD_1880 + " The image reads Armistead, not Armtogne.",
     ],
 )
 def test_the_1880_bundle_shapes_fail(reply):
@@ -98,6 +104,30 @@ def test_the_1880_bundle_shapes_fail(reply):
 )
 def test_legitimate_variants_pass(reply):
     check_reply(T1900, reply)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1880 + " The two records disagree, and neither can simply be called a variant of the other.",
+        GOOD_1880 + " Ann Tone is not a rendering of Armistead.",
+    ],
+)
+def test_a_fold_named_only_to_deny_it_passes(reply):
+    check_reply(T1880, reply)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1880 + " I cannot say the indexer did not misread it, nor that the machine did.",
+        GOOD_1880 + " The index was never shown to be a misread; only the image can settle it.",
+        GOOD_1880 + " Either reading could be a misread; the index and the machine disagree.",
+        GOOD_1880 + " The machine reads Armistead and the index reads Armtogne.",
+    ],
+)
+def test_a_misread_not_laid_on_the_index_passes(reply):
+    check_reply(T1880, reply)
 
 
 def test_an_untagged_test_is_skipped():
