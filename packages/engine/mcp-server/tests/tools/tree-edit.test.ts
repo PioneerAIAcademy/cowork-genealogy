@@ -3422,6 +3422,48 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect(await readTree()).toEqual(treeBefore);
   });
 
+  // Decision 26: a father whose edge reads set aside from claims is not a rival.
+  const setAsideResearch = () => ({ ...minimalResearch, ...{
+  proof_summaries: [
+    {
+      id: "ps_001",
+      question_id: "q_001",
+      tier: "probable",
+      claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+        { claim: "not Thomas", proof_tier: "possible", polarity: "denied", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+      ],
+    },
+  ],
+} });
+
+  it("adding the concluded father beside a father that reads set aside needs no justification", async () => {
+    await writeProject(parentage(), setAsideResearch());
+    const r = await addParent("I3");
+    expect(r.ok).toBe(true);
+    const edges = (await readTree()).relationships.map((e: any) => e.parent);
+    expect(edges).toEqual(expect.arrayContaining(["I2", "I3"]));
+  });
+
+  it("a winner's edge beside a set-aside import lands; with no summary the same write is refused and routed", async () => {
+    await writeProject(parentage());
+    const refused = await addParent("I3");
+    expect((refused as any).reason).toBe("unjustified_warnings");
+    expect((refused as any).warnings[0].warningId).toMatch(/^competingParentage\|I1\|Male\|/);
+
+    await writeProject(parentage(), setAsideResearch());
+    expect((await addParent("I3")).ok).toBe(true);
+  });
+
+  it("still refuses a third father who has no claim, beside the winner and the set-aside import", async () => {
+    const t = parentage();
+    t.persons.push({ id: "I5", gender: "Male", names: [{ id: "N5", given: "James", surname: "Flynn", preferred: true }], facts: [] } as any);
+    t.relationships.push({ id: "R2", type: "ParentChild", parent: "I3", child: "I1", sources: [{ ref: "S1" }] } as any);
+    await writeProject(t, setAsideResearch());
+    const r = await addParent("I5");
+    expect((r as any).reason).toBe("unjustified_warnings");
+  });
+
   it("lets a ParentChild edge to a parent of the other sex through", async () => {
     await writeProject(parentage());
 

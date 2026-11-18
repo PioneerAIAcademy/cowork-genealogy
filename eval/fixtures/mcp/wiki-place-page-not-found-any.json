@@ -1,0 +1,10 @@
+{
+  "tool": "wiki_place_page",
+  "description": "Catch-all wiki_place_page fixture for a place or section no specific fixture covers: answers with the real tool's not-found text (src/tools/wiki-place-page.ts: 'No wiki page found for \"<standardPlace>\".') rather than wiki-place-page-any.json's invented page, which the agent would survey from. List it AFTER a test's specific wiki_place_page fixtures so they answer first.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "error": "No wiki page found for this place."
+  }
+}
