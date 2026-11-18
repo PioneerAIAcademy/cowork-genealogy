@@ -32,7 +32,7 @@
     },
     {
       "id": "q_002",
-      "question": "Where was Patrick Flynn in the 1850 census?",
+      "question": "Where did Patrick Flynn live in 1850?",
       "rationale": "The 1850 census is the earliest enumeration where Patrick would appear by name (age ~5). Locating him in a household identifies candidate parents.",
       "selection_basis": "objective_decomposition",
       "priority": "high",
@@ -62,7 +62,7 @@
           "original_substitution": "FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.",
           "independent_verification": "FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original.",
           "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
-          "conflict_resolution": "No conflicts on the 1850 census placement question.",
+          "conflict_resolution": "No conflicts on the 1850 residence question.",
           "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
         },
         "not_reached": []

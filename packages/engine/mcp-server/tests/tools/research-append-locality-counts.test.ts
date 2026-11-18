@@ -54,9 +54,9 @@ const CATALOG: FSCollectionsResponse = {
   ],
 };
 
-function locality(collections: unknown[]) {
+function locality(collections: unknown[], place = "Ohio, United States") {
   return {
-    place: "Illinois, United States",
+    place,
     collections,
     pages_read: [{ section: "home", url: "u1", found: true }],
     source: "locality-guide",
@@ -287,13 +287,144 @@ describe("research_append stamps locality collection counts from the catalog", (
     expect(warnings[1]).toMatch(/^ops\[1\]/);
   });
 
-  it("does not read the catalog for a call with no locality collections", async () => {
+  it("does not read the catalog for a call that touches no locality collections", async () => {
+    await appendLocality([]);
+    mockedGetValidToken.mockClear();
+    mockFetch.mockClear();
     const r = await researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: locality([]) } as never,
+      { projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { quirks: ["q"] } } as never,
       collectionCatalogLoader(LOCAL),
     );
     expect(r.ok).toBe(true);
     expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  // The whole list (spec 5.12): an append gains every catalog collection for its place.
+  const ILLINOIS = "Illinois, United States";
+  const appendIn = (place: string, collections: unknown, extra: Record<string, unknown> = {}) =>
+    researchAppendFromCaller(
+      { projectPath: dir, section: "localities", op: "append", entry: { ...locality([], place), collections, ...extra } } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+  const row1855 = { id: "1803969", title: "Illinois, State Census, 1855", date_range: "1855-1855", person_count: 240768, record_count: 60123 };
+  const row1865 = { id: "1803971", title: "Illinois, State Census, 1865", date_range: "1855-1855", person_count: 380262, record_count: 95456 };
+
+  it("an append that sends no collections gets every catalog collection for its place", async () => {
+    const r = await appendIn(ILLINOIS, []);
+    expect(await storedCollections()).toEqual([row1855, row1865]);
+    expect(warningsOf(r)).toEqual([
+      'localities collections: added the 2 other FamilySearch collections for "Illinois" from the catalog, after the 0 sent',
+    ]);
+  });
+
+  it("an append with no collections key is filled the same way", async () => {
+    const entry: Record<string, unknown> = locality([], ILLINOIS);
+    delete entry.collections;
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "localities", op: "append", entry } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+    expect(r.ok).toBe(true);
+    expect(await storedCollections()).toEqual([row1855, row1865]);
+  });
+
+  it("keeps what the entry sent first, as stamped, and adds only what it lacks", async () => {
+    const r = await appendIn(ILLINOIS, [col("1803971", 0, 95456)]);
+    const stored = await storedCollections();
+    expect(stored.map((c: any) => c.id)).toEqual(["1803971", "1803969"]);
+    expect(stored[0]).toMatchObject({ title: "Illinois, State Census", person_count: 380262 });
+    expect(stored[1]).toEqual(row1855);
+    const warnings = warningsOf(r);
+    expect(warnings).toHaveLength(2);
+    expect(warnings[0]).toContain("person_count 0 -> 380262");
+    expect(warnings[1]).toContain("added the 1 other FamilySearch collections");
+  });
+
+  it("adds nothing and says nothing when the entry already holds them all", async () => {
+    const r = await appendIn(ILLINOIS, [col("1803969", 240768, 60123), col("1803971", 380262, 95456)]);
+    expect(await storedCollections()).toHaveLength(2);
+    expect(warningsOf(r)).toEqual([]);
+  });
+
+  it("keeps a sent collection the catalog's list for the place does not hold", async () => {
+    await appendIn(ILLINOIS, [col("9999999", 5, 5)]);
+    expect((await storedCollections()).map((c: any) => c.id)).toEqual(["9999999", "1803969", "1803971"]);
+  });
+
+  it("takes the scope from a jurisdiction's name when the place names no collection", async () => {
+    await appendIn("Illinois Country, New France", [], { jurisdictions: [{ name: "Sangamon, Illinois, United States", date_range: "1821-" }] });
+    expect((await storedCollections()).map((c: any) => c.id)).toEqual(["1803969", "1803971"]);
+  });
+
+  it("adds nothing for a place whose scope names no collection", async () => {
+    const r = await appendIn("Ohio, United States", []);
+    expect(await storedCollections()).toEqual([]);
+    expect(warningsOf(r)).toEqual([]);
+  });
+
+  it("adds nothing when the catalog cannot be read", async () => {
+    mockFetch.mockRejectedValue(new Error("network down"));
+    const r = await appendIn(ILLINOIS, []);
+    expect(r.ok).toBe(true);
+    expect(await storedCollections()).toEqual([]);
+  });
+
+  it("adds nothing on an update", async () => {
+    await appendIn("Ohio, United States", []);
+    await researchAppendFromCaller(
+      { projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { place: ILLINOIS, collections: [col("1803969", 1, 1)] } } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+    expect((await storedCollections()).map((c: any) => c.id)).toEqual(["1803969"]);
+  });
+
+  describe("a title that names another part of the scope is not added", () => {
+    const PORTUGAL: FSCollectionsResponse = {
+      results: 6,
+      index: 0,
+      entries: [
+        catalogEntry("1", "Portugal, Madeira, Catholic Church Records, 1044-1990", 1, 1),
+        catalogEntry("2", "Portugal, Aveiro, Catholic Church Records, 1550-1957", 1, 1),
+        catalogEntry("3", "Portugal, Azores, Catholic Church Records, 1542-2019", 1, 1),
+        catalogEntry("4", "Portugal Baptisms, 1570-1910", 1, 1),
+        catalogEntry("5", "Portugal, Civil Records, 1437-2023", 1, 1),
+        catalogEntry("6", "Portugal, Passport Registers and Passenger Lists, 1800-1946", 1, 1),
+      ],
+    };
+    const madeira = (collections: unknown[]) =>
+      appendIn("Madeira, Portugal", collections, { for_place: "Funchal, Madeira, Portugal", jurisdictions: [{ name: "Funchal, Madeira, Portugal", date_range: "1835-" }] });
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(PORTUGAL), { status: 200 }));
+    });
+
+    it("adds the place's own and the country-wide collections, and says how many it left out", async () => {
+      const r = await madeira([]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["1", "4", "5", "6"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 4 other FamilySearch collections for "Portugal" from the catalog, after the 0 sent; ' +
+          '2 that name another part of "Portugal" were left out',
+      ]);
+    });
+
+    it("keeps a collection for another part when the entry itself sent it", async () => {
+      await madeira([{ id: "3", title: "Portugal, Azores, Catholic Church Records, 1542-2019" }]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["3", "1", "4", "5", "6"]);
+    });
+
+    it("reads a place part with a type in brackets as the part alone", async () => {
+      await appendIn("Portugal", [], { jurisdictions: [{ name: "Madeira, Portugal (Autonomous Region)", date_range: "1835-" }] });
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["1", "4", "5", "6"]);
+    });
+
+    it("with no part below the scope, adds only what names no part", async () => {
+      await appendIn("Portugal", []);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["4", "5", "6"]);
+    });
+  });
+
+  it("leaves a collections value that is not a list for the validator to refuse", async () => {
+    const r = await appendIn(ILLINOIS, "all of them");
+    expect(r.ok).toBe(false);
   });
 
   it("does not stamp when the loader is null (the unit eval harness)", async () => {
