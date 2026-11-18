@@ -1747,13 +1747,36 @@ PROJECT_WRITER_TOOLS = {
 # test is the one this guard can actually make.
 CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"}
 
+#: Of the conditional writers, the ones whose write is decided by the RESPONSE,
+#: not the args, with the response keys that prove the write happened.
+#:
+#: `record_search` writes only on a nil (issue #4527), and nil-ness is not in its
+#: arguments. Keying it on `projectPath` instead would count EVERY search as a
+#: writer call — search-records and survey-surname pass `projectPath` on all of
+#: them — so `test_project_file_changes_route_through_writer_tools` would pass in
+#: any run of those suites, including the zero-writer hand-edit its own docstring
+#: cites (tree-edit ut_012). A guard that cannot fail in the case it exists to
+#: catch reads as coverage and is worse than none.
+#:
+#: `logId` only, never `nilLogRefused`: a refusal means the entry was NOT
+#: written, so it legitimizes no project-file change. Both keys survive into the
+#: committed run log (`orchestrator._MOCK_ENRICHED_KEYS`), so this reads the same
+#: post hoc as it does live.
+RESPONSE_KEYED_PROJECT_WRITERS = {"record_search": ("logId",)}
+
 
 def _is_project_writer_call(call: dict) -> bool:
     name = (call.get("tool") or "").rsplit("__", 1)[-1]
     if name in PROJECT_WRITER_TOOLS:
         return True
+    if name not in CONDITIONAL_PROJECT_WRITER_TOOLS:
+        return False
+    keys = RESPONSE_KEYED_PROJECT_WRITERS.get(name)
+    if keys is not None:
+        response = call.get("response")
+        return isinstance(response, dict) and any(k in response for k in keys)
     args = call.get("args")
-    return name in CONDITIONAL_PROJECT_WRITER_TOOLS and isinstance(args, dict) and bool(args.get("projectPath"))
+    return isinstance(args, dict) and bool(args.get("projectPath"))
 
 
 def test_project_file_changes_route_through_writer_tools(

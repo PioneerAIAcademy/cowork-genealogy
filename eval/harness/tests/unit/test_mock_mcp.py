@@ -2852,6 +2852,84 @@ def test_a_nil_record_search_actually_writes_its_log_entry(tmp_path):
     assert entry["query"] == {"surname": "Flynn", "givenName": "Patrick"}
 
 
+def test_the_nil_log_trims_its_note_exactly_as_production_does(tmp_path):
+    """`record-search.ts` writes `note.trim()`, and a blank note as null.
+
+    Passing it through raw made the harness and the engine write different
+    `notes` for the same call, so a validator or judge graded against a value
+    production never produces.
+    """
+    import json as _json
+
+    def _logged(case, note):
+        # A fresh workspace per call: the mock locks the project files down once
+        # its server is built, so the second case cannot reuse the first's dir.
+        ws = tmp_path / case
+        ws.mkdir()
+        (ws / "research.json").write_text(_json.dumps({"log": []}), encoding="utf-8")
+        (ws / "tree.gedcomx.json").write_text(
+            _json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+        )
+        _server, _calls, tools_by_name = create_mock_server(
+            ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=ws
+        )
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(ws), "note": note},
+        )
+        after = _json.loads((ws / "research.json").read_text(encoding="utf-8"))
+        # A null note leaves the key off the entry, exactly as production does.
+        return after["log"][0].get("notes")
+
+    assert _logged("padded", " Checking the 1880 census ") == "Checking the 1880 census"
+    assert _logged("blank", "   ") is None
+
+
+def test_a_total_less_nil_fixture_writes_no_log_entry(tmp_path):
+    """`_fixture_is_nil` treats a missing total as 0, which is looser than
+    production, whose `totalMatches` is always a number from upstream.
+
+    Elsewhere that divergence is absorbed downstream (the compiled
+    `surnameVariantHints` re-checks the total itself). The nil-log write has no
+    such re-check and is not inert — it appends a real `written_by` entry — so a
+    fixture that never stated a total must not trigger it, or the suite grades
+    the agent against a log entry production would not have written.
+    """
+    import json as _json
+
+    def _log_after(response):
+        """Run a record_search against a fixture with this response; return log[]."""
+        case = tmp_path / f"case{abs(hash(_json.dumps(response, sort_keys=True))) % 10**8}"
+        fixtures = case / "fixtures"
+        ws = case / "ws"
+        fixtures.mkdir(parents=True)
+        ws.mkdir()
+        (fixtures / "rs-total-less.json").write_text(
+            _json.dumps({
+                "tool": "record_search",
+                "description": "nil search whose fixture states no total",
+                "args": {"surname": "Flynn"},
+                "response": response,
+            }),
+            encoding="utf-8",
+        )
+        (ws / "research.json").write_text(_json.dumps({"log": []}), encoding="utf-8")
+        (ws / "tree.gedcomx.json").write_text(
+            _json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+        )
+        _server, _calls, tools_by_name = create_mock_server(
+            ["rs-total-less"], fixtures, workspace=ws
+        )
+        _invoke(tools_by_name, "record_search", {"surname": "Flynn", "projectPath": str(ws)})
+        return _json.loads((ws / "research.json").read_text(encoding="utf-8"))["log"]
+
+    # Stated zero → production's gate holds → the entry is written.
+    assert len(_log_after({"results": [], "totalMatches": 0})) == 1
+    # No total stated → production's gate cannot be known to hold → no write.
+    assert _log_after({"results": []}) == []
+
+
 def test_a_nil_fulltext_search_still_asks_the_agent_to_log_it(tmp_path):
     """The other direction of issue #4527: only record_search's arm was dropped.
 

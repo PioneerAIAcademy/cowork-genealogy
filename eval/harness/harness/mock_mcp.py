@@ -484,6 +484,28 @@ def _fixture_is_nil(response: dict[str, Any]) -> bool:
     return True
 
 
+def _fixture_states_zero_total(response: dict[str, Any]) -> bool:
+    """`_fixture_is_nil`, but the fixture must SAY its total is zero.
+
+    `_fixture_is_nil` treats a missing total as 0, which is looser than
+    production, whose `totalMatches` always comes from upstream as a number.
+    Everywhere else that divergence is absorbed downstream — the compiled
+    `surnameVariantHints` re-checks `totalMatches === 0` itself, so a total-less
+    fixture simply gets no hint. The nil-log write has no such re-check and is
+    not inert: it appends a real `written_by: "record_search"` entry to
+    research.json and hands back a `logId`. A fixture authored with `results: []`
+    and no total would make the harness grade the agent against a log entry
+    production's own gate would never have written, so that write requires the
+    stated zero.
+    """
+    if not _fixture_is_nil(response):
+        return False
+    return any(
+        isinstance(response.get(key), (int, float))
+        for key in ("totalMatches", "totalResults")
+    )
+
+
 def _format_unlogged_refs(refs: list[str]) -> str:
     shown = ", ".join(refs[:UNLOGGED_REFS_SHOWN])
     rest = len(refs) - UNLOGGED_REFS_SHOWN
@@ -744,7 +766,12 @@ def _write_nil_log(args: dict[str, Any]) -> dict[str, Any]:
         "outcome": "negative",
         "resultsExamined": 0,
         "planItemId": args.get("planItemId"),
-        "notes": args.get("note") or None,
+        # Trimmed, and whitespace-only is absent — what record-search.ts writes
+        # (`input.note.trim() !== "" ? input.note.trim() : null`). Passing it
+        # through raw made the harness and production write different `notes`
+        # for the same call, so a validator or judge read a value production
+        # never produces.
+        "notes": (args.get("note").strip() or None) if isinstance(args.get("note"), str) else None,
         "writtenBy": "record_search",
     }
     try:
@@ -2222,7 +2249,7 @@ def create_mock_server(
                 # ...and record_search performs that write here, through the same
                 # compiled code production runs, so the suite grades the agent on
                 # the entry production would actually have written.
-                if _name == "record_search" and _fixture_is_nil(response):
+                if _name == "record_search" and _fixture_states_zero_total(response):
                     _notes.update(_write_nil_log(args))
                 if _notes:
                     reordered = {}

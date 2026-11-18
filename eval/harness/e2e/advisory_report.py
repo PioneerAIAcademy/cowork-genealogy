@@ -73,7 +73,7 @@ import sys
 from collections import Counter
 from datetime import date
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import Callable, Mapping, NamedTuple
 
 from e2e.response_summary import unwrap
 from e2e.runlog_selection import (
@@ -101,17 +101,20 @@ VALIDATION_SHIP_DATE = date(2026, 8, 11)
 # `external_links_search` only until it stopped staging (2026-10): see
 # `_stopped_emitting`.
 SEARCH_TOOLS = frozenset({"record_search", "fulltext_search", "external_links_search"})
-# `nilSearchNeedsLog` loses its record_search arm at issue #4527: the tool writes
-# a nil's log entry itself and stops emitting the note. Scoped so the drop in
-# fired-counts is not read as "agents stopped ignoring it" — nothing about agent
-# behaviour changed, the engine stopped asking.
+# `nilSearchNeedsLog` is retired for record_search at issue #4527, PER RUN, not
+# corpus-wide. Scoped so the drop in fired-counts is not read as "agents stopped
+# ignoring it" — nothing about agent behaviour changed, the engine stopped asking.
 #
-# Derived by SUBTRACTION, deliberately. Only `fulltext-search.ts` emits the note
-# in the engine today, so naming fulltext alone would also drop
-# external_links_search — a change this card did not ask for and whose history
-# nobody here has checked. Subtracting the one tool that changed keeps this edit
-# to what shipped.
-NIL_NOTE_TOOLS = SEARCH_TOOLS - frozenset({"record_search"})
+# Keyed on the RUN, like `_stopped_emitting` beside it, NOT by removing the tool
+# from `emitters`. The emitters set is consulted per call with no notion of when
+# the run happened, so dropping record_search there erases its whole history:
+# 321 of the field's 430 firings in the committed corpus are record_search, and
+# every one would stop being counted ACTED/IGNORED/NEVER_HELD/NOT_OBSERVABLE —
+# ~75% of the evidence silently gone, which is the very misreading this scoping
+# exists to prevent. A run from before the change still scores exactly as it did.
+#: Bare tool -> the (commit, date) at which it stopped emitting the note.
+NIL_NOTE_STOPPED = {"record_search": ("2046e6446", date(2026, 11, 17))}
+NIL_NOTE_TOOLS = SEARCH_TOOLS
 # The two writer tools that land sources / assertions: `research_append` names
 # the section in its args, `extraction_append` writes both for each record it
 # extracts and names none.
@@ -154,6 +157,22 @@ def _bare(call: dict) -> str:
 
 def _is_error(call: dict) -> bool:
     return bool(call.get("is_error"))
+
+
+def _retired_emitter(call: dict, doc: dict, path: Path, spec: "FieldSpec",
+                     probe: "_GitProbe") -> bool:
+    """Did THIS run postdate the commit at which this tool stopped emitting?
+
+    The per-run counterpart of dropping a tool from `emitters`: a run built
+    before the retiring commit still scores exactly as it did, and only a run
+    that contains it stops counting the call as an emitter. Reuses
+    `version_observable`, so an unresolvable sha falls back to the capture date
+    the same way the shipping gate does."""
+    retired = spec.stopped.get(_bare(call))
+    if retired is None:
+        return False
+    commit, when = retired
+    return version_observable(doc, path, commit, when, probe)
 
 
 def _stopped_emitting(call: dict, doc: dict) -> bool:
@@ -331,6 +350,11 @@ class FieldSpec(NamedTuple):
     needs_validation_key: bool                 # validation.warnings note?
     fired: Callable[[dict], tuple[bool, dict | None]]  # (fired?, decoded doc)
     acted: Callable[[list[dict], int, dict, dict | None], str]  # -> ACTED/IGNORED
+    #: Emitters that RETIRED, bare tool -> the (commit, date) they stopped at.
+    #: The mirror of ship_commit/ship_date: a run containing that commit no
+    #: longer gets the note from that tool, so the call is not an emitter THERE,
+    #: while every earlier run still scores. Default empty = nothing retired.
+    stopped: Mapping[str, tuple[str, date]] = {}
 
 
 def _fired_search_key(key: str) -> Callable[[dict], tuple[bool, dict | None]]:
@@ -457,7 +481,8 @@ FIELDS: list[FieldSpec] = [
     FieldSpec("unloggedSearches", SEARCH_TOOLS, SEARCH_SHIP_COMMIT, SEARCH_SHIP_DATE,
               False, _fired_search_key("unloggedSearches"), _acted_unlogged),
     FieldSpec("nilSearchNeedsLog", NIL_NOTE_TOOLS, SEARCH_SHIP_COMMIT, SEARCH_SHIP_DATE,
-              False, _fired_search_key("nilSearchNeedsLog"), _acted_nil),
+              False, _fired_search_key("nilSearchNeedsLog"), _acted_nil,
+              stopped=NIL_NOTE_STOPPED),
     FieldSpec("sources-without-assertions", SECTION_WRITERS, VALIDATION_SHIP_COMMIT,
               VALIDATION_SHIP_DATE, True, _fired_validation(SRC_NO_ASSERT_MARKER),
               _acted_src_no_assert),
@@ -506,7 +531,9 @@ def classify_run(doc: dict, path: Path, probe: _GitProbe) -> list[CallRow]:
         version_ok = version_observable(doc, path, spec.ship_commit, spec.ship_date, probe)
         fired_at: dict[int, int] = {}  # call index -> its row's position
         for i, call in enumerate(calls):
-            if _is_error(call) or _bare(call) not in spec.emitters or _stopped_emitting(call, doc):
+            if (_is_error(call) or _bare(call) not in spec.emitters
+                    or _stopped_emitting(call, doc)
+                    or _retired_emitter(call, doc, path, spec, probe)):
                 continue
             agent = agent_label(call)
             if not version_ok or not _capture_observable(call, spec):

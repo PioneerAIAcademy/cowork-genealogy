@@ -484,10 +484,37 @@ def test_a_links_fetch_in_a_run_after_the_change_is_neither_an_emitter_nor_a_sea
 
 
 def test_a_record_search_in_a_run_after_the_change_still_counts(tmp_path):
+    """A fulltext_search still emits the note after #4527 — only record_search retired."""
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
     rows = scan([_write_run_with(tmp_path, [_search(nil_doc), _log_append(outcome="negative")],
                                  external_collection_keys={})]).rows
     assert _states(rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+def test_a_record_search_from_before_the_change_still_scores(tmp_path):
+    """#4527 retires record_search's arm PER RUN, so its history is not erased.
+
+    A pre-change run is dated before the retiring commit, so the call is still an
+    emitter and still partitions. Removing record_search from the field's
+    `emitters` instead would drop this row entirely — 321 of the corpus's 430
+    firings — and read as "agents stopped ignoring it".
+    """
+    nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
+    call = _search(nil_doc, tool="mcp__genealogy__record_search")
+    rows = scan([_write_run_with(tmp_path, [call, _log_append(outcome="negative")],
+                                 external_collection_keys={},
+                                 captured_at="2026-10-01T00:00:00Z")]).rows
+    assert _states(rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+def test_a_record_search_from_after_the_change_is_not_an_emitter(tmp_path):
+    """A run postdating #4527 gets no note from record_search, so it scores nothing."""
+    nil_doc = {"results": [], "totalMatches": 0, "logId": "log_007"}
+    call = _search(nil_doc, tool="mcp__genealogy__record_search")
+    rows = scan([_write_run_with(tmp_path, [call, _log_append(outcome="negative")],
+                                 external_collection_keys={},
+                                 captured_at="2026-11-18T00:00:00Z")]).rows
+    assert _states(rows, "nilSearchNeedsLog") == Counter()
 
 
 def test_a_links_fetch_in_a_run_before_the_change_scores_as_before(tmp_path):
