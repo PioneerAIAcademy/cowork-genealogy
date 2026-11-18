@@ -11,7 +11,8 @@
       "multi-conflict",
       "fact-vs-identity",
       "flynn-identity-geographic",
-      "direct-arm"
+      "direct-arm",
+      "resolved-flynn-identity-if-worked"
     ]
   },
   "input": {
@@ -24,7 +25,8 @@
     "c_001's competing_assertion_ids include a_002 (the 1850 census, src_001), and the still-unresolved c_002 asks whether src_001's Patrick is the same person as src_004's Patrick — the source behind a_012, c_001's other side. If the skill resolves c_001 first, grade whether it says what that open dependency does to the resolution's standing. Treating a_002 as a settled attribute of the subject without addressing c_002 is a substantive defect, not a stylistic preference",
     "Grade on the quality of the prioritization reasoning, not on whether it considered all three: it is acceptable and even good behavior for the skill to briefly note observations about all three conflicts before focusing its resolution work on one",
     "The resolution work (writing independence_analysis, weighing_analysis, preferred_assertion_id, resolution_rationale) should be concentrated on one conflict — the chosen one should receive a complete, well-reasoned treatment rather than thin coverage spread across all three",
-    "Resolving exactly ONE conflict and then offering the remaining conflicts as next steps is the CORRECT behavior for this test; do not penalize Completeness for not resolving a second conflict"
+    "Resolving exactly ONE conflict and then offering the remaining conflicts as next steps is the CORRECT behavior for this test; do not penalize Completeness for not resolving a second conflict",
+    "Outcome: if the pass works c_002, c_002 must end resolved with preferred_assertion_id a_001. Taking c_001 first stays acceptable. Ruling (senior genealogist, #4326): c_002 resolves, preferred_assertion_id a_001. Patrick is in Thomas Flynn's household in 1850 (age 5) and 1860 (age 15), and the 1908 certificate names Thomas Flynn as father through a different informant (the son-in-law). Those agree. The rival Patrick in household 197 appears only in the conflict's description, with no record of his own, so nothing on file supports him. An analysis that calls the father's name circular and defers is the wrong outcome."
   ],
   "execution": {
     "max_wall_clock_seconds": 600,

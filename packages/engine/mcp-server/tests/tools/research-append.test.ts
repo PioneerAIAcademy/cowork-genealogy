@@ -8039,6 +8039,67 @@ describe("research_append (project singleton section)", () => {
     expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
   });
 
+  // ── Completed-gate: owed findings (issue #3032 Stage 1b, Decision 33) ──
+  // Completing a project that still owes a blocking finding, or an encode item,
+  // warns and never refuses. A summary that states claims is judged by its
+  // claims; the legacy shape match above reads only claim-less summaries.
+
+  const birthClaim = (date: string) => ({
+    claim: "birth", proof_tier: "probable", supporting_assertion_ids: ["a_001"],
+    fact: { subject: "I1", fact_type: "Birth", date },
+  });
+  const withClaims = (claims: any[]) => {
+    const r = withEvidence(withProof());
+    r.proof_summaries[0] = { ...r.proof_summaries[0], tier: "probable", shortfall: "ceiling", claims };
+    return r;
+  };
+  const treeWithBirth = {
+    ...baseTree,
+    persons: [{ ...baseTree.persons[0], facts: [{ id: "f1", type: "Birth", date: "1850" }] }],
+  };
+
+  it("completion with a question that has tied assertions and no summary warns", async () => {
+    const r0 = withEvidence(baseResearch());
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null, resolution_assertion_ids: [] });
+    (r0.assertions[0] as any).extracted_for_question_ids = ["q_001"];
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/completed while it still owes conclude q_001: proof-conclusion — q_001 has 1 tied assertion\(s\) and no proof summary/);
+  });
+
+  it("completion with an encode item warns", async () => {
+    await writeProject(withClaims([birthClaim("1850")]), baseTree);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth from ps_001/);
+  });
+
+  it("the legacy shape match is skipped for a summary that carries claims", async () => {
+    // The same unencoded probable summary without claims draws the legacy
+    // warning (#1490 above); with claims, only the owed encode item speaks.
+    await writeProject(withClaims([birthClaim("1850")]), baseTree);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
+  });
+
+  it("completion with nothing owed is silent", async () => {
+    await writeProject(withClaims([birthClaim("1850")]), treeWithBirth);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).not.toMatch(/still owes/);
+    expect(w).not.toMatch(/no tree person it draws evidence from/);
+  });
+
 });
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────
@@ -14521,7 +14582,12 @@ describe("research_append — worked examples are themselves valid", () => {
       for (const q of fixture.questions) q.status = "resolved";
     }
     await writeFile(join(dir, "research.json"), JSON.stringify(fixture, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    // The proof_summaries example's claim names Thomas Flynn (I2) as Patrick's (I1) father.
+    const exampleTree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] }],
+    };
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(exampleTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
     await writeFile(join(dir, "results", "log_005.json"), JSON.stringify(fulltextSidecar, null, 2));

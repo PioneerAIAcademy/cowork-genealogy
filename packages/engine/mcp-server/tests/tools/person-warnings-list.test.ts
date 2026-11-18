@@ -9,6 +9,7 @@ import {
   MAX_PERSONS,
 } from "../../src/tools/person-warnings.js";
 import type { PlaceCoordsResolver } from "../../src/utils/place-coords.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 import type { PersonWarningsList, PersonWarningsFound } from "../../src/types/person-warnings.js";
 
 // person_warnings' list form (#3713): one call checks several anchors, with the
@@ -38,6 +39,23 @@ function family(extraFather: object[] = []) {
     sources: [],
   };
 }
+
+// Decision 26 (docs/plan/conclusion-tree.md): I1 has two biological fathers in
+// the tree. A probable claim concludes I3; I2's edge carries a denial below the
+// proof bar, so it reads set aside in favour of I3 and is not counted.
+const setAsideClaims = {
+  proof_summaries: [
+    {
+      id: "ps_001",
+      question_id: "q_001",
+      tier: "probable",
+      claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+        { claim: "not Thomas", proof_tier: "possible", polarity: "denied", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+      ],
+    },
+  ],
+};
 
 const noPlaces: { placeCoords: PlaceCoordsResolver } = { placeCoords: async () => null };
 
@@ -188,5 +206,52 @@ describe("person_warnings list form", () => {
     expect(() => personIdsOf(many)).toThrow(/limit is 50/);
     expect(personIdsOf(["I1", "I1"])).toEqual({ ids: ["I1"], isList: true });
     expect(personIdsOf("I1")).toEqual({ ids: ["I1"], isList: false });
+  });
+
+  describe("set-aside parents (Decision 26)", () => {
+    const twoFathers = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ id: "N1", given: "Patrick", surname: "Flynn" }] },
+        { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] },
+        { id: "I3", gender: "Male", names: [{ id: "N3", given: "John", surname: "Flynn" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+        { id: "R2", type: "ParentChild", parent: "I3", child: "I1" },
+      ],
+      sources: [],
+    };
+    const research = async (r: object) => writeFile(join(dir, "research.json"), JSON.stringify(r), "utf-8");
+    const single = async () =>
+      ((await personWarningsTool({ projectPath: dir, personId: "I1" }, noPlaces)) as PersonWarningsFound).warnings.map((w) => w.issueType);
+    const listed = async () =>
+      ((await personWarningsTool({ projectPath: dir, personId: ["I3", "I1"] }, noPlaces)) as PersonWarningsList).results[1].warnings!.map((w) => w.issueType);
+
+    it("a second father that reads set aside raises no tooManyFathers2 on the single-id call", async () => {
+      await tree(twoFathers);
+      expect(await single()).toContain("tooManyFathers2");
+      await research({ project: { id: "rp_001" }, ...setAsideClaims });
+      expect(await single()).not.toContain("tooManyFathers2");
+    });
+
+    it("the list form skips the same set-aside father", async () => {
+      await tree(twoFathers);
+      expect(await listed()).toContain("tooManyFathers2");
+      await research({ project: { id: "rp_001" }, ...setAsideClaims });
+      expect(await listed()).not.toContain("tooManyFathers2");
+    });
+
+    it("fails open to the count with no research.json", async () => {
+      await tree(twoFathers);
+      await rm(join(dir, "research.json"));
+      expect(await single()).toContain("tooManyFathers2");
+    });
+
+    it("fails open to the count with a research.json that does not parse", async () => {
+      fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
+      await tree(twoFathers);
+      await writeFile(join(dir, "research.json"), "{not json", "utf-8");
+      expect(await single()).toContain("tooManyFathers2");
+    });
   });
 });
