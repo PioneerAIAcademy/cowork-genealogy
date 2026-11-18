@@ -1,0 +1,481 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search for \"Württemberg, Germany\", 1780-1830, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~rttemberg"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Württemberg, Germany",
+      "pageSize": 10,
+      "startYear": 1780,
+      "endYear": 1830
+    },
+    "totalResults": 16120,
+    "results": [
+      {
+        "imageGroupNumber": "101897530_001_M93B-8M8",
+        "imageCount": 572,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "de",
+          "fr"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Cannstatt, Stuttgart, Württemberg, Germany"
+            ],
+            "dateRange": "1750–1806",
+            "recordType": "Religious Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008115606_001_M94L-F76",
+        "imageCount": 338,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "de"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Calw, Calw, Württemberg, Germany"
+            ],
+            "dateRange": "1818-1860",
+            "recordTypeConceptId": 101655
+          },
+          {
+            "places": [
+              "Calw, Calw, Württemberg, Germany"
+            ],
+            "dateRange": "1818-1860",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "places": [
+              "Calw, Calw, Württemberg, Germany"
+            ],
+            "dateRange": "1818-1860",
+            "recordTypeConceptId": 127577
+          },
+          {
+            "places": [
+              "Calw, Calw, Württemberg, Germany"
+            ],
+            "dateRange": "1818-1860",
+            "recordTypeConceptId": 103612
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "101848500_005_M951-5WG",
+        "imageCount": 82,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "de",
+          "la"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Ochsenhausen, Biberach, Württemberg"
+            ],
+            "dateRange": "1817-1908",
+            "recordTypeConceptId": 126483
+          }
+        ],
+        "title": "Ochsenhausen",
+        "volumes": [
+          "Band 3"
+        ]
+      },
+      {
+        "imageGroupNumber": "101848500_007_M951-5WT",
+        "imageCount": 200,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "de",
+          "la"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Pflummern, Riedlingen, Riedlingen, Württemberg, Germany"
+            ],
+            "dateRange": "1764-1784",
+            "recordTypeConceptId": 101655
+          },
+          {
+            "places": [
+              "Pflummern, Riedlingen, Riedlingen, Württemberg, Germany"
+            ],
+            "dateRange": "1741-1791",
+            "recordTypeConceptId": 104727
+          },
+          {
+            "places": [
+              "Pflummern, Riedlingen, Riedlingen, Württemberg, Germany"
+            ],
+            "dateRange": "1741-1785",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "places": [
+              "Pflummern, Riedlingen, Riedlingen, Württemberg, Germany"
+            ],
+            "dateRange": "1741-1808",
+            "recordTypeConceptId": 104898
+          }
+        ],
+        "title": "Pflummern",
+        "volumes": [
+          "Band 2"
+        ]
+      },
+      {
+        "imageGroupNumber": "101848470_006_M953-CB3",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "de"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1808-1819",
+            "recordTypeConceptId": 127576
+          }
+        ],
+        "title": "Untersontheim Totenbuch 1808-1819",
+        "volumes": [
+          "9"
+        ]
+      },
+      {
+        "imageGroupNumber": "101848470_004_M953-CBM",
+        "imageCount": 1,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "de"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1808-1821",
+            "recordTypeConceptId": 127683
+          },
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1808-1873",
+            "recordTypeConceptId": 127577
+          }
+        ],
+        "title": "Untersontheim Ehebuch1808-1873",
+        "volumes": [
+          "7"
+        ]
+      },
+      {
+        "imageGroupNumber": "101848470_001_M953-CBS",
+        "imageCount": 337,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "de"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1759-1813",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1759-1813",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1759-1813",
+            "recordTypeConceptId": 127577
+          }
+        ],
+        "title": "Untersontheim Tauf-,Trau-und Totenregister 1759-1813",
+        "volumes": [
+          "4"
+        ]
+      },
+      {
+        "imageGroupNumber": "101848470_002_M953-CY1",
+        "imageCount": 219,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "de"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1808-1852",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "places": [
+              "Untersontheim, Hall, Württemberg, Germany"
+            ],
+            "dateRange": "1808-1821",
+            "recordTypeConceptId": 123837
+          }
+        ],
+        "title": "Untersontheim Taufbuch 1808-1852",
+        "volumes": [
+          "5"
+        ]
+      },
+      {
+        "imageGroupNumber": "007541522_001_M95C-V9F",
+        "imageCount": 373,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "de"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Klosterreichenbach, Freudenstadt, Württemberg, Germany"
+            ],
+            "dateRange": "1818",
+            "recordType": "Family Registers"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007541522_002_M95C-V9X",
+        "imageCount": 432,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "de"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Klosterreichenbach, Freudenstadt, Württemberg, Germany"
+            ],
+            "dateRange": "1818",
+            "recordType": "Family Registers"
+          }
+        ]
+      }
+    ],
+    "nextPageToken": "001d001010416f456f54546b31517931574f56673d00f07ffffff5f07ffffff5009bc725a906e47e75b2ab372609aa12350041",
+    "summary": {
+      "totalVolumes": 16120,
+      "complete": false,
+      "byRecordType": [
+        {
+          "group": "Genealogies",
+          "volumes": 189,
+          "browseOnly": 175,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Vital",
+          "volumes": 1788,
+          "browseOnly": 824,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Birth",
+          "volumes": 76,
+          "browseOnly": 59,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Death",
+          "volumes": 1339,
+          "browseOnly": 613,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Cemetery",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Marriage",
+          "volumes": 1240,
+          "browseOnly": 597,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Divorce",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Religious",
+          "volumes": 7013,
+          "browseOnly": 2715,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Baptism",
+          "volumes": 3726,
+          "browseOnly": 1448,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Religious Death",
+          "volumes": 2042,
+          "browseOnly": 887,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Religious Marriage",
+          "volumes": 1907,
+          "browseOnly": 895,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Confirmation",
+          "volumes": 1065,
+          "browseOnly": 493,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Military",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Migration",
+          "volumes": 781,
+          "browseOnly": 781,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Emigration",
+          "volumes": 658,
+          "browseOnly": 658,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Census",
+          "volumes": 378,
+          "browseOnly": 266,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Legal",
+          "volumes": 258,
+          "browseOnly": 256,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Court",
+          "volumes": 230,
+          "browseOnly": 228,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Probate",
+          "volumes": 198,
+          "browseOnly": 196,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Guardianship",
+          "volumes": 51,
+          "browseOnly": 51,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Wills",
+          "volumes": 8,
+          "browseOnly": 8,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Land",
+          "volumes": 19,
+          "browseOnly": 19,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Government",
+          "volumes": 1304,
+          "browseOnly": 705,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Tax",
+          "volumes": 100,
+          "browseOnly": 100,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "School",
+          "volumes": 2,
+          "browseOnly": 2,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Business",
+          "volumes": 13,
+          "browseOnly": 13,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Reference",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Miscellaneous",
+          "volumes": 12,
+          "browseOnly": 12,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Newspapers",
+          "volumes": 6,
+          "browseOnly": 6,
+          "fulltextOnly": 0
+        }
+      ],
+      "untyped": {
+        "volumes": 0,
+        "browseOnly": 0,
+        "fulltextOnly": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "tool": "place_population",
+  "description": "place_population for \"Württemberg, Germany\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~rttemberg"
+  },
+  "response": {
+    "place": {
+      "place_id": "1991625",
+      "name": "Württemberg-Baden",
+      "level": "province",
+      "parent": {
+        "place_id": "1927074",
+        "name": "Germany"
+      }
+    },
+    "population": {
+      "gapminder": {
+        "source_url": "https://www.gapminder.org/data/documentation/gd003/",
+        "level": "country",
+        "place": {
+          "place_id": "1927074",
+          "name": "Germany"
+        },
+        "data": [
+          {
+            "year": 1800,
+            "population": 18000000,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1801,
+            "population": 18294612,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1802,
+            "population": 18594046,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1803,
+            "population": 18898381,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1804,
+            "population": 19207698,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1805,
+            "population": 19522077,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1806,
+            "population": 19841601,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1807,
+            "population": 20166356,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1808,
+            "population": 20496425,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1809,
+            "population": 20831897,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1810,
+            "population": 21178441,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1811,
+            "population": 21525076,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1812,
+            "population": 21877384,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1813,
+            "population": 22235459,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1814,
+            "population": 22599394,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1815,
+            "population": 22969286,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1816,
+            "population": 23345232,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1817,
+            "population": 23727332,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1818,
+            "population": 24115685,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1819,
+            "population": 24488367,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1820,
+            "population": 24844857,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1821,
+            "population": 25184625,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1822,
+            "population": 25507128,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1823,
+            "population": 25811809,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1824,
+            "population": 26120130,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1825,
+            "population": 26432134,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1826,
+            "population": 26747865,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1827,
+            "population": 27067367,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1828,
+            "population": 27390685,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1829,
+            "population": 27709637,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1830,
+            "population": 28024082,
+            "data_type": "estimate"
+          }
+        ]
+      }
+    },
+    "indexed_records": {
+      "familysearch_births": {
+        "description": "Indexed birth records",
+        "level": "country",
+        "place": {
+          "place_id": "1927074",
+          "name": "Germany"
+        },
+        "data": [
+          {
+            "period_start": 1750,
+            "period_end": 1800,
+            "records": 29247776
+          },
+          {
+            "period_start": 1800,
+            "period_end": 1850,
+            "records": 35325747
+          }
+        ]
+      }
+    }
+  }
+}

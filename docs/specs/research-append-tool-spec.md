@@ -189,7 +189,8 @@ camelCase convenience fields the same way `research_log_append` does.
     resulting `place`/`standard_place` pair that contradicts on country clears
     the fact's `standard_place` and warns, matching `tree_edit`.
   - **One more advisory, non-blocking.** A rewritten fact marked `primary` is a
-    concluded value a proof summary may cite, so it is named. A `place` corrected
+    concluded value a proof summary may cite, so it is named, unless §5.16 clears
+    that fact's `primary` in the same call, which reports it instead. A `place` corrected
     without its `standard_place` no longer keeps the old value: §3.6 re-resolves
     it on the update, or clears it, before the rewrite runs.
 
@@ -1499,12 +1500,25 @@ that did nothing.
 ### 5.2 Tree-encoding completion advisory (warning, not a precondition)
 
 A **warning** — never a rejection — emitted on the successful write that sets
-`project.status: "completed"`, when the completed project holds a
-tier-≥-`probable` proof summary but **none** of the tree persons its evidence
-touches gained any new fact or relationship since the project's opening tree. It
-rides `validation.warnings` and never touches `ok`. Implemented as
-`treeEncodingCompletionWarnings` in `research-append.ts`, using the `tree_diff`
-tool against the write-once `starting-tree.gedcomx.json` baseline.
+`project.status: "completed"`. It rides `validation.warnings` and never touches
+`ok`. Two arms:
+
+- **Owed findings (Decision 33 of `docs/plan/conclusion-tree.md`).** Each owed
+  item that blocks completion (`conclude`: a question with tied assertions and no
+  summary; `hypothesis`: a supported hypothesis with no summary) and each `encode`
+  item (an affirmed claim at `probable` or better that no tree object carries by
+  Decision 31's join) becomes one warning, from `src/utils/owed-findings.ts`, the
+  same list `project_context.owedFindings` serves. Over the 181 completed
+  committed e2e runs, 0 carry a blocking item; on the 3 whose summaries carry
+  claims, `encode` fires 0 times (`dev/replay-owed-findings.ts`).
+- **The legacy shape match, for claim-less summaries only.** When a
+  tier-≥-`probable` proof summary that states **no claims** has evidence persons
+  none of whom gained any new fact or relationship since the opening tree, it
+  warns. Implemented as `treeEncodingCompletionWarnings` in `research-append.ts`,
+  using the `tree_diff` tool against the write-once `starting-tree.gedcomx.json`
+  baseline. A summary that states claims is judged by `encode` instead. This arm
+  is Decision 24's legacy reading and stays until Stage 1b's part 4 bodies write
+  claims, when it is removed.
 
 - **Why a baseline file.** `research_append` loads only the *current* tree, so it
   cannot tell a conclusion this session encoded from a fact already seeded. The
@@ -2455,6 +2469,53 @@ an update's `fields` (`normalizeRegistrationStart`, `utils/registration-level.ts
 puts it there. Rejected: a body line telling the agent to escape quotes, which a
 cheaper model follows less often; and a repair step in the engine, which never sees a
 call Claude Code refused.
+
+### 5.15 The claim rules (warn mode until Stage 1c)
+
+Rules 1, 2 and 4-12 of `docs/plan/conclusion-tree.md` § "Stage 1b". Each is decided from the
+documents alone, lives in `src/validation/claim-rules.ts`, and reads which tree object a claim is about through
+`src/utils/claim-join.ts` (Decision 31's one join). Each is staged in `src/validation/rule-modes.ts` at `"warn"`: a
+finding comes back as a warning prefixed `Will be refused: proof_summaries <id>: `, and nothing is refused until a
+rule's line there flips to `"refuse"` (Stage 1c), when the same finding refuses the whole batch.
+
+**When they run.** Once per call, after every op has applied and the batch's other refusals have run, before
+anything is written: for each summary an op appended or whose `tier`, `claims` or `supporting_assertion_ids` it set
+(a narrative-only edit of a legacy summary never runs them), and, for rule 11, each question an op set
+`status: "resolved"` or `resolved: true`. They read the final in-batch summaries (so a later op that adds a Couple
+claim or revises a disproved one is seen), the pre-call assertions and links (a batch may not supply a link and
+spend it in the same call, as every proof gate reads), and the pre-call tree.
+
+| Rule id | Fires when |
+|---|---|
+| `claims-rival-verdicts` (1) | an affirmed biological ParentChild claim at `probable`+ while a same-gender untyped or Biological rival parent of that child in the tree has no claim, at any tier or polarity. Only Male and Female form a slot |
+| `claims-one-per-slot` (2) | two affirmed claims at `probable`+ fill one biological parent slot, or one person's Birth, Christening, Death or Burial with values neither of whose unfudged day ranges contains the other's ("Abt" reads as the bare date; "Bef" and "Aft" are open-ended; couple events exempt) |
+| `claims-no-empty-escape` (4) | a summary at `possible`+ or `disproved` with no tree-object claim, while a child a cited child-role assertion links (the role's part before "of" names a child; not an in-law, step-, grand- or god-relation) has two or more same-gender untyped/Biological parents |
+| `claims-present` (5) | a summary at `possible`+ or `disproved` with no claims (a `not_proved` decline may carry none) |
+| `claims-cite` (6) | a claim at `possible`+, a denial or a `disproved` claim cites no assertion (an `absence` or `completeness` finding may cite `log_entry_ids` instead) |
+| `claims-grounding` (7) | an affirmed tree-object claim at `probable`+ names a person no cited assertion links (live, `confident`/`probable`), or a fact's cited value assertions come from no record persona tied to its subject (each spouse, for a couple fact); a denial at `probable` needs only its anchor linked. A link from a persona a live denied identity claim covers does not count |
+| `claims-absence` (8) | an affirmed tree-object claim at `probable`+ whose cited assertions are all absence evidence |
+| `claims-polarity` (9) | an object both affirmed and denied, or affirmed and covered by a `disproved` claim, across all summaries; or one record persona affirmed at `probable`+ as two persons |
+| `claims-couple-first` (10) | an affirmed Marriage or Divorce claim at `probable`+ with no affirmed Couple claim on the pair at the same tier or better |
+| `claims-capped-open` (11) | a question set resolved while its summary holds an affirmed tree-object claim that grounding holds at `possible`, other than a rival set aside beside a winner |
+| `claims-proved-identity` (12) | a `proved` claim names a person not linked at `confident` from a cited assertion, nor covered by a `proved` identity claim whose persona it cites |
+
+Two ParentChild claims are one object for rule 9 only when their subtypes agree, untyped and Biological agreeing, so
+"affirm Step, deny the (biological) father" does not collide; for coverage of a tree edge the subtype is ignored (Decision 32). Rule 7 over the
+claims study's 45 hand-labelled proofs holds at `possible` 8 of 89 relationships, 0 of 25 facts and 1 of 11 couple
+facts (`tests/tools/research-append-claim-grounding.test.ts`, vectors built by
+`dev/build-claim-grounding-vectors.ts`).
+
+### 5.16 `primary` follows its claim
+
+After the ops apply, `research_append` clears `primary` on each tree fact, person or Couple, that a live affirmed
+claim at `probable` or better covered before the call (the fact as it stood then, by Decision 31's join) and none
+covers after it, whether the claim was lowered, denied, disproved or removed (Decision 34 of
+`docs/plan/conclusion-tree.md`). A `primary` no claim covered before the call (legacy or imported) is untouched
+(Decision 24). The response names each cleared fact in `validation.warnings` as `personId <id>, factId <id>:` (or
+`relationshipId <id>, factId <id>:`). The clear rides the assertion rewrite's tree write and rollback: when the
+rewrite is rolled back, the clear is re-run on the restored facts, so a claim the call lowered still clears its fact
+and a fact only the rolled-back rewrite had moved keeps its flag. It is the second route by which `research_append`
+writes tree `persons`, and its only route to tree `relationships` (`ownership.json`).
 
 ## 6. Decisions recorded
 

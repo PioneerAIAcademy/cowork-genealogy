@@ -624,3 +624,32 @@ export function factYearsDiffEarliestEarliest(
   if (earliest1 === null || earliest2 === null) return null;
   return earliest2 - earliest1;
 }
+
+/**
+ * Is this the same fact already recorded, rather than a second one?
+ *
+ * Strict equality on type, date, place and value — deliberately NOT
+ * `factsEquivalent` from merge-gedcomx, which is a *compatibility* test: it
+ * treats an absent date as matching any date, and one day-range containing
+ * another as one fact. That is right for merging two documents and wrong here,
+ * where folding a dated Marriage into an undated one would silently discard
+ * the date the new record supplied (plan Decision 31 on the same helpers:
+ * `compatibleDate`/`compatiblePlace` "treated 5 of 10 labelled
+ * affirmed-and-ruled-out pairs as one object").
+ *
+ * Compares the four fields the plan names — type, date, place and value — and
+ * deliberately NOT `standard_place`. The twin lookup runs before
+ * tree_edit's `settlePlace`, so the stored fact carries a resolved `standard_place`
+ * while the incoming one carries none: comparing it made a retried call whose
+ * fact had a resolvable place write a SECOND fact, which is the opposite of the
+ * idempotence corroboration exists for. `standard_date` is dropped with it —
+ * caller-supplied, and the raw `date` already carries the claim.
+ */
+export function sameFactValue(a: SimplifiedFact, b: SimplifiedFact): boolean {
+  return (
+    a.type === b.type &&
+    a.date === b.date &&
+    a.place === b.place &&
+    a.value === b.value
+  );
+}

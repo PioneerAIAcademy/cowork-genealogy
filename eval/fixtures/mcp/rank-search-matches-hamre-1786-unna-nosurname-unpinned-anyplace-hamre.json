@@ -1,0 +1,36 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Derived offline from captured rows (2026-11-17), place-filtered; not a live capture. Source: rank-search-matches-hamre-1786-unna-nosurname-unpinned, filtered to the rows kept in record-search-hamre-1786-unna-nosurname-unpinned-anyplace-hamre; matchScore and every other field copied from the capture, with matchRank and searchRank renumbered within the filtered rows. Keyed like its search fixture and listed ahead of the place-less ranking fixtures. Shared by ut_search_records_022 and ut_search_records_023.",
+  "args": {
+    "subjectId": "~KZHH-VTX",
+    "givenName": "Unna",
+    "anyPlace": "~Hamre"
+  },
+  "response": {
+    "subjectId": "KZHH-VTX",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:8T1N-LK2M",
+        "matchScore": 0.0027533795,
+        "primaryId": "p_260242244700",
+        "personName": "Unna Andersdatter",
+        "sex": "Female",
+        "birthDate": "1796",
+        "collectionTitle": "Norway, Census, 1801",
+        "recordArk": "ark:/61903/1:2:4H6K-BFZM",
+        "candidateFactCount": 2,
+        "birthYearConflict": true,
+        "birthYearGap": 51,
+        "surnameNotOnSubject": true,
+        "candidateSurname": "Andersdatter"
+      }
+    ],
+    "surnameNote": "Rows with `surnameNotOnSubject` carry a surname (`candidateSurname`) that this person bears nowhere in the project: not on the tree person, not in linked evidence, and not on a tree spouse, parent or child. The match score does not account for this. Each such row is `needs-review`: report it as consistent with that name, never as a confirmed match, as cleared, or as ready to extract as this person's record. That holds when the surname is the one the research is trying to establish: finding a same-named person under it is not evidence this person bore it. Name the record that would tie this person to that surname (a marriage, or a record giving both surnames for this person)."
+  }
+}
