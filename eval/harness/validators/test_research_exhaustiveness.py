@@ -709,6 +709,8 @@ _DEATH_RECORD_RE = re.compile(
     re.IGNORECASE,
 )
 _BIRTH_CERTIFICATE_RE = re.compile(r"birth\s+certificate", re.IGNORECASE)
+_DEATH_CERTIFICATE_RE = re.compile(
+    r"death\s+(certificate|record|registration)|certificate\s+of\s+death", re.IGNORECASE)
 
 
 def test_decline_names_a_death_record(before_state, after_state, test):
@@ -724,16 +726,28 @@ def test_decline_names_a_death_record(before_state, after_state, test):
     A sealed record is listed as `privacy_sealed` or `skipped_plan_item`. A
     `deferred` entry is a search still to run, so one that describes the birth
     certificate recommends obtaining it."""
-    if "death-record-gap" not in test.get("tags", []):
+    tags = test.get("tags", [])
+    if "death-record-gap" not in tags and "death-certificate-gap" not in tags:
         pytest.skip("not a death-record-gap scenario")
+    # `death-certificate-gap`: the project already holds the obituary, so every
+    # write mentions it. Only the certificate itself counts, and the project
+    # records no seal on it, so listing it as `privacy_sealed` invents one.
+    strict = "death-certificate-gap" in tags
+    wanted = _DEATH_CERTIFICATE_RE if strict else _DEATH_RECORD_RE
     bad: list[str] = []
     for q in _written_questions(before_state, after_state):
         stop = q["search_stop"]
         entries = stop.get("not_reached") or []
         said = " ".join([stop.get("justification") or ""] + [e.get("description") or "" for e in entries])
-        if not _DEATH_RECORD_RE.search(said):
-            bad.append(f"{q.get('id')}: neither justification nor not_reached names a death certificate, "
-                       f"death record or obituary")
+        if not wanted.search(said):
+            bad.append(f"{q.get('id')}: neither justification nor not_reached names a death certificate"
+                       + ("" if strict else ", death record or obituary"))
+        if strict:
+            bad += [f"{q.get('id')}: the death certificate is listed `privacy_sealed`, a seal the project "
+                    f"never records: {(e.get('description') or '')[:120]!r}"
+                    for e in entries
+                    if e.get("kind") == "privacy_sealed"
+                    and _DEATH_CERTIFICATE_RE.search(e.get("description") or "")]
         bad += [f"{q.get('id')}: the birth certificate is a `deferred` search: {(e.get('description') or '')[:120]!r}"
                 for e in entries
                 if e.get("kind") == "deferred" and _BIRTH_CERTIFICATE_RE.search(e.get("description") or "")]

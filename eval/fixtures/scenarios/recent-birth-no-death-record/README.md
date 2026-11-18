@@ -31,10 +31,11 @@ right outcome.
 ## Fork
 
 Forked 2026-11-17 from `recent-birth-sealed`, which also holds Alan's 2023
-obituary naming both parents and is declared on (`ut_research_exhaustiveness_017`).
+obituary naming both parents (`ut_research_exhaustiveness_017`, which since 2026-11-18
+also declines, because the death certificate is never mentioned there either).
 Removed here: the obituary's plan item, log entry, source, assertion and
 person-evidence link, and its source and references in the tree. Added: the
 death year in the objective and the question. `pli_004` carries the seal in
 `skip_category` and `skip_reason`, not in prose, and `log_004` is removed: reading a
-seal out of prose is what `ut_research_exhaustiveness_017` tests, and three early runs of
+seal out of prose is what `ut_research_exhaustiveness_018` tests, and three early runs of
 022 doubted the prose seal and declined on the birth certificate.

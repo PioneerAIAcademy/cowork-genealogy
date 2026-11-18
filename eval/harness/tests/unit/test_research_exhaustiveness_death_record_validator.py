@@ -113,3 +113,41 @@ def test_a_deferred_birth_announcement_is_not_the_birth_certificate():
     announcement = {"kind": "deferred", "log_entry_id": None, "wiki_title": None,
                     "description": "1936 Ogden newspaper birth announcements for Alan Applegarth, not searched."}
     _run(_declined(_DEATH_JUSTIFICATION, [_DEATH, announcement]))
+
+
+# --- `death-certificate-gap`: ut_research_exhaustiveness_017 -------------
+# The project holds the obituary, so the obituary is in every write and only
+# the certificate itself can show the decline rests on the right record.
+
+_STRICT = {"tags": ["research-exhaustiveness", "death-certificate-gap"]}
+_OBITUARY_HELD = ("Overturn risk: low. The censuses, the marriage and the 2023 obituary agree on the parents. "
+                  "Not consulted: the original image of the 1926 marriage register.")
+
+
+def test_strict_fails_on_a_decline_that_names_only_the_obituary():
+    with pytest.raises(AssertionError, match="names a death certificate"):
+        _run(_declined(_OBITUARY_HELD, [_SEALED, _OBITUARY]), _STRICT)
+
+
+def test_strict_fails_on_a_decline_for_another_record():
+    with pytest.raises(AssertionError, match="names a death certificate"):
+        _run(_declined(_OBITUARY_HELD, [_SEALED]), _STRICT)
+
+
+def test_strict_fails_when_the_death_certificate_is_listed_sealed():
+    invented = {"kind": "privacy_sealed", "log_entry_id": None, "wiki_title": None,
+                "description": "Alan's 2023 Utah death certificate, restricted for 50 years."}
+    with pytest.raises(AssertionError, match="a seal the project never records"):
+        _run(_declined(_OBITUARY_HELD, [_SEALED, invented]), _STRICT)
+
+
+def test_strict_still_fails_a_deferred_birth_certificate():
+    with pytest.raises(AssertionError, match="birth certificate is a `deferred` search"):
+        _run(_declined(_DEATH_JUSTIFICATION, [_DEATH, _BIRTH_DEFERRED]), _STRICT)
+
+
+def test_strict_passes_on_the_death_certificate_with_the_obituary_also_mentioned():
+    _run(_declined(_OBITUARY_HELD + " Alan's own 2023 death record is never mentioned in the project.",
+                   [_SEALED, _DEATH]), _STRICT)
+    _run(_declined("Overturn risk: high — the Certificate of Death was never searched or recorded as sealed.",
+                   [_SEALED]), _STRICT)

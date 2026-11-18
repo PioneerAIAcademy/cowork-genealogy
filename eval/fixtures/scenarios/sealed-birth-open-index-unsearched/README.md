@@ -17,3 +17,5 @@ Its pair is `decisive-skip-inaccessible`, which now carries pli_009 / log_011:
 the same index searched, no entry. There the agent declares.
 
 Used by `ut_research_exhaustiveness_021`.
+
+`loc_001` (added 2026-11-18) is the saved locality guide for Weber County. It names the births index, which is how a real project carries a source the place has: the agent compares the guide with the log. Before this the index appeared only in the canned wiki page, and the agent missed it 7 times in 10 once that page was longer than 1,582 characters.

@@ -479,5 +479,61 @@
   "hypotheses": [],
   "timelines": [],
   "proof_summaries": [],
-  "evaluations": []
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Utah, United States",
+      "for_place": "Weber County, Utah",
+      "time_period": "1926-2023",
+      "jurisdictions": [
+        {
+          "name": "Weber County, Utah",
+          "date_range": "1850-present"
+        }
+      ],
+      "quirks": [
+        "Utah statewide birth and death registration began in 1905; general compliance for births by 1922.",
+        "Utah birth certificates are closed for 100 years and death certificates for 50 years, released before then only to the registrant or immediate family.",
+        "Marriage records are kept by the county clerk; Weber County marriages run from 1887."
+      ],
+      "guide_markdown": "## Weber County, Utah - 1926-2023\n\nWeber County (seat Ogden) has kept marriages at the county clerk since 1887. Utah registered births and deaths statewide from 1905, with general compliance for births by 1922.\n\n### Births\n\n- Birth certificates, 1905 onward: Utah Office of Vital Records and Statistics. Closed for 100 years; released before then only to the registrant or immediate family.\n- **Utah Births and Christenings, 1892-1941** (FamilySearch, collection 1675542): an online index, searchable with record_search. Covers births through 1941.\n\n### Deaths\n\n- Death certificates, 1905 onward: Utah Office of Vital Records and Statistics. Closed for 50 years.\n\n### Census, church, probate\n\n- U.S. census 1940 and 1950, indexed on FamilySearch.\n- LDS ward membership and christening records for Ogden wards.\n- Weber County probate, district court.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Utah,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Utah_Online_Genealogy_Records",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-14",
+      "collections": [
+        {
+          "id": "1675542",
+          "title": "Utah Births and Christenings, 1892-1941",
+          "date_range": "1892-1941"
+        },
+        {
+          "id": "2000219",
+          "title": "United States Census, 1940",
+          "date_range": "1940"
+        },
+        {
+          "id": "4464515",
+          "title": "United States Census, 1950",
+          "date_range": "1950"
+        },
+        {
+          "id": "1803977",
+          "title": "Utah, County Marriages, 1887-1966",
+          "date_range": "1887-1966"
+        }
+      ]
+    }
+  ]
 }
