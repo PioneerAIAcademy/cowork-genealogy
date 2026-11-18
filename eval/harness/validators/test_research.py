@@ -642,13 +642,30 @@ def test_status_question_answered_from_project_context_only(
 
 # ── "write this up" (issue #4576, MCP App plan M2 "A readable report") ──────
 #
-# Tags `write-this-up-proof` (the question has a proof summary) and
-# `write-this-up-no-proof` (it has none). The harness cannot produce a .docx, so the
+# Tags `write-this-up-proof` (the question has a proof summary), `write-this-up-craft-only`
+# (its only evaluation is a craft read) and `write-this-up-no-proof` (it has none). The harness cannot produce a .docx, so the
 # report text is the main-thread reply plus every Write `content` and every Bash
 # command string. "No fact absent from the project" is the judge's, not this check's.
 
-_TIER_WORD_RE = re.compile(r"\b(?:probable|proved|disproved|not[ _]proved)\b", re.IGNORECASE)
+# A tier GIVEN AS A RATING ("rated probable", "tier: probable", "probable rating"). A bare
+# "probable match" or "not yet proved" is ordinary prose, and a person-evidence link carries
+# `confidence: probable`; other wordings of a leaked tier are the judge's.
+_TIER_WORDS = r"(?:probable|proved|disproved|not[ _]proved|possible)"
+_TIER_RATING_RE = re.compile(
+    r"\b(?:rated|rating|tier|graded)\b[^.\n]{0,30}?\b" + _TIER_WORDS + r"\b"
+    r"|\b" + _TIER_WORDS + r"\s+(?:tier|rating)\b",
+    re.IGNORECASE,
+)
+# The proof's own narrative says "Probably"; the viewer shows `probable` as "likely".
+_TIER_STATED_RE = re.compile(r"\b(?:probable|probably|likely)\b", re.IGNORECASE)
+_BIRTHPLACE_RE = re.compile(r"birthplace|place of birth|born in (?:ireland|pennsylvania)", re.IGNORECASE)
 _VERDICT_RE = re.compile(r"looks[ _-]solid", re.IGNORECASE)
+_CRAFT_VERDICT_RE = re.compile(r"consider[ _]addressing", re.IGNORECASE)
+_NO_REVIEW_RE = re.compile(
+    r"no (?:\w+ )?review(?:er)?\b|not (?:yet )?(?:been )?(?:reviewed|requested)|review (?:was|has) not been",
+    re.IGNORECASE,
+)
+_CONTINUE_LINE_RE = re.compile(r"^\W*continue with\b", re.IGNORECASE)
 
 
 def _report_text(text_response, builtin_tool_calls) -> str:
@@ -676,7 +693,8 @@ def test_write_this_up_built_from_project_state(
     from harness.skill_runner import SPAWN_TOOL_NAMES
 
     tags = test.get("tags", [])
-    with_proof = "write-this-up-proof" in tags
+    craft_only = "write-this-up-craft-only" in tags
+    with_proof = "write-this-up-proof" in tags or craft_only
     if not with_proof and "write-this-up-no-proof" not in tags:
         pytest.skip("not a write-this-up scenario")
 
@@ -688,6 +706,16 @@ def test_write_this_up_built_from_project_state(
     if with_proof:
         missing = {"proof_summaries", "evaluations"} - sections
         assert not missing, f"the report must read {sorted(missing)} with research_query; read {sorted(sections)}"
+    if craft_only:
+        assert any(bare_tool_name(str(c.get("tool") or "")) == "sidecar_read" for c in (tool_calls or [])), (
+            "the only evaluation may be a craft read, which only its body shows: the report must "
+            "read the body with sidecar_read before naming a reviewer's verdict"
+        )
+
+    reply_lines = [ln for ln in (text_response or "").splitlines() if ln.strip()]
+    assert not (reply_lines and _CONTINUE_LINE_RE.match(reply_lines[-1])), (
+        f"a report that is the only deliverable ends on no 'Continue with' line; got {reply_lines[-1]!r}"
+    )
 
     spawns = [
         (c.get("args") or {}).get("subagent_type") or "general-purpose"
@@ -713,17 +741,22 @@ def test_write_this_up_built_from_project_state(
     report = _report_text(text_response, builtin_tool_calls)
     if with_proof:
         lacking = []
-        if not re.search(r"\bprobable\b", report, re.IGNORECASE):
-            lacking.append("the tier (probable)")
-        if not _VERDICT_RE.search(report):
+        if not _TIER_STATED_RE.search(report):
+            lacking.append("the tier (probable, probably or likely)")
+        if craft_only:
+            if _CRAFT_VERDICT_RE.search(report):
+                lacking.append("a craft read must not appear as the reviewer's verdict")
+            if not _NO_REVIEW_RE.search(report):
+                lacking.append("a statement that no review was requested")
+        elif not _VERDICT_RE.search(report):
             lacking.append("the reviewer's verdict (looks solid)")
-        if not re.search(r"birthplace", report, re.IGNORECASE):
+        if not _BIRTHPLACE_RE.search(report):
             lacking.append("the resolved birthplace conflict")
         if not all(y in report for y in ("1870", "1880", "1900")):
             lacking.append("what was not yet searched (the 1870, 1880 and 1900 censuses)")
         assert not lacking, f"the report omits {lacking}"
     else:
-        hits = sorted({m.group(0).lower() for m in _TIER_WORD_RE.finditer(report)})
+        hits = sorted({m.group(0).lower() for m in _TIER_RATING_RE.finditer(report)})
         assert not hits, f"no proof summary exists, so the report states no tier; found {hits}"
 
 

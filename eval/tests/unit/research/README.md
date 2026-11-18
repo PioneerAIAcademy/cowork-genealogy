@@ -394,6 +394,10 @@ to research-plan or search-records.
 - **ut_research_wtp** (`write-this-up-with-proof.json`): scenario `mid-research-flynn-with-evaluation`. The report is built from `research_query` reads, with no spawn and no `research_append`, and names the tier (probable), the reviewer's verdict (looks solid), the resolved birthplace conflict and the 1870, 1880 and 1900 censuses as not yet searched. Tag `write-this-up-proof`. "No fact absent from the project" is the judge's (`judge_context` lists the facts).
 - **ut_research_wtm** (`write-this-up-mid-research.json`): scenario `mid-research-flynn-no-proof`. Same bans, and no tier word. Tag `write-this-up-no-proof`.
 
+- **ut_research_wtc** (`write-this-up-craft-read-only.json`): scenario `flynn-prior-craft-verdict`, whose only evaluation is a craft read. The report reads its body with `sidecar_read`, does not give "consider addressing" as the reviewer's verdict, and says no review was requested. Tag `write-this-up-craft-only`.
+
+The tier check accepts "probable", "probably" or "likely" (the proof's narrative and the viewer's label); the no-proof check fails only a tier given as a rating ("rated probable"), because a person-evidence link carries `confidence: probable` and "not yet proved" is ordinary prose. The reply must also not end on a "Continue with" line.
+
 The report text is the reply joined with every `Write` content and `Bash` command, because the harness cannot produce a .docx. Validator proofs: `eval/harness/tests/unit/test_write_this_up_validator.py`.
 
 A live `make e2e-run` remains the only end-to-end instrument.

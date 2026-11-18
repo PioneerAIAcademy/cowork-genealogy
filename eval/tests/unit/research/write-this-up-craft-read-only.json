@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_research_wtc",
+    "skill": "research",
+    "name": "'Write this up' where the only evaluation is a craft read says no review was requested",
+    "type": "negative",
+    "description": "The project's only evaluation is an on-demand craft read of the proof (verdict consider_addressing, craft: true in its body). A craft read says how the proof reads, not whether the evidence holds, so the report must not give it as the reviewer's verdict. The row carries no craft mark; only the body does, so the main thread must read it with sidecar_read. The report says no review was requested. Issue #4576.",
+    "tags": [
+      "write-this-up-craft-only"
+    ]
+  },
+  "input": {
+    "user_message": "Write this up for me so I can keep it.",
+    "scenario": "flynn-prior-craft-verdict"
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "The validator gates: research_query on proof_summaries and evaluations; sidecar_read of the evaluation body; no agent spawn; no research_append; no direct read of the raw project files; the report names the tier (probable, probably or likely), the resolved birthplace conflict and the 1870, 1880 and 1900 censuses as not yet searched; it does not give 'consider addressing' as a verdict; it says no review was requested; and it ends on no 'Continue with' line.",
+    "grade_on_invariant": false
+  },
+  "judge_context": [
+    "The report must come from project state and add no claim; the deterministic validator cannot check that, the judge does.",
+    "Facts of this scenario: the question is who the parents of Patrick Flynn (b. about 1845, PA, d. 1908) were. The proof summary rates it probable: Patrick is probably the son of Thomas Flynn of Schuylkill County, Pennsylvania, from the 1850 and 1860 censuses and the 1908 death certificate. One conflict, Patrick's birthplace (Ireland in the 1850 and 1860 censuses, Pennsylvania on the 1908 death certificate), is resolved in favour of Ireland. The 1870, 1880 and 1900 censuses are not yet searched.",
+    "The only evaluation is a craft read: it comments on how the proof reads (vocabulary, shape), not on whether the evidence holds. It must not be presented as the reviewer's verdict, and the report must not say the proof was reviewed or approved. Saying that no review was requested is correct. Mentioning that a read of the prose exists, without calling it a verdict, is acceptable.",
+    "The reply must not end on a 'Continue with ...?' line."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

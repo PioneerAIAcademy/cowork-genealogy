@@ -101,16 +101,86 @@ def test_no_proof_report_without_a_tier_passes_and_needs_no_reads():
     _run(test=NO_PROOF, text=OPEN, tool_calls=[])
 
 
-@pytest.mark.parametrize("word", ["probable", "Proved", "disproved", "not proved"])
-def test_a_tier_word_with_no_proof_fails(word):
+@pytest.mark.parametrize(
+    "tail",
+    [
+        "Rated probable.", "Rated Proved.", "Rated disproved.", "Rated not proved.",
+        "Tier: probable.", "Rated as probable overall.", "A probable rating.", "Possible tier.",
+    ],
+)
+def test_a_tier_given_as_a_rating_with_no_proof_fails(tail):
     with pytest.raises(AssertionError, match="states no tier"):
-        _run(test=NO_PROOF, text=f"{OPEN} Rated {word}.")
+        _run(test=NO_PROOF, text=f"{OPEN} {tail}")
 
 
-def test_a_tier_word_in_a_written_file_fails_too():
+@pytest.mark.parametrize(
+    "tail",
+    [
+        "The parentage is not yet proved.",
+        "The 1850 census entry is a probable match.",
+        "Thomas Flynn is probably Patrick's father.",
+        "Thomas Flynn is likely Patrick's father.",
+    ],
+)
+def test_other_wordings_with_no_proof_are_the_judges_not_this_checks(tail):
+    _run(test=NO_PROOF, text=f"{OPEN} {tail}")
+
+
+def test_a_tier_in_a_written_file_fails_too():
     with pytest.raises(AssertionError, match="states no tier"):
         _run(test=NO_PROOF, text="Done.",
              builtin=[{"tool": "Write", "args": {"content": "Rated probable."}}])
+
+
+@pytest.mark.parametrize("word", ["probable", "probably", "likely"])
+def test_the_tier_may_be_stated_in_any_of_its_wordings(word):
+    _run(text=REPORT.replace("Rated probable", f"Patrick is {word} the son of Thomas"))
+
+
+@pytest.mark.parametrize("phrase", ["birthplace", "place of birth"])
+def test_the_conflict_may_be_named_either_way(phrase):
+    _run(text=REPORT.replace("birthplace", phrase))
+
+
+@pytest.mark.parametrize("last", ["Continue with a probate search?", "  continue with the 1870 census?"])
+@pytest.mark.parametrize("test,text", [(PROOF, REPORT), (NO_PROOF, OPEN)], ids=["proof", "no-proof"])
+def test_a_continue_line_ending_the_reply_fails(test, text, last):
+    with pytest.raises(AssertionError, match="Continue with"):
+        _run(test=test, text=f"{text}\n\n{last}", tool_calls=READS)
+
+
+def test_continue_mid_reply_is_not_a_continue_line():
+    _run(text=f"{REPORT} You can continue with probate later.\nThat is all.")
+
+
+# --- the craft-only scenario: the only evaluation is a craft read -----------------
+
+CRAFT = {"tags": ["write-this-up-craft-only"]}
+SIDECAR = {"tool": "mcp__genealogy__sidecar_read", "args": {"ref": "evaluations/on-demand-ps_001.json"}}
+CRAFT_REPORT = REPORT.replace(
+    "The reviewer's verdict is looks solid.", "No review has been requested on this proof."
+)
+
+
+def test_a_craft_only_report_that_says_no_review_passes():
+    _run(test=CRAFT, text=CRAFT_REPORT, tool_calls=READS + [SIDECAR])
+
+
+def test_the_craft_read_given_as_the_verdict_fails():
+    text = CRAFT_REPORT + " The reviewer's verdict is consider addressing."
+    with pytest.raises(AssertionError, match="craft read must not appear"):
+        _run(test=CRAFT, text=text, tool_calls=READS + [SIDECAR])
+
+
+def test_a_craft_only_report_that_never_reads_the_body_fails():
+    with pytest.raises(AssertionError, match="sidecar_read"):
+        _run(test=CRAFT, text=CRAFT_REPORT, tool_calls=READS)
+
+
+def test_a_craft_only_report_that_names_no_review_state_fails():
+    with pytest.raises(AssertionError, match="no review was requested"):
+        _run(test=CRAFT, text=REPORT.replace("The reviewer's verdict is looks solid.", ""),
+             tool_calls=READS + [SIDECAR])
 
 
 def test_an_untagged_test_is_skipped():
