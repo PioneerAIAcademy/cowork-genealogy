@@ -17,10 +17,13 @@ export const READING_NOTE =
   "`indexReadings` are the held records' indexed names for " +
   "this page; a given name the index left blank is absent from them. Where they and the " +
   "transcription differ, show both side by side, say they differ, name the line, and give " +
-  "`viewerUrl` to check it. Call neither the answer, never call the index wrong or a misread, " +
-  "and never count a second transcription of the same page as agreement. Report each other " +
-  "record's name as that record writes it, never as a rendering, variant or split of this " +
-  "reading or of another record's name.";
+  "`viewerUrl` to check it. Call neither reading the answer or the likelier one, never call the " +
+  "index wrong or a misread, and never state a correction. A second transcription of the same page, " +
+  "or one made after declining to read it, confirms nothing; only a different record or a " +
+  "different person's reading does. Report each other record's name as that record writes " +
+  "it: it challenges this reading, so never call it a rendering, variant or split of another " +
+  "name, never call a disagreeing spelling consistent, and never drop a reading on a premise " +
+  "the project's own files contradict.";
 
 /** The held records' indexed names for the page an ARK names. */
 export function indexReadingsForPage(research: any, ark: string): IndexReading[] {

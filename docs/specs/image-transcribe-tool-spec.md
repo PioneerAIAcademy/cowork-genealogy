@@ -750,9 +750,14 @@ in-process call.
 - `readingNote` (`READING_NOTE`): the transcription is one machine reading, not a sight
   of the page, and its text is never "the name as written". Where it and the index
   differ, show both side by side, say they differ, name the line, and give `viewerUrl`.
-  Call neither the answer, never call the index wrong or a misread, and never count a
-  second transcription of the same page as agreement. Report each other record's name as
-  that record writes it, never as a rendering, variant or split of another.
+  Call neither reading the answer or the likelier one, never call the index wrong or a
+  misread, and never state a correction. A second transcription of the same page, or one
+  made after declining to read it, confirms nothing; only a different record or a
+  different person's reading does. Report each other record's name as that record writes
+  it: it challenges the reading, so never call it a rendering, variant or split of another
+  name, never call a disagreeing spelling consistent, and never drop a reading on a
+  premise the project's own files contradict. The router's skill carries none of these
+  rules itself; it follows the note.
 
 Never an error: an unreadable `research.json` gives the note alone. The unit harness
 calls the same compiled function on its staged canned answers (`_stage_image_transcribe`).

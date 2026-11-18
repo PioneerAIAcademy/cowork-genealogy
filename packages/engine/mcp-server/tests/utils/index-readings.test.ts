@@ -75,7 +75,9 @@ describe("attachIndexReadings (#4578)", () => {
     for (const rule of [/one machine reading/, /never say the image or page shows, reads or is clear/,
       /never call its text the name as written/,
       /side by side/, /name the line/, /never call the index wrong or a misread/,
-      /second transcription of the same page/, /never as a rendering, variant or split/]) {
+      /second transcription of the same page/, /never call it a rendering, variant or split/,
+      /never state a correction/, /after declining to read it/, /only a different record/,
+      /never call a disagreeing spelling consistent/, /never drop a reading on a premise/]) {
       expect(READING_NOTE).toMatch(rule);
     }
   });
