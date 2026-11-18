@@ -32,11 +32,14 @@ vi.mock("../../src/auth/config.js", () => ({
 }));
 
 import {
+  SEARCH_HELP_TITLE,
   __clearResolvedPagesForTests,
+  topicPageFitsPlace,
   wikiPlacePageTool,
   wikiPlacePageSchema,
 } from "../../src/tools/wiki-place-page.js";
-import { WIKI_PAGE_MAX_CHARS, WIKI_PAGE_SECTIONS } from "../../src/types/wikiPage.js";
+import { WIKI_EXTRAS_DEADLINE_MS } from "../../src/utils/wiki-page-fetch.js";
+import { WIKI_PAGE_MAX_CHARS, WIKI_PAGE_SECTIONS, WIKI_TOPIC_SUFFIXES } from "../../src/types/wikiPage.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
@@ -82,6 +85,18 @@ function searchResponse(titles: string[]) {
     }),
   };
 }
+
+/** A GET for one of the country topic pages the home section lists, not part of resolving the place. */
+const isTopicLookup = (call: any[]): boolean =>
+  WIKI_TOPIC_SUFFIXES.some((suffix) => String(call[0]).endsWith(`_${suffix}`));
+/** The calls that resolve and read the place's own page. */
+const resolutionCalls = (): any[][] => mockFetch.mock.calls.filter((c) => !isTopicLookup(c));
+/** The topicPages a home answer carries when every topic page exists for this country. */
+const allTopicPages = (country: string) =>
+  WIKI_TOPIC_SUFFIXES.map((suffix) => ({
+    topic: suffix.replace(/_/g, " "),
+    url: `https://www.familysearch.org/en/wiki/${country}_${suffix}`,
+  }));
 
 const placeOfType = (type: string) => ({ placeId: "1", placeRepId: "rep-1", name: "x", fullName: "x", type });
 
@@ -411,7 +426,7 @@ describe("wikiPlacePageTool — a sub-national home page (issue #2486 item B)", 
       `${API_BASE}/page/Schuylkill_County,_Pennsylvania_Genealogy`,
       expect.objectContaining({ method: "GET" })
     );
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(resolutionCalls()).toHaveLength(2);
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy");
     expect(result.placeName).toBe("Schuylkill County, Pennsylvania");
   });
@@ -425,7 +440,7 @@ describe("wikiPlacePageTool — a sub-national home page (issue #2486 item B)", 
     const result = await wikiPlacePageTool({ standardPlace: "St. Louis, Missouri, United States", section: "home" }, LOCAL);
 
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/St._Louis_City,_Missouri_Genealogy");
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(resolutionCalls()).toHaveLength(2);
   });
 
   it("returns no page rather than guess when the place type is unknown", async () => {
@@ -503,7 +518,7 @@ describe("wikiPlacePageTool — a sub-national home page (issue #2486 item B)", 
     const result = await wikiPlacePageTool({ standardPlace: "Pennsylvania, United States", section: "home" }, LOCAL);
 
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/Pennsylvania,_United_States_Genealogy");
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(resolutionCalls()).toHaveLength(3);
     expect(mockFetch.mock.calls.every((c) => c[1].method === "GET")).toBe(true);
   });
 });
@@ -595,7 +610,7 @@ describe.each(SHAPES)("wikiPlacePageTool, a page of %s", (_label, make) => {
 
   it("fetches the page again for each part", async () => {
     const parts = await walkParts(readPortugal);
-    expect(mockFetch).toHaveBeenCalledTimes(parts.length);
+    expect(resolutionCalls()).toHaveLength(parts.length);
   });
 });
 
@@ -607,7 +622,7 @@ describe("wikiPlacePageTool, a page found by its title", () => {
     expect(parts[0].truncated).toBe(true);
     // Part 1 resolved the place in full: a search, the page, and the Places lookups that
     // decide whether a ranked title's type word fits.
-    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(resolutionCalls().map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
     expect(placeLookups()).toBeGreaterThan(0);
     const after1 = { requests: mockFetch.mock.calls.length, lookups: placeLookups() };
 
@@ -694,7 +709,7 @@ describe("wikiPlacePageTool, a continuation reuses the page the first call resol
     expect(part.content).toBe(slice(page, 5_000, part));
     expect(part.url).toBe(SCHUYLKILL_URL);
     expect(part.placeName).toBe("Schuylkill County, Pennsylvania");
-    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(resolutionCalls().map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
     expect(placeLookups()).toBeGreaterThan(0);
   });
 
@@ -798,10 +813,10 @@ describe("wikiPlacePageTool, a continuation reuses the page the first call resol
     await readSchuylkill(); // the entry
     clearCalls();
     await readSchuylkill();
-    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(resolutionCalls().map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
     clearCalls();
     await readSchuylkill(0);
-    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(resolutionCalls().map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
     expect(placeLookups()).toBeGreaterThan(0);
     // and an offset of 1 is a continuation
     clearCalls();
@@ -857,8 +872,14 @@ describe("wikiPlacePageTool, a page under the cap", () => {
     expect(content.length).toBe(9_000);
     servePortugal(content);
     const result = await readPortugal();
-    expect(result).toStrictEqual({ url: PORTUGAL_URL, content, standardPlace: "Portugal", placeName: "Portugal" });
-    expect(Object.keys(result).sort()).toEqual(["content", "placeName", "standardPlace", "url"]);
+    expect(result).toStrictEqual({
+      url: PORTUGAL_URL,
+      content,
+      standardPlace: "Portugal",
+      placeName: "Portugal",
+      topicPages: allTopicPages("Portugal"),
+    });
+    expect(Object.keys(result).sort()).toEqual(["content", "placeName", "standardPlace", "topicPages", "url"]);
   });
 
   it("returns a page whose escaped body is exactly the cap whole, and pages one unit more", async () => {
@@ -879,6 +900,7 @@ describe("wikiPlacePageTool, a page under the cap", () => {
       totalChars: 7,
       offset: 0,
       truncated: false,
+      topicPages: allTopicPages("Portugal"),
     });
   });
 
@@ -911,6 +933,7 @@ describe("wikiPlacePageTool, the sidebar", () => {
       content: ENGLAND_STRIPPED,
       standardPlace: "Portugal",
       placeName: "Portugal",
+      topicPages: allTopicPages("Portugal"),
     });
   });
 
@@ -966,5 +989,224 @@ describe("wikiPlacePageSchema, paging", () => {
       "when `truncated` is true, call again with `offset: nextOffset` until it is false",
     );
     expect(wikiPlacePageSchema.inputSchema.properties.offset.description).toContain("`nextOffset`");
+  });
+});
+
+describe("wikiPlacePageTool, country topic pages (issue #4516)", () => {
+  /** Serve these slugs; every other GET is a 404. */
+  function serveSlugs(pages: Record<string, string>): void {
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) => {
+      const slug = String(url).split("/page/")[1];
+      return slug !== undefined && slug in pages ? pageResponse(slug, pages[slug]) : NOT_FOUND;
+    });
+  }
+
+  it("lists, on the home section, only the country's record-type pages that exist, in topic order", async () => {
+    serveSlugs({ Norway_Genealogy: "# Norway", Norway_Naming_Customs: "# N", Norway_Church_Records: "# C" });
+    const result = await wikiPlacePageTool({ standardPlace: "Norway", section: "home" }, LOCAL);
+    expect(result.topicPages).toEqual([
+      { topic: "Church Records", url: "https://www.familysearch.org/en/wiki/Norway_Church_Records" },
+      { topic: "Naming Customs", url: "https://www.familysearch.org/en/wiki/Norway_Naming_Customs" },
+    ]);
+  });
+
+  /** A topic page whose breadcrumb names `home` (a wiki title such as "England"). */
+  const crumbed = (home: string, body = "# T") =>
+    `${body}\n\n[${home.split(",")[0]}](https://www.familysearch.org/en/wiki/${home.replace(/ /g, "_")}_Genealogy "${home} Genealogy")\n\nTopic\n`;
+
+  it("titles a topic by the broadest part that has its page, falling through to a narrower one", async () => {
+    serveSlugs({ England_Genealogy: "# England", England_Church_Records: crumbed("England") });
+    const result = await wikiPlacePageTool({ standardPlace: "England, United Kingdom", section: "home" }, LOCAL);
+    expect(result.topicPages).toEqual([
+      { topic: "Church Records", url: "https://www.familysearch.org/en/wiki/England_Church_Records" },
+    ]);
+    const tried = mockFetch.mock.calls.map((c) => String(c[0])).filter((u) => u.endsWith("_Church_Records"));
+    expect(tried).toEqual([`${API_BASE}/page/United_Kingdom_Church_Records`, `${API_BASE}/page/England_Church_Records`]);
+  });
+
+  it("returns an empty list when no topic page exists", async () => {
+    serveSlugs({ Portugal_Genealogy: "# Portugal" });
+    const result = await wikiPlacePageTool({ standardPlace: "Portugal", section: "home" }, LOCAL);
+    expect(result.topicPages).toEqual([]);
+  });
+
+  it("omits a topic whose lookup fails, and still returns the place page", async () => {
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) => {
+      const slug = String(url).split("/page/")[1];
+      if (slug === "Norway_Genealogy") return pageResponse(slug, "# Norway");
+      if (slug === "Norway_Census") return { ok: false, status: 503, json: async () => ({}) };
+      if (slug === "Norway_Church_Records") return pageResponse(slug, "# C");
+      return NOT_FOUND;
+    });
+    const result = await wikiPlacePageTool({ standardPlace: "Norway", section: "home" }, LOCAL);
+    expect(result.content).toBe("# Norway");
+    expect(result.topicPages?.map((p) => p.topic)).toEqual(["Church Records"]);
+  });
+
+  it("skips a narrower part's page whose breadcrumb names another jurisdiction", async () => {
+    serveSlugs({
+      England_Genealogy: "# England",
+      England_Church_Records: crumbed("England"),
+      England_Census: crumbed("England, Arkansas, United States"),
+    });
+    const result = await wikiPlacePageTool({ standardPlace: "England, United Kingdom", section: "home" }, LOCAL);
+    expect(result.topicPages).toEqual([
+      { topic: "Church Records", url: "https://www.familysearch.org/en/wiki/England_Church_Records" },
+    ]);
+  });
+
+  it("returns by the deadline with the topics found so far when lookups answer slowly, and does not cache them", async () => {
+    // Each Census lookup answers just inside the per-request timeout, one candidate after the
+    // other: United Kingdom, then England. Together they would end past the bridge's 60 s abort.
+    const SLOW_MS = 29_000;
+    const later = <T>(value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), SLOW_MS));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      mockFetch.mockReset();
+      mockFetch.mockImplementation((url: string) => {
+        const slug = String(url).split("/page/")[1];
+        if (slug === "England_Genealogy") return Promise.resolve(pageResponse(slug, "# England"));
+        if (slug === "England_Church_Records") return Promise.resolve(pageResponse(slug, crumbed("England")));
+        if (slug === "United_Kingdom_Census") return later(NOT_FOUND);
+        if (slug === "England_Census") return later(pageResponse(slug, crumbed("England")));
+        return Promise.resolve(NOT_FOUND);
+      });
+      let settled = false;
+      const call = wikiPlacePageTool({ standardPlace: "England, United Kingdom", section: "home" }, LOCAL).finally(
+        () => {
+          settled = true;
+        }
+      );
+      await vi.advanceTimersByTimeAsync(WIKI_EXTRAS_DEADLINE_MS);
+      expect(settled).toBe(true);
+      const result = await call;
+      expect(result.content).toBe("# England");
+      expect(result.topicPages?.map((p) => p.topic)).toEqual(["Church Records"]);
+      await vi.advanceTimersByTimeAsync(2 * SLOW_MS);
+    } finally {
+      vi.useRealTimers();
+    }
+    serveSlugs({
+      England_Genealogy: "# England",
+      England_Church_Records: crumbed("England"),
+      England_Census: crumbed("England"),
+    });
+    const again = await wikiPlacePageTool({ standardPlace: "England, United Kingdom", section: "home" }, LOCAL);
+    expect(again.topicPages?.map((p) => p.topic)).toEqual(["Church Records", "Census"]);
+  });
+
+  it("adds no topic pages to a continuation part or to another section", async () => {
+    serveSlugs({ Norway_Genealogy: "# Norway", Norway_Getting_Started: "# G", Norway_Church_Records: "# C" });
+    const continued = await wikiPlacePageTool({ standardPlace: "Norway", section: "home", offset: 3 }, LOCAL);
+    expect("topicPages" in continued).toBe(false);
+    const other = await wikiPlacePageTool({ standardPlace: "Norway", section: "getting_started" }, LOCAL);
+    expect("topicPages" in other).toBe(false);
+  });
+});
+
+describe("topicPageFitsPlace", () => {
+  const crumb = (title: string) =>
+    `# Topic\n\n[X](https://www.familysearch.org/en/wiki/${title.replace(/ /g, "_")}_Genealogy "${title} Genealogy")\n`;
+
+  it("rejects a same-named page from another country", () => {
+    expect(topicPageFitsPlace(crumb("Victoria, Australia"), "Victoria, British Columbia, Canada")).toBe(false);
+  });
+
+  it("accepts a page whose breadcrumb names only parts of the place", () => {
+    expect(topicPageFitsPlace(crumb("Victoria, Australia"), "Victoria, Australia")).toBe(true);
+    expect(topicPageFitsPlace(crumb("England"), "England, United Kingdom")).toBe(true);
+    expect(topicPageFitsPlace(crumb("Iowa, United States"), "Polk, Iowa, United States")).toBe(true);
+  });
+
+  it("rejects a page with no breadcrumb, or with no text", () => {
+    expect(topicPageFitsPlace("# Topic\n\nNo links here.", "England, United Kingdom")).toBe(false);
+    expect(topicPageFitsPlace(undefined, "England, United Kingdom")).toBe(false);
+  });
+});
+
+describe("wikiPlacePageTool, search help on the research-tips section (issue #4516)", () => {
+  const TIPS_SLUG = "Mexico_Research_Tips_and_Strategies";
+  const HELP_SLUG = "Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org";
+  const tips = (links: string) => `# Mexico Research Tips\n\n${links}\n`;
+  const link = (slug: string, title: string) =>
+    `* [${title}](https://www.familysearch.org/en/wiki/${slug} "${title}")`;
+
+  function serve(pages: Record<string, string>): void {
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) => {
+      const slug = decodeURIComponent(String(url).split("/page/")[1] ?? "");
+      return slug in pages ? pageResponse(slug, pages[slug]) : NOT_FOUND;
+    });
+  }
+
+  it("includes the text of a linked page whose title is about search results", async () => {
+    const title = "Improve your Search Results for Hispanic Ancestors in FamilySearch.org";
+    serve({ [TIPS_SLUG]: tips(link(HELP_SLUG, title)), [HELP_SLUG]: "# Improve\n\nSearch the paternal surname." });
+    const result = await wikiPlacePageTool({ standardPlace: "Mexico", section: "research_tips" }, LOCAL);
+    expect(result.searchHelp).toEqual({
+      title,
+      url: `https://www.familysearch.org/en/wiki/${HELP_SLUG}`,
+      content: "# Improve\n\nSearch the paternal surname.",
+      truncated: false,
+    });
+  });
+
+  it("ignores a linked research-strategy page and adds nothing", async () => {
+    serve({ [TIPS_SLUG]: tips(link("X_Search_Strategies", "England Search Strategies for Births, Marriages and Deaths")) });
+    const result = await wikiPlacePageTool({ standardPlace: "Mexico", section: "research_tips" }, LOCAL);
+    expect("searchHelp" in result).toBe(false);
+  });
+
+  it("cuts a long help page and says it was cut", async () => {
+    serve({ [TIPS_SLUG]: tips(link("Search_Tips_Page", "Search Tips for Records")), Search_Tips_Page: headingPage() });
+    const result = await wikiPlacePageTool({ standardPlace: "Mexico", section: "research_tips" }, LOCAL);
+    expect(result.searchHelp?.truncated).toBe(true);
+    expect(result.searchHelp!.content.length).toBeLessThanOrEqual(8_000);
+  });
+
+  it("adds nothing when the linked page is missing", async () => {
+    serve({ [TIPS_SLUG]: tips(link("Missing_Page", "Searching Records")) });
+    const result = await wikiPlacePageTool({ standardPlace: "Mexico", section: "research_tips" }, LOCAL);
+    expect("searchHelp" in result).toBe(false);
+  });
+
+  it("returns by the extras deadline when the search-help page answers slowly", async () => {
+    // The tips page answers in 25 s and the help page 29 s after that: about 54 s in all, past the
+    // 50 s extras deadline and close to the bridge's 60 s abort.
+    const title = "Improve your Search Results for Hispanic Ancestors in FamilySearch.org";
+    const after = <T>(ms: number, value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      mockFetch.mockReset();
+      mockFetch.mockImplementation((url: string) => {
+        const slug = decodeURIComponent(String(url).split("/page/")[1] ?? "");
+        if (slug === TIPS_SLUG) return after(25_000, pageResponse(slug, tips(link(HELP_SLUG, title))));
+        if (slug === HELP_SLUG) return after(29_000, pageResponse(slug, "# Improve"));
+        return Promise.resolve(NOT_FOUND);
+      });
+      let settled = false;
+      const call = wikiPlacePageTool({ standardPlace: "Mexico", section: "research_tips" }, LOCAL).finally(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(WIKI_EXTRAS_DEADLINE_MS);
+      expect(settled).toBe(true);
+      const result = await call;
+      expect(result.content).toContain("Mexico Research Tips");
+      expect("searchHelp" in result).toBe(false);
+      await vi.advanceTimersByTimeAsync(30_000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("matches search-results, search-tips and searching titles, not strategies", () => {
+    for (const t of ["Improve your Search Results for X", "Search Tips for Y", "Searching Indexed Records"]) {
+      expect(SEARCH_HELP_TITLE.test(t)).toBe(true);
+    }
+    for (const t of ["England Search Strategies for Births", "Norway Birth Record Search Strategy 1500-1813", "Research Strategies"]) {
+      expect(SEARCH_HELP_TITLE.test(t)).toBe(false);
+    }
   });
 });

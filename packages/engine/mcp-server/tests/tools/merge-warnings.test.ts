@@ -461,6 +461,40 @@ describe("merge_warnings tool", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("a merge that leaves a set-aside father beside the concluded one raises no parent-count warning", async () => {
+    const male = (id: string, given: string) => ({ id, gender: "Male", names: [{ id: `N${id}`, given, surname: "Flynn" }] });
+    const tree = {
+      persons: [male("I1", "Patrick"), male("I2", "Thomas"), male("I3", "John")],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+        { id: "R2", type: "ParentChild", parent: "I3", child: "I1" },
+      ],
+      sources: [],
+    };
+    const run = async () =>
+      mergeWarnings({
+        projectPath: dir,
+        candidateGedcomx: { persons: [male("C1", "Patrick")], relationships: [], sources: [] },
+        merges: [["I1", "C1"]],
+      });
+    await writeProject(tree);
+    expect(((await run()) as any).warnings.map((w: any) => w.issueType)).toContain("tooManyFathers2");
+    await writeProject(tree, { ...minimalResearch, ...{
+  proof_summaries: [
+    {
+      id: "ps_001",
+      question_id: "q_001",
+      tier: "probable",
+      claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+        { claim: "not Thomas", proof_tier: "possible", polarity: "denied", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+      ],
+    },
+  ],
+} });
+    expect(((await run()) as any).warnings.map((w: any) => w.issueType)).not.toContain("tooManyFathers2");
+  });
+
   it("blocks a planted impossibility: a census event after the tree person's death", async () => {
     await writeProject({
       persons: [

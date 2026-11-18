@@ -706,6 +706,8 @@ def subject_reply_text(
     text_response: str | None,
     agent: str,
     test: dict[str, Any] | None,
+    *,
+    skip_failed_spawns: bool = False,
 ) -> str:
     """The reply a validator grades: the subject's own words.
 
@@ -716,7 +718,14 @@ def subject_reply_text(
     happened to write the right name (review of issue #2805, 2026-09-30). On a
     ROUTED test the main thread's reply IS the subject's, so `text_response` is
     the fallback when the agent made no return.
+
+    `skip_failed_spawns=True` drops the returns marked `is_error`: a failed
+    spawn is recorded under the agent's name, and its runtime text ("Available
+    agents: ...") names every agent, so a check for an owner's name would pass
+    on it (issue #3935).
     """
+    if skip_failed_spawns:
+        agent_returns = [r for r in (agent_returns or []) if not r.get("is_error")]
     own = agent_return_text(agent_returns, agent)
     if own or (test or {}).get("delegation"):
         return own

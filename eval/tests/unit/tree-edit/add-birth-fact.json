@@ -15,6 +15,6 @@
     "Should confirm that F1 already shows `place: \"Ireland\"` and `date: \"~1845\"`, matching the conflict resolution c_001 (which preferred a_002/a_009 over a_012)",
     "Should NOT modify other persons (Thomas Flynn I2) or other facts (F2 death fact) — edit-minimality requires touching only the requested target",
     "Should explicitly tell the user the file is unchanged rather than silently completing — the user needs to know whether their request triggered an edit",
-    "The agent reads tree.gedcomx.json with the built-in Read tool, which is not listed among the MCP tool calls; a validator checks that read. An empty MCP tool-call list must not reduce Correctness or Completeness."
+    "The agent reads the tree with `tree_query`; a validator checks that call. Score Tool Arguments on that call."
   ]
 }
