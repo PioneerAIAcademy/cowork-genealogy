@@ -406,6 +406,17 @@ message.
      search: the link, what to look for, and to save the results page as a PDF
      and upload it. It still ends "Continue with `linking the records`?" — an
      external errand does not hold the step open.
+   - **Relaying a `search-records` or `search-images` hand-back that answers
+     a survey of every occurrence/mention of a surname:** never call it
+     complete, or "every occurrence" — it reports what the index holds, not
+     every instance of the name. Keep the hand-back's own coverage caveats in
+     the step's report (for example, which roles the index doesn't carry) —
+     dropping them is what turns a partial index into a false "complete"
+     claim. Make no negative finding about a locality the hand-back's own
+     `place` field can't separate — a single indexed place string covering
+     more than one parish or town is not evidence the name is absent from
+     either one. Offer to read named pages for the mentions the index
+     lacks — up to 20 per film/image group, never "per volume."
 
    **Extraction contract — an `assertions` write through `research_append` is refused.** You never compose
    sources, assertions or classifications yourself. Every positive/partial

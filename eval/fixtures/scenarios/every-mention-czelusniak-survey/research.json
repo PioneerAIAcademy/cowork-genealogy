@@ -1,0 +1,64 @@
+{
+  "project": {
+    "id": "rp_czelusniak_survey",
+    "objective": "Identify every occurrence of the surname Czelusniak in the Wójtowa, Pagorzyna and Lipinki parish registers (FamilySearch DGS 004118433), to find Marianna Czelusniak's parents and siblings.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-18",
+    "updated": "2026-11-18"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Which relatives of Marianna Czelusniak (I1) appear under the surname Czelusniak across the Wójtowa, Pagorzyna and Lipinki parish registers (DGS 004118433)?",
+      "rationale": "Marianna's parents and siblings are not yet in the tree. A survey of every occurrence of the surname in the three parishes' digitized registers, rather than a search for her own marriage record alone, is the only way to surface them from this index.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-18",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-18",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Wójtowa, Pagorzyna and Lipinki, Gorlice, Województwo Rzeszów, Polska",
+          "date_range": "1784-1900",
+          "repository": "FamilySearch",
+          "rationale": "A survey of every occurrence of the surname Czelusniak across the digitized parish registers (FamilySearch DGS 004118433, Poland, Church Books collection 4135958) — not a search for one person's own record. Do not narrow with isPrincipal: true; the goal is every mention, so a parent or sibling named in another role is not missed.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

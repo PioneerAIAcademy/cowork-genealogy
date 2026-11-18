@@ -13,14 +13,6 @@
     {
       "test_id": "ut_search_images_d10",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d10",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
@@ -241,6 +233,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d10",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The AI reported the fact correctly, but its reply never adds the separator line or the two plain language paragraphs free of identifiers that the return contract requires; both paragraphs still carry the estate number and the raw page link all the way through."
     }
   ]
 }
