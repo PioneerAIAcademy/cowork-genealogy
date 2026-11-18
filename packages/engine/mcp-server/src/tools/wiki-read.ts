@@ -12,7 +12,7 @@ import {
   type WikiReadResult,
   type WikiCollectionNotice,
 } from "../types/wikiPage.js";
-import { fetchPage } from "../utils/wiki-page-fetch.js";
+import { WIKI_EXTRAS_DEADLINE_MS, fetchPage, settleByDeadline } from "../utils/wiki-page-fetch.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
 
@@ -88,11 +88,18 @@ export function legacyNotice(content: string): string | null {
   return sentenceEnd > 0 ? text.slice(0, sentenceEnd + 1) : text.slice(0, COLLECTION_NOTICE_MAX_CHARS);
 }
 
-/** The linked collection pages that carry the Legacy notice. A failed or missing page is skipped. */
-async function collectionNoticesFor(content: string, baseUrl: string): Promise<WikiCollectionNotice[]> {
+/**
+ * The linked collection pages that carry the Legacy notice. A failed or missing page is skipped,
+ * and a lookup still running at `deadlineAt` is dropped.
+ */
+async function collectionNoticesFor(
+  content: string,
+  baseUrl: string,
+  deadlineAt: number
+): Promise<WikiCollectionNotice[]> {
   const slugs = collectionPageSlugs(content).slice(0, COLLECTION_NOTICE_MAX_PAGES);
-  const found = await Promise.all(
-    slugs.map(async (slug): Promise<WikiCollectionNotice | null> => {
+  const { results: found } = await settleByDeadline(
+    slugs.map((slug) => async (): Promise<WikiCollectionNotice | null> => {
       try {
         const page = await fetchPage(baseUrl, slug);
         if (!page || typeof page.content !== "string") return null;
@@ -103,7 +110,8 @@ async function collectionNoticesFor(content: string, baseUrl: string): Promise<W
       } catch {
         return null;
       }
-    })
+    }),
+    deadlineAt
   );
   return found.filter((n): n is WikiCollectionNotice => n !== null);
 }
@@ -123,6 +131,7 @@ interface PageApiResponse {
 }
 
 export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiReadResult> {
+  const deadlineAt = Date.now() + WIKI_EXTRAS_DEADLINE_MS;
   // Argument checks first: a bad offset must not cost a request.
   const offset = input.offset === undefined ? undefined : requireWholeNumber("offset", input.offset, 0);
   const slug = urlToSlug(input.url);
@@ -157,7 +166,7 @@ export async function wikiReadTool(input: WikiReadInput, principal: Principal): 
   const { content, paging } = pageText(stripWikiSidebar(data.content), offset, WIKI_PAGE_MAX_CHARS);
   const result: WikiReadResult = { url, content, ...paging };
   if (!offset) {
-    const notices = await collectionNoticesFor(content, baseUrl);
+    const notices = await collectionNoticesFor(content, baseUrl, deadlineAt);
     if (notices.length) result.collectionNotices = notices;
   }
   return result;

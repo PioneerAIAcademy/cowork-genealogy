@@ -17,6 +17,7 @@ import {
   wikiReadSchema,
 } from "../../src/tools/wiki-read.js";
 import { WIKI_PAGE_MAX_CHARS } from "../../src/types/wikiPage.js";
+import { WIKI_EXTRAS_DEADLINE_MS } from "../../src/utils/wiki-page-fetch.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
 import { SHAPES, escapedBody, headingPage, oneLinePage, walkParts } from "../helpers/wiki-pages.js";
@@ -506,6 +507,37 @@ describe("wikiReadTool, collection notices", () => {
     expect(notice!.length).toBeLessThanOrEqual(COLLECTION_NOTICE_MAX_CHARS);
     expect(notice!.endsWith(".")).toBe(true);
     expect(notice!.startsWith("This is a Legacy Collection This sentence")).toBe(true);
+  });
+
+  it("returns by the extras deadline when a collection page answers slowly", async () => {
+    // The page answers in 25 s and its linked collection page 29 s after that: about 54 s in all,
+    // past the 50 s extras deadline and close to the bridge's 60 s abort.
+    const after = <T>(ms: number, value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      mockFetch.mockImplementation((url: string) => {
+        const slug = decodeURIComponent(url.slice(`${API_BASE}/page/`.length));
+        if (slug === "Region_Church_Records") {
+          return after(25_000, ok({ title: slug, content: `* ${collectionLink("Region,_Births")}`, source_url: "" }));
+        }
+        if (slug === "Region,_Births_-_FamilySearch_Historical_Records") {
+          return after(29_000, ok({ title: slug, content: legacyLine, source_url: "" }));
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
+      });
+      let settled = false;
+      const call = wikiReadTool({ url: `${WIKI}/Region_Church_Records` }, LOCAL).finally(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(WIKI_EXTRAS_DEADLINE_MS);
+      expect(settled).toBe(true);
+      const result = await call;
+      expect(result.content).toContain("How to Use this Collection");
+      expect(result).not.toHaveProperty("collectionNotices");
+      await vi.advanceTimersByTimeAsync(30_000);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps a sentence whose period is the cap's last character", () => {

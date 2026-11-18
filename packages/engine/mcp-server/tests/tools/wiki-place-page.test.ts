@@ -1172,6 +1172,35 @@ describe("wikiPlacePageTool, search help on the research-tips section (issue #45
     expect("searchHelp" in result).toBe(false);
   });
 
+  it("returns by the extras deadline when the search-help page answers slowly", async () => {
+    // The tips page answers in 25 s and the help page 29 s after that: about 54 s in all, past the
+    // 50 s extras deadline and close to the bridge's 60 s abort.
+    const title = "Improve your Search Results for Hispanic Ancestors in FamilySearch.org";
+    const after = <T>(ms: number, value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      mockFetch.mockReset();
+      mockFetch.mockImplementation((url: string) => {
+        const slug = decodeURIComponent(String(url).split("/page/")[1] ?? "");
+        if (slug === TIPS_SLUG) return after(25_000, pageResponse(slug, tips(link(HELP_SLUG, title))));
+        if (slug === HELP_SLUG) return after(29_000, pageResponse(slug, "# Improve"));
+        return Promise.resolve(NOT_FOUND);
+      });
+      let settled = false;
+      const call = wikiPlacePageTool({ standardPlace: "Mexico", section: "research_tips" }, LOCAL).finally(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(WIKI_EXTRAS_DEADLINE_MS);
+      expect(settled).toBe(true);
+      const result = await call;
+      expect(result.content).toContain("Mexico Research Tips");
+      expect("searchHelp" in result).toBe(false);
+      await vi.advanceTimersByTimeAsync(30_000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("matches search-results, search-tips and searching titles, not strategies", () => {
     for (const t of ["Improve your Search Results for X", "Search Tips for Y", "Searching Indexed Records"]) {
       expect(SEARCH_HELP_TITLE.test(t)).toBe(true);

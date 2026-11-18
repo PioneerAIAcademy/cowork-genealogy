@@ -116,7 +116,10 @@ whose own text carries the notice:
   `COLLECTION_NOTICE_MAX_CHARS` (450), so a full part with ten notices stays under the CLI
   spill line (the real notice's first four sentences, through "Legacy" collection, fit in 344);
 - a page that is missing, fails or carries no notice adds nothing, and the read still
-  returns; with none found the key is absent.
+  returns; with none found the key is absent;
+- the lookups share `WIKI_EXTRAS_DEADLINE_MS` (50 s from the start of the call, under the
+  Cowork bridge's 60 s abort; `settleByDeadline` in `src/utils/wiki-page-fetch.ts`): at the
+  deadline the notices found so far are returned and a lookup still running adds nothing.
 
 Nothing in the code names a country or a collection: the link pattern and the notice
 marker are the wiki's own conventions.
@@ -226,7 +229,9 @@ The first part of a `research_tips` answer carries `searchHelp` when the page (s
 removed) links a wiki page whose link title matches `SEARCH_HELP_TITLE`,
 `/\b(search results|search tips|searching)\b/i`. The first such link is read and cut to
 8,000 escaped characters: `{ title, url, content, truncated }`. A missing or unreadable
-linked page adds nothing. The pattern is narrow on purpose: a bare "search" also matches
+linked page adds nothing. The lookup shares the call's `WIKI_EXTRAS_DEADLINE_MS` (see
+**Country topic pages**): it is skipped when the deadline has already passed, and bounded by
+the time remaining otherwise, adding nothing if the deadline comes first. The pattern is narrow on purpose: a bare "search" also matches
 the research-strategy pages many countries link (`England Search Strategies for Births,
 Marriages and Deaths`, the Norway record-search strategy series), which are not about
 searching the index. Measured 2026-11-15 across 14 research-tips pages, it matches only

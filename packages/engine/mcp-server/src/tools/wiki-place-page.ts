@@ -361,17 +361,23 @@ const WIKI_LINK = /\]\(https:\/\/www\.familysearch\.org\/en\/wiki\/([^)\s"]+)\s+
 
 /**
  * The first page the research-tips text links whose link title matches `SEARCH_HELP_TITLE`,
- * read and cut to `SEARCH_HELP_MAX_CHARS`. Undefined when none is linked or it cannot be read.
+ * read and cut to `SEARCH_HELP_MAX_CHARS`. Undefined when none is linked, it cannot be read, or
+ * `deadlineAt` passes first (the lookup is skipped once it has passed).
  */
-async function searchHelpFor(content: string, baseUrl: string): Promise<WikiSearchHelp | undefined> {
+async function searchHelpFor(
+  content: string,
+  baseUrl: string,
+  deadlineAt: number
+): Promise<WikiSearchHelp | undefined> {
   for (const [, slug, title] of content.matchAll(WIKI_LINK)) {
     if (!SEARCH_HELP_TITLE.test(title)) continue;
-    let page: PageApiResponse | null;
-    try {
-      page = await fetchPage(baseUrl, decodeURIComponent(slug));
-    } catch {
-      return undefined;
-    }
+    if (Date.now() >= deadlineAt) return undefined;
+    const { results, timedOut } = await settleByDeadline(
+      [async () => fetchPage(baseUrl, decodeURIComponent(slug))],
+      deadlineAt
+    );
+    if (timedOut) return undefined;
+    const page: PageApiResponse | null = results[0];
     if (page === null || typeof page.content !== "string") return undefined;
     const cut = pageText(stripWikiSidebar(page.content), undefined, SEARCH_HELP_MAX_CHARS);
     return {
@@ -462,7 +468,7 @@ export async function wikiPlacePageTool(
     if (section === "home") {
       result.topicPages = await topicPagesFor(standardPlace, baseUrl, deadlineAt);
     } else if (section === "research_tips") {
-      const help = await searchHelpFor(stripWikiSidebar(hit.content), baseUrl);
+      const help = await searchHelpFor(stripWikiSidebar(hit.content), baseUrl, deadlineAt);
       if (help) result.searchHelp = help;
     }
   }
