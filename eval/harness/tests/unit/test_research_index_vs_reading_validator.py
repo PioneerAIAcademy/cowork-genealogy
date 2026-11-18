@@ -116,6 +116,10 @@ def test_legitimate_variants_pass(reply):
     [
         GOOD_1880 + " The two records disagree, and neither can simply be called a variant of the other.",
         GOOD_1880 + " Ann Tone is not a rendering of Armistead.",
+        # scratch_2026-11-18_08-09-03, ut_research_iv2 runs 0, 1 and 3
+        GOOD_1880 + " None of them is confirmed as a variant of the other.",
+        GOOD_1880 + " None of the three can be called correct or a variant of another.",
+        GOOD_1880 + " I cannot call any of these a variant or rendering of another.",
     ],
 )
 def test_a_fold_named_only_to_deny_it_passes(reply):
@@ -149,13 +153,34 @@ def _spawn(callee: str, prompt: str) -> dict:
     [
         [_spawn("search-records", 'subject: {"names": ["Tyler"]}\ngivenName: An*\n'
                 "The 1900 index gives no given name; one machine reading gives Anthony, in doubt.")],
-        [_spawn("search-images", "Machine reading 'Anthony' is disputed; the index has Tyler only.")],
+        [_spawn("search-images", "Machine reading 'Anthony' is disputed; the index has Tyler only. Search An*.")],
         [_spawn("search-records", 'subject: {"names": [{"given": "An*", "surname": "Tyler"}]}'),
          _spawn("person-evidence", "Anthony Tyler")],
+        # scratch_2026-11-18_08-09-03, ut_research_iv3 runs 0, 2 and 4, each with An* added
+        [_spawn("search-records", 'subject: {"names": [{"surname": "Tyler"}]}\nThe tree calls her '
+                '"Anthony Tyler" but no linked name assertion confirms the given name. Search An*.')],
+        [_spawn("search-records", 'The machine transcription of that census page reads "Tyler '
+                'Anthony." Try first-name wildcards (e.g. An*).')],
+        [_spawn("search-records", 'The tree currently records her as "Anthony Tyler" but no name '
+                "assertion carries that given name — it is a proposed reading only. Given name: An*")],
     ],
 )
 def test_a_brief_holding_the_reading_in_doubt_passes(calls):
     check_brief(BRIEF, calls)
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        [_spawn("search-images", "Machine reading 'Anthony' is disputed; the index has Tyler only.")],
+        # scratch_2026-11-18_08-09-03, ut_research_iv3 runs 0 and 3: surname only
+        [_spawn("search-records", 'subject: {"names": [{"surname": "Tyler"}]}\nSearch with surname '
+                "Tyler, born ~1853 Virginia. She may appear under any given name or initial.")],
+    ],
+)
+def test_a_brief_that_drops_the_given_name_fails(calls):
+    with pytest.raises(AssertionError, match="name was dropped"):
+        check_brief(BRIEF, calls)
 
 
 @pytest.mark.parametrize("calls", [[], [_spawn("person-evidence", "Anthony Tyler")]])
@@ -173,6 +198,9 @@ def test_no_search_briefed_fails_rather_than_passing_unchecked(calls):
         [_spawn("search-records", '{"givenName": "Anthony", "surname": "Tyler"}')],
         [_spawn("search-images", "**first name:** Antone")],
         [_spawn("search-records", 'subject: {"names": [{"given": "Anthony", "surname": "Tyler"}]}')],
+        # a doubt word in another sentence does not excuse naming her by the reading
+        [_spawn("search-records", "Her name is disputed. Search for Anthony Tyler in 1910. An*")],
+        [_spawn("search-records", "Search for Anthony Tyler, the name in the tree. Wildcard An* too.")],
     ],
 )
 def test_a_brief_naming_the_subject_by_the_reading_fails(calls):

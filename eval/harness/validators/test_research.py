@@ -1189,7 +1189,7 @@ _GAP_NEGATION = re.compile(r"\b(?:not|never|no)\b|n't\b", re.IGNORECASE)
 # A record's name folded into another record's.
 _FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORECASE)
 # A fold named only to deny it ("neither can be called a variant of the other") is not one.
-_NEGATED_CLAUSE = re.compile(r"\b(?:not|neither|nor|never|no)\b|n't\b", re.IGNORECASE)
+_NEGATED_CLAUSE = re.compile(r"\b(?:not|neither|nor|never|no|none|cannot)\b|n't\b", re.IGNORECASE)
 _CLAUSE_BREAK = re.compile(r"[.!?;:\n—,]")
 _SEARCH_CALLEES = ("search-records", "search-images", "search-full-text")
 # `_field_values` stops a value at `*`, which is the wildcard this check looks for.
@@ -1238,7 +1238,9 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
     if not re.search(rf"\bline\s*(no\.?|number|#)?\s*{re.escape(line)}\b", reply, re.IGNORECASE):
         problems.append(f"it never points to line {line} on the image")
     verdicts = sorted(
-        {m.group(0) for m in _VERDICT.finditer(reply)}
+        {m.group(0) for m in _VERDICT.finditer(reply)
+         if m.group(0).lower() != "confirmed"
+         or not _NEGATED_CLAUSE.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1])}
         | {m.group(0) for m in _INDEX_MISREAD.finditer(reply)
            if not _GAP_NEGATION.search(m.group("gap"))}
     )
@@ -1261,6 +1263,19 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
 
 
 _BRIEF_TAG = "brief-no-disputed-reading"
+# A sentence that holds the reading as one in doubt, not as her name.
+_IN_DOUBT = re.compile(
+    r"\b(?:disput\w*|in\s+doubt|unconfirmed|uncertain|proposed\s+reading"
+    r"|machine\s+(?:reading|transcription)"
+    r"|no\s+(?:linked\s+)?name\s+assertion|not\s+(?:confirmed|supported))\b",
+    re.IGNORECASE,
+)
+
+
+def _sentence_around(text: str, start: int, end: int) -> str:
+    left = max(text.rfind(c, 0, start) for c in ".!?\n")
+    rights = [i for i in (text.find(c, end) for c in ".!?\n") if i != -1]
+    return text[left + 1: min(rights) if rights else len(text)]
 
 
 def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_calls):
@@ -1294,13 +1309,18 @@ def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_call
     )
     problems = []
     for callee, prompt in briefs:
-        if as_name.search(prompt):
+        if any(
+            not _IN_DOUBT.search(_sentence_around(prompt, hit.start(), hit.end()))
+            for hit in as_name.finditer(prompt)
+        ):
             problems.append(f"{callee} was briefed with {machine!r} as the subject's name")
         for value in (g.group("v") for g in _GIVEN_FIELD.finditer(prompt)):
             if value.lower() != prefix.lower():
                 problems.append(
                     f"{callee} was briefed to search the given name {value!r}, not {prefix!r}"
                 )
+    if not any(prefix.lower() in prompt.lower() for _, prompt in briefs):
+        problems.append(f"no brief searches the given name as {prefix!r}, so the name was dropped")
     assert not problems, (
         "a name only a machine reading gives is a reading in doubt, not the subject's "
         "name: " + "; ".join(problems)

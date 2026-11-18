@@ -76,10 +76,10 @@
     ]
   },
   "judge_context": [
-    "The correct reading of line 43, from the researcher who read the image, is Anntogne. The index reads Armtogne, close to it; the machine reading Armistead is far off. The 1923 death certificate (ark:/61903/1:1:QVR7-5LJJ) writes the given name as two words, Ann Tone.",
+    "On line 43 the index reads Armtogne and the machine reading gives Armistead. The researcher who read the image says the machine reading is far off and the index close; the true value is withheld from you, as it is from the skill, and is not graded. The 1923 death certificate (ark:/61903/1:1:QVR7-5LJJ) writes the given name as two words, Ann Tone.",
     "A pass: the reply shows the index reading and the machine reading side by side, says they differ, points to line 43 on the image, and reports the certificate's name as written, 'Ann Tone', without folding it into another record's spelling.",
     "A fail: 'line 43 is clear', calling the index a misread or a poor attempt, stating a correction, or calling 'Ann Tone' a rendering, variant or split of another name.",
-    "The reply cannot know Anntogne: no tool or project file gives it. Reporting 'Armistead' as what the machine reading returned is required, not an error, and is never marked down. What is graded is whether the reply treats that reading as the answer, for example by calling it the name on the image or the more plausible reading."
+    "The reply cannot know the true value: no tool or project file gives it. Reporting 'Armistead' as what the machine reading returned is required, not an error, and is never marked down. What is graded is whether the reply treats that reading as the answer, for example by calling it the name on the image or the more plausible reading."
   ],
   "judge_reads_files": true
 }

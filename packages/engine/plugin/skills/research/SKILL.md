@@ -496,11 +496,18 @@ message.
    `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. **When the
    question or request a search serves asks about the subject's parentage, even one parent (who a
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
-   block.** Before that brief, read the subject's linked `name` assertions (`research_query`
-   `person_evidence` by `personId`, then `assertions` by those `assertionId`s): a tree given name
-   none of them carries is a machine reading. A given name only a machine reading gives goes in that brief as plain text, a reading
-   in doubt beside the index reading, never in `names`, which keep the surname alone; a search on it uses a wildcard on the part
-   every reading agrees on (`An*`), and never drops the name. In a wrap-up turn
+   block.**
+
+   **Before any `subject:` block, check its given name:**
+   1. `research_query({ section: "person_evidence", personId })`, then
+      `research_query({ section: "assertions", assertionId: [those ids] })`.
+   2. A tree given name that none of those `name` assertions carries is a machine reading, not
+      her or his name.
+   3. Then `names` keeps the surname alone, the given name goes in the brief as plain text, a
+      reading in doubt beside the index reading, and a search on it uses a wildcard on the part
+      every reading agrees on (`An*`). Never drop the name, and never send the disputed reading.
+
+   In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and
    `@plugin:proof-conclusion` takes `newQuestion: yes` when the researcher
