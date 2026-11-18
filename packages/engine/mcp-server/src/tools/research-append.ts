@@ -2351,6 +2351,55 @@ function personEvidenceScoreInvariants(
   // prove -- and refusing it left a bad score unremovable on any reachable
   // link while still letting `confidence` be escalated on it.
   if (!isAppend && entry.match_score == null) return [];
+
+  // Exact lookup on (assertion, tree person) first -- the pair the writer was
+  // called with and the pair this entry carries. Keying on the PARTY instead
+  // could not see a score written by the fetched route, which resolves a real
+  // persons[].id where the assertion carries null. Then the persona arm: a score
+  // that compared this assertion's party with this tree person answers for every
+  // fact of that party (#3552; match-scores.ts header). A second party of the
+  // record is a different party, so ADR-0009 constraint 3 holds.
+  //
+  // Computed here, BEFORE reachability, so the two uses below share one
+  // lookup rather than querying twice: the null-vs-recorded refusal right
+  // after this, and the ordinary presence check further down. The exact-key
+  // lookup is a cheap map read; `scoredPersonaOf` -- a scan of this record's
+  // assertions -- runs only when that lookup misses, same as before this
+  // reordering (it is also needed below for the refusal's personaHint even
+  // when no score exists at all, so it cannot be skipped on `file` alone).
+  const file = matchScores.get(recordId) ?? null;
+  const exactScore = findRecordedScore(file, entry.assertion_id, entry.person_id);
+  const persona = exactScore
+    ? null
+    : scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
+  const recorded = exactScore ?? (persona ? findRecordedScore(file, null, entry.person_id, persona) : null);
+
+  // The writer records what same_person returns; a link for a pairing it
+  // already scored must carry that attestation, not drop it. A null here
+  // reads as unscored even though a number was obtained -- seen twice in
+  // production (ut_person_evidence_010; #3552's panel analysis). Reachability
+  // has no bearing: it excuses a MISSING score, never one that was actually
+  // obtained. A genuine retraction goes through an UPDATE, which the isAppend
+  // check above already lets through.
+  //
+  // `recorded` may answer via the persona arm rather than this exact
+  // assertion -- the message says so, or it reads as "same_person was called
+  // on THIS assertion" when it was really called on a sibling fact of the
+  // same persona.
+  if (entry.match_score == null && recorded !== null) {
+    const scoredWhat = exactScore
+      ? "this pairing"
+      : persona?.personaId !== null && persona?.personaId !== undefined
+        ? `persona '${persona.personaId}' for this tree person`
+        : `this record's other party for this tree person`;
+    return [
+      `person_evidence for '${entry.person_id}' (assertion '${entry.assertion_id}') carries ` +
+        `match_score: null, but same_person already scored ${scoredWhat} at ${recorded.score}. ` +
+        `Write that score on the link -- a null here reads as unscored even though a number was ` +
+        `obtained. To retract a score instead of recording it, use an update, not an append.`,
+    ];
+  }
+
   // Reachability excuses a MISSING score, never a fabricated one. Gating the
   // whole arm on it left ut_person_evidence_014's actual defect open: a stub
   // minted by `tree_edit add_person` carries no source ref, so the circular walk
@@ -2370,17 +2419,7 @@ function personEvidenceScoreInvariants(
       : research;
   if (entry.match_score == null && !personaReachable(entry, reachabilityView)) return [];
 
-  // Exact lookup on (assertion, tree person) first -- the pair the writer was
-  // called with and the pair this entry carries. Keying on the PARTY instead
-  // could not see a score written by the fetched route, which resolves a real
-  // persons[].id where the assertion carries null. Then the persona arm: a score
-  // that compared this assertion's party with this tree person answers for every
-  // fact of that party (#3552; match-scores.ts header). A second party of the
-  // record is a different party, so ADR-0009 constraint 3 holds.
-  const file = matchScores.get(recordId) ?? null;
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
-  const persona = scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
-  if (persona && findRecordedScore(file, null, entry.person_id, persona) !== null) return [];
+  if (recorded !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
