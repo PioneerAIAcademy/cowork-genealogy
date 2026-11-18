@@ -13,14 +13,6 @@
     {
       "test_id": "ut_search_images_d6",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d6",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
@@ -286,6 +278,14 @@
       "test_id": "ut_search_images_011",
       "dimension_source": "rubric",
       "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d6",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
