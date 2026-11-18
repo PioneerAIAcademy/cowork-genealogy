@@ -130,6 +130,17 @@
           "rationale": "Utah Births and Christenings, 1892-1941 (FamilySearch index, collection 1675542) could index Alan's 1936 birth or christening with his parents' names. Searched; no entry for Alan.",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 9,
+          "record_type": "vital",
+          "jurisdiction": "Utah",
+          "date_range": "2023",
+          "repository": "Utah Office of Vital Records and Statistics",
+          "rationale": "Alan's 2023 Utah death certificate would name his parents. NOT obtainable: Utah keeps death certificates closed for 50 years after the death (public 2073), released before then only to immediate family or a legal representative. Not a reasonably available record for this project.",
+          "fallback_for": null,
+          "status": "skipped"
         }
       ]
     }
@@ -256,6 +267,22 @@
       "outcome": "negative",
       "results_examined": 0,
       "notes": "Utah Births and Christenings, 1892-1941 (FamilySearch collection 1675542, the online birth index the Utah Vital Records wiki page lists for 1936) searched for Alan Glen Applegarth, b. 1936 Ogden, with surname variants: no entry. The index does not cover his birth.",
+      "external_site": null
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-14T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "given": "Alan",
+        "death_year": 2023,
+        "collection": "Utah Death Certificates"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Alan's 2023 Utah death certificate is NOT publicly accessible: Utah keeps death certificates closed for 50 years after the death (public 2073), released before then only to immediate family or a legal representative. The record exists but is not reasonably obtainable for this project.",
       "external_site": null
     }
   ],

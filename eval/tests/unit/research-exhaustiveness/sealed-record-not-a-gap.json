@@ -24,7 +24,8 @@
     "Contrast (do not conflate): a record that is merely unsearched-but-accessible WOULD gate a declaration under the decisive-record rule. This birth certificate is unobtainable by privacy law, so it does NOT gate the declaration. The distinction is exactly the point of this test.",
     "The skill must NOT claim the birth certificate was examined or invent its contents.",
     "Acceptable pass: (a) declares q_001 reasonably exhaustive, noting the sealed birth record as an access limitation rather than a gap; OR (b) if it declines for a DIFFERENT legitimate reason, it still does not cite the sealed birth certificate as the outstanding searchable gap and does not recommend obtaining it. Alan's death certificate is NOT such a reason: the project holds his 2023 obituary naming both parents, which is his death record for this question, so a decline that rests on the death certificate being unsearched is a miss.",
-    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema). A review/decline still makes MCP calls — `## 1. Gather evidence` names a wiki_read unconditionally — so grade this dimension on the calls that were made."
+    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema). A review/decline still makes MCP calls — `## 1. Gather evidence` names a wiki_read unconditionally — so grade this dimension on the calls that were made.",
+    "pli_010 is Alan's 2023 Utah death certificate, skipped because Utah keeps death certificates closed for 50 years (public 2073). It is recorded as not obtainable, the same as the birth certificate: declining on account of it, or recommending the researcher obtain it, is a miss."
   ],
   "execution": {
     "max_turns": 40,

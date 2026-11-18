@@ -132,6 +132,19 @@
           "rationale": "Utah Births and Christenings, 1892-1941 (FamilySearch index, collection 1675542) could index Alan's 1936 birth or christening with his parents' names. Searched; no entry for Alan.",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 9,
+          "record_type": "vital",
+          "jurisdiction": "Utah",
+          "date_range": "2023",
+          "repository": "Utah Office of Vital Records and Statistics",
+          "rationale": "Alan's 2023 Utah death certificate would name his parents.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Utah keeps death certificates closed for 50 years after the death (public 2073), released before then only to immediate family or a legal representative. No access path exists for this project."
         }
       ]
     }
