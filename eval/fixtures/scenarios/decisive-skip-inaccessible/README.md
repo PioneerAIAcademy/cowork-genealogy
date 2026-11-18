@@ -88,8 +88,8 @@ pli_009 / log_011 record a search of "Utah Births and Christenings, 1892-1941"
 (FamilySearch collection 1675542) with no entry for Alan. The Utah Vital
 Records wiki page the agent reads lists that index as the online birth source
 for 1936; without the search a careful agent declines on it and never reaches
-the sealed-record rule this scenario tests. The unsearched version is
-`sealed-birth-open-index-unsearched`.
+the sealed-record rule this scenario tests. The unsearched version was
+moved out with its test to issue #4654 (commit 90c6ea119 of PR #4628 holds both).
 
 `pli_010` records Alan's 2023 Utah death certificate as skipped: Utah keeps death certificates closed for 50 years. Added 2026-11-18 so that every decisive record for the parentage question is accounted for in the project.
 
