@@ -164,3 +164,91 @@ describe("research_append runs the claim rules", () => {
     expect(warnings(r).join("\n")).toMatch(/Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'father' stands at possible/);
   });
 });
+
+describe("research_append clears `primary` that follows a claim (Decision 34)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "primary-clear-"));
+    modes.refuse.clear();
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const birthClaim = (tier = "probable") => ({
+    claim: "birth", proof_tier: tier, supporting_assertion_ids: ["a_001"],
+    fact: { subject: "I1", fact_type: "Birth", date: "1850" },
+  });
+  const marriageClaim = (tier = "probable") => ({
+    claim: "marriage", proof_tier: tier, supporting_assertion_ids: ["a_001"],
+    fact: { subject: { person1: "I1", person2: "I3" }, fact_type: "Marriage", date: "1875" },
+  });
+  const coupleClaim = { claim: "couple", proof_tier: "probable", supporting_assertion_ids: ["a_001"], relationship: { type: "Couple", person1: "I1", person2: "I3" } };
+  const primaryTree = () => ({
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }],
+        facts: [
+          { id: "F1", type: "Birth", date: "1850", primary: true, sources: [{ ref: "SD-001" }] },
+          { id: "F2", type: "Death", date: "1900", primary: true, sources: [{ ref: "SD-001" }] },
+        ] },
+      { id: "I3", gender: "Female", names: [{ id: "N3", given: "Mary", surname: "Jones" }] },
+    ],
+    relationships: [
+      { id: "R2", type: "Couple", person1: "I1", person2: "I3", sources: [{ ref: "SD-001" }],
+        facts: [{ id: "F9", type: "Marriage", date: "1875", primary: true, sources: [{ ref: "SD-001" }] }] },
+    ],
+    sources: [{ id: "SD-001", title: "Parish register" }],
+  });
+  const write = async (summaries: any[]) => {
+    const research = project(summaries);
+    research.questions.push({ ...question("q_002"), question: "When was John born?" });
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(primaryTree(), null, 2));
+  };
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+  const fact = (t: any, id: string) =>
+    [...t.persons.flatMap((p: any) => p.facts ?? []), ...t.relationships.flatMap((r: any) => r.facts ?? [])].find((f: any) => f.id === id);
+  const setClaims = (entryId: string, claims: any[], tier?: string) =>
+    researchAppend({ projectPath: dir, section: "proof_summaries", op: "update", entryId, fields: { claims, ...(tier ? { tier } : {}) } } as any);
+
+  it("lowering the covering claim to possible clears primary in the same write, and names the fact", async () => {
+    await write([{ id: "ps_001", ...summaryEntry({ claims: [birthClaim()] }) }]);
+    const r: any = await setClaims("ps_001", [birthClaim("possible")], "possible");
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    expect(fact(await readTree(), "F1")).not.toHaveProperty("primary");
+    expect(r.validation.warnings.join("\n")).toMatch(/personId I1, factId F1: `primary` cleared/);
+  });
+
+  it("removing the covering claim from claims clears primary", async () => {
+    await write([{ id: "ps_001", ...summaryEntry({ claims: [birthClaim(), coupleClaim] }) }]);
+    const r: any = await setClaims("ps_001", [coupleClaim]);
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    expect(fact(await readTree(), "F1")).not.toHaveProperty("primary");
+  });
+
+  it("primary stays when another live probable claim covers the fact", async () => {
+    await write([
+      { id: "ps_001", ...summaryEntry({ claims: [birthClaim()] }) },
+      { id: "ps_002", ...summaryEntry({ question_id: "q_002", claims: [birthClaim()] }) },
+    ]);
+    const r: any = await setClaims("ps_001", [birthClaim("possible")], "possible");
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    expect(fact(await readTree(), "F1")?.primary).toBe(true);
+    expect(r.validation.warnings.join("\n")).not.toMatch(/`primary` cleared/);
+  });
+
+  it("a legacy primary no claim covered is untouched", async () => {
+    await write([{ id: "ps_001", ...summaryEntry({ claims: [birthClaim()] }) }]);
+    const r: any = await setClaims("ps_001", [birthClaim("possible")], "possible");
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    expect(fact(await readTree(), "F2")?.primary).toBe(true);
+  });
+
+  it("a Couple Marriage primary is cleared the same way", async () => {
+    await write([{ id: "ps_001", ...summaryEntry({ claims: [coupleClaim, marriageClaim()] }) }]);
+    const r: any = await setClaims("ps_001", [coupleClaim, marriageClaim("possible")], "possible");
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    expect(fact(await readTree(), "F9")).not.toHaveProperty("primary");
+    expect(r.validation.warnings.join("\n")).toMatch(/relationshipId R2, factId F9: `primary` cleared/);
+  });
+});

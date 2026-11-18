@@ -139,10 +139,15 @@ export const MAX_MATCH_MOB = 40;
 export class Mob {
   readonly tree: SimplifiedGedcomX;
   readonly anchorId: string;
+  /** The anchor's parents whose edge reads set aside or ruled out from proof-summary
+   *  claims (conclusion-status.ts `setAsideParents`, Decision 26): the parent-count
+   *  warnings do not count them. Empty unless a caller passes them. */
+  readonly setAsideParentIds: ReadonlySet<string>;
 
-  constructor(tree: SimplifiedGedcomX, anchorId: string) {
+  constructor(tree: SimplifiedGedcomX, anchorId: string, options: { setAsideParentIds?: Iterable<string> } = {}) {
     this.tree = tree;
     this.anchorId = anchorId;
+    this.setAsideParentIds = new Set(options.setAsideParentIds ?? []);
     if (this.findPerson(anchorId) === undefined) {
       throw new Error(
         `Mob: anchor person "${anchorId}" not found in tree.persons[]`,

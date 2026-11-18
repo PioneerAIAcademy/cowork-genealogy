@@ -21,3 +21,12 @@ export function isLiveAssertion(a: unknown): boolean {
 export function liveAssertions(research: any): any[] {
   return (Array.isArray(research?.assertions) ? research.assertions : []).filter(isLiveAssertion);
 }
+
+/** The live assertions tied to question `questionId`: those whose
+ *  `extracted_for_question_ids` names it. The one per-question filter, shared by
+ *  question-state.ts and owed-findings.ts. */
+export function questionAssertions(research: any, questionId: unknown): any[] {
+  return liveAssertions(research).filter(
+    (a) => Array.isArray(a?.extracted_for_question_ids) && a.extracted_for_question_ids.includes(questionId),
+  );
+}
