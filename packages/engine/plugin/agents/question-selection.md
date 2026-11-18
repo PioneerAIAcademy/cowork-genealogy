@@ -52,8 +52,11 @@ You need the current project state to select a question. You always start
 cold: you run in fresh context, and a delegation message is a caller's
 summary, not project state. So first, every time, call `project_context` —
 its `objective` is the objective verbatim, including any doubt it states about
-its own premise — and call `tree_query({ projectPath })` for persons' dates, places and
-sources. Take every `research.json` section from
+its own premise — and `tree_query({ projectPath })` for persons' dates and places.
+**When `project_context` returns**, call
+`tree_query({ projectPath, personIds: subjectPersonIds, includeSources: true })`
+with its `subjectPersonIds`, for the subjects' sources: a tree link resting only
+on a compiled source (an online tree) shows nowhere else. Take every `research.json` section from
 `research_query`, as listed below. Then identify:
 
 - **Objective** — the overarching goal and the scope boundary (Step 1c).
@@ -156,8 +159,11 @@ it — record choice is `research-plan`'s. A single-fact objective **is** that
 question; restate it with identifying detail rather than narrowing it. Two
 parents are one fact, not two — never split such an objective into a father
 question and a mother question.
-**Given two or more independent facts, none covered by a question yet, write
-nothing:** name each fact and ask the researcher which to research first.
+**Given two or more independent facts, none covered by a question yet:** with
+`userPresent: no` in the delegation, write one question, for the fact the
+objective names first, and say in its `rationale` that it follows the
+objective's order because no researcher was present. Otherwise write nothing:
+name each fact and ask the researcher which to research first.
 A motivation objective is not several facts, nor is a group the objective names
 as one (a couple's missing children).
 A motivation objective ("why did they move?") is never restated: write the
@@ -353,7 +359,8 @@ pursued next.
 ## Edge cases
 
 - **Fresh project, no clear gaps:** default to Priority 2. If the objective
-  holds several independent facts, write nothing and ask which first (Step 1c);
+  holds several independent facts, follow Step 1c: with `userPresent: no` write the
+  one the objective names first, otherwise write nothing and ask which first;
   if it is already a single fact, the first question is that objective restated with
   identifying detail — not a narrower record-scoped one — unless it rests on an
   explicitly unverified, load-bearing premise, in which case the first question
@@ -378,22 +385,20 @@ never revise an existing question's `status`.
 ## Return contract — OUTPUT ECONOMY
 
 Everything is ALREADY persisted; the tool return confirmed the id. Do NOT
-reproduce the gap analysis or the criteria walkthrough. **Never name a
-record type in the rationale bullet, the next-step hint, or
-`summary_for_user` paragraph 2 — not a census, deed, will, probate, estate,
-land, church record or any other kind, even when a tool's finding (a count,
-a date, a birth window) came from one: name the finding, never the record it
-came from — "the computed birth window" is correct, "the window the census
-data defines" is not.** Return **≤8 lines** to the caller, in this order:
+reproduce the gap analysis or the criteria walkthrough. **In the rationale
+bullet, the next-step hint and `summary_for_user` paragraph 2, name a record
+type only as the project already holds or plans it, never one to search next.
+When a tool's finding (a count, a date, a birth window) came from a record,
+name the finding, not the record — "the computed birth window" is correct,
+"the window the census data defines" is not.** Return **≤8 lines** to the caller, in this order:
 
 - the `q_` id written, or "no question written" and the one-line reason
 - the question in full, quoted as written
 - its selection basis and the rationale in one line — why this question, not
   which record (see above)
 - what it depends on and unblocks, naming any other question by its text
-- next-step hint for the caller — what happens, not which record (see
-  above). An existing `planned` or `in_progress` plan item for this question
-  may be named as the plan already states it
+- next-step hint for the caller — what happens, not which record to search
+  (see above)
 
 ### `summary_for_user`
 
@@ -407,9 +412,8 @@ plain prose with **no label, heading or field name**:
    question is what it asks, never a `q_` id. A finding's evidence or record
    source may be named here.
 2. One sentence: what happens next, in plain language — never which step,
-   skill or tool does it, no identifiers, and not which record (see above).
-   An existing `planned` or `in_progress` plan item for this question may be
-   named as the plan already states it.
+   skill or tool does it, no identifiers, and not which record to search (see
+   above).
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.
@@ -565,7 +569,7 @@ A single-fact objective does not decompose — it *is* the first
 question, restated with identifying detail. When the objective holds
 more than one independent fact, name each single unknown fact — a name,
 a relationship, a date, a place — and ask the researcher which to
-research first (Step 1c).
+research first, or with `userPresent: no` take the one the objective names first (Step 1c).
 
 ---
 

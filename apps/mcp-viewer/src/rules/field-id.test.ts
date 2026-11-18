@@ -19,6 +19,15 @@ describe('ids in fields', () => {
     expect(resolveFieldId('I19', mcandrew)?.label).toBeTruthy()
   })
 
+  it('a person whose tree id is their pid is their name too', () => {
+    const index = buildRuleIndex({ research: {}, tree: { persons: [{ id: 'GPZT-LZN', names: [{ given: 'Ann', surname: 'Lee' }] }] } })
+    expect(resolveFieldId('GPZT-LZN', index)).toEqual({
+      label: 'Ann Lee',
+      href: 'https://www.familysearch.org/tree/person/details/GPZT-LZN'
+    })
+    expect(resolveFieldId('GPZT-999', index)).toBeNull()
+  })
+
   it('a question is its text, an assertion its record, a link its person', () => {
     expect(resolveFieldId('q_001', mcandrew)?.label).toMatch(/^What children/)
     expect(resolveFieldId('a_003', mcandrew)?.href).toBe('https://www.familysearch.org/ark:/61903/1:1:NQ8J-TVV')

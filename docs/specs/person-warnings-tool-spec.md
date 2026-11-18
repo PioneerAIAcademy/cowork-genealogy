@@ -789,6 +789,11 @@ reading of them. Every other tag reads as before.
 | `tooManyFathers2` | implausible | Two or more male parents (only one biological father is possible) | A step/adoptive father recorded as biological, or a wrong link |
 | `tooManyMothers2` | implausible | Two or more female parents | As above |
 | `tooManyParents3` | implausible | Three or more biological parents, at least one with no sex recorded (which `tooManyFathers2` and `tooManyMothers2` cannot count) | A duplicate parent, or a step link recorded as biological |
+
+The three parent counts above skip set-aside and ruled-out parents. A parent whose edge reads **set aside** (a weaker claim, or a denial below the proof bar, beside a concluded parent of the same slot whose own edge is in the tree) or **ruled out** (a `disproved` claim covers it) in a proof summary's claims is not counted, so an import set aside in favour of the concluded parent no longer reads as a rival. With no claims nothing is skipped. `person_warnings` reads
+`research.json` for this, in the single-id and list forms, and fails open to counting every parent when the file is
+absent or does not parse; `merge_warnings` applies it to the merged mob, and the write gate to both sides of its
+subtraction (`tree-edit-tool-spec.md` §6).
 | `missingFactsAndRelatives` | implausible | Empty stub: no facts other than `GenderChange`, and no relatives | An unfinished record |
 | `hasBlankName` | implausible | A name entry carries a blank (empty-string) given name or surname part — distinct from a name part that is simply absent (see `missingSurnames`/`missingGivenNamesWithoutExactBirthLikeDate`) | An incomplete record |
 | `hasDiffSurnameMale` | implausible | Male anchor has surnames that do not match each other (similarity ≤ 0.5) | Records from two same-given-name men merged |
