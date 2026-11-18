@@ -106,6 +106,31 @@ describe("expandLookingFor", () => {
     expect(expandLookingFor("marked in may")).toBeNull();
   });
 
+  it("expands a name written with a comma or bracket beside it (#4587)", () => {
+    const incident = expandLookingFor("Lee, Eliza, father James Lee");
+    expect(incident).not.toBeNull();
+    expect(incident!.expansions).toHaveProperty("Elizabeth");
+    expect(incident!.expansions).toHaveProperty("James");
+    expect(incident!.expanded).toMatch(
+      /^Lee, Eliza, father James Lee \(also known as .*Elizabeth/
+    );
+    expect(expandLookingFor("Eliza, Lee")!.expansions).toHaveProperty("Elizabeth");
+    expect(expandLookingFor("(Eliza) Lee")!.expansions).toHaveProperty("Elizabeth");
+    expect(expandLookingFor('"Polly" Lee')!.expansions).toHaveProperty("Mary");
+  });
+
+  it("matches a scribal form with its period, and a sentence-final name without it", () => {
+    expect(expandLookingFor("Jas., son of")!.expansions).toHaveProperty("James");
+    const final = expandLookingFor("daughter of James.");
+    expect(final!.expansions).toHaveProperty("James");
+    expect(final!.expansions.James).not.toContain("James");
+  });
+
+  it("does not expand punctuated common words", () => {
+    expect(expandLookingFor("29 May, 1774")).toBeNull();
+    expect(expandLookingFor("the last will, and testament")).toBeNull();
+  });
+
   it("skips ambiguous words without an adjacent proper name", () => {
     // "MAY" in a date context — "1774" is not capitalized, "29" is not → skip MAY
     expect(expandLookingFor("born 12 May 1877")).toBeNull();

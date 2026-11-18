@@ -524,6 +524,13 @@ periods) because the model reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
+A name is matched with the punctuation beside it stripped: leading `(`, `[`
+and quotes, and trailing `,`, `;`, `:`, `!`, `?`, `)`, `]` and quotes. A
+trailing period is kept when the form with it is in the table (`Jas.`) and
+dropped otherwise (`daughter of James.`). So `"Lee, Eliza, father James Lee"`
+expands both Eliza and James, and a page holding Elizabeth, daughter of James
+Lee, is credited.
+
 When expansion fires, `imageTranscribeTool`'s in-process result carries a
 `nameExpansion` field:
 
@@ -536,6 +543,7 @@ When expansion fires, `imageTranscribeTool`'s in-process result carries a
 The MCP answer drops it (see "Output"). It was added so a genealogist could see which
 name forms the found check credited, but no caller relays it, and the
 search-images agent reads every `FOUND` page in full before it reports one.
+search-images treats a credited short form as the same name.
 
 This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.

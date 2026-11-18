@@ -274,7 +274,13 @@ function hasAdjacentCapital(tokens: string[], index: number): boolean {
  * Returns null if no expansion applies.
  */
 export function expandLookingFor(lookingFor: string): NameExpansionResult | null {
-  const tokens = lookingFor.split(/\s+/).filter(Boolean);
+  // Strip the punctuation that sits beside a name in free text ("Lee, Eliza,
+  // father James", "(Eliza)") so the token matches the table (issue #4587).
+  // A trailing period is kept: the table's scribal forms carry one ("Jas.").
+  const tokens = lookingFor
+    .split(/\s+/)
+    .map((t) => t.replace(/^[("'[]+/, "").replace(/[,;:!?)"'\]]+$/, ""))
+    .filter(Boolean);
   if (tokens.length === 0) return null;
 
   const alsoKnownAs: string[] = [];
@@ -293,10 +299,16 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
     // "May Thornton" → "Thornton" starts with T → expand.
     if (AMBIGUOUS_WORDS.has(token.toLowerCase()) && !hasAdjacentCapital(tokens, i)) continue;
 
-    const family = lookupNameFamily(token);
+    // A sentence-final name ("daughter of James.") is not a scribal form.
+    let name = token;
+    let family = lookupNameFamily(name);
+    if (!family && name.endsWith(".")) {
+      name = name.slice(0, -1);
+      family = lookupNameFamily(name);
+    }
     if (!family) continue;
 
-    const originalNorm = normalizeString(token);
+    const originalNorm = normalizeString(name);
     const others = family.allForms.filter(
       (f) => normalizeString(f) !== originalNorm
     );
