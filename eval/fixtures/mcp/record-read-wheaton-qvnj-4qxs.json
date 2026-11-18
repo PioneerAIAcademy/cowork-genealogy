@@ -1,0 +1,349 @@
+{
+  "tool": "record_read",
+  "description": "record_read for a source attached to Orpha (Brooks) Wheaton (LZPF-WMT). New York State Census 1865, Erin, Chemung: indexes her as 'Orphy Wheaton', age-derived birth 1784-1785. Captured live 2026-11-17 for issue #4584 (feedback #4507/#4508: Orpha (Brooks) Wheaton, LZPF-WMT), re-captured on main rather than copied from the 2381ff72c bundle. Verbatim.",
+  "args": {
+    "recordId": "~QVNJ-4QXS"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_101004763017",
+        "ark": "ark:/61903/1:1:QVNJ-4Q6Y",
+        "principal": true,
+        "names": [
+          {
+            "id": "e8570b1a-f1f7-4594-80fa-05d47ff8e32b",
+            "type": "BirthName",
+            "given": "Henry",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "71fcd157-d7a9-48e4-a8f5-2f1448209dd3",
+            "type": "Birth",
+            "date": "1814",
+            "standard_date": "1814"
+          },
+          {
+            "id": "d86dd8a7-7aab-4fab-93cf-8779b1fc5fd2",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Erin, Chemung, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_101004763018",
+        "ark": "ark:/61903/1:1:QVNJ-4Q6B",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "069c96f2-81d5-4d78-8a6d-43128191d316",
+            "type": "BirthName",
+            "given": "Emerella",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "d9dfa7ea-07b5-4409-80a9-c0b98fc1ce3e",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Erin, Chemung, New York, United States"
+          },
+          {
+            "id": "117cf933-8a22-4dc8-82d0-8810450afc62",
+            "type": "Birth",
+            "date": "1839",
+            "standard_date": "1839"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_101004763019",
+        "ark": "ark:/61903/1:1:QVNJ-4Q61",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "52cd6607-24c4-42d3-9d84-12b078a5ca11",
+            "type": "BirthName",
+            "given": "Rachael",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "00b2bca5-b940-4671-92f8-bef49ceabf25",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Erin, Chemung, New York, United States"
+          },
+          {
+            "id": "189fb436-2b14-43fc-a1a5-ffb243254401",
+            "type": "Birth",
+            "date": "1852",
+            "standard_date": "1852"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_101004763020",
+        "ark": "ark:/61903/1:1:QVNJ-4QXM",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "6a9a06be-90bf-4442-a26d-84176135f40a",
+            "type": "BirthName",
+            "given": "Rupheus",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "811ba55c-2db2-4c8d-bb29-fefce601414e",
+            "type": "Birth",
+            "date": "1854",
+            "standard_date": "1854"
+          },
+          {
+            "id": "55796f24-e8a3-497e-a97c-20ca0fa207f3",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Erin, Chemung, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_101004763021",
+        "ark": "ark:/61903/1:1:QVNJ-4QX9",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "821d6697-3f26-4480-92a4-1c868d7c762c",
+            "type": "BirthName",
+            "given": "Elias",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "22af670e-fa01-451f-9f1b-6d616e9b1d82",
+            "type": "Birth",
+            "date": "1856",
+            "standard_date": "1856"
+          },
+          {
+            "id": "1e17ed8f-739b-4b6e-aaab-de955fce7ec2",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Erin, Chemung, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_101004763022",
+        "ark": "ark:/61903/1:1:QVNJ-4QXS",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "549af425-58c6-418b-a4df-afd53a37ec49",
+            "type": "BirthName",
+            "given": "Orphy",
+            "surname": "Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "d45c2788-bace-4a7e-b809-c8226bc44194",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Erin, Chemung, New York, United States"
+          },
+          {
+            "id": "821caf9e-62b5-48b8-b610-250d9e4a371f",
+            "type": "Birth",
+            "date": "1785",
+            "standard_date": "1785"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "e11783f8-5d96-47f1-bd29-021a3837ffb9",
+        "type": "ParentChild",
+        "parent": "p_101004763017",
+        "child": "p_101004763021"
+      },
+      {
+        "id": "bf28de34-1654-4abe-b742-ae30ae64d0c3",
+        "type": "ParentChild",
+        "parent": "p_101004763017",
+        "child": "p_101004763018"
+      },
+      {
+        "id": "da8c0cf2-8f46-41b6-a194-dbe3f3df02ab",
+        "type": "ParentChild",
+        "parent": "p_101004763022",
+        "child": "p_101004763017"
+      },
+      {
+        "id": "4c7fb4dc-6ac9-45c5-ad48-65be5f403f41",
+        "type": "ParentChild",
+        "parent": "p_101004763017",
+        "child": "p_101004763020"
+      },
+      {
+        "id": "f5dde99a-242e-4888-b849-5c23505bc720",
+        "type": "ParentChild",
+        "parent": "p_101004763017",
+        "child": "p_101004763019"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_102051138517",
+        "resource_type": "Record",
+        "title": "Household of Henry Wheaton, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-4Q6Y : Sun Jul 07 11:49:37 UTC 2024), Entry for Henry Wheaton and Emerella Wheaton, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:QK1K-9PY4",
+        "coverage": {
+          "record_type": "Census"
+        }
+      },
+      {
+        "id": "sd_c_1491284",
+        "resource_type": "Collection",
+        "title": "New York, State Census, 1865",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1491284",
+        "coverage": {
+          "place_rep_id": "339",
+          "date_range": "1865/1865",
+          "record_type": "Census",
+          "standard_place": "New York, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DBTS-VPF",
+        "coverage": {
+          "place_rep_id": "339",
+          "date_range": "1865",
+          "record_type": "Census",
+          "standard_place": "New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_101004763021",
+        "resource_type": "Person",
+        "title": "Elias Wheaton, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-4QX9 : Sun Jul 07 11:49:37 UTC 2024), Elias Wheaton in entry for Henry Wheaton, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-4QX9"
+      },
+      {
+        "id": "sd_p_101004763017",
+        "resource_type": "Person",
+        "title": "Henry Wheaton, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-4Q6Y : Sun Jul 07 11:49:37 UTC 2024), Henry Wheaton, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-4Q6Y"
+      },
+      {
+        "id": "sd_p_101004763018",
+        "resource_type": "Person",
+        "title": "Emerella Wheaton, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-4Q6B : Sun Jul 07 11:49:37 UTC 2024), Emerella Wheaton in entry for Henry Wheaton, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-4Q6B"
+      },
+      {
+        "id": "sd_p_101004763020",
+        "resource_type": "Person",
+        "title": "Rupheus Wheaton, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-4QXM : Sun Jul 07 11:49:37 UTC 2024), Rupheus Wheaton in entry for Henry Wheaton, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-4QXM"
+      },
+      {
+        "id": "sd_p_101004763022",
+        "resource_type": "Person",
+        "title": "Orphy Wheaton, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-4QXS : Sun Jul 07 11:49:37 UTC 2024), Orphy Wheaton in entry for Henry Wheaton, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-4QXS"
+      },
+      {
+        "id": "sd_p_101004763019",
+        "resource_type": "Person",
+        "title": "Rachael Wheaton, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-4Q61 : Sun Jul 07 11:49:37 UTC 2024), Rachael Wheaton in entry for Henry Wheaton, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-4Q61"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1790 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1790-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HY-DBTS-VPF",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DBTS-VPF",
+    "birthRanges": {
+      "p_101004763017": "Bet 1813 and 1814",
+      "p_101004763018": "Bet 1838 and 1839",
+      "p_101004763019": "Bet 1851 and 1852",
+      "p_101004763020": "Bet 1853 and 1854",
+      "p_101004763021": "Bet 1855 and 1856",
+      "p_101004763022": "Bet 1784 and 1785"
+    }
+  }
+}

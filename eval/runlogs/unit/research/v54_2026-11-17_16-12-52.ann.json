@@ -1,0 +1,246 @@
+{
+  "run_log": "v54_2026-11-17_16-12-52.json",
+  "annotator": "taiwoadedotunxx1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2, but not for the judge's reason. search-records was delegated and stubbed; relaying the stub's report as the searches done is correct per judge_context, so the missing record_search calls are not fabrication. Two real slips: it adds \"immigration collections\", which the stub did not list (it said births, marriages, deaths and censuses), and it names Ancestry, FindMyPast and newspaper archives, which no tool returned. judge_context says to mark the reply down for naming such sites."
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2, for a narrower reason than the judge gives. search-records was delegated and stubbed, and the reply relays the stub faithfully (births, marriages, deaths and censuses for Pennsylvania, 1845-1908; each search saved in the log), so the missing record_search calls are not fabrication. But it ends by naming Ancestry, MyHeritage and newspaper archives, which no tool returned, and judge_context says to mark the reply down for exactly that."
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "Disagree with 1. The judge's premise is wrong: the skill did invoke the sub-skill the state calls for (proof-conclusion for q_001, matching nextStep \"re-conclude ps_001\"; see builtin_tool_calls and agent_returns). Two real gaps remain, both from judge_context. It ran a second step in the same turn (proof-conclusion for q_002, outside the parentage objective). It also ended without a \"Continue with ...?\" offer, even though it names a next step (resolve the open conflict). That is a 2, not a 1."
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Disagree with 1. By the test's own explanation, the correct behavior is not evaluating exhaustiveness. Whether Claude calls question-selection or narrates the handoff is model variance and is not graded. Claude evaluated nothing and wrote nothing (files_created empty, test_no_search_stop passed). It still answered the user's question in full: all three open items from project_context, in a sensible order, ending with an offer instead of acting. Nothing the user needed was missing."
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Disagree with 1. This test checks that \"what next?\" does not trigger an exhaustiveness declaration, and test_no_search_stop passed: nothing was written. Claude read project_context and every recommendation matches it: q_001 nextStep is re-conclude ps_001, q_002 is resolved with no proof summary, and there is 1 conflict. Accurate, grounded, and it offered rather than acted."
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with 2. proof-conclusion was invoked twice through Agent (builtin_tool_calls and agent_returns show subagent_type proof-conclusion for q_001 and q_002). The judge only looked at the MCP tool_calls. \"Reported no change\" repeats the stub reply (\"It changed no project state\"). The other claims match project_context: I1's only parent is I2, so no mother is encoded; 4 sources hold 13 assertions; there is 1 conflict and 1 hypothesis. The only unsupported part is the guess about why ps_001 was blocked, and it is hedged with \"likely\""
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Disagree with 3. The researcher asked to \"Reevaluate based on this evidence\". The reply weighed the record against none of the existing hypotheses and never mentioned h_002's 1870 marriage, so the reevaluation step is missing. It did follow the lead correctly by asking for the record's identifier before extraction, which judge_context accepts as a first step. Minor: it ignores the narration guidance (an example ARK link, \"187 assertions\", narrating \"Checking the current state\")."
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with 2. Every mention of the sibling premise calls it unproven: \"inferred\", \"based on shared surname and South Dakota birth state alone\", \"No record links them as siblings\". judge_context says describing the premise while calling it unproven is not relying on it, and registering it as a hypothesis is the expected route (test_routes_to_expected_skill passed). Claude said it was \"handed off to be registered\" and never claimed the hypothesis was written. It did not carry the Massachusetts birthplace forward. \"Stowers household\" in the next-step line repeats pli_002's own rationale (\"Stouer / Stowers household\")."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "Disagree with the judge's reasoning. The 2 is too generous. Active hypothesis h_002 says the Robert Eastham in the 1850 and 1860 Burton household is the man who married in Boyd County in January 1870. A death in 1861 makes that impossible, and the reply never notices. Instead it presents the record as support: \"could be a sibling of Mary Ann Eastham and help establish the Eastham family line\". judge_context names that exact behavior as the failure. It also calls the wife \"Mary Ann Eastham\", which is the merge the project is disputing (h_001). The judge's own objection is weak: \"in the Burton household censuses\" is a fair reading of what the researcher wrote"
+    }
+  ]
+}

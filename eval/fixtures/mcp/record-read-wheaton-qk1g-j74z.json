@@ -1,0 +1,95 @@
+{
+  "tool": "record_read",
+  "description": "record_read for a source attached to Orpha (Brooks) Wheaton (LZPF-WMT). Find a Grave Index: Orpha Brooks Wheaton, b. 11 Nov 1784, d. 21 Feb 1866. Captured live 2026-11-17 for issue #4584 (feedback #4507/#4508: Orpha (Brooks) Wheaton, LZPF-WMT), re-captured on main rather than copied from the 2381ff72c bundle. Verbatim.",
+  "args": {
+    "recordId": "~QK1G-J74Z"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_102053983720",
+        "ark": "ark:/61903/1:1:QK1G-J74Z",
+        "principal": true,
+        "names": [
+          {
+            "id": "006ec5d7-3d9c-45a5-bef1-9513a6c6da7f",
+            "type": "BirthName",
+            "given": "Orpha",
+            "surname": "Brooks Wheaton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "c96dd34e-38c0-4e51-befd-be9be8d3c9ad",
+            "type": "Burial",
+            "primary": true
+          },
+          {
+            "id": "9f33325f-c024-43cb-9bfc-cc05f4595cd8",
+            "type": "Death",
+            "date": "21 Feb 1866",
+            "standard_date": "21 Feb 1866"
+          },
+          {
+            "id": "74f511fc-6e16-4573-a307-02481c0d4c05",
+            "type": "Birth",
+            "date": "11 Nov 1784",
+            "standard_date": "11 Nov 1784"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_102756398821",
+        "resource_type": "Record",
+        "title": "Entry for Orpha Brooks Wheaton, \"Find a Grave Index\"",
+        "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1G-J74Z : Thu Oct 01 23:34:38 UTC 2026), Entry for Orpha Brooks Wheaton.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:Q2BK-GNX9",
+        "coverage": {
+          "date_range": "21 February 1866",
+          "record_type": "Death"
+        }
+      },
+      {
+        "id": "sd_c_2221801",
+        "resource_type": "Collection",
+        "title": "Find a Grave Index",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "coverage": {
+          "place_rep_id": "324",
+          "date_range": "1500/2013",
+          "record_type": "Death",
+          "standard_place": "World"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=147952624"
+      },
+      {
+        "id": "sd_p_102053983720",
+        "resource_type": "Person",
+        "title": "Orpha Brooks Wheaton, \"Find a Grave Index\"",
+        "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1G-J74Z : Thu Oct 01 23:34:38 UTC 2026), Orpha Brooks Wheaton.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QK1G-J74Z"
+      },
+      {
+        "id": "sd_auto_M9LZ-K5X",
+        "resource_type": "auto",
+        "title": "World, Deaths, from 7729 BC to 9999",
+        "coverage": {
+          "place_rep_id": "324",
+          "date_range": "-7728-01-01T00:00:00Z/+9999-12-31T23:59:59Z",
+          "standard_place": "World"
+        }
+      }
+    ]
+  }
+}

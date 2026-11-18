@@ -67,7 +67,7 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 | **assertion** | One evidence claim extracted from one source, persisted in `research.json`. |
 | **proof summary / `ps_id`** | The written argument resolving one research question, carrying a confidence **tier**: `proved`, `probable`, `possible`, `not_proved`, or `disproved` (a closed enum — `enums.schema.json`). "Tier ≥ probable" in §4 means `proved` or `probable`. |
 | **sidecar** | A raw search payload stored at `results/<log_id>.json` instead of inside `research.json`, so the co-edited file stays small (§6.1). |
-| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
+| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `extraction_append` logs with the read's own ref when it extracts from it; an `image_transcribe` entry with no ref is refused unless it records a failed call), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
 | **projection** | A compact, filtered read of a large document — what `project_context` and `research_query` return instead of the whole file (§6.3). |
 | **compaction** | When a long session's context is summarized to fit the window. Skill bodies can be evicted by it — the reason §3.1 exists. |
 | **fixture** | Two different things. `eval/fixtures/mcp/` holds **mocked tool responses** for unit runs; `eval/tests/e2e/<slug>/` holds a **benchmark case** (a starting project plus expected findings). |
@@ -888,11 +888,11 @@ There **is** an orchestrator, and it is a skill:
    since come to read it again: besides the trigger in its description, an
    autonomous message is always a job, never a bounded ask, and the router hands
    `userPresent: no` to
-   `search-external-sites` and `search-hints`, which get it on no other run, and to
-   `person-evidence`, which also gets it on a "Keep going." or "Wrap it up." turn
-   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those agents read that
-   field, not the string. `agents/person-evidence.md` was left out of the folding; its
-   resolve-downward rule now applies when its delegation says `userPresent: no`.
+   `search-external-sites` and `question-selection`, which get it on no other run
+   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those two read that field,
+   not the string (§9.5 below). The router also sends it to `person-evidence`, on a "Keep
+   going." or "Wrap it up." turn as well, but `agents/person-evidence.md` no longer
+   reads it.
    `agents/search-records.md` hands back `userPresent: no` for
    search-external-sites only when its delegation says the search is part of an
    autonomous run, which the router's search-records delegation does not carry;
@@ -901,8 +901,9 @@ There **is** an orchestrator, and it is a skill:
    `opening_prompt` in `apps/server/proto/demo.py`, the prototype's default opener
    (`make proto-demo` when no `--prompt` is given, and the `cap_main_real` and
    `concurrent_rss_heavy` cases of `make proto-bounds`; their `-aws` twins run the
-   same scripts); and by the two research unit tests that pin the trigger and the
-   always-a-job rule (`ut_research_005`, `ut_research_023`).
+   same scripts); and by the research unit tests that open with it: `ut_research_005`
+   and `ut_research_023`, which pin the trigger and the always-a-job rule, and
+   `ut_research_ue1`, `ut_research_uh1` and `ut_research_uq1`.
    Offline suites pin that the flag is sent; none can see what the router does
    with it. Only the paid eval runs do.
    **gps-mentor runs only when the user asks for a second opinion, and the router
@@ -1578,7 +1579,7 @@ trustworthy rather than merely present:
 
 | Location | What |
 |---|---|
-| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), which no shipped flow logs; `project_create` reads the `person_read` one. 24h TTL. |
+| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), finalized when it is logged with its ref, as `extraction_append` does for the read it extracts from; `project_create` reads the `person_read` one, which is never logged. 24h TTL. |
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. Each entry names its `scorer` (`familysearch` or `service`) and `model`. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail, each line naming its `scorer` and `model`. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
@@ -2391,9 +2392,9 @@ with nobody waiting to answer, skip the ask and take the action.
 Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
 "can a human act on this right now?". Two bodies keep a genuine two-sided answer because
 a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
-`agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
-can) and `search-external-sites` (a user who named the plan item will capture it; mid-run
-nobody will). `search-hints` decides hints itself on every run. Each has eval fixtures on
+`search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will) and `agents/question-selection.md` (a user can pick which fact of the
+objective first; mid-run nobody can). `search-hints` decides hints itself on every run. Each has eval fixtures on
 each side. The mode difference survives in the router, which sets that field from the
 flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
 where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
@@ -2459,8 +2460,8 @@ CI covered you (§9.4).
 things it removes: a pause, or a capability (§9.5). Note that no agent reads
 `--autonomous`: key an agent's rule on the `userPresent` field of its delegation, not on a
 string in the message. The router sets that field per agent: in its spawn-fields paragraph
-(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-hints, in its
-routing-table row; a new agent that needs it also needs its own line in the router.
+(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-external-sites
+and question-selection, at the routing rows that reach them; a new agent that needs it also needs its own line in the router.
 Removing the pause is the established shape and is fine: decide instead of asking, and
 log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
