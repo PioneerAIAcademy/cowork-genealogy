@@ -259,6 +259,43 @@ fails here: it stops for the researcher's verdict
 and writes no offer. **They put init-project's full body in this
 suite's snapshot**, so an init-project body edit now owes a research run.
 
+`ut_research_ia1` (`bounded-interpretive-ask.json`) and `ut_research_ia2`
+(`bounded-interpretive-first-message.json`) cover the interpretive ask (issue #4381).
+Why a move or event in the family happened, what could explain a pattern in it, or
+historical background for either, is bounded and goes to `historical-context` (lead,
+2026-11-09). Feedback #4300 asked "can you explain what could be behind the migration
+patterns?"; question-selection made it a records question, and the run made 11 locality
+surveys and 2 plans and never answered it. The same tester's #3244 and #3930 went the
+same way.
+- **ia1** runs on `empty-project-just-created`. It has no questions, so the job path's
+  first hand-off is question-selection, and `routes-to:historical-context` tells the two
+  apart.
+- **ia2** is feedback #4564's shape: a first message with a PID and no project, under
+  #4350's paragraph. The `bounded-after-init` validator checks it. Its `routes-to:` is
+  init-project, so the deliverable's owner comes from a new `deliverable:<agent>` tag. With
+  no such tag the owner is search-records, so b4i and b4w are unchanged.
+  `delegates-verbatim` reads its callee the same way: `deliverable:`, else `routes-to:`,
+  else person-evidence.
+
+Two more tags are deterministic:
+- **`delegates-tree-facts`**: the session calls `tree_query`, and the spawn names every year
+  and leading place word of the subject's tree facts, and no year outside those facts, the
+  message and the project objective. The `tree_query` half is what tells ia1 apart on
+  main's SKILL.md: in a scratch run there, the router reached historical-context from the
+  agent's own description, skipped `tree_query`, and handed over the objective's years. After init-project, ia2's tree holds Ireland ~1845 and Schuylkill County 1908,
+  and the message names neither. ia1's tree holds nothing, so on ia1 it checks only that no
+  other year appears. The delegation may pass the objective's places and years named as the
+  objective's (Ikennaya, 2026-11-17, after 3 of 3 scratch runs of ia1 did so). Whether it
+  names them as the objective's is checked by nothing: the judge cannot see a spawn prompt.
+- **`relays-overview`**: the reply carries the overview's Sources consulted list and not
+  its `### Search implications` block (Richard, 2026-11-17).
+
+ia2 is a `/research` test on purpose. #4564's skip was the main thread spawning
+historical-context directly. No unit test here can see that, because the harness never
+adds Cowork's routing sentence; the beta acceptance run covers it. ia2 stubs
+historical-context with its return contract's shape: narrative, Sources consulted,
+Search implications, `---`, summary. A change to that contract should update the stub.
+
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius
 Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request

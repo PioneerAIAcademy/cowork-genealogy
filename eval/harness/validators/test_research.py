@@ -24,12 +24,13 @@ from validators_lib import bare_ark_id, bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_gate_stop
 from validators_lib import existing_plan_changes, new_plan_ids
+from validators_lib import response_strings
 
 _ROUTES_TO_PREFIX = "routes-to:"
+_DELIVERABLE_PREFIX = "deliverable:"
 
 
-def _expected_skill(test: dict) -> str | None:
-    prefix = _ROUTES_TO_PREFIX
+def _data_tag(test: dict, prefix: str) -> str | None:
     found = [t[len(prefix):] for t in (test.get("tags") or []) if t.startswith(prefix)]
     assert len(found) <= 1, (
         f"a test may declare at most one {prefix}<name> tag; got: {found}"
@@ -38,6 +39,17 @@ def _expected_skill(test: dict) -> str | None:
     if value is not None:
         assert value, f"empty {prefix} tag value — fill in the skill name or remove the tag"
     return value
+
+
+def _expected_skill(test: dict) -> str | None:
+    return _data_tag(test, _ROUTES_TO_PREFIX)
+
+
+def _deliverable(test: dict) -> str | None:
+    """The agent that owns a bounded deliverable, named by a ``deliverable:<agent>``
+    tag. A no-project test's first hand-off (``routes-to:``) is init-project, so the
+    owner it hands to next needs a tag of its own."""
+    return _data_tag(test, _DELIVERABLE_PREFIX)
 
 
 def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
@@ -988,33 +1000,113 @@ def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
     return None
 
 
-_DELEGATES_VERBATIM_TAG = "delegates-verbatim"
-
-
 def _quote_and_space_normal(text: str) -> str:
     text = text.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
     return " ".join(text.split())
 
 
 def test_person_evidence_spawn_carries_the_users_words(test, builtin_tool_calls):
-    """Tag-gated (``delegates-verbatim``). research/SKILL.md sends a researcher
-    who doubts or denies that a record is this person to person-evidence with
-    their message copied verbatim (#3601): a hedge relayed as a "no" becomes a
-    rejection the researcher never made. The spawn prompt is invisible to the
-    judge, so it is read from the hook records. The user message without
-    ``/research`` must appear in at least one person-evidence spawn prompt,
-    with whitespace collapsed and straight and curly quotes made equal on both
-    sides."""
-    if _DELEGATES_VERBATIM_TAG not in (test.get("tags") or []):
+    """Tag-gated (``delegates-verbatim``). research/SKILL.md sends some bounded asks
+    to their owner with the message copied verbatim: a researcher who doubts or
+    denies that a record is this person to person-evidence (#3601), where a hedge
+    relayed as a "no" becomes a rejection the researcher never made; an interpretive
+    ask to historical-context (#4381). The callee is the ``deliverable:`` tag, else
+    the ``routes-to:`` tag, else person-evidence. The spawn prompt is invisible to
+    the judge, so it is read from the hook records. The user message without
+    ``/research`` must appear in at least one of the callee's spawn prompts, with
+    whitespace collapsed and straight and curly quotes made equal on both sides."""
+    if "delegates-verbatim" not in (test.get("tags") or []):
         pytest.skip("not a delegates-verbatim test")
+    callee = _deliverable(test) or _expected_skill(test) or "person-evidence"
     message = re.sub(r"^/research\b", "", (test.get("user_message") or "").strip()).strip()
     assert message, "the test has no user message to relay"
-    prompts = _spawn_prompts(builtin_tool_calls, "person-evidence")
-    assert prompts, "no person-evidence spawn to carry the user's words"
+    prompts = _spawn_prompts(builtin_tool_calls, callee)
+    assert prompts, f"no {callee} spawn to carry the user's words"
     wanted = _quote_and_space_normal(message)
     assert any(wanted in _quote_and_space_normal(p) for p in prompts), (
-        "no person-evidence spawn carries the user's message verbatim.\n"
+        f"no {callee} spawn carries the user's message verbatim.\n"
         f"  message: {message!r}\n  prompts: {[p[:400] for p in prompts]!r}"
+    )
+
+
+_YEAR = re.compile(r"\b1[5-9]\d\d\b")
+_PLACE_TAIL = re.compile(r"\s+(?:county|parish|township)$", re.I)
+
+
+def _subject_fact_marks(state: dict) -> tuple[set[str], set[str]]:
+    """The years, and the leading place words, of the project subject's tree facts:
+    each fact's `date` and `standard_date` years, and the first comma-separated part
+    of its `place` with a trailing County/Parish/Township dropped."""
+    research = state.get("research_json") or {}
+    tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+    subjects = set((research.get("project") or {}).get("subject_person_ids") or [])
+    years: set[str] = set()
+    places: set[str] = set()
+    for person in tree.get("persons") or []:
+        if not isinstance(person, dict) or person.get("id") not in subjects:
+            continue
+        for fact in person.get("facts") or []:
+            if not isinstance(fact, dict):
+                continue
+            years.update(_YEAR.findall(f"{fact.get('date') or ''} {fact.get('standard_date') or ''}"))
+            lead = _PLACE_TAIL.sub("", str(fact.get("place") or "").split(",")[0].strip())
+            if lead:
+                places.add(lead)
+    return years, places
+
+
+def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool_calls, after_state):
+    """Tag-gated (``delegates-tree-facts``), issue #4381. research/SKILL.md has the
+    router call ``tree_query`` for the people the message names, then hand
+    historical-context the places and years it returned, or say it returned none,
+    and never a place or year it did not return. The session must hold a
+    ``tree_query`` call. Read from the callee's spawn prompts (the ``deliverable:``
+    tag, else ``routes-to:``), against the project subject's tree facts in the after
+    state: every fact year and leading place word appears, and no year appears that
+    is in none of those facts, the user's message and the project objective, which
+    the delegation may add when it names them as the objective's. Places are
+    checked one way only: telling an invented place from a real one would need a
+    gazetteer."""
+    if "delegates-tree-facts" not in (test.get("tags") or []):
+        pytest.skip("not a delegates-tree-facts test")
+    callee = _deliverable(test) or _expected_skill(test)
+    assert callee, "delegates-tree-facts needs a deliverable: or routes-to: tag naming the callee"
+    prompts = _spawn_prompts(builtin_tool_calls, callee)
+    assert prompts, f"no {callee} spawn to carry the tree's places and years"
+    assert any(
+        isinstance(c, dict) and bare_tool_name(c.get("tool") or "") == "tree_query"
+        for c in tool_calls or []
+    ), f"the session makes no tree_query call, so what {callee} was handed was not read from the tree"
+    text = " ".join(prompts)
+    years, places = _subject_fact_marks(after_state or {})
+    missing = sorted(y for y in years if not re.search(rf"\b{y}\b", text))
+    missing += sorted(p for p in places if p.lower() not in text.lower())
+    assert not missing, (
+        f"no {callee} spawn names {missing}, which the subject's tree facts hold"
+    )
+    objective = ((after_state or {}).get("research_json") or {}).get("project") or {}
+    allowed = years | set(_YEAR.findall(test.get("user_message") or ""))
+    allowed |= set(_YEAR.findall(str(objective.get("objective") or "")))
+    invented = sorted(set(_YEAR.findall(text)) - allowed)
+    assert not invented, (
+        f"a {callee} spawn names the year(s) {invented}, which none of the subject's "
+        f"tree facts ({sorted(years)}), the user's message and the project objective hold"
+    )
+
+
+def test_reply_relays_the_overview(test, text_response):
+    """Tag-gated (``relays-overview``), Richard on #4381, 2026-11-17: from
+    historical-context the router relays everything above its
+    ``### Search implications`` heading (the narrative and its Sources consulted
+    list) and not that block, which names agents for the main thread."""
+    if "relays-overview" not in (test.get("tags") or []):
+        pytest.skip("not a relays-overview test")
+    reply = (text_response or "").lower()
+    assert "sources consulted" in reply, (
+        "the reply does not relay the overview's Sources consulted list"
+    )
+    assert "search implications" not in reply, (
+        "the reply relays historical-context's Search implications block, which is for the main thread"
     )
 
 
@@ -1110,14 +1202,16 @@ def test_bounded_transcription_is_delivered_in_place(
 def test_bounded_first_message_runs_its_deliverable_after_init_project(
     skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
 ):
-    """Tag-gated (``bounded-after-init``). A bounded record ask with a PID and no
-    project creates the project and runs the search in the same turn (plan section
-    H, issue #2813): the hand-offs are init-project then search-records, repeats
-    allowed and nothing else; init-project made the project; the search is handed
-    the subject's tree id, not the FamilySearch ID; no step denial cut it short; the
-    reply drops init-project's next-step sentence; and it ends on an offer. Which
-    step it offers is the router's call: 2 of 6 scratch runs offered "setting up
-    the project" when the router was told to, so a fixed label is not pinned.
+    """Tag-gated (``bounded-after-init``). A bounded ask with a PID and no project
+    creates the project and runs its deliverable in the same turn (plan section H,
+    issue #2813; #4381 for an interpretive ask): the hand-offs are init-project then
+    the deliverable's owner — the ``deliverable:`` tag, else search-records —
+    repeats allowed and nothing else; init-project made the project; a search is
+    handed the subject's tree id, not the FamilySearch ID; no step denial cut it
+    short; the reply drops init-project's next-step sentence; and it ends on an
+    offer. Which step it offers is the router's call: 2 of 6 scratch runs offered
+    "setting up the project" when the router was told to, so a fixed label is not
+    pinned.
 
     A gate denial and a stub's reply both come back as the spawn's result, so a
     denial is told apart by its text, which carries the gate's own reason."""
@@ -1125,18 +1219,19 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
 
     if "bounded-after-init" not in test.get("tags", []):
         pytest.skip("not a bounded-first-message test")
+    owner = _deliverable(test) or "search-records"
     skill_under_test = test.get("skill")
     taken: list[str] = []
     for name in handoffs(skills_invoked, builtin_tool_calls):
         if name != skill_under_test and name not in taken:
             taken.append(name)
-    assert taken == ["init-project", "search-records"], (
-        f"a bounded record ask with no project hands off to init-project, then "
-        f"search-records, and nothing else; got {taken}"
+    assert taken == ["init-project", owner], (
+        f"a bounded ask with no project hands off to init-project, then "
+        f"{owner}, and nothing else; got {taken}"
     )
     research = after_state.get("research_json")
     tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx") or {}
-    assert research is not None, "init-project made no project, yet the turn went on to search"
+    assert research is not None, f"init-project made no project, yet the turn went on to {owner}"
     problems = [
         p for p in (_handed_subject(prompt, tree, research)[1]
                     for prompt in _spawn_prompts(builtin_tool_calls, "search-records")) if p
@@ -1802,24 +1897,8 @@ def _italic_titles(reply: str) -> list[str]:
     return titles
 
 
-def _strings(value) -> list[str]:
-    """Every string leaf of a tool response, unescaped, so a title that wraps a line or
-    holds a quote in the result still matches. A string response holding JSON is parsed."""
-    if isinstance(value, str):
-        try:
-            parsed = json.loads(value)
-        except ValueError:
-            return [value]
-        return [parsed] if isinstance(parsed, str) else _strings(parsed)
-    if isinstance(value, dict):
-        return [s for v in value.values() for s in _strings(v)]
-    if isinstance(value, list):
-        return [s for v in value for s in _strings(v)]
-    return [] if value is None else [str(value)]
-
-
 def _tool_result_text(tool_calls) -> str:
-    return _normalised_title(" ".join(s for call in tool_calls or [] for s in _strings(call.get("response"))))
+    return _normalised_title(" ".join(s for call in tool_calls or [] for s in response_strings(call.get("response"))))
 
 
 def test_names_works_only_from_tool_results(text_response, tool_calls, test):
