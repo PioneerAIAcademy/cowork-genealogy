@@ -17,48 +17,48 @@ const rej = (assertion_id: string, person_id: string, over = {}): Record<string,
 
 describe("isRejectedPair", () => {
   it("refuses the exact pair a researcher rejected", () => {
-    expect(isRejectedPair("a_001", "I1", [rej("a_001", "I1")])).toBe(true);
+    expect(isRejectedPair("a_001", "I1", [rej("a_001", "I1")], [])).toBe(true);
   });
 
   it("allows the same assertion against a DIFFERENT person", () => {
     // Rejecting "this record is not Mary" says nothing about her sister.
-    expect(isRejectedPair("a_001", "I2", [rej("a_001", "I1")])).toBe(false);
+    expect(isRejectedPair("a_001", "I2", [rej("a_001", "I1")], [])).toBe(false);
   });
 
   it("allows a different assertion against the same person", () => {
-    expect(isRejectedPair("a_002", "I1", [rej("a_001", "I1")])).toBe(false);
+    expect(isRejectedPair("a_002", "I1", [rej("a_001", "I1")], [])).toBe(false);
   });
 
   it("allows everything when nothing has been rejected", () => {
-    expect(isRejectedPair("a_001", "I1", [])).toBe(false);
+    expect(isRejectedPair("a_001", "I1", [], [])).toBe(false);
   });
 
   it("is not fooled by a missing or malformed record", () => {
     const bad = [{}, { assertion_id: "a_001" }, null] as unknown as Record<string, unknown>[];
-    expect(isRejectedPair("a_001", "I1", bad)).toBe(false);
+    expect(isRejectedPair("a_001", "I1", bad, [])).toBe(false);
   });
 
   it("allows the pair again once the rejection is withdrawn", () => {
     // A rejection is a fact the researcher can change their mind about; the record
     // going away is how they do it.
-    expect(isRejectedPair("a_001", "I1", [rej("a_002", "I3")])).toBe(false);
+    expect(isRejectedPair("a_001", "I1", [rej("a_002", "I3")], [])).toBe(false);
   });
 });
 
 describe("rejectionFor", () => {
   it("returns the record so the refusal can quote the researcher's reason", () => {
-    const r = rejectionFor("a_001", "I1", [rej("a_001", "I1", { reason: "different birth year" })]);
+    const r = rejectionFor("a_001", "I1", [rej("a_001", "I1", { reason: "different birth year" })], []);
     expect(r?.reason).toBe("different birth year");
   });
 
   it("returns the record even when no reason was given", () => {
     // "never a demand for the right answer" -- a reason is optional, and a rejection
     // without one is still binding.
-    expect(rejectionFor("a_001", "I1", [rej("a_001", "I1")])).not.toBeNull();
+    expect(rejectionFor("a_001", "I1", [rej("a_001", "I1")], [])).not.toBeNull();
   });
 
   it("returns null when the pair was never rejected", () => {
-    expect(rejectionFor("a_009", "I9", [rej("a_001", "I1")])).toBeNull();
+    expect(rejectionFor("a_009", "I9", [rej("a_001", "I1")], [])).toBeNull();
   });
 });
 
@@ -441,6 +441,119 @@ describe("a rejection on a linked pair undoes the link and its facts", () => {
     const { research, tree } = read(dir);
     expect(research.person_evidence[0].superseded_by).toBe("pe_009");
     expect(tree.persons[0].facts.map((f: any) => f.id)).toEqual(["F1", "F2", "F3"]);
+  });
+});
+
+// --- #4652: a rejection covers the whole record entry, not one assertion ------------
+
+const REC = "ark:/61903/1:1:AAAA-111";
+const asrt = (id: string, over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  id, source_id: "src_001", record_id: REC, record_persona_id: "p_1", record_role: "principal",
+  fact_type: "Birth", ...over,
+});
+
+describe("rejectionFor: the record entry", () => {
+  const set = [
+    asrt("a_001"), asrt("a_002", { fact_type: "Residence" }), asrt("a_003", { fact_type: "Occupation" }),
+    asrt("a_004", { record_persona_id: "p_2", record_role: "spouse" }),
+    asrt("a_005", { fact_type: "Marriage" }),
+    asrt("a_006", { record_id: "ark:/61903/1:1:BBBB-222" }),
+  ];
+  const rejected = [rej("a_002", "I1")];
+
+  it("covers every assertion of the same party on the same record", () => {
+    for (const id of ["a_001", "a_002", "a_003"]) expect(isRejectedPair(id, "I1", rejected as never, set)).toBe(true);
+  });
+  it("leaves another party of the record, another record and another person alone", () => {
+    expect(isRejectedPair("a_004", "I1", rejected as never, set)).toBe(false);
+    expect(isRejectedPair("a_006", "I1", rejected as never, set)).toBe(false);
+    expect(isRejectedPair("a_001", "I2", rejected as never, set)).toBe(false);
+  });
+  it("keeps a two-party fact out of the entry, on both sides", () => {
+    expect(isRejectedPair("a_005", "I1", rejected as never, set)).toBe(false);
+    expect(isRejectedPair("a_001", "I1", [rej("a_005", "I1")] as never, set)).toBe(false);
+    expect(isRejectedPair("a_005", "I1", [rej("a_005", "I1")] as never, set)).toBe(true);
+  });
+  it("falls back to the exact assertion where the keyer cannot place it", () => {
+    const bare = [asrt("a_001", { record_persona_id: undefined, record_role: undefined }), asrt("a_002")];
+    expect(isRejectedPair("a_001", "I1", [rej("a_001", "I1")] as never, bare)).toBe(true);
+    expect(isRejectedPair("a_002", "I1", [rej("a_001", "I1")] as never, bare)).toBe(false);
+  });
+  it("does not sweep in a superseded assertion", () => {
+    const withDead = [...set, asrt("a_007", { superseded_by: "a_001" })];
+    expect(isRejectedPair("a_007", "I1", rejected as never, withDead)).toBe(false);
+  });
+});
+
+describe("a rejection retires every link of the record entry", () => {
+  const entryProject = () => {
+    const dir = mkdtempSync(join(tmpdir(), "rej-entry-"));
+    mkdirSync(join(dir, "results"), { recursive: true });
+    const link = (id: string, a: string, person = "I1") => ({
+      id, assertion_id: a, person_id: person, confidence: "speculative", rationale: "attached", created: "2026-09-01",
+    });
+    writeFileSync(join(dir, "research.json"), JSON.stringify({
+      project: { id: "rp_t", status: "active" },
+      questions: [], plans: [], log: [],
+      sources: [{ id: "src_001", gedcomx_source_description_id: "S1" }],
+      assertions: [asrt("a_001"), asrt("a_002", { fact_type: "Residence" }), asrt("a_003", { record_persona_id: "p_2", record_role: "spouse" })],
+      person_evidence: [link("pe_001", "a_001"), link("pe_002", "a_002"), link("pe_003", "a_003"), link("pe_004", "a_002", "I2")],
+      conflicts: [], hypotheses: [], timelines: [], proof_summaries: [], evaluations: [], localities: [],
+    }), "utf8");
+    writeFileSync(join(dir, "tree.gedcomx.json"), JSON.stringify({
+      persons: [
+        { id: "I1", facts: [
+          { id: "F1", type: "Birth", assertion_id: "a_001", sources: [{ ref: "S1" }] },
+          { id: "F2", type: "Residence", assertion_id: "a_002", sources: [{ ref: "S1" }] },
+          { id: "F3", type: "Occupation", assertion_id: "a_003", sources: [{ ref: "S1" }] },
+        ] },
+        { id: "I2", facts: [] },
+      ],
+      relationships: [], sources: [{ id: "S1" }],
+    }), "utf8");
+    return dir;
+  };
+  const read = (dir: string) => ({
+    research: JSON.parse(readFileSync(join(dir, "research.json"), "utf8")),
+    tree: JSON.parse(readFileSync(join(dir, "tree.gedcomx.json"), "utf8")),
+  });
+
+  it("rejecting one assertion retires the party's other links, removes their facts, names each", async () => {
+    const dir = entryProject();
+    const text = await appendRejection(dir, { assertion_id: "a_002", person_id: "I1", researcher_words: "not him" });
+    expect(text).toMatch(/"ok":true/);
+    const { research, tree } = read(dir);
+    const by = (id: string) => research.person_evidence.find((pe: any) => pe.id === id);
+    expect(by("pe_001").superseded_by).toBe("rj_001");
+    expect(by("pe_002").superseded_by).toBe("rj_001");
+    expect(by("pe_003").superseded_by).toBeUndefined();
+    expect(by("pe_004").superseded_by).toBeUndefined();
+    expect(tree.persons[0].facts.map((f: any) => f.id)).toEqual(["F3"]);
+    expect(text).toMatch(/assertions a_001, a_002\b/);
+  });
+
+  it("refuses a re-link of a sibling assertion the rejection never named", async () => {
+    const dir = entryProject();
+    const r = JSON.parse(readFileSync(join(dir, "research.json"), "utf8"));
+    r.person_evidence = r.person_evidence.filter((pe: any) => pe.id !== "pe_004");
+    writeFileSync(join(dir, "research.json"), JSON.stringify(r), "utf8");
+    await appendRejection(dir, { assertion_id: "a_002", person_id: "I1", researcher_words: "not him" });
+    const out = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "append",
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "probable", rationale: "x" },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/rejected as not a match/);
+  });
+
+  it("a rejection on an assertion the keyer cannot place still retires one link only", async () => {
+    const dir = entryProject();
+    const r = read(dir).research;
+    for (const a of r.assertions) if (a.id !== "a_003") { delete a.record_persona_id; delete a.record_role; }
+    writeFileSync(join(dir, "research.json"), JSON.stringify(r), "utf8");
+    await appendRejection(dir, { assertion_id: "a_002", person_id: "I1", researcher_words: "not him" });
+    const by = (id: string) => read(dir).research.person_evidence.find((pe: any) => pe.id === id);
+    expect(by("pe_002").superseded_by).toBe("rj_001");
+    expect(by("pe_001").superseded_by).toBeUndefined();
   });
 });
 

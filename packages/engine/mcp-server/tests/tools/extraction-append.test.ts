@@ -1807,7 +1807,7 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect((await research()).person_evidence).toHaveLength(1);
   });
 
-  it("never re-links a rejected pair, and still links the persona's other assertions", async () => {
+  it("never re-links a rejected pair, nor the rest of its persona's record entry", async () => {
     await writeTree([person("I1", { person: ["S1"] })], [S1]);
     await runExtractionAppend({ projectPath: dir, recordIds: ["ark:/61903/1:1:MZGS-1B7"] } as any, reader([CENSUS()]) as any, LOCAL);
     const r0 = await research();
@@ -1815,9 +1815,9 @@ describe("extraction_append: personId extracts and links a person's attachments"
     r0.rejected_links = [{ id: "rj_001", assertion_id: johns[0].id, person_id: "I1", created: "2026-01-01" }];
     await writeProjectFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
     const r = await run("I1");
-    expect(r.rejectedSkipped).toBe(1);
-    expect(r.linked).toBe(johns.length - 1);
-    expect((await research()).person_evidence.some((pe: any) => pe.assertion_id === johns[0].id)).toBe(false);
+    expect(r.rejectedSkipped).toBe(johns.length);
+    expect(r.linked).toBe(0);
+    expect((await research()).person_evidence.some((pe: any) => johns.some((j: any) => j.id === pe.assertion_id))).toBe(false);
   });
 
   it("treats a record re-found through another persona's ARK as one record: tied, not re-extracted", async () => {
@@ -2152,7 +2152,13 @@ describe("research_append: the attachment-link score exemption is code-only", ()
     const resend = await raise(freshId, { superseded_by: rjId });
     expect(errorsOf(resend)?.join(" ") ?? "").not.toMatch(/names no person_evidence entry/);
     expect(resend.ok, JSON.stringify(resend)).toBe(true);
-    const other = (await research()).person_evidence.find((e: any) => e.assertion_id !== pe.assertion_id && !e.superseded_by);
+    // The rejection covers John's whole record entry (#4652), so the link that is
+    // "another pair" is another party's: Anna's.
+    const annaOp = await annaLink();
+    const doc = await research();
+    doc.person_evidence.push({ id: "pe_901", ...annaOp.entry, created: "2026-11-18" });
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(doc));
+    const other = (await research()).person_evidence.find((e: any) => e.id === "pe_901");
     const wrong = await raise(other.id, { superseded_by: rjId });
     expect(wrong.ok).toBe(false);
   });
