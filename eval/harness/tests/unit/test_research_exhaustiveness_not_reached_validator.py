@@ -24,7 +24,9 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # Aliased: pyproject.toml collects `test_*`, so the names imported as-is would
 # be collected here with fixtures pytest cannot supply.
 from test_research_exhaustiveness import (  # noqa: E402
+    declined_skip_items,
     held_wiki_titles,
+    test_not_reached_lists_declined_skips as _declined_fn,
     test_not_reached_lists_uncaptured_handoffs as _handoff_fn,
     test_not_reached_wiki_title_is_page_title as _wiki_fn,
     uncaptured_handoff_ids,
@@ -33,6 +35,7 @@ from test_research_exhaustiveness import (  # noqa: E402
 _SCENARIOS = Path(__file__).resolve().parents[3] / "fixtures" / "scenarios"
 _HANDOFF_TEST = {"tags": ["research-exhaustiveness", "not-reached-handoff"]}
 _WIKI_TEST = {"tags": ["research-exhaustiveness", "not-reached-wiki"]}
+_DECLINED_TEST = {"tags": ["research-exhaustiveness", "not-reached-skipped-item"]}
 
 
 def _research(scenario: str) -> dict:
@@ -41,6 +44,7 @@ def _research(scenario: str) -> dict:
 
 HANDOFF_BEFORE = _research("recent-birth-handoff-agent-closed")
 WIKI_BEFORE = _research("recent-birth-wiki-untouched")
+DECLINED_BEFORE = _research("flynn-skip-user-declined")
 
 
 def _declared(before: dict, not_reached: list[dict]) -> dict:
@@ -165,7 +169,7 @@ def test_wiki_check_fails_when_question_never_written():
 
 def test_checks_skip_without_their_tag():
     after = _declared(HANDOFF_BEFORE, [])
-    for fn in (_handoff_fn, _wiki_fn):
+    for fn in (_handoff_fn, _wiki_fn, _declined_fn):
         with pytest.raises(pytest.skip.Exception):
             fn({"research_json": HANDOFF_BEFORE}, {"research_json": after}, {"tags": []})
 
@@ -183,3 +187,100 @@ def test_capture_on_another_questions_item_is_out_of_scope():
     research["log"][-1]["plan_item_id"] = "pli_other_question"
     research["log"][-1]["external_site"]["capture_received"] = True
     assert uncaptured_handoff_ids(research, "q_001") == ["log_008"]
+
+
+def _skipped(description: str) -> dict:
+    return {"kind": "skipped_plan_item", "log_entry_id": None, "wiki_title": None, "description": description}
+
+
+def _wrapped_up(before: dict, not_reached: list[dict]) -> dict:
+    after = _declared(before, not_reached)
+    q = after["questions"][0]
+    q["status"] = before["questions"][0]["status"]
+    q["search_stop"].update(stopped_because="resources_spent", stop_criteria=None)
+    return after
+
+
+_NEWSPAPER = {"kind": "skipped_plan_item", "log_entry_id": None, "wiki_title": None,
+              "description": "Pottsville Republican newspaper obituary (pli_010): microfilm only, not reachable."}
+
+
+def test_scenario_has_the_struck_and_the_inaccessible_item():
+    assert [i["id"] for i in declined_skip_items(DECLINED_BEFORE, "q_001")] == ["pli_009", "pli_010"]
+
+
+@pytest.mark.parametrize("description", [
+    "Naturalization (pli_009) not searched: the researcher declined it.",
+    "Thomas Flynn's naturalization papers, 1850-1880: struck by the researcher.",
+    "pli_009 skipped at the researcher's request.",
+])
+def test_declined_skip_listed_passes(description):
+    after = _declared(DECLINED_BEFORE, [_skipped(description), _NEWSPAPER])
+    _run(_declined_fn, DECLINED_BEFORE, after, _DECLINED_TEST)
+
+
+def test_declined_skip_listed_on_a_wrap_up_passes():
+    after = _wrapped_up(DECLINED_BEFORE, [_skipped("Naturalization search declined by the researcher."), _NEWSPAPER])
+    _run(_declined_fn, DECLINED_BEFORE, after, _DECLINED_TEST)
+
+
+def test_an_inaccessible_item_may_be_listed_under_the_exceptions_kind():
+    """On a declaration §3's exception lists an inaccessible source under its own
+    kind, so the newspaper item passes as `browse_only` — the other direction
+    of requiring an entry for it at all."""
+    exception_entry = {**_NEWSPAPER, "kind": "browse_only"}
+    after = _declared(DECLINED_BEFORE, [_skipped("Naturalization (pli_009) declined."), exception_entry])
+    _run(_declined_fn, DECLINED_BEFORE, after, _DECLINED_TEST)
+
+
+@pytest.mark.parametrize("not_reached", [
+    pytest.param([], id="missing"),
+    pytest.param([{**_skipped("Naturalization search declined."), "kind": "deferred"}, _NEWSPAPER], id="wrong-kind"),
+    pytest.param([_skipped("1870-1900 census (pli_007) skipped."), _NEWSPAPER], id="names-another-item"),
+    pytest.param([_skipped("pli_0090 skipped."), _NEWSPAPER], id="id-inside-a-longer-id"),
+    pytest.param([_skipped("Naturalization (pli_009) declined.")], id="inaccessible-missing"),
+    pytest.param([{**_skipped("Naturalization (pli_009) declined."), "log_entry_id": "log_006"}, _NEWSPAPER],
+                 id="log-entry-id-not-null"),
+    pytest.param([_skipped("Naturalization (pli_009) declined."), {**_NEWSPAPER, "wiki_title": "Pennsylvania_Vital_Records"}],
+                 id="wiki-title-not-null"),
+])
+def test_declined_skip_check_fails(not_reached):
+    with pytest.raises(AssertionError):
+        _run(_declined_fn, DECLINED_BEFORE, _declared(DECLINED_BEFORE, not_reached), _DECLINED_TEST)
+
+
+def test_declined_skip_check_fails_on_a_wrap_up_without_it():
+    with pytest.raises(AssertionError):
+        _run(_declined_fn, DECLINED_BEFORE, _wrapped_up(DECLINED_BEFORE, [_NEWSPAPER]), _DECLINED_TEST)
+
+
+def test_declined_skip_check_fails_when_question_never_written():
+    with pytest.raises(AssertionError):
+        _run(_declined_fn, DECLINED_BEFORE, copy.deepcopy(DECLINED_BEFORE), _DECLINED_TEST)
+
+
+def test_a_skip_with_no_category_is_not_required():
+    before = copy.deepcopy(DECLINED_BEFORE)
+    item = next(i for p in before["plans"] for i in p["items"] if i["id"] == "pli_009")
+    del item["skip_category"]
+    assert [i["id"] for i in declined_skip_items(before, "q_001")] == ["pli_010"]
+
+
+def test_a_no_coverage_skip_is_required():
+    before = copy.deepcopy(DECLINED_BEFORE)
+    item = next(i for p in before["plans"] for i in p["items"] if i["id"] == "pli_009")
+    item["skip_category"] = "no_coverage"
+    assert [i["id"] for i in declined_skip_items(before, "q_001")] == ["pli_009", "pli_010"]
+
+
+def test_a_declined_item_awaiting_an_upload_is_not_required():
+    before = copy.deepcopy(DECLINED_BEFORE)
+    before["log"].append({
+        "id": "log_099", "plan_item_id": "pli_009", "tool": "external_site", "outcome": "partial",
+        "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Thomas_Flynn",
+                          "capture_received": False},
+    })
+    assert [i["id"] for i in declined_skip_items(before, "q_001")] == ["pli_010"]
+    after = _declared(before, [{**_handoff("log_099"), "description": "Ancestry naturalization search, handed to the user."},
+                               _NEWSPAPER])
+    _run(_declined_fn, before, after, _DECLINED_TEST)

@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 57 tools. A caller on the remote connector also gets the two
+The MCP server exposes 58 tools. A caller on the remote connector also gets the two
 under [Connector only](#connector-only).
 
 ### FamilySearch records and places
@@ -30,9 +30,10 @@ under [Connector only](#connector-only).
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_search_all` | Like `place_search`, but expands each match to every jurisdiction the place has belonged to over time — for boundary or parent-jurisdiction changes across a research period | None |
 | `collections_search` | Lists FamilySearch record collections for a place (returns the derived `scope`); optional `startYear`/`endYear` filter | OAuth |
-| `catalog_search` | Searches the FamilySearch **Catalog** — microfilm, books, manuscripts and finding aids — and hydrates its top hits with holdings detail: where the originals are held, and an `imageGroupNumber` for `image_search`/`fulltext_search` where one was filmed. A different index from `collections_search` | OAuth |
+| `catalog_search` | Searches the FamilySearch **Catalog** — microfilm, books, manuscripts and finding aids — and hydrates its top hits with holdings detail: where the originals are held, and an `imageGroupNumber` for `image_search`/`fulltext_search` where one was filmed. Also opens one entry by its id or a pasted Catalog link (`catalogId`). A different index from `collections_search` | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns every persona on the record as compacted simplified GEDCOMX (`citation` and `recordUrl` in place of sources, no name/fact/relationship ids, large households capped with stubs and `personsOmitted`); with `projectPath` the full record is staged (`staged.resultsRef`) so `research_log_append` retains it as a sidecar and `extraction_append` reads it | OAuth |
+| `image_index` | Lists the records FamilySearch has indexed on one page image (its `3:1:` ARK or viewer URL), reading each record for the persona arks and names on it; capped per call with `nextOffset`, and marked unordered (`ordered: false`) because the list's order is not verified as the page's line order | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. With `item` / `itemImage` on a bare film number, resolves a "DGS 004528134, Item 5, Image 10" citation to its image ID. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |

@@ -244,3 +244,37 @@ def test_run_skill_attributes_each_spawn_result_to_its_spawn(tmp_path, monkeypat
         {"subagent_type": "search-wikipedia", "text": CLEAN},
         {"subagent_type": "image-reader", "text": "agent crashed", "is_error": True},
     ]
+
+
+# --- subject_reply_text(skip_failed_spawns=True) -------------------------
+# The one shared "skip failed spawns" filter for test_universal's
+# hand-back check and tree-edit's namesake hand-back check (issue #3935).
+
+from harness.skill_runner import subject_reply_text  # noqa: E402
+
+_FAILED = {"subagent_type": "tree-edit", "is_error": True,
+           "text": "Agent type 'tree-edit' failed. Available agents: person-evidence, extraction"}
+_OWN = {"subagent_type": "tree-edit", "text": "This census is not tied to I1; that link is person-evidence's."}
+_DIRECT = {"delegation": {"agent": "tree-edit"}}
+
+
+def test_a_failed_spawn_is_dropped_when_asked():
+    assert subject_reply_text([_FAILED], "", "tree-edit", _DIRECT, skip_failed_spawns=True) == ""
+
+
+def test_a_failed_spawn_is_kept_by_default():
+    assert "person-evidence" in subject_reply_text([_FAILED], "", "tree-edit", _DIRECT)
+
+
+def test_the_agents_own_return_survives_beside_a_failed_spawn():
+    reply = subject_reply_text([_FAILED, _OWN], "", "tree-edit", _DIRECT, skip_failed_spawns=True)
+    assert reply == _OWN["text"]
+
+
+def test_is_error_false_or_absent_is_kept():
+    kept = dict(_OWN, is_error=False)
+    assert subject_reply_text([kept], "", "tree-edit", _DIRECT, skip_failed_spawns=True) == _OWN["text"]
+
+
+def test_none_returns_on_a_routed_test_fall_back_to_the_reply():
+    assert subject_reply_text(None, "relay", "tree-edit", {}, skip_failed_spawns=True) == "relay"

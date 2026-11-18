@@ -307,7 +307,7 @@ described under "Who actually writes a row" below.
 | `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `search_stop`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `search_stop.stopped_because` to be a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) — checked from either side, on the post-merge entry — and a gate-value `stopped_because` is refused while an item on the question's **active** plan is `in_progress` **or `planned`** (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared) |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, search-hints (`items[].status`); `extraction_append` (`items[].status`, `in_progress` → `completed` only, by tool identity) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it (search-hints sets the status of its `fs_hints` review item) |
 | `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per hint it accepts or rejects, or per verdict the researcher states), survey-surname; `extraction_append` (its own `record_read` entry per record it reads live; an earlier uncited read is cited instead) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
-| `sources` | `extraction_append` (by tool identity), citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
+| `sources` | `extraction_append` (by tool identity), citation (the plugin hook denies a `research_append` to the section to every other caller) | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
 | `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. A wrong extraction is corrected only by `extraction_append`'s re-extraction, which retires the old assertions with `superseded_by` (§5.6). Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. The one removal is `research_append`'s unanchored-person sweep, which takes out the links naming a minted person it removes (`research-append-tool-spec.md` §5.11). An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
@@ -378,7 +378,9 @@ names the holder on must equal the rows the tool reaches:
   for every caller, so the row names no holder for it: `merge_tree_persons` on
   the research.json rows it repoints ids in, and `research_append` /
   `extraction_append` on tree `persons`, which they reach only through the
-  assertion-backlink fact rewrite. The unit plane reads the same field
+  assertion-backlink fact rewrite and, for `research_append`, the `primary`
+  clear (Decision 34); and `research_append` on tree `relationships`, which it
+  reaches only through that clear, on a Couple fact. The unit plane reads the same field
   (`harness/ownership.py:writer_tool_sets`) and still requires the delta to be
   that tool's own write. Widening `callers` instead would grant the section by
   any path, which is why these writers are not callers.
@@ -388,7 +390,8 @@ names the holder on must equal the rows the tool reaches:
   `AGENT_WRITABLE_SECTIONS` lane, minus any section `OWNED_SECTIONS` routes to
   another agent, and a tree row only through the one section that writes it —
   tree `persons` via an `assertions` update, tree `sources` via a `sources`
-  append. That tool and that map are the manifest's `hookRouting`, the one
+  append — plus the `primary` clear on tree `persons` and `relationships`,
+  which tool identity authorizes and no section routes. That tool and that map are the manifest's `hookRouting`, the one
   copy both the packaging guard and `make e2e-writer-attribution` read, and
   `plugin-hooks.test.ts` pins the tool to the one the hook gates. Every agent
   granted `research_append` must have a lane (`plugin-hooks.test.ts`, which
@@ -490,8 +493,9 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
-*conclusion* on the tree — marking the concluded value `primary` and
-writing the concluded relationship (see Section 8 "tree.gedcomx.json
+*conclusion* on the tree — marking the concluded value `primary`, which any
+writer may set only on a fact a live affirmed claim at `probable` or better
+covers (Decision 34), and writing the concluded relationship (see Section 8 "tree.gedcomx.json
 update timing" and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
 `person-evidence` **owns the household skeleton**: it mints a `person`
 when a newly discovered persona matches no one in the tree — with its
@@ -501,10 +505,13 @@ never a name-only stub — and writes the parent-child / spouse edges via
 **assertion-only**: it writes `sources` (the GedcomX `S` entry that
 mirrors each `src_` it appends to `research.json`) plus the assertions,
 and is **not a writer of `persons` or `relationships`**. The validator
-still admits, by tool identity, one derived tree delta: an assertion
+still admits, by tool identity, two derived tree deltas: an assertion
 update that rewrites `place`/`standard_place`/`date`/`value` on a fact
 already carrying that assertion's `assertion_id`
-(`tree-materialization-spec.md` §4.4), and nothing else. Nothing reaches
+(`tree-materialization-spec.md` §4.4), and `research_append`'s `primary`
+clear (Decision 34 of `docs/plan/conclusion-tree.md`), which removes `primary`
+from a person or Couple fact whose covering claim the same call lowered or
+removed; nothing else. Nothing reaches
 it today: `research_append` refuses every assertions write except an
 update setting only `informant_bias_notes` (genealogist ruling
 2026-10-05, option B), and `extraction_append` makes one update only, which
@@ -1500,9 +1507,9 @@ Users may manually edit `tree.gedcomx.json` — adding a person, correcting a fa
 
 **Layer 1 — evidence, materialized at identity-link time.** When person-evidence links a persona to a tree person, the evidence facts and names that persona asserts materialize onto the person via `materialize_facts`. Each materialized fact and name carries **provenance** — a non-null source reference back to the record it came from. This happens as soon as the identity link is made, **independent of any proof summary**. The tree therefore accumulates evidence facts as research proceeds, not only once a conclusion is reached; conflicting values of the same fact type **coexist as separate sourced facts** rather than being withheld until the conflict is resolved.
 
-**Layer 2 — conclusion, governed by `primary`/`preferred`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags — written by **proof-conclusion alone**; its strength lives in the proof summary (`tier`, and each claim's `proof_tier` when claims are present). Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`; the underlying evidence facts stay in the tree as evidence.
+**Layer 2 — conclusion, governed by `primary`/`preferred`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags. `primary` follows a claim (Decision 34 of `docs/plan/conclusion-tree.md`): any writer sets it only on a fact a live affirmed claim at `probable` or better covers (the tree writers warn until Stage 1c), and a merge never sets it; its strength lives in the proof summary (`tier`, and each claim's `proof_tier` when claims are present). Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised so no live claim at `probable` or better covers the fact any more, `research_append` clears `primary` in the same write; the underlying evidence facts stay in the tree as evidence.
 
-The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary` flag on the birthplace fact and by ps_001 (`probable`), not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but the birthplace's `primary` flag would be cleared.
+The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by ps_001's two `probable` claims, which the birthplace fact's `primary` flag follows (Decision 34), not by the facts' mere presence in the file. Were ps_001's birth claim lowered below `probable` or removed, R1 and the birthplace evidence would remain, but `research_append` would clear the birthplace's `primary` flag in the same write. F3's `primary` predates any claim and is left alone (Decision 24).
 
 **Two further evidence-layer writes during active research:**
 - **Source descriptions (`S` entries)** are created by `extraction_append` — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."
@@ -2296,6 +2303,20 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "tier": "probable",
       "vehicle": "summary",
       "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
+      "claims": [
+        {
+          "claim": "Thomas Flynn is Patrick's father",
+          "proof_tier": "probable",
+          "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
+          "relationship": { "type": "ParentChild", "parent": "I2", "child": "I1" }
+        },
+        {
+          "claim": "Patrick was born about 1845 in Ireland",
+          "proof_tier": "probable",
+          "supporting_assertion_ids": ["a_002", "a_009"],
+          "fact": { "subject": "I1", "fact_type": "Birth", "date": "~1845", "place": "Ireland" }
+        }
+      ],
       "resolved_conflict_ids": ["c_001"],
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
       "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."

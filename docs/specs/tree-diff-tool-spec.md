@@ -15,9 +15,12 @@ changed relative to the first — persons, per-person facts, and relationships.
 
 Two callers need this and neither can get it from the data alone:
 
-- **The tree-encoding completion gate** diffs the final
+- **The tree-encoding completion gate's legacy arm** diffs the final
   `tree.gedcomx.json` against the write-once `starting-tree.gedcomx.json` baseline
-  to tell a conclusion this session encoded from a fact that was already seeded.
+  to tell a conclusion this session encoded from a fact that was already seeded,
+  for a proof summary that states no claims. A summary with claims is judged by
+  the owed `encode` item instead, which joins each claim to the tree object it
+  names (research-append-tool-spec §5.2).
   `research_append` loads only the *current* tree, so without the baseline it has
   no way to make that distinction.
 - **The viewer and a status answer** want the same "what did this session change"
@@ -101,9 +104,11 @@ conclusion's person gain any tree structure this session?"
 - It does not diff `sources[]`, names, gender, or `ark`.
 - It is a **shape** diff, not a semantic one: it reports that a person gained a
   Birth fact, not whether that Birth fact is the one a given conclusion asserts.
-  That ambiguity is inherent — a proof summary carries no machine-readable tree
-  reference — and is why the tree-encoding gate built on this is a shape match, not
-  a foreign key (see the gate's row in `research-append-tool-spec.md`).
+  That ambiguity is inherent for a proof summary with no claims — it carries no
+  machine-readable tree reference — and is why the gate's legacy arm built on this
+  is a shape match, not a foreign key. A summary that states claims names its
+  objects, and the owed `encode` item reads those instead
+  (`research-append-tool-spec.md` §5.2).
 
 ## Behaviour
 
