@@ -1,0 +1,175 @@
+{
+  "tool": "record_read",
+  "description": "Carved from feedback bundle feedback-2026-10-30T07-56-13-719275Z.zip (issue #4042), results/log_023.json: the 1945 death registration (b. 1875, parents Ventura Cedillo + Maria Jesus Amaya, no spouse).",
+  "args": {
+    "recordId": "~X7FM-YRGN"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_310190252176",
+        "ark": "ark:/61903/1:1:X7FM-YRGN",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "443c968a-7d18-4c0c-b34f-bb56184ae6bb",
+            "type": "BirthName",
+            "surname": "Cedillo",
+            "given": "Maria Nicolasa"
+          }
+        ],
+        "facts": [
+          {
+            "id": "3dda7753-00a4-4a0f-8fa4-54e432e88ada",
+            "type": "DeathRegistration",
+            "primary": true,
+            "date": "13 de febrero de 1945",
+            "standard_date": "13 Feb 1945",
+            "place": "Santa Lucía, Intibucá, Honduras"
+          },
+          {
+            "id": "50f5703c-f46d-4932-a19b-f955cf7e4f24",
+            "type": "Death",
+            "date": "12 de febrero de 1945",
+            "standard_date": "12 Feb 1945"
+          },
+          {
+            "id": "dd0e45b9-7da8-4117-b578-9b737ba5e88e",
+            "type": "Birth",
+            "date": "1875",
+            "standard_date": "1875"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310190252177",
+        "ark": "ark:/61903/1:1:X7FM-YRGJ",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "2747da74-7c08-45fe-ac4a-f5a8f6a31be2",
+            "type": "BirthName",
+            "surname": "Cedillo",
+            "given": "Ventura"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310190252179",
+        "ark": "ark:/61903/1:1:X7FM-YRGK",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "5efff528-f069-44e0-845a-5f0be06780e6",
+            "type": "BirthName",
+            "surname": "Amaya",
+            "given": "Maria Jesus"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "d751abba-1698-488b-a535-fd4c08487c0e",
+        "type": "ParentChild",
+        "parent": "p_310190252179",
+        "child": "p_310190252176"
+      },
+      {
+        "id": "c95a65cc-37b8-41d8-8785-3aaa5b0be0dc",
+        "type": "ParentChild",
+        "parent": "p_310190252177",
+        "child": "p_310190252176"
+      },
+      {
+        "id": "94c5892a-cfe3-4405-a640-f0c8a33dab5b",
+        "type": "Couple",
+        "person1": "p_310190252177",
+        "person2": "p_310190252179"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_182560213954",
+        "resource_type": "Record",
+        "title": "Registro para Maria Nicolasa Cedillo, \"Honduras, Civil Registration, 1841-1968\"",
+        "citation": "\"Honduras, Civil Registration, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGN : Thu Aug 06 05:22:30 UTC 2026), Entry for Maria Nicolasa Cedillo and Ventura Cedillo, 13 de febrero de 1945.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HZDG-1D7Q",
+        "coverage": {
+          "date_range": "13 de febrero de 1945",
+          "record_type": "Death"
+        }
+      },
+      {
+        "id": "sd_c_2135627",
+        "resource_type": "Collection",
+        "title": "Honduras, Civil Registration, 1841-1968",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "coverage": {
+          "place_rep_id": "173",
+          "date_range": "1841/1968",
+          "record_type": "Vital",
+          "standard_place": "Honduras"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-5Q11-NK2",
+        "coverage": {
+          "place_rep_id": "441572",
+          "date_range": "1945-01/1947-12",
+          "record_type": "Death",
+          "standard_place": "Santa Lucía, Intibucá, Honduras"
+        }
+      },
+      {
+        "id": "sd_p_310190252176",
+        "resource_type": "Person",
+        "title": "Maria Nicolasa Cedillo, \"Honduras, Civil Registration, 1841-1968\"",
+        "citation": "\"Honduras, Civil Registration, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGN : Thu Aug 06 05:22:30 UTC 2026), Maria Nicolasa Cedillo, 13 de febrero de 1945.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGN"
+      },
+      {
+        "id": "sd_p_310190252177",
+        "resource_type": "Person",
+        "title": "Ventura Cedillo, \"Honduras, Civil Registration, 1841-1968\"",
+        "citation": "\"Honduras, Civil Registration, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGJ : Thu Aug 06 05:22:30 UTC 2026), Ventura Cedillo in entry for Maria Nicolasa Cedillo, 13 de febrero de 1945.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGJ"
+      },
+      {
+        "id": "sd_p_310190252179",
+        "resource_type": "Person",
+        "title": "Maria Jesus Amaya, \"Honduras, Civil Registration, 1841-1968\"",
+        "citation": "\"Honduras, Civil Registration, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGK : Thu Aug 06 05:22:30 UTC 2026), Maria Jesus Amaya in entry for Maria Nicolasa Cedillo, 13 de febrero de 1945.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGK"
+      },
+      {
+        "id": "sd_auto_M9VM-SQG",
+        "resource_type": "auto",
+        "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+        "coverage": {
+          "place_rep_id": "5270",
+          "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z",
+          "standard_place": "Intibucá, Honduras"
+        }
+      }
+    ]
+  }
+}
