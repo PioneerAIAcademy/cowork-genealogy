@@ -3113,10 +3113,11 @@ or the `citation` agent (which refines `sources`); `record-structurer` holds no
 `research_append`, and the retired `record-extractor` stays exempt for replay. A *different*
 dedicated agent (gps-mentor, proof-conclusion, research-exhaustiveness) writing
 these sections is out of lane, exactly as it is for `extraction_append`, so it is
-not exempt here. This half is shadow only, logged and never denied, and covers the
-delegate route only. The main-thread half is the hook's `sources` route (§4,
-"Section ownership by caller (`sources`)"): it denies a main-thread `sources`
-write outright, and the engine refuses every caller's `assertions` write.
+not exempt here. This detector is shadow only and covers the delegate route. Both
+writes are now denied elsewhere: the hook's `sources` route (§4, "Section
+ownership by caller (`sources`)") denies a `sources` write from the main thread
+and from every delegate but citation, and the engine refuses every caller's
+`assertions` write.
 
 ### The decision, and what it beat
 
