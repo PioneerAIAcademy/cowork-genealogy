@@ -1,0 +1,933 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search for \"Lincolnshire, England, United Kingdom\", 1750-1800, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Lincolnshire"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Lincolnshire, England, United Kingdom",
+      "startYear": 1750,
+      "endYear": 1800
+    },
+    "totalForPlace": 676,
+    "returned": 200,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/5900",
+        "linkText": "Lincolnshire, England Extracted Church of England Parish Records, 1500s-1800s",
+        "startYear": 1500,
+        "endYear": 1899
+      },
+      {
+        "url": "http://joinermarriageindex.co.uk/",
+        "linkText": "110 Lincolnshire Parishes Indexed in Joiner's Marriage Index"
+      },
+      {
+        "url": "http://joinermarriageindex.co.uk/marriage-records/Lincolnshire/",
+        "linkText": "110 Lincolnshire Parishes Indexed in Coverage"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/lincolnshire-poor-law-removals-1665-1865",
+        "linkText": "Lincolnshire Poor Law Removals, 1665-1865"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-records/lincolnshire-settlement-certificates-1675-1860",
+        "linkText": "Lincolnshire Settlement Certificates, 1675-1860"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-records/lincolnshire-settlement-examinations-1721-1861",
+        "linkText": "Lincolnshire Settlement Examinations, 1721-1861"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/lincolnshire-baptisms",
+        "linkText": "Lincolnshire Baptisms"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/lincolnshire-parish-apprentice-index",
+        "linkText": "Lincolnshire Parish Apprentice Index, 1618-1925",
+        "startYear": 1618,
+        "endYear": 1925
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/lincolnshire-parish-bastardy-cases",
+        "linkText": "Lincolnshire Parish Bastardy Cases"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/lincolnshire-poor-law-removals-1665-1865",
+        "linkText": "Lincolnshire Poor Law Removals, 1665-1865",
+        "startYear": 1665,
+        "endYear": 1865
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/lincolnshire-settlement-certificates-1675-1860",
+        "linkText": "Lincolnshire Settlement Certificates, 1675-1860",
+        "startYear": 1675,
+        "endYear": 1860
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/lincolnshire-settlement-examinations-1721-1861",
+        "linkText": "Lincolnshire Settlement Examinations, 1721-1861",
+        "startYear": 1721,
+        "endYear": 1861
+      },
+      {
+        "url": "http://workhouses.org.uk/",
+        "linkText": "The History of the Workhouse by Peter Higginbotham"
+      },
+      {
+        "url": "http://www.british-history.ac.uk/report.aspx?compid=53656",
+        "linkText": "Lincoln Wills, 1271-1489"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/LIN",
+        "linkText": "Lincolnshire Records"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/LIN/",
+        "linkText": "Lincolnshire Records"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/Paupers/",
+        "linkText": "general website providing data on approximately 10 percent of Lincolnshire's poor"
+      },
+      {
+        "url": "http://www.ukbmdsearch.org.uk/",
+        "linkText": "UKBMD Multi-Region Search"
+      },
+      {
+        "url": "https://forebears.io/england/lincolnshire",
+        "linkText": "Lincolnshire Genealogy Resources & Parish Registers"
+      },
+      {
+        "url": "https://search.findmypast.co.uk/historical-records",
+        "linkText": "Findmypast.co.uk currently publishes 4"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/britain-marriage-licences",
+        "linkText": "British Marriage Licences, 1115-1906",
+        "startYear": 1115,
+        "endYear": 1906
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/lincolnshire-monumental-inscriptions",
+        "linkText": "Lincolnshire Monumental Inscriptions, 1400s-2000s",
+        "startYear": 1400,
+        "endYear": 2099
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/lincolnshire-parish-registers-browse-1538-1911",
+        "linkText": "Lincolnshire Parish Registers, 1538-1911",
+        "startYear": 1538,
+        "endYear": 1911
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/lincolnshire-registers-and-records",
+        "linkText": "Lincolnshire Registers and Records"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-records/lincolnshire-burials",
+        "linkText": "Lincolnshire Burials"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-records/lincolnshire-marriages-and-banns",
+        "linkText": "Lincolnshire Marriages and Banns, 1754-1837",
+        "startYear": 1754,
+        "endYear": 1837
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-records/national-burial-index-for-england-and-wales",
+        "linkText": "National Burial Index"
+      },
+      {
+        "url": "https://www.familyhistory.co.uk/lincolnshire-family-history/",
+        "linkText": "Lincolnshire Family History Resources"
+      },
+      {
+        "url": "https://www.findmypast.com/articles/world-records/full-list-of-united-kingdom-records/life-events-bmds/lincolnshire-marriage-licence-bonds-and-allegations",
+        "linkText": "Lincolnshire Marriage Licence Bonds and Allegations"
+      },
+      {
+        "url": "https://www.freereg.org.uk/",
+        "linkText": "Search Query"
+      },
+      {
+        "url": "https://www.genealogycenter.info/persi/",
+        "linkText": "Periodical Source Index - ACPL Genealogy Center"
+      },
+      {
+        "url": "https://www.genuki.org.uk/big/eng/LIN",
+        "linkText": "Lincolnshire Records"
+      },
+      {
+        "url": "https://www.lincolnshirefhs.org.uk/",
+        "linkText": "Lincolnshire Family History Society"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-65223/lincolnshire-pedigrees-volume-1",
+        "linkText": "Lincolnshire Pedigrees, Vol 1"
+      },
+      {
+        "url": "https://www.visionofbritain.org.uk/descriptions/index.jsp",
+        "linkText": "Vision of Britain"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1351/",
+        "linkText": "England & Wales, Christening Index, 1530-1980",
+        "startYear": 1530,
+        "endYear": 1980
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1352/",
+        "linkText": "England & Wales Marriages, 1538-1988",
+        "startYear": 1538,
+        "endYear": 1988
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1547",
+        "linkText": "U.K., City and County Directories, 1600s-1900s"
+      },
+      {
+        "url": "https://search.ancestry.com/search/db.aspx?dbid=1590",
+        "linkText": "England & Wales, Criminal Registers, 1791-1892",
+        "startYear": 1791,
+        "endYear": 1892
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1609/",
+        "linkText": "UK, Aliens Entry Books, 1794-1921",
+        "startYear": 1794,
+        "endYear": 1921
+      },
+      {
+        "url": "http://search.ancestry.co.uk/search/db.aspx?dbid=1610",
+        "linkText": "UK, Extracted Probate Records, 1269-1975",
+        "startYear": 1269,
+        "endYear": 1975
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1686",
+        "linkText": "UK, Military Campaign Medal and Award Rolls, 1793-1949",
+        "startYear": 1793,
+        "endYear": 1949
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1687",
+        "linkText": "UK, Naval Medal and Award Rolls, 1793-1972",
+        "startYear": 1793,
+        "endYear": 1972
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1851",
+        "linkText": "UK, Register of Duties Paid for Apprentices' Indentures, 1710-1811",
+        "startYear": 1710,
+        "endYear": 1811
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1933",
+        "linkText": "British Postal Service Appointment Books, 1737-1969",
+        "startYear": 1737,
+        "endYear": 1969
+      },
+      {
+        "url": "https://www.ancestry.co.uk/search/collections/1993/",
+        "linkText": "UK, Foreign and Overseas Registers of British Subjects, 1628-1969",
+        "startYear": 1628,
+        "endYear": 1969
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2410",
+        "linkText": "UK, Poll Books and Electoral Registers, 1538-1893",
+        "startYear": 1538,
+        "endYear": 1893
+      },
+      {
+        "url": "https://search.ancestry.com/search/db.aspx?dbid=2972",
+        "linkText": "England & Wales Non-Conformist Registers, 1567-1936",
+        "startYear": 1567,
+        "endYear": 1970
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3255",
+        "linkText": "UK, Royal Hospital Chelsea Pensioner Registers of Soldiers Who Served in Canada, 1743-1882",
+        "startYear": 1743,
+        "endYear": 1882
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/34793/",
+        "linkText": "England & Wales, Calendar of the Principal Ecclesiastical Dignitaries, 314-1853"
+      },
+      {
+        "url": "http://search.ancestry.co.uk/search/db.aspx?dbid=3997",
+        "linkText": "Cambridge University Alumni, 1261-1900",
+        "startYear": 1261,
+        "endYear": 1900
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/50095",
+        "linkText": "England, Newspapers.com Stories and Events Index, 1800's to current",
+        "startYear": 1800,
+        "endYear": 1800
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5111/",
+        "linkText": "England & Wales, Prerogative Court of Canterbury Wills, 1384-1858"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5967/",
+        "linkText": "England, Pallot's Marriage Index, 1780-1837",
+        "startYear": 1780,
+        "endYear": 1837
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61073/",
+        "linkText": "A List of Emigrants from England to America, 1682-1692, 1718-1759",
+        "startYear": 1682,
+        "endYear": 1759
+      },
+      {
+        "url": "https://search.ancestry.com/search/db.aspx?dbid=61074",
+        "linkText": "Emigrants in Bondage, 1614-1775",
+        "startYear": 1614,
+        "endYear": 1775
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61103/",
+        "linkText": "UK, Roll of the Indian Medical Service, 1615-1930",
+        "startYear": 1615,
+        "endYear": 1930
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61468/",
+        "linkText": "UK, Registers of Employees of the East India Company and the India Office, 1746-1939",
+        "startYear": 1746,
+        "endYear": 1939
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61643/",
+        "linkText": "Scotland, Ireland and Wales, Militia Attestation Papers, 1800-1915",
+        "startYear": 1800,
+        "endYear": 1915
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61804/",
+        "linkText": "UK, Household Cavalry Records of Service, 1799-1920",
+        "startYear": 1799,
+        "endYear": 1920
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61805/",
+        "linkText": "UK, Criminal Records, 1780-1871",
+        "startYear": 1780,
+        "endYear": 1871
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61810/",
+        "linkText": "UK, Prison Commission Records, 1770-1951",
+        "startYear": 1770,
+        "endYear": 1951
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62221/",
+        "linkText": "UK and Ireland, Newspapers.com Obituary Index, 1800s-current"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62222/",
+        "linkText": "UK and Ireland, Newspapers.com Marriage Index, 1800s-current"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62613",
+        "linkText": "UK, Wills of Royal Navy and Royal Marines Personnel, 1786-1882",
+        "startYear": 1786,
+        "endYear": 1882
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62614",
+        "linkText": "UK, Officers' Birth Certificates, Wills and Personal Papers, 1755-1908",
+        "startYear": 1755,
+        "endYear": 1908
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62629/",
+        "linkText": "UK, Admiralty Records of Marriages and Baptisms, 1754-1878",
+        "startYear": 1754,
+        "endYear": 1878
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62646/",
+        "linkText": "UK and Ireland, Families of Historic Properties, 1222-1967",
+        "startYear": 1222,
+        "endYear": 1967
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62736",
+        "linkText": "UK, Heraldic Card Index, 1150-1850",
+        "startYear": 1150,
+        "endYear": 1850
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/63019",
+        "linkText": "England Clergy of the Church of England Index, 1540-1835",
+        "startYear": 1540,
+        "endYear": 1835
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6552/",
+        "linkText": "Plantagenet Roll of the Blood Royal, Medieval-1900s",
+        "startYear": 1500,
+        "endYear": 1999
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7918/",
+        "linkText": "1851 United Kingdom Census Sample"
+      },
+      {
+        "url": "https://search.ancestry.com/search/db.aspx?dbid=7919",
+        "linkText": "British Chancery Records, 1386-1558",
+        "startYear": 1386,
+        "endYear": 1857
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7927",
+        "linkText": "Red Book of the Exchequer"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8960/",
+        "linkText": "UK and Ireland, Obituary Index, 2004-Current"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9041/",
+        "linkText": "England & Scotland, Select Cemetery Registers, 1800-2016",
+        "startYear": 1800,
+        "endYear": 2016
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9840/",
+        "linkText": "England Select Deaths and Burials, 1538-1991",
+        "startYear": 1538,
+        "endYear": 1991
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9841/",
+        "linkText": "England Select Births and Christenings, 1538-1975",
+        "startYear": 1538,
+        "endYear": 1975
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9852/",
+        "linkText": "England Select Marriages, 1538-1973",
+        "startYear": 1538,
+        "endYear": 1973
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9880/",
+        "linkText": "Great Britain Select Deaths and Burials, 1778-1988",
+        "startYear": 1778,
+        "endYear": 1988
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9881/",
+        "linkText": "Great Britain Select Marriages, 1797-1988",
+        "startYear": 1797,
+        "endYear": 1988
+      },
+      {
+        "url": "http://aalt.law.uh.edu/",
+        "linkText": "Anglo-American Legal Tradition"
+      },
+      {
+        "url": "http://dea.byu.edu/",
+        "linkText": "Discovering British Ancestors"
+      },
+      {
+        "url": "http://dea.byu.edu/index.php?page=churchrecords",
+        "linkText": "Discovering English Ancestors: Church Records"
+      },
+      {
+        "url": "http://directory.cbcew.org.uk/",
+        "linkText": "Catholic Directory England and Wales"
+      },
+      {
+        "url": "http://dupinternational.org/",
+        "linkText": "Submitted Histories from Dup International"
+      },
+      {
+        "url": "http://englishancestors.byu.edu/",
+        "linkText": "Home"
+      },
+      {
+        "url": "http://englishancestors.byu.edu//",
+        "linkText": "Home"
+      },
+      {
+        "url": "http://englishancestors.byu.edu/Pages/london-pcc",
+        "linkText": "Discovering English Ancestors - Prerogative Court of Canterbury"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Europe/Ireland.pdf",
+        "linkText": "Ireland Research Outline"
+      },
+      {
+        "url": "http://fmg.ac/",
+        "linkText": "Foundation for Medieval Genealogy"
+      },
+      {
+        "url": "http://fmg.ac/Projects/MedLands/",
+        "linkText": "Medieval Lands: A Prosopography of Medieval European Noble and Royal Families"
+      },
+      {
+        "url": "http://genealogy.ukga.org/",
+        "linkText": "Family Trees at UK Genealogy Archives"
+      },
+      {
+        "url": "http://immigrants.byu.edu/",
+        "linkText": "Immigrant Ancestors Project Update"
+      },
+      {
+        "url": "http://immigrants.byu.edu/search/simple",
+        "linkText": "Immigrant Ancestors Project Update"
+      },
+      {
+        "url": "http://immigrantships.net/",
+        "linkText": "Immigrant Ships Transcribers Guild"
+      },
+      {
+        "url": "http://joinermarriageindex.co.uk/marriage-records/",
+        "linkText": "Joiner Marriage Index County Coverage of Marriage Records"
+      },
+      {
+        "url": "http://knowlescollection.blogspot.com/",
+        "linkText": "The Knowles Collection"
+      },
+      {
+        "url": "http://lib.byu.edu/digital/mmd/",
+        "linkText": "Lib.byu.edu Digital Collections"
+      },
+      {
+        "url": "http://lutheran.co.uk/directory",
+        "linkText": "Evangelical Lutheran Church of England Directory"
+      },
+      {
+        "url": "http://search.ancestry.com/group/ukicen/UK_Census_Collection.aspx",
+        "linkText": "Search"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/britain-directories-and-almanacs?_ga=1.110943041.553913357.1443808205",
+        "linkText": "Britain, Directories and Almanacs"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/york-medieval-probate-index-1267-1500",
+        "linkText": "York Medieval Probate Index 1267 – 1500"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/bank-of-england-wills-extracts-1717-1845",
+        "linkText": "Bank Of England Wills Extracts 1717-1845",
+        "startYear": 1717,
+        "endYear": 1845
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/britain-country-apprentices-1710-1808",
+        "linkText": "Britain Country Apprentices, 1710-1808"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/british-army-honourable-artillery-company",
+        "linkText": "British Army, Honourable Artillery Company"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/british-army-officer-promotions-1800-1815",
+        "linkText": "British Army Officer Promotions 1800-1815",
+        "startYear": 1800,
+        "endYear": 1815
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/british-army-royal-artillery-officers-1716-1899",
+        "linkText": "British Army, Royal Artillery Officers 1716-1899",
+        "startYear": 1716,
+        "endYear": 1899
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/british-army-service-records-1760-1915",
+        "linkText": "British Army Service Records 1760-1915",
+        "startYear": 1760,
+        "endYear": 1920
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/british-royal-navy-and-royal-marines-service-and-pension-records-1704-1919?_ga=1.127630989.1219846231.1458237470",
+        "linkText": "British Royal Navy & Royal Marines Service and Pension Records, 1704-1919",
+        "startYear": 1704,
+        "endYear": 1919
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/england-and-wales-published-wills-and-probate-indexes-1300-1858",
+        "linkText": "England & Wales Published Wills & Probate Indexes, 1300-1858",
+        "startYear": 1300,
+        "endYear": 1858
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/england-billion-graves-cemetery-index",
+        "linkText": "England BillionGraves Cemetery Index"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/national-burial-index-for-england-and-wales",
+        "linkText": "National Burial Index for England & Wales"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/probate-calendars-of-england-and-wales-1858-1959---browse",
+        "linkText": "England & Wales Probate Calendars, 1858-1995"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/world-war-one-british-army-medal-index-cards",
+        "linkText": "World War One British Army Medal Index Cards"
+      },
+      {
+        "url": "http://specialcollections.le.ac.uk/digital/collection/p16445coll4",
+        "linkText": "Historical Directories of England & Wales"
+      },
+      {
+        "url": "http://thepeerage.com/",
+        "linkText": "Main Page"
+      },
+      {
+        "url": "http://ukbmd.co.uk/",
+        "linkText": "UK Birth, Marriage, and Death Records"
+      },
+      {
+        "url": "http://ukga.org/",
+        "linkText": "Family Trees at UK Genealogy Archives"
+      },
+      {
+        "url": "http://webarchive.nationalarchives.gov.uk/+/http://yourarchives.nationalarchives.gov.uk/index.php?title=Online_Probate_Indexes",
+        "linkText": "The National Archives Online Probate Indexes"
+      },
+      {
+        "url": "http://www.1914-1918.net/hospitals_uk.htm",
+        "linkText": "Military Hospitals - The Long, Long Trail"
+      },
+      {
+        "url": "http://www.CyndisList.com",
+        "linkText": "Jewish—Societies"
+      },
+      {
+        "url": "http://www.ancestry.com/cs/immigration-all",
+        "linkText": "U.S. Immigration Collection"
+      },
+      {
+        "url": "http://www.archersoftware.co.uk/igi/",
+        "linkText": "A Guide to the British Batches"
+      },
+      {
+        "url": "http://www.birminghamarchdiocesanarchives.org.uk/",
+        "linkText": "Catholic Archdiocese of Birmingham Archives"
+      },
+      {
+        "url": "http://www.bmdregisters.co.uk/",
+        "linkText": "Non Conformist BMD Register Search"
+      },
+      {
+        "url": "http://www.british-history.ac.uk/",
+        "linkText": "British History Online"
+      },
+      {
+        "url": "http://www.britishnewspaperarchive.co.uk/",
+        "linkText": "British Newspaper Archive"
+      },
+      {
+        "url": "http://www.connectedhistories.org/",
+        "linkText": "Connected Histories, 1600-1900",
+        "startYear": 1600,
+        "endYear": 1900
+      },
+      {
+        "url": "http://www.cwgc.org/",
+        "linkText": "Commonwealth War Graves Commission"
+      },
+      {
+        "url": "http://www.cwgc.org/find-war-dead.aspx",
+        "linkText": "Second World War Dead"
+      },
+      {
+        "url": "http://www.cyndislist.com/",
+        "linkText": "Cyndi's List"
+      },
+      {
+        "url": "http://www.deceasedonline.com/",
+        "linkText": "Deceased Online"
+      },
+      {
+        "url": "http://www.dustydocs.com/",
+        "linkText": "UK Websites for Parish Records"
+      },
+      {
+        "url": "http://www.ffhs.org.uk/",
+        "linkText": "FFHS Resources for Family History Research"
+      },
+      {
+        "url": "http://www.fhswales.org.uk/",
+        "linkText": "FHS Wales Records"
+      },
+      {
+        "url": "http://www.findagrave.com/php/famous.php?page=country&FScountryid=5",
+        "linkText": "Famous Memorials"
+      },
+      {
+        "url": "http://www.findmypast.co.uk/helpadvice/knowledge-base/overseas-military/cheps.jsp",
+        "linkText": "Frequently Asked Questions about Chelsea Pensioners' service records"
+      },
+      {
+        "url": "http://www.findmypast.co.uk/search/all/births",
+        "linkText": "Regimental Registers of births, 1761",
+        "startYear": 1761,
+        "endYear": 1761
+      },
+      {
+        "url": "http://www.findmypast.co.uk/search/army-service-records/all",
+        "linkText": "British Army Service Records"
+      },
+      {
+        "url": "http://www.findmypast.co.uk/search/army-service-records/chelsea-pensioners",
+        "linkText": "Chelsea Pensioners' Service Records 1760-1913",
+        "startYear": 1760,
+        "endYear": 1913
+      },
+      {
+        "url": "http://www.findmypast.com/articles/world-records/full-list-of-united-kingdom-records/armed-forces-and-conflict/british-army-service-records-1760-1915",
+        "linkText": "British Army Service Records"
+      },
+      {
+        "url": "http://www.findmypast.com/content/english-genealogy-records",
+        "linkText": "Discover Your Family History in Records"
+      },
+      {
+        "url": "http://www.firepower.org.uk/index.php/research/family-history/",
+        "linkText": "Royal Artillery Museum"
+      },
+      {
+        "url": "http://www.freebmd.org.uk",
+        "linkText": "FreeBMD Home Page"
+      },
+      {
+        "url": "http://www.freebmd.org.uk/",
+        "linkText": "FreeBMD Home Page"
+      },
+      {
+        "url": "http://www.freebmd.org.uk/cgi/search.pl",
+        "linkText": "FreeBMD Search"
+      },
+      {
+        "url": "http://www.freecen.org.uk/",
+        "linkText": "Free Census Records, 1841-1891"
+      },
+      {
+        "url": "http://www.freecen.org.uk/cgi/search.pl/",
+        "linkText": "Search Query, Free Census"
+      },
+      {
+        "url": "http://www.freereg.org.uk/",
+        "linkText": "Search Query"
+      },
+      {
+        "url": "http://www.genealogylinks.net/uk/england/",
+        "linkText": "England Genealogy Links"
+      },
+      {
+        "url": "http://www.genealogylinks.net/uk/england/all-england/military.htm",
+        "linkText": "England Military Records"
+      },
+      {
+        "url": "http://www.genesreunited.co.uk/",
+        "linkText": "Discover Your Ancestors"
+      },
+      {
+        "url": "http://www.genuki.org.uk/",
+        "linkText": "GENUKI Home Page"
+      },
+      {
+        "url": "http://www.genuki.org.uk/Societies/",
+        "linkText": "Societies in the UK and Ireland"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/",
+        "linkText": "Genuki Genealogy Resources"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/",
+        "linkText": "GENUKI: England"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/#Newspapers",
+        "linkText": "GENUKI: England"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/Census.html#1861",
+        "linkText": "England and Wales Census Records"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/ChurchRecords.html",
+        "linkText": "Church Records, All of England"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/LND/",
+        "linkText": "Genuki London Genealogy Records"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/VacCert",
+        "linkText": "Vaccination Certificate from 1867, All of England"
+      },
+      {
+        "url": "http://www.gov.uk/wills-probate-inheritance/searching-for-probate-records/",
+        "linkText": "National Archives Probate Records"
+      },
+      {
+        "url": "http://www.greatwar.co.uk/index.htm",
+        "linkText": "The Great War: A Guide to WWI Battlefields and History of the First World War"
+      },
+      {
+        "url": "http://www.gro.gov.uk/gro/content/",
+        "linkText": "General Register Office Searchable Records"
+      },
+      {
+        "url": "http://www.gro.gov.uk/gro/content/certificates/default.asp",
+        "linkText": "General Register Office Birth and Death Records"
+      },
+      {
+        "url": "http://www.gro.gov.uk/gro/content/certificates/most_customers_want_to_know.asp#FamilyHistory",
+        "linkText": "GRO Index Reference"
+      },
+      {
+        "url": "http://www.haine.org.uk/wills/willsearch.php",
+        "linkText": "Probate Registry (microfilm) index lookup"
+      },
+      {
+        "url": "http://www.hiddenlives.org.uk/articles/juvenile_part2.html",
+        "linkText": "Poverty and Juvenile Crime - Prisons"
+      },
+      {
+        "url": "http://www.historyhome.co.uk/peel/factmine/mines.htm",
+        "linkText": "Conditions of the Mines"
+      },
+      {
+        "url": "http://www.historyofparliamentonline.org/research/members",
+        "linkText": "Member Biographies, 1386-1832",
+        "startYear": 1386,
+        "endYear": 1832
+      },
+      {
+        "url": "http://www.histpop.org/ohpr/servlet/PageBrowser?path=Browse/Census%20(by%20date)/1931/England&active=yes&mno=313&tocstate=expandnew&tocseq=700&display=sections&display=tables&display=pagetitles&pageseq=first-nonblank",
+        "linkText": "1931 Census"
+      },
+      {
+        "url": "http://www.iajgsjewishcemeteryproject.org/",
+        "linkText": "IAJGS Cemetery Project has 400"
+      },
+      {
+        "url": "http://www.interment.net/uk/eng/index.htm",
+        "linkText": "Interment.net page for England"
+      },
+      {
+        "url": "http://www.interment.net/uk/eng/leicestershire.htm",
+        "linkText": "Leicestershire, England Cemetery Records"
+      },
+      {
+        "url": "http://www.iwm.org.uk/",
+        "linkText": "Imperial War Museums"
+      },
+      {
+        "url": "http://www.jewishgen.org/gedcom",
+        "linkText": "Family Tree of the Jewish People"
+      },
+      {
+        "url": "http://www.jewishgen.org/jgff",
+        "linkText": "JewishGen Family Finder (JGFF)"
+      },
+      {
+        "url": "http://www.jgsgb.org.uk/shemot",
+        "linkText": "Jewish Genealogical Society of Great Britain"
+      },
+      {
+        "url": "http://www.jhse.org/",
+        "linkText": "Jewish Historical Society of England"
+      },
+      {
+        "url": "http://www.landregistryservices.com/",
+        "linkText": "Land Registry Title Registers, Title Plans and Conveyancing Searches for UK and Ireland"
+      },
+      {
+        "url": "http://www.mariners-l.co.uk/UKCoastguards.html",
+        "linkText": "Mariners Mailing List"
+      },
+      {
+        "url": "http://www.maritimeuk.org/",
+        "linkText": "The collective voice for the UK's maritime industries"
+      },
+      {
+        "url": "http://www.marriage-locator.co.uk/",
+        "linkText": "Marriage Locator for Marriages 1837-1911 in England and Wales"
+      },
+      {
+        "url": "http://www.medievalgenealogy.org.uk/",
+        "linkText": "Some Notes on Medieval English Genealogy"
+      },
+      {
+        "url": "http://www.medievalgenealogy.org.uk/sources/probate.shtml",
+        "linkText": "Medieval Source Material on the Internet: Probate Records"
+      },
+      {
+        "url": "http://www.medievalgenealogy.org.uk/sources/tax.shtml",
+        "linkText": "Medieval Taxation and Other Lists"
+      },
+      {
+        "url": "http://www.mocavo.com/",
+        "linkText": "Genealogy and Ancestry Search Engine & Research"
+      },
+      {
+        "url": "http://www.movinghere.org.uk/galleries/roots/jewish/tracingjewishroots/tracingjewishroots.htm#getting_started",
+        "linkText": "WageDayAdvance - Payday Loans - Bad Credit Accepted"
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-50939/thoms-directory-great-britain-ireland-1894?s=218489221",
+        "linkText": "Thom's Directory Great Britain & Ireland, 1894"
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-58004/county-families-of-the-united-kingdom-or-royal-manual-of?s=218489221",
+        "linkText": "County Families of the United Kingdom, or, Royal Manual of the Titled And Untitled Aristocracy of England, Wales, Scotland, And Ireland, 1909"
+      },
+      {
+        "url": "http://www.navylist.org",
+        "linkText": "Royal Navy Biographical Database"
+      },
+      {
+        "url": "http://www.old-maps.co.uk/index.html",
+        "linkText": "Old Maps Collection"
+      },
+      {
+        "url": "http://www.oldbaileyonline.org/",
+        "linkText": "Old Bailey Online Proceedings"
+      },
+      {
+        "url": "http://www.olivetreegenealogy.com/england/index.shtml",
+        "linkText": "UK Ireland Genealogy Records"
+      },
+      {
+        "url": "http://www.one-name.org/",
+        "linkText": "One-Name Study Records"
+      },
+      {
+        "url": "http://www.parishregister.co.uk/?gclid=CNmIgqTs0b4CFUiEfgod24sA5g",
+        "linkText": "Family History before 1837: England Parish Registers"
+      },
+      {
+        "url": "http://www.reenactor.ru/ARH/PDF/Wickes.pdf",
+        "linkText": "Regiments of Foot: Historical Record of British Army"
+      },
+      {
+        "url": "http://www.reformedreader.org/rbengland.htm",
+        "linkText": "International Reformed Baptist Church Directory, England"
+      },
+      {
+        "url": "http://www.safhs.org.uk/",
+        "linkText": "Scottish Association of Family History Societies"
+      }
+    ],
+    "inlineCapped": true
+  }
+}
