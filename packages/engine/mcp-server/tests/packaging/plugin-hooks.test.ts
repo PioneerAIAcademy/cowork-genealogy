@@ -1091,6 +1091,67 @@ describe("the guard script's decisions", () => {
     })).toEqual({});
   });
 
+  // ── caller-routed sections: research_append + sources (issue #2475, row from #1874) ──
+  //
+  // What this route closes is the main thread composing a source to stand in
+  // for a failed extraction (alpha feedback #2214). citation is the only agent
+  // whose research_append writes the section. A caller with no lane is sent to
+  // extraction_append and citation; a laned agent is told its lane, since it
+  // holds no extraction_append and cannot invoke another agent.
+  const CITATION = "genealogy-research:citation";
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "sources", op: "append", entry: { title: "x" } }, {}],
+    ["update in place, no agent_id", { section: "sources", op: "update", entryId: "src_001", fields: { citation: "x" } }, {}],
+    // agent_type WITHOUT agent_id is the `--agent` main thread, not a subagent.
+    ["agent_type present but agent_id absent", { section: "sources", op: "append", entry: {} }, { agent_type: CITATION }],
+    // 13 committed sources ops came from subagents with a null agent_type.
+    ["a subagent with a null agent_type", { section: "sources", op: "append", entry: {} }, { agent_id: "a1", agent_type: null }],
+    // An unlaned caller must get the sources text, never a lane lookup that raises.
+    ["a general-purpose stand-in", { section: "sources", op: "append", entry: {} }, { agent_id: "a1", agent_type: "general-purpose" }],
+    ["batched with a legitimate plan_items update", { ops: [
+      { section: "plan_items", op: "update", entryId: "pli_009", fields: { status: "completed" } },
+      { section: "sources", op: "append", entry: {} },
+    ] }, {}],
+    ["stringified ops", { ops: JSON.stringify([{ section: "sources", op: "append", entry: {} }]) }, {}],
+  ])("denies research_append on sources — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("extraction_append");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:citation");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it("denies a laned agent its lane, not the extraction route", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "sources", op: "update", entryId: "src_001", fields: { notes: "x" } },
+      agent_id: "agent-1",
+      agent_type: OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).not.toContain("extraction_append");
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", CITATION],
+    ["bare agent_type", "citation"],
+  ])("permits the citation agent its refinement — %s", (_label, agent_type) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        section: "sources",
+        op: "update",
+        entryId: "src_001",
+        fields: { citation: "Pennsylvania, County Marriages, 1885-1950", citation_detail: { what: "marriage record" } },
+      },
+      agent_id: "agent-1",
+      agent_type,
+    });
+    expect(out).toEqual({});
+  });
+
   // ── caller-routed sections: research_append + hit_verdicts (issue #3522) ──
   //
   // Section-scoped like namesakes. The router spawns one evaluate-search-results

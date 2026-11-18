@@ -964,6 +964,52 @@ def test_question_append_narration_is_append_scoped_not_out_of_lane(tmp_path, mo
     assert "outside this agent's lane" not in text, text
 
 
+def test_sources_narration_sends_a_new_record_to_extraction_not_citation(tmp_path, monkeypatch):
+    """Drives the ORCHESTRATOR's `routed` narration for `sources` (issue #2475,
+    row from issue #1874). citation never creates a source, so the generic
+    "delegate this write" to the owning agent would send a main thread with a
+    new record to the wrong place; the narration names extraction instead."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    sink: dict = {}
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        inputs = [
+            (
+                "sources",
+                {
+                    "tool_name": "mcp__genealogy__research_append",
+                    "tool_input": {"section": "sources", "op": "append", "entry": {"title": "x"}},
+                },
+            ),
+        ]
+        return _HookDrivingAgent(
+            hook,
+            inputs,
+            [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()],
+            sink,
+        )
+
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
+    result = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )
+    narration = result[1]
+
+    assert sink["sources"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    blocked = [n for n in narration if n.get("kind") == "blocked"]
+    assert len(blocked) == 1, narration
+    text = blocked[0]["text"]
+    assert "extraction_append" in text, text
+    assert "delegate this write" not in text, text
+
+
 # ── the SDK's per-model ledger (T1.11) ──
 
 
