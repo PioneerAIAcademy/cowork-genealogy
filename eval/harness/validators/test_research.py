@@ -1176,7 +1176,7 @@ _VERDICT = re.compile(
     r"|\bindex\s+(is|was)\s+(wrong|an\s+error|a\s+misread)"
     r"|\bbadly\s+misread|\bpoor\s+attempt"
     r"|\bboth\b[^.\n]*\bagree"
-    r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)\bconfirmed\b"
+    r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)(?<!not\sa\s)(?<!not\san\s)\bconfirmed\b"
     r"|\bmore\s+(?:plausible|likely|accurate)\s+reading\b"
     r"|\b(?:image|scan)\s+reads\b",
     re.IGNORECASE,

@@ -62,6 +62,8 @@ def test_a_side_by_side_reply_passes(test, reply):
         "Line 23: Anthony. The index was wrong to leave the given name blank.",
         "Two independent machine reads both return Anthony, so line 23 is confirmed; the index has no given name.",
         "Confirmed — both AI reads agree on Anthony at line 23. The index gives no given name.",
+        GOOD_1900 + " This is a confirmed transcription.",
+        GOOD_1900 + " Line 23 is now a confirmed Anthony.",
         "Line 23 reads Tyler Anthony.",
         "The index has no given name, and line 23 is worth checking on the image.",
         "Machine reading Anthony; the index has no given name.",
@@ -98,6 +100,9 @@ def test_the_1880_bundle_shapes_fail(reply):
     [
         GOOD_1900 + " This is not confirmed by any other record.",
         GOOD_1900 + " It cannot be confirmed from this page alone.",
+        # scratch_2026-11-18_07-21-54, ut_research_iv2
+        GOOD_1900 + " This is a machine reading of one image, not a confirmed transcription.",
+        GOOD_1900 + " It is not an confirmed reading.",
         GOOD_1900.replace("Line 23", "Line no. 23"),
         "- Index: Tyler, given name blank\n- Machine reading: Tyler, Anthony\n- Line #23 on the image",
     ],

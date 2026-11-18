@@ -201,18 +201,24 @@ with no hand-off. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
 and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. A transcription you deliver yourself: call
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
-`projectPath` when a project exists, however new or empty — show the page from
-`sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
-link. For a page of a record the project holds, first read its indexed names with
-`research_query({ section: "assertions", recordId })`; a name with no given name is an index
-reading too. Where the record's index and the machine reading disagree, show both side by side, say
-they differ, and name the line to check on the image; never call the index wrong, never say the
-image is clear or was seen, and never state a correction. A second pass over the same image, or
-a reading made after declining to read, confirms nothing; only a different record or a different
-person's reading does. Report each record's name as written: a record that disagrees with a
-reading challenges it, never call it a variant, rendering or split of another name, never call
-a disagreeing spelling consistent, and never drop a reading on a premise the project's files
-contradict. Only when `project_context` returns `reason: "no_project"`: one named image, called
+`projectPath` when a project exists, however new or empty — and read the page from
+`sidecar_read({ projectPath, ref: staged.resultsRef })`. Before you write the reply:
+
+1. For a page of a record the project holds, read its indexed names with
+   `research_query({ section: "assertions", recordId })`; a name with no given name is an
+   index reading too.
+2. The page text is one machine reading. Label it so, never "the image shows", "the image
+   reads" or "is clear": you have not seen the image.
+3. Where the index and the machine reading disagree, show both side by side, say they differ,
+   name the line, and give `viewerUrl` as the link to check it. Never call the index wrong or a
+   misread, never prefer either reading, and never state a correction.
+4. A second pass over the same image, or a reading made after declining to read, confirms
+   nothing; only a different record or a different person's reading does.
+5. Report each record's name as written. A record that disagrees with a reading challenges it:
+   never call it a variant, rendering or split of another name, never call a disagreeing
+   spelling consistent, and never drop a reading on a premise the project's files contradict.
+
+Only when `project_context` returns `reason: "no_project"`: one named image, called
 without `projectPath`, its `transcription` shown inline; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
