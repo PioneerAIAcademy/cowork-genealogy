@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_person_evidence_up1",
     "skill": "person-evidence",
-    "name": "userPresent: no resolves a weak match downward, on a wrap-up",
+    "name": "A wrap-up delegation with userPresent: no: a weak match still gets no link",
     "type": "positive",
-    "description": "Plan section B2. The downward resolution used to key on 'an autonomous run where no user can ever confirm'. A wrap-up has the researcher present and still needs it, so the rule now keys on the delegation's `userPresent: no`. `ut_person_evidence_023` is the autonomous half of this; this is the wrap-up half, and it is the case the old wording could not express.",
+    "description": "Plan section B2. The router passes person-evidence `userPresent: no` on a wrap-up, but the agent receives the field and does not read it: a weak match gets no link on every run, whether or not a user is present. `ut_person_evidence_023` is the autonomous half of this; this is the wrap-up half.",
     "tags": [
       "step-mode",
       "wrap-up"
