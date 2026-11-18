@@ -499,17 +499,10 @@ message.
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
    block.**
 
-   **Before any `subject:` block, check its given name:**
-   1. `research_query({ section: "person_evidence", personId })`, then
-      `research_query({ section: "assertions", assertionId: [those ids] })`.
-   2. A tree given name that none of those `name` assertions carries is a machine reading, not
-      her or his name.
-   3. Then `names` keeps the surname alone, and the given name goes in the brief as plain text, a
-      reading in doubt beside the index reading. Gather every given name the project holds for
-      her or him: the machine reading, each index, and each other record's name (the `name`
-      assertions of the project's other sources). The brief asks for the given name as a
-      wildcard on the letters all of them share (`An*` for Anthony and Ann Tone). Never brief
-      the surname alone, and never send the disputed reading as the name.
+   **When the subject's `project_context` person carries `unsupportedGivenName`:** `names`
+   keeps the surname alone; the brief gives its `given` as plain text, a reading in doubt beside
+   the index reading, and asks for the given name to be searched as its `searchAs`. Never brief
+   the surname alone, and never send `given` as the name.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and

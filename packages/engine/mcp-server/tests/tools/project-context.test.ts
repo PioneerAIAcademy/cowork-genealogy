@@ -184,6 +184,54 @@ describe("project_context", () => {
     expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null, I6: null });
   });
 
+  it("flags a given name none of the person's linked records gives, searched by its first letter (#4578)", async () => {
+    const person = (id: string, given: string, surname = "Tyler") => ({
+      id, gender: "Female", names: [{ id: `N${id}`, given, surname, preferred: true }],
+    });
+    const name = (id: string, value: string) => ({ id, source_id: "src_001", record_id: "r", fact_type: "name", value });
+    const link = (n: number, personId: string, assertionId: string) => ({
+      id: `pe_00${n}`, person_id: personId, assertion_id: assertionId, confidence: "confident",
+    });
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        assertions: [
+          name("a_001", "Tyler"), // the 1900 index: no given name
+          name("a_002", "Dora Lightfoot"),
+          name("a_003", "anthony TYLER"),
+          { ...name("a_004", "Anthony Tyler"), superseded_by: "a_001" },
+          { id: "a_005", source_id: "src_001", record_id: "r", fact_type: "sex", value: "Female" },
+        ],
+        person_evidence: [
+          link(1, "I1", "a_001"), link(2, "I1", "a_004"), link(3, "I1", "a_005"),
+          link(4, "I2", "a_002"),
+          link(5, "I3", "a_003"),
+          link(6, "I5", "a_005"),
+        ],
+      },
+      {
+        persons: [
+          person("I1", "Anthony"), // only a superseded name and an index blank: flagged
+          person("I2", "Dora"), // carried
+          person("I3", "Anthony"), // carried, whatever the case
+          person("I4", "Anthony"), // no linked name at all: not judged
+          person("I5", "Anthony"), // a linked sex, no linked name: not judged
+          person("I6", ""), // no given name to judge
+        ],
+        relationships: [],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const flags = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.unsupportedGivenName ?? null]));
+    expect(flags).toEqual({
+      I1: { given: "Anthony", searchAs: "A*" },
+      I2: null, I3: null, I4: null, I5: null, I6: null,
+    });
+  });
+
   it("returns the objective verbatim and untruncated, and leaves it out when absent (#3026)", async () => {
     const objective =
       "Identify the parents of Rosalind Hartwell (b. ca. 1855, Ohio). Her recorded surname 'Hartwell' is " +

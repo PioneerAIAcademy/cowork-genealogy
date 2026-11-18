@@ -34,7 +34,7 @@ T1880 = {
 
 BRIEF = {
     "skill": "research",
-    "tags": ["brief-no-disputed-reading", "machine-reading:Anthony", "surname:Tyler", "agreed-prefix:An*"],
+    "tags": ["brief-no-disputed-reading", "machine-reading:Anthony", "surname:Tyler", "agreed-prefix:A*"],
 }
 
 GOOD_1900 = (
@@ -151,18 +151,18 @@ def _spawn(callee: str, prompt: str) -> dict:
 @pytest.mark.parametrize(
     "calls",
     [
-        [_spawn("search-records", 'subject: {"names": ["Tyler"]}\ngivenName: An*\n'
+        [_spawn("search-records", 'subject: {"names": ["Tyler"]}\ngivenName: A*\n'
                 "The 1900 index gives no given name; one machine reading gives Anthony, in doubt.")],
-        [_spawn("search-images", "Machine reading 'Anthony' is disputed; the index has Tyler only. Search An*.")],
-        [_spawn("search-records", 'subject: {"names": [{"given": "An*", "surname": "Tyler"}]}'),
+        [_spawn("search-images", "Machine reading 'Anthony' is disputed; the index has Tyler only. Search A*.")],
+        [_spawn("search-records", 'subject: {"names": [{"given": "A*", "surname": "Tyler"}]}'),
          _spawn("person-evidence", "Anthony Tyler")],
-        # scratch_2026-11-18_08-09-03, ut_research_iv3 runs 0, 2 and 4, each with An* added
+        # scratch_2026-11-18_08-09-03, ut_research_iv3 runs 0, 2 and 4, each with A* added
         [_spawn("search-records", 'subject: {"names": [{"surname": "Tyler"}]}\nThe tree calls her '
-                '"Anthony Tyler" but no linked name assertion confirms the given name. Search An*.')],
+                '"Anthony Tyler" but no linked name assertion confirms the given name. Search A*.')],
         [_spawn("search-records", 'The machine transcription of that census page reads "Tyler '
-                'Anthony." Try first-name wildcards (e.g. An*).')],
+                'Anthony." Try first-name wildcards (e.g. A*).')],
         [_spawn("search-records", 'The tree currently records her as "Anthony Tyler" but no name '
-                "assertion carries that given name — it is a proposed reading only. Given name: An*")],
+                "assertion carries that given name — it is a proposed reading only. Given name: A*")],
     ],
 )
 def test_a_brief_holding_the_reading_in_doubt_passes(calls):
@@ -173,6 +173,8 @@ def test_a_brief_holding_the_reading_in_doubt_passes(calls):
     "calls",
     [
         [_spawn("search-images", "Machine reading 'Anthony' is disputed; the index has Tyler only.")],
+        # a longer prefix than project_context's searchAs misses Atonne and Armtogne
+        [_spawn("search-records", 'subject: {"names": ["Tyler"]}\nGiven name: An* (Anthony is in doubt).')],
         # scratch_2026-11-18_08-09-03, ut_research_iv3 runs 0 and 3: surname only
         [_spawn("search-records", 'subject: {"names": [{"surname": "Tyler"}]}\nSearch with surname '
                 "Tyler, born ~1853 Virginia. She may appear under any given name or initial.")],
@@ -199,8 +201,8 @@ def test_no_search_briefed_fails_rather_than_passing_unchecked(calls):
         [_spawn("search-images", "**first name:** Antone")],
         [_spawn("search-records", 'subject: {"names": [{"given": "Anthony", "surname": "Tyler"}]}')],
         # a doubt word in another sentence does not excuse naming her by the reading
-        [_spawn("search-records", "Her name is disputed. Search for Anthony Tyler in 1910. An*")],
-        [_spawn("search-records", "Search for Anthony Tyler, the name in the tree. Wildcard An* too.")],
+        [_spawn("search-records", "Her name is disputed. Search for Anthony Tyler in 1910. A*")],
+        [_spawn("search-records", "Search for Anthony Tyler, the name in the tree. Wildcard A* too.")],
     ],
 )
 def test_a_brief_naming_the_subject_by_the_reading_fails(calls):

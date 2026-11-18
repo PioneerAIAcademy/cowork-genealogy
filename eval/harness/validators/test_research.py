@@ -1319,7 +1319,8 @@ def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_call
                 problems.append(
                     f"{callee} was briefed to search the given name {value!r}, not {prefix!r}"
                 )
-    if not any(prefix.lower() in prompt.lower() for _, prompt in briefs):
+    wildcard = re.compile(rf"(?<![A-Za-z]){re.escape(prefix)}", re.IGNORECASE)
+    if not any(wildcard.search(prompt) for _, prompt in briefs):
         problems.append(f"no brief searches the given name as {prefix!r}, so the name was dropped")
     assert not problems, (
         "a name only a machine reading gives is a reading in doubt, not the subject's "

@@ -279,7 +279,8 @@ Two deterministic validators, driven by the tests' data tags:
 - **`brief-no-disputed-reading`** (iv3): `test_search_brief_never_carries_the_disputed_reading`
   reads the spawn prompts. No search brief may name the subject by the machine
   reading, a given name it does search on must be the `agreed-prefix:` wildcard
-  (`An*`), and a run that briefs no search fails. It cannot ride on iv1 or iv2: a
+  (`A*`, `project_context`'s `unsupportedGivenName.searchAs`), a brief that never
+  searches it fails as a dropped name, and a run that briefs no search fails. It cannot ride on iv1 or iv2: a
   transcription takes no hand-off, so no brief would ever be checked. iv3 is a
   bounded record ask that stops at the search-records hand-off. A bare "continue" was
   rejected, because `project_context.nextStep` there offers "search-records … or
