@@ -32,3 +32,5 @@ or from the final reply when the run writes neither and asks first.
 
 **Names are kept, not scrubbed**, as in the source scenario: everyone here is
 deceased and the data is from the public FamilySearch tree.
+
+The 1871 arrival (`src_002`, assertions `a_010` to `a_014`) is linked to I1 before the run, by `pe_001` to `pe_005`, and I1 carries it as Immigration fact `F3`. That link is part of the fixture: it stands for an identification the researcher made, so the arrival and the naturalization are one person's records. It is not under review in this test.

@@ -20,7 +20,21 @@ row but will almost always fail `forbidden_tools`, since that agent searches wit
 
 ## Expected result today
 
-PASS. Measured 2026-11-02:
+**FAIL on `save`. Issue #2813 owns it** (this is its "answer already attached" case). Measured 2026-11-16
+in the eight-fixture panel run:
+
+```
+FAIL death-attached-susan-cornwell  expected=none|search-records  first=none  save=1 new sources, expected none  stop=clean  failed=[save]
+    units: research  extraction_append=1
+```
+
+The router answered from the attached index entry, as before, then ran `extraction_append` on that same
+record (`ark:/61903/1:1:QG5L-ZMP3`), so the attached death index became `src_001` in `research.json`. That
+is a source duplicating the attached entry, which the row forbids. It is not from the PR that added the
+routing sentence to the panel: the sentence is conditional on no project, and the same fixture on `main`'s
+harness that day also failed, worse (no router, `record_search` called, the record extracted; $0.84).
+
+Measured 2026-11-02 (PASS then):
 
 ```
 PASS death-attached-susan-cornwell  expected=none|search-records  first=none  save=ok  delivered=yes  stop=clean
@@ -48,3 +62,4 @@ calls. `max_cost_usd: 3` only labels a run (spec §6).
 
 Measured 2026-11-02: $0.59 (`usage.whole_run_cost_usd_estimated`), `claude-sonnet-4-6` at effort `high`.
 One run.
+Measured 2026-11-16: $0.44, `claude-sonnet-4-6` at effort `medium`, in the panel run.

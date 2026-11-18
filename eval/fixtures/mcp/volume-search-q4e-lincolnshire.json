@@ -1,0 +1,402 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search for \"Lincolnshire, England, United Kingdom\", 1750-1800, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Lincolnshire"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Lincolnshire, England, United Kingdom",
+      "pageSize": 10,
+      "startYear": 1750,
+      "endYear": 1800
+    },
+    "totalResults": 1066,
+    "results": [
+      {
+        "imageGroupNumber": "007566004_002_M921-DG2",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Kirkby Green, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1821-1973",
+            "recordTypeConceptId": 126374
+          },
+          {
+            "places": [
+              "Kirkby Green, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1722-1812",
+            "recordTypeConceptId": 130206
+          },
+          {
+            "places": [
+              "Kirkby Green, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1562-1831",
+            "recordTypeConceptId": 123295
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007566004_001_M921-DGG",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "North Hykeham, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1616-1867",
+            "recordTypeConceptId": 123295
+          },
+          {
+            "places": [
+              "North Hykeham, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1694-1793",
+            "recordTypeConceptId": 104497
+          },
+          {
+            "places": [
+              "North Hykeham, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1922-1970",
+            "recordTypeConceptId": 122950
+          },
+          {
+            "places": [
+              "North Hykeham, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1813-1936",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "places": [
+              "North Hykeham, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1694-1944",
+            "recordTypeConceptId": 104727
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007566004_004_M921-DGL",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Metheringham, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1538-1812",
+            "recordTypeConceptId": 130206
+          },
+          {
+            "places": [
+              "Metheringham, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1562-1858",
+            "recordTypeConceptId": 123295
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007565995_001_M923-LM6",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England"
+            ],
+            "dateRange": "1730-1767",
+            "recordTypeConceptId": 104727
+          },
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England"
+            ],
+            "dateRange": "1730-1773",
+            "recordTypeConceptId": 104497
+          },
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England"
+            ],
+            "dateRange": "1730-1773",
+            "recordTypeConceptId": 103612
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007565995_003_M923-LM7",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England"
+            ],
+            "dateRange": "1773-1792",
+            "recordType": "Baptisms, burials"
+          },
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England"
+            ],
+            "dateRange": "1773–1792",
+            "recordType": "Burial Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007565995_005_M923-LM8",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England"
+            ],
+            "dateRange": "1768-1790",
+            "recordType": "Marriage Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007565995_002_M923-LMC",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1773-1812",
+            "recordType": "Baptisms, burials"
+          },
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1773–1812",
+            "recordType": "Burial Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007565995_006_M923-LMW",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1788-1812",
+            "recordTypeConceptId": 104727
+          },
+          {
+            "places": [
+              "Old Somerby, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1789-1807",
+            "recordTypeConceptId": 122950
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004003945_002_M924-2M3",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Beesby in the Marsh, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1743–1812",
+            "recordType": "Parish Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004003945_004_M924-2M7",
+        "imageCount": 0,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Bilsby, Lincolnshire, England, United Kingdom"
+            ],
+            "dateRange": "1669–1981",
+            "recordType": "Parish Records"
+          }
+        ]
+      }
+    ],
+    "nextPageToken": "001d001010416f456f54546b794e4330795454633d00f07ffffff5f07ffffff500ca061da6601794ad50441c457bc16ca60041",
+    "summary": {
+      "totalVolumes": 1066,
+      "complete": true,
+      "byRecordType": [
+        {
+          "group": "Genealogies",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Vital",
+          "volumes": 380,
+          "browseOnly": 375,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Birth",
+          "volumes": 12,
+          "browseOnly": 11,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Death",
+          "volumes": 212,
+          "browseOnly": 208,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Cemetery",
+          "volumes": 183,
+          "browseOnly": 181,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Marriage",
+          "volumes": 323,
+          "browseOnly": 320,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Religious",
+          "volumes": 908,
+          "browseOnly": 897,
+          "fulltextOnly": 6
+        },
+        {
+          "group": "Baptism",
+          "volumes": 650,
+          "browseOnly": 645,
+          "fulltextOnly": 4
+        },
+        {
+          "group": "Religious Death",
+          "volumes": 434,
+          "browseOnly": 434,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Religious Marriage",
+          "volumes": 519,
+          "browseOnly": 519,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Confirmation",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Military",
+          "volumes": 3,
+          "browseOnly": 1,
+          "fulltextOnly": 2
+        },
+        {
+          "group": "Legal",
+          "volumes": 5,
+          "browseOnly": 5,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Court",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Wills",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Land",
+          "volumes": 4,
+          "browseOnly": 4,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Government",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Newspapers",
+          "volumes": 3,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        }
+      ],
+      "untyped": {
+        "volumes": 0,
+        "browseOnly": 0,
+        "fulltextOnly": 0
+      }
+    }
+  }
+}

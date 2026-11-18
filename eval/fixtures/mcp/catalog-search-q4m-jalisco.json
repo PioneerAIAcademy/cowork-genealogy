@@ -1,0 +1,400 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for \"Jalisco, Mexico\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Jalisco"
+  },
+  "response": {
+    "totalHits": 593,
+    "returned": 25,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "koha:666457",
+        "title": "5º Censo de población, municipio de Atemajac de Brizuela (antes Atemajac de Las Tablas), Jalisco 1930",
+        "creator": "Archivo General de la Nación (Distrito Federal, México)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": true,
+        "notes": [
+          "The 5th census of Mexico, 1930. Census registers from the municipality of Atemajac de Brizuela (previously denominated as Atemajac de Las Tablas until 1903), Jalisco, Mexico. Text in Spanish.",
+          "En 1884 Atemajac tiene categoría de municipio con el nombre de Atemajac de las Tablas. El 25 de abril de 1903 el municipio de Atemajac de las Tablas cambia de nombre por el de Atemajac de Brizuela, según lo dispuesto por el decreto número 997.",
+          "Microfilme de manuscritos en el Archivo General de la Nación en la Ciudad de México.",
+          "Records of Mexico National Census, 1930 are available online, click here (https://familysearch.org/search/collection/1307314)"
+        ],
+        "subjects": [
+          "Mexico, Jalisco, Atemajac de Brizuela - Census"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1507501",
+            "imageGroupNumber": "4107188",
+            "text": "Censo 1930.  Ciudad de Atemajac de Brizuela"
+          },
+          {
+            "filmNumber": "1507502",
+            "imageGroupNumber": "4107189",
+            "text": "Censo 1930 (cont.).  Ciudad de Atemajac de Brizuela (Cuartel # 2, Manzana # 1) hasta el Rancho de Yolosta"
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:637285",
+        "title": "Actas de cabildos de la ciudad de Guadalajara",
+        "creator": "López, Juan",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Vol. 1 pertenece a la serie: Instituto Jaliscense de Antropología e Historia.",
+          "Acts of the government official of Guadalajara, 1607-1668.",
+          "Contenido: V. 1. 1607-1636. -- V. 2. 1636-1668 / por Juan López."
+        ],
+        "subjects": [
+          "Mexico, Jalisco, Guadalajara - History - Sources",
+          "Mexico, Jalisco, Guadalajara - Politics and government - 1540-1810"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:1418650",
+        "title": "Guadalajara census project",
+        "creator": "Florida State University (Tallahassee). Department of History",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Contents: v. 1. 1821 and 1822-- v. 2. 1791, 1813, 1824, 1838-43, 1930.",
+          "If you are using a computer in the Family History Library in Salt Lake City, you may use this database by clicking here. (run:C:/Locks/4425.bat)"
+        ],
+        "subjects": [
+          "Mexico, Jalisco, Guadalajara - Census"
+        ],
+        "filmNotes": [],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:1107730",
+        "title": "Andariegos y pobladores : Nueva España y Nueva Galicia, Siglo XVI/ José Miguel Romero de Solis",
+        "creator": "Romero de Solís, José Miguel",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Diccionario biográfico de conquistadores, autoridades provinciales y locales, cabildantes, eclesiásticos, encomenderos, dueños de ganados, huertas, estancias, etcétera de la edad colonial (1517-1821) de los estados de Colima y Jalisco.",
+          "A biographical dictionary of conquistadores, provincial and local authorities, counselors, clerics, commissioners, owners of ranches, orchards, and farms, etc. from the colonial period (1517 to 1821) in the states of Colima and Jalisco."
+        ],
+        "subjects": [
+          "Mexico, Colima - Encyclopedias and dictionaries",
+          "Mexico, Colima - History",
+          "Mexico, Jalisco - Encyclopedias and dictionaries",
+          "Mexico, Jalisco - History"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:567142",
+        "title": "Anotaciones genealógicas/ Rubén Villaseñor Bordes",
+        "creator": "Villaseñor Bordes, Rubén",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Microreproduccion del original publicado: Autlan, Jalisco : 1949. 152 p. Libro en la biblioteca personal del licenciado Guillermo Romo Celis.",
+          "Genealogical annotations of Autlán, Jalisco, México."
+        ],
+        "subjects": [
+          "Mexico, Jalisco, Autlán de Navarro - Genealogy"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1410945",
+            "imageGroupNumber": "7970171",
+            "text": "Anotaciones genealógicas"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:219110",
+        "title": "Anuario de la comisión diocesana de historia del Arzobispado de Guadalajara/ Comisión Diocesana de Historia",
+        "creator": "Iglesia Católica. Arquidiócesis de Guadalajara (México)",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Yearbook of the Diocesan Committee for History, Archibishopric of Guadalajara, Mexico."
+        ],
+        "subjects": [
+          "Mexico, Jalisco - Church history"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:4329046",
+        "title": "Apuntes para la historia de la Iglesia en Guadalajara/ J. Ignacio Dávila Garibi.",
+        "creator": "Dávila Garibi, J Ignacio 1888-1981",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "\"Escrito por ... encargo del ... Arzobispo de Guadalajara, Dr. D. José Garibi Rivera ...\".",
+          "Notes for the history of the Church in Guadalajara.",
+          "v. 1. Desde los primeros tiempos de que se tiene noticia hasta las postrimerías del siglo XVI -- v. 2. Siglo XVII -- v. 3 pt. 1. Siglo XVIII -- v. 3 pt. 2. Siglo XVIII -- v. 4 pt. 1. Siglo XIX -- v. 4 pt. 2. Siglo XIX -- v. 5. Enero lo de 1901-18 de febrero de 1936.",
+          "Includes bibliographical references and indexes."
+        ],
+        "subjects": [
+          "Mexico, Jalisco, Guadalajara - Church history"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:291320",
+        "title": "Archivo particular del Sr. Ignacio Vizcaino",
+        "creator": "Vizcaino, Ignacio",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Microfilme de manuscritos en Tapalpa, Jalisco en el archivo personal de Ignacio Vizcaino.",
+          "Todos los volumenes contienen información de los años ca 1649-1905 y están muy desordenados.",
+          "Archives belonging to Mr. Ignacio Vizcaino in Tapalpa, Jalisco."
+        ],
+        "subjects": [
+          "Vizcaino",
+          "Mexico, Jalisco, Tapalpa - Archives and libraries"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "270160",
+            "imageGroupNumber": "7985217",
+            "text": "Vol. 1"
+          },
+          {
+            "filmNumber": "270161",
+            "imageGroupNumber": "7985218",
+            "text": "Vol. 2"
+          },
+          {
+            "filmNumber": "270162",
+            "imageGroupNumber": "7985219",
+            "text": "Vol. 3"
+          },
+          {
+            "filmNumber": "270163",
+            "imageGroupNumber": "7985220",
+            "text": "Vol. 4"
+          },
+          {
+            "filmNumber": "270164",
+            "imageGroupNumber": "7985221",
+            "text": "Vol. 5."
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:4499630",
+        "title": "Atando cabos : familias Loza y su historia/ Rubén Casillas Moreno.",
+        "creator": "Casillas Moreno, Rubén",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": true,
+        "digitalLibraryUrl": "http://www.familysearch.org/library/books/idurl/1/889209",
+        "notes": [
+          "\"Rubén Casillas Moreno shares with a large number of altenos the legitimate pride of bearing the surname of one of the founding families of the highlands of Jalisco, the same one carried by the master builder of the Guadalajara cathedral: Martín Casillas. Rubén Casillas Moreno Padilla Loza entered these depths, and with two more published titles, Sequelas de la Historia and Mirandilla Historia y Tradicion, honors with his third book his fourth last name, that of his maternal grandmother: Dona Juana Loza Padilla. \" -- translation of back cover."
+        ],
+        "subjects": [
+          "Loza",
+          "Mexico, Jalisco - Genealogy"
+        ],
+        "filmNotes": [],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:4115269",
+        "title": "Beneficio de los Tecuexes : la primera divisin de la parroquia de  Jalostotitln en 1769./ Sergio Gutiérrez Martín, José de Jesús Martín Flores",
+        "creator": "Gutiérrez Martín, Sergio",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "The old Beneficio de los Tecuexes , today known as the parish of Jalostotitlan, was founded in 1572. For almost two hundred years, the parish remained intact until 1769, when it was divided for the first time by the ecclesiastical authorities of the bishopric of Guadalajara and civil authorities of the Royal Court of New Galicia. The present work, Beneficio de los Tecuexes: La Division de la Parroquia de Jalostotitlan, February 23, 1769 , focuses on that fact; act that promoted the founding of the parish of Nuestra Senora de San Juan and adjusted the jurisdictional limits of the parishes of Tepatitlan, Lagos de Moreno and Teocaltiche, all located in the region known as Los Altos de Jalisco .",
+          "Includes bibliographical references and index."
+        ],
+        "subjects": [
+          "Mexico, Jalisco, Jalostotitlán - Church history"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:4591283",
+        "title": "Bibliografía general de Jalisco/ Ramiro Villaseñor y Villaseñor",
+        "creator": "Villaseñor y Villaseñor, Ramiro",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:1383700",
+        "title": "Bienes de difuntos, de la Real Audiencia de Guadalajara, Jalisco, México 1549-1885",
+        "creator": "Real Audiencia de Guadalajara (México)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:3461755",
+        "title": "Biografias de hijos ilustres de la provincia de Guadalajara/ por Juan Diges Antón y Manuel Sagredo y Martin",
+        "creator": "Dijes Antón, Juan, 1856-",
+        "repositoryCalls": [
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:4591279",
+        "title": "Biografías: Jesús López Portillo, José Luis Verdía : su influjo en el desarrollo político e intelectual de Jalisco/ Luis Pérez Verdía",
+        "creator": "Pérez Verdía, Luis 1857-1914",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "HSB (Headquarters Storage Building)"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:76536",
+        "title": "Boletin del Archivo Histórico de Jalisco",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:3656530",
+        "title": "Canon cronologico razonado de los gobernantes de Jalisco desde la consumacion de la Independencia mexicana : formado en presencia de documentos auténticos/ por Alberto Santoscoy",
+        "creator": "Santoscoy, Alberto, 1857-1906",
+        "repositoryCalls": [
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:44952",
+        "title": "Capellanías, 1606-1899",
+        "creator": "Archivo de la Sagrada Mitra en Guadalajara (México)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:2840394",
+        "title": "Carta general del Estado de Jalisco",
+        "creator": "Tamayo, Jorge L",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:195152",
+        "title": "Carta general del estado de Jalisco/ Jorge L. Tamayo",
+        "creator": "Tamayo, Jorge L., 1912-",
+        "repositoryCalls": [
+          "Oakland California FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:520990",
+        "title": "La casa y mayorazgo de La Canal de la villa de San Miguel el Grande : Nueva España/ Miguel J. Malo Zozaya",
+        "creator": "Malo Zozaya, Miguel J.",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:4499603",
+        "title": "Los Casillas en el tiempo : genealogía/ Rubén Casillas Moreno.",
+        "creator": "Casillas Moreno, Rubén",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:219133",
+        "title": "Catálogo biobibliográfico de los doctores, licenciados y maestros de la antigua Universidad de Guadalajara/ Juan Bautista Iguíniz",
+        "creator": "Iguíniz, Juan Bautista",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:522162",
+        "title": "Catálogo del Archivo del Registro Público de la Propiedad de Guadalajara : libros de hipotecas, 1566-1820/ David J. Robinson y Linda Greenow",
+        "creator": "Greenow, Linda L",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:213531",
+        "title": "Cedulario de la Nueva Galicia/ compilado por Eucario López Jiménez",
+        "creator": "López Jiménez, Eucario",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:666382",
+        "title": "Censo de población del municipio de Acatic, Jalisco, 1930",
+        "creator": "Archivo General de la Nación (Distrito Federal, México)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "hydrated": false
+      }
+    ]
+  }
+}

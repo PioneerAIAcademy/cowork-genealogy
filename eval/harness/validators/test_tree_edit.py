@@ -89,29 +89,55 @@ def _trees_equal(before: dict | None, after: dict | None) -> bool:
     return before == after
 
 
-def test_verification_reads_the_tree(tool_calls, builtin_tool_calls, test):
+def test_verification_reads_the_tree(tool_calls, test):
     """Tag-gated (reads-tree): the delegation states the values it wants
-    confirmed, so a reply can repeat them without looking. A `tree_query` that
-    returned persons, or a Read of tree.gedcomx.json, shows the tree was
-    checked."""
+    confirmed, so a reply can repeat them without looking. tree-edit reads the
+    tree only through ``tree_query`` (it holds no ``Read``), so the check passes
+    on a ``tree_query`` whose answer was ``ok`` and returned I1 with fact F1.
+    It reads the answer, not the arguments: I1 listed only as missing, or a
+    ``factTypes`` filter that drops F1, fails; a lookup by FamilySearch id
+    passes, since the answer names the tree person I1 (issue #4484)."""
     if "reads-tree" not in test.get("tags", []):
         pytest.skip("not a reads-tree scenario")
-    queries = [
-        c for c in tool_calls or []
-        if bare_tool_name(c.get("tool")) == "tree_query"
-        and as_mapping(c.get("response")).get("ok") is True
-        and as_mapping(c.get("response")).get("persons")
+    calls = tool_calls or []
+
+    def returns_i1_with_f1(call):
+        response = as_mapping(call.get("response"))
+        if response.get("ok") is not True:
+            return False
+        persons = response.get("persons")
+        if not isinstance(persons, list):
+            return False
+        for person in map(as_mapping, persons):
+            facts = person.get("facts")
+            if person.get("id") == "I1" and isinstance(facts, list):
+                if any(as_mapping(f).get("id") == "F1" for f in facts):
+                    return True
+        return False
+
+    served = [
+        c for c in calls
+        if bare_tool_name(str(c.get("tool") or "")) == "tree_query" and returns_i1_with_f1(c)
     ]
-    reads = [
-        (c.get("args") or {}).get("file_path", "")
-        for c in builtin_tool_calls or []
-        if c.get("tool") == "Read"
-    ]
-    tree_reads = [r for r in reads if r.replace("\\", "/").endswith("tree.gedcomx.json")]
-    assert queries or tree_reads, (
-        "The agent reported on the tree without reading it: no tree_query "
-        f"returned persons and its Read calls were {reads[:3]}"
+    assert served, (
+        "The agent reported on the tree without a served tree_query returning I1 with F1; "
+        f"its tool calls were {[bare_tool_name(str(c.get('tool') or '')) for c in calls][:5]}"
     )
+
+
+def test_record_matches_ask_every_confidence(tool_calls, test):
+    """Tag-gated (person-record-matches): the tool's default floor of 2 leaves
+    out matches at confidence 1, so every listing call passes minConfidence 1."""
+    if "person-record-matches" not in test.get("tags", []):
+        pytest.skip("not a person-record-matches scenario")
+    calls = [
+        c.get("args") or {}
+        for c in tool_calls or []
+        if bare_tool_name(c.get("tool")) == "person_record_matches"
+    ]
+    assert calls, "The agent listed record matches without calling person_record_matches"
+    low = [a for a in calls if a.get("minConfidence") != 1]
+    assert not low, f"person_record_matches called without minConfidence 1: {low}"
 
 
 def test_tree_edit_noop(before_state, after_state, test):
@@ -311,16 +337,18 @@ def _facts_of(state: dict, person_id: str) -> list:
 
 def test_namesake_citation_refused_and_handed_back(before_state, after_state, text_response, test, agent_returns=None):
     """Tag-gated (`namesake-citation`): with a namesake on I1 and the census
-    untied to him, no fact is added to I1 and the return hands the census link
-    to person-evidence."""
+    untied to him, no fact is added to I1 and the return names person-evidence
+    as the owner of the census link. Any wording counts, as in
+    ``test_universal.test_hand_back_names_its_owner``; nothing reads a
+    ``Hand-back:`` line (issue #4170)."""
     if "namesake-citation" not in (test.get("tags") or []):
         pytest.skip("not a namesake-citation test")
     added = [f.get("type") for f in _facts_of(after_state, "I1") if f not in _facts_of(before_state, "I1")]
     assert not added, f"facts were added to I1 although the census is untied to him: {added}"
     from harness.skill_runner import subject_reply_text
-    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test)
-    assert re.search(r"hand[- ]?back[^\n]{0,40}`?person-evidence", text_response or "", re.I), (
-        f"the refused citation was not handed to person-evidence: {(text_response or '')[:600]!r}"
+    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test, skip_failed_spawns=True)
+    assert "person-evidence" in (text_response or "").lower(), (
+        f"the reply does not name person-evidence as the owner of the census link: {(text_response or '')[:600]!r}"
     )
 
 

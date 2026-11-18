@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_020",
+    "skill": "research-exhaustiveness",
+    "name": "Wrap-up lists a plan item the researcher struck in not_reached as skipped_plan_item",
+    "type": "positive",
+    "description": "The wrap-up twin of ut_research_exhaustiveness_019, on the same scenario. Wrap-up is where a user_declined skip most often comes from: research-plan disposes every open item as skipped user_declined before the stop. Issue #4551 moved the wrap-up's own skipped_plan_item clause into Build not_reached so declare, decline and wrap-up read one rule; this test is what shows the wrap-up still lists the struck item after that move. Under wrapUp: yes the agent records resources_spent and stops, with no recommendation and no 'Continue with ...?' line. pli_010 (newspaper, skipped inaccessible) checks the same rule's inaccessible arm.",
+    "tags": [
+      "research-exhaustiveness",
+      "not-reached",
+      "not-reached-skipped-item",
+      "wrap-up"
+    ]
+  },
+  "input": {
+    "delegation": "wrapUp: yes. The researcher has asked to wrap up question q_001 (the father of Patrick Flynn) and move on.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-skip-user-declined"
+  },
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
+  ],
+  "judge_context": [
+    "pli_009 (naturalization, Schuylkill County, 1850-1880) is skipped with skip_category user_declined; the researcher struck it and no log entry ever searched it. pli_007 (census, skipped) carries no skip_category.",
+    "pli_010 (newspaper: Thomas Flynn's obituary in the Pottsville Republican, 1880-1890) is skipped with skip_category inaccessible: the paper is held only on microfilm. REQUIRED: not_reached also names this newspaper item, as a skipped_plan_item entry; on a nothing_further_reachable declaration §3's exception may list it under its own kind (for example browse_only) instead. A missing entry for it is a failure.",
+    "Under wrapUp: yes the agent writes q_001.search_stop with stopped_because resources_spent and stop_criteria null, leaves q_001.status unchanged, and ends with no recommendation and no 'Continue with ...?' line.",
+    "REQUIRED: search_stop.not_reached contains a skipped_plan_item entry for the naturalization search, with log_entry_id null, wiki_title null, and a description naming the naturalization item and that the researcher declined it.",
+    "FAILURE MODES: (a) no not_reached entry for the naturalization search; (b) it is listed as nil_search or deferred; (c) the agent declares exhaustive instead of recording resources_spent; (d) the agent recommends a next step or asks 'Continue with ...?'; (e) the agent re-plans or runs the struck search.",
+    "Listing pli_007 in not_reached is neither required nor a failure.",
+    "Tool Arguments: grade the research_append update on q_001. A separate validate_research_schema call is not needed; do not penalize its absence."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 900
+  }
+}

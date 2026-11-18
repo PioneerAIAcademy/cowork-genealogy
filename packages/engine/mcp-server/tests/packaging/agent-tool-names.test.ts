@@ -532,8 +532,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "person-evidence.md": {
     tools: [
       "materialize_facts",
-      "merge_warnings",
-      "person_quality",
       "person_warnings",
       "place_distance",
       "place_search",
@@ -869,7 +867,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "question-selection.md": {
     tools: [
       "census_children_gap",
-      "person_warnings",
       "project_context",
       "research_append",
       "research_query",

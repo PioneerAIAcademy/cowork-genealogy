@@ -18,10 +18,11 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
+    "person-record-matches-flynn-accepted",
     "person-record-matches-flynn"
   ],
   "judge_context": [
-    "Should call person_record_matches with the `id` parameter set to LZNY-BRF (not a made-up ID). The tool's schema declares `id` and nothing else — a call passing `personId` or `person_id` is wrong, and no fixture covers it any more",
+    "Should call person_record_matches with the `id` parameter set to LZNY-BRF (not a made-up ID), and with no `status` or one naming both accepted and pending. A call passing `personId` or `person_id` is wrong, and no fixture covers it any more. A call with `status: [\"accepted\"]` alone gets only the accepted match back, as FamilySearch answers it, so a reply built on it cannot list the pending matches",
     "Should clearly distinguish the accepted match (1850 census, confidence 5) from the two pending hints (1860 census confidence 3, Pennsylvania Death Certificates confidence 2)",
     "Should NOT make any edits to tree.gedcomx.json or research.json — this is a read-only query, not an edit request",
     "Listing is the whole job: should NOT recommend accepting or rejecting the pending matches. Pointing out that they are hints the researcher can have reviewed is fine; adjudicating them is search-hints' job"
