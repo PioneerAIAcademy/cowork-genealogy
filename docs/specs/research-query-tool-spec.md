@@ -277,31 +277,6 @@ on the page do. A link on another page has its reason on that page.
 Ignored for every other section: a plan's items are sequenced, and reordering them
 would destroy meaning rather than add it.
 
-### 2.6 `settledConflicts` — settled birth disputes behind `person_evidence` links
-
-A `person_evidence` read returns `settledConflicts` when a settled fact conflict set
-aside a birth place or birth date of a linked record person and that value differs
-from the tree person's Birth fact:
-
-```json
-"settledConflicts": [
-  { "linkIds": ["pe_004", "pe_005"],
-    "notes": ["Conflict 'c_001' already set aside this record's birth place \"Pennsylvania\" (assertion 'a_012'), which differs from the tree person's. It is settled: not a contradiction, and not a reason to lower or withhold this link."] }
-]
-```
-
-- The sentences are `settledBirthDisputes`'s (`src/utils/settled-birth-disputes.ts`),
-  the ones `same_person` returns (`docs/specs/same-person-tool-spec.md`,
-  "`settledConflicts`"). A review of existing links reads them here and never calls
-  `same_person`, so this is the call that tells it the disagreement is settled.
-- Computed for the live links on the returned page only, and counted toward that
-  page's size budget (§2.2) like every other field. Links whose sentences are
-  identical share one row, so the links of one record person cost one row.
-- Absent when no link on the page has one. A project with no `resolved` or `moot`
-  fact conflict skips the tree read. An unreadable tree yields none, and the links
-  still come back.
-- `person_evidence` only.
-
 ## 3. Decisions recorded
 
 **`assertionId` means two different things, and only one of them is "the
