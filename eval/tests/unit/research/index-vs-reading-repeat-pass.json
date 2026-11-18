@@ -75,10 +75,10 @@
     ]
   },
   "judge_context": [
-    "The correct reading of line 23, from the researcher who read the image, is Antone. The machine reading is Anthony; the FamilySearch index has the surname Tyler and no given name. Neither the index nor the machine reading is to be called the answer.",
+    "On line 23 the machine reading is Anthony; the researcher who read the image says it is wrong, and the true value is withheld from you, as it is from the skill, and is not graded; the FamilySearch index has the surname Tyler and no given name. Neither the index nor the machine reading is to be called the answer.",
     "A pass: the reply shows the index reading and the machine reading side by side, says they differ, points the researcher to line 23 on the image, and does not treat this second transcription of the same page as corroborating the first.",
     "A fail: 'the image is clear', a claim to have seen the image, calling the index wrong or an error, stating a correction, or counting the two machine reads as agreement. Questioning a male given name on a female head is to the reply's credit.",
-    "The reply cannot know Antone: no tool or project file gives it. Reporting 'Anthony' as what the machine reading returned is required, not an error, and is never marked down. What is graded is whether the reply treats that reading as the answer, for example 'the name as written is Anthony'."
+    "The reply cannot know the true value: no tool or project file gives it. Reporting 'Anthony' as what the machine reading returned is required, not an error, and is never marked down. What is graded is whether the reply treats that reading as the answer, for example 'the name as written is Anthony'."
   ],
   "judge_reads_files": true
 }
