@@ -11,7 +11,29 @@
 export type RuleMode = "warn" | "refuse";
 
 /** Each staged rule's current mode, by rule id. A rule absent here is not staged. */
-export const RULE_MODES: Readonly<Record<string, RuleMode>> = {};
+export const RULE_MODES: Readonly<Record<string, RuleMode>> = Object.freeze({
+  // research_append's claim rules (issue #3032 Stage 1b, rules 1, 2, 4-12); they
+  // refuse from Stage 1c.
+  "claims-rival-verdicts": "warn",
+  "claims-one-per-slot": "warn",
+  "claims-no-empty-escape": "warn",
+  "claims-present": "warn",
+  "claims-cite": "warn",
+  "claims-grounding": "warn",
+  "claims-absence": "warn",
+  "claims-polarity": "warn",
+  "claims-couple-first": "warn",
+  "claims-capped-open": "warn",
+  "claims-proved-identity": "warn",
+});
+
+/** A staged rule's mode. Throws on an unknown id, so a misspelt rule id fails
+ *  loudly instead of silently dropping the rule. */
+export function ruleMode(id: string): RuleMode {
+  const mode = Object.prototype.hasOwnProperty.call(RULE_MODES, id) ? RULE_MODES[id] : undefined;
+  if (mode === undefined) throw new Error(`rule-modes: no staged rule '${id}'`);
+  return mode;
+}
 
 /** The prefix a warn-mode finding carries. */
 export const WILL_BE_REFUSED = "Will be refused:";

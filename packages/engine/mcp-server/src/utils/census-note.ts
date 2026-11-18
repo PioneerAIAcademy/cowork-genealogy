@@ -4,13 +4,7 @@
 // Keyed on the call's own arguments and nothing else, so the tool and the eval
 // mock run the same function and cannot disagree. It reads no search result.
 
-import {
-  BRITISH_RELATIONSHIP_COLUMN_FROM,
-  CENSUS_FRAGMENTS,
-  CENSUS_TABLE,
-  US_RELATIONSHIP_COLUMN_FROM,
-  type CensusRow,
-} from "../data/census-table.js";
+import { CENSUS_FRAGMENTS, CENSUS_TABLE, type CensusRow } from "../data/census-table.js";
 import { foldPlaceKey, listedOneWordPlace } from "./one-word-places.js";
 
 export interface CensusSchedule {
@@ -142,17 +136,16 @@ function overlaps(forms: readonly string[], place: readonly string[]): boolean {
 }
 
 function recorded(row: CensusRow): string | undefined {
-  if (row.headsOnly) return "names only the head of each household; the others are counted, not named";
-  const from =
-    row.label === "United States"
-      ? US_RELATIONSHIP_COLUMN_FROM
-      : row.label === "England and Wales" || row.label === "Scotland"
-        ? BRITISH_RELATIONSHIP_COLUMN_FROM
-        : undefined;
-  if (from === undefined) return undefined;
-  return row.year >= from
-    ? "names every person and states each one's relationship to the head of household"
-    : "names every person but has no relationship-to-head column: relationships within a household are inferred from surname, age and listing order, not stated";
+  switch (row.schedule) {
+    case "headsOnly":
+      return "names only the head of each household; the others are counted, not named";
+    case "relationship":
+      return "names every person and states each one's relationship to the head of household";
+    case "everyone":
+      return "names every person but has no relationship-to-head column: relationships within a household are inferred from surname, age and listing order, not stated";
+    default:
+      return undefined;
+  }
 }
 
 function schedule(row: CensusRow): CensusSchedule {

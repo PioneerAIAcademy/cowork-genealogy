@@ -1957,7 +1957,7 @@ describe("research_append (Phase 1)", () => {
       projectPath: dir,
       section: "person_evidence",
       op: "append",
-      entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "Name + birth year match", superseded_by: null },
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "Name + birth year match", superseded_by: null },
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -2030,7 +2030,7 @@ describe("research_append (Phase 1)", () => {
       projectPath: dir,
       section: "person_evidence",
       op: "append",
-      entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "stronger match", superseded_by: null },
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "stronger match", superseded_by: null },
     });
     expect(appended.ok && singleOk(appended).entryId).toBe("pe_002");
 
@@ -8096,7 +8096,7 @@ describe("research_append (batch ops)", () => {
         {
           section: "person_evidence",
           op: "append",
-          entry: { assertion_id: "a_002", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+          entry: { assertion_id: "a_002", person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "match", superseded_by: null },
         },
       ],
     });
@@ -13135,7 +13135,10 @@ describe("research_append — person_evidence epistemic gate", () => {
       person_id: "I1",
       confidence,
       rationale: "Names match the subject.",
-      match_score: null,
+      // write() attests every assertion at 0.9 (attestEveryAssertion); the
+      // subject of this block is the [?] gate, not the score gate, so this
+      // carries the score that attestation recorded rather than null.
+      match_score: 0.9,
       created: "2026-07-18",
       superseded_by: null,
     },
@@ -14518,7 +14521,12 @@ describe("research_append — worked examples are themselves valid", () => {
       for (const q of fixture.questions) q.status = "resolved";
     }
     await writeFile(join(dir, "research.json"), JSON.stringify(fixture, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    // The proof_summaries example's claim names Thomas Flynn (I2) as Patrick's (I1) father.
+    const exampleTree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] }],
+    };
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(exampleTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
     await writeFile(join(dir, "results", "log_005.json"), JSON.stringify(fulltextSidecar, null, 2));
@@ -15728,6 +15736,18 @@ describe("research_append — person_evidence requires a recorded score", () => 
     expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
   });
 
+  // #4549: the old gate checked that an attestation EXISTS for the pairing,
+  // not that the link being written carries it -- so a null match_score beside
+  // a recorded score passed. Seen twice in production (ut_person_evidence_010;
+  // #3552's panel analysis).
+  it("refuses a null append beside a recorded score, naming it", async () => {
+    await writeProject();
+    await attest(); // records 0.82
+    const r = await researchAppend(link(null) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/same_person already scored this pairing at 0\.82/);
+  });
+
   // The gate binds the PRESENCE of an attestation for the pairing, not the
   // VALUE written against it. An agent that really called same_person and then
   // wrote a different number is not caught here. Pinned rather than implied
@@ -15840,6 +15860,22 @@ describe("research_append — person_evidence requires a recorded score", () => 
     await writeProject();
     await attest(); // records 0.82
     expect((await researchAppend(link(0.11) as any)).ok).toBe(true);
+  });
+
+  // #4549's new arm is scoped to `isAppend`, same as the ordinary retraction
+  // check above it: an UPDATE that retracts a score beside a recorded
+  // attestation must stay a retraction, not a refusal.
+  it("still allows an update to retract a score, even with one recorded", async () => {
+    await writeProject();
+    await attest(); // records 0.82
+    const a = await researchAppend(link(0.82) as any);
+    expect(a.ok).toBe(true);
+    const entryId = (a as any).entry?.id ?? "pe_001";
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId, fields: { match_score: null },
+    } as any);
+    expect(r.ok).toBe(true);
   });
 
   // Batch semantics, decided rather than left to fall out: the refusal is a
@@ -16066,6 +16102,21 @@ describe("research_append — person_evidence requires a recorded score", () => 
     expect((await researchAppend(link(null) as any)).ok).toBe(true);
   });
 
+  // #4549: reachability excuses a MISSING score, never one that was actually
+  // obtained. `personaReachable` is a provenance HEURISTIC about whether a call
+  // could plausibly have been made -- it is not consulted by `same_person`
+  // itself, which can score a full-text/image/external-site-sourced pairing
+  // just as it scores any other. This pins the ordering against the lane this
+  // whole block otherwise excuses: the null-vs-recorded refusal must fire
+  // BEFORE the unreachable short-circuit, not be silently skipped by it.
+  it.each(unreachable)("still refuses a null score on an unreachable lane once same_person scored it: %s", async (_name, logEntry) => {
+    await writeUnreachable(logEntry);
+    await attest();
+    const r = await researchAppend(link(null) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/already scored this pairing/);
+  });
+
   // Exempting on a MISSING field is the bypass this gate exists to refuse: if a
   // dangling log_entry_id silenced the requirement, dropping the field would be
   // the way out. `personaReachable` treats unresolvable provenance as reachable,
@@ -16113,6 +16164,15 @@ describe("research_append — person_evidence requires a recorded score", () => 
     const r = await researchAppend(link(0.005, "I9") as any);
     expect(r.ok).toBe(false);
     expect(failure(r).errors?.join(" ")).toMatch(/minted from the very record/);
+  });
+
+  // #4549's new null-vs-recorded refusal must not reach a circular pairing:
+  // the minted-person arm returns before that check ever runs, even when
+  // same_person was (wrongly) called on it and left a score on file.
+  it("still exempts a circular pairing's null score even when one was recorded", async () => {
+    await writeProject(mintedTree);
+    await attest({ tree_person_id: "I9" });
+    expect((await researchAppend(link(null, "I9") as any)).ok).toBe(true);
   });
 
   // A tree source ref is written either bare (`S1`) or as a fragment (`#S1`).
@@ -17663,6 +17723,17 @@ describe("research_append — one score per record persona covers its facts (#35
     expect(errorsOf(r) ?? []).toEqual([]);
   });
 
+  // #4549: the null-vs-recorded refusal has to see a score found through the
+  // persona arm too, not only the exact (assertion, person) key -- a_010's own
+  // key is unscored here, but a_011 (same persona P1) carries one.
+  it("refuses a null fact of a scored persona just the same", async () => {
+    await writeProject();
+    await score({ assertion_id: "a_011" });
+    const op = { ...link("a_010"), entry: { ...link("a_010").entry, match_score: null } };
+    const r = await write(op);
+    expect(failure(r).errors?.join(" ")).toMatch(/same_person already scored persona 'P1' for this tree person at 0\.82/);
+  });
+
   it("still needs its own score for a fact with no persona id", async () => {
     await writeProject();
     await score({});
@@ -18451,7 +18522,9 @@ describe("research_append — unexplained move, update path", () => {
       op: "append",
       entry: {
         assertion_id: assertionId, person_id: personId, confidence: "confident",
-        rationale: "Name and household agree.", match_score: null,
+        // write() attests every assertion for I1 and I2 (attestEveryAssertion)
+        // at 0.9; carry that score rather than null.
+        rationale: "Name and household agree.", match_score: 0.9,
         created: "2026-10-07", superseded_by: null,
       },
     });
