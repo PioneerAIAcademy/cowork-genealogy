@@ -165,6 +165,33 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
 
+def test_open_conflict_writes_blocked_by_conflict(before_state, after_state, test):
+    """Tag-gated: Step 0's open-conflict block writes `blocked_by_conflict`
+    (issue #4323). `test_no_exhaustive_declaration` catches only a stop-gate
+    value; this catches a `resources_spent` decline in its place and a run
+    that writes no stop at all."""
+    if "blocked-by-conflict" not in test.get("tags", []):
+        pytest.skip("not a blocked-by-conflict scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    stops = [
+        (q.get("id"), (q.get("search_stop") or {}).get("stopped_because"))
+        for q in _questions_with_changed_declaration(before, after)
+        if q.get("search_stop")
+    ]
+    assert stops, (
+        "no question's search_stop was written: an unresolved conflict that "
+        "lists the question owes a `blocked_by_conflict` stop"
+    )
+    bad = [f"{qid}: stopped_because={sb!r}" for qid, sb in stops if sb != "blocked_by_conflict"]
+    assert not bad, (
+        "an unresolved conflict that lists the question owes a "
+        "`blocked_by_conflict` stop, not:\n  - " + "\n  - ".join(bad)
+    )
+
+
 # --- Tag-gated: not_reached is built from what the project holds ------------
 
 _LOCALITY_PAGE_SECTIONS = frozenset({"home", "getting_started", "online_records", "research_tips"})
@@ -267,6 +294,64 @@ def test_not_reached_lists_uncaptured_handoffs(before_state, after_state, test):
     assert not bad, "not_reached hand-off entries wrong:\n  - " + "\n  - ".join(bad)
 
 
+_DECLINED_SKIP_CATEGORIES = frozenset({"user_declined", "no_coverage", "inaccessible"})
+
+
+def declined_skip_items(research: dict, question_id: str) -> list[dict]:
+    """Items on the question's plans skipped `user_declined`, `no_coverage` or
+    `inaccessible`, minus any item an uncaptured hand-off already lists as
+    `handed_to_user` (issue #4551)."""
+    handoff_ids = set(uncaptured_handoff_ids(research, question_id))
+    handed_items = {e.get("plan_item_id") for e in (research.get("log") or []) if e.get("id") in handoff_ids}
+    return [
+        item
+        for plan in (research.get("plans") or [])
+        if plan.get("question_id") == question_id
+        for item in (plan.get("items") or [])
+        if item.get("status") == "skipped"
+        and item.get("skip_category") in _DECLINED_SKIP_CATEGORIES
+        and item.get("id") not in handed_items
+    ]
+
+
+def _names_item(description: str, item: dict) -> bool:
+    text = (description or "").casefold()
+    record_type = (item.get("record_type") or "").replace("_", " ").casefold()
+    item_id = (item.get("id") or "").casefold()
+    return bool(item_id and re.search(rf"\b{re.escape(item_id)}\b", text)) or bool(record_type and record_type in text)
+
+
+def test_not_reached_lists_declined_skips(before_state, after_state, test):
+    """Tag-gated: every plan item skipped `user_declined` or `no_coverage` has a
+    `skipped_plan_item` entry, and every item skipped `inaccessible` has an
+    entry of any kind — on a declaration §3's exception may list it as
+    `privacy_sealed`, `browse_only` and the like. Every `skipped_plan_item`
+    entry carries `log_entry_id: null` and `wiki_title: null`.
+
+    Entries carry no `plan_item_id`, so an entry matches an item when its
+    description names the item id as a whole word or its record type; two
+    skipped items of one record type can share an entry, and a variant
+    spelling of the record type does not match."""
+    if "not-reached-skipped-item" not in test.get("tags", []):
+        pytest.skip("not a not-reached-skipped-item scenario")
+    before = before_state.get("research_json") or {}
+    bad: list[str] = []
+    for q in _written_questions(before_state, after_state):
+        entries = q["search_stop"].get("not_reached") or []
+        skipped_entries = [e for e in entries if e.get("kind") == "skipped_plan_item"]
+        bad += [f"{q.get('id')}: skipped_plan_item entry carries log_entry_id "
+                f"{e.get('log_entry_id')!r} / wiki_title {e.get('wiki_title')!r}; both must be null"
+                for e in skipped_entries
+                if e.get("log_entry_id") is not None or e.get("wiki_title") is not None]
+        for item in declined_skip_items(before, q.get("id")):
+            pool = entries if item.get("skip_category") == "inaccessible" else skipped_entries
+            if not any(_names_item(e.get("description") or "", item) for e in pool):
+                wanted = "not_reached" if pool is entries else "skipped_plan_item"
+                bad.append(f"{q.get('id')}: {item.get('id')} ({item.get('record_type')}, "
+                           f"{item.get('skip_category')}) has no {wanted} entry")
+    assert not bad, "not_reached skipped-item entries wrong:\n  - " + "\n  - ".join(bad)
+
+
 def test_not_reached_wiki_title_is_page_title(before_state, after_state, test):
     """Tag-gated: a `wiki_named_untouched` entry names a page the project
     read, by its title from `pages_read[].url` — never the section enum,
@@ -336,18 +421,36 @@ def test_fetches_registration_start_date(tool_calls, test):
     only because the agent happened to fetch anyway before stopping, so this
     was a latent contradiction surfaced by sampling, not a regression.
 
-    Step 0 declares five hard blocks. The four named above are the ones any
-    test exercises; the classification and person_evidence blocks have no test
-    today, so a test that stops at one will need its tag added here too.
+    `blocked-by-conflict` is the fifth member (issue #4323): an unresolved
+    conflict that lists the question in `blocks_question_ids` is a Step 0 hard
+    block, because the `blocked_by_conflict` write it produces carries
+    `stop_criteria: null` and no start date can change it. ut_d3c failed here
+    3/3 on Sonnet 5 medium with every judge dimension 3 before the block moved
+    into Step 0.
+
+    Step 0 declares six hard blocks. The five tags named above cover four of
+    them — `refuse-in-progress` and `refuse-planned` are both the active-plan
+    check. The classification and person_evidence blocks have no test today, so
+    a test that stops at one will need its tag added here too.
+
+    `wrap-up` is a different population (issue #4551): under `wrapUp: yes` the
+    agent records `resources_spent` with `stop_criteria: null` and "nothing
+    else", so no criterion reads a start date. ut_020 failed here 3/3 while the
+    judge scored its every dimension 3. The skip keys on the tag, not on the
+    `resources_spent` it writes — ut_014/ut_015 decline the same way and still
+    owe the fetch.
     """
     tags = test.get("tags") or []
     if "near-miss" in tags:
         pytest.skip("negative routing test — the agent is never spawned")
+    if "wrap-up" in tags:
+        pytest.skip("wrapUp: yes records the stop with no criteria to assess")
     if (
         "refuse-in-progress" in tags
         or "refuse-planned" in tags
         or "already-declared" in tags
         or "tentative-value-sweep" in tags
+        or "blocked-by-conflict" in tags
     ):
         pytest.skip("returns at a Step 0 precondition — Step 1 is never reached")
     called = [bare_tool_name(c.get("tool", "")) for c in (tool_calls or [])]

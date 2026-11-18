@@ -1,4 +1,6 @@
 import { LOCAL } from "../../src/auth/principal.js";
+import { connectorPrincipal } from "../../src/auth/principal.js";
+import { connectorReauthMessage } from "../../src/auth/config.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -437,6 +439,36 @@ describe("Error handling", () => {
       headers: new Headers(),
     });
     await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/login tool/);
+  });
+
+  // Self-hosted beta E3: a connector caller has no login tool. A 401 is a
+  // sign-in problem and carries the link; a 403 is a refusal of this request and
+  // sends nobody to sign in.
+  const connector = connectorPrincipal({
+    accessToken: "fs-token",
+    userId: "u_1",
+    config: { webPublicUrl: "https://beta.example" },
+  });
+  const refuse = (status: number, statusText: string) =>
+    mockFetch.mockResolvedValueOnce({
+      ok: false, status, statusText,
+      text: () => Promise.resolve(""),
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
+
+  it("a connector caller's 401 carries the sign-in link, and never the login tool", async () => {
+    refuse(401, "Unauthorized");
+    const failure = await personRecordMatches({ id: "KNDX-MKG" }, connector).catch((e: Error) => e.message);
+    expect(failure).toBe(connectorReauthMessage(connector));
+    expect(failure).toContain("https://beta.example/auth/familysearch/login");
+    expect(failure).not.toMatch(/login tool/);
+  });
+
+  it("a connector caller's 403 names the refusal and sends nobody to sign in", async () => {
+    refuse(403, "Forbidden");
+    const failure = await personRecordMatches({ id: "KNDX-MKG" }, connector).catch((e: Error) => e.message);
+    expect(failure).toBe("FamilySearch match API rejected the request: 403 Forbidden.");
   });
 
   it("translates 400 to a malformed-ARK message", async () => {

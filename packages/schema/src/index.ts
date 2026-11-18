@@ -428,6 +428,7 @@ export interface LocalityRegistrationStart {
   level: RegistrationLevel
   year: number
   source_url: string
+  note?: string
 }
 
 export interface LocalityVolumeCounts {

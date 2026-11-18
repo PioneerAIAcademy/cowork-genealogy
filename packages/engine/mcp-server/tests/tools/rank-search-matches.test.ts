@@ -30,6 +30,8 @@ vi.mock("../../src/auth/config.js", async (orig) => ({
 }));
 
 import { rankSearchMatches, SURNAME_NOT_ON_SUBJECT_NOTE } from "../../src/tools/rank-search-matches.js";
+import { connectorReauthMessage, REJECTED_TOKEN_MESSAGE } from "../../src/auth/config.js";
+import { connectorPrincipal } from "../../src/auth/principal.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { scorePair } from "../../src/utils/match-engine.js";
 import { sourceAttachmentsTool } from "../../src/tools/source-attachments.js";
@@ -512,6 +514,71 @@ describe("rank_search_matches", () => {
       expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Van Buren" });
     });
 
+    describe("a particle spaced differently from the tree's", () => {
+      const withSurname = (surname: string) => ({
+        persons: [juanita({ names: [{ preferred: true, given: "Anna", surname }] })],
+        relationships: [],
+        sources: [],
+      });
+      const flagged = async (tree: string, record: string) =>
+        only(await rank([hit("ark:/61903/1:1:AAAA-AA1", record, "Anna")], withSurname(tree)));
+
+      it.each([
+        ["VanBuren", "Van Buren"],
+        ["Van Buren", "VanBuren"],
+        ["McWilliams", "Mc Williams"],
+        ["McAndrew", "Mc Andrew"],
+        ["Mc Andrew", "McAndrew"],
+        ["Vanderlinde", "Van der Linde"],
+        ["StClair", "St. Clair"],
+        ["De La Cruz", "Delacruz"],
+        ["McAndrew", "Mc Andrews"],
+        ["Vanderlinden", "Van der Linde"],
+        ["St.Clair", "St Claire"],
+        ["Van-Buren", "VanBuran"],
+        ["O'Brien", "O Brien"],
+        ["Van Der", "Vander"],
+        ["Le Roy", "LeRoy"],
+        ["Van Os", "Vanos"],
+      ])("does not flag %s vs %s", async (tree, record) => {
+        expect(await flagged(tree, record)).not.toHaveProperty("surnameNotOnSubject");
+      });
+
+      it.each([
+        ["Van Buren", "van Dyke"],
+        ["van Dyke", "Van Deusen"],
+        ["McWilliams", "Mc Lean"],
+        ["VanBuren", "Van Bergen"],
+      ])("still flags %s vs %s (joined tokens are not compared by Soundex)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it.each([
+        ["Linde, van der", "Berg, van der"],
+        ["Rosa, de la", "Cruz, de la"],
+        ["Linde, van der", "Vander"],
+      ])("still flags %s vs %s (a particle run after the last word is not a word)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it.each([
+        ["da Silva", "da Costa"],
+        ["dos Santos", "dos Reis"],
+        ["Garcia y Lopez", "Martinez y Ruiz"],
+        ["van 't Hof", "van 't Veer"],
+      ])("still flags %s vs %s (a shared word of three letters or fewer is not a match)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it("still matches a tree Van Buren against a record indexed Buren", async () => {
+        expect(await flagged("Van Buren", "Buren")).not.toHaveProperty("surnameNotOnSubject");
+      });
+
+      it("still matches O'Hare against OHare", async () => {
+        expect(await flagged("O'Hare", "OHare")).not.toHaveProperty("surnameNotOnSubject");
+      });
+    });
+
     it("falls back to the last word of personName when the row has no gedcomx", async () => {
       const bare = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", hasGedcomx: false, personName: "Juanita Fenstermaker" });
       const out = await rank([bare]);
@@ -900,6 +967,43 @@ describe("rank_search_matches", () => {
         expect(m).not.toHaveProperty("attachedToSubject");
         expect(m).not.toHaveProperty("attachedToOther");
       }
+    });
+
+    describe("when the attachments read fails (self-hosted beta E3)", () => {
+      const connector = connectorPrincipal({
+        accessToken: "dead-token",
+        userId: "u_1",
+        config: { webPublicUrl: "https://beta.example" },
+      });
+      async function rankAs(who: Parameters<typeof rankSearchMatches>[1], failure: Error) {
+        await writeTree(treeOf({ id: SUBJECT_ID }));
+        const ref = await stage([candidate({ recordId: ATTACHED, primaryId: "p1" })]);
+        scorePairMock.mockResolvedValue(scoreResult(0.8));
+        sourceAttachmentsMock.mockRejectedValue(failure);
+        return rankSearchMatches(
+          { projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID, checkAttachments: true },
+          who,
+        );
+      }
+
+      it("a connector caller whose FamilySearch session ended gets the sign-in link, not a ranking without it", async () => {
+        await expect(rankAs(connector, new Error(connectorReauthMessage(connector)))).rejects.toThrow(
+          'FamilySearch session not accepted. Sign in again at https://beta.example/auth/familysearch/login, ' +
+            'then come back here and say "continue". Nothing is lost.',
+        );
+      });
+
+      it("any other failure still leaves a connector caller's ranking standing, flags unset", async () => {
+        const out = await rankAs(connector, new Error("FamilySearch source-attachments API error: 500"));
+        expect(out.matches).toHaveLength(1);
+        expect(out.matches[0]).not.toHaveProperty("attachedToSubject");
+      });
+
+      it("the desktop is as before: a rejected session in this step does not fail the ranking", async () => {
+        const out = await rankAs(LOCAL, new Error(REJECTED_TOKEN_MESSAGE));
+        expect(out.matches).toHaveLength(1);
+        expect(out.matches[0]).not.toHaveProperty("attachedToSubject");
+      });
     });
   });
 

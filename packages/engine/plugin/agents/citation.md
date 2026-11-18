@@ -149,8 +149,10 @@ delegation gave; with none, skip the steps that need a project. Prioritize:
   Explained patterns
 - Sources the user specifically asks about
 
-For the GedcomX `author` and `title` of a source, call
-`tree_query({ projectPath })` and read its `sources`.
+For the GedcomX `author` and `title` of the sources you refine, call
+`tree_query({ projectPath, personIds: subjectPersonIds, sourceIds })`, where
+`subjectPersonIds` comes from `project_context` and `sourceIds` lists each source's
+`gedcomx_source_description_id`, and read its `sources`.
 
 ### 2. Refine citation_detail
 

@@ -70,14 +70,11 @@ evidence for the index-error reading, and it is also a caution for anyone
 calibrating a transcription against this page under Step 1a, since a mismatch
 there may mean the indexed side is wrong rather than the reading.
 
-**One limit of the `avoid` finding, stated rather than hidden.** `f2` rules out
-adding "Rurek" to `LDZR-FTC`'s names in the tree, which is a *grading*
-constraint and not genealogical advice — recording a source's name variant on
-the person is ordinarily right. The avoid guard matches on names alone and
-exempts only the fixture's subject (`LDZR-XPT`), so an alternate name on the
-wife is indistinguishable from a newly created second wife and force-fails the
-finding. No edit to this fixture can separate the two cases; the variant is
-therefore recorded in `research.json` instead.
+**How `f2` is enforced.** `apply_avoid_guard` fails `f2` on a new Couple
+relationship, absent from the starting tree, joining `LDZR-XPT` to a person named
+Hedvigis Rurek. Jacob's existing couple with `LDZR-FTC` is in the starting tree
+and never counts, so recording "Rurek" as an alternate name on `LDZR-FTC` passes,
+as recording a source's name variant on the person ordinarily should.
 
 **The 1886 child did not die in infancy.** The entry carries a later marginal
 annotation: *"Iniit matr. 11.2.15. Posnan. S. Adalb. cum Ant. Matuszak"* — he

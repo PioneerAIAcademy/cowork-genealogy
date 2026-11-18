@@ -122,7 +122,7 @@
       "record_role": "child",
       "record_persona_id": null,
       "fact_type": "christening",
-      "value": "Christened 12 March 1858 at Kilrush",
+      "value": "Christened 12 March 1845 at Kilrush",
       "structured_value": {
         "relationship_type": "child",
         "related_person_role": "mother",
@@ -136,7 +136,7 @@
       "extracted_for_question_ids": [
         "q_001"
       ],
-      "date": "12 March 1858",
+      "date": "12 March 1845",
       "place": "Kilrush, Clare, Ireland"
     }
   ],

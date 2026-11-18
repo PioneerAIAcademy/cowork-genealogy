@@ -247,9 +247,9 @@ describe("results-staging", () => {
     });
 
     it("does not count a staged acquisition file with no log entry", async () => {
-      // record-extraction logs an upload as `user_provided` and a record_read with
-      // no stagedResultsRef, so neither file can ever pair; counting it would nag
-      // the next search about a read that was logged correctly.
+      // extraction_append logs each acquisition read it extracts with that read's
+      // own stagedResultsRef, so a file not yet logged is not the next search's to
+      // log; counting it would nag that search about a read the extraction logs.
       await writeResearch([]);
       await stage("image_transcribe");
       await stage("record_read");

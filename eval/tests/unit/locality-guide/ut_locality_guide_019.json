@@ -11,7 +11,8 @@
       "colonial records",
       "church registers",
       "town meetings",
-      "direct-arm"
+      "direct-arm",
+      "no-project"
     ]
   },
   "input": {
@@ -40,7 +41,9 @@
     "wiki-search-any",
     "wikipedia-search-any",
     "volume-search-massachusetts-colonial",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s."

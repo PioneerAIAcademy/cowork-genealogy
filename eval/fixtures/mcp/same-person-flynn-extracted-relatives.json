@@ -1,0 +1,27 @@
+{
+  "tool": "same_person",
+  "description": "same_person with matchRelatives on Patrick's persona of MXHY-TP4 against I1: both parents paired. List before the test's own I1 fixture, which the same call would otherwise match. Measured live on 2026-11-15 with same_person's project arm on flynn-record-matching-extracted (FamilySearch matcher).",
+  "args": {
+    "treePersonId": "I1",
+    "matchRelatives": true
+  },
+  "response": {
+    "matchRelatives": true,
+    "matches": [
+      {
+        "role": "parent",
+        "targetId": "P3",
+        "candidateId": "I3",
+        "score": 0.59707934,
+        "preScore": 0.8
+      },
+      {
+        "role": "parent",
+        "targetId": "P2",
+        "candidateId": "I2",
+        "score": 0.2401402,
+        "preScore": 0.8
+      }
+    ]
+  }
+}

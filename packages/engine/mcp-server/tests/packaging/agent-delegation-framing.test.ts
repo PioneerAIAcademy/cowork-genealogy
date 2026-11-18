@@ -518,9 +518,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
-  // Added with the agent (issue #2029). Two spawns, because an agent returns
-  // once: triage, then the researcher's verdicts. The caller pin is the one
-  // that keeps a triage recommendation from being passed back as a verdict.
+  // Added with the agent (issue #2029). The agent decides hints itself; a second
+  // spawn carries only verdicts the researcher stated. The caller pin keeps the
+  // router from inventing one.
   // Added with the bounded-ask owners (issue #3526): each bounded deliverable is
   // handed straight to the agent that owns it, by one clause naming a destination.
   // The caller side is exempt for the same reason on each: the router names
@@ -584,11 +584,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Never pass a verdict the\nresearcher did not state — a triage recommendation is not one.",
+          "Never pass a verdict the researcher did\nnot state.",
       },
       {
         side: "agent",
-        excerpt: "**Verdicts are the researcher's.**",
+        excerpt: "**A delegation that pre-states a verdict**",
       },
     ],
   },

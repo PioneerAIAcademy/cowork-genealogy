@@ -68,9 +68,11 @@ export interface TreeSourceRef {
 
 export interface TreePerson {
   id: string;
+  /** Absent from `person_read`'s answer (the id carries it). */
   ark?: string;
   gender: string;
-  living: boolean;
+  /** Absent from `person_read`'s answer when false. */
+  living?: boolean;
   names: TreeName[];
   facts?: TreeFact[];
   /** The sources FamilySearch attached to this person, as refs into the
