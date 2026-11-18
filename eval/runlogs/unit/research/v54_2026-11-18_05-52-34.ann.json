@@ -125,14 +125,6 @@
     {
       "test_id": "ut_research_tsi",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_research_029`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the research skill in this response. The skill correctly routed to check-warnings without invoking any tools itself, which is appropriate for a negative routing test. N/A applies.\n\nJunior: (N/A applies. No MCP tool calls were made by the research skill in this response.)"
-    },
-    {
-      "test_id": "ut_research_tsi",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -193,6 +185,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_gm4`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two tool calls: project_list and project_context. Both calls used correct arguments. The project_context call passed the correct projectPath (the working folder path provided by the harness). Neither call had a fixture_not_found error (matched.kind == 'live' for both). Claude also called research_query with correct arguments (projectPath and section='hypotheses'). All tool calls matched expected usage patterns and returned valid responses. No critical identifiers were wrong, and no calls landed in fixture_not_found errors.\n\nJunior: (Pass - All tool calls matched expected usage patterns and returned valid responses. No critical identifies were wrong. No calls landed in fixture_not_found errors.)"
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_tsi`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that no project exists (no research.json), recognized this as the empty-folder-no-project scenario, and appropriately routed to init-project. The response accurately states the situation and the action taken. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - Claude correctly recognized that no project existed because research.json was absent, identified the situation as an empty-folder/no-project scenario, and appropriately routed to project initialization. The response stayed within scope, accurately described the state of the project, and took the correct action without introducing unsupported assumptions or fabricated information.)"
     }
   ]
 }
