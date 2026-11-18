@@ -1117,6 +1117,9 @@ export async function checkWarningGate(
     touchedIds,
     warningJustifications,
     collapseMap,
+    true,
+    true,
+    research ?? undefined,
   );
 
   // A finding replaces the count warning for the same child and sex, so the

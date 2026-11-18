@@ -61,6 +61,7 @@ export function setAsideBy(
   edge: any,
   located: readonly Located[],
   genderOf: (id: string) => string | undefined,
+  edges?: readonly any[],
 ): string | null {
   if (edge?.type !== "ParentChild" || !isBiologicalClaim(edge)) return null;
   const gender = genderOf(String(edge.parent));
@@ -75,9 +76,43 @@ export function setAsideBy(
     const r = c?.relationship;
     if (!isAffirmed(c) || !atLeastProbable(c) || !isBiologicalClaim(r)) continue;
     if (r.child !== edge.child || r.parent === edge.parent || genderOf(r.parent) !== gender) continue;
+    // With `edges`, a winner counts only when its own biological edge is in the tree.
+    if (edges && !edges.some((o) => o !== edge && o?.type === "ParentChild" && isBiologicalClaim(o) && o.parent === r.parent && o.child === edge.child)) continue;
     return String(r.parent);
   }
   return null;
+}
+
+/** Every biological parent whose edge reads set aside (Decision 9) or ruled out
+ *  (a `disproved` claim covers it, Decision 10), by child. The parent-count
+ *  warnings and the competing-parentage refusal skip them (Decision 26), so a
+ *  winner's edge lands beside a set-aside import. Empty with no claims: with no
+ *  live summary nothing is skipped and the refusal still routes. */
+export function setAsideParents(research: any, tree: any): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+  const located: Located[] = summaries.flatMap((s: any) =>
+    (Array.isArray(s?.claims) ? s.claims : [])
+      .filter((c: any) => c && typeof c === "object")
+      .map((c: any) => ({ c, summaryId: String(s.id) })),
+  );
+  if (located.length === 0) return out;
+  const gender = new Map<string, string>();
+  for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
+    if (typeof p?.id === "string" && typeof p.gender === "string") gender.set(p.id, p.gender);
+  }
+  const genderOf = (id: string) => gender.get(id);
+  const edges: any[] = Array.isArray(tree?.relationships) ? tree.relationships : [];
+  for (const r of edges) {
+    if (r?.type !== "ParentChild" || !isBiologicalClaim(r) || typeof r.parent !== "string" || typeof r.child !== "string") continue;
+    const ruledOut = located.some(({ c }) => isDisproved(c) && claimCoversEdge(c, r));
+    if (ruledOut || setAsideBy(r, located, genderOf, edges) !== null) {
+      const set = out.get(r.child) ?? new Set<string>();
+      set.add(r.parent);
+      out.set(r.child, set);
+    }
+  }
+  return out;
 }
 
 export function conclusionStatus(research: any, tree: any, startingTree: any | null): StatusRow[] {
@@ -170,7 +205,7 @@ export function conclusionStatus(research: any, tree: any, startingTree: any | n
     const row: StatusRow = { holder: { relationshipId: r.id }, label: "" };
     const ruledOut = covering.find(({ c }) => isDisproved(c));
     const best = strongest(covering.filter(({ c }) => isAffirmed(c)));
-    const winner = setAsideBy(r, located, genderOf);
+    const winner = setAsideBy(r, located, genderOf, edges);
     const doubt = doubting(covering);
     if (ruledOut) {
       row.label = STATUS_LABELS.disproved;
