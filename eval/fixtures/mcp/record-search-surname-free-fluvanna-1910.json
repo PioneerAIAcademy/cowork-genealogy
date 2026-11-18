@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_034: any search with no surname, anchored on recordCountry. Live response for givenName An* + Female + recordCountry United States + Fluvanna + 1910 census (1727033) + otherGivenName Edward: 41 matches, and the first row is 'Antone Lightfoot' (MPPN-TV7) with relativeTerms.other present (Edward Lightfoot). Keyed on recordCountry alone, so whichever household anchor the agent picks reaches it. Listed after every Tyler fixture. Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "description": "ut_search_records_036: any search with no surname, anchored on recordCountry. Live response for givenName An* + Female + recordCountry United States + Fluvanna + 1910 census (1727033) + otherGivenName Edward: 41 matches, and the first row is 'Antone Lightfoot' (MPPN-TV7) with relativeTerms.other present (Edward Lightfoot). Keyed on recordCountry alone, so whichever household anchor the agent picks reaches it. Listed after every Tyler fixture. Issue #4580. Captured live 2026-11-16 (fix/4580).",
   "args": {
     "recordCountry": "~"
   },

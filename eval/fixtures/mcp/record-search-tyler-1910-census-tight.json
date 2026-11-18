@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_034: a Tyler (or Tyl* wildcard) search pinned to the 1910 census (1727033). Live, Tyler + Female + Fluvanna + born 1848-1858 returns one row, Sallie R Tyler (white, married, b. 1852) -- not the subject, as in the session's log_090. Listed BEFORE the broad Tyler nil. Captured live 2026-11-16 (fix/4580).",
+  "description": "ut_search_records_036: a Tyler (or Tyl* wildcard) search pinned to the 1910 census (1727033). Live, Tyler + Female + Fluvanna + born 1848-1858 returns one row, Sallie R Tyler (white, married, b. 1852) -- not the subject, as in the session's log_090. Listed BEFORE the broad Tyler nil. Captured live 2026-11-16 (fix/4580).",
   "args": {
     "surname": "~Tyl",
     "collectionId": "1727033"

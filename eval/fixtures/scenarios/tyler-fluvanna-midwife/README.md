@@ -28,4 +28,4 @@ In 1870 a Cunningham household is headed by "Antoine Tyler", female, b. 1833
 1848-1858 range the session searched with, so a tight birth range hides her under either
 surname.
 
-Used by `ut_search_records_034` (post-1900 nil) and `ut_search_records_035` (1870 candidate).
+Used by `ut_search_records_036` (post-1900 nil) and `ut_search_records_035` (1870 candidate).

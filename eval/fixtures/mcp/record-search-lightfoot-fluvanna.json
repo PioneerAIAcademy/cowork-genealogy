@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_034: a Lightfoot-surnamed search (the household's surname in 1900). Live response for givenName An* + surname Lightfoot + Fluvanna 1910: the top rows include the 1910 census entry 'Antone Lightfoot' (MPPN-TV7, widowed, b. 1837, household of Edward Lightfoot) and the 1923 death registration 'Ann Tone Lightfoot' (QVR7-5LJJ, b. 1833). Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "description": "ut_search_records_036: a Lightfoot-surnamed search (the household's surname in 1900). Live response for givenName An* + surname Lightfoot + Fluvanna 1910: the top rows include the 1910 census entry 'Antone Lightfoot' (MPPN-TV7, widowed, b. 1837, household of Edward Lightfoot) and the 1923 death registration 'Ann Tone Lightfoot' (QVR7-5LJJ, b. 1833). Issue #4580. Captured live 2026-11-16 (fix/4580).",
   "args": {
     "surname": "~Lightfoot"
   },

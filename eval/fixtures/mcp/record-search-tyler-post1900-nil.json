@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_034: every other Tyler or Tyl*-surnamed search (1920/1930 censuses, deaths, any later year). After 1900 the subject is indexed under her birth surname Lightfoot, so a Tyler (or Tyl* wildcard) search does not reach her; the response is the live 1920 pinned nil (Tyler + Female + Fluvanna + born 1848-1858 in 1488411 returns 0). Listed after the 1910 pin and BEFORE the Lightfoot and surname-free fixtures. Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "description": "ut_search_records_036: every other Tyler or Tyl*-surnamed search (1920/1930 censuses, deaths, any later year). After 1900 the subject is indexed under her birth surname Lightfoot, so a Tyler (or Tyl* wildcard) search does not reach her; the response is the live 1920 pinned nil (Tyler + Female + Fluvanna + born 1848-1858 in 1488411 returns 0). Listed after the 1910 pin and BEFORE the Lightfoot and surname-free fixtures. Issue #4580. Captured live 2026-11-16 (fix/4580).",
   "args": {
     "surname": "~Tyl"
   },
