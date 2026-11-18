@@ -65,6 +65,9 @@ def test_a_side_by_side_reply_passes(test, reply):
         GOOD_1900 + " This is a confirmed transcription.",
         GOOD_1900 + " Line 23 is now a confirmed Anthony.",
         "Line 23 reads Tyler Anthony.",
+        # scratch_2026-11-18_10-11-07, ut_research_iv1 run 1
+        GOOD_1900 + " The name as written on the page reads Anthony, not a female given name.",
+        GOOD_1900 + " Anthony is the name as written on the image.",
         "The index has no given name, and line 23 is worth checking on the image.",
         "Machine reading Anthony; the index has no given name.",
     ],
@@ -103,6 +106,9 @@ def test_the_1880_bundle_shapes_fail(reply):
         # scratch_2026-11-18_07-21-54, ut_research_iv2
         GOOD_1900 + " This is a machine reading of one image, not a confirmed transcription.",
         GOOD_1900 + " It is not an confirmed reading.",
+        # "as written" for another record, or for what the page was asked for, is not a verdict
+        GOOD_1900 + " The 1923 certificate gives Ann Tone, as written on the certificate.",
+        GOOD_1900 + " Only the image can show the name as written.",
         GOOD_1900.replace("Line 23", "Line no. 23"),
         "- Index: Tyler, given name blank\n- Machine reading: Tyler, Anthony\n- Line #23 on the image",
     ],

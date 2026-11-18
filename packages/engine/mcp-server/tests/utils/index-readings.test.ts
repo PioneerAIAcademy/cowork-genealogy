@@ -72,9 +72,10 @@ describe("attachIndexReadings (#4578)", () => {
   });
 
   it("says what the issue's bundle broke, in the note", () => {
-    for (const rule of [/one machine reading/, /never say the image shows, reads or is clear/,
+    for (const rule of [/one machine reading/, /never say the image or page shows, reads or is clear/,
+      /never call its text the name as written/,
       /side by side/, /name the line/, /never call the index wrong or a misread/,
-      /second transcription of the same page/]) {
+      /second transcription of the same page/, /never as a rendering, variant or split/]) {
       expect(READING_NOTE).toMatch(rule);
     }
   });

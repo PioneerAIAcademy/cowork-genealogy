@@ -14,11 +14,14 @@ import { pageKey } from "./waiting-pages.js";
 
 export const READING_NOTE =
   "The transcription is one machine reading of the page, not a sight of it: never say the " +
-  "image shows, reads or is clear. `indexReadings` are the held records' indexed names for " +
+  "image or page shows, reads or is clear, and never call its text the name as written. " +
+  "`indexReadings` are the held records' indexed names for " +
   "this page; a given name the index left blank is absent from them. Where they and the " +
   "transcription differ, show both side by side, say they differ, name the line, and give " +
   "`viewerUrl` to check it. Call neither the answer, never call the index wrong or a misread, " +
-  "and never count a second transcription of the same page as agreement.";
+  "and never count a second transcription of the same page as agreement. Report each other " +
+  "record's name as that record writes it, never as a rendering, variant or split of this " +
+  "reading or of another record's name.";
 
 /** The held records' indexed names for the page an ARK names. */
 export function indexReadingsForPage(research: any, ark: string): IndexReading[] {

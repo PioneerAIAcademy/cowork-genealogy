@@ -748,10 +748,11 @@ in-process call.
   given name the index left blank is simply absent from `name`. Joined for an `ark` (or
   its `imageArk` alias) only: an `imageId` and a `file` name no `image_ark`.
 - `readingNote` (`READING_NOTE`): the transcription is one machine reading, not a sight
-  of the page. Where it and the index differ, show both side by side, say they differ,
-  name the line, and give `viewerUrl`. Call neither the answer, never call the index
-  wrong or a misread, and never count a second transcription of the same page as
-  agreement.
+  of the page, and its text is never "the name as written". Where it and the index
+  differ, show both side by side, say they differ, name the line, and give `viewerUrl`.
+  Call neither the answer, never call the index wrong or a misread, and never count a
+  second transcription of the same page as agreement. Report each other record's name as
+  that record writes it, never as a rendering, variant or split of another.
 
 Never an error: an unreadable `research.json` gives the note alone. The unit harness
 calls the same compiled function on its staged canned answers (`_stage_image_transcribe`).
