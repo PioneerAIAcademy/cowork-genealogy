@@ -7,7 +7,7 @@
 > `research.json` + `tree.gedcomx.json`; the caller never opens either file.
 
 ```
-project_context({ projectPath }) -> compact projection (read-only)
+project_context({ projectPath, include? }) -> compact projection (read-only)
 ```
 
 ---
@@ -38,8 +38,13 @@ thousands. This tool computes it host-side.
 ## 2. The tool
 
 ```typescript
-project_context({ projectPath: string })
+project_context({ projectPath: string, include?: ("persons" | "sources")[] })
 ```
+
+`include` is an optional closed list naming the larger lists to return; an
+unknown value is refused with `{ ok: false, errors, buildId }`. This stage
+returns every list whether or not it is passed (§3, "A projection, not a query
+language").
 
 Read-only: opens `research.json` and `tree.gedcomx.json`, writes nothing,
 never creates a `.bak`. Not a validator — malformed *entries* are skipped
@@ -163,7 +168,8 @@ Projection rules:
 
 - **`buildId`** — the engine's build stamp (`<base>+<date>.<sha>[.dirty]`, or `<base>+dev`
   for a build outside a git checkout), identical to the wire `serverInfo.version`. Present on
-  the `ok: true` result, the broken-project failure **and** the `no_project` answer, because
+  the `ok: true` result, the broken-project failure, the `include` refusal **and** the
+  `no_project` answer, because
   this tool is the primary "which build is this?" surface (8 skills call it; 0 call
   `auth_status`) and the question is most urgent when nothing else works. Read from
   `build/build-info.json`; format and rationale in `mcpb-package-spec.md` § Versioning.
@@ -669,10 +675,17 @@ drops out. It reads every fresh staged file while any source waits, as
 
 ## 3. Decisions recorded
 
-- **A projection, not a query language.** One fixed shape, no field
-  selectors — the consumer is one agent prompt, and a stable shape is what
-  lets that prompt say "check `persons[].parentIds`". *Rejected:* jq-style
-  path parameters (open-ended context cost, un-promptable).
+- **A projection, not a query language.** The shape is stable so an agent
+  prompt can say "check `persons[].parentIds`"; the only selector is `include`,
+  a **closed list** of the larger lists to return (values `"persons"` and
+  `"sources"`), not open-ended field selection. A list rather than `includeX`
+  booleans because the conclusion-tree work adds `"status"` and `"view"` to the
+  same list (lead, 2026-11-09). *Rejected:* jq-style path parameters
+  (open-ended context cost, un-promptable). **This stage returns every list
+  whether or not `include` is passed** — the parameter is accepted and
+  validated only, and an unknown value is refused (`ok:false`); the default
+  then narrows persons to the subjects' one-hop family and drops `sources`
+  from the default in a later stage.
 - **No assertion bodies.** Per-assertion detail (values, classifications) is
   deliberately excluded — it is exactly the growing payload the diet
   removes. Refinement flows get the specific `a_` ids from the delegating
@@ -755,6 +768,7 @@ untouched.
 |-----------|----------|
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
+| `include` is not an array, or names a value other than `"persons"` or `"sources"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
 | person with no names / no preferred flag | `name` falls back to the first names entry, else absent |
@@ -782,6 +796,11 @@ untouched.
   half of a project.
 - **not a project at all** — `{ ok: false, reason: "no_project", errors }`, and
   no `isError`.
+- **`include`** — omitted, each value, both and `[]` give byte-identical answers on
+  a project with a person outside the subjects' one-hop family; an unknown value or
+  a non-array is refused with `{ ok: false, errors, buildId }` and no `reason`, also
+  on a folder with no project files; through the server, `include` is not refused as
+  an unknown parameter.
 - **`awaitingUser`** — lists an open partial hand-off with its plan item and
   timestamp; drops it once a later entry for the same URL carries the capture,
   and when a later `error` entry records that the user could not access the site;
