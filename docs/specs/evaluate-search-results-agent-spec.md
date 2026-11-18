@@ -30,7 +30,11 @@ extracts each Match from the hit's own transcript.
    - a delegation with no single `hitRef` (a whole search, the `#hits` list, a
      list of hit numbers, a record or person id) is `Hand-back: no hit ref`.
      Fanning a search out into one spawn per hit is the router's job.
-2. **`project_context`.** The target defaults to `subjectPersonIds[0]`. The
+2. **`project_context`.** Called with `include: ["sources"]`; the target
+   defaults to `subjectPersonIds[0]`, a subject, so it and its one-hop family are
+   in the default `persons`. Only when the target's row is not in `persons` (a
+   non-subject `target`) does the agent call again with
+   `include: ["persons", "sources"]`. The
    agent notes the target's `spouseIds`, `parentIds` and `childIds`, and whether
    the hit is already extracted: some `sources[].recordIds` entry has the same
    bare id as the hit, both reduced to the part after the last `:` (the record
@@ -122,7 +126,8 @@ the thread that ran the search cannot label its own hits from the list.
   `research_append`, each under all three spellings.
   - No `extraction_append` (lead, 2026-10-18): a Match is labelled, and the
     researcher's yes starts extraction on the next turn.
-  - No `research_query` and no `Read`. `project_context` gives the target, its
+  - No `research_query` and no `Read`. `project_context`, called with
+    `include: ["sources"]`, gives the target, its
     one-hop family and each source's record ids, which is all the
     already-extracted test needs. `tree_query` gives the facts.
 - **Tree facts come from `tree_query`**, whose edges carry their facts. A
