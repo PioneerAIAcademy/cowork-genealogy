@@ -800,6 +800,7 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
 _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
     "delegates-user-present-no-external": (("search-external-sites", "userPresent", r"no"),),
+    "delegates-qs-user-present-no": (("question-selection", "userPresent", r"no"),),
     "delegates-wrap-up": (
         ("research-plan", "planItemIds", r".*pli_\w+"),
         ("research-exhaustiveness", "wrapUp", r"yes"),
@@ -809,9 +810,10 @@ _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
 
 
 def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
-    """Tag-gated (``delegates-user-present-no``, ``delegates-wrap-up``). The
-    fields research/SKILL.md's spawn rule passes on a "Keep going." or "Wrap it
-    up." turn sit in the spawn prompt, which the judge cannot see, so they are
+    """Tag-gated (``delegates-user-present-no``,
+    ``delegates-user-present-no-external``, ``delegates-qs-user-present-no``,
+    ``delegates-wrap-up``). The fields research/SKILL.md's spawn rule passes on a
+    "Keep going." or "Wrap it up." turn, or in an autonomous run, sit in the spawn prompt, which the judge cannot see, so they are
     read from the hook records. A field is matched as ``name: value`` on any
     line, case-insensitively, with optional backticks around either side."""
     rules = [r for tag in (test.get("tags") or []) for r in _SPAWN_FIELD_TAGS.get(tag, ())]
@@ -1187,6 +1189,41 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
     assert boundary.offered_step(text_response) is not None, (
         f"the reply does not end on a \"Continue with …?\" offer: {lines[-1:]}"
+    )
+
+
+def test_bounded_plan_first_message_stops_after_init_project(
+    skills_invoked, builtin_tool_calls, text_response, after_state, test
+):
+    """Tag-gated (``bounded-plan-after-init``). A bounded research-plan ask with a
+    PID and no project runs init-project and nothing else, then ends on "Continue
+    with `setting up the project`?" (issue #2813, lead 2026-11-10): the researcher
+    confirms the question before anything is planned, because question-selection
+    is where feedback #4237 drifted. The project exists with no question or plan.
+    Unlike the record ask, the reply may keep init-project's next-step sentence:
+    on a plan ask the next step is the first research question."""
+    from harness.skill_runner import handoffs, load_step_boundary
+
+    if "bounded-plan-after-init" not in test.get("tags", []):
+        pytest.skip("not a bounded-plan-first-message test")
+    skill_under_test = test.get("skill")
+    taken: list[str] = []
+    for name in handoffs(skills_invoked, builtin_tool_calls):
+        if name != skill_under_test and name not in taken:
+            taken.append(name)
+    assert taken == ["init-project"], (
+        f"a bounded plan ask with no project hands off to init-project and nothing "
+        f"else; got {taken}"
+    )
+    research = after_state.get("research_json")
+    assert research is not None, "init-project made no project"
+    written = [s for s in ("questions", "plans") if research.get(s)]
+    assert not written, f"the turn that created the project wrote {written}"
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    offered = load_step_boundary().offered_step(text_response)
+    assert offered == "setup", (
+        f"the reply must end on \"Continue with `setting up the project`?\"; "
+        f"it offers {offered!r}: {lines[-1:]}"
     )
 
 

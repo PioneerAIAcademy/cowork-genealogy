@@ -1,0 +1,444 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for \"Lincolnshire, England, United Kingdom\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Lincolnshire"
+  },
+  "response": {
+    "totalHits": 5444,
+    "returned": 25,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "koha:80400",
+        "title": "The 1341 royal inquest in Lincolnshire/ edited by Bernard William Mclane",
+        "creator": "Lincoln Record Society",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Includes bibliographical references and index."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Court records",
+          "England, Lincolnshire - History - 14th century"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:688213",
+        "title": "The 1641 Lincolnshire poll tax returns for Flaxwell, Aswardhurn and Langoe, parts of Kesteven, Lincolnshire/ Simon Pawley, Vera Miller",
+        "creator": "Lincolnshire Family History Society",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "The returns are arranged in name order and in village order.",
+          "At head of title: Lincolnshire Family History Society."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Taxation - Indexes"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "6393715",
+            "text": "Indexes to the 1641 Linconshire poll tax returns for Flaxwell, Aswardhurn and Langoe, parts of Kesteven, Lincolnshire (1 fiche)."
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:1975076",
+        "title": "1831 census of Grantham : (Lincolnshire Archives reference: Grantham St. Wulframs PAR 23/6)/ Joyce Barnes ... [et al.]",
+        "creator": "Barnes, Joyce",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "On t.p.: \"This document is a transcription of the census of 1831 of part of Grantham.\".",
+          "Includes index."
+        ],
+        "subjects": [
+          "England, Lincolnshire, Grantham - Census - 1831"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "6214653",
+            "text": "1831 census of Grantham."
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:697142",
+        "title": "1841 census surname finder : Louth and other districts/ by E. D. Blakelock",
+        "creator": "Blakelock, E. D",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "From census film HO 107/639/1-29.",
+          "Includes a separate index for each of the following enumeration districts: Laceby, Langrick, Langton by Horncastle, Langton by Spilsby, Langton by Wragby, Laughton, Lea, Legsby, Legbourne, Great Limber, Linwood, Lissington, Louth, Ludborough, Luddington, Fockerby & Garthorpe, Ludford Magna, Ludford Parva, Lusby."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Census - Indexes - 1841",
+          "England, Lincolnshire, Louth - Census - Indexes - 1841"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "6344587",
+            "text": "1841 census surname finder"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:688165",
+        "title": "1841 census surname index [Lincolnshire]",
+        "creator": "Lincolnshire Family History Society",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Some fiche have title: Surname index for the 1841 census of Lincolnshire.",
+          "Some fiche have title: Surname index of the 1841 census.",
+          "At head of title: Lincolshire Family History Society.",
+          "Surname index to the 1841 census of Lincolnshire."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Census - Indexes - 1841"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "6393658",
+            "text": "Caistor Registration District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393659",
+            "text": "Grantham Registration District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393660",
+            "text": "Holbeach and Spalding Registration Districts (2 fiches)."
+          },
+          {
+            "filmNumber": "6393661",
+            "text": "Horncastle Registration District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393662",
+            "text": "Glanford Brigg, Goole and Thorn (those parts in Lincolnshire) Registration Districts (1 fiche)."
+          },
+          {
+            "filmNumber": "6393663",
+            "text": "Boston Registration District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393664",
+            "text": "Lincoln Registraton District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393665",
+            "text": "Louth Registration District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393666",
+            "text": "Bourne, Peterborough (Crowland) and Stamford Registration Districts (1 fiche)."
+          },
+          {
+            "filmNumber": "6393667",
+            "text": "Spilsby Registration District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393668",
+            "text": "Gainsborough Regisration District (1 fiche)."
+          },
+          {
+            "filmNumber": "6393671",
+            "text": "Sleaford & Newark Registration Districts (1 fiche)."
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:676270",
+        "title": "1851 census of Lincolnshire index of surnames",
+        "creator": "Lincolnshire Family History Society",
+        "repositoryCalls": [],
+        "hydrated": true,
+        "notes": [
+          "\"An earlier index ... indexed alphabetically the surnames in each parish in a Registration District. This new version indexes alphabetically all the surnames in a piece number. A list of all the civil parishes in a piece number is included at the beginning of each piece number with the folio numbers for each parish.\"--Introd.",
+          "Contents: Vol. 4. Sleaford Registration District HO107/2100-2101 and part of Neward Registration District HO 107/2136 (pt.) and 2138 (pt.)."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Census - Indexes - 1851"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:330557",
+        "title": "1871 census of Lincolnshire index of surnames/ series editor, Richard E. B. Ratcliffe",
+        "creator": "Ratcliffe, Richard E. B",
+        "repositoryCalls": [
+          "HSB (Headquarters Storage Building)",
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Contents: v. 1. Stamford Registration District, RG 10/3307-3310 / Eileen and Eric Emptage -- v. 2. Bourne Registration District, RG 10 /3311-3317 / Eileen & Eric Emptage -- v. 3. Spalding Registration District RG 10/3318-3325 and part of Peterborough Registration District RG 1520 / Richard E.B. Ratcliffe & Richard A. Westland -- v. 4. Holbeach Registration District RG 10/3326-3332 / Joyce & John Barnes -- v. 5. Boston Registration District RG 3333-3346 / Richard E.B. Ratcliffe, Colin & Gwen Baslington v. 6. Sleaford Registration District, RG 10/3347-3353 & part of Newark Registration Distriction, RG 10/3359 (pt.), 3540, 3544 & 3545 / Charles Elliff and Richard E. B. Ratcliffe -- v. 7. Grantham Registration District, RG 10/3354- 3363 / Joyce & John Barnes -- v. 8. Lincoln Registration District RG 3364-3377 / Richard Ratcliffe -- v. 9. Horncastle Registration District, RG 10/3378-3386 / Colin and Gwen Baslinton -- v. 10. Spilsby Registration District RG 10/3387-3397 / Colin & Gwen Baslington -- v. 11. Louth Registration District RG 10/3398-3449 / Eileen & Eric Emptage, Jill Day -- v. 12. Caistor Registration District, RG 10/3411-3426 / Eileen & Eric Emptage -- v. 13. Glanford Brigg Registration District, RG 3427-3438 -- v. 14. Gainsborough Registration District and the Isel of Axholme RG 10/ 3439-3449, RG 10/4725, 4728, 4729 9 (pt.) / Reg & Pauline Johnson."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Census - Indexes - 1871"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:752930",
+        "title": "1881 census of England and Wales [transcription and indexes] : Lincoln",
+        "creator": "Federation of Family History Societies",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Computer output microfiches produced as a joint project of the Federation of Family History Societies and the Genealogical Society of Utah.",
+          "The term strays refers to people born in one location but living in another at the time of the census.",
+          "In the birthplace and census place indexes, entries with the same surname are arranged alphabetically by place."
+        ],
+        "subjects": [
+          "England - Census - Indexes - 1881",
+          "England, Lincolnshire - Census - Indexes - 1881"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "6086341",
+            "text": "Surname index (21 fiches)"
+          },
+          {
+            "filmNumber": "6086342",
+            "text": "Birthplace [strays] index (21 fiches)"
+          },
+          {
+            "filmNumber": "6086343",
+            "text": "Census place index (21 fiches)"
+          },
+          {
+            "filmNumber": "6086344",
+            "text": "Census as enumerated (21 fiches)"
+          },
+          {
+            "filmNumber": "6086345",
+            "text": "Miscellaneous notes (1 fiche)"
+          },
+          {
+            "filmNumber": "6086346",
+            "text": "List of vessels/ships in port (1 fiche)"
+          },
+          {
+            "filmNumber": "6086347",
+            "text": "List of institutions (1 fiche)"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:608936",
+        "title": "1891 census of Lincolnshire index of surnames",
+        "creator": "Lincolnshire Family History Society",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Compiler varies.",
+          "Contents: Vol. 1. Stamford Registration District RG12/2552-2554 -- v. 2. Bourne Registration District,RG 12/2555-2558 -- v. 3. Spalding Registration District RG12/2259-2565 -- v. 4. Holbeach Registration District RG 12/2566-2569 -- v. 5. Boston Registration District, RG 12/2570-2576 -- v. 6. Sleaford Registration District RG 12/2577-2581 -- v. 7. Grantham Registration District RG 12/2582-2586 -- v. 8. Lincoln Registration District, RG 12/2587-2596 -- v. 9. Horncastle Registration District RG 12/2597-2600 -- v. 10. Spilsby Registration District RG 12/2601-2605 -- v. 11. Louth Registration District RG12/2606-2611 -- v. 12. Caistor Registration District, pt. 1 RG12/2612-2619 -- v. 12. Caistor Registration District, pt. 2 RG12/2620-2624 -- v. 13. Glanford Brigg Registration District RG 12/1625-2630 -- v. 14. Gainsborough Registration District & Isle of Axholme RG 12/2631-2637, RG12/3868, 3870, 3871 (part)."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Census - Indexes - 1891"
+        ],
+        "filmNotes": [],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:721559",
+        "title": "Abstracts of Nottinghamshire marriage licenses, 1577-1853, Lincolnshire references",
+        "creator": "Lincolnshire Family History Society",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": true,
+        "notes": [
+          "Includes index."
+        ],
+        "subjects": [
+          "England, Lincolnshire - Church records",
+          "England, Nottinghamshire - Church records"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "6393633",
+            "text": "Abstracts of Nottinghamshire marriage licenses, 1577-1853, Lincolnshire references with index (2 fiches)."
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:493871",
+        "title": "Academia Tertia Anglicana, or, The antiquarian annals of Stanford/ by Francis Peck ; with a new introduction by A. Rogers and J.S. Hartley. The survey and antiquitie of the towne of Stamford ...written by Richard Butcher",
+        "creator": "Butcher, Richard",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:396175",
+        "title": "An account of some achievements of Methodism in Barton - 1796 to 1861/ by Rex C. Russell ; foreword by G.I.J. Cushing",
+        "creator": "Russell, Rex C",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:4499806",
+        "title": "The act book of St. Katherine's gild, Stamford, 1480-1534/ edited by Alan Rogers.",
+        "creator": "Rogers, Alan 1933-",
+        "repositoryCalls": [
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:628037",
+        "title": "Additional Dalison manuscripts, 1774-1966",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999770",
+        "title": "Admission registers of an unknown infants' schools in Great Grimsby, 1903-1905, and 1920-1924",
+        "creator": "North East Lincolnshire Archive (Great Grimsby)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999211",
+        "title": "Admission registers of Central Market Infants' School (Great Grimsby), 1854-1926",
+        "creator": "Central Market Infants' School (Great Grimsby, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999214",
+        "title": "Admission registers of Clee Village School (Clee), 1876-1906",
+        "creator": "Clee Village School (Clee, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999342",
+        "title": "Admission registers of Edward Street School (Great Grimsby), 1920-1933",
+        "creator": "Edward Street School (Great Grimsby, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999406",
+        "title": "Admission registers of Hamilton Street Infants' School (Great Grimsby), 1908-1922",
+        "creator": "Hamilton Street Infants' School (Great Grimsby, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999442",
+        "title": "Admission registers of Harold Street Council School (Great Grimsby)",
+        "creator": "Harold Street Council School (Great Grimsby, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999714",
+        "title": "Admission registers of Holme Hill School (Great Grimsby), 1905-1927",
+        "creator": "Holme Hill School (Great Grimsby, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999726",
+        "title": "Admission registers of King Edward Street Temporary Council School (Great Grimsby), 1875-1927",
+        "creator": "King Edward Street School (Great Grimsby, Lincolnshire)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999743",
+        "title": "Admission registers of Macaulay Street School (Great Grimsby), 1887-1938",
+        "creator": "Macaulay Street School (Great Grimsby, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999745",
+        "title": "Admission registers of Municipal College (Great Grimsby), 1904-1907",
+        "creator": "Municipal College (Great Grimsby, Lincolnshire)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      },
+      {
+        "id": "koha:999756",
+        "title": "Admission registers of Silver Street School (Great Grimsby), 1889-1924",
+        "creator": "Silver Street School (Great Grimsby, Lincoln)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library"
+        ],
+        "hydrated": false
+      }
+    ]
+  }
+}

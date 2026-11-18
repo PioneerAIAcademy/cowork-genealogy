@@ -1,0 +1,29 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all for \"Lincolnshire, England, United Kingdom\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "~Lincolnshire"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Lincolnshire, England, United Kingdom",
+        "type": "County (Top level)",
+        "dateRange": "+1801/",
+        "latitude": 53.158118,
+        "longitude": -0.239248,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Lincolnshire&focusedId=3684",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Lincolnshire,_England"
+      },
+      {
+        "standardPlace": "Lincolnshire, England",
+        "type": "County (Top level)",
+        "dateRange": "+1086/+1801",
+        "latitude": 53.15812,
+        "longitude": -0.23925,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Lincolnshire&focusedId=10560315",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Lincolnshire"
+      }
+    ]
+  }
+}

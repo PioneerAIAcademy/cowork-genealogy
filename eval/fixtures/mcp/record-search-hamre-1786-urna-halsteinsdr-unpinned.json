@@ -1,0 +1,724 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Urna, surname Halsteinsdr, no collection, marriage 1770-1800, count 50. 503 matches; row 1 is the bride NW44-PMK, Urna Halsteinsdr, in the 25 Jun 1786 Hamre marriage (record MY3L-FH3). Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-urna-halsteinsdr-unpinned, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023. The predicate cannot require collectionId to be absent, so it is listed after every pinned fixture.",
+  "args": {
+    "givenName": "Urna",
+    "surname": "Halsteinsdr"
+  },
+  "response": {
+    "query": {
+      "givenName": "Urna",
+      "surname": "Halsteinsdr",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50
+    },
+    "totalMatches": 503,
+    "returned": 50,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NW44-PMK",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Jun 1786",
+            "place": "Hamre, Hordaland, Norway"
+          }
+        ],
+        "personName": "Urna Halsteinsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Monsen",
+        "recordArk": "ark:/61903/1:2:MY3L-FH3",
+        "batchNumber": "M42039-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6D3K-GRYM",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Beching Stoke"
+          },
+          {
+            "type": "Marriage",
+            "date": "12 Feb 1795",
+            "place": "Beechingstoke, Wiltshire, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "4380174",
+        "recordArk": "ark:/61903/1:2:4BRR-SVZM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6D3K-VYGT",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Beching Stoke"
+          },
+          {
+            "type": "Marriage",
+            "date": "12 Feb 1795",
+            "place": "Beechingstoke, Wiltshire, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "sex": "Female",
+        "collectionId": "4380174",
+        "recordTitle": "Entry for James Gilbert",
+        "recordArk": "ark:/61903/1:2:4BR5-1SDR",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWD5-3L9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Sep 1778",
+            "place": "Herøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Andersen",
+        "recordArk": "ark:/61903/1:2:MY3K-SBX",
+        "batchNumber": "M42205-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPFX-3V1K",
+        "personName": "Hallstein",
+        "sex": "Male",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für John, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRT2-TLRB",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPJZ-K8JX",
+        "personName": "Hallstein",
+        "sex": "Male",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Johannes Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRY2-Z8B5",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68WS-3RRJ",
+        "personName": "Halsteensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Sivert Nielsen",
+        "recordArk": "ark:/61903/1:2:4BFZ-GTWK",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6832-BMTK",
+        "personName": "Halstensen",
+        "sex": "Male",
+        "collectionId": "4237104",
+        "recordTitle": "Entry for Andreas Martin Halstensen",
+        "recordArk": "ark:/61903/1:2:4BXX-H5LM",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N6YH-7FQ",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "1473015",
+        "recordTitle": "Entry for William Hailstone",
+        "recordArk": "ark:/61903/1:2:9QLL-SYG",
+        "batchNumber": "I02501-9",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2WK-8RHJ",
+        "personName": "Hällsten",
+        "sex": "Male",
+        "collectionId": "1647693",
+        "recordTitle": "Entry for Carl Jacob Jonsson and Johanna Fredrica Bernhardina Hällsten",
+        "recordArk": "ark:/61903/1:2:QL36-J1KH",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QKJH-8MY2",
+        "personName": "Halston",
+        "sex": "Female",
+        "collectionId": "1807364",
+        "recordTitle": "Entry for Charles St Clare and Josephine Hatch",
+        "recordArk": "ark:/61903/1:2:Q2PX-65W5",
+        "role": "Mother Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLSW-1D7M",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "2562514",
+        "recordTitle": "Entry for Joseph",
+        "recordArk": "ark:/61903/1:2:QPMJ-NNB6",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLS4-PYG2",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "2562514",
+        "recordTitle": "Entry for Kilpin",
+        "recordArk": "ark:/61903/1:2:QPMJ-G3MW",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLSC-BTPW",
+        "personName": "Hailstone",
+        "sex": "Male",
+        "collectionId": "2562514",
+        "recordTitle": "Entry for Kilpin",
+        "recordArk": "ark:/61903/1:2:QPMV-RSQV",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QJ8G-JV25",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1873",
+            "place": "Cass County, Texas, United States"
+          }
+        ],
+        "personName": "Halston",
+        "collectionId": "1827575",
+        "recordArk": "ark:/61903/1:2:QKS4-QHZ5",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KBML",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1825",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-66ZL",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KF2G",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1822",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-69MG",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-K8JF",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1821",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-DTYF",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KKRY",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1823",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-677Y",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KFLX",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1822",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-699X",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-H8GL",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1771",
+            "place": ", St Margaret, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-91C8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KP17",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1824",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-6CC7",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-KFL3",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1822",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-6993",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1K-L98J",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1830",
+            "place": ", St James Piccadilly, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2Z4-L15Y",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-HBQB",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1774",
+            "place": ", St Margaret, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-SFLV",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QV1G-K8JB",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1821",
+            "place": ", St Martin In The Fields, Westminster, Middlesex, England"
+          }
+        ],
+        "personName": "Hailstone",
+        "collectionId": "2489869",
+        "recordArk": "ark:/61903/1:2:Q2ZZ-DTYB",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VQ48-TRJ",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "3 May 1749",
+            "place": "Cockpen, Midlothian, Scotland"
+          }
+        ],
+        "personName": "Hailstones",
+        "sex": "Female",
+        "birthDate": "0005",
+        "collectionId": "1771030",
+        "recordArk": "ark:/61903/1:2:MBXR-FBX",
+        "batchNumber": "C11676-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XTNF-1BQ",
+        "events": [
+          {
+            "type": "Christening",
+            "place": "Saint Cuthberts, Edinburgh, Edinburghshire, Scotland, United Kingdom"
+          }
+        ],
+        "personName": "Hailston",
+        "sex": "Male",
+        "birthDate": "2 January 1803",
+        "birthPlace": "Saint Cuthberts, Edinburgh, Scotland, United Kingdom",
+        "deathDate": "2 January 1803",
+        "collectionId": "1771030",
+        "recordArk": "ark:/61903/1:2:MB7L-5KH",
+        "batchNumber": "C11990-6",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:CMHM-RZN2",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "14 Mar 1725",
+            "place": "Coldingham, Berwickshire, Scotland"
+          }
+        ],
+        "personName": "Hailstones",
+        "sex": "Male",
+        "birthDate": "0003",
+        "collectionId": "1771030",
+        "recordArk": "ark:/61903/1:2:WNWC-BF2M",
+        "batchNumber": "C11732-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VQCD-WVC",
+        "personName": "Hailston",
+        "sex": "Male",
+        "birthDate": "2 January 1803",
+        "birthPlace": "Saint Cuthberts, Edinburgh, Scotland, United Kingdom",
+        "deathDate": "2 January 1803",
+        "collectionId": "1771030",
+        "recordArk": "ark:/61903/1:2:MB6N-CF5",
+        "batchNumber": "C11990-6",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VQC8-1XY",
+        "personName": "Hailston",
+        "sex": "Male",
+        "birthDate": "2 January 1803",
+        "birthPlace": "Saint Cuthberts, Edinburgh, Scotland, United Kingdom",
+        "deathDate": "2 January 1803",
+        "collectionId": "1771030",
+        "recordArk": "ark:/61903/1:2:MB6N-413",
+        "batchNumber": "C11990-6",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPNG-BQVG",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "23. Juni 1793",
+            "place": "Kremitten, Kreis Wehlau, Ostpreußen, Preußen, Deutsches Reich"
+          }
+        ],
+        "personName": "Halstein",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Beeckstsen, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRY8-7JCS",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPFN-1VQR",
+        "personName": "Hallstein",
+        "sex": "Male",
+        "birthDate": "1857",
+        "deathDate": "1857",
+        "deathPlace": "Harpertshausen, Harpertshausen, Altheim, Dieburg, Hesse, Germany",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRTG-KCHY",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP6G-TGLT",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "16. März 1858",
+            "place": "Neulingen, Osterburg, Sachsen, Preußen, Deutschland"
+          }
+        ],
+        "personName": "Hallstein",
+        "birthDate": "1858",
+        "deathDate": "14 March 1858",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRRR-8ZTM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGRM-W177",
+        "events": [
+          {
+            "type": "Census",
+            "date": "from 1881 to 1885",
+            "place": "Östmark, Värmland, Sweden"
+          },
+          {
+            "type": "Residence",
+            "place": "Sörmark Lorkängen"
+          }
+        ],
+        "personName": "Halstensson",
+        "birthDate": "1899",
+        "birthPlace": "Ontario, Canada",
+        "collectionId": "2790465",
+        "recordTitle": "Household of Halstensson",
+        "recordArk": "ark:/61903/1:2:QR6X-D3C3",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPFN-3VT1",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "16. April 1857",
+            "place": "Harpertshausen, Harpertshausen, Altheim, Kreis Dieburg, Großherzogtum Hessen, Deutsches Reich"
+          }
+        ],
+        "personName": "Hellstein",
+        "birthDate": "1857",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hellstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRTG-HY77",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPVN-LJQR",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "4. Februar 1817",
+            "place": "Bartenstein, Kreis Bartenstein, Ostpreußen, Freistaat Preußen, Deutschland"
+          }
+        ],
+        "personName": "Hallstein",
+        "birthDate": "1819",
+        "deathDate": "3 February 1819",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRBH-2HJY",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPFN-ZK5G",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "20. Mai 1861",
+            "place": "Harpertshausen, Harpertshausen, Altheim, Kreis Dieburg, Großherzogtum Hessen, Deutsches Reich"
+          }
+        ],
+        "personName": "Hallstein",
+        "birthDate": "1861",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRTG-VB5J",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPV3-J8W7",
+        "personName": "Halstens",
+        "deathDate": "from 1778 to 1779",
+        "deathPlace": "Rehna, Mecklenburg-Schwerin, Germany",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Halstens, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRB9-S85K",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPN1-XWXJ",
+        "personName": "Haustens",
+        "birthDate": "January 1728",
+        "birthPlace": "Lindholm, Tondern, Schleswig-Holstein, Prussia, Germany",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Haustens, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRYX-KQZW",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPVN-5FXS",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "7 Feb 1821",
+            "place": "Bartenstein, Kreis Bartenstein, Ostpreußen, Freistaat Preußen, Deutschland"
+          }
+        ],
+        "personName": "Hallstein",
+        "birthDate": "1821",
+        "deathDate": "6 February 1821",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRBH-RSF8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPFJ-WBXD",
+        "personName": "Hallstein",
+        "sex": "Male",
+        "birthDate": "1862",
+        "deathDate": "27 April 1862",
+        "deathPlace": "Harpertshausen, Harpertshausen, Altheim, Dieburg, Hesse, Germany",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRTG-9QWX",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPND-5HGT",
+        "personName": "Halstein",
+        "birthDate": "1771",
+        "deathDate": "2 February 1771",
+        "deathPlace": "Königsberg vor dem Litauer Baum, Königsberg, East Prussia, Prussia, Germany",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Halstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRYW-SJTJ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPND-R48M",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "27 1768 - 1800",
+            "place": "Juditten, Königsberg, Ostpreußen, Preußen, Deutsches Reich"
+          }
+        ],
+        "personName": "Halestein",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Halestein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRYW-7955",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPNX-8MTH",
+        "personName": "Halstein",
+        "deathDate": "1778",
+        "deathPlace": "Wargen, Fischhausen, East Prussia, Prussia, Germany",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Halstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRYW-V2SM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPNX-1PZJ",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "4 Feb 1819",
+            "place": "Bartenstein, Friedland, Ostpreußen, Preußen, Deutschland"
+          }
+        ],
+        "personName": "Hallstein",
+        "deathDate": "3 February 1819",
+        "collectionId": "3015626",
+        "recordTitle": "Eintrag für Hallstein, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+        "recordArk": "ark:/61903/1:2:QRY4-981Y",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QL2M-DS84",
+        "personName": "Halstein",
+        "sex": "Male",
+        "deathDate": "7 January 1838",
+        "deathPlace": "Breukelen, Boxtel, North Brabant, Netherlands",
+        "collectionId": "2704829",
+        "recordArk": "ark:/61903/1:2:QPB9-YBTV",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZBX-JCTP",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1895 to 1896",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "personName": "Halston",
+        "collectionId": "3754697",
+        "recordArk": "ark:/61903/1:2:4BDC-JFXC",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6FWD-44K9",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1886",
+            "place": "Boston, Suffolk, Massachusetts, United States"
+          }
+        ],
+        "personName": "Halston",
+        "collectionId": "2125599",
+        "recordArk": "ark:/61903/1:2:412X-RB62",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:CJXB-YGW2",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "14 May 1867",
+            "place": "All Saint's, Nottingham, Nottinghamshire, England, United Kingdom"
+          },
+          {
+            "type": "Residence",
+            "place": "Fulham,"
+          }
+        ],
+        "personName": "Hailstone",
+        "sex": "Female",
+        "birthDate": "1867",
+        "deathDate": "6 May 1867",
+        "deathPlace": "England, United Kingdom",
+        "collectionId": "1473016",
+        "recordArk": "ark:/61903/1:2:WK4B-ZRPZ",
+        "batchNumber": "B01519-6",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926",
+      "1473015": "England Marriages, 1538–1973",
+      "1473016": "England, Deaths and Burials, 1538-1991",
+      "1647693": "Sweden, Södermanland, Church Records, 1604-1900; index 1640-1860",
+      "1771030": "Scotland, Births and Baptisms, 1564-1950",
+      "1807364": "Louisiana, Parish Marriages, 1787-1958",
+      "1827575": "Texas, County Tax Rolls, 1837-1910",
+      "2125599": "Massachusetts, Suffolk, Boston Tax Records, 1822-1918",
+      "2489869": "England, Middlesex, Westminster Rate Books, 1634-1900",
+      "2562514": "British Newspaper Archive, Family Notices",
+      "2704829": "Netherlands, Archival Indexes, Vital Records, 1600-2000",
+      "2790465": "Sweden, Household Examination Books, 1874-1931",
+      "3015626": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+      "3754697": "United States City and Business Directories, ca. 1749 - ca. 1990",
+      "4237104": "Norway, Church Books, 1797-1958",
+      "4380174": "England, Wiltshire, Church Records, 1518-1990"
+    }
+  }
+}

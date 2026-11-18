@@ -307,3 +307,130 @@ describe("primary: false clears the flag", () => {
     expect(res.errors.join(" ")).toMatch(/`primary` must be the boolean true or false/);
   });
 });
+
+describe("primary follows its claim (Decision 34): the tree writers warn", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "primary-claimed-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const factClaim = (subject: unknown, fact_type: string, date: string, proof_tier = "probable") => ({
+    claim: `${fact_type} ${date}`,
+    proof_tier,
+    supporting_assertion_ids: [],
+    fact: { subject, fact_type, date },
+  });
+  const withClaims = (claims: object[]) => ({
+    ...minimalResearch,
+    proof_summaries: [{ id: "ps_001", question_id: "q_001", tier: "probable", claims }],
+  });
+  async function writeProject(tree: any, research: any = minimalResearch) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const primaryWarnings = (res: any) =>
+    (res.validation?.warnings ?? []).filter((w: string) => w.startsWith("Will be refused:") && w.includes("`primary`"));
+  const addDeath = (primary: boolean) =>
+    treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1900", primary, sources: [{ ref: "S1" }] },
+    } as never);
+
+  it("primary on a fact no claim covers warns, naming the person and fact", async () => {
+    await writeProject(onePrimaryBirth());
+    const res: any = await addDeath(true);
+    expect(res.ok, JSON.stringify(res.errors)).toBe(true);
+    const warned = primaryWarnings(res);
+    expect(warned).toHaveLength(1);
+    expect(warned[0]).toMatch(/^Will be refused: personId I1, factId F\d+: /);
+  });
+
+  it("primary on a fact a probable claim covers passes", async () => {
+    await writeProject(onePrimaryBirth(), withClaims([factClaim("I1", "Death", "1900")]));
+    const res: any = await addDeath(true);
+    expect(res.ok).toBe(true);
+    expect(primaryWarnings(res)).toEqual([]);
+  });
+
+  it("a possible claim does not cover it", async () => {
+    await writeProject(onePrimaryBirth(), withClaims([factClaim("I1", "Death", "1900", "possible")]));
+    expect(primaryWarnings(await addDeath(true))).toHaveLength(1);
+  });
+
+  it("a pre-existing primary the call does not set raises nothing", async () => {
+    await writeProject(onePrimaryBirth());
+    const res: any = await addDeath(false);
+    expect(res.ok).toBe(true);
+    expect(primaryWarnings(res)).toEqual([]);
+  });
+
+  it("an add_relationship Couple Marriage marked primary with no covering claim warns", async () => {
+    await writeProject(twoPersons());
+    const res: any = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S1" }],
+        facts: [{ type: "Marriage", date: "1870", primary: true, sources: [{ ref: "S1" }] }],
+      },
+    } as never);
+    expect(res.ok, JSON.stringify(res.errors)).toBe(true);
+    const warned = primaryWarnings(res);
+    expect(warned).toHaveLength(1);
+    expect(warned[0]).toMatch(/^Will be refused: relationshipId R\d+, factId /);
+  });
+
+  it("an update_fact setting primary on a fact whose id two persons share warns, naming that person's id and the fact id", async () => {
+    const tree = onePrimaryBirth();
+    tree.persons.push({
+      id: "I2",
+      gender: "Male",
+      names: [{ id: "N9", given: "Tom", surname: "Smith", preferred: true }],
+      facts: [{ id: "F2", type: "Birth", date: "1860", sources: [{ ref: "S1" }] }],
+    } as any);
+    await writeProject(tree);
+    const res: any = await treeCorrect({
+      projectPath: dir,
+      operation: "update_fact",
+      personId: "I2",
+      factId: "F2",
+      fact: { primary: true },
+    } as never);
+    expect(res.ok, JSON.stringify(res.errors)).toBe(true);
+    expect(primaryWarnings(res)).toEqual([expect.stringMatching(/^Will be refused: personId I2, factId F2: /)]);
+  });
+
+  it("an update_fact correcting the place of a primary fact no claim covered raises nothing", async () => {
+    await writeProject(onePrimaryBirth());
+    const res: any = await treeCorrect({
+      projectPath: dir,
+      operation: "update_fact",
+      personId: "I1",
+      factId: "F1",
+      fact: { date: "1851" },
+    } as never);
+    expect(res.ok, JSON.stringify(res.errors)).toBe(true);
+    expect(primaryWarnings(res)).toEqual([]);
+  });
+
+  it("an update_fact that moves a primary fact's date off its claim warns", async () => {
+    await writeProject(onePrimaryBirth(), withClaims([factClaim("I1", "Birth", "1850")]));
+    const res: any = await treeCorrect({
+      projectPath: dir,
+      operation: "update_fact",
+      personId: "I1",
+      factId: "F1",
+      fact: { date: "1851" },
+    } as never);
+    expect(res.ok, JSON.stringify(res.errors)).toBe(true);
+    expect(primaryWarnings(res)).toEqual([expect.stringMatching(/^Will be refused: personId I1, factId F1: /)]);
+  });
+});

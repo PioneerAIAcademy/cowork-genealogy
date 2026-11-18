@@ -173,6 +173,12 @@ autonomous run it would wait for a researcher who is not there.
 which the judge cannot see. SKILL.md states the rule at each routing row and
 dispatch list that reaches the agent, not only in the spawn-fields contract.
 
+`ut_research_uq1` clones `ut_research_023` on `empty-project-two-fact-objective`.
+question-selection reads a missing `userPresent` as a researcher being there, so
+on an autonomous run it would ask which fact of the objective to research first.
+`delegates-qs-user-present-no` asserts `userPresent: no` in the question-selection
+spawn.
+
 ## What is NOT covered (and why)
 
 - **Second-opinion verdict handling**: gps-mentor is not a routing row; it
@@ -263,6 +269,17 @@ reply ends on a "Continue with …?" offer, whichever step it names. A hint revi
 fails here: it stops for the researcher's verdict
 and writes no offer. **They put init-project's full body in this
 suite's snapshot**, so an init-project body edit now owes a research run.
+
+`ut_research_b4p` (`bounded-plan-first-message-stops-after-setup.json`) is the
+one bounded deliverable that does not run in the setup turn: a research plan with a
+FamilySearch ID and no project runs init-project alone and ends on "Continue with
+`setting up the project`?", so the researcher confirms the question before anything
+is planned (lead, 2026-11-10; feedback #4237 drifted at question-selection). It is
+deterministic through the `bounded-plan-after-init` tag and
+`test_bounded_plan_first_message_stops_after_init_project`, which reads the
+hand-off list, that the project exists with no question or plan, and that the offer
+names that step. Unlike `b4i`, the reply may keep init-project's next-step sentence,
+because on a plan ask the next step is the first research question.
 
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius

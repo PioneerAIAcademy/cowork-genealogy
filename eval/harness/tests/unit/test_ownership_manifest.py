@@ -317,6 +317,13 @@ def test_extraction_append_completes_plan_items_by_tool_identity():
     assert "extraction_append" in writer_tool_sets(RESEARCH_JSON)["plans"]
 
 
+def test_research_append_clears_couple_primary_by_tool_identity():
+    """Decision 34: research_append clears `primary` on a Couple fact whose
+    covering claim the call removed, so tree `relationships` authorizes it by
+    tool identity, as tree `persons` does for the assertion rewrite."""
+    assert "research_append" in writer_tool_sets(TREE_GEDCOMX_JSON)["relationships"]
+
+
 def test_the_only_newly_enforced_section_is_localities():
     """The set of enforced sections grew by exactly what was declared.
 
