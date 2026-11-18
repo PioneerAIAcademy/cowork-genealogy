@@ -1,0 +1,338 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search for \"Jalisco, Mexico\", 1880-1920, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Jalisco"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Jalisco, Mexico",
+      "pageSize": 10,
+      "startYear": 1880,
+      "endYear": 1920
+    },
+    "totalResults": 28858,
+    "results": [
+      {
+        "imageGroupNumber": "004767878",
+        "imageCount": 283,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Morelia, Michoacan, Mexico",
+              "Guerrero, Mexico",
+              "Guanajuato, Mexico",
+              "San Luis Potosí, Mexico",
+              "Michoacan, Mexico",
+              "Tamaulipas, Mexico",
+              "Jalisco, Mexico",
+              "Colima, Mexico"
+            ],
+            "dateRange": "1774-1883",
+            "recordType": "Church records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004767922",
+        "imageCount": 669,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Guanajuato, Mexico",
+              "Guerrero, Mexico",
+              "Jalisco, Mexico",
+              "Colima, Mexico",
+              "San Luis Potosí, Mexico",
+              "Morelia, Michoacan, Mexico",
+              "Tamaulipas, Mexico",
+              "Michoacan, Mexico"
+            ],
+            "dateRange": "1881",
+            "recordType": "Church records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004767923",
+        "imageCount": 597,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Capellanía, Mexticacán, Jalisco, Mexico",
+              "Ex-Hacienda Capellanía de Loera, León, Guanajuato, Mexico"
+            ],
+            "dateRange": "1860-1898",
+            "recordType": "Church records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004001000_002_M93F-221",
+        "imageCount": 531,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "es",
+          "la"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Sagrario Metropolitano, Guadalajara, Guadalajara, Jalisco, Mexico"
+            ],
+            "dateRange": "1889–1893",
+            "recordType": "Bautismos"
+          }
+        ],
+        "volumes": [
+          "Libro 50"
+        ]
+      },
+      {
+        "imageGroupNumber": "004001000_001_M93F-22B",
+        "imageCount": 134,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": [
+          "es",
+          "la"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Sagrario Metropolitano, Guadalajara, Guadalajara, Jalisco, Mexico"
+            ],
+            "dateRange": "1888–1889",
+            "recordType": "Bautismos"
+          }
+        ],
+        "volumes": [
+          "Libro 49"
+        ]
+      },
+      {
+        "imageGroupNumber": "004786256_002_M93X-MN2",
+        "imageCount": 249,
+        "recordSearchablePercent": 99,
+        "fulltextSearchable": false,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "San Agustín, San Agustin, Tlajomulco de Zúñiga, Jalisco, Mexico"
+            ],
+            "dateRange": "May 1914–Feb 1919",
+            "recordType": "Bautismos"
+          }
+        ],
+        "volumes": [
+          "Libro 2"
+        ]
+      },
+      {
+        "imageGroupNumber": "004786256_003_M93X-MNG",
+        "imageCount": 102,
+        "recordSearchablePercent": 99,
+        "fulltextSearchable": false,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "San Agustín, San Agustin, Tlajomulco de Zúñiga, Jalisco, Mexico"
+            ],
+            "dateRange": "Feb 1919–Oct 1920",
+            "recordType": "Bautismos"
+          }
+        ],
+        "volumes": [
+          "Libro 3"
+        ]
+      },
+      {
+        "imageGroupNumber": "004786256_001_M93X-MNL",
+        "imageCount": 61,
+        "recordSearchablePercent": 97,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "San Agustín, San Agustin, Tlajomulco de Zúñiga, Jalisco, Mexico"
+            ],
+            "dateRange": "Mar 1913–Jun 1919",
+            "recordType": "Bautismos"
+          }
+        ],
+        "volumes": [
+          "Libro 1"
+        ]
+      },
+      {
+        "imageGroupNumber": "004786256_004_M93X-MNP",
+        "imageCount": 101,
+        "recordSearchablePercent": 98,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "San Agustín, San Agustin, Tlajomulco de Zúñiga, Jalisco, Mexico"
+            ],
+            "dateRange": "Oct 1920–Jul 1922",
+            "recordType": "Bautismos"
+          }
+        ],
+        "volumes": [
+          "Libro 4"
+        ]
+      },
+      {
+        "imageGroupNumber": "004566632_003_M944-318",
+        "imageCount": 170,
+        "recordSearchablePercent": 89,
+        "fulltextSearchable": false,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Santa María de Guadalupe, Arandas, Arandas, Jalisco, Mexico"
+            ],
+            "dateRange": "1896–1898",
+            "recordType": "Bautismos de hijos legítimos"
+          }
+        ],
+        "volumes": [
+          "42(22)"
+        ]
+      }
+    ],
+    "nextPageToken": "001d001010416f456f54546b304e43307a4d54673d00f07ffffff5f07ffffff50026af5efcb924a0bc14b9febe5ad7dba40041",
+    "summary": {
+      "totalVolumes": 28858,
+      "complete": false,
+      "byRecordType": [
+        {
+          "group": "Vital",
+          "volumes": 7774,
+          "browseOnly": 7,
+          "fulltextOnly": 27
+        },
+        {
+          "group": "Birth",
+          "volumes": 3064,
+          "browseOnly": 2,
+          "fulltextOnly": 2
+        },
+        {
+          "group": "Death",
+          "volumes": 2374,
+          "browseOnly": 4,
+          "fulltextOnly": 5
+        },
+        {
+          "group": "Marriage",
+          "volumes": 2375,
+          "browseOnly": 2,
+          "fulltextOnly": 20
+        },
+        {
+          "group": "Religious",
+          "volumes": 1870,
+          "browseOnly": 86,
+          "fulltextOnly": 130
+        },
+        {
+          "group": "Baptism",
+          "volumes": 530,
+          "browseOnly": 43,
+          "fulltextOnly": 1
+        },
+        {
+          "group": "Religious Death",
+          "volumes": 83,
+          "browseOnly": 3,
+          "fulltextOnly": 42
+        },
+        {
+          "group": "Religious Marriage",
+          "volumes": 1242,
+          "browseOnly": 27,
+          "fulltextOnly": 83
+        },
+        {
+          "group": "Confirmation",
+          "volumes": 15,
+          "browseOnly": 11,
+          "fulltextOnly": 4
+        },
+        {
+          "group": "Legal",
+          "volumes": 356,
+          "browseOnly": 0,
+          "fulltextOnly": 352
+        },
+        {
+          "group": "Court",
+          "volumes": 4,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Probate",
+          "volumes": 4,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Wills",
+          "volumes": 2,
+          "browseOnly": 0,
+          "fulltextOnly": 2
+        },
+        {
+          "group": "Land",
+          "volumes": 2,
+          "browseOnly": 0,
+          "fulltextOnly": 2
+        },
+        {
+          "group": "Notarial",
+          "volumes": 350,
+          "browseOnly": 0,
+          "fulltextOnly": 350
+        }
+      ],
+      "untyped": {
+        "volumes": 0,
+        "browseOnly": 0,
+        "fulltextOnly": 0
+      }
+    }
+  }
+}

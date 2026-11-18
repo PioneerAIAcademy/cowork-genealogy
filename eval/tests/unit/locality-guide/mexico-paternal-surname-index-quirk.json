@@ -1,0 +1,74 @@
+{
+  "test": {
+    "id": "ut_locality_guide_q4m",
+    "skill": "locality-guide",
+    "name": "Mexico survey records that indexes carry only the paternal surname and parents can anchor a search",
+    "type": "positive",
+    "description": "Issue #4516 moves search-records' collection quirks onto the wiki path: locality-guide reads the FamilySearch Wiki and records the quirk in localities[].quirks, research-plan writes it into the plan item, and search-records follows the plan item. This test grades the first step for Mexico: the survey must persist a localities entry whose quirks carry the rule from https://www.familysearch.org/en/wiki/Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org. Fixtures are live captures (2026-11-15); none is hand-written.",
+    "tags": [
+      "locality-guide",
+      "localities",
+      "localities-persist",
+      "collection-quirks",
+      "wiki-quirk-route",
+      "mexico",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "We're researching civil registration births and marriages in Mexico, chiefly Jalisco, 1880-1920, for a family that used two surnames. Produce the locality research guide for Mexico and save it to the project.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "wiki-read-hispanic-search-results",
+    "place-search-q4m-jalisco",
+    "place-search-all-q4m-jalisco",
+    "place-population-q4m-jalisco",
+    "volume-search-q4m-jalisco",
+    "catalog-search-q4m-jalisco",
+    "external-links-search-q4m-jalisco",
+    "collections-search-q4m-jalisco",
+    "wiki-place-page-q4m-jalisco-home",
+    "wiki-read-q4m-mexico-church-records",
+    "wiki-read-mexico-naming-customs",
+    "wiki-read-q4m-mexico-vital-records",
+    "wiki-read-q4m-mexico-civil-registration",
+    "wiki-read-q4m-mexico-census",
+    "wiki-read-q4m-mexico-probate-records",
+    "wiki-read-q4m-mexico-land-and-property",
+    "wiki-read-q4m-mexico-military-records",
+    "wiki-place-page-q4m-jalisco-getting-started",
+    "wiki-place-page-q4m-jalisco-online-records",
+    "wiki-place-page-q4m-jalisco-research-tips",
+    "place-search-q4m-mexico",
+    "collections-search-q4m-mexico",
+    "wiki-place-page-q4m-mexico-home",
+    "wiki-place-page-q4m-mexico-getting-started",
+    "wiki-place-page-q4m-mexico-online-records",
+    "wiki-place-page-mexico-research-tips",
+    "place-search-any",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "catalog-search-empty",
+    "wiki-place-page-not-found-any",
+    "wiki-search-any",
+    "wiki-read-not-found-any",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "Read-coverage is enforced deterministically by the validator (`test_localities_persisted_with_full_page_coverage` checks a localities[] entry was persisted with `pages_read` covering all four wiki sections). Do NOT independently re-count wiki_place_page calls — grade the persisted entry's substance.",
+    "The quirk under test (issue #4516): although Mexicans use two surnames, most indexed records carry only the first (paternal) surname, so searches should use the paternal surname alone; when the person is not found, search through the parents (a parent search with each parent's first surname, leaving out the child's name). Source: https://www.familysearch.org/en/wiki/Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org — 'Although most Hispanic use a double surname, normally the records are only indexed with the first or paternal surname. Try searching using only the paternal surname.' and, under 'Search with a relationship': 'Try leaving out the child's name.' / 'Because of the Spanish double surname system, try doing a parent search with just the first last names of each parent.'",
+    "How the page reaches the agent: Mexico's research_tips place page (Mexico_Research_Tips_and_Strategies) links this page, and wiki_place_page returns its text in `searchHelp`; the wiki_read fixture also serves it in full.",
+    "Correctness and Completeness turn on the persisted research.json: the rule counts ONLY when it is in an entry of the new localities[] entry's `quirks` array (paraphrase is fine; citing the page URL is good practice). A rule that appears only in guide_markdown — its research tips or any other section — or only in the reply, or anywhere else but `quirks`, fails Correctness and Completeness: research-plan reads `quirks`, not the guide. In both rationales, quote verbatim the `quirks` entry you relied on, copied from the persisted research.json; if no `quirks` entry carries the rule, say so and quote none.",
+    "Do not credit a quirk with computer-aided-indexing error rates or accent handling: these pages do not state them.",
+    "The skill must NOT write to any research.json section other than `localities`, and must not touch tree.gedcomx.json."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 1800,
+    "sdk_message_silence_seconds": 360
+  }
+}

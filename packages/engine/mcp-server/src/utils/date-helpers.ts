@@ -143,8 +143,8 @@ function isImperfect(p: ParsedDate): boolean {
  * side. Mirrors Java MobWarnings.getDateRange's imperfectDateFudgeDays
  * parameter (warnings.java:1564).
  */
-function minDayNum(p: ParsedDate, imperfectDateFudgeDays = 0): number {
-  const fudge = p.modifier ? FUDGE[p.modifier] : null;
+function minDayNum(p: ParsedDate, imperfectDateFudgeDays = 0, applyModifierFudge = true): number {
+  const fudge = p.modifier && applyModifierFudge ? FUDGE[p.modifier] : null;
   const dayOffset = fudge ? fudge[2] : 0;
 
   let minMonth: number;
@@ -178,8 +178,8 @@ function minDayNum(p: ParsedDate, imperfectDateFudgeDays = 0): number {
  * When `imperfectDateFudgeDays > 0` and the date is imperfect, the result
  * is widened by an extra fudge to the late side.
  */
-function maxDayNum(p: ParsedDate, imperfectDateFudgeDays = 0): number {
-  const fudge = p.modifier ? FUDGE[p.modifier] : null;
+function maxDayNum(p: ParsedDate, imperfectDateFudgeDays = 0, applyModifierFudge = true): number {
+  const fudge = p.modifier && applyModifierFudge ? FUDGE[p.modifier] : null;
   const dayOffset = fudge ? fudge[3] : 0;
 
   let maxMonth: number;
@@ -221,34 +221,38 @@ interface DateRange {
  * Java MobWarnings.getDateRange's imperfectDateFudgeDays parameter
  * (warnings.java:1564) — checks like hasChristeningBeforeBirth pass 365
  * here so that "Christening 1850" vs "Birth 1851" doesn't naively fire.
+ *
+ * `applyModifierFudge = false` reads Abt/Bef/Aft as the bare date, for an
+ * "unfudged" day range (Decision 3 of docs/plan/conclusion-tree.md).
  */
 export function getDayRange(
   std: string,
   imperfectDateFudgeDays = 0,
+  applyModifierFudge = true,
 ): DateRange | null {
   const parts = parseStdDate(std);
   if (!parts) return null;
   if (parts.kind === "range") {
     return {
-      min: minDayNum(parts.start, imperfectDateFudgeDays),
-      max: maxDayNum(parts.end, imperfectDateFudgeDays),
+      min: minDayNum(parts.start, imperfectDateFudgeDays, applyModifierFudge),
+      max: maxDayNum(parts.end, imperfectDateFudgeDays, applyModifierFudge),
     };
   }
   if (parts.kind === "or") {
     return {
       min: Math.min(
-        minDayNum(parts.a, imperfectDateFudgeDays),
-        minDayNum(parts.b, imperfectDateFudgeDays),
+        minDayNum(parts.a, imperfectDateFudgeDays, applyModifierFudge),
+        minDayNum(parts.b, imperfectDateFudgeDays, applyModifierFudge),
       ),
       max: Math.max(
-        maxDayNum(parts.a, imperfectDateFudgeDays),
-        maxDayNum(parts.b, imperfectDateFudgeDays),
+        maxDayNum(parts.a, imperfectDateFudgeDays, applyModifierFudge),
+        maxDayNum(parts.b, imperfectDateFudgeDays, applyModifierFudge),
       ),
     };
   }
   return {
-    min: minDayNum(parts.date, imperfectDateFudgeDays),
-    max: maxDayNum(parts.date, imperfectDateFudgeDays),
+    min: minDayNum(parts.date, imperfectDateFudgeDays, applyModifierFudge),
+    max: maxDayNum(parts.date, imperfectDateFudgeDays, applyModifierFudge),
   };
 }
 

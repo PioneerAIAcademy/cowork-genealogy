@@ -1,0 +1,878 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Udna, no surname (recordCountry Norway), collection 1468080, marriage 1770-1800, count 50. 2283 matches; the bride NW44-PMK is not among the 50 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-udna-nosurname-1468080, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023. The predicate cannot require surname to be absent, so it is listed after every surname-specific fixture.",
+  "args": {
+    "givenName": "Udna",
+    "collectionId": "1468080"
+  },
+  "response": {
+    "query": {
+      "givenName": "Udna",
+      "recordCountry": "Norway",
+      "collectionId": "1468080",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50
+    },
+    "totalMatches": 2283,
+    "returned": 50,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NWWY-HX1",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "21 Jun 1795",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Torgersdr Wiche",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Thorris Gudmundsen Leervig",
+        "recordArk": "ark:/61903/1:2:MY32-JSC",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4Q-6B3",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Jul 1790",
+            "place": "Finnås Prestegard, Moster, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Rasmusdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hilgie Baarsen",
+        "recordArk": "ark:/61903/1:2:MY3L-BMG",
+        "batchNumber": "M42896-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWY-V3J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "3 Jul 1791",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Johanesdr Yttrebouge",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torbiorn Omundsen Matre",
+        "recordArk": "ark:/61903/1:2:MY32-N7Q",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N75R-BH7",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Marriage",
+            "date": "6 Jan 1785",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Henrichsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Magnessen",
+        "recordArk": "ark:/61903/1:2:MYSJ-J29",
+        "batchNumber": "M42143-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4H-R23",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "4 Apr 1774",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Henrichsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Johannes Monsen",
+        "recordArk": "ark:/61903/1:2:MY3L-DZT",
+        "batchNumber": "M42143-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6H-PJ8",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "29 Nov 1789",
+            "place": "Lindås, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Aamund Gudmundsen",
+        "recordArk": "ark:/61903/1:2:MY3L-ML5",
+        "batchNumber": "M42031-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWY-ZBC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Jun 1774",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Christopher Eliasen",
+        "recordArk": "ark:/61903/1:2:MY32-N56",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4Q-NM7",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Jun 1775",
+            "place": "Finnås Prestegard, Moster, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Tosten Ericsen",
+        "recordArk": "ark:/61903/1:2:MY3L-Y2T",
+        "batchNumber": "M42896-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4Q-L3L",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "17 Feb 1788",
+            "place": "Finnås Prestegard, Finnås, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Peder Knutsen",
+        "recordArk": "ark:/61903/1:2:MY3L-TT6",
+        "batchNumber": "M42896-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6S-RZ9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "8 Jul 1787",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Pedersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Paul Torgiersen",
+        "recordArk": "ark:/61903/1:2:MY32-FPJ",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7T1-SQC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jul 1784",
+            "place": "Hemnes Prestegjeld, Nordland, Norway"
+          }
+        ],
+        "personName": "Anna U. Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Nielsen",
+        "recordArk": "ark:/61903/1:2:MYSK-XFB",
+        "batchNumber": "M42733-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWM1-V4D",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "9 Jul 1775",
+            "place": "Aurskog, Akershus, Norway"
+          }
+        ],
+        "personName": "Roys",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYS8-FXB",
+        "batchNumber": "M42818-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TZ-ZYT",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Unknown"
+          },
+          {
+            "type": "Marriage",
+            "date": "1799",
+            "place": "Melhus, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Erichsen Kraegnes",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYST-5N7",
+        "batchNumber": "M42635-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TZ-ZYQ",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Unknown"
+          },
+          {
+            "type": "Marriage",
+            "date": "26 Mar 1799",
+            "place": "Melhus, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "... Kraegnes",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYST-P1C",
+        "batchNumber": "M42635-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7RK-TPV",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "21 Oct 1781",
+            "place": "Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Olss. Rosseland",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYS1-TWS",
+        "batchNumber": "M42478-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWDM-NHF",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Dec 1790",
+            "place": "Lardal, Vestfold, Norway"
+          }
+        ],
+        "personName": "Heide",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY3J-2CD",
+        "batchNumber": "M42342-2",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6L-MXX",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "Jun 1776",
+            "place": "Gjestal, Stavanger Amt, Norway"
+          }
+        ],
+        "personName": "Aadnesen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQH-7KL",
+        "batchNumber": "M42209-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6F-3ZZ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 May 1774",
+            "place": "Gjestal, Stavanger Amt, Norway"
+          }
+        ],
+        "personName": "Aadnesen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQH-7K2",
+        "batchNumber": "M42209-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW8Q-6MW",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "4 Sep 1777",
+            "place": "Lenvik, Troms, Norway"
+          }
+        ],
+        "personName": "Heyde",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY35-PF2",
+        "batchNumber": "M42547-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWM9-382",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "14 Mar 1797",
+            "place": "Holmestrand, Vestfold, Norway"
+          }
+        ],
+        "personName": "Rosenhof",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY3M-LWR",
+        "batchNumber": "M42347-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW9W-8JM",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "29 Jun 1800",
+            "place": "Røldal, Hordaland, Norway"
+          }
+        ],
+        "personName": "Tiaeran Vinten Huus",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSJ-RBH",
+        "batchNumber": "M42926-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7RM-B6D",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Unknown"
+          },
+          {
+            "type": "Marriage",
+            "date": "23 Dec 1790",
+            "place": "Kvinesdal, Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Hoyer",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY3M-73M",
+        "batchNumber": "M42287-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7YZ-LBH",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "2 Aug 1776",
+            "place": "Oslo, Norway"
+          }
+        ],
+        "personName": "Seuted",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSG-J9F",
+        "batchNumber": "M42827-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TK-VL2",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "14 Jun 1785",
+            "place": "Frosta Prestegjeld, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Coldevin",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYS2-6R5",
+        "batchNumber": "M42664-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6F-3ZD",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "11 Jun 1798",
+            "place": "Gjestal, Stavanger Amt, Norway"
+          }
+        ],
+        "personName": "Gitlefsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQH-7KG",
+        "batchNumber": "M42209-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWM9-9XB",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "12 Jun 1774",
+            "place": "Holmestrand, Vestfold, Norway"
+          }
+        ],
+        "personName": "Fleische",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY3M-LW2",
+        "batchNumber": "M42347-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7Y4-H6X",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Marriage",
+            "date": "14 Nov 1782",
+            "place": "Nannestad, Akershus, Norway"
+          }
+        ],
+        "personName": "Dokken",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSD-X91",
+        "batchNumber": "M42804-2",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TZ-ZT5",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Unknown"
+          },
+          {
+            "type": "Marriage",
+            "date": "29 Jun 1799",
+            "place": "Melhus, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Johansen Blokken",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYST-PP6",
+        "batchNumber": "M42635-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWM7-H8X",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "7 Oct 1779",
+            "place": "Aamot, Hedmark, Norway"
+          }
+        ],
+        "personName": "Hirsch",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSN-ZXL",
+        "batchNumber": "M42409-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7T8-89D",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Marriage",
+            "date": "1780",
+            "place": "Oppdal, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Ericksen Ri",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSY-337",
+        "batchNumber": "M42639-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6F-38W",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "17 Dec 1797",
+            "place": "Gjestal, Stavanger Amt, Norway"
+          }
+        ],
+        "personName": "Ericsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQH-W57",
+        "batchNumber": "M42209-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWQB-QQD",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "12 May 1788",
+            "place": "Høland, Akershus, Norway"
+          }
+        ],
+        "personName": "Erichsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQD-9LP",
+        "batchNumber": "M42807-2",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7RG-QVZ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 May 1781",
+            "place": "Søndre Land, Oppland, Norway"
+          }
+        ],
+        "personName": "Erichsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSG-3KH",
+        "batchNumber": "M42502-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWCF-SKQ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jun 1777",
+            "place": "Øyer, Oplandenes, Norway"
+          }
+        ],
+        "personName": "Ericsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQK-87K",
+        "batchNumber": "M42045-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMP-2HM",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Jul 1798",
+            "place": "Hammerfest, Finnmark, Norway"
+          }
+        ],
+        "personName": "Killengreen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSN-74W",
+        "batchNumber": "M42775-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWCC-BQT",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jul 1779",
+            "place": "Lesja, Oppland, Norway"
+          }
+        ],
+        "personName": "Hage",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQK-R3V",
+        "batchNumber": "M42102-2",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWDX-7XG",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "28 Oct 1780",
+            "place": "Moss, Østfold, Norway"
+          }
+        ],
+        "personName": "Hegge",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQC-1KF",
+        "batchNumber": "M42467-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW7G-6ZZ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Aug 1795",
+            "place": "Bragernes Nedre Kirkegård, Drammen, Drammen, Buskerud, Norway"
+          }
+        ],
+        "personName": "Von Bulov",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQM-VF2",
+        "batchNumber": "M42048-2",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWM9-9XW",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "27 Sep 1772",
+            "place": "Holmestrand, Vestfold, Norway"
+          }
+        ],
+        "personName": "Hopstoch",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY3M-21N",
+        "batchNumber": "M42347-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMV-22T",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "28 Dec 1787",
+            "place": "Skien, Skien, Telemark, Norway"
+          }
+        ],
+        "personName": "Toolstrom",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSB-BB5",
+        "batchNumber": "M42599-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TZ-ZBW",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Unknown"
+          },
+          {
+            "type": "Marriage",
+            "date": "Apr 1799",
+            "place": "Melhus, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Olssen Olderøen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYST-5LT",
+        "batchNumber": "M42635-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW89-5VW",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Oct 1786",
+            "place": "Tromsø, Tromsø, Finnmark, Norway"
+          }
+        ],
+        "personName": "Thomaesen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY35-FBV",
+        "batchNumber": "M42540-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TL-1NG",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "7 Feb 1776",
+            "place": "Skogn, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Von Lehne",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYS2-1HW",
+        "batchNumber": "M42691-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7RP-BNB",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "May 1785",
+            "place": "Lyngen, Troms, Norway"
+          }
+        ],
+        "personName": "Aslachsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYS1-VRW",
+        "batchNumber": "M42546-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWHW-LPT",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "15 Mar 1795",
+            "place": "Surnadal, Romsdal, Norway"
+          }
+        ],
+        "personName": "Arnz",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MY3V-HBL",
+        "batchNumber": "M42164-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TG-MQB",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "2 Jul 1778",
+            "place": "Skogn, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Arentsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYSL-M2T",
+        "batchNumber": "M42691-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TZ-M3T",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Unknown"
+          },
+          {
+            "type": "Marriage",
+            "date": "1779",
+            "place": "Melhus, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Arntsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYST-593",
+        "batchNumber": "M42635-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7TC-1ZV",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Unknown"
+          },
+          {
+            "type": "Marriage",
+            "date": "25 May 1777",
+            "place": "Melhus, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Arntsen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYST-5ZQ",
+        "batchNumber": "M42635-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMC-T62",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "Aug 1799",
+            "place": "Nes, Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Reimanes",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYS1-YDQ",
+        "batchNumber": "M42481-1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW74-SJH",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "22 Jan 1789",
+            "place": "Arendal, Arendal, Aust-Agder, Norway"
+          }
+        ],
+        "personName": "Friderikssen",
+        "sex": "Male",
+        "collectionId": "1468080",
+        "recordArk": "ark:/61903/1:2:MYQ8-QTF",
+        "batchNumber": "M42137-1",
+        "role": "Groom"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926"
+    }
+  }
+}
