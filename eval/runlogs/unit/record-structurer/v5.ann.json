@@ -1,0 +1,342 @@
+{
+  "run_log": "v5.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I compared the extracted information with the original source. Robert's birth details, marriage date, parents, spouse, and child were accurately captured. Jacob's Hamlin/Hamblin name variation and Maryland origin were preserved. Ann's three surnames were recorded without assigning unsupported surname types, and the title Mrs was retained in a note. All stated facts are accurately represented, with no fabrication or substantive errors. I therefore recommend a score of 3."
+    },
+    {
+      "test_id": "ut_record_structurer_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent initially submitted an unsupported note field at the person level for Henry L. Weiss, resulting in a validation error. It then corrected the field placement by moving the physician's credentials into the name object's note field, and the second extraction call succeeded. Although the agent recovered successfully, the initial schema error justifies retaining a score of 2 rather than awarding full credit."
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The first extraction call contained an unsupported person-level note, resulting in a validation rejection. The agent corrected the arguments and successfully resubmitted the document. The recovery was successful, but the initial schema error justifies a partial score."
+    },
+    {
+      "test_id": "ut_record_structurer_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The extraction captures all ten named individuals and most of the important facts. However, it omits the explicitly stated information that Harold was survived by seven grandchildren. This is a significant detail from the obituary that was not represented in the extracted information."
+    },
+    {
+      "test_id": "ut_record_structurer_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
