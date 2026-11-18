@@ -50,6 +50,7 @@ english-old-style-date-conflict
 extraction-workbench
 feliciana-parish-boundary-split
 first-plan-migration-hypothesis
+flynn-answered-skip-unsound
 flynn-baptism-both-parents-differ
 flynn-baptism-contradicts-birth
 flynn-baptism-mother-named-differently
@@ -160,6 +161,7 @@ plan-continue-authorized-in-message
 plan-reads-question-person-profile
 premise-surname-origin
 recent-birth-handoff-agent-closed
+recent-birth-no-death-record
 recent-birth-sealed
 research-competing-parent-sets-no-hypotheses
 research-unlinked-baptism-evidence
