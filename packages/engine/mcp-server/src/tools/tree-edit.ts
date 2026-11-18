@@ -16,6 +16,7 @@
 // tree_edit is structurally unable to rewrite identity (the ut_013 rename
 // incident), instead of merely prose-forbidden from it.
 
+import { sameFactValue } from "../utils/fact-helpers.js";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -35,6 +36,8 @@ import {
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { primaryTarget, unclaimedPrimarySet } from "../utils/primary-claim.js";
+import { applyRuleMode, ruleMode, treeConcern } from "../validation/rule-modes.js";
 import {
   introducedWarnings,
   staleJustifications,
@@ -459,35 +462,6 @@ function clearPrimaryOfType(holder: FactHolder, type: string | undefined, except
   for (const f of holder.facts ?? []) {
     if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
   }
-}
-
-/**
- * Is this the same fact already recorded, rather than a second one?
- *
- * Strict equality on type, date, place and value — deliberately NOT
- * `factsEquivalent` from merge-gedcomx, which is a *compatibility* test: it
- * treats an absent date as matching any date, and one day-range containing
- * another as one fact. That is right for merging two documents and wrong here,
- * where folding a dated Marriage into an undated one would silently discard
- * the date the new record supplied (plan Decision 31 on the same helpers:
- * `compatibleDate`/`compatiblePlace` "treated 5 of 10 labelled
- * affirmed-and-ruled-out pairs as one object").
- *
- * Compares the four fields the plan names — type, date, place and value — and
- * deliberately NOT `standard_place`. The twin lookup runs before
- * `settlePlace`, so the stored fact carries a resolved `standard_place`
- * while the incoming one carries none: comparing it made a retried call whose
- * fact had a resolvable place write a SECOND fact, which is the opposite of the
- * idempotence corroboration exists for. `standard_date` is dropped with it —
- * caller-supplied, and the raw `date` already carries the claim.
- */
-function sameFactValue(a: SimplifiedFact, b: SimplifiedFact): boolean {
-  return (
-    a.type === b.type &&
-    a.date === b.date &&
-    a.place === b.place &&
-    a.value === b.value
-  );
 }
 
 /** Remove the `preferred` flag from the person's other names. */
@@ -1145,6 +1119,9 @@ export async function checkWarningGate(
     touchedIds,
     warningJustifications,
     collapseMap,
+    true,
+    true,
+    research ?? undefined,
   );
 
   // A finding replaces the count warning for the same child and sex, so the
@@ -1250,6 +1227,22 @@ function proposedParentAssertions(ops: Array<Partial<TreeEditOp>> | undefined): 
   return out;
 }
 
+/** The `primary` rule (Decision 34): a fact the call left `primary` that no live
+ *  affirmed claim at `probable` or better covers. Warns until Stage 1c. */
+function primaryRuleOutcome(beforeTree: SimplifiedGedcomX, afterTree: SimplifiedGedcomX, research: any): { errors: string[]; warnings: string[] } {
+  const mode = ruleMode("primary-claimed");
+  const out = { errors: [] as string[], warnings: [] as string[] };
+  for (const x of unclaimedPrimarySet(beforeTree, afterTree, research)) {
+    const r = applyRuleMode(mode, treeConcern(primaryTarget(x)), [
+      "`primary` marks a fact the concluded value of its type, and no live affirmed claim at probable or better " +
+        "covers this one. Set it once a proof summary claims this value, or leave it unset.",
+    ]);
+    out.errors.push(...r.errors);
+    out.warnings.push(...r.warnings);
+  }
+  return out;
+}
+
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
  *  id-assignment, and validate-on-write semantics; only the admitted
  *  op set (the gate) differs. */
@@ -1342,6 +1335,8 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
+      const primaryRule = primaryRuleOutcome(beforeTree, tree, research);
+      if (primaryRule.errors.length > 0) return { ok: false, errors: primaryRule.errors };
 
       // Warning gate: refuse if the write introduces unjustified warnings
       const warningGateResult = await checkWarningGate(
@@ -1370,7 +1365,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
         filesWritten,
         validation: {
           valid: true,
-          warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
+          warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings, ...primaryRule.warnings],
         },
       };
     }
@@ -1390,6 +1385,8 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
+    const primaryRule = primaryRuleOutcome(beforeTree, tree, research);
+    if (primaryRule.errors.length > 0) return { ok: false, errors: primaryRule.errors };
 
     // Warning gate: refuse if the write introduces unjustified warnings
     const singleGateResult = await checkWarningGate(
@@ -1419,7 +1416,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       filesWritten: singleFilesWritten,
       validation: {
         valid: true,
-        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings],
+        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings, ...primaryRule.warnings],
       },
     };
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;

@@ -1,0 +1,80 @@
+{
+  "test": {
+    "id": "ut_research_uq1",
+    "skill": "research",
+    "name": "Hands question-selection userPresent: no on the opening turn of an --autonomous run",
+    "type": "positive",
+    "description": "Clone of ut_research_023 on empty-project-two-fact-objective (issue #4531). The project has an objective that names two facts and no questions, so the router spawns question-selection first. research/SKILL.md: question-selection gets userPresent no only in an autonomous run. Without it the agent asks which fact to research first, and nobody is there to answer. delegates-qs-user-present-no asserts userPresent: no in the question-selection spawn, which the judge cannot see.",
+    "tags": [
+      "routing",
+      "routes-to:question-selection",
+      "delegates-qs-user-present-no"
+    ]
+  },
+  "input": {
+    "user_message": "/research --autonomous Research the next open question on this project — drive the workflow forward.",
+    "scenario": "empty-project-two-fact-objective"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test and the hand-off is asserted deterministically. Do NOT grade routing, and do NOT grade whether the research was driven to completion.",
+    "Every callee here is STUBBED, and each stub tells the router its delegation 'changed no project state' and not to walk further down the routing table. So one hand-off and a summary is the only outcome the harness permits.",
+    "Do not penalise the reply for reporting what the stubbed callee did, and do not reward it for claiming project state changed when the stub said it did not.",
+    "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists.",
+    "This run was opened with --autonomous, so nobody answers a pause. Whether the question-selection spawn carries userPresent: no is asserted by test_spawn_carries_its_step_mode_fields from the hook records; do not grade it."
+  ],
+  "judge_reads_files": true
+}

@@ -157,3 +157,21 @@ def test_router_decisions_are_never_self_named(tmp_path):
     p = _write(tmp_path, [_pc("research-plan", agent_type="research-plan"), _skill("research-plan")])
     (d,) = scan([p]).decisions
     assert d.population == "router" and not d.self_named
+
+
+def test_owed_findings_next_steps_are_not_counted_as_question_steps():
+    summary = (
+        '{"ok":true,"owedFindings":[{"kind":"conclude","ref":"q_002","nextStep":"proof-conclusion — q_002 has 1 tied"}],'
+        '"questionStatuses":[{"id":"q_001","nextStep":"search-records — next item pli_002"},'
+        '{"id":"q_002","nextStep":"proof-conclusion — resolved with no'
+    )
+    assert next_steps(summary) == ["search-records"]
+
+
+def test_a_summary_without_question_statuses_is_scanned_whole():
+    assert next_steps('{"ok":true,"x":[{"nextStep":"research-plan"}]') == ["research-plan"]
+
+
+def test_a_summary_cut_after_owed_findings_yields_no_question_step():
+    summary = '{"ok":true,"owedFindings":[{"kind":"conclude","nextStep":"proof-conclusion — q_001 has 2 tied"}],"questi'
+    assert next_steps(summary) == []

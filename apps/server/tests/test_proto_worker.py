@@ -6589,6 +6589,21 @@ def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatc
     assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"
 
 
+def test_plan_auto_reply_accepts_a_research_argument():
+    """A wrong signature here fails SILENTLY (plan_auto_reply swallows every
+    exception and ends the run with a log line) -- this is the regression test for
+    that failure mode, not a behavioral test of next_auto_reply itself."""
+    real = worker.load_step_boundary()
+    conn = FakeConn()
+    turn = {**TURN}
+    research = {"questions": [{"id": "q_001", "status": "in_progress"}]}
+    decision = worker.plan_auto_reply(
+        conn, real, turn, turn_mode="job", outcome="ok",
+        offered="research-exhaustiveness", research=research, log=lambda **kw: None,
+    )
+    assert decision is not None
+
+
 def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
     """A turn init-project opens is grouped by the step after it (spec section H), so
     that step replaces init-project in `turns.step`; nothing else is ever overwritten."""
