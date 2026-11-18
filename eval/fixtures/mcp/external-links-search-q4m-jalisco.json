@@ -1,0 +1,330 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search for \"Jalisco, Mexico\", 1880-1920, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~Jalisco"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Jalisco, Mexico",
+      "startYear": 1880,
+      "endYear": 1920
+    },
+    "totalForPlace": 73,
+    "returned": 72,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/60017/",
+        "linkText": "Jalisco, Mexico, Catholic Church Records, 1590-1995",
+        "startYear": 1590,
+        "endYear": 1995
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1082",
+        "linkText": "Border Crossings from Mexico to US, 1895-1964",
+        "startYear": 1895,
+        "endYear": 1964
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1771",
+        "linkText": "1930 Mexico National Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60038/",
+        "linkText": "México, Mexico, Catholic Church Records, 1567-1970",
+        "startYear": 1567,
+        "endYear": 1970
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60982/",
+        "linkText": "Baja California and Baja California Sur, Mexico, Catholic Church Records, 1750-1984",
+        "startYear": 1750,
+        "endYear": 1984
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61089/",
+        "linkText": "Mexico, Select Church Records, 1537-1966",
+        "startYear": 1537,
+        "endYear": 1966
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9297",
+        "linkText": "Mexico Select Baptisms, 1560-1950"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9298",
+        "linkText": "Mexico, Select Deaths, 1680-1940"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9299",
+        "linkText": "Mexico Select Marriages Index, 1556-1989"
+      },
+      {
+        "url": "http://archivohistoricodeensenada.weebly.com/",
+        "linkText": "Archivo Histórico de Ensenada"
+      },
+      {
+        "url": "http://cdm16775.contentdm.oclc.org/cdm/",
+        "linkText": "University of Texas Rio Grande Valley"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/LatinAmerica/Mexico.pdf",
+        "linkText": "Mexico Research"
+      },
+      {
+        "url": "http://hemeroteca.informador.com.mx/",
+        "linkText": "El Informador: Diario Independiente, 1917-present"
+      },
+      {
+        "url": "http://mexicangenealogy.info/",
+        "linkText": "Mexican Genealogy"
+      },
+      {
+        "url": "http://mexicangenealogy.info/find-your-mexican-ancestors-using-mexican-catholic-church-records/",
+        "linkText": "Find Your Mexican Ancestors Using Catholic Church Records"
+      },
+      {
+        "url": "http://pares.mcu.es/MovimientosMigratorios/staticContent.form?viewName=fuentes",
+        "linkText": "Migratory Movements"
+      },
+      {
+        "url": "http://pares.mcu.es/MovimientosMigratorios/staticContent.form?viewName=presentacion",
+        "linkText": "Movimientos Migratorios Iberoamericanos"
+      },
+      {
+        "url": "http://parroquiasdemexico.com/",
+        "linkText": "Parroquias de México"
+      },
+      {
+        "url": "http://raullongoria.net/",
+        "linkText": "The Longoria Alcala Family"
+      },
+      {
+        "url": "http://search.ancestry.mx/search/group/mexicocivilbirth",
+        "linkText": "Registros civiles de nacimiento de México"
+      },
+      {
+        "url": "http://search.ancestry.mx/search/group/mexicocivildeaths",
+        "linkText": "Civil Death Records of Mexico"
+      },
+      {
+        "url": "http://search.ancestry.mx/search/group/mexicocivilmarriage",
+        "linkText": "Civil Marriage Records of Mexico"
+      },
+      {
+        "url": "http://search.findmypast.com/search-world-Records/british-armed-forces-and-overseas-deaths-and-burials",
+        "linkText": "British Armed Forces and Overseas Deaths and Burials"
+      },
+      {
+        "url": "http://uair.library.arizona.edu/item/79579",
+        "linkText": "University of Arizona Documents from Northern New Spain"
+      },
+      {
+        "url": "http://www.agn.gob.mx/",
+        "linkText": "Archivo General de la Nación"
+      },
+      {
+        "url": "http://www.ancestry.mx/",
+        "linkText": "Ancestry | Genética y genealogía"
+      },
+      {
+        "url": "http://www.archives.gov/research/immigration/border-mexico.html",
+        "linkText": "Mexican Border Crossing Records, ca. 1903–ca. 1955"
+      },
+      {
+        "url": "http://www.catholic-hierarchy.org/country/mx.html",
+        "linkText": "Catholic Hierarchy Records for Mexico"
+      },
+      {
+        "url": "http://www.culturaydeporte.gob.es/cultura/areas/archivos/mc/archivos/agi/portada.html",
+        "linkText": "Portada del Archivo General de Indias"
+      },
+      {
+        "url": "http://www.emigrantelibanes.com/cgi-bin/Inmi",
+        "linkText": "Libaneses en México"
+      },
+      {
+        "url": "http://www.gcatholic.org/dioceses/country/MX.htm",
+        "linkText": "GCatholic.org for Mexico"
+      },
+      {
+        "url": "http://www.gob.mx/agn/acciones-y-programas/consulta-la-guia-general-de-los-fondos-del-agn?idiom=es",
+        "linkText": "Instrumentos de consulta del AGN, Archivo General de la Nación"
+      },
+      {
+        "url": "http://www.guadalajaradispensas.com",
+        "linkText": "Guadalajara Marriage Dispensations"
+      },
+      {
+        "url": "http://www.guadalajaradispensas.com/p/search-tips.html",
+        "linkText": "Guadalajara Marriage Dispensation Index, 1600-1899",
+        "startYear": 1600,
+        "endYear": 1899
+      },
+      {
+        "url": "http://www.hispanicgen.org/links.html",
+        "linkText": "Colorado Society of Hispanic Genealogy"
+      },
+      {
+        "url": "http://www.hndm.unam.mx/",
+        "linkText": "Hemeroteca Nacional Digital de México"
+      },
+      {
+        "url": "http://www.huntington.org/Information/ECPPlogin.htm",
+        "linkText": "Early California Population Project"
+      },
+      {
+        "url": "http://www.inm.gob.mx",
+        "linkText": "The URL you requested has been blocked"
+      },
+      {
+        "url": "http://www.library.arizona.edu/contentdm/mmap/index.html",
+        "linkText": "Historic Mexican & Mexican American Press database"
+      },
+      {
+        "url": "http://www.monterrey.gob.mx/ArchivoHistorico/",
+        "linkText": "Archivo Histórico de Monterrey"
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-30039/mexico-baptisms-1560-1950?s=218489221",
+        "linkText": "Free Family Tree and DNA Testing"
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-30040/mexico-marriages-1570-1950?s=218489221",
+        "linkText": "Free Family Tree and DNA Testing"
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-30041/mexico-deaths-1680-1940?s=218489221",
+        "linkText": "Free Family Tree and DNA Testing"
+      },
+      {
+        "url": "http://www.oficinaparroquial.com/directorio/index.html#Directorio",
+        "linkText": "Directorio Nacional de Parroquias Mexicanas"
+      },
+      {
+        "url": "http://www.teldir.com/mx/",
+        "linkText": "Teldir Mexico Directory"
+      },
+      {
+        "url": "http://www.villadan.com/",
+        "linkText": "The Genealogy of Mexico"
+      },
+      {
+        "url": "http://www.worldcat.org/",
+        "linkText": "OCLC WorldCat or Archive Grid"
+      },
+      {
+        "url": "https://archivos.gob.mx/DirectorioArchivos/DirectorioArchivos.html",
+        "linkText": "Directorio Nacional de Archivos, México"
+      },
+      {
+        "url": "https://archivos.gob.mx/guiageneral/",
+        "linkText": "Guía General de Fondos en Línea"
+      },
+      {
+        "url": "https://embamex.sre.gob.mx/espana/images/regcivmx.pdf",
+        "linkText": "List of Register Offices in Mexico"
+      },
+      {
+        "url": "https://guides.library.ttu.edu/MALS/genealogy",
+        "linkText": "Mexican American & Latina/o Studies Resources"
+      },
+      {
+        "url": "https://lib.nmsu.edu/archives/documents/ahadnmpi2.pdf",
+        "linkText": "Records from 1800 to 1893",
+        "startYear": 1800,
+        "endYear": 1893
+      },
+      {
+        "url": "https://mexicangenealogy.com/",
+        "linkText": "Mexican and Spanish Colonial Genealogy"
+      },
+      {
+        "url": "https://search.findmypast.com/results/world-records/british-armed-forces-and-overseas-banns-and-marriages?country=mexico",
+        "linkText": "Mexico, British Armed Forces and Overseas Banns and Marriages"
+      },
+      {
+        "url": "https://search.findmypast.com/results/world-records/british-armed-forces-and-overseas-births-and-baptisms?country=mexico",
+        "linkText": "Mexico, British Armed Forces and Overseas Births and Baptisms"
+      },
+      {
+        "url": "https://www.ancestry.com/search/categories/bmd_birth/?event=_mexico&count=50&location=3255&priority=mexico&types=r&viewMode=category",
+        "linkText": "Birth, Baptism, & Christening"
+      },
+      {
+        "url": "https://www.arquidiocesisgdl.org/archivo_diocesano.php",
+        "linkText": "Arquidiocesis de Guadalajara"
+      },
+      {
+        "url": "https://www.colleengreene.com/mexican-genealogy/",
+        "linkText": "Mexican Genealogy Guide by Colleen Robledo Greene"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+banns+and+marriages&sid=103&country=mexico",
+        "linkText": "British Armed Forces and Overseas Banns and Marriages"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+births+and+baptisms&sid=103&country=mexico",
+        "linkText": "British Armed Forces and Overseas Births and Baptisms"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+deaths+and+burials&sid=103&country=mexico",
+        "linkText": "British Armed Forces and Overseas Deaths and Burials"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?sourcecategory=travel%20%26%20migration&sid=999",
+        "linkText": "Passenger Lists Leaving UK, 1890-1960",
+        "startYear": 1890,
+        "endYear": 1960
+      },
+      {
+        "url": "https://www.genealogycenter.info/persi/",
+        "linkText": "Periodical Source Index - ACPL Genealogy Center"
+      },
+      {
+        "url": "https://www.gob.mx/ActaNacimiento/",
+        "linkText": "Acta de Nacimiento, Trámites"
+      },
+      {
+        "url": "https://www.gob.mx/sedena/acciones-y-programas/expedicion-de-documentos",
+        "linkText": "Dirección General de Archivo e Historia"
+      },
+      {
+        "url": "https://www.gob.mx/tramites/identidad",
+        "linkText": "Portal Gob MX"
+      },
+      {
+        "url": "https://www.hgrc-nm.org/",
+        "linkText": "Hispanic Genealogical Research Center of New Mexico"
+      },
+      {
+        "url": "https://www.immigrantships.net/index.html",
+        "linkText": "Immigrant Ships Transcribers Guild"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30039/mexico-baptisms-1560-1950",
+        "linkText": "Mexico Baptisms, 1560-1950",
+        "startYear": 1560,
+        "endYear": 1950
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30040/mexico-marriages-1570-1950",
+        "linkText": "Mexico Marriages, 1570-1950",
+        "startYear": 1570,
+        "endYear": 1950
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30041/mexico-deaths-1680-1940",
+        "linkText": "Mexico Deaths, 1680-1940",
+        "startYear": 1680,
+        "endYear": 1940
+      },
+      {
+        "url": "https://www.valladoliddispensas.com/",
+        "linkText": "Valladolid Dispensas, 1600-1899",
+        "startYear": 1600,
+        "endYear": 1899
+      }
+    ]
+  }
+}

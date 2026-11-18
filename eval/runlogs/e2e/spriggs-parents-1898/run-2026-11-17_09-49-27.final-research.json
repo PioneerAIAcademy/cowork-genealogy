@@ -1,0 +1,3565 @@
+{
+  "project": {
+    "id": "rp_spriggs_parents_1898",
+    "objective": "Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?",
+    "subject_person_ids": [
+      "L64C-QQX"
+    ],
+    "status": "active",
+    "created": "2026-06-23",
+    "updated": "2026-06-23"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?",
+      "rationale": "The tree holds Reuben Spencer Spriggs's birth, marriage and children, but no parents are linked to him. The objective is a single relationship fact about one named person, and the tree offers no unverified parentage claim to test first. Sources for his birth and parentage are not yet attached.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1898-1930",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-17"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-17",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Benson County, North Dakota (and neighbors Eddy, Nelson, Pierce, Ramsey, Towner, Wells)",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "Tree records Reuben born 6 Nov 1898 in Maddock, Benson County, with no parents attached. The 1900 federal census is the first surviving census after his birth (1890 was lost per loc_001) and should show him aged 1 in a household with parent(s) and relationship to head. Search the surname Spriggs with variants (Spriggs, Spriggs, Sprigs, Spriggins, Spiggs) and given name Reuben, born Nov 1898; extend to neighboring counties per loc_001.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Belle Prairie Township, Beadle County, South Dakota",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The tree records Reuben's 1910 residence as Belle Prairie Township, Beadle County, SD, so the family likely moved from Benson County between 1900 and 1910. The 1910 census, at age 11, should list him as son of the head; it also gives parents' birthplaces and, for the mother, children born/living. Also check the 1905 and 1915 South Dakota state censuses for the same township.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Beadle and Kingsbury Counties, South Dakota",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "Fills the gap between 1910 and his 1926 marriage. A 1920 household with Reuben (age 21) beside the same adults seen in 1910 bridges the link so continuity is not asserted from name and age alone. Tree facts place him in Beadle County in 1910 and later in Iroquois, Kingsbury County (children born 1928 and 1931).",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "North Dakota (Benson County and neighbors)",
+          "date_range": "1915-1925",
+          "repository": "FamilySearch",
+          "rationale": "The collections North Dakota, Census, 1915 and North Dakota, Census, 1925 are name-searchable. If the 1900 or 1910 searches show the family stayed in or returned to North Dakota, these state censuses give household composition between federal years. Run only the years the earlier items leave open.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Riverside, Riverside County, California",
+          "date_range": "1998",
+          "repository": "FamilySearch",
+          "rationale": "Tree records Reuben's death 21 May 1998 in Riverside, with an obituary dated 29 May 1998 (the tree lacks its content). His own death entry (California Death Index names mother's maiden surname and father's surname) and obituary (parents, siblings, birthplace) are the most likely direct answer, and the locality guide says a baptism may be hard to reach. Look for a death certificate, newspaper obituary and Social Security Death Index entry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "United States (Social Security Administration)",
+          "date_range": "1936-1998",
+          "repository": "Ancestry",
+          "rationale": "A Social Security application (SS-5) gives the applicant's birthplace and his father's and mother's full names, usually in the applicant's own hand. Search the Social Security Applications and Claims Index for Reuben Spencer Spriggs, born 6 Nov 1898, Maddock; if not indexed, request the SS-5 from SSA, since he died in 1998.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Minneapolis, Hennepin County, Minnesota",
+          "date_range": "1926",
+          "repository": "FamilySearch",
+          "rationale": "Tree records Reuben's marriage to Nora Alvina Satter on 8 Nov 1926 in Minneapolis. Marriage license and certificate applications typically name both parties' parents (with mother's maiden name). Search Minnesota marriage indexes and Hennepin County records for the 1926 entry.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "military",
+          "jurisdiction": "Beadle County, South Dakota (or North Dakota)",
+          "date_range": "1917-1918",
+          "repository": "FamilySearch",
+          "rationale": "Reuben (born Nov 1898) was of age for the WWI draft registration of 12 Sep 1918. The card gives residence, employer and nearest relative, who may be a parent. Also check WWI service records or bonus applications.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "Benson County, North Dakota (and neighbors) and Beadle County, South Dakota",
+          "date_range": "1875-1900",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated item for the candidate parents' marriage to each other: search North Dakota, County Marriages, 1872-2000 (name-searchable) for any Spriggs groom 1875-1898, and Dakota Territory/South Dakota marriages. It would confirm a couple, give the mother's name (a surname on a marriage record may be a prior married name, so it is not assumed to be her maiden name), and by date relative to Nov 1898 corroborate a father found by other evidence. It does not by itself show Reuben is their child; that needs a record placing him in their household (items 1-3).",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "church",
+          "jurisdiction": "Maddock, Esmond and Flora, Benson County, North Dakota",
+          "date_range": "1898-1900",
+          "repository": "FamilySearch",
+          "rationale": "Baptism or christening around Nov 1898 would name parents and sponsors (FAN). loc_001 lists Lutheran congregations at Esmond and Flora, partly name-indexed and mostly image-browse, with Norwegian text; the family's denomination is unknown, so also consider other Maddock congregations. Run after censuses establish a surname and likely parish.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 11,
+          "record_type": "cemetery",
+          "jurisdiction": "Maplewood Cemetery, Iroquois, Kingsbury County, South Dakota",
+          "date_range": "1900-2000",
+          "repository": "FamilySearch",
+          "rationale": "Tree records Reuben and Nora buried at Maplewood Cemetery, Iroquois. FAN item: nearby Spriggs plots, and the interment records in North Dakota, Cemetery Records, 1877-1999 (name-searchable) may reveal parents or siblings buried near him, and the cemetery sexton or funeral home records may list his parents. Window runs to cover parents' deaths (up to about 1960).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 12,
+          "record_type": "land",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1883-1910",
+          "repository": "other",
+          "rationale": "If a Spriggs father homesteaded near Maddock, BLM land patents and Benson County deeds would locate him. Also North Dakota and South Dakota Naturalization Records, 1851-1924 (name-searchable) and the full-text Benson County naturalization volumes for a foreign-born Spriggs. Pioneer Files (Red River Valley Genealogical Society) and Maddock local history (The First Fifty Years, 1901-1951) may name neighbors and kin.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-17T09:31:53.821Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "recordType": "census",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Benson, North Dakota, United States"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Collection mismatch: the only hit is a city and business directory entry (Mrs Sprigg, spouse of J C Sprigg), not a 1900 census household. No census record for a Reuben Spriggs under this query. Cross-check: none. Census schedule for 1900 is the US census (collection 1325221), which names every person and relationship to head.",
+      "staged_ref": "results/.staging/98348c71-56cd-4779-9681-2ed280a7b2e5.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-17T09:31:53.831Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordType": "census",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Benson, North Dakota, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "Surname-only 1900 census pool, no given name. Four census households, none a candidate for the subject: John H Spriggs (b. Dec 1868, District of Columbia, birth-year gap -30 vs 1898); Silas B Spriggs (b. Sep 1877, Ohio, gap -21); Jesse L Spriggs (b. Apr 1876, West Virginia, gap -22). Mrs Sprigg is a directory entry. The place filter did not restrict these to Benson County; no Benson County household surfaced. Ranker: no candidate above 0.01 for the subject.",
+      "staged_ref": "results/.staging/6b372e09-74b9-4e92-864e-b183a6cdabd4.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-17T09:31:53.840Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sprigs",
+        "givenName": "Reuben",
+        "recordType": "census",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "North Dakota, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 2,
+      "notes": "Spelling variant Sprigs with given name Reuben, North Dakota scope. Only candidate: Ruben Spriggs, Grand Forks household, b. Dec 1865 Minnesota, married 1893 (birth-year gap -33 vs subject's 1898 birth; birth year conflict flagged by the tool). Not the subject: a 1900 household of a married man born 1865 cannot be a one-year-old Reuben. Namesake recorded separately. Mrs Sprigg directory entry is the other hit.",
+      "staged_ref": "results/.staging/018192c3-ed1b-4a64-b991-5cd2064dfe5f.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-17T09:32:29.434Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben Spencer",
+        "recordType": "census",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "residencePlace": "Belle Prairie Township, Beadle County, South Dakota"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 2,
+      "notes": "1910 federal census, collection 1727033 (schedule names relationship to head). Top hit ark:/61903/1:1:MPXD-MZC, indexed Rueben S Spriggs, b.1899 ND, household of John W Spriggs, attached to subject, matchScore 0.886. Cross-check: age 12 vs subject b. Nov 1898 (gap about 1 yr, within tolerance); place Prairie Belle, Beadle SD matches tree. Relationship to head not shown on index stub; needs record read to confirm son. Second hit is a directory entry (Mrs Sprigg), not a match.",
+      "staged_ref": "results/.staging/653605ab-e6ac-418d-810b-6b21b2b1b593.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-17T09:32:29.445Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben Spencer",
+        "recordType": "census",
+        "residenceYearFrom": 1905,
+        "residenceYearTo": 1905,
+        "residencePlace": "Belle Prairie Township, Beadle County, South Dakota"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 3,
+      "notes": "1905 SD state census, collection 1477737. Hits: Spencer Spriggs b.1899 but birthplace Iowa (tree says ND), not attached to subject, matchScore 0.31, needs-review: birthplace conflicts and the index name is Spencer, not Reuben. S W Spriggs b.1870 Nebraska flagged birthYearConflict (gap -28), not the subject. Schedule does not give relationship to head in the stub; no conclusion about household structure drawn.",
+      "staged_ref": "results/.staging/b4dcae03-9994-4589-904d-99e964ee569d.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-17T09:32:30.418Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben Spencer",
+        "recordType": "census",
+        "residenceYearFrom": 1915,
+        "residenceYearTo": 1915,
+        "residencePlace": "Belle Prairie Township, Beadle County, South Dakota"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 2,
+      "notes": "1915 SD state census, collection 1476041. Top hit ark:/61903/1:1:MMH5-9TH, indexed Spencer Spriggs, b.1899 ND (matches tree birthplace), single, attached to subject, matchScore 0.64. Given name differs (Spencer, not Reuben), consistent with Spencer as his call name; residence place not shown in stub beyond South Dakota. Second hit is a directory entry, not a match.",
+      "staged_ref": "results/.staging/313c361c-3524-45fc-8331-d23007be7c3f.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-17T09:33:26.694Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordType": "census",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "residencePlace": "Beadle County, South Dakota, United States",
+        "subjectId": "L64C-QQX"
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 8,
+      "notes": "Beadle County 1920 census, 8 hits (place expanded to Beadle, SD and Beadle, Dakota Territory; merged). Household of Will Spriggs, Belle Prairie Township, Beadle, SD, indexed in collection 1488411 (US Census 1920) with Will (b.1873 Iowa, married), Charlott (b.1878 Norway, married; immigration 1877), and Spencer (b.1899 North Dakota, single; attached to subject, matchScore 0.80). Cross-check: Spencer 1899 vs subject 1898 (gap 1 yr); birthplace ND matches Maddock, Benson Co., ND. Will 1873 Iowa and Charlott 1878 Norway fit the 1910 couple (John W b.1872 Iowa; Charlotte b.1877 Norway) within 1-2 years; the name John vs Will is a given-name variant to confirm on the image. Leonard (b.1907 SD) in same household, flagged birthYearConflict only against the subject, not a household conflict. Pre-1880 inference N/A: 1920 schedule records relationship to head. Other hits (Claud Spriggs LDS church census, C H Spriggs and Mrs Sprigg directory entries, Lillian Spriggs 1915 marriage) are not this family per tool birthYearConflict or no household link. Pending record_read for relationship column.",
+      "staged_ref": "results/.staging/c76b48ce-2a5d-4bbc-80cb-bae714f5ea53.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-17T09:33:26.716Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordType": "census",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "residencePlace": "Kingsbury County, South Dakota, United States",
+        "subjectId": "L64C-QQX"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 3,
+      "notes": "Kingsbury County 1920: 3 hits, none a census household of Spriggs. Top-ranked candidates are a directory entry (C H Spriggs, 1920-1921), an LDS church census entry for Claud Spriggs (birth 1908, birthYearConflict gap 10), and a directory spouse entry (Mrs Sprigg). Ranker reports no candidate scored above 0.01, so this is a real negative for Kingsbury County in the 1920 census collection. Note the Kingsbury search was run with the same surname only; the 1920 census Iroquois household is not indexed under this query.",
+      "staged_ref": "results/.staging/d7ebc34b-240b-4faf-8b4f-5f1e1cb883c3.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-17T09:34:44.652Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben Spencer",
+        "deathYearFrom": 1998,
+        "deathYearTo": 1998,
+        "deathPlace": "Riverside, Riverside County, California, United States"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 650,
+      "notes": "Death search, 1998, Riverside. 650 total. Top match QKLM-51PS (GenealogyBank obituary index, attached to subject, matchScore 0.945): Reuben Spencer Spriggs, birth about 1899 Maddock ND (1-year gap to 6 Nov 1898, within tolerance), death 21 May 1998 Riverside, obituary dated 29 May 1998. Index entry only, derivative; obituary text not read. Second strong hit V3N4-V2P (SSDI, attached to subject, 0.97) and NUMIDENT 6KWW-PLZX (0.87) give death 21 May 1998 but in Orange County CA (Orange) not Riverside: place conflict to resolve. Burial index Q231-HPSQ (Find a Grave, Iroquois SD, attached). No California Death Index entry: CDI collection ends 1997. No death certificate located in the index. Spouse absent on top match.",
+      "staged_ref": "results/.staging/34f3bb70-b212-4440-8e1a-894e41c9d469.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-11-17T09:34:44.702Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben Spencer",
+        "marriageYearFrom": 1926,
+        "marriageYearTo": 1926,
+        "marriagePlace": "Minneapolis, Hennepin County, Minnesota, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 736,
+      "notes": "Marriage search, 1926, Minneapolis. 736 total. No 1926 Minneapolis marriage record for Reuben in top 50. Results are census, obituary and draft entries; no marriage event carrying 1926 in Minneapolis. Nil in pool, not exhaustive.",
+      "staged_ref": "results/.staging/63a0de09-439d-4d31-9dc7-596d5ca6a19d.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-11-17T09:34:44.734Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "spouseSurname": "Satter",
+        "marriageYearFrom": 1926,
+        "marriageYearTo": 1926
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 3448,
+      "notes": "Spouse-anchored marriage search (spouse surname Satter), 1926. 3448 total. No 1926 marriage for Reuben with Satter spouse in top 50. Top hits are the death/obituary entries and the 1910 Belle Prairie household (Rueben S Spriggs, attached to subject). 9 rows name no spouse. Nil in pool.",
+      "staged_ref": "results/.staging/00f4af7b-41fd-4fb1-8d36-10f0658e8933.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_007",
+      "performed": "2026-11-17T09:34:44.761Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Satter",
+        "givenName": "Nora Alvina",
+        "marriageYearFrom": 1926,
+        "marriageYearTo": 1926,
+        "marriagePlace": "Minneapolis, Hennepin County, Minnesota, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 582,
+      "notes": "Bride-side search for Nora Alvina Satter, 1926, Minneapolis. 582 total. Subject not resolvable: no candidate scored above 0.01 (diagnostic says real negative for this query). Nora Alvina Satter b.1901 MN appears only in the 1910 Carthage SD census (MPXX-WJ6, not a marriage record; surname not on subject, needs-review, not evidence of the 1926 marriage). Nil in pool, not exhaustive.",
+      "staged_ref": "results/.staging/63f45657-b214-4090-bff2-c81160d51933.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-17T09:35:35.308Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben Spencer",
+        "recordType": "military",
+        "residencePlace": "Beadle County, South Dakota, United States",
+        "residenceYearFrom": 1917,
+        "residenceYearTo": 1918
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 369,
+      "notes": "Subject-anchored ranking: no candidate scored above 0.01; subject not found. Reuben Spencer Spriggs is not in the pool. Ranked 50 of 369 total. The only WWI draft card with a Spriggs of the same surname that is not the subject: Spencer Spriggs, b. 21 Feb 1876, Kansas City, Missouri (birthYearConflict, gap -22). Also James S Spriggs b. 1875 (gap -23), Berthold R (gap -13, Wayne MI), Max S (gap -14, Wheeling WV). None is Reuben and none is the subject. Place expansion searched Beadle County/Beadle SD/Beadle Dakota Territory, and the subject's 1910 residence is Belle Prairie, Beadle County. The ranking shows the givenName-as-written filter may exclude a card indexed under Reuben alone. Next lever: givenName Reuben without the Spencer middle name, and a no-place search (surname plus year range, anchored on recordCountry).",
+      "staged_ref": "results/.staging/1fc1fda5-3598-4fd3-8aff-867f52ba50d7.json"
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_009",
+      "performed": "2026-11-17T09:35:35.332Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordType": "marriage",
+        "marriagePlace": "North Dakota, United States",
+        "marriageYearFrom": 1875,
+        "marriageYearTo": 1898
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 5,
+      "notes": "Five Spriggs hits, none a marriage of a Spriggs groom in ND 1875-1898. Hits: Brandvold entry (Father F E Spriggs as a parent of a bride, not a groom); Fredrick Leigh and Grace Spriggs entry (John Spriggs as father-in-law, Iowa/ELCA context, not our couple); Louis Allison Bendle entry (Edith Mae Spriggs as mother of groom, Indiana, 1811-2019). jurisdictionHints point to Beadle County, South Dakota and Belle Prairie Township (1910) as places where the subject family was on record before the 1926 Minneapolis marriage. The hint notes a South Dakota or Dakota Territory marriage search was not yet run. Subject unresolvable: no candidate scored above 0.01.",
+      "staged_ref": "results/.staging/7009f5f3-56a2-4937-964a-82f20cdb6885.json"
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-17T09:35:52.629Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "recordType": "military",
+        "residenceYearFrom": 1917,
+        "residenceYearTo": 1918
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 352,
+      "notes": "No place filter, given name Reuben alone (drops Spencer). Pool 352 total, top 50 read; subject not in the pool (no candidate scored above 0.01). Reuben Spriggs b. 1894 Hatfield, Hertfordshire, England (British WWI service record, birthYearConflict gap -4) is a different person on a stated ground: born in England to a British service record, while the subject was born in Maddock, ND. Spencer Ruben Spriggs b. 3 Oct 1928 Huron, Beadle SD (WWII 1946 card, birthYearConflict gap +30) is too young to be the subject in 1917-1918. The Beadle-born Spencer Ruben is a same-surname, near-same-name namesake to record. No Beadle County WWI card appears for any Spriggs in the pool.",
+      "staged_ref": "results/.staging/6e759fa9-4a7f-4ab6-b9d8-513c32dceaae.json"
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_009",
+      "performed": "2026-11-17T09:35:52.654Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordType": "marriage",
+        "marriagePlace": "South Dakota, United States",
+        "marriageYearFrom": 1875,
+        "marriageYearTo": 1898
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 3,
+      "notes": "South Dakota marriage search 1875-1898 returned 3 hits, none a Spriggs groom or a couple with the subject's parents. Hits: Simon Spriggs (father of bride, Indiana 1410397), Martin Spriggs (father of groom, Montana 1609797), Mary Spriggle (mother, California). The jurisdictionHints in this run point to Maddock, ND (1898 birth) and Minneapolis (1926 marriage) as places the subject was on record, not to a Dakota marriage. Subject unresolvable (no candidate above 0.01). Territory-era Dakota (Beadle, Dakota Territory) was covered by the earlier place expansion only for the WWI search, not for marriage; a Beadle County marriage search is still open.",
+      "staged_ref": "results/.staging/671d4864-028a-4baf-bbd9-24dbc0e2f6e6.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:36:27.617Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MPXD-MZC"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "staged_ref": "results/.staging/22789878-419b-42e0-902a-a90e3ada292b.json"
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:36:27.631Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MMH5-9TH"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "staged_ref": "results/.staging/15b330f5-dde1-471a-adb5-8751599462a9.json"
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:43:55.092Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:V3N4-V2P"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "staged_ref": "results/.staging/4e6699ab-0895-4514-9f5c-850c474ef764.json"
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:43:55.100Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6KWW-PLZX"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "staged_ref": "results/.staging/3f8c17a6-5479-4a98-a498-a25daf57403e.json"
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-17T09:47:27.836Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordType": "census",
+        "residenceYearFrom": 1915,
+        "residenceYearTo": 1915,
+        "residencePlace": "North Dakota, United States",
+        "collectionId": "2346284"
+      },
+      "outcome": "negative",
+      "results_examined": 24,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 24,
+      "notes": "North Dakota, Census, 1915: 24 Spriggs-surname results, none scored above 0.011 against Reuben Spencer Spriggs. No Reuben, John W or Charlotte Spriggs in the pool. Benson County households: Fred E Spriggs (Benson) with Roy O, Leo E, Myrtle E, Geneva E, Emma B, C Victor D; ranked top match is a different person. Not the subject by stated ground: no given name of the subject or his listed parents. Subject is not found in this year; relationship to the Fred E household is unestablished.",
+      "staged_ref": "results/.staging/7b39b1dd-c336-448a-a6be-bc976d148b54.json"
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-17T09:47:27.855Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordType": "census",
+        "residenceYearFrom": 1925,
+        "residenceYearTo": 1925,
+        "residencePlace": "North Dakota, United States",
+        "collectionId": "2351024"
+      },
+      "outcome": "negative",
+      "results_examined": 24,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 24,
+      "notes": "North Dakota, Census, 1925: 24 Spriggs-surname results; subjectResolvable false, no candidate scored above 0.01. No Reuben Spriggs. No John W or Charlotte Spriggs. Benson County households: Emma Spriggs (North Viking, b.1875) with Victor (b.1901), Geneva (1907), Earlen (1908), Leo (1913), Adelide (1921); Mary Spriggs (Burleigh, b.1879) and John Spriggs (Burleigh) are not in Benson. Roy Spriggs (Grand Forks, b.1900) is a different given name and place. Real negative for the subject; Benson-county Spriggs households are not tied to the subject and are not adopted.",
+      "staged_ref": "results/.staging/ceb99d3c-20f4-4f0d-ab9e-f0fdd4415a3a.json"
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_011",
+      "performed": "2026-11-17T09:48:07.410Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "recordCountry": "United States",
+        "recordSubdivision": "South Dakota",
+        "recordType": "cemetery"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "results_available": 357,
+      "notes": "Surname Spriggs, US/South Dakota, cemetery type, ranked against subject L64C-QQX. 357 total matches. Top match is Reuben Spencer Spriggs (ark QKLM-51PS, GenealogyBank obituary, burial De Smet SD, matchScore 0.94, attached to subject); its burial place conflicts with the Iroquois burial in the Find a Grave index (see next log entry). Other SD grave registration hits are S W, A T, M V, Emily, Ama J Spriggs (Rockerville, Pennington), and William J Spriggs 1872-1934 (CTJP-TFN2, burial Kingsbury SD, matchScore 0.00002, birth year matches John William 1872 but not triaged as the same person; William J Spriggs 1872-1934 also appears with a Maplewood Township, Essex NJ burial, a namesake pool). Results are mostly from the GenealogyBank obituary and SD grave registration collections, not the Find a Grave index.",
+      "staged_ref": "results/.staging/cb151fbb-48da-4945-9114-f6073550df57.json"
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_011",
+      "performed": "2026-11-17T09:48:20.445Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "anyPlace": "Iroquois, Kingsbury County, South Dakota, United States",
+        "anyYearFrom": 1900,
+        "anyYearTo": 2000
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "results_available": 15839,
+      "notes": "Spriggs anywhere in Iroquois/Kingsbury SD, 1900-2000, ranked against subject L64C-QQX. 15,839 matches, top 50 triaged. Find a Grave Index entries at Iroquois: Reuben Spencer Spriggs (Q231-HPSQ, burial Iroquois, matchScore 0.97, attached to subject); Nora Alvina Satter Spriggs (Q2S3-ZXXX, b. 7 Nov 1899, d. 16 May 1959, burial Iroquois, attached to other, matchScore 0.00003); John William Spriggs (QVLQ-8N94, b. 17 Mar 1872, d. 27 Jul 1934, burial Iroquois, attached to other); Charlotte Westby Spriggs (QVPM-RRRJ, b. 13 Jun 1876, d. 17 Jan 1968, burial Iroquois, attached to other). Cross-check: John William b. 1872 matches the 1910-context father (b. 1872); Charlotte b. 1876 Westby (Norway-linked surname) vs the 1877 Norway year in context, within one year. The 1925 SD state census household of Wm Spriggs (b. 1872 Iowa, wife b. 1876 Norway, MM4X-513 and MM4X-513 wife record) is consistent with the parents. The Grave Registration index separately lists William J Spriggs 1872-1934 at Kingsbury (CTJP-TFN2), same dates as John William; unresolved whether the same man. Nora and Charlotte are noted as relatives; Reuben's Iroquois burial conflicts with the De Smet burial in the GenealogyBank obituary record, to be resolved. Remaining Iroquois hits not triaged in depth; many are unrelated Spriggs from other states.",
+      "staged_ref": "results/.staging/ed8077aa-938e-4b9d-ac20-7f95f35d1e1f.json"
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_011",
+      "performed": "2026-11-17T09:48:20.471Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "John William",
+        "recordCountry": "United States",
+        "collectionId": "2221801"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "results_available": 698,
+      "notes": "Find a Grave Index pinned, given name John William, no place filter. 698 matches; ranked pool holds no candidate above 0.01 score against the subject, so the ranker reports a real negative for the subject. The entry that fits the family, John William Spriggs b. 17 Mar 1872 d. 27 Jul 1934 Iroquois (QVLQ-8N94), is present but was ranked 3rd on search order and scored only 0.00001. Outcome set to partial because the pool contains many unrelated John William Spriggs entries in other states; no candidate was accepted. The Iroquois entry is the family candidate and needs extraction and confirmation (birth year 1872 matches the father; the subject's own birth conflict is not relevant to this person).",
+      "staged_ref": "results/.staging/1e6d791e-11d4-4a62-9e51-ad819cc5946b.json"
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:48:44.309Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:Q231-HPSQ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "staged_ref": "results/.staging/8e99ba42-6866-4594-8d92-2ed1c1c01643.json"
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:48:44.353Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QVLQ-8N94"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "staged_ref": "results/.staging/afdf1721-98e9-49f5-87ff-b2d581cb48d7.json"
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:48:44.365Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QVPM-RRRJ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "staged_ref": "results/.staging/de279dd9-2187-4f67-bd21-3677774c79f5.json"
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": null,
+      "performed": "2026-11-17T09:48:44.378Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:Q2S3-ZXXX"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "staged_ref": "results/.staging/40523550-0a3d-4b5d-b0ed-e163f418891d.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MPXD-MZ4 : Wed Aug 13 17:11:01 UTC 2025), Entry for John W Spriggs and Charlotte Spriggs, 1910.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of John W Spriggs, \"United States, Census, 1910\"",
+        "when_created": "1910",
+        "when_accessed": "2026-11-17",
+        "where": "United States, Census, 1910",
+        "where_within": "ark:/61903/1:1:MPXD-MZC"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_017",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD",
+      "image_ark": "ark:/61903/3:1:33SQ-GRGT-F9L",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"South Dakota, State Census, 1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMH5-9TH : Mon Jan 20 19:39:34 UTC 2025), Entry for Spencer Spriggs, 1915.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Spencer Spriggs, \"South Dakota, State Census, 1915\"",
+        "when_created": "1915",
+        "when_accessed": "2026-11-17",
+        "where": "South Dakota, State Census, 1915",
+        "where_within": "ark:/61903/1:1:MMH5-9TH"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_018",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MMV9-NTH",
+      "image_ark": "ark:/61903/3:1:S3HT-6QZQ-GCW",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Social Security Death Index,\" , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:ZHZ2-DT2 : 10 January 2021), Reuben S Spriggs, 21 May 1998; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Reuben S Spriggs, \"United States, Social Security Death Index\"",
+        "when_created": "1998",
+        "when_accessed": "2026-11-17",
+        "where": "United States, Social Security Death Index",
+        "where_within": "ark:/61903/1:1:V3N4-V2P"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_019",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:ZHZ2-DT2",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KWW-PLZX : Tue Jul 07 02:13:34 UTC 2026), Entry for Reuben S Spriggs.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Reuben S Spriggs, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+        "when_created": "1998",
+        "when_accessed": "2026-11-17",
+        "where": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+        "where_within": "ark:/61903/1:1:6KWW-PLZX"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_020",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:HSKT-D89M",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q231-HPSQ : Sun Oct 04 17:33:31 UTC 2026), Entry for Reuben Spencer Spriggs.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Reuben Spencer Spriggs, \"Find a Grave Index\"",
+        "when_created": "1898",
+        "when_accessed": "2026-11-17",
+        "where": "Find a Grave Index",
+        "where_within": "ark:/61903/1:1:Q231-HPSQ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_026",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QL94-4CFN",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVLQ-8N94 : Sat Oct 03 23:56:46 UTC 2026), Entry for John William Spriggs.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for John William Spriggs, \"Find a Grave Index\"",
+        "when_created": "1934",
+        "when_accessed": "2026-11-17",
+        "where": "Find a Grave Index",
+        "where_within": "ark:/61903/1:1:QVLQ-8N94"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_027",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q23Z-89L4",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVPM-RRRJ : Sat Oct 03 06:16:57 UTC 2026), Entry for Charlotte Westby Spriggs, 1968.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Charlotte Westby Spriggs, \"Find a Grave Index\"",
+        "when_created": "1968",
+        "when_accessed": "2026-11-17",
+        "where": "Find a Grave Index",
+        "where_within": "ark:/61903/1:1:QVPM-RRRJ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_028",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q27W-R8FJ",
+      "gedcomx_source_description_id": "S7"
+    },
+    {
+      "id": "src_008",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S3-ZXXX : Sun Oct 04 00:03:50 UTC 2026), Entry for Nora Alvina Satter Spriggs.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Nora Alvina Satter Spriggs, \"Find a Grave Index\"",
+        "when_created": "1899",
+        "when_accessed": "2026-11-17",
+        "where": "Find a Grave Index",
+        "where_within": "ark:/61903/1:1:Q2S3-ZXXX"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_029",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QLM9-LYJ5",
+      "gedcomx_source_description_id": "S8"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "John W Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "John W",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "38",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Iowa",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Iowa",
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Bet 1871 and 1872",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Bet 1871 and 1872",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1910",
+      "place": "Prairie Belle, 12, Beadle, South Dakota, United States",
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Beadle, South Dakota, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Charlotte Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Charlotte",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "33",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "census",
+      "value": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1910",
+      "place": "Prairie Belle, 12, Beadle, South Dakota, United States",
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Beadle, South Dakota, United States"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Norway",
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Norway"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Bet 1876 and 1877",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Bet 1876 and 1877",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Rueben S Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Rueben S",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "11",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "North Dakota",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "North Dakota",
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "North Dakota, United States"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Bet 1898 and 1899",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Bet 1898 and 1899",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "census",
+      "value": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1910",
+      "place": "Prairie Belle, 12, Beadle, South Dakota, United States",
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Beadle, South Dakota, United States"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Lillian F Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Lillian F",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "age",
+      "value": "10",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Iowa",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Iowa",
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Bet 1899 and 1900",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Bet 1899 and 1900",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "census",
+      "value": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1910",
+      "place": "Prairie Belle, 12, Beadle, South Dakota, United States",
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Beadle, South Dakota, United States"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Leonard W Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Leonard W",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "age",
+      "value": "3",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "census",
+      "value": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1910",
+      "place": "Prairie Belle, 12, Beadle, South Dakota, United States",
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Beadle, South Dakota, United States"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "South Dakota",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "South Dakota",
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "South Dakota, United States"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Bet 1906 and 1907",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Bet 1906 and 1907",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "name",
+      "value": "Selvin Christianson",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Selvin",
+        "surname": "Christianson"
+      },
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "age",
+      "value": "26",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "Iowa",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Iowa",
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "Bet 1883 and 1884",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Bet 1883 and 1884",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "census",
+      "value": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1910",
+      "place": "Prairie Belle, 12, Beadle, South Dakota, United States",
+      "standard_place": "Beadle, South Dakota, United States",
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "boarder_1",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_570564312",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of John W Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "son of John W Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_570564309",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of John W Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_570564310",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "son of John W Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_570564311",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Iowa",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Iowa",
+      "record_persona_id": "p_570564307",
+      "informant_bias_notes": "the father's birthplace as stated on 3 household member line(s); no household respondent could have witnessed it",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:MPXD-MZC",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Norway",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Norway",
+      "record_persona_id": "p_570564308",
+      "informant_bias_notes": "the mother's birthplace as stated on 3 household member line(s); no household respondent could have witnessed it",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9JX9-6LD",
+      "standard_place": "Norway"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Spencer Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Spencer",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "16y",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "W",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "1915",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1915",
+      "place": "South Dakota, United States",
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH",
+      "standard_place": "South Dakota, United States"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "North Dakota",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "North Dakota",
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH",
+      "standard_place": "North Dakota, United States"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:MMH5-9TH",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1899",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_018",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1899",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_7129688",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MMV9-NTH"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:V3N4-V2P",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Reuben S Spriggs",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_019",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Reuben S",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_13208065823",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:ZHZ2-DT2"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:V3N4-V2P",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "21 May 1998",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_019",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "21 May 1998",
+      "place": "Orange, California",
+      "record_persona_id": "p_13208065823",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:ZHZ2-DT2",
+      "standard_place": "Orange, California, United States"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:V3N4-V2P",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "06 Nov 1898",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_019",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "06 Nov 1898",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13208065823",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:ZHZ2-DT2"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:6KWW-PLZX",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Reuben S Spriggs",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_020",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Reuben S",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_298312300214",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HSKT-D89M"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:6KWW-PLZX",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_020",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_298312300214",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HSKT-D89M"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:6KWW-PLZX",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "21 May 1998",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_020",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "21 May 1998",
+      "record_persona_id": "p_298312300214",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HSKT-D89M"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:6KWW-PLZX",
+      "record_role": "deceased",
+      "fact_type": "social_program_claim",
+      "value": "6 Apr 1966",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_020",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "6 Apr 1966",
+      "record_persona_id": "p_298312300214",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HSKT-D89M"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:6KWW-PLZX",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Dana Point, Orange, California, United States",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_020",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Dana Point, Orange, California, United States",
+      "record_persona_id": "p_298312300214",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HSKT-D89M",
+      "standard_place": "Dana Point, Orange, California, United States"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:6KWW-PLZX",
+      "record_role": "deceased",
+      "fact_type": "social_program_correspondence",
+      "value": "United States",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_020",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "United States",
+      "record_persona_id": "p_298312300214",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HSKT-D89M",
+      "standard_place": "United States"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:6KWW-PLZX",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "6 Nov 1898",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_020",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "6 Nov 1898",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_298312300214",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HSKT-D89M"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:Q231-HPSQ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Reuben Spencer Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Reuben Spencer",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_102156626764",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:QL94-4CFN"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:Q231-HPSQ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "06 Nov 1898",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "inferred",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "06 Nov 1898",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_102156626764",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:QL94-4CFN"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:Q231-HPSQ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "21 May 1998",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "21 May 1998",
+      "record_persona_id": "p_102156626764",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:QL94-4CFN"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:Q231-HPSQ",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Iroquois, Kingsbury, South Dakota, United States of America",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Iroquois, Kingsbury, South Dakota, United States of America",
+      "record_persona_id": "p_102156626764",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:QL94-4CFN",
+      "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:QVLQ-8N94",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "John William Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "John William",
+        "surname": "Spriggs"
+      },
+      "record_persona_id": "p_101115851437",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:Q23Z-89L4"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:QVLQ-8N94",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "27 Jul 1934",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "27 Jul 1934",
+      "record_persona_id": "p_101115851437",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:Q23Z-89L4"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:QVLQ-8N94",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "17 Mar 1872",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "inferred",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "17 Mar 1872",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_101115851437",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:Q23Z-89L4"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:QVLQ-8N94",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Iroquois, Kingsbury, South Dakota, United States of America",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Iroquois, Kingsbury, South Dakota, United States of America",
+      "record_persona_id": "p_101115851437",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_006",
+      "record_document_id": "ark:/61903/1:2:Q23Z-89L4",
+      "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:QVPM-RRRJ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Charlotte Westby Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Charlotte",
+        "surname": "Westby Spriggs"
+      },
+      "record_persona_id": "p_101161598267",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:Q27W-R8FJ"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:QVPM-RRRJ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "13 Jun 1876",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "inferred",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "13 Jun 1876",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_101161598267",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:Q27W-R8FJ"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:QVPM-RRRJ",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "1968",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1968",
+      "place": "Iroquois, Kingsbury, South Dakota, United States of America",
+      "record_persona_id": "p_101161598267",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:Q27W-R8FJ",
+      "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:QVPM-RRRJ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "17 January 1968",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "17 January 1968",
+      "record_persona_id": "p_101161598267",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_007",
+      "record_document_id": "ark:/61903/1:2:Q27W-R8FJ"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:Q2S3-ZXXX",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Nora Alvina Satter Spriggs",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_029",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Nora Alvina",
+        "surname": "Satter Spriggs"
+      },
+      "record_persona_id": "p_102111313034",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_008",
+      "record_document_id": "ark:/61903/1:2:QLM9-LYJ5"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:Q2S3-ZXXX",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "07 Nov 1899",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "inferred",
+      "log_entry_id": "log_029",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "07 Nov 1899",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_102111313034",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_008",
+      "record_document_id": "ark:/61903/1:2:QLM9-LYJ5"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:Q2S3-ZXXX",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Iroquois, Kingsbury, South Dakota, United States of America",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_029",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Iroquois, Kingsbury, South Dakota, United States of America",
+      "record_persona_id": "p_102111313034",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_008",
+      "record_document_id": "ark:/61903/1:2:QLM9-LYJ5",
+      "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:Q2S3-ZXXX",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "16 May 1959",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_029",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "16 May 1959",
+      "record_persona_id": "p_102111313034",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_008",
+      "record_document_id": "ark:/61903/1:2:QLM9-LYJ5"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_017",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.9306184,
+      "rationale": "Name/age/place correlation is strong (score 0.93): 'Rueben S Spriggs', b. ND Bet 1898-1899, in Beadle Co. SD 1910 matches Reuben Spencer Spriggs born 6 Nov 1898, Maddock, Benson, ND, with an existing (uncited) tree Residence fact at Belle Prairie Township, Beadle, SD, 1910. However, the tree records a namesake, ns_003 'Spencer Ruben Spriggs', b. 1928, Huron, Beadle, South Dakota -- the same county -- and the project holds no tie from this source to L64C-QQX's known spouse/parent/child or to any other already-tied record at this address. Per namesake-cap policy this link is capped at speculative despite the high score until independent corroboration (e.g. a document bridging this family to L64C-QQX's later life) is found.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_018",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_017: the same record entry (MPXD-MZC/p_570564309), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_019",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_017: the same record entry (MPXD-MZC/p_570564309), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_020",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_017: the same record entry (MPXD-MZC/p_570564309), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_021",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_017: the same record entry (MPXD-MZC/p_570564309), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_022",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_017: the same record entry (MPXD-MZC/p_570564309), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_023",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_017: the same record entry (MPXD-MZC/p_570564309), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_024",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_017: the same record entry (MPXD-MZC/p_570564309), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_055",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.5631169,
+      "rationale": "1915 SD state census head of household 'Spencer Spriggs', age 16 (b. ~1899, ND), single, in SD 1915 -- plausibly Reuben Spencer Spriggs by his middle name, consistent with birth date, birthplace ND, and an existing tree Residence fact in South Dakota. same_person score 0.56 (moderate) given the given-name variance. However the tree records namesakes (ns_001 Ruben Spriggs, ND 1900; ns_002 Reuben C Spriggs, ND/MN b.1865-67; ns_004 Reuben Spriggs, England b.1894) and this source has no tie to L64C-QQX's spouse/parent/child or any already-tied record. Per namesake-cap policy this link is capped at speculative pending corroboration.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_056",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_055: the same record entry (MMH5-9TH/p_7129688), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_057",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_055: the same record entry (MMH5-9TH/p_7129688), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_058",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_055: the same record entry (MMH5-9TH/p_7129688), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_059",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_055: the same record entry (MMH5-9TH/p_7129688), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_060",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_055: the same record entry (MMH5-9TH/p_7129688), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_061",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_055: the same record entry (MMH5-9TH/p_7129688), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_062",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Derived from the link on a_055: the same record entry (MMH5-9TH/p_7129688), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_050",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.9306184,
+      "rationale": "Relationship assertion 'son of John W Spriggs' bears on child_1 persona; same namesake cap as pe_001 applies. Capped speculative despite strong correlation (score 0.93).",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_050",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'son of John W Spriggs' also bears on John W Spriggs (head_of_household, I1) as the named parent -- household position consistent.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 census head_of_household persona; person minted directly from this record via materialize_facts as I1 (John W Spriggs). No independent corroboration yet beyond this household record.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_053",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_001: the same record entry (MPXD-MZC/p_570564307), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 census wife persona; person minted directly from this record via materialize_facts as I2 (Charlotte Spriggs). No independent corroboration yet beyond this household record.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 census child_2 persona; person minted directly from this record via materialize_facts as I3 (Lillian F Spriggs). No independent corroboration yet beyond this household record.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_033",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 census child_3 persona; person minted directly from this record via materialize_facts as I4 (Leonard W Spriggs). No independent corroboration yet beyond this household record.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_049",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'wife of John W Spriggs' bears on this persona (wife, I2) directly -- household position consistent.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_049",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'wife of John W Spriggs' also bears on John W Spriggs (head_of_household, I1) as the named spouse -- household position consistent.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_051",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'daughter of John W Spriggs' bears on this persona (child_2, I3) directly -- household position consistent.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_051",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'daughter of John W Spriggs' also bears on John W Spriggs (head_of_household, I1) as the named parent -- household position consistent.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_052",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'son of John W Spriggs' bears on this persona (child_3, I4) directly -- household position consistent.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_052",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'son of John W Spriggs' also bears on John W Spriggs (head_of_household, I1) as the named parent -- household position consistent.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_054",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_009: the same record entry (MPXD-MZC/p_570564308), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_025: the same record entry (MPXD-MZC/p_570564310), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_027",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_025: the same record entry (MPXD-MZC/p_570564310), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_028",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_025: the same record entry (MPXD-MZC/p_570564310), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_029",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_025: the same record entry (MPXD-MZC/p_570564310), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_030",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_025: the same record entry (MPXD-MZC/p_570564310), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_031",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_025: the same record entry (MPXD-MZC/p_570564310), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_032",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_025: the same record entry (MPXD-MZC/p_570564310), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_034",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_033: the same record entry (MPXD-MZC/p_570564311), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_035",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_033: the same record entry (MPXD-MZC/p_570564311), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_036",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_033: the same record entry (MPXD-MZC/p_570564311), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_037",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_033: the same record entry (MPXD-MZC/p_570564311), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_038",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_033: the same record entry (MPXD-MZC/p_570564311), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_039",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_033: the same record entry (MPXD-MZC/p_570564311), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_040",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Derived from the link on a_033: the same record entry (MPXD-MZC/p_570564311), which that link identified as this person.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_063",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.9716204,
+      "rationale": "SSDI entry 'Reuben S Spriggs', b. 6 Nov 1898, d. 21 May 1998 Orange CA matches the tree person's name/birth/death exactly (same_person score 0.97). The four recorded external namesakes (ns_001 b.1865 MN, ns_002 b.1865-67 MN, ns_003 b.1928 SD, ns_004 b.1894 England) are ruled out and pose no competing identity. However, L64C-QQX also has an in-tree namesake of the same given name (his son LFT9-PDR, 'Reuben Spencer Spriggs'), and nothing in src_003 independently ties this record to L64C-QQX rather than to that namesake. Capped at speculative per namesake-cap policy despite the very strong score and the absence of any plausible competing identity.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_064",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.9716204,
+      "rationale": "Same SSDI persona as a_063 (p_13208065823); death date 21 May 1998 matches the tree's attested death date exactly. Same namesake cap as a_063 applies (in-tree namesake LFT9-PDR, son of same name).",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_065",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.9716204,
+      "rationale": "Same SSDI persona as a_063; birth date 6 Nov 1898 matches the tree's attested birth date exactly. Same namesake cap as a_063 applies (in-tree namesake LFT9-PDR, son of same name).",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_066",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.7736747,
+      "rationale": "NUMIDENT entry 'Reuben S Spriggs', b. 6 Nov 1898, d. 21 May 1998, residence Dana Point, Orange, California matches the tree person's name/birth/death closely (same_person score 0.77). As with the SSDI (a_063-a_065), the four external namesakes are ruled out, but the in-tree namesake LFT9-PDR (L64C-QQX's son, same given name) means nothing in src_004 alone independently ties this record to the father rather than the son. Capped at speculative per namesake-cap policy.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_067",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.7736747,
+      "rationale": "Same NUMIDENT persona as a_066 (p_298312300214); sex Male is consistent. Same namesake cap applies.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_068",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.7736747,
+      "rationale": "Same NUMIDENT persona as a_066; death date 21 May 1998 matches the tree's attested death date exactly. Same namesake cap applies.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_069",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.7736747,
+      "rationale": "Same NUMIDENT persona as a_066; social program (SSN) claim date 6 Apr 1966 is a biographical detail consistent with this individual's lifespan. Same namesake cap applies.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_070",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.7736747,
+      "rationale": "Same NUMIDENT persona as a_066; residence Dana Point, Orange, California is consistent with the tree's attested death location in Orange County, California near end of life. Same namesake cap applies.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_071",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.7736747,
+      "rationale": "Same NUMIDENT persona as a_066; social program correspondence place United States is non-distinguishing. Same namesake cap applies.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_072",
+      "person_id": "L64C-QQX",
+      "confidence": "speculative",
+      "match_score": 0.7736747,
+      "rationale": "Same NUMIDENT persona as a_066; birth date 6 Nov 1898 matches the tree's attested birth date exactly. Same namesake cap applies.",
+      "created": "2026-11-17"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "North Dakota, United States",
+      "for_place": "Benson County, North Dakota",
+      "time_period": "1890-1930",
+      "jurisdictions": [
+        {
+          "name": "Benson, North Dakota, United States",
+          "date_range": "1883-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "3241319",
+          "title": "North Dakota and South Dakota Naturalization Records, 1851-1924",
+          "date_range": "1851-1924",
+          "person_count": 6835,
+          "record_count": 6198
+        },
+        {
+          "id": "1451475",
+          "title": "North Dakota, Cemetery Records, 1877-1999",
+          "date_range": "1877-1999",
+          "person_count": 594509,
+          "record_count": 546565
+        },
+        {
+          "id": "2346284",
+          "title": "North Dakota, Census, 1915",
+          "date_range": "1915-1915",
+          "person_count": 619486,
+          "record_count": 619486
+        },
+        {
+          "id": "2351024",
+          "title": "North Dakota, Census, 1925",
+          "date_range": "1925-1925",
+          "person_count": 678504,
+          "record_count": 678504
+        },
+        {
+          "id": "2550852",
+          "title": "North Dakota, County Marriages, 1872-2000",
+          "date_range": "1872-2000",
+          "person_count": 34974,
+          "record_count": 17428
+        },
+        {
+          "id": "2443935",
+          "title": "North Dakota, Manifests of Immigrant Arrivals, 1910-1952",
+          "date_range": "1910-1952",
+          "person_count": 19294,
+          "record_count": 19294
+        },
+        {
+          "id": "3241359",
+          "title": "North Dakota, Naturalization Records, 1868-1924",
+          "date_range": "1868-1924",
+          "person_count": 1887,
+          "record_count": 1883
+        },
+        {
+          "id": "3155904",
+          "title": "North Dakota, Red River Valley Genealogical Society, Pioneer Files, 1880-1953",
+          "date_range": "1880-1953",
+          "person_count": 10352,
+          "record_count": 5545
+        }
+      ],
+      "quirks": [
+        "County office birth/marriage/death begin ~1890s-1895 per the county wiki page, but statewide registration started 1907 (births/deaths) and 1925 (marriages), general compliance only by 1924 - a Nov 1898 birth predates reliable civil registration, so census, church, land, naturalization and later-life records carry the burden.",
+        "Federal census for 1890 did not survive; use the 1900, 1910, 1920, 1930 federal censuses plus state 1915 and 1925 censuses to track the family.",
+        "Benson County naturalization volumes (declarations/petitions, 1884-1954) are full-text searchable though not name-indexed - useful if the father was an immigrant homesteader.",
+        "Search neighboring counties (Eddy, Nelson, Pierce, Ramsey, Towner, Wells) for the family since townships and parishes/congregations did not always align with county lines."
+      ],
+      "guide_markdown": "# Locality Guide: Benson County, North Dakota (1890-1930)\n\n## Jurisdiction overview\n- Formed 9 March 1883 from DeSmet and Ramsey Counties. County seat: Minnewaukan.\n- Population: 1890: 2,460; 1900: 8,320; 1910: 12,681; 1920: 13,095; 1930: 13,327 (FamilySearch Wiki, Benson County Genealogy page).\n- Maddock (Reuben Spriggs's birthplace) is an incorporated city within the county; Esmond and Flora in the county had Norwegian-language Lutheran congregations per volume_search coverage.\n- Spirit Lake (Devils Lake/Fort Totten) Indian Reservation lies mostly within Benson County.\n\n## Boundary changes\nNo boundary changes affecting the 1890-1930 period; the county's boundaries were stable after 1883 organization.\n\n## Available record types\n\n### Vital records (civil registration)\n- County-level birth records from late 1890s, marriage from late 1800s, death from 1895, all at the Clerk of District Court (FamilySearch Wiki, Benson County Genealogy, https://www.familysearch.org/en/wiki/Benson_County,_North_Dakota_Genealogy).\n- Statewide registration began 1907 for births/deaths (general compliance by 1924) and 1925 for marriages (FamilySearch Wiki, North Dakota Vital Records, https://www.familysearch.org/en/wiki/North_Dakota_Vital_Records).\n- No FamilySearch birth/death collection indexed online for this county/period; the state has not supplied birth or death records to FamilySearch. Order certified copies from ND Health and Human Services, or search county office directly.\n- North Dakota, County Marriages 1872-2000 (FamilySearch collection 2550852) covers the period with index & images.\n- Pre-registration alternative: church baptism/burial records (see Church records below).\n\n### Church records\n- Lutheran congregations recorded in Esmond, Benson County (1830-1958, Norwegian/English, volume imageGroupNumber 100881428, 36% indexed, browse-heavy) and Flora, Benson County (1820-1997, imageGroupNumber 100881427, 34% indexed) per volume_search.\n- U.S. Evangelical Lutheran Church in America Records 1875-1940 at Ancestry (index & images, $).\n- Both congregation volumes are mostly browse-only images; records partly in Norwegian.\n\n### Census records\n- Federal census: 1890 did not survive nationwide; next available is 1900 (collection image group 004120517, 92% indexed). 1910, 1920, 1930 federal censuses also apply but were not directly queried here.\n- State/territorial census: 1915 (FamilySearch collection 2346284, also ND image group 007637091/007637092, 51-55% indexed) and 1925 (FamilySearch collection 2351024).\n- 1885 Dakota Territory census index available at NDSU Archives and FamilySearch Catalog (koha:655787, partial index to Benson County).\n\n### Probate and court records\n- Probate/court records held at county clerk's office from 1883 per the county wiki Record Dates table.\n- North Dakota and South Dakota Wills and Probate Records 1878-1928 at Ancestry (index & images, $). FamilySearch Full-Text Search also covers wills/probate, dates vary.\n- Determine testate/intestate status once an identified candidate father/mother is found, to target wills vs. administrations.\n\n### Land records\n- Public-domain rectangular survey land; homesteading was the primary means of acquiring county land (FamilySearch Wiki, North Dakota Land and Property).\n- BLM Land Patent Search (federal patents/homesteads, some images) and Benson County BLM Land Records Index at USGenWeb Archives.\n- U.S. Homestead Records 1863-1908 and U.S. General Land Office Records 1796-1907 at Ancestry ($).\n- Deeds/mortgages recorded by the county Register of Deeds from 1883.\n\n### Military records\n- WWI (1917-1918): North Dakota Military Men and WWI service rosters at Ancestry ($); Benson County WWI Casualties list at Genealogy Trails.\n- No Civil War-era county-specific need expected for this family's generation, but Dakota Territory Civil War Service Records (1861-1865) exist statewide if needed for an earlier generation.\n\n### Cemetery records\n- North Dakota, Cemetery Records 1877-1999 (FamilySearch collection 1451475, 594,509 persons) covers the county.\n- FindAGrave, BillionGraves, Interment.net and USGenWeb Tombstone Project all list Benson County cemeteries.\n\n### Newspaper records\n- Chronicling America has North Dakota newspapers 1777-1963 (free). GenealogyBank (1865-1931) and NewspaperArchive (1873-1994) are subscription options.\n- Maddock-specific items: Maddock High School Graduates 1917-1925 at Genealogy Trails; \"The First Fifty Years: a history of the community of Maddock, North Dakota, 1901-1951\" (FamilySearch Catalog koha:2205557, available online) may include family/biographical detail relevant to a family resident in Maddock circa 1898.\n\n### Immigration/emigration records\n- Benson County naturalization case files are extensive: Declarations of Intention 1884-1954, Final/Second Papers 1888-1955, Miscellaneous Naturalization Records 1903-1955 (FamilySearch Catalog koha:1009663, koha:998987, koha:1009683) - all full-text searchable online though 0% name-indexed (volume_search image groups 007785641-45).\n- North Dakota, Manifests of Immigrant Arrivals 1910-1952 (FamilySearch collection 2443935) and US Border Crossings from Canada 1894-1954 (FamilySearch collection 2185932) apply if the family emigrated via Canada, a common route into this part of North Dakota.\n\n### Tax records\n- County tax records at the county treasurer's/auditor's/clerk's office; some moved to the North Dakota State Archives (FamilySearch Wiki, Benson County Genealogy).\n\n### Other record types\n- School records: Maddock High School Graduates 1917-1925 at Genealogy Trails (too late for Reuben's own schooling circa 1904-1912, but could help locate contemporaries/witnesses).\n- Local histories: Knox area history (koha:185094); Oberon N.D. 1884-1990 (koha:1006119); Minnewaukan Illustrated (koha:2227724, online) - useful county-context biographical sources.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | County Marriages 1872-2000; Cemetery Records 1877-1999; Census 1915/1925; Naturalization Records 1868-1924; Manifests of Immigrant Arrivals 1910-1952 | No state birth/death records supplied to FamilySearch | Free |\n| Ancestry | North Dakota and South Dakota Wills and Probate Records 1878-1928; ND State Death Certificates 1908-2007; Territorial and State Censuses 1885/1915/1925 | Fills probate and post-1908 death gap | Subscription |\n| MyHeritage | North Dakota Marriages 1770-Onward; North Dakota Deaths 1893-Onward | Index-only alternative to Ancestry's certificates | Subscription |\n\n**Coverage of this survey:** volume_search returned 13 digitized volumes for Benson County 1890-1930 (census, naturalization, church, probate, court, etc.); all 13 were detailed above (totalResults equaled the page).\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Benson County Courthouse, Minnewaukan, ND | Birth records from late 1890s, marriage from late 1800s, divorce/probate/court from 1895, land records at Register of Deeds | In-person / mail; 701-473-5345 |\n| North Dakota State Archives, Bismarck | Microfilm of original Benson County naturalization records; some tax records | In-person / inter-library loan |\n| ND Health and Human Services, Bismarck | State birth/death certificates (restricted access) | Mail request, relative-only access |\n\n## Records NOT online\n- Birth and death certificates: FamilySearch has not acquired any ND birth or death records from the state; order from ND Health and Human Services or search county office.\n- Pre-1925 marriage license originals for Benson County are not confirmed among the state archive's online-indexed counties list (which names other counties); contact the county directly.\n\n## Known record losses\n- The 1890 federal census for North Dakota did not survive (FamilySearch Wiki, Benson County Genealogy, Census Records section) - a nationwide loss, not county-specific.\n- No known courthouse disaster/record loss is recorded for Benson County itself (FamilySearch Wiki, Record Loss section).\n\n## Research tips\n- Finding parents: ND death records (1923 onward) recorded the deceased's birth/parent info, but accuracy depends on the informant's memory and relationship (North Dakota Research Tips and Strategies, https://www.familysearch.org/en/wiki/North_Dakota_Research_Tips_and_Strategies).\n- Obituaries can name parents and family members - check Chronicling America and county-specific obituary indexes (same source).\n- Knowing the family's church denomination narrows which congregation's baptismal/burial records to search (same source).\n- Check every census year 1900-1930 for the family; relationship-to-head-of-household was recorded from 1880 onward (same source).\n- Because statewide birth registration only began in 1907, Reuben's 1898 birth in Maddock is unlikely to have a state-level birth certificate; prioritize church baptismal records, the 1900/1910/1915/1920/1925/1930 censuses, and his own later-life records (death certificate, obituary, marriage record, draft card) to work backward to his parents.\n- Search the adjoining counties (Eddy, Nelson, Pierce, Ramsey, Towner, Wells per the county wiki's Neighboring Counties table) since family records can appear across county lines.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Benson_County,_North_Dakota_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/North_Dakota_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/North_Dakota_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/North_Dakota_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "state",
+          "year": 1907,
+          "source_url": "https://www.familysearch.org/en/wiki/North_Dakota_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "state",
+          "year": 1907,
+          "source_url": "https://www.familysearch.org/en/wiki/North_Dakota_Vital_Records"
+        },
+        {
+          "event": "marriage",
+          "level": "state",
+          "year": 1925,
+          "source_url": "https://www.familysearch.org/en/wiki/North_Dakota_Vital_Records"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1890,
+        "end_year": 1930,
+        "total_volumes": 13,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Census",
+            "volumes": 4,
+            "browse_only": 0,
+            "fulltext_only": 1
+          },
+          {
+            "group": "Naturalization",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Probate",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 1
+          },
+          {
+            "group": "Religious",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-17"
+    }
+  ],
+  "namesakes": [
+    {
+      "id": "ns_001",
+      "person_id": "L64C-QQX",
+      "name": "Ruben Spriggs",
+      "place": "Grand Forks, Grand Forks, North Dakota, United States",
+      "time_period": "1900",
+      "record_ids": [
+        "ark:/61903/1:1:M9VJ-V1R"
+      ],
+      "log_entry_ids": [
+        "log_003"
+      ],
+      "notes": "Born Dec 1865 Minnesota, married 1893, head of a 1900 Grand Forks household. Birth year gap -33 against the subject's 6 Nov 1898 birth; a married head in 1900 cannot be a one-year-old. Not the subject.",
+      "created": "2026-11-17",
+      "record_persona_ids": {
+        "ark:/61903/1:1:M9VJ-V1R": "p_39356095"
+      },
+      "birth_year": 1865
+    },
+    {
+      "id": "ns_002",
+      "person_id": "L64C-QQX",
+      "name": "Reuben C Spriggs",
+      "place": "Grand Forks, North Dakota; Bridgewater, Rice, Minnesota",
+      "time_period": "born 1865-1867, Minnesota",
+      "record_ids": [
+        "ark:/61903/1:1:KM96-SQ1",
+        "ark:/61903/1:1:MLGT-5NL",
+        "ark:/61903/1:1:MQXR-SS1",
+        "ark:/61903/1:1:MKNR-Q8X",
+        "ark:/61903/1:1:MDHC-Y8K",
+        "ark:/61903/1:1:QVVL-DZJN"
+      ],
+      "log_entry_ids": [
+        "log_009"
+      ],
+      "notes": "Ground: birthYearConflict on each record (birth 1865-1867 in Minnesota against the subject's 6 Nov 1898 birth in North Dakota, a gap of 31 to 33 years; burial record QVVL-DZJN gives birth 5 Dec 1865 and death 24 Oct 1945). Not the subject. Surfaced in the death search top 50 under the given name Reuben.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "ns_003",
+      "person_id": "L64C-QQX",
+      "name": "Spencer Ruben Spriggs",
+      "place": "Huron, Beadle, South Dakota, United States",
+      "time_period": "born 1928",
+      "record_ids": [
+        "ark:/61903/1:1:QGXB-T313"
+      ],
+      "log_entry_ids": [
+        "log_015"
+      ],
+      "notes": "Ruled out on birth year: born 3 Oct 1928 per the WWII 1946 California card, gap +30 years from the subject's 6 Nov 1898 birth, and too young to be a 1917-1918 WWI registrant. Same surname and near-same name, Beadle County birthplace. Different person.",
+      "created": "2026-11-17",
+      "record_persona_ids": {
+        "ark:/61903/1:1:QGXB-T313": "p_103881585573"
+      },
+      "birth_year": 1928
+    },
+    {
+      "id": "ns_004",
+      "person_id": "L64C-QQX",
+      "name": "Reuben Spriggs",
+      "place": "Hatfield, Hertfordshire, England",
+      "time_period": "born 1894",
+      "record_ids": [
+        "ark:/61903/1:1:QVBG-BFLD",
+        "ark:/61903/1:1:QVBR-FBC2"
+      ],
+      "log_entry_ids": [
+        "log_015"
+      ],
+      "notes": "Ruled out on stated ground: born in Hatfield, England, with British WWI service records, not the subject's Maddock, Benson County ND birth on 6 Nov 1898. Birth year gap is 4 years, but the birthplace and national service record conflict. Different person.",
+      "created": "2026-11-17",
+      "record_persona_ids": {
+        "ark:/61903/1:1:QVBG-BFLD": "p_101300990142",
+        "ark:/61903/1:1:QVBR-FBC2": "p_101303080490"
+      },
+      "birth_year": 1894
+    }
+  ]
+}

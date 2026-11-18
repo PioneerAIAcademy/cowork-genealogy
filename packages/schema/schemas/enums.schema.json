@@ -334,9 +334,12 @@
       "description": "The jurisdiction level at which a locality's registration_start[] entry says civil registration of that event began (localities section); a place can have an early town series and a later statewide one.",
       "enum": [
         "town",
+        "municipality",
         "parish",
+        "district",
         "county",
         "state",
+        "province",
         "national"
       ]
     },

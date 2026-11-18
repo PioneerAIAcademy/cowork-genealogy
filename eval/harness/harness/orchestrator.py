@@ -766,6 +766,11 @@ async def _execute_single_run(
             # test_index_discrepancy_does_not_recommend_detaching
             # (issue #1606; unit-test-spec.md § 5.12 `index_error_source`).
             "index_error_source": spec.raw.get("index_error_source"),
+            # Also threaded in: `variant_names`, the name spellings a test
+            # declares to be variants the records state — ground truth for
+            # test_name_variant_not_called_index_error (issue #4584;
+            # unit-test-spec.md § 5.13 `variant_names`).
+            "variant_names": spec.raw.get("variant_names"),
             # Also threaded in: `execution`, so test_tool_allowlist can widen
             # by the same `run_skills` rule the session allowlist used. A
             # callee's calls land in this run's tool_calls log, and without
@@ -1308,6 +1313,18 @@ def _predicate_matched_count(tool_calls: list[dict[str, Any]]) -> int:
     return sum(1 for c in tool_calls if c["matched"]["kind"] in ("predicate", "live"))
 
 
+def unparsed_tool_input(call: dict[str, Any]) -> int | None:
+    """The size in bytes of a tool call's input when Claude Code could not parse it
+    as JSON, else None. Claude Code records such a call with its input replaced by
+    `{"__unparsedToolInput": {"raw": <first 2048 chars>, "len": <whole size>}}`."""
+    args = call.get("args")
+    marker = args.get("__unparsedToolInput") if isinstance(args, dict) else None
+    if marker is None:
+        return None
+    size = marker.get("len") if isinstance(marker, dict) else None
+    return size if isinstance(size, int) and not isinstance(size, bool) else 0
+
+
 def _build_warnings(
     tool_calls: list[dict[str, Any]],
     rubric=None,
@@ -1443,8 +1460,31 @@ def _build_warnings(
         (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
         for c in refused
     )
+    # A call whose input was not valid JSON never left Claude Code, so no
+    # fixture can cover it either, and the agent wrote the whole call again
+    # (#4588). Counted apart for the same reason as a refused call.
+    unparsed = [c for c in attempted if unparsed_tool_input(c) is not None]
+    if unparsed:
+        detail = Counter((c.get("tool") or "").split("__")[-1] for c in unparsed)
+        sizes = [unparsed_tool_input(c) for c in unparsed]
+        warnings.append({
+            "kind": "unparsed_tool_input",
+            "advisory": (
+                f"{len(unparsed)} MCP tool call(s) never ran: the agent wrote input "
+                "that is not valid JSON, so Claude Code refused each before the tool "
+                "saw it and the agent wrote the call again. This is the agent's "
+                "output to fix, NOT a missing fixture. "
+                + ", ".join(f"{tool} x{n}" for tool, n in sorted(detail.items()))
+                + f"; {sum(sizes)} bytes rewritten."
+            ),
+            "test_id": test_id,
+            "count": len(unparsed),
+            "bytes": sizes,
+        })
     uncovered_attempted = []
     for c in attempted:
+        if unparsed_tool_input(c) is not None:
+            continue
         key = (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
         if _refused_keys.get(key):
             _refused_keys[key] -= 1

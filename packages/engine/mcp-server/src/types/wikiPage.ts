@@ -66,7 +66,52 @@ export interface WikiPlacePageInput {
   offset?: number;
 }
 
+/** The record-type pages `wiki_place_page` lists for a place's country (`topicPages`) and
+ *  `wiki_read` offers when a regional one is missing: `{Country}_{suffix}` slugs.
+ *  docs/specs/wiki-page-tool-spec.md, "Country topic pages". */
+export const WIKI_TOPIC_SUFFIXES = [
+  "Church_Records",
+  "Naming_Customs",
+  "Vital_Records",
+  "Civil_Registration",
+  "Census",
+  "Probate_Records",
+  "Land_and_Property",
+  "Military_Records",
+] as const;
+
+export interface WikiTopicPage {
+  topic: string;
+  url: string;
+}
+
+/** A page the research-tips page links whose title says it is about searching the
+ *  place's indexed records. docs/specs/wiki-page-tool-spec.md, "Search help". */
+export interface WikiSearchHelp {
+  title: string;
+  url: string;
+  content: string;
+  truncated: boolean;
+}
+
+/** A collection page the read page links that carries the wiki's Legacy-collection notice.
+ *  docs/specs/wiki-page-tool-spec.md, "Collection notices". */
+export interface WikiCollectionNotice {
+  title: string;
+  url: string;
+  notice: string;
+}
+
+export interface WikiReadResult extends WikiPageResult {
+  /** First part only: linked collection pages that carry the Legacy-collection notice. */
+  collectionNotices?: WikiCollectionNotice[];
+}
+
 export interface WikiPlacePageResult extends WikiPageResult {
   standardPlace: string;
   placeName: string;
+  /** `home` section, first part only: the country's record-type pages that exist. */
+  topicPages?: WikiTopicPage[];
+  /** `research_tips` section, first part only, when the page links one. */
+  searchHelp?: WikiSearchHelp;
 }

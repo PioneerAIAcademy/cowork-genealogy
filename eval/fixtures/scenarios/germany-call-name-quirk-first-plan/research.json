@@ -1,0 +1,103 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Anna Margaretha Bauer, born 1792 in Württemberg, Germany",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-15",
+    "updated": "2026-11-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Anna Margaretha Bauer (b. 1792, Württemberg, Germany)?",
+      "rationale": "Primary research objective. No records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-15",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Germany",
+      "for_place": "Württemberg, Germany",
+      "time_period": "1780-1830",
+      "jurisdictions": [
+        {
+          "name": "Württemberg, Germany",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1473000",
+          "title": "Germany, Births and Baptisms, 1558-1898",
+          "date_range": "1558-1898"
+        },
+        {
+          "id": "1473009",
+          "title": "Germany Marriages, 1558-1929",
+          "date_range": "1558-1929"
+        }
+      ],
+      "quirks": [
+        "German children baptised with two or more given names were often called by the second in daily life (the wiki's example: Johann Christoph and Johann Friedrich were usually called Christoph and Friedrich) — search later records under the second given name alone as well as the full baptismal name. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Germany_Naming_Customs)"
+      ],
+      "guide_markdown": "## Württemberg, Germany - 1780-1830\n\nGerman children baptised with two or more given names were often called by the second in daily life (the wiki's example: Johann Christoph and Johann Friedrich were usually called Christoph and Friedrich) — search later records under the second given name alone as well as the full baptismal name. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Germany_Naming_Customs)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-11-15"
+    }
+  ]
+}

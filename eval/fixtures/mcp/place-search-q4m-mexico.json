@@ -1,0 +1,443 @@
+{
+  "tool": "place_search",
+  "description": "place_search for \"Mexico\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "Mexico"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Mexico",
+        "type": "Country",
+        "dateRange": "+1821/",
+        "latitude": 23,
+        "longitude": -102,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=218",
+        "wikipediaUrl": "https://es.wikipedia.org/wiki/M%C3%A9xico"
+      },
+      {
+        "standardPlace": "North America",
+        "type": "Continent",
+        "latitude": 42,
+        "longitude": -97,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=North%20America&focusedId=290",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/North_America"
+      },
+      {
+        "standardPlace": "State of Mexico, Mexico",
+        "type": "State",
+        "dateRange": "+1824/",
+        "latitude": 19.35417,
+        "longitude": -99.63083,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=State%20of%20Mexico&focusedId=2893",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/State_of_Mexico"
+      },
+      {
+        "standardPlace": "Mexico City, Mexico",
+        "type": "Major City",
+        "dateRange": "+1821/",
+        "latitude": 19.4307,
+        "longitude": -99.1374,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico%20City&focusedId=2898",
+        "wikipediaUrl": "https://es.wikipedia.org/wiki/Demarcaciones_territoriales_de_la_Ciudad_de_M%C3%A9xico"
+      },
+      {
+        "standardPlace": "Kingdom of Mexico, New Spain",
+        "type": "Colony",
+        "dateRange": "+1521/+1821",
+        "latitude": 28,
+        "longitude": -98,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kingdom%20of%20Mexico&focusedId=10704770",
+        "wikipediaUrl": "https://es.wikipedia.org/wiki/Regionalizaci%C3%B3n_de_la_Nueva_Espa%C3%B1a_y_divisi%C3%B3n_territorial_de_M%C3%A9xico"
+      },
+      {
+        "standardPlace": "Tenochtitlan",
+        "type": "Independent City",
+        "dateRange": "+1323/+1521",
+        "latitude": 19.4333,
+        "longitude": -99.1333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Tenochtitlan&focusedId=10729077",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Tenochtitlan"
+      },
+      {
+        "standardPlace": "Mexico, Queensland, Australia",
+        "type": "Hamlet",
+        "latitude": -23.7755,
+        "longitude": 145.9911,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=3447240",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Queensland"
+      },
+      {
+        "standardPlace": "Mexico, Queensland, Australia",
+        "type": "Farm",
+        "latitude": -23.8167,
+        "longitude": 146.2167,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=719903"
+      },
+      {
+        "standardPlace": "Mexico, Pampanga, Philippines",
+        "type": "Municipality",
+        "latitude": 15.11667,
+        "longitude": 120.68333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=437071",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Pampanga"
+      },
+      {
+        "standardPlace": "Mexico, Sakania, Haut-Katanga, Democratic Republic of the Congo",
+        "type": "Village",
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=12364701"
+      },
+      {
+        "standardPlace": "Mexico, Oxford, Maine, United States",
+        "type": "Town",
+        "dateRange": "+1820/",
+        "latitude": 44.5861,
+        "longitude": -70.5133,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=11695311",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Maine"
+      },
+      {
+        "standardPlace": "Mexico, Hunt, Texas, United States",
+        "type": "Town",
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=5966430"
+      },
+      {
+        "standardPlace": "Mexico, York, South Carolina, United States",
+        "type": "Neighborhood or suburb",
+        "latitude": 34.9378,
+        "longitude": -81.005,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4854503"
+      },
+      {
+        "standardPlace": "Mexico, Wyandot, Ohio, United States",
+        "type": "Village",
+        "latitude": 40.9866,
+        "longitude": -83.1903,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4821433",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Ohio"
+      },
+      {
+        "standardPlace": "Mexico, Oswego, New York, United States",
+        "type": "Town",
+        "dateRange": "+1816/",
+        "latitude": 43.4547,
+        "longitude": -76.2047,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4608313",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico%2C_New_York"
+      },
+      {
+        "standardPlace": "Mexico, Audrain, Missouri, United States",
+        "type": "City",
+        "dateRange": "+1836/",
+        "latitude": 39.1697,
+        "longitude": -91.8828,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4405864",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Missouri"
+      },
+      {
+        "standardPlace": "Mexico, Carroll, Maryland, United States",
+        "type": "Village",
+        "dateRange": "+1873/",
+        "latitude": 39.6008,
+        "longitude": -76.9447,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4280914",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Carroll_County,_Maryland"
+      },
+      {
+        "standardPlace": "Mexico, Crittenden, Kentucky, United States",
+        "type": "Village",
+        "dateRange": "+1880/",
+        "latitude": 37.225,
+        "longitude": -88.0967,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4121822",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Kentucky"
+      },
+      {
+        "standardPlace": "Mexico, Chikomba, Mashonaland East, Zimbabwe",
+        "type": "Farm",
+        "dateRange": "+1983/",
+        "latitude": -18.56667,
+        "longitude": 31,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=714486"
+      },
+      {
+        "standardPlace": "Mexico, Washington, District of Columbia, United States",
+        "type": "Town",
+        "latitude": 38.9,
+        "longitude": -77.05083,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=399946"
+      },
+      {
+        "standardPlace": "Mexico, Liberty Township, Montour, Pennsylvania, United States",
+        "type": "Hamlet",
+        "dateRange": "+1776/",
+        "latitude": 41.0211,
+        "longitude": -76.7486,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=8576966",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Montour_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Mexico, Walker Township, Juniata, Pennsylvania, United States",
+        "type": "Village",
+        "dateRange": "+1776/",
+        "latitude": 40.5375,
+        "longitude": -77.3536,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=8576522",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Juniata_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Mexico, Mexico, Oxford, Massachusetts, United States",
+        "type": "Town",
+        "latitude": 44.56083,
+        "longitude": -70.545829,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=8303924"
+      },
+      {
+        "standardPlace": "Mexico, Mexico, Oswego, New York, United States",
+        "type": "Village",
+        "latitude": 43.4594,
+        "longitude": -76.2292,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4665638"
+      },
+      {
+        "standardPlace": "Mexico, Jefferson Township, Miami, Indiana, United States",
+        "type": "Village",
+        "dateRange": "+1834/",
+        "latitude": 40.8222,
+        "longitude": -86.1156,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4113767",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Indiana"
+      },
+      {
+        "standardPlace": "Spain",
+        "type": "Country",
+        "latitude": 40.43,
+        "longitude": -4,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Spain&focusedId=134",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Spain"
+      },
+      {
+        "standardPlace": "México, Mexico City, Mexico",
+        "type": "Municipality",
+        "latitude": 19.4326,
+        "longitude": -99.1315,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=13619196"
+      },
+      {
+        "standardPlace": "México, Camagüey, Cuba",
+        "type": "Town",
+        "dateRange": "+1899/",
+        "latitude": 21.774727,
+        "longitude": -77.814001,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=1929300"
+      },
+      {
+        "standardPlace": "México, Yaguará, Huila, Colombia",
+        "type": "Town",
+        "latitude": 2.693135,
+        "longitude": -75.550269,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=7499472"
+      },
+      {
+        "standardPlace": "México, Nezahualcóyotl, State of Mexico, Mexico",
+        "type": "Town",
+        "latitude": 19.422321,
+        "longitude": -99.041607,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=6921367"
+      },
+      {
+        "standardPlace": "México, Hermosillo, Sonora, Mexico",
+        "type": "Estate",
+        "latitude": 28.6231,
+        "longitude": -111.6296,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=6436975"
+      },
+      {
+        "standardPlace": "México, San José, San José, Costa Rica",
+        "type": "Town",
+        "latitude": 9.95,
+        "longitude": -84.08333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=2250482"
+      },
+      {
+        "standardPlace": "México, El Callao, Bolívar, Venezuela",
+        "type": "Town",
+        "latitude": 7.18333,
+        "longitude": -61.83333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=2101262"
+      },
+      {
+        "standardPlace": "México, San Pedro de Macorís, San Pedro de Macorís, San Pedro de Macorís, Dominican Republic",
+        "type": "Neighborhood or suburb",
+        "latitude": 18.4656,
+        "longitude": -69.3046,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=13043284"
+      },
+      {
+        "standardPlace": "México, Pueblo Viejo, Pueblo Viejo, Azua de Compostela, Dominican Republic",
+        "type": "Neighborhood or suburb",
+        "latitude": 18.4006,
+        "longitude": -70.7637,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=12211805"
+      },
+      {
+        "standardPlace": "México, Delicias, Upala, Alajuela, Costa Rica",
+        "type": "Neighborhood or suburb",
+        "latitude": 11,
+        "longitude": -85.0667,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=1847751"
+      },
+      {
+        "standardPlace": "México, Rio Blanco, Limón, Limón, Costa Rica",
+        "type": "Town",
+        "latitude": 9.9833,
+        "longitude": -83.1333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=1847748"
+      },
+      {
+        "standardPlace": "Mexico, Charter, Midlands, Southern Rhodesia",
+        "type": "Farm",
+        "dateRange": "/+1980",
+        "latitude": -18.5667,
+        "longitude": 31,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=714484"
+      },
+      {
+        "standardPlace": "Mexico, Oxford, Massachusetts, United States",
+        "type": "Town",
+        "dateRange": "+1805/+1820",
+        "latitude": 44.586109,
+        "longitude": -70.513329,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4273274",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Maine"
+      },
+      {
+        "standardPlace": "Mexico, Cumberland, Massachusetts, United States",
+        "type": "Town",
+        "dateRange": "+1789/+1805",
+        "latitude": 44.5861,
+        "longitude": -70.5133,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico&focusedId=4273273",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico,_Maine"
+      },
+      {
+        "standardPlace": "Raheen Pen & Barnett, Saint Elizabeth, Jamaica",
+        "type": "Hamlet",
+        "latitude": 18.1813,
+        "longitude": -77.6648,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Raheen%20Pen%20%26%20Barnett&focusedId=1176891"
+      },
+      {
+        "standardPlace": "México, Puerto Principe, Cuba",
+        "type": "Town",
+        "dateRange": "/+1899",
+        "latitude": 21.774727,
+        "longitude": -77.814001,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico&focusedId=1929301"
+      },
+      {
+        "standardPlace": "Mexico City, New Spain",
+        "type": "City",
+        "dateRange": "+1521/+1821",
+        "latitude": 19.4333,
+        "longitude": -99.1333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mexico%20City&focusedId=10729076",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mexico_City"
+      },
+      {
+        "standardPlace": "San Pedro México, La Paz, Baja California Sur, Mexico",
+        "type": "Town",
+        "latitude": 23.970819,
+        "longitude": -109.895979,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=San%20Pedro%20M%C3%A9xico&focusedId=7495768"
+      },
+      {
+        "standardPlace": "México y los Lirios, Ocampo, Durango, Mexico",
+        "type": "Hamlet",
+        "latitude": 26.6827,
+        "longitude": -105.9253,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=M%C3%A9xico%20y%20los%20Lirios&focusedId=6906194"
+      },
+      {
+        "standardPlace": "Lázaro Cárdenas (El Mexe) (Colonia), Francisco I. Madero, Hidalgo, Mexico",
+        "type": "Village",
+        "latitude": 20.2249,
+        "longitude": -99.0951,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=L%C3%A1zaro%20C%C3%A1rdenas%20(El%20Mexe)%20(Colonia)&focusedId=6899977"
+      },
+      {
+        "standardPlace": "Colonia México, Janos, Chihuahua, Mexico",
+        "type": "Hamlet",
+        "latitude": 30.9989,
+        "longitude": -108.1518,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Colonia%20M%C3%A9xico&focusedId=6895484"
+      },
+      {
+        "standardPlace": "Colonia México (La Lagunita), Cusihuiriachi, Chihuahua, Mexico",
+        "type": "Hamlet",
+        "latitude": 28.3286,
+        "longitude": -106.832,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Colonia%20M%C3%A9xico%20(La%20Lagunita)&focusedId=6895413"
+      },
+      {
+        "standardPlace": "Ejido México, Mexicali, Baja California, Mexico",
+        "type": "Town",
+        "latitude": 32.5172,
+        "longitude": -114.9764,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ejido%20M%C3%A9xico&focusedId=6894212"
+      },
+      {
+        "standardPlace": "Colonia México, Janos, Chihuahua, Mexico",
+        "type": "Hamlet",
+        "latitude": 30.9988,
+        "longitude": -108.1518,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Colonia%20M%C3%A9xico&focusedId=6426876"
+      },
+      {
+        "standardPlace": "Colonia México (La Lagunita), Cusihuiriachi, Chihuahua, Mexico",
+        "type": "Hamlet",
+        "latitude": 28.3286,
+        "longitude": -106.8321,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Colonia%20M%C3%A9xico%20(La%20Lagunita)&focusedId=6426875"
+      },
+      {
+        "standardPlace": "Oakwood, Cecil, Maryland, United States",
+        "type": "Village",
+        "dateRange": "+1871/",
+        "latitude": 39.6989,
+        "longitude": -76.1803,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Oakwood&focusedId=4279411",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Oakwood,_Maryland"
+      },
+      {
+        "standardPlace": "Uhlerstown, Tinicum Township, Bucks, Pennsylvania, United States",
+        "type": "Hamlet",
+        "dateRange": "+1832/",
+        "latitude": 40.5253,
+        "longitude": -75.0736,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Uhlerstown&focusedId=8586635",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Uhlerstown,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Holmanstown Plantation, Oxford, Massachusetts, United States",
+        "type": "Hamlet",
+        "dateRange": "+1805/+1820",
+        "latitude": 44.5667,
+        "longitude": -70.55,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Holmanstown%20Plantation&focusedId=11695301"
+      },
+      {
+        "standardPlace": "Holmanstown Plantation, Cumberland, Massachusetts, United States",
+        "type": "Hamlet",
+        "dateRange": "+1803/+1805",
+        "latitude": 44.5667,
+        "longitude": -70.55,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Holmanstown%20Plantation&focusedId=8079351"
+      }
+    ],
+    "verdict": {
+      "standardPlace": "Mexico",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}
