@@ -1,0 +1,25 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mary",
+          "surname": "Dawson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "about 1772",
+          "place": "Lincolnshire, England"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

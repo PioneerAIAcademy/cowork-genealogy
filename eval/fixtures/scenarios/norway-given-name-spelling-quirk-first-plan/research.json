@@ -1,0 +1,104 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the husband of Unna Halsteinsdatter, born May 1745 in Hestdal, Meland, Hordaland, Norway, and the date of the marriage",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-15",
+    "updated": "2026-11-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did Unna Halsteinsdatter (b. May 1745, Hestdal, Meland, Hordaland, Norway) marry, and when?",
+      "rationale": "Primary research objective. No records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-15",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Norway",
+      "for_place": "Hamre prestegjeld, Hordaland, Norway",
+      "time_period": "1765-1800",
+      "jurisdictions": [
+        {
+          "name": "Hamre prestegjeld, Hordaland, Norway",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1468080",
+          "title": "Norway, Marriages, 1660-1926",
+          "date_range": "1660-1926"
+        },
+        {
+          "id": "1467014",
+          "title": "Norway Baptisms, 1634-1927",
+          "date_range": "1634-1927"
+        }
+      ],
+      "quirks": [
+        "Norwegian name spellings were set by the recorder and vary between records (the wiki's example: the given name Sivert written as Syver, Sjur, Siver, Sifuer or Siffuer) — search given-name spelling variants, not just the tree's spelling, before concluding a nil. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Church_Records)",
+        "Before about 1850 most Norwegians used patronymics: Halsteinsdatter means daughter of Halstein. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Naming_Customs)"
+      ],
+      "guide_markdown": "## Hamre prestegjeld, Hordaland, Norway - 1765-1800\n\nNorwegian name spellings were set by the recorder and vary between records (the wiki's example: the given name Sivert written as Syver, Sjur, Siver, Sifuer or Siffuer) — search given-name spelling variants, not just the tree's spelling, before concluding a nil. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Church_Records)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-11-15"
+    }
+  ]
+}

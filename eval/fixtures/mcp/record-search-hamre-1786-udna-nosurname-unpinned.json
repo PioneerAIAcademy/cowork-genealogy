@@ -1,0 +1,851 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Udna, no surname (recordCountry Norway), no collection, marriage 1770-1800, count 50. 36607 matches; the bride NW44-PMK is not among the 50 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-udna-nosurname-unpinned, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023. The predicate cannot require surname or collectionId to be absent, so it is listed after every pinned and surname-specific fixture.",
+  "args": {
+    "givenName": "Udna"
+  },
+  "response": {
+    "query": {
+      "givenName": "Udna",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50
+    },
+    "totalMatches": 36607,
+    "returned": 50,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NWWY-HX1",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "21 Jun 1795",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Torgersdr Wiche",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Thorris Gudmundsen Leervig",
+        "recordArk": "ark:/61903/1:2:MY32-JSC",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4Q-6B3",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Jul 1790",
+            "place": "Finnås Prestegard, Moster, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Rasmusdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hilgie Baarsen",
+        "recordArk": "ark:/61903/1:2:MY3L-BMG",
+        "batchNumber": "M42896-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWY-V3J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "3 Jul 1791",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Johanesdr Yttrebouge",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Torbiorn Omundsen Matre",
+        "recordArk": "ark:/61903/1:2:MY32-N7Q",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N75R-BH7",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Marriage",
+            "date": "6 Jan 1785",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Henrichsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Magnessen",
+        "recordArk": "ark:/61903/1:2:MYSJ-J29",
+        "batchNumber": "M42143-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4H-R23",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "4 Apr 1774",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Henrichsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Johannes Monsen",
+        "recordArk": "ark:/61903/1:2:MY3L-DZT",
+        "batchNumber": "M42143-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6H-PJ8",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "29 Nov 1789",
+            "place": "Lindås, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Aamund Gudmundsen",
+        "recordArk": "ark:/61903/1:2:MY3L-ML5",
+        "batchNumber": "M42031-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWY-ZBC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Jun 1774",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Christopher Eliasen",
+        "recordArk": "ark:/61903/1:2:MY32-N56",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4Q-NM7",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Jun 1775",
+            "place": "Finnås Prestegard, Moster, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Tosten Ericsen",
+        "recordArk": "ark:/61903/1:2:MY3L-Y2T",
+        "batchNumber": "M42896-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4Q-L3L",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "17 Feb 1788",
+            "place": "Finnås Prestegard, Finnås, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Olsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Peder Knutsen",
+        "recordArk": "ark:/61903/1:2:MY3L-TT6",
+        "batchNumber": "M42896-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6S-RZ9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "8 Jul 1787",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Pedersdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Paul Torgiersen",
+        "recordArk": "ark:/61903/1:2:MY32-FPJ",
+        "batchNumber": "M42918-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-864Y",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "20 Apr 1880",
+            "place": "Masfjorden, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Kolbeinsdatter",
+        "sex": "Female",
+        "birthDate": "1803",
+        "birthPlace": "Kvame, Sogn og Fjordane, Norway",
+        "deathDate": "April 0012",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-3XNB",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8T1F-WBZM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Haldorsdatter",
+        "sex": "Female",
+        "birthDate": "1784",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Knud Haldorsen",
+        "recordArk": "ark:/61903/1:2:4H6V-XNW2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8Y9N-JSMM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Manger, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Halstensdatter",
+        "sex": "Female",
+        "birthDate": "1745",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Ingebor Nielsdatter",
+        "recordArk": "ark:/61903/1:2:4HXX-9H6Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-WLM3",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "29 Feb 1856",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Andersdatter Sjeheim",
+        "deathDate": "25 February 1855",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-7TRX",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VW2V-VZL",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "13 Aug 1737",
+            "place": "Finnås Prestegard, Moster, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Kioffsson",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJCL-FRY",
+        "batchNumber": "C42896-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-KBVV",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "6 Jun 1848",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Johannesdatter Fleskje",
+        "deathDate": "May 0030",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-HCFS",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VW2V-LB7",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "27 Sep 1812",
+            "place": "Finnås Prestegard, Bømlo, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Carina Erichsen",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJCL-X1D",
+        "batchNumber": "C42896-5",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH3W-4Z6",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "10 Mar 1778",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "deathDate": "July 1779",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-VXR",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-GTHD",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "9 Jul 1876",
+            "place": "Bremnes, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Thomasdtr.",
+        "deathDate": "8 April 1875",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-HRDV",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-KM9V",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "14 Apr 1850",
+            "place": "Finnås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Thomasdatter",
+        "deathDate": "February 0014",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-6MBY",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8T1N-NP3Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Thomasdatter",
+        "sex": "Female",
+        "birthDate": "1790",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Brithe Thomasdatter",
+        "recordArk": "ark:/61903/1:2:4H6K-PVT2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68Q7-M6CG",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "11 Jan 1823",
+            "place": "Suldal, Rogaland, Norge"
+          }
+        ],
+        "personName": "Udna Pouelsdat",
+        "sex": "Female",
+        "birthDate": "1814",
+        "deathDate": "January 0004",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXL-MFR9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8YMN-YST2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Ølversdatter",
+        "sex": "Female",
+        "birthDate": "1719",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Britha Torkildsdatter",
+        "recordArk": "ark:/61903/1:2:4H6V-RCN2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-KFYH",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "17 Aug 1871",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Ivarsdatter Brekke",
+        "deathDate": "August 0013",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-4J3J",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8Y9J-D1PZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Våge, Finnås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Rasmusdatter",
+        "sex": "Female",
+        "birthDate": "1755",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Rasmus Helgiesen",
+        "recordArk": "ark:/61903/1:2:4H6V-B1PZ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687H-MB78",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "16 Aug 1834",
+            "place": "Skånevik Kyrkjegard, Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Johannesdatter Skumme",
+        "birthDate": "1791",
+        "deathDate": "8 August 1834",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFM-J58Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VW2V-2HV",
+        "personName": "Udna Johannessen",
+        "sex": "Female",
+        "birthDate": "24 November 1822",
+        "birthPlace": "Finnås Prestegard, Bømlo, Hordaland, Norway",
+        "deathDate": "20 April 1823",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJCL-FC9",
+        "batchNumber": "C42896-5",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:687H-Q4RY",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "25 Oct 1842",
+            "place": "Skånevik Kyrkje, Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Viersdatter Visekjær",
+        "birthDate": "1762",
+        "deathDate": "18 October 1842",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BFM-JP2R",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N4BN-V2N",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "18 Sep 1763",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-XR9",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8T1X-1M6Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Andersdatter",
+        "sex": "Female",
+        "birthDate": "1792",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Niels Nielsen",
+        "recordArk": "ark:/61903/1:2:4H63-YQW2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-V48S",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "8 Mar 1838",
+            "place": "Lindås, Lindås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Andersdr",
+        "birthDate": "1786",
+        "deathDate": "5 March 1838",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-4Z7N",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VW2V-VZK",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "4 Jan 1746",
+            "place": "Finnås Prestegard, Bømlo, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Rubbestad",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJCL-FRT",
+        "batchNumber": "C42896-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-LSMG",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "17 Apr 1852",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Thorsdatter Vige",
+        "deathDate": "April 0010",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-6Z38",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH3W-MZ8",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "28 Jan 1770",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-V9K",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHHG-BZJ",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "26 Apr 1772",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-FV9",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH37-GZG",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "28 Nov 1809",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-JJ8",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8YSM-VF2M",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Wiersdatter",
+        "sex": "Female",
+        "birthDate": "1761",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Anne Nielsdatter",
+        "recordArk": "ark:/61903/1:2:4HDR-4G6Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8YMD-VZT2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Skånevik, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Wiersdatter",
+        "sex": "Female",
+        "birthDate": "1772",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Udna Wiersdatter",
+        "recordArk": "ark:/61903/1:2:4HXF-ZP6Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH3W-M82",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "10 May 1771",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-VSZ",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-KKLN",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "20 Apr 1823",
+            "place": "Finnås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Olsdtr",
+        "deathDate": "3 March 1823",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-ZW5R",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8YM6-HXW2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Os, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Olsdatter",
+        "sex": "Female",
+        "birthDate": "1796",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Udna Olsdatter",
+        "recordArk": "ark:/61903/1:2:4HXN-MTPZ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8T1N-R53Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Haus, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Olsdatter",
+        "sex": "Female",
+        "birthDate": "1798",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Britha Monsdatter",
+        "recordArk": "ark:/61903/1:2:4H6W-H7MM",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8Y9F-7S6Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1801",
+            "place": "Finnås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Olesdatter",
+        "sex": "Female",
+        "birthDate": "1755",
+        "collectionId": "3733603",
+        "recordTitle": "Household of Ole Pedersen",
+        "recordArk": "ark:/61903/1:2:4H6V-GRN2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QH-LQ2X",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "25 Aug 1833",
+            "place": "Finnås, Hordaland, Norge"
+          }
+        ],
+        "personName": "Udna Olsdatter",
+        "birthDate": "1755",
+        "deathDate": "May 0028",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BXG-ZJZZ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QQ-TXDH",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "19 May 1846",
+            "place": "Skudenes, Rogaland, Norge"
+          }
+        ],
+        "personName": "Udna Olene Olsdatter",
+        "birthDate": "1844",
+        "deathDate": "May 0012",
+        "collectionId": "4237104",
+        "recordArk": "ark:/61903/1:2:4BX2-L1YN",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWL1-XWT",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "19 May 1846",
+            "place": "Rogaland, Norway"
+          }
+        ],
+        "personName": "Udna Olene Olsdatter",
+        "sex": "Female",
+        "birthDate": "1844",
+        "deathDate": "12 May 1846",
+        "deathPlace": "Rogaland, Norway",
+        "collectionId": "1468081",
+        "recordArk": "ark:/61903/1:2:MX9V-14T",
+        "batchNumber": "B42887-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWWT-GM4",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "6 Nov 1802",
+            "place": "Gjerstad, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJSC-5HZ",
+        "batchNumber": "C42900-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH3W-749",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "Oct 1776",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-VZ5",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NH37-K4W",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "29 Oct 1815",
+            "place": "Skånevik, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna",
+        "sex": "Female",
+        "deathDate": "11 November 1815",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJS8-J81",
+        "batchNumber": "C42918-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VW2V-VWP",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "19 Mar 1734",
+            "place": "Finnås Prestegard, Finnås, Hordaland, Norway"
+          }
+        ],
+        "personName": "Udna Meling",
+        "sex": "Female",
+        "collectionId": "1467014",
+        "recordArk": "ark:/61903/1:2:MJCL-FRP",
+        "batchNumber": "C42896-1",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1467014": "Norway, Baptisms, 1634-1927",
+      "1468080": "Norway, Marriages, 1660-1926",
+      "1468081": "Norway, Burials, 1666-1927",
+      "3733603": "Norway, Census, 1801",
+      "4237104": "Norway, Church Books, 1797-1958"
+    }
+  }
+}

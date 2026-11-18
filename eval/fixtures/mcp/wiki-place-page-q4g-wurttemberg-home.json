@@ -1,0 +1,44 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page home for \"Württemberg, Germany\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~rttemberg",
+    "section": "home"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Württemberg,_Germany_Genealogy",
+    "content": "# W%C3%BCrttemberg, Germany Genealogy\n\n\n\n[Germany](https://www.familysearch.org/en/wiki/Germany_Genealogy \"Germany Genealogy\")\n\nWürttemberg, Germany Genealogy\n\n## The German Empire 1871, Meyer's Gazetteer, and FamilySearch Records\n\nGermany was first unified as a nation. An important gazetteer, [***Meyers Orts- und Verkehrs-lexikon des deutschen Reichs***](http://www.meyersgaz.org)**, \"Meyer's Gazetter\" for short**, details the place names of villages, towns. counties (kreise), and higher jurisdictions used at that time. As FamilySearch began microfilming the records of Germany, those records were organized in the Card Catalog using those place names. That system is still in use today in the FamilySearch Catalog and FamilySearch Historical Records.\n\nAt the end of both World Wars, the boundaries of the states were changed dramatically, as areas of Germany were distributed among the Allied nations. Eventually, after re-unification in 1990, the states of Germany settled into what they are today. It is also necessary to understand Germany by this system, as it affects the locations of archives and mailing addresses used in correspondence searches.\n\n**This table will help you coordinate information from the two geographic systems, enabling you to find your desired records within each system.**\n\n|  |  |  |  |\n| --- | --- | --- | --- |\n| **1871 Region** | **Geo-Political Differences Today** | **FamilySearch Catalog** **(organized by 1871 Meyer's Gazetteer)** | **Wiki Page** |\n| [Württemberg](https://en.wikipedia.org/wiki/W%C3%BCrttemberg) | 1951: Merged with Baden and Hohenzollern to become the current state of [Baden-Württemberg](https://en.wikipedia.org/wiki/Baden-W%C3%BCrttemberg#20th_century_to_present) ([Map](https://www.familysearch.org/en/wiki/Germany_Historic_and_Current_States#Baden-W%C3%BCrttemberg \"Germany Historic and Current States\")) | [Württemberg](https://www.familysearch.org/search/catalog/results?count=20&placeId=1991625&query=%2Bplace%3A%22Germany%2C%20W%C3%BCrttemberg%22) | [Baden-Württemberg, Germany Genealogy](https://www.familysearch.org/en/wiki/Baden-W%C3%BCrttemberg,_Germany_Genealogy \"Baden-Württemberg, Germany Genealogy\") |\n\n",
+    "standardPlace": "Württemberg, Germany",
+    "placeName": "Württemberg, Germany",
+    "topicPages": [
+      {
+        "topic": "Church Records",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Church_Records"
+      },
+      {
+        "topic": "Naming Customs",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Naming_Customs"
+      },
+      {
+        "topic": "Civil Registration",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Civil_Registration"
+      },
+      {
+        "topic": "Census",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Census"
+      },
+      {
+        "topic": "Probate Records",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Probate_Records"
+      },
+      {
+        "topic": "Land and Property",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Land_and_Property"
+      },
+      {
+        "topic": "Military Records",
+        "url": "https://www.familysearch.org/en/wiki/Germany_Military_Records"
+      }
+    ]
+  }
+}
