@@ -1062,7 +1062,8 @@ export const researchQuerySchema = {
     "matches remain beyond the returned page — set `offset` to `nextOffset` and call " +
     "again until `truncated` is false. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document, with two omissions. An item of a plan " +
+    "projection, not a persisted document, with two omissions, and `assertions` " +
+    "come back grouped by persona (below). An item of a plan " +
     "that is not active (superseded or completed) carries no `rationale`, except " +
     "a skipped item with no `skip_category`, whose `rationale` holds its skip " +
     "reason for research-exhaustiveness; every item of the active plan keeps its " +
