@@ -36,6 +36,14 @@ describe("claim-join: Decision 31's one join", () => {
     expect(claimCoversFact(a, ["I1"], { type: "Birth", standard_date: "1880" })).toBe(false);
   });
 
+  it("a claim copied from a fact's written date or place covers it beside a different standard form", () => {
+    expect(claimCoversFact(fact("I1", "Birth", { date: "about 1882" }), ["I1"], { type: "Birth", date: "about 1882", standard_date: "1882" })).toBe(true);
+    expect(claimCoversFact(fact("I1", "Birth", { date: "1882" }), ["I1"], { type: "Birth", date: "about 1882", standard_date: "1882" })).toBe(true);
+    const tree = { type: "Birth", place: "Berks County, Pennsylvania", standard_place: "Berks, Pennsylvania, United States" };
+    expect(claimCoversFact(fact("I1", "Birth", { place: "Berks County, Pennsylvania" }), ["I1"], tree)).toBe(true);
+    expect(claimCoversFact(fact("I1", "Birth", { place: "Lancaster, Pennsylvania" }), ["I1"], tree)).toBe(false);
+  });
+
   it("an ISO and a written form of one date are the same", () => {
     expect(sameClaimObject(fact("I1", "Death", { date: "1913-01-14" }), fact("I1", "Death", { date: "14 January 1913" }))).toBe(true);
     expect(claimCoversFact(fact("I1", "Death", { date: "+1913-01-14" }), ["I1"], { type: "Death", date: "14 Jan 1913" })).toBe(true);

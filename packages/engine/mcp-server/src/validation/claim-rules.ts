@@ -215,6 +215,42 @@ export function claimGrounding(claim: any, research: any, summaries: readonly an
   return groundingShortfall(claim, new Evidence(research, summaries));
 }
 
+/** The persons rule 7 finds the claim does not reach: each named person no cited
+ *  assertion links, or, for a fact whose value persona is tied to no subject, that
+ *  subject. Empty when the claim is grounded. The status lookup names them. */
+export function claimUngroundedPersons(claim: any, research: any, summaries: readonly any[] = []): string[] {
+  const ev = new Evidence(research, summaries);
+  if (groundingShortfall(claim, ev) === null) return [];
+  const cited = citedIds(claim).filter((id) => ev.assertions.has(id));
+  const linked = ev.linkedFrom(cited);
+  const unlinked = (isDenied(claim) ? denialAnchors(claim) : namedPersons(claim)).filter((p) => !linked.has(p));
+  return unlinked.length > 0 ? unlinked : namedPersons(claim);
+}
+
+/** Rule 12 (Decision 30): the persons a `proved` claim names that are neither
+ *  linked at confident from an assertion it cites nor covered by a proved
+ *  identity claim whose own confident persona it cites. Empty when it holds. */
+function provedWeakPersons(claim: any, ev: Evidence, allClaims: readonly any[]): string[] {
+  const cited = citedIds(claim);
+  const confident = ev.linkedFrom(cited, true);
+  const coveredByIdentity = new Set<string>();
+  for (const other of allClaims) {
+    const idn = other?.identity;
+    if (other?.proof_tier !== "proved" || isDenied(other) || typeof idn?.person !== "string") continue;
+    const idCited = citedIds(other).filter((id) => ev.linkedFrom([id], true).has(idn.person));
+    const persona = new Set(idCited.map((id) => ev.persona(id)));
+    if (cited.some((id) => persona.has(ev.persona(id)))) coveredByIdentity.add(idn.person);
+  }
+  return namedPersons(claim).filter((p) => !confident.has(p) && !coveredByIdentity.has(p));
+}
+
+/** Rule 12 for the status lookup: a `proved` claim that would stand at probable. */
+export function claimProvedCapped(claim: any, research: any, summaries: readonly any[] = []): boolean {
+  if (claim?.proof_tier !== "proved") return false;
+  const all = summaries.flatMap((s: any) => (Array.isArray(s?.claims) ? s.claims : []));
+  return provedWeakPersons(claim, new Evidence(research, summaries), all).length > 0;
+}
+
 /** Rule 7's verdict on one claim: null when grounded, else why it would stand at possible. */
 function groundingShortfall(claim: any, ev: Evidence): string | null {
   const kind = claimKind(claim);
@@ -326,16 +362,7 @@ export function claimRuleFindings(summary: any, ctx: ClaimRuleContext): Map<Clai
 
     // Rule 12: proved needs confident identity.
     if (c.proof_tier === "proved" && treeObject) {
-      const confident = ev.linkedFrom(cited, true);
-      const coveredByIdentity = new Set<string>();
-      for (const { c: other } of allClaims) {
-        const idn = other.identity;
-        if (other.proof_tier !== "proved" || isDenied(other) || typeof idn?.person !== "string") continue;
-        const idCited = citedIds(other).filter((id) => ev.linkedFrom([id], true).has(idn.person));
-        const persona = new Set(idCited.map((id) => ev.persona(id)));
-        if (cited.some((id) => persona.has(ev.persona(id)))) coveredByIdentity.add(idn.person);
-      }
-      const weak = namedPersons(c).filter((p) => !confident.has(p) && !coveredByIdentity.has(p));
+      const weak = provedWeakPersons(c, ev, allClaims.map(({ c: o }) => o));
       if (weak.length > 0) {
         push(
           "claims-proved-identity",

@@ -1,17 +1,9 @@
 {
-  "run_log": "v14_2026-11-11_15-39-52.json",
-  "annotator": "edmondoware70@gmail.com",
+  "run_log": "v5.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_030",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,71 +19,79 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "test_id": "ut_tree_edit_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Data preservation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Edit minimality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Merge correctness",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_032",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Evidence grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_032",
+      "test_id": "ut_tree_edit_013",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Evidence grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Merge correctness",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_032",
+      "test_id": "ut_tree_edit_013",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Edit minimality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_032",
+      "test_id": "ut_tree_edit_013",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Data preservation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_032",
+      "test_id": "ut_tree_edit_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -99,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_032",
+      "test_id": "ut_tree_edit_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_032",
+      "test_id": "ut_tree_edit_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -115,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_031",
+      "test_id": "ut_tree_edit_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -123,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_031",
+      "test_id": "ut_tree_edit_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -131,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_031",
+      "test_id": "ut_tree_edit_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -139,71 +139,71 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_031",
+      "test_id": "ut_tree_edit_014",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_031",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_031",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_031",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Data preservation",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_028",
+      "test_id": "ut_tree_edit_014",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Edit minimality",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Merge correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_028",
+      "test_id": "ut_tree_edit_015",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Evidence grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_028",
+      "test_id": "ut_tree_edit_015",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Merge correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_028",
+      "test_id": "ut_tree_edit_015",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Edit minimality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_028",
+      "test_id": "ut_tree_edit_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Data preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_015",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -211,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_028",
+      "test_id": "ut_tree_edit_015",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -219,7 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_028",
+      "test_id": "ut_tree_edit_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -227,7 +227,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_ugo",
+      "test_id": "ut_tree_edit_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -235,7 +235,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_ugo",
+      "test_id": "ut_tree_edit_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -243,7 +243,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_ugo",
+      "test_id": "ut_tree_edit_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -251,33 +251,33 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_ugo",
+      "test_id": "ut_tree_edit_007",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Data preservation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_ugo",
+      "test_id": "ut_tree_edit_007",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Edit minimality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_ugo",
+      "test_id": "ut_tree_edit_007",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Merge correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_ugo",
+      "test_id": "ut_tree_edit_007",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Evidence grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

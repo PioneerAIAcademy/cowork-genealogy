@@ -2228,7 +2228,18 @@ async def _run_agent(
             # `section.field` and an `out_of_lane` one names a section the map
             # deliberately does not hold, so an unconditional lookup raises on
             # the three arms this was widened to serve.
-            if rule == "routed":
+            if rule == "routed" and owned == "sources":
+                # citation refines a source and never creates one, so a main
+                # thread composing one is sent to extraction, as the hook's
+                # SOURCES_REASON says, not told to delegate to citation.
+                text = (
+                    f"`{bare}` denied on `sources` — a new record goes through "
+                    "`extraction_append` (record-structurer for a non-FamilySearch "
+                    "source), and a citation refinement to the citation agent. "
+                    "Everything else in "
+                    f"`{bare}` is unaffected."
+                )
+            elif rule == "routed":
                 text = (
                     f"`{bare}` denied on `{owned}` — that section is routed to the "
                     f"{OWNED_SECTION_OWNERS[owned]} agent. Everything else in "

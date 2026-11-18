@@ -913,3 +913,54 @@ describe("introducedWarnings — hasPlaceStandardOtherCountry is gate-exempt (is
     ).toBe(true);
   });
 });
+
+describe("competingParentage skips set-aside parents (Decision 26)", () => {
+  const person = (id: string, gender: string) => ({ id, gender, names: [{ id: `${id}-n`, given: id, surname: "Flynn" }], facts: [] });
+  const pc = (id: string, parent: string) => ({ id, type: "ParentChild", parent, child: "I1", sources: [{ ref: "S1" }] });
+  const persons = [person("I1", "Male"), person("I2", "Male"), person("I3", "Male")];
+  const before = { persons, relationships: [pc("R1", "I2")], sources: [{ id: "S1", title: "x" }] } as unknown as SimplifiedGedcomX;
+  const after = { ...before, relationships: [pc("R1", "I2"), pc("R2", "I3")] } as unknown as SimplifiedGedcomX;
+  const claims = {
+  proof_summaries: [
+    {
+      id: "ps_001",
+      question_id: "q_001",
+      tier: "probable",
+      claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+        { claim: "not Thomas", proof_tier: "possible", polarity: "denied", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+      ],
+    },
+  ],
+};
+
+  it("finds the competition with no summary, and none when the import reads set aside", () => {
+    expect(competingParentage(before, after, {})).toHaveLength(1);
+    expect(competingParentage(before, after, claims)).toEqual([]);
+  });
+
+  it("on a merge, the before side skips the set-aside father under his collapsed id, so a new rival is not hidden", () => {
+    // Before: I8 (a duplicate of child I1) has fathers I3 and I9 (a duplicate of set-aside I2).
+    // After: I8 -> I1 and I9 -> I2 collapsed, and an unclaimed father I5 is added.
+    // The before side must skip I9 under the child's collapsed id, or its count hides I5.
+    const pcOf = (id: string, parent: string, child: string) => ({ id, type: "ParentChild", parent, child, sources: [{ ref: "S1" }] });
+    const all = [...persons, person("I5", "Male"), person("I8", "Male"), person("I9", "Male")];
+    const mergeBefore = { persons: all, relationships: [pcOf("R3", "I3", "I8"), pcOf("R9", "I9", "I8")], sources: before.sources } as unknown as SimplifiedGedcomX;
+    const mergeAfter = {
+      persons: [...persons, person("I5", "Male")],
+      relationships: [pcOf("R1", "I2", "I1"), pcOf("R2", "I3", "I1"), pcOf("R5", "I5", "I1")],
+      sources: before.sources,
+    } as unknown as SimplifiedGedcomX;
+    const collapse = new Map([["I8", "I1"], ["I9", "I2"]]);
+    const introduced = introducedWarnings(mergeBefore, mergeAfter, ["I1", "I2", "I5"], undefined, collapse, true, true, claims)
+      .allIntroduced.map((w) => [w.issueType, w.personId]);
+    expect(introduced).toContainEqual(["tooManyFathers2", "I1"]);
+  });
+
+  it("introducedWarnings skips the count on both sides when given research", () => {
+    const ids = (r?: unknown) =>
+      introducedWarnings(before, after, ["I1", "I3"], undefined, undefined, true, true, r).allIntroduced.map((w) => w.issueType);
+    expect(ids()).toContain("tooManyFathers2");
+    expect(ids(claims)).not.toContain("tooManyFathers2");
+  });
+});

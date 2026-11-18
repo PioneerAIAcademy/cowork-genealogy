@@ -6131,3 +6131,42 @@ describe("hasInterleavedChildrenIgnoreSimilarSpouses", () => {
     expect(hits([H, Aw, Bw, A1, A2, X], rels)).toHaveLength(1);
   });
 });
+
+describe("set-aside parents are not counted (Decision 26)", () => {
+  const tree = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "Patrick", surname: "Flynn" }] },
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] },
+      { id: "I3", gender: "Male", names: [{ id: "N3", given: "John", surname: "Flynn" }] },
+    ],
+    relationships: [
+      { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      { id: "R2", type: "ParentChild", parent: "I3", child: "I1" },
+    ],
+  } as any;
+  const tags = (mob: Mob) => calculateWarnings(mob, mob, mob, true).map((w) => w.issueType);
+
+  it("a second father that reads set aside raises no tooManyFathers2", () => {
+    expect(tags(new Mob(tree, "I1"))).toContain("tooManyFathers2");
+    expect(tags(new Mob(tree, "I1", { setAsideParentIds: ["I2"] }))).not.toContain("tooManyFathers2");
+  });
+
+  it("skips a set-aside mother, and a set-aside parent in the three-parent count", () => {
+    const withMothers = {
+      persons: [...tree.persons.slice(0, 1),
+        { id: "I4", gender: "Female", names: [{ id: "N4", given: "Mary", surname: "Flynn" }] },
+        { id: "I5", gender: "Female", names: [{ id: "N5", given: "Ann", surname: "Flynn" }] }],
+      relationships: [{ id: "R3", type: "ParentChild", parent: "I4", child: "I1" },
+        { id: "R4", type: "ParentChild", parent: "I5", child: "I1" }],
+    } as any;
+    expect(tags(new Mob(withMothers, "I1"))).toContain("tooManyMothers2");
+    expect(tags(new Mob(withMothers, "I1", { setAsideParentIds: ["I5"] }))).not.toContain("tooManyMothers2");
+
+    const threeParents = {
+      persons: [...tree.persons, { id: "I6", names: [{ id: "N6", given: "Pat", surname: "Flynn" }] }],
+      relationships: [...tree.relationships, { id: "R5", type: "ParentChild", parent: "I6", child: "I1" }],
+    } as any;
+    expect(tags(new Mob(threeParents, "I1"))).toContain("tooManyParents3");
+    expect(tags(new Mob(threeParents, "I1", { setAsideParentIds: ["I2"] }))).not.toContain("tooManyParents3");
+  });
+});
