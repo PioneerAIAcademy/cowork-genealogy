@@ -1915,3 +1915,38 @@ def test_names_works_only_from_tool_results(text_response, tool_calls, test):
         "Name a source, collection, book or citation only if a tool result returned it, "
         "or say it is unconfirmed."
     )
+
+
+# ---------------------------------------------------------------------------
+# `claims-no-hypothesis-write` tag
+# ---------------------------------------------------------------------------
+
+_HYPOTHESIS_WRITTEN_RE = re.compile(
+    r"formal tracking entry"
+    r"|\b(?:it|this|that|the (?:sibling )?(?:hypothesis|relationship|inference))"
+    r" (?:is|has been|was) now (?:registered|recorded|tracked|written)\b"
+    r"|\bis now (?:registered|recorded|tracked) as an? (?:working )?hypothesis\b"
+    r"|(?<!\bno )(?<!\bonce the )(?<!\buntil the )(?<!\bbefore the )(?<!\bafter the )"
+    r"\bhypothesis (?:has been|is now|was) (?:registered|recorded|written|created)\b",
+    re.IGNORECASE,
+)
+
+
+def test_reply_does_not_claim_hypothesis_written(text_response, test):
+    """Tag-gated (``claims-no-hypothesis-write``), issue #4432: the router only hands
+    the inference to hypothesis-tracking, so a reply that says the hypothesis now
+    exists overclaims. The judge passed ``v49.json`` run 4's "now has a formal
+    tracking entry" under a judge_context that names that very phrase.
+
+    A hand-off described by its purpose ("handed off to register it as a
+    hypothesis"), a negation ("no hypothesis has been registered") and a condition
+    ("once the hypothesis is registered") all pass. Proven both ways in
+    ``tests/unit/test_research_hypothesis_written_validator.py``.
+    """
+    if "claims-no-hypothesis-write" not in test.get("tags", []):
+        pytest.skip("not a claims-no-hypothesis-write test")
+    m = _HYPOTHESIS_WRITTEN_RE.search(text_response or "")
+    assert m is None, (
+        f"the reply claims the hypothesis now exists: {m.group(0)!r}. The router only "
+        "handed it to hypothesis-tracking; describe the hand-off by its purpose."
+    )
