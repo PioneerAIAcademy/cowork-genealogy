@@ -41,6 +41,7 @@ import { wikiPlacePageSchema } from "./tools/wiki-place-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
+import { imageIndexSchema } from "./tools/image-index.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
 import { personQualityToolSchema } from "./tools/person-quality.js";
 import { mergeWarningsSchema } from "./tools/merge-warnings.js";
@@ -91,6 +92,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "external_links_search",
   "fulltext_search",
   "get_name_variants",
+  "image_index",
   "image_read",
   "image_search",
   "image_transcribe",
@@ -160,6 +162,7 @@ export const allToolSchemas = [
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
   imageSearchSchema,
+  imageIndexSchema,
   personWarningsToolSchema,
   personQualityToolSchema,
   mergeWarningsSchema,

@@ -73,6 +73,8 @@ import { sourceAttachmentsTool } from "./tools/source-attachments.js";
 import type { SourceAttachmentsInput } from "./types/source-attachments.js";
 import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
+import { imageIndexTool } from "./tools/image-index.js";
+import type { ImageIndexInput } from "./types/image-index.js";
 import { personWarningsTool } from "./tools/person-warnings.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
 import { personQualityTool } from "./tools/person-quality.js";
@@ -669,6 +671,16 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as ImageSearchInput;
         const result = await imageSearchTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "image_index") {
+      try {
+        const args = request.params.arguments as unknown as ImageIndexInput;
+        const result = await imageIndexTool(args, principal);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

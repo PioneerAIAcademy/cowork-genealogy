@@ -1,9 +1,33 @@
 {
-  "run_log": "v7_2026-11-09_11-48-39.json",
-  "annotator": "okeziepascal2@gmail.com",
+  "run_log": "v9_2026-11-16_22-04-30.json",
+  "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_question_selection_d01",
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,79 +35,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_d01",
+      "test_id": "ut_question_selection_c7f",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_c7f",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_c7f",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_c7f",
       "dimension_source": "rubric",
       "dimension_name": "Question specificity",
       "llm_score": null,
       "corrected_score": null,
-      "comment": null
+      "comment": "The assessment correctly applies the rubric. No research question was proposed, and the per-test context explicitly requires that outcome, so question specificity/answerability is not applicable."
     },
     {
-      "test_id": "ut_question_selection_d01",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_d01",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_c7f",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_c7f",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_c7f",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_c7f",
+      "test_id": "ut_question_selection_013",
       "dimension_source": "rubric",
       "dimension_name": "Question specificity",
       "llm_score": null,
       "corrected_score": null,
-      "comment": null
+      "comment": "The assessment correctly applies the rubric. No new question was proposed, and the per-test context explicitly requires selecting none because q_001 already covers the objective. Therefore, question specificity is not applicable."
     },
     {
-      "test_id": "ut_question_selection_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The agent failed to fulfill a core requirement specified in the judge context: naming specific FAN (Family/Associates/Neighbors) research avenues to add as plan items to q_001 (e.g., Thomas Flynn's neighbors in the 1850 census, land deed witnesses, or Irish emigrant community members in Schuylkill County). The agent's response stopped at recommending proof-conclusion without articulating or outlining concrete FAN research directions."
-    },
-    {
-      "test_id": "ut_question_selection_005",
+      "test_id": "ut_question_selection_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -91,11 +83,19 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Question specificity",
-      "llm_score": null,
-      "corrected_score": null,
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -132,8 +132,16 @@
     },
     {
       "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -149,47 +157,7 @@
     {
       "test_id": "ut_question_selection_008",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Question specificity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_014",
-      "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

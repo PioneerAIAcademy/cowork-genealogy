@@ -45,6 +45,7 @@ from test_question_selection import (  # noqa: E402
     test_motivation_objective_decomposed as check_motivation,
     test_new_question_not_vague as check_not_vague,
     test_premise_question_names_fact as check_premise,
+    test_question_selection_one_new_question as check_one_new_question,
     test_single_fact_objective_not_narrowed as check_single_fact,
     test_unblocks_nonempty as check_unblocks_nonempty,
 )
@@ -807,3 +808,50 @@ def test_relaying_the_summarys_own_gap_list_passes(sentence):
 def test_a_record_the_summary_does_not_list_as_a_gap_still_fails(summary, sentence):
     with pytest.raises(AssertionError, match="names a record"):
         _check_summary(summary, sentence)
+
+
+# --- test_question_selection_one_new_question (issue #4531) -------------
+
+_ONE_NEW_TAGS = {"tags": ["question-selection-one-new-question"]}
+_BURIAL = "Where was Patrick Flynn (b. ca. 1845, d. 1908) buried?"
+_MARRIAGE = "Whom did Patrick Flynn (b. ca. 1845, d. 1908) marry?"
+
+
+def _check_one_new(before, after):
+    """A tagged call that skips is a dead gate, not a pass."""
+    try:
+        check_one_new_question(before, after, _ONE_NEW_TAGS)
+    except pytest.skip.Exception:
+        pytest.fail("the validator skipped a tagged test")
+
+
+def test_one_new_question_passes():
+    _check_one_new(_EMPTY, _state([_q("q_001", _BURIAL)]))
+
+
+def test_one_new_question_beside_an_existing_one_passes():
+    """Only questions added in the run count, not ones already there."""
+    before = _state([_q("q_001", _MARRIAGE, status="resolved")])
+    after = _state([_q("q_001", _MARRIAGE, status="resolved"), _q("q_002", _BURIAL)])
+    _check_one_new(before, after)
+
+
+def test_no_new_question_fails():
+    """Asking which fact first writes nothing: the failure #4531 is about."""
+    with pytest.raises(BaseException) as excinfo:
+        check_one_new_question(_EMPTY, _EMPTY, _ONE_NEW_TAGS)
+    assert excinfo.typename == "AssertionError", excinfo.typename
+    assert "got 0" in str(excinfo.value)
+
+
+def test_two_new_questions_fail():
+    after = _state([_q("q_001", _BURIAL), _q("q_002", _MARRIAGE)])
+    with pytest.raises(BaseException) as excinfo:
+        check_one_new_question(_EMPTY, after, _ONE_NEW_TAGS)
+    assert excinfo.typename == "AssertionError", excinfo.typename
+    assert "got 2" in str(excinfo.value)
+
+
+def test_one_new_question_untagged_is_skipped():
+    with pytest.raises(pytest.skip.Exception):
+        check_one_new_question(_EMPTY, _EMPTY, {"tags": ["question-selection-no-new-question"]})
