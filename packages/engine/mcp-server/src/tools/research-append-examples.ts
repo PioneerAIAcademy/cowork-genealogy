@@ -184,6 +184,10 @@ const EXAMPLES: Record<string, string> = {
   // conflict example whose `preferred_assertion_id` and `resolution_rationale`
   // match it.
   //
+  // It carries a claim: a summary at possible or better states the object it
+  // concludes (issue #3032 Decision 27); research_append's claim rules warn on
+  // one without.
+  //
   // `shortfall` is "ceiling" here and not "gap" because this example's own
   // `exhaustive_search_summary` says no further records surfaced — the value
   // has to agree with the narrative beside it, or the example teaches the model
@@ -196,7 +200,11 @@ const EXAMPLES: Record<string, string> = {
   "supporting_assertion_ids": ["a_013", "a_025"],
   "resolved_conflict_ids": [],
   "exhaustive_search_summary": "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
-  "narrative_markdown": "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father..."
+  "narrative_markdown": "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father...",
+  "claims": [
+    { "claim": "father", "proof_tier": "probable", "supporting_assertion_ids": ["a_013", "a_025"],
+      "relationship": { "type": "ParentChild", "parent": "I2", "child": "I1" } }
+  ]
 }`,
 
   // The section that drew the identical rejection in 4+ runs across 4
@@ -232,7 +240,6 @@ const EXAMPLES: Record<string, string> = {
     "Schuylkill County was formed in 1811 from Berks and Northampton; pre-1811 records are filed under the parent counties.",
     "Statewide civil birth/death registration began only in 1906 — earlier vital events rely on church, cemetery, and probate records."
   ],
-  "guide_markdown": "# Locality Guide: Schuylkill County, Pennsylvania (1845-1908)\\n\\n## Jurisdiction overview\\n- Formed 1811 from Berks and Northampton...\\n\\n## Available record types\\n- Probate: county Register of Wills from 1811...\\n\\n## Research tips\\n- Search the parent counties before 1811...",
   "pages_read": [
     { "section": "home", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy", "found": true },
     { "section": "getting_started", "url": null, "found": false },

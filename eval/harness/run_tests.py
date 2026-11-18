@@ -612,6 +612,7 @@ def _print_summary(rows: list[dict]) -> None:
     _print_outcome_counts(rows)
     _print_judge_warnings(rows)
     _print_readme_fallbacks(rows)
+    _print_unparsed_tool_inputs(rows)
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
@@ -690,6 +691,26 @@ def _print_readme_fallbacks(rows: list[dict]) -> None:
     print(
         f"{len(tests)} test(s) graded without a judge brief, on a README or "
         f"nothing ({len(scenarios)} scenario(s)): {', '.join(scenarios)}"
+    )
+    print()
+
+
+def _print_unparsed_tool_inputs(rows: list[dict]) -> None:
+    """Say how many tool calls Claude Code refused as invalid JSON.
+
+    Such a call never reaches the tool: the agent writes it again, whole, and the
+    test still passes on the retry. A move to a cheaper model took locality-guide's
+    count from 2 to 17 in one suite with every test passing (#4588), so every run
+    names the tests it happened in.
+    """
+    tests = [r for r in rows if r.get("unparsed_tool_inputs")]
+    if not tests:
+        return
+    total = sum(r["unparsed_tool_inputs"] for r in tests)
+    named = ", ".join(f"{r['test_id']} x{r['unparsed_tool_inputs']}" for r in tests)
+    print(
+        f"{total} tool call(s) in {len(tests)} test(s) were refused as invalid JSON "
+        f"before reaching the tool, and written again: {named}"
     )
     print()
 
@@ -1415,6 +1436,11 @@ def main(argv: list[str] | None = None) -> int:
                 # Scenarios with no judge-brief.md yet, graded on a whole
                 # README or on nothing (#2478). Its own line, not the judge
                 # tally: a fixture advisory, not a grading rule.
+                "unparsed_tool_inputs": sum(
+                    w.get("count") or 0
+                    for w in iter_run_warnings(entry)
+                    if w.get("kind") == "unparsed_tool_input"
+                ),
                 "readme_fallback_scenarios": sorted({
                     w.get("scenario") or ""
                     for w in iter_run_warnings(entry)

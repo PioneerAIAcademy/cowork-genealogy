@@ -96,6 +96,9 @@ import { arkToBareId, findDocumentImageArk, toArk } from "../utils/ark.js";
 import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
+import { GUIDE_SECTION_MAX_CHARS, mergeGuideSection } from "../utils/locality-guide-sections.js";
+import { normalizeRegistrationStart } from "../utils/registration-level.js";
+import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -141,6 +144,10 @@ import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import type { FulltextSearchableLoader } from "../types/volume-search.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
+import { claimRuleFindings, questionCapFindings } from "../validation/claim-rules.js";
+import { owedFindings } from "../utils/owed-findings.js";
+import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
+import { clearUnclaimedPrimary, primaryTarget, type PrimaryClearResult } from "../utils/primary-claim.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -2348,6 +2355,55 @@ function personEvidenceScoreInvariants(
   // prove -- and refusing it left a bad score unremovable on any reachable
   // link while still letting `confidence` be escalated on it.
   if (!isAppend && entry.match_score == null) return [];
+
+  // Exact lookup on (assertion, tree person) first -- the pair the writer was
+  // called with and the pair this entry carries. Keying on the PARTY instead
+  // could not see a score written by the fetched route, which resolves a real
+  // persons[].id where the assertion carries null. Then the persona arm: a score
+  // that compared this assertion's party with this tree person answers for every
+  // fact of that party (#3552; match-scores.ts header). A second party of the
+  // record is a different party, so ADR-0009 constraint 3 holds.
+  //
+  // Computed here, BEFORE reachability, so the two uses below share one
+  // lookup rather than querying twice: the null-vs-recorded refusal right
+  // after this, and the ordinary presence check further down. The exact-key
+  // lookup is a cheap map read; `scoredPersonaOf` -- a scan of this record's
+  // assertions -- runs only when that lookup misses, same as before this
+  // reordering (it is also needed below for the refusal's personaHint even
+  // when no score exists at all, so it cannot be skipped on `file` alone).
+  const file = matchScores.get(recordId) ?? null;
+  const exactScore = findRecordedScore(file, entry.assertion_id, entry.person_id);
+  const persona = exactScore
+    ? null
+    : scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
+  const recorded = exactScore ?? (persona ? findRecordedScore(file, null, entry.person_id, persona) : null);
+
+  // The writer records what same_person returns; a link for a pairing it
+  // already scored must carry that attestation, not drop it. A null here
+  // reads as unscored even though a number was obtained -- seen twice in
+  // production (ut_person_evidence_010; #3552's panel analysis). Reachability
+  // has no bearing: it excuses a MISSING score, never one that was actually
+  // obtained. A genuine retraction goes through an UPDATE, which the isAppend
+  // check above already lets through.
+  //
+  // `recorded` may answer via the persona arm rather than this exact
+  // assertion -- the message says so, or it reads as "same_person was called
+  // on THIS assertion" when it was really called on a sibling fact of the
+  // same persona.
+  if (entry.match_score == null && recorded !== null) {
+    const scoredWhat = exactScore
+      ? "this pairing"
+      : persona?.personaId !== null && persona?.personaId !== undefined
+        ? `persona '${persona.personaId}' for this tree person`
+        : `this record's other party for this tree person`;
+    return [
+      `person_evidence for '${entry.person_id}' (assertion '${entry.assertion_id}') carries ` +
+        `match_score: null, but same_person already scored ${scoredWhat} at ${recorded.score}. ` +
+        `Write that score on the link -- a null here reads as unscored even though a number was ` +
+        `obtained. To retract a score instead of recording it, use an update, not an append.`,
+    ];
+  }
+
   // Reachability excuses a MISSING score, never a fabricated one. Gating the
   // whole arm on it left ut_person_evidence_014's actual defect open: a stub
   // minted by `tree_edit add_person` carries no source ref, so the circular walk
@@ -2367,17 +2423,7 @@ function personEvidenceScoreInvariants(
       : research;
   if (entry.match_score == null && !personaReachable(entry, reachabilityView)) return [];
 
-  // Exact lookup on (assertion, tree person) first -- the pair the writer was
-  // called with and the pair this entry carries. Keying on the PARTY instead
-  // could not see a score written by the fetched route, which resolves a real
-  // persons[].id where the assertion carries null. Then the persona arm: a score
-  // that compared this assertion's party with this tree person answers for every
-  // fact of that party (#3552; match-scores.ts header). A second party of the
-  // record is a different party, so ADR-0009 constraint 3 holds.
-  const file = matchScores.get(recordId) ?? null;
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
-  const persona = scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
-  if (persona && findRecordedScore(file, null, entry.person_id, persona) !== null) return [];
+  if (recorded !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
@@ -7763,6 +7809,7 @@ export interface ResearchAppendOp {
   entryId?: string; // op = update
   fields?: Record<string, unknown>; // op = update (shallow-merged; id immutable)
   edits?: NarrativeEdit[]; // op = update of proof_summaries: exact-match edits, expanded into `fields`
+  guideSection?: string; // op = update of localities: one guide section, placed into `fields.guide_markdown`
   planId?: string; // required for section = "plan_items"
 }
 
@@ -7790,6 +7837,7 @@ export interface ResearchAppendInput {
   entryId?: string;
   fields?: Record<string, unknown>;
   edits?: NarrativeEdit[];
+  guideSection?: string;
   planId?: string;
   // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
@@ -7846,8 +7894,17 @@ interface SingleSuccess {
    *  rows than the entry has facts. */
   skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
+  guide?: LocalityGuideStatus[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
+}
+
+/** On a `localities` write, per entry written: the template headings its guide
+ *  still lacks, and how to send them (spec §5.14). `missing: []` is a whole guide. */
+export interface LocalityGuideStatus {
+  entryId: string;
+  missing: string[];
+  next?: string;
 }
 interface BatchSuccess {
   ok: true;
@@ -7861,6 +7918,7 @@ interface BatchSuccess {
    *  rows than the entry has facts. */
   skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
+  guide?: LocalityGuideStatus[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
   /** Set only by `extraction_append`'s EXTRACTOR MODE, which builds its own ops
@@ -7943,6 +8001,10 @@ function treeEncodingCompletionWarnings(
   const warnings: string[] = [];
   for (const ps of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
     if (!ps || (ps.tier !== "proved" && ps.tier !== "probable")) continue;
+    // A summary that states claims is judged claim by claim (owed `encode`
+    // items); this shape match is Decision 24's legacy reading of one that does
+    // not, kept until Stage 1b's part 4 bodies write claims.
+    if (Array.isArray(ps.claims) && ps.claims.length > 0) continue;
     const supporting = new Set(
       Array.isArray(ps.supporting_assertion_ids) ? ps.supporting_assertion_ids : [],
     );
@@ -7961,6 +8023,16 @@ function treeEncodingCompletionWarnings(
     );
   }
   return warnings;
+}
+
+/** Decision 33: completing a project while it still owes a blocking finding (a
+ *  question with tied assertions and no summary; a supported hypothesis with no
+ *  summary), or an `encode` item (a likely claim no tree object carries), warns.
+ *  It never refuses until Stage 1c measures the rate. */
+function owedCompletionWarnings(research: any, tree: SimplifiedGedcomX): string[] {
+  return owedFindings(research, tree)
+    .filter((f) => f.blocksCompletion || f.kind === "encode")
+    .map((f) => `the project is completed while it still owes ${f.kind} ${f.ref}: ${f.nextStep}.`);
 }
 
 /** Next `<prefix>NNN` id (max + 1, zero-padded to 3) for a research section.
@@ -8029,6 +8101,56 @@ interface AppliedOp extends AppliedByApplyOne {
   opIndex: number;
 }
 
+/** The claim rules (issue #3032 Stage 1b, `src/validation/claim-rules.ts`) for
+ *  one batch: each summary an op appended or whose `tier`, `claims` or
+ *  `supporting_assertion_ids` it set (a narrative-only edit of a legacy summary
+ *  never runs them, Decision 24), and each question an op set resolved. Read
+ *  against the final in-batch summaries, the pre-call research and the pre-call
+ *  tree. Each finding goes through its rule's mode. */
+function claimRuleOutcome(
+  ops: readonly any[],
+  applied: readonly AppliedOp[],
+  research: any,
+  beforeResearch: any,
+  beforeTree: any,
+): { errors: string[]; warnings: string[] } {
+  const RULE_FIELDS = ["tier", "claims", "supporting_assertion_ids"];
+  const summaryIds = new Set<string>();
+  const questionIds = new Set<string>();
+  for (const a of applied) {
+    const op = ops[a.opIndex];
+    const fields = op?.fields ?? {};
+    const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
+    if (a.section === "proof_summaries" && (a.op === "append" || RULE_FIELDS.some(has))) summaryIds.add(a.entryId);
+    if (a.section === "questions") {
+      const entry = a.op === "append" ? op?.entry : fields;
+      if (entry?.status === "resolved" || entry?.resolved === true) questionIds.add(a.entryId);
+    }
+  }
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  if (summaryIds.size === 0 && questionIds.size === 0) return { errors, warnings };
+  const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+  const ctx = { summaries, preCallResearch: beforeResearch, tree: beforeTree };
+  const take = (id: string, summaryId: string, messages: readonly string[]) => {
+    const outcome = applyRuleMode(ruleMode(id), summaryConcern(summaryId), messages);
+    errors.push(...outcome.errors);
+    warnings.push(...outcome.warnings);
+  };
+  for (const id of summaryIds) {
+    const summary = summaries.find((s: any) => s?.id === id);
+    if (!summary) continue;
+    for (const [rule, messages] of claimRuleFindings(summary, ctx)) take(rule, id, messages);
+  }
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  for (const id of questionIds) {
+    const question = questions.find((q: any) => q?.id === id);
+    if (!question) continue;
+    for (const { summaryId, messages } of questionCapFindings(question, ctx)) take("claims-capped-open", summaryId, messages);
+  }
+  return { errors, warnings };
+}
+
 // ─── #2472: carry an assertion correction onto the fact it minted ────────────
 
 interface FactRewriteResult {
@@ -8045,6 +8167,9 @@ interface FactRewriteResult {
   mutationWarnings: string[];
   /** Restore every touched fact to its pre-rewrite attributes. */
   undo: () => void;
+  /** The advisory for each rewritten fact marked `primary`, kept apart from
+   *  `mutationWarnings` so a fact the `primary` clear then clears drops it. */
+  concluded: Map<SimplifiedFact, string>;
 }
 
 /**
@@ -8288,8 +8413,10 @@ function rewriteLinkedFacts(
     }
   }
 
+  const concluded = new Map<SimplifiedFact, string>();
   for (const fact of concludedTouched) {
-    mutationWarnings.push(
+    concluded.set(
+      fact,
       `fact '${fact.id}' is marked primary (a concluded value) and was rewritten from its ` +
         "assertion. Re-read the proof summary that cites it: the conclusion was written against " +
         "the earlier reading.",
@@ -8304,7 +8431,7 @@ function rewriteLinkedFacts(
       }
     }
   };
-  return { mutated, warnings, mutationWarnings, undo };
+  return { mutated, warnings, mutationWarnings, undo, concluded };
 }
 
 // ─── #3601: a rejection undoes its link ──────────────────────────────────────
@@ -10930,48 +11057,55 @@ export function missingGuideHeadings(markdown: string): string[] {
 }
 
 /**
- * Refuse a `localities` write whose `guide_markdown` lacks a template heading
- * (spec §5.14). Runs on an append, and on an update whose `fields` set the key. An
- * absent key and `null` are the schema's to allow, and a persisted guide is never
- * re-read. Any other non-string is refused here, since `validator.ts` does not type
- * this field. Synchronous, so it runs even when an earlier `prepareOps` check has
- * already collected a refusal, and both come back in one call.
+ * Refuse a `localities` write that sets `guide_markdown` itself (spec §5.14): the
+ * guide arrives one `guideSection` per call and this tool builds the field. Runs on
+ * an append, and on an update whose `fields` set the key. An absent key and `null`
+ * are the schema's to allow, and a persisted guide is never re-read. Synchronous, so
+ * it runs even when an earlier `prepareOps` check has already collected a refusal,
+ * and both come back in one call.
  */
-function localityGuideHeadingRefusals(
+function localityGuideWholeRefusals(
   ops: ResearchAppendOp[],
   fmt: (i: number, msg: string) => string,
 ): string[] {
   const out: string[] = [];
   for (const [i, op] of ops.entries()) {
+    if (GUIDE_SECTION_OPS.has(op)) continue;
     const body = localityBody(op);
     const guide = body && typeof body === "object" ? (body as Record<string, unknown>).guide_markdown : undefined;
     if (guide === undefined || guide === null) continue;
-    if (typeof guide !== "string") {
-      const got = Array.isArray(guide) ? "an array" : typeof guide === "object" ? "an object" : `a ${typeof guide}`;
-      out.push(
-        fmt(
-          i,
-          `guide_markdown must be the whole guide as one markdown string, not ${got}. Re-send this ` +
-            `entry with it as a string carrying the template's ` +
-            `${LOCALITY_GUIDE_HEADINGS.map((t) => `'## ${t}'`).join(", ")} lines.`,
-        ),
-      );
-      continue;
-    }
-    const missing = missingGuideHeadings(guide);
-    if (missing.length === 0) continue;
-    const many = missing.length > 1;
     out.push(
       fmt(
         i,
-        `guide_markdown lacks the locality guide template's heading${many ? "s" : ""} ` +
-          `${missing.map((t) => `'## ${t}'`).join(", ")}. Add ${many ? "each" : "it"} as its own line ` +
-          "beginning with exactly those words after two #s, put the guide's text for that section " +
-          "under it, and re-send this entry with the whole guide.",
+        "guide_markdown is not written directly: this tool builds it. " +
+          (op.op === "append" ? "Append this entry without it, then send" : "Leave it out of `fields`, and send") +
+          ` the guide ${GUIDE_SECTION_HOW}`,
       ),
     );
   }
   return out;
+}
+
+/** What each `localities` entry this call wrote still needs in its guide. */
+function localityGuideStatus(
+  research: any,
+  entryIds: readonly string[],
+): LocalityGuideStatus[] {
+  const localities = Array.isArray(research?.localities) ? research.localities : [];
+  return [...new Set(entryIds)].flatMap((entryId) => {
+    const entry = localities.find((l: any) => l?.id === entryId);
+    if (!entry) return [];
+    const missing = missingGuideHeadings(typeof entry.guide_markdown === "string" ? entry.guide_markdown : "");
+    return [
+      missing.length === 0
+        ? { entryId, missing }
+        : {
+            entryId,
+            missing: missing.map((t) => `## ${t}`),
+            next: `Send the guide ${GUIDE_SECTION_HOW} At most ${GUIDE_SECTION_MAX_CHARS} characters a call.`,
+          },
+    ];
+  });
 }
 
 /** The `collections` lists of a batch's `localities` writes, by op index: an
@@ -10991,6 +11125,115 @@ function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record
 /** FamilySearch's collection catalog as `researchAppendFromCaller` read it before
  *  the lock, or `"unavailable"` when that read failed. */
 export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
+
+/** The most collections one locality's fill adds. The largest list in 18 surveyed
+ *  places was New York's 65; a country-wide scope can run to several hundred. */
+export const LOCALITY_COLLECTIONS_FILL_MAX = 150;
+
+/** A `localities` append in these ops: the catalog is read for it even when it
+ *  sends no collections. */
+function hasLocalityAppend(ops: readonly unknown[]): boolean {
+  return ops.some((op: any) => op && typeof op === "object" && op.section === "localities" && op.op === "append");
+}
+
+/** A word of a record type or a record-keeping body. A title segment holding none,
+ *  with more of the title after it, is read as a place: `Aveiro` in `Portugal,
+ *  Aveiro, Catholic Church Records, 1550-1957`. */
+const COLLECTION_TITLE_TYPE_WORD =
+  /\b(records?|census|births?|baptisms?|christenings?|marriages?|deaths?|burials?|church|civil|index|indexes|registers?|registration|passenger|immigration|emigration|naturali[sz]ation|military|probate|estate|wills?|land|deeds?|tax|court|cemeter\w*|obituar\w*|newspapers?|directories|school|voter|vital|pension|draft|service|lists?|files?|books?|cards?|papers|collections?|genealog\w*|find a grave|billiongraves|miscellaneous|select|state|county|city|parish|diocese|district|national|federal)\b/i;
+
+/**
+ * Whether a catalog title in the place's scope names somewhere else: a part of the
+ * scope that is not one of the entry's own places. For a Madeira guide 33 of
+ * Portugal's 39 collections do (Aveiro, Azores, Beja). Over 331 rows from 18 real
+ * places the titles sort as 16 naming the place, 165 naming no part of the scope,
+ * and 150 naming another part.
+ */
+function titleNamesElsewhere(title: string, scope: string, ownTerms: readonly RegExp[]): boolean {
+  if (ownTerms.some((re) => re.test(title))) return false;
+  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  const rest = title
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) => p !== "" && !scopeParts.has(p.toLowerCase()) && !/^[\d\s–-]+$/.test(p));
+  return rest.length >= 2 && !COLLECTION_TITLE_TYPE_WORD.test(rest[0]);
+}
+
+/** One whole-word matcher per part of the entry's places below `scope`. */
+function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
+  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  const terms = new Set<string>();
+  for (const name of names) {
+    if (typeof name !== "string") continue;
+    for (const raw of name.split(",")) {
+      const part = raw.replace(/\([^()]*\)/g, " ").trim();
+      if (part.length < 3 || scopeParts.has(part.toLowerCase()) || part === "United States") continue;
+      terms.add(part);
+    }
+  }
+  return [...terms].map((t) => new RegExp(`(?<![\\p{L}\\p{N}])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "iu"));
+}
+
+/**
+ * Add to a `localities` append's `collections` the FamilySearch collections for
+ * the place that the entry did not send, from the catalog (spec §5.12, "The whole
+ * list"). Runs after the count stamp, so the rows the entry sent stay first, as
+ * stamped.
+ *
+ * locality-guide copied about a third of what `collections_search` returned (109 of
+ * 331 over 17 real places), and research-plan plans from this list without its own
+ * search, so a collection left out was hidden from the plan. The scope is the one
+ * `collections_search` derives: the entry's `place`, else the first jurisdiction
+ * name whose scope matches a title. A title that names another part of the scope
+ * is not added (`titleNamesElsewhere`).
+ */
+function fillLocalityCollections(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined || catalog === "unavailable") return;
+  ops.forEach((op: any, i) => {
+    if (!op || typeof op !== "object" || op.section !== "localities" || op.op !== "append") return;
+    const entry = op.entry;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return;
+    if (entry.collections !== undefined && !Array.isArray(entry.collections)) return;
+    const names = [entry.place, ...(Array.isArray(entry.jurisdictions) ? entry.jurisdictions.map((j: any) => j?.name) : [])];
+    for (const name of names) {
+      if (typeof name !== "string" || name.trim() === "") continue;
+      const scope = standardPlaceToCollectionsQuery(name);
+      const needle = scope.toLowerCase();
+      if (needle === "") continue;
+      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
+      if (inScope.length === 0) continue;
+      const own = ownPlaceTerms([...names, entry.for_place], scope);
+      const sent: unknown[] = entry.collections ?? [];
+      const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
+      const missing = inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own));
+      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, scope, own)).length;
+      const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
+      const added = missing.slice(0, room).map(([id, c]) => ({
+        id,
+        title: c.title as string,
+        date_range: c.dateRange ?? null,
+        person_count: c.personCount,
+        record_count: c.recordCount,
+      }));
+      if (missing.length === 0) return;
+      entry.collections = [...sent, ...added];
+      warnings.push(
+        fmt(
+          i,
+          `localities collections: added ${added.length === missing.length ? `the ${added.length}` : `${added.length} of the ${missing.length}`} ` +
+            `other FamilySearch collections for "${scope}" from the catalog, after the ${sent.length} sent` +
+            (elsewhere > 0 ? `; ${elsewhere} that name another part of "${scope}" were left out` : ""),
+        ),
+      );
+      return;
+    }
+  });
+}
 
 /**
  * Stamp each `localities` collection's `person_count` / `record_count` from
@@ -12020,9 +12263,12 @@ async function prepareOps(
   }
   errors.push(...retiredAssertionCitations(ops, research, fmt));
 
-  errors.push(...localityGuideHeadingRefusals(ops, fmt));
+  errors.push(...localityGuideWholeRefusals(ops, fmt));
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
-  if (errors.length === 0) stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
+  if (errors.length === 0) {
+    stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
+    fillLocalityCollections(ops, options.collectionCatalog, warnings, fmt);
+  }
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
@@ -12253,6 +12499,109 @@ function expandNarrativeEdits(
     // as a `fields` collision.
     delete op.edits;
     if (next.has(key(op.entryId as string, "narrative_markdown"))) NARRATIVE_EDITED_OPS.add(op);
+  });
+  return errors;
+}
+
+/** Ops whose `guide_markdown` a `guideSection` expansion wrote: the one way a guide
+ *  reaches a `localities` entry (spec §5.14). */
+const GUIDE_SECTION_OPS = new WeakSet<object>();
+
+/** How a guide is sent, for the refusals and the `guide.next` line. */
+const GUIDE_SECTION_HOW =
+  "one section per research_append call, never several in `ops`: op 'update', the entry's id as " +
+  "entryId, and guideSection holding that section's '## ' heading line with its text under it. Each " +
+  "'### ' subsection of Available record types and of Repository guide is its own call, beginning " +
+  "with its '### ' line.";
+
+/** Read each localities op's `registration_start` levels into the closed list, in
+ *  place (utils/registration-level.ts). */
+function normalizeLocalityRegistration(ops: ResearchAppendOp[]): void {
+  for (const op of ops) {
+    if (!op || typeof op !== "object" || op.section !== "localities") continue;
+    for (const holder of [op.entry, op.fields]) {
+      if (!holder || typeof holder !== "object" || Array.isArray(holder)) continue;
+      const rows = (holder as Record<string, unknown>).registration_start;
+      const next = normalizeRegistrationStart(rows, VALIDATOR_ENUMS.registration_level);
+      if (next !== rows) (holder as Record<string, unknown>).registration_start = next;
+    }
+  }
+}
+
+/**
+ * Place each op's `guideSection` into `fields.guide_markdown`, in place, and return
+ * every refusal (spec §5.14).
+ *
+ * A guide sent whole is 12-18k of prose in one JSON string, and a model that leaves
+ * one character unescaped loses the whole call before it reaches this tool (issue
+ * #4588). A section is 600 characters at the median. The text a section is placed
+ * into is the guide as an earlier op in this batch left it, else the stored entry's.
+ */
+function expandGuideSections(
+  ops: ResearchAppendOp[],
+  research: any,
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const errors: string[] = [];
+  const pending = new Map<string, string>();
+  const stored = (id: string) =>
+    (Array.isArray(research?.localities) ? research.localities : []).find((l: any) => l?.id === id);
+  // The limit is on the call, not the op: a batch of every section is the whole
+  // guide in one JSON string again.
+  const sent = ops.flatMap((op, i) => (op && typeof op.guideSection === "string" ? [[i, op.guideSection.length] as const] : []));
+  const sentChars = sent.reduce((sum, [, n]) => sum + n, 0);
+  if (sent.length > 1 && sentChars > GUIDE_SECTION_MAX_CHARS) {
+    return [
+      `this call carries ${sentChars} characters of guide in ${sent.length} sections (ops ` +
+        `${sent.map(([i]) => i).join(", ")}); one call carries at most ${GUIDE_SECTION_MAX_CHARS}. ` +
+        "Send each section as its own research_append call, not in `ops`.",
+    ];
+  }
+  ops.forEach((op, i) => {
+    if (!op || typeof op !== "object") return;
+    if (op.guideSection == null) delete op.guideSection;
+    if (!Object.prototype.hasOwnProperty.call(op, "guideSection")) return;
+    const refuse = (msg: string) => errors.push(fmt(i, msg));
+    if (op.section !== "localities" || op.op !== "update") {
+      refuse("`guideSection` applies only to an update of `localities`.");
+      return;
+    }
+    const fields = op.fields && typeof op.fields === "object" && !Array.isArray(op.fields) ? op.fields : undefined;
+    if (op.fields !== undefined && !fields) {
+      refuse("`fields` beside `guideSection` must be an object of the other fields to change.");
+      return;
+    }
+    if (fields && Object.prototype.hasOwnProperty.call(fields, "guide_markdown")) {
+      refuse("`guide_markdown` is also set in `fields`; send the guide through `guideSection` only.");
+      return;
+    }
+    if (typeof op.guideSection !== "string") {
+      refuse("`guideSection` must be a string of markdown beginning with the section's heading line.");
+      return;
+    }
+    const entry = typeof op.entryId === "string" ? stored(op.entryId) : undefined;
+    if (!entry) {
+      refuse(`\`guideSection\` needs \`entryId\` naming an existing locality; '${op.entryId ?? "(none)"}' is not one.`);
+      return;
+    }
+    const id = op.entryId as string;
+    const place = fields?.for_place ?? entry.for_place ?? fields?.place ?? entry.place;
+    const period = fields?.time_period ?? entry.time_period;
+    const titleLine =
+      typeof place === "string" && place.trim() !== ""
+        ? `# Locality Guide: ${place}${typeof period === "string" && period.trim() !== "" ? ` (${period})` : ""}`
+        : "";
+    const merged = mergeGuideSection(pending.has(id) ? pending.get(id) : entry.guide_markdown, op.guideSection, titleLine);
+    if ("error" in merged) {
+      refuse(merged.error);
+      return;
+    }
+    pending.set(id, merged.guide);
+    op.fields = { ...(fields ?? {}), guide_markdown: merged.guide };
+    // A caller that re-sends the same op object must not meet its own expansion
+    // as a `fields` collision.
+    delete op.guideSection;
+    GUIDE_SECTION_OPS.add(op);
   });
   return errors;
 }
@@ -12692,7 +13041,7 @@ export async function researchAppendFromCaller(
   // pay an outbound request — and run CONCURRENTLY: serialized, a batch that
   // both stamps locality collections and completes a plan item could spend both
   // budgets back to back before the lock is even taken.
-  const wantsCatalog = !!loadCatalog && localityCollectionLists(writeOps).length > 0;
+  const wantsCatalog = !!loadCatalog && (localityCollectionLists(writeOps).length > 0 || hasLocalityAppend(writeOps));
   const wantsSearchable = !!loadFulltextSearchable && touchesTerminalPlanItem(writeOps);
   const [collectionCatalog, fulltextSearchable] = await Promise.all([
     wantsCatalog ? readCatalog(loadCatalog!) : Promise.resolve(undefined),
@@ -12791,6 +13140,7 @@ export async function researchAppend(
           entryId: input.entryId,
           fields: input.fields,
           ...(input.edits != null ? { edits: input.edits } : {}),
+          ...(input.guideSection != null ? { guideSection: input.guideSection } : {}),
           planId: input.planId,
         },
       ];
@@ -12849,6 +13199,9 @@ export async function researchAppend(
         refused.map((i) => ({ ...failedOpHint(ops[i], []), fields: ["edits"] })),
       );
     }
+    const guideErrors = expandGuideSections(ops, research, fmt);
+    if (guideErrors.length > 0) return fail(boundErrors(guideErrors));
+    normalizeLocalityRegistration(ops);
 
     let retracted = new Set<string>();
     if (options.retireAssertions) {
@@ -12973,9 +13326,24 @@ export async function researchAppend(
       return fail(originalRefusals.map((r) => fmt(r.opIndex, r.message)));
     }
 
+    // #3032 Stage 1b: the claim rules, once per batch against the final in-batch
+    // summaries, so a later op that revises a disproved claim or adds the Couple
+    // claim is seen. Warn mode until Stage 1c.
+    const claimRules = claimRuleOutcome(ops, applied, research, beforeResearch, beforeTree);
+    if (claimRules.errors.length > 0) return fail(claimRules.errors);
+
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+    // #3032 Stage 1b (Decision 34): `primary` follows its claim. Rides the
+    // rewrite's tree write and rollback.
+    let primaryClear = clearUnclaimedPrimary(beforeResearch, research, beforeTree, tree);
+    const primaryClearWarnings = (c: PrimaryClearResult) =>
+      c.cleared.map(
+        (x) =>
+          `${treeConcern(primaryTarget(x))}: \`primary\` cleared, because no live affirmed claim at probable or better ` +
+          "covers this fact any more.",
+      );
     // #3601: a rejection retires its pair's live link and that link's facts,
     // in this same all-or-nothing write.
     const retire = retireRejectedLinks(applied, research, tree);
@@ -13011,8 +13379,14 @@ export async function researchAppend(
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
-    let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated || removedPersons;
-    let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
+    let treeMutated = prep.treeMutated || rewrite.mutated || primaryClear.mutated || retire.mutated || removedPersons;
+    const clearedFacts = new Set(primaryClear.cleared.map((x) => x.fact));
+    let rewriteWarnings = [
+      ...rewrite.warnings,
+      ...rewrite.mutationWarnings,
+      ...[...rewrite.concluded].filter(([f]) => !clearedFacts.has(f)).map(([, m]) => m),
+      ...primaryClearWarnings(primaryClear),
+    ];
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
@@ -13025,8 +13399,10 @@ export async function researchAppend(
     );
     let treeEncodingWarnings: string[] = [];
     if (completingNow) {
-      const startingTree = await readStartingTree(projectPath);
-      treeEncodingWarnings = treeEncodingCompletionWarnings(research, tree, startingTree);
+      treeEncodingWarnings = [
+        ...treeEncodingCompletionWarnings(research, tree, prep.startingTree ?? null),
+        ...owedCompletionWarnings(research, tree),
+      ];
     }
 
     // A planned next action unlikely to be usable: a jurisdiction outside every
@@ -13099,10 +13475,14 @@ export async function researchAppend(
       // already failing, so it costs nothing in the normal case.
       if (!validation.valid && rewrite.mutated) {
         rewrite.undo();
+        // The clear never fails validation; re-run it on the restored facts, so a
+        // claim this call lowered still clears its fact.
+        primaryClear.undo();
+        primaryClear = clearUnclaimedPrimary(beforeResearch, research, beforeTree, tree);
         const retry = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
         if (retry.valid) {
           validation = retry;
-          treeMutated = prep.treeMutated || retire.mutated || removedPersons;
+          treeMutated = prep.treeMutated || primaryClear.mutated || retire.mutated || removedPersons;
           // The mutation half described a tree change that no longer exists.
           rewriteWarnings = [
             ...rewrite.warnings,
@@ -13110,6 +13490,7 @@ export async function researchAppend(
               "fact failed validation, so the fact rewrite was rolled back. The assertion is " +
               "corrected; the fact still holds the earlier reading. (Any other write this call " +
               "made, including a composite source description, still landed — see filesWritten.)",
+            ...primaryClearWarnings(primaryClear),
           ];
         }
       }
@@ -13175,12 +13556,17 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...claimRules.warnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<
       BatchSuccess,
-      "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces" | "skippedDerivedLinks"
+      "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces" | "skippedDerivedLinks" | "guide"
     > = {};
+    const guide = localityGuideStatus(
+      research,
+      applied.flatMap((a) => (a.section === "localities" ? [a.entryId] : [])),
+    );
+    if (guide.length > 0) extras.guide = guide;
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
     if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;
     if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
@@ -13702,6 +14088,15 @@ const EDITS_SCHEMA = {
   },
 };
 
+/** `guideSection` on the top-level call and on each batch op. */
+const GUIDE_SECTION_SCHEMA = {
+  type: "string",
+  description:
+    "update of localities: one section of the entry's guide, as markdown beginning with its " +
+    "'## ' or '### ' heading line. The tool places it in `guide_markdown`, replacing a section " +
+    `with the same heading. At most ${GUIDE_SECTION_MAX_CHARS} characters; send a guide one section per call.`,
+};
+
 export const researchAppendSchema = {
   name: "research_append",
   description:
@@ -13763,6 +14158,7 @@ export const researchAppendSchema = {
         description: "update: the fields to shallow-merge onto the existing entry (the id is immutable).",
       },
       edits: EDITS_SCHEMA,
+      guideSection: GUIDE_SECTION_SCHEMA,
       planId: {
         type: "string",
         description: "Required for section 'plan_items' — the pl_ id of the parent plan to write into.",
@@ -13791,6 +14187,7 @@ export const researchAppendSchema = {
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },
             fields: { type: "object", description: "update: fields to shallow-merge (the id is immutable)." },
             edits: EDITS_SCHEMA,
+            guideSection: GUIDE_SECTION_SCHEMA,
             planId: { type: "string", description: "Required when section is 'plan_items' — the parent pl_ id." },
           },
           required: ["section", "op"],

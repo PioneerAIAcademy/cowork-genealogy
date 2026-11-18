@@ -34,16 +34,21 @@
   "mcp_fixtures": [
     "volume-search-billy-antrim",
     "wiki-search-billy-presbyterian",
+    "place-search-billy-antrim",
     "place-search-any",
     "place-search-all-any",
     "place-population-any",
     "collections-search-any",
     "volume-search-any",
     "external-links-search-any",
+    "wiki-read-ireland-church-records",
+    "wiki-read-billy-antrim",
     "wiki-read-any",
     "wiki-place-page-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ]
 }

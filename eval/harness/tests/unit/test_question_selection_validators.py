@@ -25,11 +25,13 @@ negative, not a false positive. Three observed-shape sentences that must
 still fail, and the issue's own worked example that must still pass.
 """
 
+import json
 import sys
 from pathlib import Path
 
 # validators/ is not a package on the import path by default.
 _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
+_REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 # Aliased away from the `test_` prefix on purpose: pytest would otherwise
@@ -43,6 +45,7 @@ from test_question_selection import (  # noqa: E402
     test_motivation_objective_decomposed as check_motivation,
     test_new_question_not_vague as check_not_vague,
     test_premise_question_names_fact as check_premise,
+    test_question_selection_one_new_question as check_one_new_question,
     test_single_fact_objective_not_narrowed as check_single_fact,
     test_unblocks_nonempty as check_unblocks_nonempty,
 )
@@ -498,36 +501,103 @@ def test_passes_the_issues_own_worked_example():
     )
 
 
-def test_carve_out_covers_in_progress_not_only_planned():
-    """A plan item already `in_progress` (not merely `planned`) was already
-    weighed by research-plan; naming it is describing the plan, not
-    choosing a record (ut_question_selection_001, ut_question_selection_d01).
-    The validator itself `pytest.skip`s this case -- the carve-out IS a skip,
-    not a clean pass -- so confirming that is what proves it fired."""
-    reply = _reply(
-        '**Next step:** Complete `pli_006` -- the Thomas Flynn probate search on FamilySearch.',
-        "Once the probate search is complete, the question can be concluded.",
+# --- the held-record rule (lead decision on issue #4382, 2026-11-16) ---
+#
+# A record type in the hand-back passes only when the before-state research.json
+# already holds or plans it (sources, plan items, assertions), or a proof summary
+# lists it as still to search.
+
+
+def _held(**sections):
+    return {"research_json": sections}
+
+
+_PROBATE_REPLY = _reply(
+    "**Next step:** Complete `pli_006` -- the Thomas Flynn probate search on FamilySearch.",
+    "Once the probate search is complete, the question can be concluded.",
+)
+
+
+@pytest.mark.parametrize("before", [
+    _held(plans=[{"items": [{"id": "pli_006", "status": "completed", "title": "Thomas Flynn probate, 1870-1890"}]}]),
+    _held(sources=[{"id": "src_004", "title": "Schuylkill County Probate Records"}]),
+    _held(proof_summaries=[{"id": "ps_001", "exhaustive_search_summary": "Thomas Flynn's probate records not yet searched."}]),
+    _held(assertions=[{"id": "a_009", "value": "Estate administered in probate court"}]),
+])
+def test_a_record_type_the_project_holds_may_be_named(before):
+    """Each section counts (a proof summary through its still-to-search list),
+    and a completed item counts: the old
+    skip covered only planned/in_progress items."""
+    check_handback(
+        before_state=before,
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": _PROBATE_REPLY}],
     )
-    with pytest.raises(pytest.skip.Exception):
+
+
+def test_a_skipped_plan_item_does_not_hold_its_record_type():
+    """A skipped item is neither held nor planned: its rationale naming
+    probate must not license a hand-back that searches probate next."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "The next step is to search the probate court files for his estate.",
+    )
+    with pytest.raises(AssertionError, match="probate"):
         check_handback(
-            before_state=_before(has_in_progress=True),
+            before_state=_held(plans=[{"items": [{
+                "id": "pli_001", "status": "skipped", "title": "Vital records",
+                "rationale": "Probate records for this county burned in 1865.",
+            }]}]),
             text_response=None,
             test=_test_dict(),
             agent_returns=[{"subagent_type": "question-selection", "text": reply}],
         )
 
 
-def test_no_carve_out_still_fires_on_a_record_name():
-    """Without any planned/in_progress item on the project, naming a record
-    is still a violation -- the carve-out test above is not vacuously
-    passing because the check never fires at all."""
-    reply = _reply(
-        '**Next step:** Complete `pli_006` -- the Thomas Flynn probate search on FamilySearch.',
-        "Once the probate search is complete, the question can be concluded.",
-    )
+def test_a_record_type_the_project_does_not_hold_still_fires():
+    """The rule is not vacuous: the same reply on an empty project fails."""
     with pytest.raises(AssertionError, match="names a record"):
         check_handback(
-            before_state=_before(),
+            before_state=_held(),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": _PROBATE_REPLY}],
+        )
+
+
+def test_one_held_and_one_unheld_record_type_fails():
+    """Every pattern is checked, not just the first a snippet hits: a held
+    census does not cover an unheld probate in the same sentence."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "The census household is in hand, and the probate file comes next.",
+    )
+    with pytest.raises(AssertionError, match="probate"):
+        check_handback(
+            before_state=_held(sources=[{"id": "src_001", "title": "1850 United States Census"}]),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+        )
+
+
+def _scenario_research(name):
+    path = _REPO / "eval" / "fixtures" / "scenarios" / name / "research.json"
+    return {"research_json": json.loads(path.read_text(encoding="utf-8"))}
+
+
+@pytest.mark.parametrize("summary_tail", [
+    "The next step is to search the 1850 census for his household.",
+    "The next step is to look for his probate file in Rowan County.",
+])
+def test_the_issue_4163_shape_still_fails(summary_tail):
+    """hollis-parents-pre-1850 (ut_question_selection_hrt) holds no record type
+    the patterns name, so a hand-back choosing one fails there."""
+    reply = _reply("**Next step:** plan research for this question.", summary_tail)
+    with pytest.raises(AssertionError, match="names a record"):
+        check_handback(
+            before_state=_scenario_research("hollis-parents-pre-1850"),
             text_response=None,
             test=_test_dict(),
             agent_returns=[{"subagent_type": "question-selection", "text": reply}],
@@ -574,3 +644,214 @@ def test_will_pattern_still_flags_the_document_noun(sentence):
             test=_test_dict(),
             agent_returns=[{"subagent_type": "question-selection", "text": reply}],
         )
+
+
+# --- replay: hand-backs that failed the old rule, judged by the held-record rule ---
+#
+# `qs_handback_replays.json` holds every hand-back the pre-2026-11-16 rule
+# failed in v7_2026-10-30_15-45-47 (13: the lead's 11, plus d01 and 001, which
+# the old planned-item skip hid), the three #4382 PR 2 failures that survive
+# (003, 007, c7f), and one labelled synthetic 006-shaped case. Expected: of the
+# lead's 11, 9 still fail (no census held) and c7f and 007 now pass (probate,
+# census and certificate held); every #4382 PR 2 failure passes.
+
+_REPLAYS = json.loads(
+    (Path(__file__).resolve().parent / "qs_handback_replays.json").read_text(encoding="utf-8")
+)["cases"]
+
+
+@pytest.mark.parametrize(
+    "case", _REPLAYS, ids=[f"{c['test_id'][-3:]}-{i}" for i, c in enumerate(_REPLAYS)]
+)
+def test_replayed_handback_gets_the_held_record_verdict(case):
+    kwargs = dict(
+        before_state=_scenario_research(case["scenario"]),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": case["reply"]}],
+    )
+    if case["expect"] == "fail":
+        with pytest.raises(AssertionError, match="names a record"):
+            check_handback(**kwargs)
+    else:
+        check_handback(**kwargs)
+
+
+def test_the_v7_replay_keeps_nine_of_the_leads_eleven():
+    v7 = [c for c in _REPLAYS if c["source_log"].startswith("eval/runlogs/unit/question-selection/v7_2026-10-30")]
+    old_skip = {"ut_question_selection_d01", "ut_question_selection_001"}
+    leads_eleven = [c for c in v7 if c["test_id"] not in old_skip]
+    assert len(leads_eleven) == 11
+    assert sorted(c["test_id"][-3:] for c in leads_eleven if c["expect"] == "pass") == ["007", "c7f"]
+
+
+# --- test_handback_not_record_scoped: naming an existing question is not a record pick ---
+#
+# The Return contract tells the agent to name other questions by their text; the
+# Flynn fixtures' q_002 is "Where was Patrick Flynn in the 1850 census?", and a
+# user can type a question like it. Lead, 2026-11-16: "a line that refers to
+# q_002 is this case. Any other line that names a record is a real failure."
+# The 1870-census case is the one that separates "the word is part of naming
+# the question" from "the word appears in some question" -- the latter would
+# switch `census` off in every Flynn project.
+
+_CENSUS_Q002 = {"id": "q_002", "question": "Where was Patrick Flynn in the 1850 census?", "status": "resolved"}
+_PARENTS_Q001 = {"id": "q_001", "question": "Who were the parents of Patrick Flynn?", "status": "in_progress"}
+
+
+def _before_with(questions):
+    return {"research_json": {"plans": [], "questions": questions}}
+
+
+def _check(questions, summary_tail, caller="**Next step:** plan research for this question."):
+    check_handback(
+        before_state=_before_with(questions),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": _reply(caller, summary_tail)}],
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "The census question is resolved.",
+    "The 1850 census question still needs its own write-up.",
+    "The q_002 census question is resolved.",
+    "The second question, q_002 (where Patrick was in the 1850 census), is marked resolved.",
+])
+def test_naming_an_existing_census_question_passes(sentence):
+    _check([_PARENTS_Q001, _CENSUS_Q002], sentence)
+
+
+def test_naming_an_existing_census_question_passes_in_the_caller_line():
+    _check(
+        [_PARENTS_Q001, _CENSUS_Q002],
+        "The next step is to plan the search for his mother.",
+        caller="- **Depends on:** q_001; q_002 (the 1850 census question) is resolved.",
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "Search the probate records next.",
+    "Search the 1870 census next.",
+    "The next step is adding searches for the later census years.",
+    "The 1850 census question is resolved; search the 1870 census next.",
+    "The tree and the census evidence give Ireland.",
+])
+def test_a_record_suggestion_still_fails_beside_a_census_question(sentence):
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001, _CENSUS_Q002], sentence)
+
+
+def test_the_census_question_fails_where_no_question_carries_census():
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001], "The census question is resolved.")
+
+
+def test_a_question_id_whose_text_has_no_census_does_not_cover_it():
+    with pytest.raises(AssertionError, match="names a record"):
+        _check([_PARENTS_Q001, _CENSUS_Q002], "q_001 (search the 1870 census) comes next.")
+
+
+# --- test_handback_not_record_scoped: relaying a proof summary's own gap list ---
+#
+# A proof summary that says which records are not yet searched has already
+# named them; relaying that list is reading the project, the same footing as
+# naming an existing plan item. A record the summary names only as work done
+# ("Searched 1850 census …") is not on the list and stays a violation.
+
+_GAP_SUMMARY = {
+    "id": "ps_001",
+    "question_id": "q_001",
+    "exhaustive_search_summary": (
+        "Searched 1850 census (FamilySearch, Ancestry, MyHeritage) and the death certificate. "
+        "1870, 1880, and 1900 censuses and Thomas Flynn's probate records not yet searched."
+    ),
+    "narrative_markdown": "If Thomas Flynn's will names Patrick as a son, the conclusion would advance to **Proved**.",
+}
+_DONE_ONLY_SUMMARY = {
+    "id": "ps_001",
+    "question_id": "q_001",
+    "exhaustive_search_summary": (
+        "Searched 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census and the death "
+        "certificate. Thomas Flynn probate search (pli_006) completed."
+    ),
+}
+
+
+def _before_with_summary(summary):
+    return {"research_json": {"plans": [], "questions": [_PARENTS_Q001], "proof_summaries": [summary]}}
+
+
+def _check_summary(summary, sentence):
+    check_handback(
+        before_state=_before_with_summary(summary),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": _reply(
+            "**Next step:** plan research for this question.", sentence)}],
+    )
+
+
+@pytest.mark.parametrize("sentence", [
+    "Further checks, such as the 1870 to 1900 censuses or Thomas Flynn's probate records, would only strengthen an answer already in place.",
+    "Later searches of additional census years or a will would only strengthen that answer.",
+])
+def test_relaying_the_summarys_own_gap_list_passes(sentence):
+    _check_summary(_GAP_SUMMARY, sentence)
+
+
+@pytest.mark.parametrize("summary,sentence", [
+    (_GAP_SUMMARY, "Search his land deeds next."),
+    (_DONE_ONLY_SUMMARY, "Search the 1870 census next."),
+    (_DONE_ONLY_SUMMARY, "Search Thomas Flynn's probate records next."),
+])
+def test_a_record_the_summary_does_not_list_as_a_gap_still_fails(summary, sentence):
+    with pytest.raises(AssertionError, match="names a record"):
+        _check_summary(summary, sentence)
+
+
+# --- test_question_selection_one_new_question (issue #4531) -------------
+
+_ONE_NEW_TAGS = {"tags": ["question-selection-one-new-question"]}
+_BURIAL = "Where was Patrick Flynn (b. ca. 1845, d. 1908) buried?"
+_MARRIAGE = "Whom did Patrick Flynn (b. ca. 1845, d. 1908) marry?"
+
+
+def _check_one_new(before, after):
+    """A tagged call that skips is a dead gate, not a pass."""
+    try:
+        check_one_new_question(before, after, _ONE_NEW_TAGS)
+    except pytest.skip.Exception:
+        pytest.fail("the validator skipped a tagged test")
+
+
+def test_one_new_question_passes():
+    _check_one_new(_EMPTY, _state([_q("q_001", _BURIAL)]))
+
+
+def test_one_new_question_beside_an_existing_one_passes():
+    """Only questions added in the run count, not ones already there."""
+    before = _state([_q("q_001", _MARRIAGE, status="resolved")])
+    after = _state([_q("q_001", _MARRIAGE, status="resolved"), _q("q_002", _BURIAL)])
+    _check_one_new(before, after)
+
+
+def test_no_new_question_fails():
+    """Asking which fact first writes nothing: the failure #4531 is about."""
+    with pytest.raises(BaseException) as excinfo:
+        check_one_new_question(_EMPTY, _EMPTY, _ONE_NEW_TAGS)
+    assert excinfo.typename == "AssertionError", excinfo.typename
+    assert "got 0" in str(excinfo.value)
+
+
+def test_two_new_questions_fail():
+    after = _state([_q("q_001", _BURIAL), _q("q_002", _MARRIAGE)])
+    with pytest.raises(BaseException) as excinfo:
+        check_one_new_question(_EMPTY, after, _ONE_NEW_TAGS)
+    assert excinfo.typename == "AssertionError", excinfo.typename
+    assert "got 2" in str(excinfo.value)
+
+
+def test_one_new_question_untagged_is_skipped():
+    with pytest.raises(pytest.skip.Exception):
+        check_one_new_question(_EMPTY, _EMPTY, {"tags": ["question-selection-no-new-question"]})
