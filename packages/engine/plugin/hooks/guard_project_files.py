@@ -320,10 +320,10 @@ OWNED_SECTIONS = {
     # the section out and `project_create` writes its sources. Measured over the
     # e2e corpus: main-thread `sources` ops 360 in 2026-06/07, 1 in 2026-09, 0 in
     # the 36 run logs captured since 2026-10-17. Accepted false deny: a
-    # main-thread correction of a field citation does not refine (`notes`,
-    # `repository`, `title`) has no route. deny_reason gives an unlaned caller
-    # SOURCES_REASON, never OWNER_REASON, which would send a new record to
-    # `citation`, an agent that cannot create one.
+    # main-thread correction of `repository`, `access_date`, `url` or
+    # `url_archived` has no route, since citation is told never to change them.
+    # deny_reason gives an unlaned caller SOURCES_REASON, never OWNER_REASON,
+    # which would send a new record to `citation`, an agent that cannot create one.
     "sources": "citation",
 }
 
