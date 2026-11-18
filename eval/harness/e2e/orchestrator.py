@@ -2228,7 +2228,18 @@ async def _run_agent(
             # `section.field` and an `out_of_lane` one names a section the map
             # deliberately does not hold, so an unconditional lookup raises on
             # the three arms this was widened to serve.
-            if rule == "routed":
+            if rule == "routed" and owned == "sources":
+                # citation refines a source and never creates one, so a main
+                # thread composing one is sent to extraction, as the hook's
+                # SOURCES_REASON says, not told to delegate to citation.
+                text = (
+                    f"`{bare}` denied on `sources` — a new record goes through "
+                    "`extraction_append` (record-structurer for a non-FamilySearch "
+                    "source), and a citation refinement to the citation agent. "
+                    "Everything else in "
+                    f"`{bare}` is unaffected."
+                )
+            elif rule == "routed":
                 text = (
                     f"`{bare}` denied on `{owned}` — that section is routed to the "
                     f"{OWNED_SECTION_OWNERS[owned]} agent. Everything else in "
@@ -2616,6 +2627,9 @@ async def _run_agent(
             mode = turn.mode = _turn_mode(turn)
             if turn.index == _answered_question.get("opened"):
                 mode = turn.mode = "job"
+            # Read once and reused below (`project_completed`) -- `research.json`
+            # does not change between the two checks in this same turn.
+            research = read_research_json(workspace)
             decision = _boundary.next_auto_reply(
                 _reply_state,
                 mode,
@@ -2623,6 +2637,7 @@ async def _run_agent(
                 turn.step,
                 _boundary.offered_step(_last_text(turn)) or turn.halt_offer,
                 outcome,
+                research=research,
             )
             _reply_state.clear()
             _reply_state.update(decision.get("state") or {})
@@ -2649,7 +2664,7 @@ async def _run_agent(
             if (not reply and not _answered_question["done"]
                     and outcome == "ok" and mode == "job"
                     and turn.step != "proof-conclusion"
-                    and not project_completed(read_research_json(workspace) or {})
+                    and not project_completed(research or {})
                     and ended_on_a_question(_boundary, _last_text(turn))):
                 _answered_question["done"] = True
                 _answered_question["opened"] = turn.index + 1

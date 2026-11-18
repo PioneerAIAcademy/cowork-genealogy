@@ -9,7 +9,8 @@
       "conflict-resolution",
       "identity-conflict",
       "single-assertion",
-      "direct-arm"
+      "direct-arm",
+      "resolved-flynn-identity"
     ]
   },
   "input": {
@@ -19,7 +20,8 @@
   "judge_context": [
     "Should treat c_002 as an identity question (is record A's subject the same person as record B's subject) rather than as a fact disagreement",
     "Should note that an identity conflict can have only 1 competing_assertion_id — the assertion whose person-link is uncertain — unlike fact conflicts which need ≥2",
-    "If the skill can't resolve from available evidence, it should write what evidence would be decisive (e.g., a third corroborating record, age trajectory across censuses, naming patterns) rather than picking a winner arbitrarily"
+    "Should resolve c_002 and write what makes the resolution stand: the 1850 and 1860 household placement, and the certificate's father name as a second informant's agreement. Residual doubt about household 197 belongs in the resolution rationale, not in a deferral.",
+    "Outcome: c_002 ends resolved with preferred_assertion_id a_001. Ruling (senior genealogist, #4326): c_002 resolves, preferred_assertion_id a_001. Patrick is in Thomas Flynn's household in 1850 (age 5) and 1860 (age 15), and the 1908 certificate names Thomas Flynn as father through a different informant (the son-in-law). Those agree. The rival Patrick in household 197 appears only in the conflict's description, with no record of his own, so nothing on file supports him. An analysis that calls the father's name circular and defers is the wrong outcome."
   ],
   "execution": {
     "max_wall_clock_seconds": 600

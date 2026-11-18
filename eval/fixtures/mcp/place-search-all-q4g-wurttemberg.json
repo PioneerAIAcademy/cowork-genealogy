@@ -1,0 +1,65 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all for \"Württemberg, Germany\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "~rttemberg"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Württemberg, Germany",
+        "type": "State",
+        "dateRange": "+1871/+1945",
+        "latitude": 48.5727,
+        "longitude": 9.0533,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=W%C3%BCrttemberg&focusedId=25612",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/W%C3%BCrttemberg"
+      },
+      {
+        "standardPlace": "Württemberg",
+        "type": "Country",
+        "dateRange": "+1495/+1871",
+        "latitude": 48.5727,
+        "longitude": 9.0533,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=W%C3%BCrttemberg&focusedId=10907841",
+        "wikipediaUrl": "https://de.wikipedia.org/wiki/W%C3%BCrttemberg"
+      },
+      {
+        "standardPlace": "Grafschaft Württemberg, Holy Roman Empire",
+        "type": "County (Top level)",
+        "dateRange": "+1135/+1495",
+        "latitude": 48.777074,
+        "longitude": 9.179397,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Grafschaft%20W%C3%BCrttemberg&focusedId=13979709",
+        "wikipediaUrl": "https://de.wikipedia.org/wiki/W%C3%BCrttemberg"
+      },
+      {
+        "standardPlace": "Baden-Württemberg, Germany",
+        "type": "State",
+        "dateRange": "+1945/",
+        "latitude": 48.855,
+        "longitude": 9.2291,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Baden-W%C3%BCrttemberg&focusedId=2030",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Baden-W%C3%BCrttemberg"
+      },
+      {
+        "standardPlace": "Baden, Germany",
+        "type": "State",
+        "dateRange": "+1871/+1945",
+        "latitude": 48.2355,
+        "longitude": 8.0738,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Baden&focusedId=11971870",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Baden"
+      },
+      {
+        "standardPlace": "Baden",
+        "type": "Duchy",
+        "dateRange": "+1112/+1871",
+        "latitude": 48.2355,
+        "longitude": 8.0738,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Baden&focusedId=25662",
+        "wikipediaUrl": "https://de.wikipedia.org/wiki/Großherzogtum_Baden"
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_research_tsv",
+    "skill": "research",
+    "name": "Routes a no-project, no-objective request to the tree-survey agent",
+    "type": "positive",
+    "description": "The user starts /research in an empty folder and asks to start a new project, stating no person or question. No research.json exists and there is no objective, so the router spawns @plugin:tree-survey (no projectPath) instead of init-project, relays its suggestions, and stops for the researcher's pick; init-project follows only once the researcher picks (issue #3273). The message enters /research; a bare \"what should I research in my tree?\" is matched by tree-survey's own description and never reaches the router. tree-survey is stubbed so the test does not depend on a live survey.",
+    "tags": [
+      "routing",
+      "routes-to:tree-survey"
+    ]
+  },
+  "input": {
+    "user_message": "/research Let's start a new research project.",
+    "scenario": "empty-folder-no-project"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "tree-survey",
+        "response": "Suggestions from the tree survey (nothing was created):\n1. FamilySearch ID LZ00-AAA: Who were the parents of Hannah Pruitt, born about 1862 in Lancaster, Pennsylvania?\n2. FamilySearch ID LZ00-BBB: Who were the children of Frank Ellery and Ruth Ashby, married in Dayton, Ohio?\nWhen the researcher picks one, run init-project with that ID and that question as the objective.\n---\nTwo people in your tree look like good places to start. Hannah Pruitt has no parents recorded, and Lancaster records from the 1860s may name them. Ruth Ashby and Frank Ellery are shown married with no children, and Dayton records could fill that in. Pick one and research will start from there."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The only assertion that matters is whether @plugin:tree-survey is the first hand-off. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
+    "The folder is empty (no research.json) and the message states no person and no question, so the routing table row is 'No research.json at all, and the message states no objective -> tree-survey'. init-project as the first hand-off is wrong here.",
+    "The people in the suggestions (Hannah Pruitt, Frank Ellery, Ruth Ashby) come from the stubbed tree-survey, not from the router, and an empty project folder is expected: tree-survey reads the FamilySearch tree, not the folder. Relaying them is correct; do not score them as fabricated.",
+    "tree-survey is stubbed with two suggestions that end with a request to pick one. The router should relay the suggestions and stop for the researcher's pick; spawning init-project with a person the researcher never chose is a fault. Grade only the quality of the router's own work: state derivation and narration.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records. Do NOT score Correctness or Completeness on whether the router reached the right callee."
+  ],
+  "judge_reads_files": true
+}

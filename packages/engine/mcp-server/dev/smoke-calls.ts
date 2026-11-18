@@ -738,6 +738,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   tokenStep("collections_search", { standardPlace: "England" }),
   tokenStep("source_attachments", { uris: ["ark:/61903/1:1:QVS9-DHDB"] }),
   tokenStep("image_search", { imageGroupNumber: "004884748" }),
+  // The one shape measured to answer (issue #4632): the Peru page with its cc.
+  tokenStep("image_index", { imageId: "ark:/61903/3:1:33SQ-GYY1-B2G", collectionId: "1803958" }),
   tokenStep("volume_search", { standardPlace: "England" }),
   tokenStep("same_person", {
     gedcomx1: { persons: [{ id: "A" }] },

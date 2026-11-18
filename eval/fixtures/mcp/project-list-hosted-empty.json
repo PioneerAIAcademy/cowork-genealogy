@@ -1,0 +1,11 @@
+{
+  "tool": "project_list",
+  "description": "Hosted listing for a signed-in user with no projects yet, plus a fresh path for a new project.",
+  "args": {},
+  "response": {
+    "mode": "hosted",
+    "projects": [],
+    "newProjectPath": "/proj_5e7b2a91c04d8f36",
+    "message": "Pass a listed project's projectPath to continue it. To start a project for a person none of them is about, pass newProjectPath as projectPath."
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "tool": "place_search",
+  "description": "place_search for \"Jalisco, Mexico\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "~Jalisco"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Jalisco, Mexico",
+        "type": "State",
+        "dateRange": "+1823/",
+        "latitude": 20.333,
+        "longitude": -103.667,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=2902",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Jalisco,_Mexico"
+      },
+      {
+        "standardPlace": "Jalisco, Emiliano Zapata, Tabasco, Mexico",
+        "type": "Estate",
+        "latitude": 17.9056,
+        "longitude": -91.7607,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=7508254"
+      },
+      {
+        "standardPlace": "Jalisco, Balancán, Tabasco, Mexico",
+        "type": "Estate",
+        "latitude": 17.9309,
+        "longitude": -91.4796,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=7508184"
+      },
+      {
+        "standardPlace": "Jalisco, Las Margaritas, Chiapas, Mexico",
+        "type": "Village",
+        "latitude": 16.429,
+        "longitude": -91.9734,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=7298851"
+      },
+      {
+        "standardPlace": "Jalisco, Altamirano, Chiapas, Mexico",
+        "type": "Town",
+        "latitude": 16.7464,
+        "longitude": -92.0169,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=7298523"
+      },
+      {
+        "standardPlace": "Jalisco, Torreón, Coahuila, Mexico",
+        "type": "Town",
+        "latitude": 25.217,
+        "longitude": -103.4411,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=6904316",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Jalisco,_Mexico"
+      },
+      {
+        "standardPlace": "Jalisco, San Juan de Guadalupe, Durango, Mexico",
+        "type": "Estate",
+        "latitude": 24.4551,
+        "longitude": -102.7193,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=6430029"
+      },
+      {
+        "standardPlace": "Jalisco, Huejotitán, Chihuahua, Mexico",
+        "type": "Hamlet",
+        "latitude": 26.9181,
+        "longitude": -106.0421,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jalisco&focusedId=6426117"
+      },
+      {
+        "standardPlace": "Xalisco, Nayarit, Mexico",
+        "type": "Municipality",
+        "dateRange": "+1525/",
+        "latitude": 21.443764,
+        "longitude": -104.899651,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Xalisco&focusedId=2945243",
+        "wikipediaUrl": "https://es.wikipedia.org/wiki/Municipio_de_Xalisco"
+      },
+      {
+        "standardPlace": "Xalisco, Xalisco, Nayarit, Mexico",
+        "type": "City",
+        "dateRange": "+1525/",
+        "latitude": 21.443753,
+        "longitude": -104.899652,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Xalisco&focusedId=6904319",
+        "wikipediaUrl": "https://es.wikipedia.org/wiki/Xalisco_(Nayarit)"
+      },
+      {
+        "standardPlace": "Jaluco, Cihuatlán, Jalisco, Mexico",
+        "type": "Village",
+        "latitude": 19.2305,
+        "longitude": -104.6855,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Jaluco&focusedId=6904289"
+      },
+      {
+        "standardPlace": "Ejido Jalisco, Mexicali, Baja California, Mexico",
+        "type": "Town",
+        "latitude": 32.519,
+        "longitude": -115.2369,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ejido%20Jalisco&focusedId=6894132"
+      }
+    ],
+    "verdict": {
+      "standardPlace": "Jalisco, Mexico",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

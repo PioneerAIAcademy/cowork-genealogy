@@ -1,0 +1,875 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Anna, no surname (recordCountry Norway), no collection, marriage 1770-1800, count 50. 998473 matches; the bride NW44-PMK is not among the 50 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-anna-nosurname-unpinned, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023. The predicate cannot require surname or collectionId to be absent, so it is listed after every pinned and surname-specific fixture.",
+  "args": {
+    "givenName": "Anna"
+  },
+  "response": {
+    "query": {
+      "givenName": "Anna",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50
+    },
+    "totalMatches": 998473,
+    "returned": 50,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:N75K-FJY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "28 Aug 1782",
+            "place": "Bergen, Bergen, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Riese",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Peder Christian Biering",
+        "recordArk": "ark:/61903/1:2:MYS6-5SJ",
+        "batchNumber": "M42937-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW7P-Z21",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jan 1770",
+            "place": "Bragernes Nedre Kirkegård, Drammen, Drammen, Buskerud, Norway"
+          }
+        ],
+        "personName": "Anna Roys",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Johan Nicholaus Pentzin",
+        "recordArk": "ark:/61903/1:2:MYQM-J3K",
+        "batchNumber": "M42048-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7R2-Q5C",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Jun 1797",
+            "place": "Finsland, Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Anna Andersdotter Heddan",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Larss. Evenstad",
+        "recordArk": "ark:/61903/1:2:MYS1-TSF",
+        "batchNumber": "M42479-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7RK-T5L",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Jun 1780",
+            "place": "Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Anna Danielsdotter Aagedal",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jorgen Ulson Landal",
+        "recordArk": "ark:/61903/1:2:MYS1-TRQ",
+        "batchNumber": "M42478-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7R2-W98",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "11 Apr 1793",
+            "place": "Grindheim, Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Anna Thoresdotter Aagedal",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Friderich Torgies. Bothnen",
+        "recordArk": "ark:/61903/1:2:MYS1-TDT",
+        "batchNumber": "M42480-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWHP-DQJ",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Jul 1781",
+            "place": "Bø, Nordland, Norway"
+          }
+        ],
+        "personName": "Anna Sophia Ringkiob",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jens Enochsen",
+        "recordArk": "ark:/61903/1:2:MYQL-JPK",
+        "batchNumber": "M42723-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7YL-28F",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Nov 1789",
+            "place": "Rogaland, Norway"
+          }
+        ],
+        "personName": "Anna Kraagedal",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Aadine Larsen",
+        "recordArk": "ark:/61903/1:2:MYSR-W7S",
+        "batchNumber": "M42875-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ9-RJ1",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Nov 1774",
+            "place": "Fjaler, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Colbeinsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Mads Truelsen",
+        "recordArk": "ark:/61903/1:2:MYQ4-DXN",
+        "batchNumber": "M42195-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWC1-F4J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "15 Jul 1788",
+            "place": "Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Anna Colbeensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Jonaesen",
+        "recordArk": "ark:/61903/1:2:MYQ4-TJH",
+        "batchNumber": "M42260-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZQ-HQ8",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "27 Dec 1795",
+            "place": "Gulen, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Colbeinsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Soren Hansen",
+        "recordArk": "ark:/61903/1:2:MYQW-LYD",
+        "batchNumber": "M42281-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ3-TJL",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jul 1794",
+            "place": "Gulen, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Colbeinsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Thomasen",
+        "recordArk": "ark:/61903/1:2:MYQW-GXT",
+        "batchNumber": "M42281-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW47-C5L",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "21 Oct 1792",
+            "place": "Fjelberg, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Kolbensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ostmund Nilsen",
+        "recordArk": "ark:/61903/1:2:MY3L-LTN",
+        "batchNumber": "M42904-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ7-V4R",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "6 Aug 1786",
+            "place": "Innvik, Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Anna Gullov Colbensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ingebricht Andersen",
+        "recordArk": "ark:/61903/1:2:MYQW-N44",
+        "batchNumber": "M42293-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMD-VL6",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "9 Dec 1795",
+            "place": "Lista, Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Anna Cathrina Willemsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Knudsen",
+        "recordArk": "ark:/61903/1:2:MY3M-CDN",
+        "batchNumber": "M42520-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7T2-TQY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Nov 1774",
+            "place": "Leksvik Prestegjeld, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jacob Olsen",
+        "recordArk": "ark:/61903/1:2:MYS2-2S1",
+        "batchNumber": "M42676-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7PQ-WM9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Dec 1786",
+            "place": "Snåsa, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Mortensen",
+        "recordArk": "ark:/61903/1:2:MYSL-WDJ",
+        "batchNumber": "M42692-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWHJ-34P",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "9 Jun 1782",
+            "place": "Overhalla Prestegjeld, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Iver Iversen",
+        "recordArk": "ark:/61903/1:2:MYQ2-JS3",
+        "batchNumber": "M42687-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWHP-WBC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "9 Nov 1778",
+            "place": "Andenes, Nordland, Norway"
+          }
+        ],
+        "personName": "Anna Maria Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Marthinus Nielsen Hitmoller",
+        "recordArk": "ark:/61903/1:2:MYQL-VWV",
+        "batchNumber": "M42741-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4J-MH9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Nov 1785",
+            "place": "Bergen, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Catrina Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Michael Berentsen",
+        "recordArk": "ark:/61903/1:2:MYQM-T3J",
+        "batchNumber": "M42941-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW66-Y44",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Mar 1790",
+            "place": "Domkirken, Stavanger, Rogaland, Norway"
+          }
+        ],
+        "personName": "Anna Maria Nielsdr Dahlstrom",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Bendix Michael Taraldsen Bahr",
+        "recordArk": "ark:/61903/1:2:MYQH-D4P",
+        "batchNumber": "M42375-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW9H-YHC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1 Jan 1800",
+            "place": "Gaular, Sogn og Fjordane, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Simon Madsen",
+        "recordArk": "ark:/61903/1:2:MYSR-RNF",
+        "batchNumber": "M42275-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZM-NM7",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Aug 1771",
+            "place": "Bremanger, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Knudtsen",
+        "recordArk": "ark:/61903/1:2:MYQW-HD9",
+        "batchNumber": "M42249-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMC-PBC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "16 Jun 1777",
+            "place": "Nes, Vest-Agder, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Sigbiorn Lilledrang",
+        "recordArk": "ark:/61903/1:2:MYS1-YTH",
+        "batchNumber": "M42481-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWDL-Q4L",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 May 1773",
+            "place": "Overhalla Prestegjeld, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Johan Einersson",
+        "recordArk": "ark:/61903/1:2:MYQ2-J55",
+        "batchNumber": "M42687-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZ7-9HY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "24 Jun 1785",
+            "place": "Hafslo, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Nielsen",
+        "recordArk": "ark:/61903/1:2:MYQW-V4V",
+        "batchNumber": "M42288-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWW4-CY6",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "22 Nov 1779",
+            "place": "Vardø, Finnmark, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Amund Hansen",
+        "recordArk": "ark:/61903/1:2:MY3B-VDV",
+        "batchNumber": "M42792-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMB-X3J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "9 Jul 1799",
+            "place": "Fet, Akershus, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Arne Johannesen",
+        "recordArk": "ark:/61903/1:2:MYS8-TS4",
+        "batchNumber": "M42813-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW66-RX1",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Aug 1770",
+            "place": "Domkirken, Stavanger, Rogaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Samuel Thordsen",
+        "recordArk": "ark:/61903/1:2:MYQH-XN2",
+        "batchNumber": "M42375-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6F-HXP",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "30 Mar 1788",
+            "place": "Hå, Rogaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsen",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Peder Olesen",
+        "recordArk": "ark:/61903/1:2:MYQH-B3C",
+        "batchNumber": "M42025-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW66-PZR",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "4 Aug 1785",
+            "place": "Domkirken, Stavanger, Rogaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr Egelund",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Andreas Buhring",
+        "recordArk": "ark:/61903/1:2:MYQH-D43",
+        "batchNumber": "M42375-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZQ-VF6",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "31 Oct 1781",
+            "place": "Hafslo, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Aamund Schierven",
+        "recordArk": "ark:/61903/1:2:MYQW-KG7",
+        "batchNumber": "M42288-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZQ-LLR",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Jun 1795",
+            "place": "Hafslo, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Lasse Endresen",
+        "recordArk": "ark:/61903/1:2:MYQW-K6M",
+        "batchNumber": "M42288-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWZQ-B91",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "3 Nov 1797",
+            "place": "Hafslo, Nordre Bergenhus, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Johannes Johannesen",
+        "recordArk": "ark:/61903/1:2:MYQW-VGK",
+        "batchNumber": "M42288-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW9Q-1ZP",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jun 1791",
+            "place": "Etne, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Jenssen",
+        "recordArk": "ark:/61903/1:2:MYSJ-WGS",
+        "batchNumber": "M42907-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWSW-NXR",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "16 Nov 1800",
+            "place": "Ibestad, Troms, Norway"
+          }
+        ],
+        "personName": "Anna Martha Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Peder Rasmus Davidsson",
+        "recordArk": "ark:/61903/1:2:MYS1-6ZS",
+        "batchNumber": "M42552-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4J-M6K",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Nov 1785",
+            "place": "Bergen, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Christina Nielsen",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Gudmund Jonassen Tofte",
+        "recordArk": "ark:/61903/1:2:MYQM-T9W",
+        "batchNumber": "M42941-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMF-BQF",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "29 Nov 1774",
+            "place": "Bjarkøy, Troms, Norway"
+          }
+        ],
+        "personName": "Anna Kirstina Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Thomas Stephanson",
+        "recordArk": "ark:/61903/1:2:MYS1-D2K",
+        "batchNumber": "M42553-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N75J-Y5J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "18 Jun 1797",
+            "place": "Rogaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdatter",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jacob Jacobson",
+        "recordArk": "ark:/61903/1:2:MYSR-JZP",
+        "batchNumber": "M30004-4",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N756-3Y1",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Jul 1799",
+            "place": "Roan kirke, Sør-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Niels Olsen Syndjor",
+        "recordArk": "ark:/61903/1:2:MYST-H17",
+        "batchNumber": "M42413-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4H-GWY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Jun 1776",
+            "place": "Haus, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erich Erichsen",
+        "recordArk": "ark:/61903/1:2:MY3L-DJM",
+        "batchNumber": "M42143-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7Y9-N8K",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "6 Oct 1799",
+            "place": "Alstahaug, Nordland, Norway"
+          }
+        ],
+        "personName": "Anna Johanna Nielsdatter",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Lars Nielsen",
+        "recordArk": "ark:/61903/1:2:MYSV-KBB",
+        "batchNumber": "M42746-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4C-FHR",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "26 Apr 1799",
+            "place": "Hosanger, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Mons Monsen",
+        "recordArk": "ark:/61903/1:2:MY3L-H17",
+        "batchNumber": "M42128-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7YQ-JHC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "6 Jan 1782",
+            "place": "Vega, Nordland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr Roroen",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Hendrich Baarsen Roroen",
+        "recordArk": "ark:/61903/1:2:MYS2-7GR",
+        "batchNumber": "M42765-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7YQ-VVC",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "5 Jan 1794",
+            "place": "Vega, Nordland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erich Ellingsen Roroen",
+        "recordArk": "ark:/61903/1:2:MYS2-7GP",
+        "batchNumber": "M42765-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7YV-KV7",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "12 Nov 1777",
+            "place": "Eiker, Buskerud, Norway"
+          }
+        ],
+        "personName": "Anna Cathrina Nielsdatter",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Amund Stensen",
+        "recordArk": "ark:/61903/1:2:MYSF-2KV",
+        "batchNumber": "M42866-2",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW83-Q9K",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "16 Nov 1794",
+            "place": "Ibestad, Troms, Norway"
+          }
+        ],
+        "personName": "Anna Christina Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Jens Rasmusson",
+        "recordArk": "ark:/61903/1:2:MY35-1DT",
+        "batchNumber": "M42552-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWMQ-YX4",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Dec 1792",
+            "place": "Tønsberg, Vestfold, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Rasmusen",
+        "recordArk": "ark:/61903/1:2:MY39-4FK",
+        "batchNumber": "M42396-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW4J-KR4",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "2 Jul 1800",
+            "place": "Os, Hordaland, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Ole Johannisen",
+        "recordArk": "ark:/61903/1:2:MY32-21C",
+        "batchNumber": "M30001-3",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NW6K-YXR",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Oct 1772",
+            "place": "Torvastad, Stavanger Amt, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Erich Rejersen",
+        "recordArk": "ark:/61903/1:2:MYQH-QNB",
+        "batchNumber": "M42159-1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7PQ-7PK",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Oct 1785",
+            "place": "Snåsa, Nord-Trøndelag, Norway"
+          }
+        ],
+        "personName": "Anna Nielsdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Kiel Larson",
+        "recordArk": "ark:/61903/1:2:MYSL-W6T",
+        "batchNumber": "M42692-1",
+        "role": "Bride"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926"
+    }
+  }
+}

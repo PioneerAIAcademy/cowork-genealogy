@@ -1,0 +1,1572 @@
+{
+ "$comment": "Conclusion status vectors (docs/plan/conclusion-tree.md Decision 6). Read by packages/engine/mcp-server/tests/utils/conclusion-status.test.ts; Stage 2's viewer port reads the same file.",
+ "cases": [
+  {
+   "name": "issue #2511: the concluded parent set reads likely; the other reads set aside in favour of it, and nothing is removed",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_m",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_c_I1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_f_I4",
+      "assertion_id": "a_f",
+      "person_id": "I4",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_m_I5",
+      "assertion_id": "a_m",
+      "person_id": "I5",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c",
+         "a_f"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I4",
+         "child": "I1"
+        }
+       },
+       {
+        "claim": "mother",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c",
+         "a_m"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I5",
+         "child": "I1"
+        }
+       },
+       {
+        "claim": "not Pedro",
+        "proof_tier": "possible",
+        "supporting_assertion_ids": [
+         "a_c"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        },
+        "polarity": "denied"
+       },
+       {
+        "claim": "not Rosa",
+        "proof_tier": "possible",
+        "supporting_assertion_ids": [
+         "a_c"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I3",
+         "child": "I1"
+        },
+        "polarity": "denied"
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI3",
+        "given": "Rosa",
+        "surname": "Diaz"
+       }
+      ]
+     },
+     {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI4",
+        "given": "Juan",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI5",
+        "given": "Maria",
+        "surname": "Lopez"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "subtype": "Biological"
+     },
+     {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "subtype": "Biological"
+     },
+     {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1"
+     },
+     {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I1"
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "startingTree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI3",
+        "given": "Rosa",
+        "surname": "Diaz"
+       }
+      ]
+     },
+     {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI4",
+        "given": "Juan",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI5",
+        "given": "Maria",
+        "surname": "Lopez"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "subtype": "Biological"
+     },
+     {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "subtype": "Biological"
+     },
+     {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1"
+     },
+     {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I1"
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R4"
+     },
+     "label": "likely"
+    },
+    {
+     "holder": {
+      "relationshipId": "R5"
+     },
+     "label": "likely"
+    },
+    {
+     "holder": {
+      "relationshipId": "R2"
+     },
+     "label": "set aside in favour of Juan Abarca",
+     "winner": "I4"
+    },
+    {
+     "holder": {
+      "relationshipId": "R3"
+     },
+     "label": "set aside in favour of Maria Lopez",
+     "winner": "I5"
+    }
+   ],
+   "expectRowCount": 4
+  },
+  {
+   "name": "a claim of 25 Nov 1879 does not cover a fact of 1880, and the near miss names both",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_m",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_c_I1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_f_I4",
+      "assertion_id": "a_f",
+      "person_id": "I4",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_m_I5",
+      "assertion_id": "a_m",
+      "person_id": "I5",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "birth",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c"
+        ],
+        "fact": {
+         "subject": "I1",
+         "fact_type": "Birth",
+         "date": "25 Nov 1879"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1880",
+        "sources": [
+         {
+          "ref": "S2"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "relationships": [],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     },
+     {
+      "id": "S2",
+      "title": "census"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "personId": "I1"
+     },
+     "factId": "F1",
+     "label": "found in a record, not yet checked",
+     "nearMiss": {
+      "claim": "birth",
+      "claimValue": "25 Nov 1879",
+      "treeValue": "1880"
+     }
+    }
+   ]
+  },
+  {
+   "name": "a place-only claim matches its fact",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_m",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_c_I1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_f_I4",
+      "assertion_id": "a_f",
+      "person_id": "I4",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_m_I5",
+      "assertion_id": "a_m",
+      "person_id": "I5",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "birthplace",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c"
+        ],
+        "fact": {
+         "subject": "I1",
+         "fact_type": "Birth",
+         "place": "Boston"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879",
+        "place": "Boston, Suffolk, Massachusetts"
+       }
+      ]
+     }
+    ],
+    "relationships": [],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "personId": "I1"
+     },
+     "factId": "F1",
+     "label": "likely"
+    }
+   ]
+  },
+  {
+   "name": "a probable denial with no winner reads doubted",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_m",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_c_I1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_f_I4",
+      "assertion_id": "a_f",
+      "person_id": "I4",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_m_I5",
+      "assertion_id": "a_m",
+      "person_id": "I5",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "not Pedro",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        },
+        "polarity": "denied"
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R2"
+     },
+     "label": "doubted"
+    }
+   ]
+  },
+  {
+   "name": "an imported edge corroborated by a census still reads as an import with no baseline",
+   "research": {
+    "assertions": [],
+    "person_evidence": [],
+    "proof_summaries": []
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+       {
+        "ref": "S1",
+        "quality": 1
+       },
+       {
+        "ref": "S3",
+        "quality": 3
+       }
+      ]
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     },
+     {
+      "id": "S3",
+      "title": "1880 census"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R2"
+     },
+     "label": "from your starting tree, not yet checked"
+    }
+   ]
+  },
+  {
+   "name": "a parent likely by its claim reads tentative while a rival has no verdict",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_m",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_c_I1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_f_I4",
+      "assertion_id": "a_f",
+      "person_id": "I4",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_m_I5",
+      "assertion_id": "a_m",
+      "person_id": "I5",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c",
+         "a_f"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I4",
+         "child": "I1"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI3",
+        "given": "Rosa",
+        "surname": "Diaz"
+       }
+      ]
+     },
+     {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI4",
+        "given": "Juan",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI5",
+        "given": "Maria",
+        "surname": "Lopez"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "subtype": "Biological"
+     },
+     {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1"
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R4"
+     },
+     "label": "tentative",
+     "rivalsWithoutVerdict": [
+      "I2"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a typed edge's subtype reads unchecked unless a claim names it",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_m",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_c_I1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_f_I4",
+      "assertion_id": "a_f",
+      "person_id": "I4",
+      "confidence": "confident",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_a_m_I5",
+      "assertion_id": "a_m",
+      "person_id": "I5",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c",
+         "a_f"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I4",
+         "child": "I1"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI3",
+        "given": "Rosa",
+        "surname": "Diaz"
+       }
+      ]
+     },
+     {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI4",
+        "given": "Juan",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI5",
+        "given": "Maria",
+        "surname": "Lopez"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1",
+      "subtype": "Step"
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R4"
+     },
+     "label": "likely",
+     "subtypeLabel": "from your starting tree, not yet checked"
+    }
+   ]
+  },
+  {
+   "name": "a probable claim whose person no cited assertion links reads tentative, naming that person",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_m",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_c_I1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_c",
+         "a_f"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I4",
+         "child": "I1"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI3",
+        "given": "Rosa",
+        "surname": "Diaz"
+       }
+      ]
+     },
+     {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI4",
+        "given": "Juan",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+       {
+        "id": "NI5",
+        "given": "Maria",
+        "surname": "Lopez"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1"
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R4"
+     },
+     "label": "tentative, not yet confirmed to be Juan Abarca"
+    }
+   ]
+  },
+  {
+   "name": "a disproved claim reads ruled out",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "disproved",
+      "claims": [
+       {
+        "claim": "not Pedro",
+        "proof_tier": "disproved",
+        "supporting_assertion_ids": [
+         "a_c"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+     }
+    ],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R2"
+     },
+     "label": "ruled out"
+    }
+   ]
+  },
+  {
+   "name": "an unclaimed fact reads as an import by its FamilySearch-tree ref, as a legacy finding when primary, else as found",
+   "research": {
+    "assertions": [],
+    "person_evidence": [],
+    "proof_summaries": []
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "NI1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1850",
+        "sources": [
+         {
+          "ref": "S1",
+          "quality": 1
+         }
+        ]
+       },
+       {
+        "id": "F2",
+        "type": "Death",
+        "date": "1910",
+        "primary": true,
+        "sources": [
+         {
+          "ref": "S2"
+         }
+        ]
+       },
+       {
+        "id": "F3",
+        "type": "Residence",
+        "date": "1880",
+        "sources": [
+         {
+          "ref": "S2"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "relationships": [],
+    "sources": [
+     {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from John Abarca, KWZ1-ABC)",
+      "url": "https://www.familysearch.org/tree"
+     },
+     {
+      "id": "S2",
+      "title": "census"
+     }
+    ]
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "personId": "I1"
+     },
+     "factId": "F1",
+     "label": "from your starting tree, not yet checked"
+    },
+    {
+     "holder": {
+      "personId": "I1"
+     },
+     "factId": "F2",
+     "label": "from an earlier finding, no claim recorded"
+    },
+    {
+     "holder": {
+      "personId": "I1"
+     },
+     "factId": "F3",
+     "label": "found in a record, not yet checked"
+    }
+   ]
+  },
+  {
+   "name": "a proved claim whose persons are linked only at probable reads likely (Decision 30)",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_c",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated"
+     },
+     {
+      "id": "a_f",
+      "record_id": "rec_bap",
+      "source_id": "src_rec_bap",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "x",
+      "record_basis": "stated"
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_1",
+      "assertion_id": "a_c",
+      "person_id": "I1",
+      "confidence": "probable",
+      "superseded_by": null
+     },
+     {
+      "id": "pe_2",
+      "assertion_id": "a_f",
+      "person_id": "I2",
+      "confidence": "probable",
+      "superseded_by": null
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "proved",
+        "supporting_assertion_ids": [
+         "a_c",
+         "a_f"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": [
+     {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+     }
+    ],
+    "sources": []
+   },
+   "startingTree": null,
+   "expect": [
+    {
+     "holder": {
+      "relationshipId": "R2"
+     },
+     "label": "likely"
+    }
+   ]
+  }
+ ]
+}

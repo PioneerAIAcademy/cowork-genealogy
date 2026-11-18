@@ -1,0 +1,2371 @@
+{
+  "tool": "record_search",
+  "description": "Carved from feedback bundle feedback-2026-10-30T07-56-13-719275Z.zip (issue #4042), results/log_001.json, verbatim: the first death search for Nicolasa Cedillo in Honduras Civil Registration (2135627). 14 results, both women scored identically: the 1943 woman (X7FS-6T4L, X7FM-RFHS, X7KG-W4V1; b. 1868, mother Julia Cedillo, spouse Santiago Cedillo with no status) and the 1945 woman (X7FM-YRGN, dup X7LQ-QZVH; b. 1875, parents Ventura Cedillo + Maria Jesus Amaya, no spouse); Santiago Cedillo's 4 Dec 1918 death (X7LS-KMLK, Couple with Nicolasa Cedillo); her children's records (X7FS-X3LL, X7LS-8L8G); and unrelated namesakes.",
+  "args": {
+    "givenName": "~Nicolasa",
+    "surname": "~Cedillo"
+  },
+  "response": {
+    "query": {
+      "projectPath": "/project",
+      "subjectId": "I1",
+      "givenName": "Nicolasa",
+      "surname": "Cedillo",
+      "collectionId": "2135627",
+      "recordCountry": "Honduras",
+      "sex": "Female",
+      "recordType": "death"
+    },
+    "totalMatches": 14,
+    "paginationCappedAt": 4999,
+    "returned": 14,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:X7FS-6T4L",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "22 de mayo de 1943",
+            "place": "Santa Lucía, Intibucá, Honduras"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Ma Nicolasa Cedillo",
+        "score": 5.6236,
+        "confidence": 5,
+        "sex": "Female",
+        "birthDate": "1868",
+        "deathDate": "22 May 1943",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZDP-GXMN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310191494631",
+              "ark": "ark:/61903/1:1:X7FS-6T4L",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Ma Nicolasa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868"
+                },
+                {
+                  "type": "Death",
+                  "date": "22 de mayo de 1943",
+                  "standard_date": "22 May 1943"
+                },
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "22 de mayo de 1943",
+                  "standard_date": "22 May 1943",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310191494634",
+              "ark": "ark:/61903/1:1:X7FS-6T45",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Santiago"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310191494631",
+              "person2": "p_310191494634"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182560836616",
+              "resource_type": "Record",
+              "title": "Registro para Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FS-6T4L : Thu Aug 06 07:42:23 UTC 2026), Entry for Ma Nicolasa Cedillo and Santiago Cedillo, 22 de mayo de 1943.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZDP-GXMN",
+              "coverage": {
+                "date_range": "22 de mayo de 1943",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-Z7CY-XSSC-N",
+              "coverage": {
+                "place_rep_id": "441572",
+                "date_range": "+1942-09-01T00:00:00Z/+1944-06-30T23:59:59Z",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310191494631",
+              "resource_type": "Person",
+              "url": "#p_310191494631"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310191494631",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7FM-YRGN",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "13 de febrero de 1945",
+            "place": "Santa Lucía, Intibucá, Honduras"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Maria Nicolasa Cedillo",
+        "score": 5.6236,
+        "confidence": 5,
+        "sex": "Female",
+        "birthDate": "1875",
+        "deathDate": "12 February 1945",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Maria Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZDG-1D7Q",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310190252176",
+              "ark": "ark:/61903/1:1:X7FM-YRGN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Maria Nicolasa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "13 de febrero de 1945",
+                  "standard_date": "13 Feb 1945",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "12 de febrero de 1945",
+                  "standard_date": "12 Feb 1945"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310190252177",
+              "ark": "ark:/61903/1:1:X7FM-YRGJ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Ventura"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310190252179",
+              "ark": "ark:/61903/1:1:X7FM-YRGK",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Amaya",
+                  "given": "Maria Jesus"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_310190252179",
+              "child": "p_310190252176"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310190252177",
+              "child": "p_310190252176"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_310190252177",
+              "person2": "p_310190252179"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182560213954",
+              "resource_type": "Record",
+              "title": "Registro para Maria Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FM-YRGN : Thu Aug 06 05:22:30 UTC 2026), Entry for Maria Nicolasa Cedillo and Ventura Cedillo, 13 de febrero de 1945.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZDG-1D7Q",
+              "coverage": {
+                "date_range": "13 de febrero de 1945",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-5Q11-NK2",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1945-01/1947-12",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310190252176",
+              "resource_type": "Person",
+              "url": "#p_310190252176"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310190252176",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7LQ-QZVH",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "13 de febrero de 1945",
+            "place": "Santa Lucía, Intibucá, Honduras"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Maria Nicolasa Cedillo",
+        "score": 5.6236,
+        "confidence": 5,
+        "sex": "Female",
+        "birthDate": "1875",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Maria Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZN4-RHRV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310338657548",
+              "ark": "ark:/61903/1:1:X7LQ-QZVH",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Maria Nicolasa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875"
+                },
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "13 de febrero de 1945",
+                  "standard_date": "13 Feb 1945",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310338657551",
+              "ark": "ark:/61903/1:1:X7LQ-QZV8",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Ventura"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310338657554",
+              "ark": "ark:/61903/1:1:X7LQ-QZVX",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Amaya",
+                  "given": "Maria Jesus"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_310338657554",
+              "child": "p_310338657548"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_310338657551",
+              "person2": "p_310338657554"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310338657551",
+              "child": "p_310338657548"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182645152968",
+              "resource_type": "Record",
+              "title": "Registro para Maria Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7LQ-QZVH : Thu Aug 06 07:48:55 UTC 2026), Entry for Maria Nicolasa Cedillo and Ventura Cedillo, 13 de febrero de 1945.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZN4-RHRV",
+              "coverage": {
+                "date_range": "13 de febrero de 1945",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHN-L7CT-R73S-P",
+              "coverage": {
+                "place_rep_id": "441572",
+                "date_range": "+1944-07-01T00:00:00Z/+1948-12-31T23:59:59Z",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310338657548",
+              "resource_type": "Person",
+              "url": "#p_310338657548"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310338657548",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7FM-RFHS",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "22 de mayo de 1943",
+            "place": "Santa Lucía, Intibucá, Honduras"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Ma Nicolasa Cedillo",
+        "score": 5.6236,
+        "confidence": 5,
+        "sex": "Female",
+        "birthDate": "1868",
+        "deathDate": "21 May 1943",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZDG-TDJT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310190188742",
+              "ark": "ark:/61903/1:1:X7FM-RFHS",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Ma Nicolasa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868"
+                },
+                {
+                  "type": "Death",
+                  "date": "21 de mayo de 1943",
+                  "standard_date": "21 May 1943"
+                },
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "22 de mayo de 1943",
+                  "standard_date": "22 May 1943",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310190188747",
+              "ark": "ark:/61903/1:1:X7FM-RFH4",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Julia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310190188750",
+              "ark": "ark:/61903/1:1:X7FM-RFHZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Santiago"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310190188742",
+              "person2": "p_310190188750"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310190188747",
+              "child": "p_310190188742"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182560133336",
+              "resource_type": "Record",
+              "title": "Registro para Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FM-RFHS : Thu Aug 06 08:59:51 UTC 2026), Entry for Ma Nicolasa Cedillo and Julia Cedillo, 22 de mayo de 1943.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZDG-TDJT",
+              "coverage": {
+                "date_range": "22 de mayo de 1943",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHK-YQYY-WSJX",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1942-01/1944-12",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310190188742",
+              "resource_type": "Person",
+              "url": "#p_310190188742"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310190188742",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7KG-W4V1",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "22 de mayo de 1943",
+            "place": "Santa Lucía, Intibucá, Honduras"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Ma Nicolasa Cedillo",
+        "score": 5.6236,
+        "confidence": 5,
+        "sex": "Female",
+        "birthDate": "1868",
+        "deathDate": "22 May 1943",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZFC-LWNF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310304688869",
+              "ark": "ark:/61903/1:1:X7KG-W4V1",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ma Nicolasa",
+                  "surname": "Cedillo"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "22 de mayo de 1943",
+                  "standard_date": "22 May 1943",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "22 de mayo de 1943",
+                  "standard_date": "22 May 1943"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310304688875",
+              "ark": "ark:/61903/1:1:X7KG-W4K7",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Santiago",
+                  "surname": "Cedillo"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310304688869",
+              "person2": "p_310304688875"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182622362895",
+              "resource_type": "Record",
+              "title": "Registro para Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7KG-W4V1 : Thu Aug 06 09:13:45 UTC 2026), Entry for Ma Nicolasa Cedillo and Santiago Cedillo, 22 de mayo de 1943.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZFC-LWNF",
+              "coverage": {
+                "date_range": "22 de mayo de 1943",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-Z7CY-XSSC-N",
+              "coverage": {
+                "place_rep_id": "441572",
+                "date_range": "+1942-09-01T00:00:00Z/+1944-06-30T23:59:59Z",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310304688869",
+              "resource_type": "Person",
+              "url": "#p_310304688869"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310304688869",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7JJ-K94N",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "21 de octubre de 2020",
+            "place": "Jutiapa, Atlántida, Honduras"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Nicolasa Cedillo Hernandez",
+        "score": 5.6136003,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1956",
+        "deathDate": "7 October 2020",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Nicolasa Cedillo Hernandez, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZ6B-4N6J",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310252384126",
+              "ark": "ark:/61903/1:1:X7JJ-K94N",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo Hernandez",
+                  "given": "Nicolasa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "21 de octubre de 2020",
+                  "standard_date": "21 Oct 2020",
+                  "place": "Jutiapa, Atlántida, Honduras",
+                  "standard_place": "Jutiapa, Atlántida, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "7 de octubre de 2020",
+                  "standard_date": "7 Oct 2020"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1956",
+                  "standard_date": "1956"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310252384130",
+              "ark": "ark:/61903/1:1:X7JJ-K942",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Luis"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310252384135",
+              "ark": "ark:/61903/1:1:X7JJ-K94R",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hernandez",
+                  "given": "Teresa"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_310252384130",
+              "child": "p_310252384126"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_310252384130",
+              "person2": "p_310252384135"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310252384135",
+              "child": "p_310252384126"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182588783807",
+              "resource_type": "Record",
+              "title": "Registro para Nicolasa Cedillo Hernandez, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7JJ-K94N : Thu Aug 06 05:53:13 UTC 2026), Entry for Nicolasa Cedillo Hernandez and Luis Cedillo, 21 de octubre de 2020.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZ6B-4N6J",
+              "coverage": {
+                "date_range": "21 de octubre de 2020",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-6QY7-T32R",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "2020-01/2020-12",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-CXG",
+              "resource_type": "auto",
+              "title": "Honduras, Atlántida, Deaths, from 1500 to 2023",
+              "coverage": {
+                "place_rep_id": "5279",
+                "date_range": "+1500-01-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310252384126",
+              "resource_type": "Person",
+              "url": "#p_310252384126"
+            }
+          ],
+          "places": [
+            {
+              "id": "441352",
+              "name": "Jutiapa, Atlántida, Honduras",
+              "latitude": 15.7426,
+              "longitude": -86.5048
+            }
+          ]
+        },
+        "primaryId": "p_310252384126",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7LS-KMLK",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nicolasa Cedillo",
+        "score": 5.6136,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Santiago Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZN4-MNNM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310337433649",
+              "ark": "ark:/61903/1:1:X7LS-KMLK",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Nicolasa"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310337433637",
+              "ark": "ark:/61903/1:1:X7LS-KML4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Santiago"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "5 de diciembre de 1918",
+                  "standard_date": "5 Dec 1918",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "4 de diciembre de 1918",
+                  "standard_date": "4 Dec 1918"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1870",
+                  "standard_date": "1870"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310337433641",
+              "ark": "ark:/61903/1:1:X7LS-KML8",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillo",
+                  "given": "Valentin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310337433646",
+              "ark": "ark:/61903/1:1:X7LS-KMLN",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Márquez",
+                  "given": "Patrocia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310337433637",
+              "person2": "p_310337433649"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310337433646",
+              "child": "p_310337433637"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310337433641",
+              "child": "p_310337433637"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182644484880",
+              "resource_type": "Record",
+              "title": "Registro para Santiago Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7LS-KML4 : Thu Aug 06 07:10:53 UTC 2026), Entry for Santiago Cedillo and Valentin Cedillo, 5 de diciembre de 1918.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZN4-MNNM",
+              "coverage": {
+                "date_range": "5 de diciembre de 1918",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHN-R7CK-5JKY",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1914-08/1919-11",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310337433649",
+              "resource_type": "Person",
+              "url": "#p_310337433649"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310337433649",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7FS-X3LL",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nicolasa Cedillo",
+        "score": 5.6136,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Dolores Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZDP-F3MC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310191501351",
+              "ark": "ark:/61903/1:1:X7FS-X3LL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nicolasa",
+                  "surname": "Cedillo"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310191501348",
+              "ark": "ark:/61903/1:1:X7FS-X3LV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Dolores",
+                  "surname": "Cedillo"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1905",
+                  "standard_date": "1905"
+                },
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "4 de diciembre de 1906",
+                  "standard_date": "4 Dec 1906",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "3 de diciembre de 1906",
+                  "standard_date": "3 Dec 1906"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310191501350",
+              "ark": "ark:/61903/1:1:X7FS-X3L2",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Santiago",
+                  "surname": "Cedillo"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310191501350",
+              "person2": "p_310191501351"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310191501350",
+              "child": "p_310191501348"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310191501351",
+              "child": "p_310191501348"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182560637709",
+              "resource_type": "Record",
+              "title": "Registro para Dolores Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FS-X3LV : Thu Aug 06 07:15:46 UTC 2026), Entry for Dolores Cedillo and Santiago Cedillo, 4 de diciembre de 1906.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZDP-F3MC",
+              "coverage": {
+                "date_range": "4 de diciembre de 1906",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-Q7CJ-5HY",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1906-09/1909-08",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310191501351",
+              "resource_type": "Person",
+              "url": "#p_310191501351"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310191501351",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7LS-8L8G",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nicolasa Cedillo",
+        "score": 5.6136,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Yanuario Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZN4-9CMQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310337236252",
+              "ark": "ark:/61903/1:1:X7LS-8L8G",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nicolasa",
+                  "surname": "Cedillo"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310337236236",
+              "ark": "ark:/61903/1:1:X7LS-8L8W",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Yanuario",
+                  "surname": "Cedillo"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "1918",
+                  "standard_date": "1918",
+                  "place": "Santa Lucía, Intibucá, Honduras",
+                  "standard_place": "Santa Lucía, Intibucá, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "1918",
+                  "standard_date": "1918"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1899",
+                  "standard_date": "1899"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310337236243",
+              "ark": "ark:/61903/1:1:X7LS-8L86",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Santiago",
+                  "surname": "Cedillo"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310337236243",
+              "person2": "p_310337236252"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310337236252",
+              "child": "p_310337236236"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310337236243",
+              "child": "p_310337236236"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182644505104",
+              "resource_type": "Record",
+              "title": "Registro para Yanuario Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7LS-8L8W : Thu Aug 06 00:19:39 UTC 2026), Entry for Yanuario Cedillo and Santiago Cedillo, 1918.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZN4-9CMQ",
+              "coverage": {
+                "date_range": "1918",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHN-R7CK-5JKY",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1914-08/1919-11",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9VM-SQG",
+              "resource_type": "auto",
+              "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+              "coverage": {
+                "place_rep_id": "5270",
+                "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310337236252",
+              "resource_type": "Person",
+              "url": "#p_310337236252"
+            }
+          ],
+          "places": [
+            {
+              "id": "441572",
+              "name": "Santa Lucía, Intibucá, Honduras",
+              "latitude": 13.92,
+              "longitude": -88.3901
+            }
+          ]
+        },
+        "primaryId": "p_310337236252",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X75M-MP2G",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nicolasa Alvarado Cedillos",
+        "score": 4.88288,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Gustavo Fernández Gutiérrez, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZJB-FC32",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310408221322",
+              "ark": "ark:/61903/1:1:X75M-MP2G",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nicolasa",
+                  "surname": "Alvarado Cedillos"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310408221316",
+              "ark": "ark:/61903/1:1:X75M-MP2N",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Gustavo",
+                  "surname": "Fernández Gutiérrez"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "20 de diciembre de 1994",
+                  "standard_date": "20 Dec 1994",
+                  "place": "Trinidad, Santa Bárbara, Honduras",
+                  "standard_place": "Trinidad, Santa Bárbara, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "15 de diciembre de 1994",
+                  "standard_date": "15 Dec 1994"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1910",
+                  "standard_date": "1910"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310408221318",
+              "ark": "ark:/61903/1:1:X75M-MP2V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Gabino",
+                  "surname": "Fernández"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310408221320",
+              "ark": "ark:/61903/1:1:X75M-MP22",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mariana",
+                  "surname": "Fajardo"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_310408221318",
+              "child": "p_310408221316"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310408221320",
+              "child": "p_310408221316"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_310408221316",
+              "person2": "p_310408221322"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182686193210",
+              "resource_type": "Record",
+              "title": "Registro para Gustavo Fernández Gutiérrez, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X75M-MP2N : Thu Aug 06 05:41:23 UTC 2026), Entry for Gustavo Fernández Gutiérrez and Gabino Fernández, 20 de diciembre de 1994.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZJB-FC32",
+              "coverage": {
+                "date_range": "20 de diciembre de 1994",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-X77M-S3L1-R",
+              "coverage": {
+                "place_rep_id": "1884017",
+                "date_range": "+1993-11-01T00:00:00Z/+1995-11-30T23:59:59Z",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-H9Q",
+              "resource_type": "auto",
+              "title": "Honduras, Santa Bárbara, Deaths, from 0321 to 2023",
+              "coverage": {
+                "place_rep_id": "5265",
+                "date_range": "+0321-01-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310408221322",
+              "resource_type": "Person",
+              "url": "#p_310408221322"
+            }
+          ],
+          "places": [
+            {
+              "id": "1884017",
+              "name": "Trinidad, Santa Bárbara, Honduras",
+              "latitude": 15.1423,
+              "longitude": -88.2333
+            }
+          ]
+        },
+        "primaryId": "p_310408221322",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7JC-N1R2",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nicolasa Alvarado Cedillos",
+        "score": 4.88288,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Gustavo Adolfo Fernández Alvarado, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZ6G-ZR2T",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310245848870",
+              "ark": "ark:/61903/1:1:X7JC-N1R2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cedillos",
+                  "given": "Nicolasa Alvarado"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310245848866",
+              "ark": "ark:/61903/1:1:X7JC-N1RN",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Fernández Alvarado",
+                  "given": "Gustavo Adolfo"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "17 de octubre de 1995",
+                  "standard_date": "17 Oct 1995",
+                  "place": "Ilama, Santa Bárbara, Honduras",
+                  "standard_place": "Ilama, Santa Bárbara, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "12 de octubre de 1995",
+                  "standard_date": "12 Oct 1995"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1971",
+                  "standard_date": "1971"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310245848868",
+              "ark": "ark:/61903/1:1:X7JC-N1RV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Fernández",
+                  "given": "Gustavo"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310245848872",
+              "ark": "ark:/61903/1:1:X7JC-N1RG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "López Garcia",
+                  "given": "Juana"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310245848866",
+              "person2": "p_310245848872"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310245848870",
+              "child": "p_310245848866"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310245848868",
+              "child": "p_310245848866"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_310245848868",
+              "person2": "p_310245848870"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182584013126",
+              "resource_type": "Record",
+              "title": "Registro para Gustavo Adolfo Fernández Alvarado, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7JC-N1RN : Thu Aug 06 09:25:19 UTC 2026), Entry for Gustavo Adolfo Fernández Alvarado and Gustavo Fernández, 17 de octubre de 1995.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZ6G-ZR2T",
+              "coverage": {
+                "date_range": "17 de octubre de 1995",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHK-XQTR-J825-6",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1992-04/1997-04",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-H9Q",
+              "resource_type": "auto",
+              "title": "Honduras, Santa Bárbara, Deaths, from 0321 to 2023",
+              "coverage": {
+                "place_rep_id": "5265",
+                "date_range": "+0321-01-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310245848870",
+              "resource_type": "Person",
+              "url": "#p_310245848870"
+            }
+          ],
+          "places": [
+            {
+              "id": "441344",
+              "name": "Ilama, Santa Bárbara, Honduras",
+              "latitude": 15.0635,
+              "longitude": -88.2285
+            }
+          ]
+        },
+        "primaryId": "p_310245848870",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7PT-J8T5",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nicolasa Alvarado Cedillos",
+        "score": 4.88288,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Gustavo Fernández Gutiérrez, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZJT-DZCQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310405429704",
+              "ark": "ark:/61903/1:1:X7PT-J8T5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Alvarado Cedillos",
+                  "given": "Nicolasa"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310405429701",
+              "ark": "ark:/61903/1:1:X7PT-J8TL",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Fernández Gutiérrez",
+                  "given": "Gustavo"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1910",
+                  "standard_date": "1910"
+                },
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "20 de diciembre de 1994",
+                  "standard_date": "20 Dec 1994",
+                  "place": "Trinidad, Santa Bárbara, Honduras",
+                  "standard_place": "Trinidad, Santa Bárbara, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "15 de diciembre de 1994",
+                  "standard_date": "15 Dec 1994"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310405429702",
+              "ark": "ark:/61903/1:1:X7PT-J8TG",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Fernández",
+                  "given": "Gabino"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310405429703",
+              "ark": "ark:/61903/1:1:X7PT-J8TP",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Figueroa",
+                  "given": "Mariana"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_310405429701",
+              "person2": "p_310405429704"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310405429703",
+              "child": "p_310405429701"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310405429702",
+              "child": "p_310405429701"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182684493274",
+              "resource_type": "Record",
+              "title": "Registro para Gustavo Fernández Gutiérrez, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7PT-J8TL : Thu Aug 06 09:35:26 UTC 2026), Entry for Gustavo Fernández Gutiérrez and Gabino Fernández, 20 de diciembre de 1994.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZJT-DZCQ",
+              "coverage": {
+                "date_range": "20 de diciembre de 1994",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHK-PQYD-Y93M-G",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1993-11/1995-11",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-H9Q",
+              "resource_type": "auto",
+              "title": "Honduras, Santa Bárbara, Deaths, from 0321 to 2023",
+              "coverage": {
+                "place_rep_id": "5265",
+                "date_range": "+0321-01-01T00:00:00Z/+2023-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310405429704",
+              "resource_type": "Person",
+              "url": "#p_310405429704"
+            }
+          ],
+          "places": [
+            {
+              "id": "1884017",
+              "name": "Trinidad, Santa Bárbara, Honduras",
+              "latitude": 15.1423,
+              "longitude": -88.2333
+            }
+          ]
+        },
+        "primaryId": "p_310405429704",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7KJ-YL3K",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nicolasa Sedillos",
+        "score": 4.88288,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Federico Castro, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZFW-3584",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310301218009",
+              "ark": "ark:/61903/1:1:X7KJ-YL3K",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nicolasa",
+                  "surname": "Sedillos"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310301218004",
+              "ark": "ark:/61903/1:1:X7KJ-YL3X",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Federico",
+                  "surname": "Castro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1933",
+                  "standard_date": "1933"
+                },
+                {
+                  "type": "Death",
+                  "date": "19 de septiembre de 1938",
+                  "standard_date": "19 Sep 1938"
+                },
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "20 de septiembre de 1938",
+                  "standard_date": "20 Sep 1938",
+                  "place": "Candelaria, Lempira, Honduras",
+                  "standard_place": "Candelaria, Lempira, Honduras"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_310301218006",
+              "ark": "ark:/61903/1:1:X7KJ-YL3N",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sebastian",
+                  "surname": "Castro"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_310301218009",
+              "child": "p_310301218004"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_310301218006",
+              "person2": "p_310301218009"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_310301218006",
+              "child": "p_310301218004"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182619462937",
+              "resource_type": "Record",
+              "title": "Registro para Federico Castro, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7KJ-YL3X : Thu Aug 06 09:18:38 UTC 2026), Entry for Federico Castro and Sebastian Castro, 20 de septiembre de 1938.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZFW-3584",
+              "coverage": {
+                "date_range": "20 de septiembre de 1938",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-1786-CK9",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1937-08/1939-07",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-VX6",
+              "resource_type": "auto",
+              "title": "Honduras, Lempira, Deaths, from 1754 to 2025",
+              "coverage": {
+                "place_rep_id": "5266",
+                "date_range": "+1754-01-01T00:00:00Z/+2025-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310301218009",
+              "resource_type": "Person",
+              "url": "#p_310301218009"
+            }
+          ],
+          "places": [
+            {
+              "id": "441274",
+              "name": "Candelaria, Lempira, Honduras",
+              "latitude": 14.0905,
+              "longitude": -88.5607
+            }
+          ]
+        },
+        "primaryId": "p_310301218009",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7SJ-FX6M",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "12 de junio de 1995",
+            "place": "San Pedro Sula, Cortés, Honduras"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Clasos Martinez Cedillos",
+        "score": 4.17216,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1909",
+        "deathDate": "7 April 1995",
+        "collectionId": "2135627",
+        "collectionTitle": "Honduras, Civil Registration, 1841-1968",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "recordTitle": "Registro para Clasos Martinez Cedillos, \"Honduras, Registro Civil, 1841-1968\"",
+        "recordArk": "ark:/61903/1:2:HZQS-X785",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_309887787990",
+              "ark": "ark:/61903/1:1:X7SJ-FX6M",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Clasos",
+                  "surname": "Martinez Cedillos"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "12 de junio de 1995",
+                  "standard_date": "12 Jun 1995",
+                  "place": "San Pedro Sula, Cortés, Honduras",
+                  "standard_place": "San Pedro Sula, Cortés, Honduras"
+                },
+                {
+                  "type": "Death",
+                  "date": "7 de abril de 1995",
+                  "standard_date": "7 Apr 1995"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1909",
+                  "standard_date": "1909"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_309887787992",
+              "ark": "ark:/61903/1:1:X7SJ-FX6S",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Olivia",
+                  "surname": "Rivas"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_309887787990",
+              "person2": "p_309887787992"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182349202854",
+              "resource_type": "Record",
+              "title": "Registro para Clasos Martinez Cedillos, \"Honduras, Registro Civil, 1841-1968\"",
+              "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7SJ-FX6M : Thu Aug 06 10:35:29 UTC 2026), Entry for Clasos Martinez Cedillos and Olivia Rivas, 12 de junio de 1995.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZQS-X785",
+              "coverage": {
+                "date_range": "12 de junio de 1995",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2135627",
+              "resource_type": "Collection",
+              "title": "Honduras, Civil Registration, 1841-1968",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+              "coverage": {
+                "place_rep_id": "173",
+                "date_range": "1841/1968",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHK-GQG2-T9HH-6",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1995-05/1995-06",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-3WJ",
+              "resource_type": "auto",
+              "title": "Honduras, Cortés, Deaths, from 1500 to 2026",
+              "coverage": {
+                "place_rep_id": "5274",
+                "date_range": "+1500-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_309887787990",
+              "resource_type": "Person",
+              "url": "#p_309887787990"
+            }
+          ],
+          "places": [
+            {
+              "id": "441470",
+              "name": "San Pedro Sula, Cortés, Honduras",
+              "latitude": 15.5053,
+              "longitude": -88.0247
+            }
+          ]
+        },
+        "primaryId": "p_309887787990",
+        "role": "Principal"
+      }
+    ]
+  }
+}
