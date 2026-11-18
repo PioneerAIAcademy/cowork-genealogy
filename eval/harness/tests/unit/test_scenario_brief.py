@@ -11,6 +11,7 @@ unit corpus references.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -274,3 +275,182 @@ def test_forced_readme_on_a_brief_only_scenario_is_not_stateless(tmp_path: Path)
     brief = load_scenario_brief(tmp_path, "demo", force_readme=True)
     assert brief.text == NO_README_MARKER
     assert "(stateless test)" not in _render(brief.text)
+
+
+# --- Every referenced scenario has a brief, or is on a list that only shrinks ---
+
+WITHOUT_BRIEF_LIST = Path(__file__).with_name("scenarios_without_brief.txt")
+
+_BRIEF_ID = re.compile(r"[a-z]{1,4}_\d+|(?:I|S|R|F|RT)\d+")
+
+
+def _read_list(path: Path) -> list[str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return [ln.strip() for ln in lines if ln.strip() and not ln.lstrip().startswith("#")]
+
+
+def brief_guard_violations(tests_dir: Path, scenarios_dir: Path, listed: list[str]) -> list[str]:
+    """Issue #2478. Each scenario a unit test references has a `judge-brief.md`
+    unless it is on the list; the list is sorted, has no repeats, and names only
+    scenarios that exist, are referenced, and still lack a brief."""
+    referenced = _referenced_scenarios(tests_dir)
+    out: list[str] = []
+    if listed != sorted(listed):
+        out.append("the list is not sorted (byte order: `LC_ALL=C sort`, or Python's sorted())")
+    for name in sorted({n for n in listed if listed.count(n) > 1}):
+        out.append(f"{name}: listed more than once")
+    for name in sorted(set(listed)):
+        if not (scenarios_dir / name).is_dir():
+            out.append(f"{name}: listed, but no such scenario directory")
+        elif (scenarios_dir / name / "judge-brief.md").is_file():
+            out.append(f"{name}: has a judge-brief.md now, so remove it from the list")
+        elif name not in referenced:
+            out.append(f"{name}: no unit test references it any more, so remove it from the list")
+    for name in sorted(referenced - set(listed)):
+        if not (scenarios_dir / name / "judge-brief.md").is_file():
+            out.append(
+                f"{name}: a unit test reads it and it has no judge-brief.md; write one "
+                f"(docs/specs/unit-test-spec.md §3.1)"
+            )
+    return out
+
+
+def _fixture_ids(scenario_dir: Path) -> set[str]:
+    ids: set[str] = set()
+
+    def walk(node) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "id" and isinstance(value, str):
+                    ids.add(value)
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    for name in ("research.json", "tree.gedcomx.json"):
+        path = scenario_dir / name
+        if path.is_file():
+            walk(json.loads(path.read_text(encoding="utf-8")))
+    return ids
+
+
+def brief_id_violations(scenario_dir: Path) -> list[str]:
+    """Issue #2478. Every fixture id a brief names in a code span (`a_017`,
+    `log_003`, `I12`, `R27` ...) exists in that scenario's JSON."""
+    brief = scenario_dir / "judge-brief.md"
+    if not brief.is_file():
+        return []
+    ids = _fixture_ids(scenario_dir)
+    named = {
+        " ".join(span.split())
+        for span in re.findall(r"`([^`]+)`", brief.read_text(encoding="utf-8"))
+    }
+    return [
+        f"{scenario_dir.name}: judge-brief.md names `{span}`, which no id in its research.json "
+        f"or tree.gedcomx.json carries"
+        for span in sorted(named)
+        if _BRIEF_ID.fullmatch(span) and span not in ids
+    ]
+
+
+def test_every_referenced_scenario_has_a_brief_or_is_listed() -> None:
+    listed = _read_list(WITHOUT_BRIEF_LIST)
+    assert listed, "the list is empty: delete it and this list check with it (issue #2478's last step)"
+    assert brief_guard_violations(UNIT_TESTS_DIR, SCENARIOS_DIR, listed) == []
+
+
+def test_every_brief_names_only_ids_its_fixture_holds() -> None:
+    briefs = sorted(SCENARIOS_DIR.glob("*/judge-brief.md"))
+    assert briefs, "no brief to check"
+    assert [v for b in briefs for v in brief_id_violations(b.parent)] == []
+
+
+def _guard_corpus(tmp_path: Path, scenarios: dict[str, bool]) -> tuple[Path, Path]:
+    tests_dir, scenarios_dir = tmp_path / "tests", tmp_path / "scenarios"
+    tests_dir.mkdir()
+    for name, has_brief in scenarios.items():
+        _scenario(scenarios_dir, name, readme=README_TEXT, brief=BRIEF_TEXT if has_brief else None)
+        (tests_dir / f"{name}.json").write_text(
+            json.dumps({"input": {"scenario": name}}), encoding="utf-8"
+        )
+    return tests_dir, scenarios_dir
+
+
+def test_guard_fails_a_new_scenario_with_no_brief(tmp_path: Path) -> None:
+    tests_dir, scenarios_dir = _guard_corpus(tmp_path, {"old": False, "planted": False})
+    violations = brief_guard_violations(tests_dir, scenarios_dir, ["old"])
+    assert len(violations) == 1 and violations[0].startswith("planted: a unit test reads it")
+
+
+def test_guard_passes_a_new_scenario_with_a_brief(tmp_path: Path) -> None:
+    tests_dir, scenarios_dir = _guard_corpus(tmp_path, {"old": False, "new": True})
+    assert brief_guard_violations(tests_dir, scenarios_dir, ["old"]) == []
+
+
+def test_guard_fails_a_listed_scenario_that_now_has_a_brief(tmp_path: Path) -> None:
+    tests_dir, scenarios_dir = _guard_corpus(tmp_path, {"a": False, "b": True})
+    assert brief_guard_violations(tests_dir, scenarios_dir, ["a", "b"]) == [
+        "b: has a judge-brief.md now, so remove it from the list"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("listed", "expected"),
+    [
+        (["b", "a"], "the list is not sorted (byte order: `LC_ALL=C sort`, or Python's sorted())"),
+        (["a", "a", "b"], "a: listed more than once"),
+        (["a", "b", "gone"], "gone: listed, but no such scenario directory"),
+    ],
+)
+def test_guard_fails_a_malformed_list(tmp_path: Path, listed: list[str], expected: str) -> None:
+    tests_dir, scenarios_dir = _guard_corpus(tmp_path, {"a": False, "b": False})
+    assert expected in brief_guard_violations(tests_dir, scenarios_dir, listed)
+
+
+def test_guard_fails_a_listed_scenario_no_test_reads(tmp_path: Path) -> None:
+    tests_dir, scenarios_dir = _guard_corpus(tmp_path, {"a": False})
+    _scenario(scenarios_dir, "orphan", readme=README_TEXT, brief=None)
+    assert brief_guard_violations(tests_dir, scenarios_dir, ["a", "orphan"]) == [
+        "orphan: no unit test references it any more, so remove it from the list"
+    ]
+
+
+def test_list_file_reads_names_and_skips_comments(tmp_path: Path) -> None:
+    path = tmp_path / "list.txt"
+    path.write_text("# header\n\n  alpha  \nbeta\n# trailing\n", encoding="utf-8")
+    assert _read_list(path) == ["alpha", "beta"]
+
+
+def _briefed(tmp_path: Path, brief: str) -> Path:
+    sdir = _scenario(tmp_path, "demo", readme=None, brief=brief)
+    (sdir / "research.json").write_text(
+        json.dumps({"assertions": [{"id": "a_017"}], "log": [{"id": "log_003"}]}), encoding="utf-8"
+    )
+    (sdir / "tree.gedcomx.json").write_text(
+        json.dumps({"persons": [{"id": "I12"}], "relationships": [{"id": "R27"}]}), encoding="utf-8"
+    )
+    return sdir
+
+
+def test_id_check_passes_ids_the_fixture_holds(tmp_path: Path) -> None:
+    sdir = _briefed(tmp_path, "Assertion `a_017` from `log_003` names `I12` (`R27`).\n")
+    assert brief_id_violations(sdir) == []
+
+
+@pytest.mark.parametrize(
+    ("brief", "bad"),
+    [
+        ("Assertion `a_018` is planted.\n", "a_018"),
+        ("Person `I99` is the subject.\n", "I99"),
+        ("Entry `\nlog_004\n` sits across lines.\n", "log_004"),
+    ],
+)
+def test_id_check_fails_an_id_the_fixture_lacks(tmp_path: Path, brief: str, bad: str) -> None:
+    violations = brief_id_violations(_briefed(tmp_path, brief))
+    assert len(violations) == 1 and f"`{bad}`" in violations[0]
+
+
+def test_id_check_ignores_prose_and_non_id_spans(tmp_path: Path) -> None:
+    sdir = _briefed(tmp_path, "Ids like a_999 in prose, `research.json`, `pli_` and `I` are not checked.\n")
+    assert brief_id_violations(sdir) == []

@@ -110,7 +110,7 @@ eval/fixtures/scenarios/<scenario-name>/
   research.json        # Starting research.json state
   tree.gedcomx.json    # Starting tree.gedcomx.json state
   README.md            # Human-readable description for the UI dropdown
-  judge-brief.md       # What the judge reads about this scenario (optional)
+  judge-brief.md       # What the judge reads about this scenario (required for a new scenario)
 ```
 
 Both JSON files must conform to their respective schemas (`docs/specs/research-schema-spec.md` and `docs/specs/simplified-gedcomx-spec.md`).
@@ -136,7 +136,16 @@ entry in `output.warnings` (a harness advisory, not a judge rule), or
 `scenario_brief_missing` when the scenario has neither file, the end of every
 suite prints `N test(s) graded without a judge brief, on a README or nothing`,
 and a regrade prints the same count. Removing the fallback is the last step of
-the brief sweep. A scenario name must match its directory exactly; a mis-cased
+the brief sweep.
+
+A new scenario needs a `judge-brief.md`. Every scenario a unit test references
+has one unless it is named in `eval/harness/tests/unit/scenarios_without_brief.txt`,
+the scenarios that had none when the sweep began; the list only shrinks
+(`test_scenario_brief.py` fails a listed scenario that has a brief, an unsorted list,
+and a name that no longer exists or no test reads). Every fixture id a brief names
+in a code span (`a_017`, `log_003`, `I12`, `R27`, …) must exist in that scenario's
+JSON. A PR that edits a scenario's JSON re-checks the claims in its
+`judge-brief.md` in the same PR. A scenario name must match its directory exactly; a mis-cased
 name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
 An `oversize_tool_result` entry in `output.warnings` (a harness advisory) means
