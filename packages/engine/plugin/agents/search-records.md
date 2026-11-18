@@ -400,10 +400,7 @@ the ranker missed), `matchScore` (0–1),
 when `true`). `ranked` carries counts and diagnostics only.
 A row at or below `ranked.realNegativeFloor` lists only identity fields; a
 missing field there is not evidence the record lacks it — `record_read` gives the
-full record. The bulk GedcomX stays host-side. A low score on a row whose role is
-parent of the groom, bride or child, naming the subject, is expected: the matcher
-compares the row's person to the subject, and that row is a record of the subject's
-child. Read such rows; do not dismiss them for the score.
+full record. The bulk GedcomX stays host-side.
 
 Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
 highest. A row the ranker could not score keeps its search position, has no
