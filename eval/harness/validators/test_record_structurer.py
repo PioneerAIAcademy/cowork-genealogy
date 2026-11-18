@@ -35,6 +35,16 @@ def _roles_by_name(assertions):
     return roles
 
 
+def _names_by_role(assertions):
+    """record_role -> the structured value of every new name assertion on it."""
+    names = {}
+    for a in assertions:
+        if a.get("fact_type") == "name":
+            sv = a.get("structured_value") if isinstance(a.get("structured_value"), dict) else {}
+            names.setdefault(a.get("record_role"), []).append(sv)
+    return names
+
+
 def _agent_reply(agent_returns, text_response):
     """The agent's own return, which is what this suite grades. On the direct
     arm the main thread relays it and may reword it; a record-structurer return
@@ -83,10 +93,91 @@ def test_obituary_parentheticals_are_read_as_their_convention(before_state, afte
         problems.append(f"Grace (the sister) is {grace_roles[0]}")
     if any("Whitaker Tolman" in (n or "") for n in roles):
         problems.append("the maiden name Whitaker was written as part of Grace's given name")
+    grace_types = {n.get("surname"): n.get("type") for r in grace_roles for n in _names_by_role(_new_assertions(before_state, after_state)).get(r, [])}
+    if grace_roles and (grace_types.get("Whitaker"), grace_types.get("Tolman")) != ("birth", "married"):
+        problems.append(f"Grace's names are not typed Whitaker birth, Tolman married: {grace_types}")
     karen = role("Karen Foster")
     if karen and not karen.startswith("neighbor"):
         problems.append(f"Karen Foster (a neighbour) is {karen}")
     assert not problems, "; ".join(problems)
+
+
+_ST_CLAIR = re.compile(r"^St\.? Clair$")
+
+
+def test_names_are_read_with_their_type(before_state, after_state, test):
+    """Each name a compiled history gives is its own name, typed only where the
+    text says whose surname it is.
+
+    Gated on `name-forms`. Every person's names must sit on one record role:
+    a person written as two people is a wrong reading however each name is typed.
+    """
+    if not _tagged(test, "name-forms"):
+        pytest.skip("not a name-forms test")
+    names = _names_by_role(_new_assertions(before_state, after_state))
+    assert names, "no name assertion was written"
+    problems = []
+
+    def person(given):
+        return [r for r, ns in names.items() if any((n.get("given") or "").split(" ")[0] == given for n in ns)]
+
+    def one(given, who):
+        roles = person(given)
+        if len(roles) != 1:
+            problems.append(f"{who} is {len(roles)} people, not one: {roles}")
+            return []
+        return names[roles[0]]
+
+    if not any(_ST_CLAIR.match(n.get("surname") or "") for n in one("Robert", "Robert St. Clair")):
+        problems.append("Robert's surname is not St. Clair")
+    mary = one("Mary", "Mary St. Clair nee Hamlin")
+    if mary and not any(n.get("surname") == "Hamlin" and n.get("type") == "birth" for n in mary):
+        problems.append(f"Mary has no Hamlin name typed birth: {mary}")
+    if mary and not any(_ST_CLAIR.match(n.get("surname") or "") and n.get("type") == "married" for n in mary):
+        problems.append(f"Mary has no St. Clair name typed married: {mary}")
+    jacob = one("Jacob", "Jacob Hamlin (Hamblin)")
+    if jacob and not any(n.get("surname") == "Hamlin" for n in jacob):
+        problems.append(f"Jacob has no Hamlin name: {jacob}")
+    if jacob and not any(n.get("surname") == "Hamblin" and n.get("type") == "also_known_as" for n in jacob):
+        problems.append(f"Jacob has no Hamblin name typed also_known_as: {jacob}")
+    edward = one("Edward", "Edward (Ted) St. Clair")
+    if edward and not any(n.get("given") == "Ted" and n.get("type") == "nickname" for n in edward):
+        problems.append(f"Edward has no Ted name typed nickname: {edward}")
+    ann = one("Ann", "Ann Hart (Cole) (Dunn)")
+    if ann and not {"Hart", "Cole", "Dunn"} <= {n.get("surname") for n in ann}:
+        problems.append(f"Ann is missing one of Hart, Cole and Dunn: {ann}")
+    if any(n.get("type") for n in ann):
+        problems.append(f"Ann's bracket surnames are typed, though the text does not say whose each is: {ann}")
+    mrs = [n for ns in names.values() for n in ns if "mrs" in f"{n.get('given') or ''} {n.get('surname') or ''}".lower()]
+    if mrs:
+        problems.append(f"(Mrs) was written as a name part: {mrs}")
+    if not any(n.get("surname") == "Hare" and re.search(r"\bO\.?$", n.get("given") or "") for ns in names.values() for n in ns):
+        problems.append("John O Hare is not given `John O`, surname Hare")
+    assert not problems, "; ".join(problems)
+
+
+def test_a_wife_named_by_her_husband_has_no_given_name(before_state, after_state, test):
+    """`Mrs. Thomas Flynn` is her own person: surname Flynn, married, no given
+    name, with a couple to Thomas.
+
+    Gated on `wife-by-husband-name`. The spouse assertion is written on one
+    party of the couple only, so either direction counts.
+    """
+    if not _tagged(test, "wife-by-husband-name"):
+        pytest.skip("not a wife-by-husband-name test")
+    new = _new_assertions(before_state, after_state)
+    names = _names_by_role(new)
+    thomas = [r for r, ns in names.items() if any(n.get("given") == "Thomas" and n.get("surname") == "Flynn" for n in ns)]
+    assert len(thomas) == 1, f"Thomas Flynn is {len(thomas)} people: {thomas}"
+    wives = [r for r, ns in names.items() if r != thomas[0] and any(n.get("surname") == "Flynn" and not (n.get("given") or "").strip() for n in ns)]
+    assert len(wives) == 1, f"Mrs. Thomas Flynn is not one person with no given name: {wives} ({names})"
+    wife = wives[0]
+    assert any(n.get("surname") == "Flynn" and n.get("type") == "married" for n in names[wife]), f"her Flynn name is not typed married: {names[wife]}"
+    pair = {wife, thomas[0]}
+    spouse = [a for a in new if a.get("fact_type") == "relationship"
+              and (a.get("structured_value") or {}).get("relationship_type") == "spouse"
+              and {a.get("record_role"), (a.get("structured_value") or {}).get("related_person_role")} == pair]
+    assert spouse, f"no couple joins {wife} and {thomas[0]}"
 
 
 def test_directive_text_in_a_record_is_data(before_state, after_state, text_response, agent_returns, test):

@@ -32,15 +32,17 @@ import { connectorSignInUrl } from "../auth/config.js";
 import { connectorSession } from "../utils/session-check.js";
 import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
+import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
+import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
+import { readStartingTree } from "../utils/starting-tree.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
- *  because the conclusion tree (#3032) adds `"status"` and `"view"` to it
- *  (lead, 2026-11-09). This stage returns every list regardless of `include`;
- *  the parameter is accepted and validated only — the default flip is #4422
- *  stage 3. */
-export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources"] as const;
+ *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
+ *  "persons" and "sources" are returned regardless of `include` until #4422
+ *  stage 3 flips the default; "status" is returned only when named. */
+export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status"] as const;
 export type ProjectContextInclude = (typeof PROJECT_CONTEXT_INCLUDE)[number];
 
 export interface ProjectContextInput {
@@ -254,6 +256,8 @@ export type ProjectContextResult =
        *  kind checks it is listed, so a newer body on an older engine keeps
        *  today's behaviour instead of having its write refused. */
       claimKinds: string[];
+      owedFindings?: OwedFinding[];
+      status?: StatusRow[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent also when
@@ -304,8 +308,8 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
 
   // `include` is a closed list; an unknown value is a clear error, not a silent
   // no-op. Validated before the file reads — a malformed request is refused
-  // whatever the project state. `include` only adds this stage (both lists are
-  // returned by default), so nothing below branches on it.
+  // whatever the project state. "persons" and "sources" are returned by default
+  // until #4422 stage 3; only "status" is branched on below.
   if (input.include !== undefined) {
     const bad =
       !Array.isArray(input.include) ||
@@ -453,6 +457,14 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       omitEmpty({ id, question: questionText.get(id) ?? "", ...rest }, ["nextStep"]) as ProjectContextQuestionStatus,
   );
 
+  // Decision 33: what the project still owes. Before questionStatuses in the
+  // answer, so a reader scoping to that array by its key does not take these
+  // items' own `nextStep` for a question's.
+  const owed = owedFindings(research, tree);
+  const status = input.include?.includes("status")
+    ? conclusionStatus(research, tree, await readStartingTree(input.projectPath))
+    : undefined;
+
   const awaitingUser = awaitingUserHandOffs(research?.log).map((row) => omitEmpty(row) as ProjectContextAwaitingUser);
   const waiting = await waitingPages(input.projectPath, research);
 
@@ -503,7 +515,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       : []
     ).filter((x: unknown): x is string => typeof x === "string"),
     openQuestions,
+    owedFindings: owed,
     questionStatuses,
+    ...(status ? { status } : {}),
     persons,
     sources,
     localities,
@@ -587,8 +601,8 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. An optional include list (closed: \"persons\", \"sources\") names the " +
-    "larger lists you read; both are returned whether or not you pass it, so you can omit it. " +
+    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
+    "larger lists you read; persons and sources are returned whether or not you pass it, and status only when named. " +
     "Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
@@ -639,6 +653,11 @@ export const projectContextSchema = {
     "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
     "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +
     "claimKinds lists the proof_summaries claim kinds this engine accepts. " +
+    "owedFindings [{kind, ref, personIds, nextStep, blocksCompletion}] lists what the project still owes, in " +
+    "order: extract (a positive search with nothing extracted), conclude (a question with tied assertions and no " +
+    "proof summary), hypothesis (a supported hypothesis with no summary), encode (a likely claim no tree object " +
+    "carries), then the advisory raise, claims and frame. With include: [\"status\"], status lists every tree fact " +
+    "and relationship with its status read from claims. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
@@ -660,9 +679,10 @@ export const projectContextSchema = {
         type: "array",
         items: { type: "string", enum: [...PROJECT_CONTEXT_INCLUDE] },
         description:
-          'Optional closed list naming the larger lists to include. Values: "persons", "sources". ' +
-          "Both are returned whether or not you pass include, so you can omit it; it exists for callers to " +
-          "name the lists they read.",
+          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status". ' +
+          '"persons" and "sources" are returned whether or not you pass include. "status": every tree fact and ' +
+          "relationship with its status read from proof-summary claims (well established, likely, tentative, " +
+          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named.",
       },
     },
     required: ["projectPath"],

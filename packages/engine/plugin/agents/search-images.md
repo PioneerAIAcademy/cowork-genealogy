@@ -228,6 +228,14 @@ describing a browse you correctly refused to perform is a false audit trail, and
 it is worse than no entry because a later exhaustiveness audit reads it as a
 search that came back empty. Declining IS completing the delegation here.
 
+**When the request asks for every mention or occurrence of a name, or names a
+godparent or witness, add to the decline:** an index often omits godparents,
+witnesses, and a mother's maiden name — point at search-records' `role` field
+as how to check which roles *this* index actually carries, since that varies
+by collection. Also offer to read named pages for the mentions the index
+lacks, up to 20 per film/image group. This only changes what the decline
+says; it still declines the whole-volume browse.
+
 ```
 volume_search({ standardPlace: "Luzerne, Pennsylvania, United States", omitSearchable: true })
 ```

@@ -12,6 +12,7 @@
       "same-name",
       "two-candidates",
       "flynn-identity-geographic-thin",
+      "stays-unresolved-flynn-identity",
       "direct-arm"
     ]
   },
