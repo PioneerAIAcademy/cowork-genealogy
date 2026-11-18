@@ -146,12 +146,14 @@
           "names": [
             {
               "given": "Grace",
-              "surname": "Tolman"
+              "surname": "Tolman",
+              "type": "married"
             },
             {
               "given": "Grace",
               "surname": "Whitaker",
-              "note": "maiden name, from the parenthetical"
+              "note": "maiden name, from the parenthetical",
+              "type": "birth"
             }
           ],
           "facts": [
@@ -767,6 +769,18 @@
             }
           ],
           "facts": []
+        },
+        {
+          "id": "p7",
+          "gender": "female",
+          "statedRelation": "mother",
+          "names": [
+            {
+              "surname": "Flynn",
+              "type": "married",
+              "note": "styled Mrs. Thomas Flynn; given name not stated"
+            }
+          ]
         }
       ],
       "relationships": [
@@ -789,6 +803,16 @@
           "type": "sibling",
           "person1": "p2",
           "person2": "p5"
+        },
+        {
+          "type": "couple",
+          "person1": "p3",
+          "person2": "p7"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p7",
+          "person2": "p1"
         }
       ]
     }
@@ -1449,5 +1473,176 @@
         ]
       }
     }
-  ]
+  ],
+  "compiled-history-name-forms": {
+    "recordId": "capture:st-clair-family-history",
+    "document": {
+      "recordType": "other",
+      "recordLabel": "family history",
+      "documentForm": "compiled_work",
+      "source": {
+        "title": "St. Clair family history",
+        "repository": "compiled family history"
+      },
+      "persons": [
+        {
+          "id": "p1",
+          "principal": true,
+          "gender": "male",
+          "names": [
+            {
+              "given": "Robert",
+              "surname": "St. Clair"
+            }
+          ],
+          "facts": [
+            {
+              "type": "birth",
+              "date": "4 May 1841",
+              "place": "Pittsylvania County, Virginia"
+            },
+            {
+              "type": "marriage",
+              "date": "12 January 1866"
+            }
+          ]
+        },
+        {
+          "id": "p2",
+          "gender": "male",
+          "statedRelation": "father",
+          "names": [
+            {
+              "given": "Thomas",
+              "surname": "St. Clair"
+            }
+          ]
+        },
+        {
+          "id": "p3",
+          "gender": "female",
+          "statedRelation": "mother",
+          "names": [
+            {
+              "given": "Mary",
+              "surname": "St. Clair",
+              "type": "married"
+            },
+            {
+              "given": "Mary",
+              "surname": "Hamlin",
+              "type": "birth"
+            }
+          ]
+        },
+        {
+          "id": "p4",
+          "gender": "male",
+          "statedRelation": "grandfather",
+          "names": [
+            {
+              "given": "Jacob",
+              "surname": "Hamlin"
+            },
+            {
+              "given": "Jacob",
+              "surname": "Hamblin",
+              "type": "also_known_as"
+            }
+          ]
+        },
+        {
+          "id": "p5",
+          "gender": "female",
+          "statedRelation": "wife",
+          "names": [
+            {
+              "given": "Ann",
+              "surname": "Hart",
+              "note": "styled (Mrs)"
+            },
+            {
+              "given": "Ann",
+              "surname": "Cole"
+            },
+            {
+              "given": "Ann",
+              "surname": "Dunn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "death",
+              "date": "1870"
+            }
+          ]
+        },
+        {
+          "id": "p6",
+          "gender": "male",
+          "statedRelation": "son",
+          "names": [
+            {
+              "given": "Edward",
+              "surname": "St. Clair"
+            },
+            {
+              "given": "Ted",
+              "surname": "St. Clair",
+              "type": "nickname"
+            }
+          ],
+          "facts": [
+            {
+              "type": "birth",
+              "date": "1867"
+            }
+          ]
+        },
+        {
+          "id": "p7",
+          "gender": "male",
+          "statedRelation": "witness",
+          "names": [
+            {
+              "given": "John O",
+              "surname": "Hare"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "type": "parent_child",
+          "person1": "p2",
+          "person2": "p1"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p3",
+          "person2": "p1"
+        },
+        {
+          "type": "couple",
+          "person1": "p2",
+          "person2": "p3"
+        },
+        {
+          "type": "couple",
+          "person1": "p1",
+          "person2": "p5"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p1",
+          "person2": "p6"
+        },
+        {
+          "type": "parent_child",
+          "person1": "p5",
+          "person2": "p6"
+        }
+      ]
+    }
+  }
 }
