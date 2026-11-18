@@ -1,0 +1,162 @@
+{
+  "tool": "record_search",
+  "description": "Issue #4348. The isPrincipal: true half of the Czelusniak / DGS 004118433 survey split. Built from the bundle's confirmed live number: totalMatches 185 (of 424 unfiltered). Must be listed before record-search-czelusniak-004118433.json (the unfiltered catch-all) in a test's mcp_fixtures, since the catch-all's args omit isPrincipal and would otherwise shadow this one.",
+  "args": {
+    "surname": "~Czelusniak",
+    "isPrincipal": true
+  },
+  "response": {
+    "query": {
+      "surname": "Czelusniak",
+      "collectionId": "4135958"
+    },
+    "totalMatches": 185,
+    "paginationCappedAt": 4999,
+    "returned": 10,
+    "offset": 0,
+    "hasMore": true,
+    "rankingSkipped": "No subjectId provided — results are in FamilySearch relevance order.",
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ1",
+        "personName": "Jan Czelusniak",
+        "score": 0.91,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          { "type": "Baptism", "date": "3 January 1828", "place": "Lipinki, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ1",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ2",
+        "personName": "Marya Czelusniakowna",
+        "score": 0.9,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          { "type": "Baptism", "date": "17 February 1829", "place": "Lipinki, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ2",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ3",
+        "personName": "Wojciech Czelusniak",
+        "score": 0.89,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          { "type": "Death", "date": "9 November 1835", "place": "Wójtowa, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ3",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ4",
+        "personName": "Anna Czelusiazonka",
+        "score": 0.86,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          { "type": "Marriage", "date": "2 June 1840", "place": "Pagorzyna, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ4",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ5",
+        "personName": "Katarzyna Czelusniak",
+        "score": 0.85,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          { "type": "Baptism", "date": "21 April 1832", "place": "Lipinki, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ5",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ6",
+        "personName": "Michal Czelusniak",
+        "score": 0.84,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          { "type": "Baptism", "date": "12 August 1826", "place": "Wójtowa, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ6",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ7",
+        "personName": "Zofia Czelusniakowna",
+        "score": 0.83,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          { "type": "Baptism", "date": "4 March 1836", "place": "Lipinki, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ7",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ8",
+        "personName": "Franciszek Czelusniak",
+        "score": 0.82,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          { "type": "Marriage", "date": "19 October 1838", "place": "Pagorzyna, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ8",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZ9",
+        "personName": "Agata Czelusniak",
+        "score": 0.81,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          { "type": "Death", "date": "28 January 1831", "place": "Lipinki, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZ9",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-BPZA",
+        "personName": "Jozef Czelusniak",
+        "score": 0.8,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          { "type": "Baptism", "date": "16 December 1833", "place": "Wójtowa, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-BPZA",
+        "treeMatches": []
+      }
+    ]
+  }
+}
