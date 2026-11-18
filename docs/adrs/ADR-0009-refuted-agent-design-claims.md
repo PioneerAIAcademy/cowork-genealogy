@@ -193,6 +193,19 @@ six:
    does not prove the call -- is therefore spent on the legitimate path: the
    check is now against a host-written record the model never touches.
 
+   **A `match_score: null` link beside a recorded score is refused too
+   (#4549).** The presence check above bound only whether an attestation
+   existed for the pairing, not whether the link being WRITTEN carried it, so
+   an agent could call `same_person`, get a score back, and still file the
+   link with `match_score: null` -- unscored on the page even though a number
+   was obtained. The fix shares the same lookup the presence check already
+   does (`findRecordedScore`, exact key then the persona arm) and refuses when
+   the link is null but that lookup finds an entry; it does not reach a
+   circular/minted pairing or the `extraction_append` attachment exemption,
+   and a null **update** still retracts cleanly. The value-vs-presence gap this
+   constraint records is unchanged by it: a link that carries a *different*
+   number from the recorded one still passes.
+
    One exemption, decided 2026-10-20 (lead, issue #3516). `extraction_append`
    in `personId` mode appends unchecked FamilySearch attachment links with no
    score: `speculative`, `match_score` null, the fixed `ATTACHMENT_LINK_RATIONALE`.
