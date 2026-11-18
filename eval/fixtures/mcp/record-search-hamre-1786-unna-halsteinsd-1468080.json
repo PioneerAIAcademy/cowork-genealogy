@@ -1,0 +1,26 @@
+{
+  "tool": "record_search",
+  "description": "derived offline from captured rows (2026-11-17), surname-filtered; not a live capture. Source: record-search-hamre-1786-unna-nosurname-1468080, whose 50 captured rows (of 2305 matches) were filtered mechanically to rows whose indexed surname (candidateSurname in rank-search-matches-hamre-1786-unna-nosurname-1468080), lowercased, starts with 'halsteinsd': 0 kept, so the answer is an empty result. totalMatches and returned are the filtered count. The bride NW44-PMK is not among them. Listed ahead of the surname-free fixtures, which cannot require surname to be absent. Shared by ut_search_records_022 and ut_search_records_023.",
+  "args": {
+    "givenName": "Unna",
+    "collectionId": "1468080",
+    "surname": "Halsteinsd"
+  },
+  "response": {
+    "query": {
+      "givenName": "Unna",
+      "recordCountry": "Norway",
+      "collectionId": "1468080",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50,
+      "surname": "Halsteinsd"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
