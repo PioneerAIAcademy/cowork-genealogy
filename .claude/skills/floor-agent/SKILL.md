@@ -28,6 +28,8 @@ caffeinate -i uv run python run_tests.py --test <ut_id> [<ut_id> ...] --runs-per
 - Always pass `--runlogs-root` outside `eval/runlogs`, so scratch logs do not prune committed ones.
 - One run at a time. Do not edit the agent, its tests, fixtures or the plugin's hooks while a run is in flight, and do not rebuild the engine: the run reads them.
 - Read outcomes from the log with `floor.py`, never from the progress lines.
+- A partial is not a pass with a lower mark. Open it: the agent may have taken the opposite action to the one the test expects.
+- Quote a run's cost with the judge included. On a Haiku agent the judge is about 95% of it: ten runs of three tests cost $4.28, of which the agent was $0.23.
 
 ## The loop
 
@@ -36,10 +38,11 @@ caffeinate -i uv run python run_tests.py --test <ut_id> [<ut_id> ...] --runs-per
    - **Test gap.** A reasonable call had no canned answer and got `fixture_not_found`, which production never returns. A cheaper model stops after one or two such errors where a stronger one keeps varying the call until one matches.
    - **Agent fault.** A rule in the body was not applied.
    - **Grading error.** The judge's reason contradicts the calls in the log.
+   - **Scenario fault.** The agent's stated reason is one a domain expert would accept: the project the test supplies does not support the outcome the test expects. Read the reason the agent gave before counting the run as a miss. A stronger model passing the test does not settle it. Put the case to a genealogist in plain words, without the expected answer, and take the answer and the scenario change to the lead.
    Open the run. A test's name and its earlier failures do not say why this run failed.
 3. **Find the real offenders.** Three runs per test cannot tell a fix from noise: the same configuration moves by five passes in 117 between runs. `floor.py tally a=<log> b=<log>` across the full runs, then run each test with two or more red runs ten times. Fix what fails 2 of 10 or more.
 4. **Fix in this order, one change at a time, each measured over ten runs of the tests it targets.**
-   1. **The test.** Add a canned answer for the reasonable call, under a second predicate, listed after the more specific fixture. Do not change what the test accepts on a guess about the upstream service. For a grading error, add a judge note that enforces the test's own stated rule.
+   1. **The test.** For a scenario fault, rebuild the scenario to what the genealogist would sign off, check every invented real-world fact (a register's dates, a law's year) against a source, and leave forks alone until a run shows the same reason on them. Add a canned answer for the reasonable call, under a second predicate, listed after the more specific fixture. Do not change what the test accepts on a guess about the upstream service. For a grading error, add a judge note that enforces the test's own stated rule.
    2. **A tool.** Ask whether a tool can state the rule at the moment it applies, on a call the agent already makes (ADR-0011). Patterns that worked:
       - a nil-gated advisory on the search response, keyed on the call's own arguments;
       - a note on the log write that quotes the plan item's rationale on its first nil;
