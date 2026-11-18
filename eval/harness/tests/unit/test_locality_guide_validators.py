@@ -819,8 +819,6 @@ _NO_PROJECT_TEST_IDS = {
     "ut_locality_guide_023",
     "ut_locality_guide_026",
     "ut_locality_guide_027",
-    "ut_locality_guide_028",
-    "ut_locality_guide_k9d",
     "ut_locality_guide_m4t",
     "ut_locality_guide_r7k",
     "ut_locality_guide_v7h",
