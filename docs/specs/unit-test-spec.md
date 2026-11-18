@@ -140,11 +140,13 @@ the brief sweep.
 
 A new scenario needs a `judge-brief.md`. Every scenario a unit test references
 has one unless it is named in `eval/harness/tests/unit/scenarios_without_brief.txt`,
-the scenarios that had none when the sweep began; the list only shrinks
-(`test_scenario_brief.py` fails a listed scenario that has a brief, an unsorted list,
-and a name that no longer exists or no test reads). Every fixture id a brief names
-in a code span (`a_017`, `log_003`, `I12`, `R27`, …) must exist in that scenario's
-JSON. A PR that edits a scenario's JSON re-checks the claims in its
+the scenarios that had none when the sweep began. The list only shrinks:
+`test_scenario_brief.py` holds it to `WITHOUT_BRIEF_CAP` names, which each wave of
+briefs lowers, and fails a listed scenario that has a brief, a list out of byte order,
+a repeated name, and a name that no longer exists or no test reads. Every fixture id
+a brief names in code, inline or fenced (`a_017`, `p_2`, `I12`, `N3`, …), must exist
+somewhere in that scenario's JSON; an id is a letter prefix the fixtures use,
+followed by digits. A PR that edits a scenario's JSON re-checks the claims in its
 `judge-brief.md` in the same PR. A scenario name must match its directory exactly; a mis-cased
 name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
