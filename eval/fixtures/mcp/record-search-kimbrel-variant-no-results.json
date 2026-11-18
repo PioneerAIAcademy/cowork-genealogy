@@ -1,0 +1,19 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero for the 'Kimbrel' spelling of Kimbrell (and a 'Kimbrel*' wildcard), for ut_search_records_d33. The rubric credits a spelling variant on Search strategy, and without a fixture the call returned fixture_not_found, which the judge scored down on Tool Arguments despite the rubric's name-variant override (v16_2026-11-18_18-41-22, runs 0 and 2). Nil, as for record-search-kimbrell-1950-nil: she is not enumerated under her birth surname in 1950. A narrow, single-spelling nil, not a catch-all. Listed AFTER record-search-kimbrell-1950-nil. Hand-authored, no real person.",
+  "args": {
+    "surname": "~Kimbrel"
+  },
+  "response": {
+    "query": {
+      "surname": "Kimbrel",
+      "givenName": "Juanita"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
