@@ -115,6 +115,8 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 
 **This agent never runs `fulltext_search` or delegates to `search-full-text`.** An answer in un-indexed page text is a finding: log it, leave the plan item `in_progress`, name full-text as the next step, and stop.
 
+**A survey of every occurrence of a surname across an indexed collection is neither of the two hand-back rows above — it runs here** (Step 2's every-mention survey). The index is not principals-only: the `isPrincipal: false` pass returns the parents, spouses and other non-principal hits, so "the index only holds principals" is never a reason to hand a surname survey to full-text. For such a survey, hand back only after an indexed `record_search` has actually run and come back noise; the rows above still stop without searching in the cases they name.
+
 ## Steps
 
 ### 1. Identify the plan item
@@ -601,7 +603,7 @@ to examine before extraction.
 
 ### 5. Log the search
 
-Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically.
+Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically. The one exception is a zero-result `record_search`, which logs itself (below).
 
 **A read-style entry has no search parameters — it still needs a `query` object, with the identifier under a canonical key and the prose in `notes`:**
 
@@ -733,7 +735,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 ## Re-invocation behavior
 
-**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up, or one for a pool of them not yet told apart (Step 6b).
+**Writes:** a new `log[]` entry in `research.json` — via `research_log_append`, or written by `record_search` itself for a zero-result search — plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up, or one for a pool of them not yet told apart (Step 6b).
 
 **On repeat invocation:** always append a new `log_` entry (and sidecar) — re-running a search is itself a logged event, never an edit of a prior one; update the plan item's `status` in place. Two runs of the same query produce two distinct log entries and sidecars — that is the audit trail, not a duplication bug.
 
