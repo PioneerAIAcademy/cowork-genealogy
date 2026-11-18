@@ -10,7 +10,8 @@
       "prioritization",
       "multi-conflict",
       "identity-vs-fact",
-      "direct-arm"
+      "direct-arm",
+      "resolved-flynn-identity-if-worked"
     ]
   },
   "input": {
@@ -20,7 +21,8 @@
   "judge_context": [
     "Should address only one conflict in this turn rather than producing tangled prose covering both",
     "Should explain the rationale for the chosen ordering — which conflict is more foundational, blocks more downstream work, or has better evidence available to resolve",
-    "If the skill writes to the conflicts section, it should update exactly one conflict's analysis fields and leave the other untouched"
+    "If the skill writes to the conflicts section, it should update exactly one conflict's analysis fields and leave the other untouched",
+    "Outcome: the pass may take either conflict first. If it works c_002, c_002 must end resolved with preferred_assertion_id a_001. Ruling (senior genealogist, #4326): c_002 resolves, preferred_assertion_id a_001. Patrick is in Thomas Flynn's household in 1850 (age 5) and 1860 (age 15), and the 1908 certificate names Thomas Flynn as father through a different informant (the son-in-law). Those agree. The rival Patrick in household 197 appears only in the conflict's description, with no record of his own, so nothing on file supports him. An analysis that calls the father's name circular and defers is the wrong outcome."
   ],
   "execution": {
     "max_wall_clock_seconds": 600

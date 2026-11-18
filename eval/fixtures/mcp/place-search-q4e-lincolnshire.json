@@ -1,0 +1,24 @@
+{
+  "tool": "place_search",
+  "description": "place_search for \"Lincolnshire, England, United Kingdom\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "~Lincolnshire"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Lincolnshire, England, United Kingdom",
+        "type": "County (Top level)",
+        "dateRange": "+1801/",
+        "latitude": 53.158118,
+        "longitude": -0.239248,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Lincolnshire&focusedId=3684",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Lincolnshire,_England"
+      }
+    ],
+    "verdict": {
+      "standardPlace": "Lincolnshire, England, United Kingdom",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

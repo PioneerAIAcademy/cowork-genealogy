@@ -1,0 +1,98 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Mary Dawson, born about 1772 in Lincolnshire, England",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-15",
+    "updated": "2026-11-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Mary Dawson (b. about 1772, Lincolnshire, England)?",
+      "rationale": "Primary research objective. No records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-15",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "England",
+      "for_place": "Lincolnshire, England",
+      "time_period": "1750-1800",
+      "jurisdictions": [
+        {
+          "name": "Lincolnshire, England",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1473014",
+          "title": "England, Births and Christenings, 1538-1975",
+          "date_range": "1538-1975"
+        }
+      ],
+      "quirks": [
+        "FamilySearch's 'England, Births and Christenings' collection (1473014) is a partial Legacy index: it does not index all records for this place or period, and no records or corrections are being added — a nil there is a statement about the index, not proof that no christening exists; search the parish register itself before concluding absence. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/England,_Births_and_Christenings_-_FamilySearch_Historical_Records)"
+      ],
+      "guide_markdown": "## Lincolnshire, England - 1750-1800\n\nFamilySearch's 'England, Births and Christenings' collection (1473014) is a partial Legacy index: it does not index all records for this place or period, and no records or corrections are being added — a nil there is a statement about the index, not proof that no christening exists; search the parish register itself before concluding absence. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/England,_Births_and_Christenings_-_FamilySearch_Historical_Records)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/England_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/England_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-11-15"
+    }
+  ]
+}

@@ -2548,8 +2548,8 @@ describe("recordSearchTool — surnameVariantHints on a search that did not find
     ]);
   });
 
-  // The shape the real index answers: the bride is not indexed as a principal,
-  // only as the groom's spouse (eval/tests/e2e/anders-monsen-ancestry/README.md).
+  // The bride searched as the groom's spouse, a shape the anders-monsen-ancestry e2e runs used
+  // (eval/tests/e2e/anders-monsen-ancestry/README.md).
   it("emits on spouseSurname when the bride is the secondary party", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
 
