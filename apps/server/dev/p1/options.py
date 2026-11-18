@@ -155,7 +155,7 @@ def build_prototype_options(
         "Follow the genealogy skills, and apply "
         "researcher_profile.narration_guidance from research.json as your "
         "narration style. "
-        f"{RECORD_SET_ROUTE}"
+        + RECORD_SET_ROUTE
     )
     kwargs: dict[str, Any] = dict(
         cwd=str(project_dir),

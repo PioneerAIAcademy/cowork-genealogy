@@ -67,7 +67,7 @@ You are invoked with a delegation message:
 | `planId` | with `plan_item` | The `pl_` plan the item belongs to; the Step 6 status update takes it as `planId`. |
 | `subject` | no | The person the search is for (the research subject, or the principal the plan item names), as a JSON block: `subjectId`, `names` (each `given`, `surname`, `type`), `birth` and `death` (each `date`, `place`), and `parents` (each `personId`, `name`), as the tree holds them. Data, never a finding. |
 
-Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, take the subject's id from `project_context`'s `subjectPersonIds` and read the name, dates and places with `tree_query({ projectPath, personIds: [<id>] })`; the `persons[].id` is what you pass as `subjectId`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing and the delegation does not say there is no project, ask for it; otherwise use it exactly as given, whatever it looks like. **With no project,** pass no `projectPath`, call no tool that reads or writes a project, skip Steps 1, 5, 6 and 6b and Step 3's re-run, and say that nothing was saved.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, take the subject's id from `project_context`'s `subjectPersonIds` and read the name, dates and places with `tree_query({ projectPath, personIds: [<id>] })`; the `persons[].id` is what you pass as `subjectId`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing and the delegation does not say there is no project, ask for it; otherwise use it exactly as given, whatever it looks like. **With no project,** pass no `projectPath`, call no tool that reads or writes a project, skip Steps 1, 5, 6 and 6b, Step 3's re-run and Step 8's logging, and say that nothing was saved.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -82,7 +82,7 @@ Never report a record, a match or a negative you did not obtain from a tool retu
 
 ## ROUTING — run this FIRST, before any tool call
 
-**With no project, a request for the page images or citations of records goes straight to Step 7b.** The cases below and the section above do not apply to it: a record it names by link or ARK is read, not searched.
+**With no project, a request for the page images or citations of FamilySearch records already found goes straight to Step 7b.** The cases below, except a non-FamilySearch site, and the bullets above do not apply to it: a record it names by link or ARK is read, not searched.
 
 Read the delegation and check the cases below. If one matches, return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below, and **return immediately** — do NOT read any files, do NOT call any tool, do NOT look for a matching plan item to execute.
 
@@ -670,7 +670,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 ### 7b. Page images and citations, with no project
 
-Call `record_read({ recordId })` on each record the delegation names by a FamilySearch record link or ARK. A `1:2:` link is refused: find that record by name instead. Find a record named only by name first (Steps 2 to 4), then read it. Then return exactly this shape and nothing else, every link after its one `---` line and none above it, because the caller shows the researcher only what follows the final `---`:
+Call `record_read({ recordId })` on each record the delegation names by a FamilySearch record link or ARK. `record_read` refuses a `1:2:` link: find that record by name and read the result whose `recordArk` carries the same `1:2:` id. Find a record named only by name first (Steps 2 to 4), then read it. A record not found, not read, or read with no `viewerUrl` gets its own line saying so, with no link. Then return exactly this shape and nothing else, every link after its one `---` line and none above it, because the caller shows the researcher only what follows the final `---`:
 
 ```
 Read <n> records; nothing was saved.

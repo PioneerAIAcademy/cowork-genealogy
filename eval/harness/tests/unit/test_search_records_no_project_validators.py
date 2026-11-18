@@ -120,8 +120,15 @@ def test_links_reject_a_run_with_no_record_read_answered():
 
 def test_links_reject_answers_with_no_link_fields():
     calls = [call("record_read", response={"persons": []}, recordId="KHJ8-J56")]
-    with pytest.raises(AssertionError, match="carried no viewerUrl or recordUrl"):
+    with pytest.raises(AssertionError, match="carry no recordUrl"):
         check_links(calls, returned("Read 1 record.", printed_block()))
+
+
+def test_links_reject_an_uncompacted_answer_with_only_a_page_link():
+    page = "https://www.familysearch.org/ark:/61903/3:1:9396-MWWN-1"
+    calls = [call("record_read", response={"viewerUrl": page}, recordId="KHJ8-J56")]
+    with pytest.raises(AssertionError, match="carry no recordUrl"):
+        check_links(calls, returned("Read 1 record.", f"[page]({page})"))
 
 
 # --- no-project-writes-nothing ---------------------------------------------

@@ -1624,13 +1624,17 @@ def test_gives_record_image_links(tool_calls, agent_returns, text_response, test
     ]
     answers = [a for a in answers if a and "error" not in a]
     assert answers, "no record_read was answered: the records were never read for their pages"
+    uncompacted = [a for a in answers if not a.get("recordUrl")]
+    assert not uncompacted, (
+        f"{len(uncompacted)} record_read answer(s) carry no recordUrl, so the record links "
+        f"cannot be checked: the mock serves recordUrl only after compaction, which needs the engine build"
+    )
     wanted = sorted({
         url
         for a in answers
         for url in (a.get("viewerUrl"), a.get("recordUrl"))
         if isinstance(url, str) and url
     })
-    assert wanted, f"the {len(answers)} record_read answer(s) carried no viewerUrl or recordUrl"
     printed = tail_after_final_rule(subject_reply_text(agent_returns, text_response, "search-records", test))
     missing = [url for url in wanted if url not in printed]
     assert not missing, (

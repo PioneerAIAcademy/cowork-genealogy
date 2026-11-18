@@ -881,7 +881,7 @@ def build_worker_options(
         "edits the tree). Follow the genealogy skills, and "
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style. "
-        f"{RECORD_SET_ROUTE}"
+        + RECORD_SET_ROUTE
     )
     # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
     project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
