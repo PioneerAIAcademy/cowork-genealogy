@@ -586,7 +586,7 @@ describe("rejected_links survives a merge", () => {
   it("and the rejection still matches the pair afterwards", () => {
     // The point of the remap, stated as the behaviour rather than the field write.
     const rejected = [{ id: "rj_001", assertion_id: "a_001", person_id: "I1", created: "2026-09-30" }];
-    expect(isRejectedPair("a_001", "I1", rejected)).toBe(true);
+    expect(isRejectedPair("a_001", "I1", rejected, [])).toBe(true);
   });
 });
 
