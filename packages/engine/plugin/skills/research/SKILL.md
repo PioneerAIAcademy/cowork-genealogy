@@ -339,9 +339,8 @@ message.
    and check the reported facts against each active hypothesis; name in the
    reply any hypothesis they would make impossible if they describe the same
    person, even when the turn ends by asking for the record's identifier — do
-   not present the record's facts, or the people it names, as support for that
-   hypothesis or any theory built on it, or, beyond naming that contradiction,
-   as evidence about anyone already in the project. The same holds for
+   not present the record's facts as support for that hypothesis or any theory
+   built on it. The same holds for
    a relationship you or an earlier log note inferred from shared surname,
    place or era with no record linking the people: it is a hypothesis, not a
    fact. Log notes that say people "look like", "appear to be", "likely are",
