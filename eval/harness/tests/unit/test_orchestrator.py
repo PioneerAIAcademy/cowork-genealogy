@@ -2087,6 +2087,51 @@ def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monke
     )
 
 
+def test_orchestrator_threads_variant_names_into_validators(tmp_path, monkeypatch):
+    """A test JSON's top-level `variant_names` must reach the `test` dict
+    run_validators receives (issue #4584) — the same whitelist trap
+    `index_error_source` hit. Without it the tagged test has no names, and
+    test_name_variant_not_called_index_error fails every run for a missing
+    declaration instead of judging the reply."""
+    spec = load_test(WIKI_TEST_PATH)
+    spec.raw["variant_names"] = ["Smyth", "Smithe"]
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert captured["test"].get("variant_names") == ["Smyth", "Smithe"], (
+        "orchestrator did not thread spec.raw['variant_names'] into "
+        "run_validators' test dict"
+    )
+
+
 
 def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_path, monkeypatch):
     """`input.delegation` and `builtin_tool_calls` must both reach run_validators.
@@ -3216,3 +3261,70 @@ def test_oversize_hits_reach_the_run_entrys_warnings(tmp_path, monkeypatch):
     assert [(w["test_id"], w["tool"], w["can_read"]) for w in hits] == [
         (spec.id, "person_read", False)
     ]
+
+
+# --- a tool call Claude Code refused as invalid JSON (issue #4588) -------------
+# Such a call never reaches the mock, so it used to be counted as a fixture
+# shortfall: the 2026-11-11 locality-guide run carried 17 of them under
+# "matched no fixture predicate", and every test passed on the agent's retry.
+
+
+def _unparsed(tool="mcp__genealogy__research_append", size=14170):
+    return {"tool": tool, "args": {"__unparsedToolInput": {"raw": '{"projectPath": "/p", "sec', "len": size}}}
+
+
+def test_an_unparsed_call_gets_its_own_advisory_not_the_fixture_one():
+    out = _build_warnings([], attempted_mcp_calls=[_unparsed(), _unparsed(size=6080)], test_id="ut_x")
+    kinds = [w["kind"] for w in out]
+    assert "unparsed_tool_input" in kinds
+    assert "uncovered_tool_call" not in kinds, (
+        "a call Claude Code refused as invalid JSON was counted as a missing fixture"
+    )
+    w = next(w for w in out if w["kind"] == "unparsed_tool_input")
+    assert (w["count"], w["bytes"], w["test_id"]) == (2, [14170, 6080], "ut_x")
+    assert "research_append x2" in w["advisory"]
+    assert "20250 bytes" in w["advisory"]
+    assert "NOT a missing fixture" in w["advisory"]
+
+
+def test_an_unparsed_call_does_not_hide_a_real_fixture_shortfall():
+    uncovered = {"tool": "mcp__genealogy__place_search", "args": {"placeName": "Funchal"}}
+    out = _build_warnings([], attempted_mcp_calls=[_unparsed(), uncovered])
+    kinds = [w["kind"] for w in out]
+    assert "unparsed_tool_input" in kinds and "uncovered_tool_call" in kinds
+    shortfall = next(w for w in out if w["kind"] == "uncovered_tool_call")
+    assert shortfall["attempted"] == [uncovered]
+    assert shortfall["advisory"].startswith("1 of 1 ")
+
+
+def test_an_unparsed_call_beside_covered_calls_raises_no_fixture_advisory():
+    matched = _matched()
+    out = _build_warnings(
+        [matched],
+        attempted_mcp_calls=[{"tool": matched["tool"], "args": matched["args"]}, _unparsed()],
+    )
+    assert [w["kind"] for w in out if w["kind"] in ("unparsed_tool_input", "uncovered_tool_call")] == [
+        "unparsed_tool_input"
+    ]
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        {"projectPath": "/p", "section": "localities"},
+        {"note": "__unparsedToolInput"},
+        {},
+        None,
+        "__unparsedToolInput",
+    ],
+)
+def test_a_parsed_call_is_not_reported_as_unparsed(args):
+    out = _build_warnings([], attempted_mcp_calls=[{"tool": "mcp__genealogy__research_append", "args": args}])
+    assert "unparsed_tool_input" not in [w["kind"] for w in out]
+
+
+@pytest.mark.parametrize("marker", [{"raw": "{", "len": None}, {"raw": "{"}, "raw text", {"len": True}])
+def test_an_unparsed_call_with_no_usable_size_still_counts(marker):
+    call = {"tool": "mcp__genealogy__research_append", "args": {"__unparsedToolInput": marker}}
+    w = next(w for w in _build_warnings([], attempted_mcp_calls=[call]) if w["kind"] == "unparsed_tool_input")
+    assert (w["count"], w["bytes"]) == (1, [0])

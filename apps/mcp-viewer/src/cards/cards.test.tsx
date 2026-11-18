@@ -4,7 +4,7 @@ import type { ProjectDocument } from '../contract'
 import { leftoverIds } from '../rules/id-check'
 import { cardView } from './kit/view'
 import { CARDS, cardKind } from './registry'
-import { COMPOUND_DOC, FLYNN_DOC, MCANDREW_DOC, status } from './test-views'
+import { COMPOUND_DOC, FLYNN_DOC, FLYNN_PARENT_CONFLICT, FLYNN_WITH_STATED_CONFLICT, MCANDREW_DOC, status } from './test-views'
 
 afterEach(cleanup)
 
@@ -132,10 +132,78 @@ describe('the search card', () => {
   })
 })
 
+describe('the link card', () => {
+  const people = (container: HTMLElement) => [...container.querySelectorAll('.people li')].map((li) => li.textContent)
+
+  it('the compound proof: how many records to how many people, the subject first, strengths in words', () => {
+    const card = drawn(COMPOUND_DOC(), { show: 'link' })
+    expect(card.title).toBe('Linking records to people')
+    expect(card.text).toContain('8 records linked to 4 people.')
+    expect(people(card.container)).toHaveLength(3)
+    expect(people(card.container)[0]).toBe('Elizabeth Mariah Turnbow: 8 records, 5 confident, 3 likely')
+    expect(card.text).toContain('And 1 more person.')
+    expect(leftoverIds(card.text)).toEqual([])
+  })
+
+  it('a speculative link reads as speculative, and a retired link shows nowhere', () => {
+    const doc = FLYNN_DOC()
+    const research = doc.research!
+    const pe001 = research.person_evidence!.find((pe) => pe.id === 'pe_001')!
+    research.person_evidence!.push(
+      { ...pe001, id: 'pe_090', person_id: 'I2', confidence: 'speculative' },
+      { ...pe001, id: 'pe_091', person_id: 'I2', confidence: 'confident', superseded_by: 'retracted' }
+    )
+    const card = drawn(doc, { show: 'link', questionId: 'q_002' })
+    expect(card.text).toContain('1 record linked to 2 people.')
+    expect(people(card.container)).toEqual(['Patrick Flynn: 1 record, confident', 'Thomas Flynn: 1 record, speculative'])
+  })
+
+  it("a speculative link's stated conflict shows its sentence, and asks nothing", () => {
+    const card = drawn(FLYNN_WITH_STATED_CONFLICT(), { show: 'link', questionId: 'q_002' })
+    expect(people(card.container)).toContain('Thomas Flynn: 1 record, speculative')
+    expect(card.text).toContain(`Speculative because${FLYNN_PARENT_CONFLICT}`)
+    expect(card.text).not.toMatch(/same person|different person|\?$/)
+    expect(leftoverIds(card.text)).toEqual([])
+  })
+
+  it('a stated conflict shows once however many rows carry it, never from a retired row, and past two as a count', () => {
+    const doc = FLYNN_WITH_STATED_CONFLICT()
+    const evidence = doc.research!.person_evidence!
+    const planted = evidence.find((pe) => pe.id === 'pe_092')!
+    evidence.push({ ...planted, id: 'pe_093' }, { ...planted, id: 'pe_094', core_identifier_conflict: 'A retired claim.', superseded_by: 'pe_093' })
+    let card = drawn(doc, { show: 'link', questionId: 'q_002' })
+    expect(card.text.split(FLYNN_PARENT_CONFLICT)).toHaveLength(2)
+    expect(card.text).not.toContain('A retired claim.')
+    expect(card.text).not.toContain('more in the case file')
+    evidence.push({ ...planted, id: 'pe_095', core_identifier_conflict: 'Second.' }, { ...planted, id: 'pe_096', core_identifier_conflict: 'Third.' })
+    card = drawn(doc, { show: 'link', questionId: 'q_002' })
+    expect(card.text).toContain('Second.')
+    expect(card.text).not.toContain('Third.')
+    expect(card.text).toContain('And 1 more in the case file.')
+  })
+
+  it('ruled out counts rejections and namesakes on a person the question has no link to', () => {
+    const doc = FLYNN_DOC()
+    const research = doc.research!
+    const assertion_id = research.person_evidence!.find((pe) => pe.id === 'pe_001')!.assertion_id
+    research.rejected_links = [{ id: 'rl_001', assertion_id, person_id: 'I9', created: '2026-11-16' }]
+    research.namesakes = [{ id: 'ns_001', person_id: 'I9', name: 'Patrick Flynn', place: 'Cork', record_ids: [], created: '2026-11-16' }]
+    const card = drawn(doc, { show: 'link', questionId: 'q_002' })
+    expect(card.text).toContain('Ruled out1 link rejected, 1 namesake.')
+    expect(drawn(FLYNN_DOC(), { show: 'link', questionId: 'q_002' }).text).not.toContain('Ruled out')
+  })
+
+  it('a question with no links says so', () => {
+    const doc = COMPOUND_DOC()
+    doc.research!.person_evidence = []
+    expect(drawn(doc, { show: 'link' }).text).toContain('No records linked yet.')
+  })
+})
+
 describe('the registry', () => {
-  it('latest follows the question: concluded shows the conclusion, evidence gathered the search card', () => {
+  it('latest follows the question: concluded shows the conclusion, evidence gathered the link card', () => {
     expect(drawn(MCANDREW_DOC(), { show: 'latest' }).title).toBe('The conclusion')
-    expect(drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title).toBe('Searching')
+    expect(drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title).toBe('Linking records to people')
   })
 
   it('every step has a card, and a stub names the question', () => {

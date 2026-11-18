@@ -183,7 +183,7 @@ matters when hand-authoring:
   "researcher_profile": {
     "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Never sound surer than the evidence was rated: say the records show it for a well established fact or relationship, probably for a likely one and possibly for a tentative one, and never write that someone is the parent, spouse or child of another without one of these. Say match or search result, never hit; never write ARK: name the record or link to it. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
@@ -721,20 +721,26 @@ rules in `research/SKILL.md` branch on it; find them with
   state, one step per turn, rather than handed straight to the step that owns a
   single deliverable.
 - **No researcher present.** On an autonomous run the router hands `userPresent: no`
-  to two agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
   run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
   otherwise `yes`". `@plugin:person-evidence` gets
   it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
   run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". The rules are there so an e2e run never waits on an
-  external-site capture nobody will upload. No check makes the router send the field
-  to search-external-sites (the research unit suite checks it only on person-evidence's spawn),
-  and an agent reads a missing field as `yes`:
+  and in an autonomous run". `@plugin:question-selection` gets it only in an autonomous
+  run, so an objective holding several facts gets a question for the first one instead
+  of an ask nobody answers. The rules are there so an e2e run never waits on an
+  external-site capture nobody will upload. The research unit suite checks that the router sends
+  the field to search-external-sites on the opening turn of an autonomous run
+  (`ut_research_ue1`, tag `delegates-user-present-no-external`), and to question-selection
+  on the opening turn of an autonomous run with an objective and no questions
+  (`ut_research_uq1`, tag `delegates-qs-user-present-no`). A spawn later in a
+  run is checked by nothing, and an agent reads a missing field as `yes`:
   `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
   search-external-sites without it, and that plan item stayed `in_progress` waiting
   for a capture.
 
-Those three agents read the `userPresent` field, not the string. The e2e
+Of those three, search-external-sites and question-selection read the `userPresent`
+field, not the string; person-evidence receives it but does not read it. The e2e
 orchestrator writes no delegation, so it cannot pass `userPresent: no` itself: the
 flag is how an e2e run gets it. That is why the flag stays as e2e's opening (lead,
 2026-11-10); decision 22 of the step-mode spec records that ruling, which rescinded
