@@ -25,8 +25,12 @@ export type VolumeBisectConfidence =
 
 export interface VolumeBisectBracket {
   lowPosition: number;
+  /** The image at `lowPosition`: read from here forward. */
+  lowImageId: string;
   lowYear: number | null;
   highPosition: number;
+  /** The image at `highPosition`. */
+  highImageId: string;
   highYear: number | null;
 }
 
