@@ -347,8 +347,11 @@ export function unlinkedKin(
   const neighbours = new Map<string, string[]>();
   const connect = (a: unknown, b: unknown): void => {
     if (typeof a !== "string" || typeof b !== "string") return;
-    neighbours.set(a, [...(neighbours.get(a) ?? []), b]);
-    neighbours.set(b, [...(neighbours.get(b) ?? []), a]);
+    for (const [from, to] of [[a, b], [b, a]]) {
+      const list = neighbours.get(from);
+      if (list) list.push(to);
+      else neighbours.set(from, [to]);
+    }
   };
   for (const r of arr(tree?.relationships)) {
     if (r?.type === "ParentChild") connect(r?.parent, r?.child);
@@ -356,8 +359,8 @@ export function unlinkedKin(
   }
   const pathed = new Set<string>(subjects);
   const queue = [...subjects];
-  while (queue.length > 0) {
-    for (const next of neighbours.get(queue.shift() as string) ?? []) {
+  for (let i = 0; i < queue.length; i++) {
+    for (const next of neighbours.get(queue[i]) ?? []) {
       if (!pathed.has(next)) {
         pathed.add(next);
         queue.push(next);
@@ -368,11 +371,15 @@ export function unlinkedKin(
   const live = new Map(arr(research?.assertions).filter(isLiveAssertion).map((a) => [a?.id, a]));
   const recordKey = (a: any): unknown =>
     typeof a?.record_id === "string" && a.record_id !== "" ? a.record_id : a?.source_id;
-  const keysOf = (personId: string): unknown[] =>
-    links
-      .filter((pe) => pe.person_id === personId && live.has(pe?.assertion_id))
-      .map((pe) => recordKey(live.get(pe.assertion_id)))
-      .filter((k) => k != null);
+  const keysByPerson = new Map<string, unknown[]>();
+  for (const pe of links) {
+    const key = live.has(pe?.assertion_id) ? recordKey(live.get(pe.assertion_id)) : null;
+    if (key == null) continue;
+    const list = keysByPerson.get(pe.person_id);
+    if (list) list.push(key);
+    else keysByPerson.set(pe.person_id, [key]);
+  }
+  const keysOf = (personId: string): unknown[] => keysByPerson.get(personId) ?? [];
   const anchored = new Set([...pathed].flatMap(keysOf));
 
   return [...candidates]
