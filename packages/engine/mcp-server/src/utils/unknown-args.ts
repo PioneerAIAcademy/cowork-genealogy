@@ -154,7 +154,7 @@ const HINTS: Readonly<Record<string, Hint>> = {
     return {
       message:
         `image_search has no parameter \`${shownKey(key)}\`; to address one item use \`item\` / \`itemImage\`, ` +
-        "or drop it to list the whole group.",
+        "or drop it to get the whole group's image ranges.",
       covers: [key],
     };
   },

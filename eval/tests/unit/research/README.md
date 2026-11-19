@@ -123,7 +123,7 @@ that keeps the judge off the routing decision.
 
 | Test | Row | Scenario |
 |---|---|---|
-| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_pe7` (deleted in #4537; issue #4659 restores it) | Assertions not yet linked to persons | `flynn-household-skeleton` |
 | `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
 | `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
 | `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
@@ -137,10 +137,12 @@ spells `@plugin:search-images`, and `_paired_names()` picks it up.
 `project_context`'s advisory `nextStep`, which then said `search-records` for any
 planned item whatever its repository. The step now names `search-external-sites`
 for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
-advisory is still wrong on two of these states and the router passed both 3 of 3
-regardless: for `pe7` it says `research-exhaustiveness`, because a no-link leaves
-no record to tell a rejected assertion from an unlinked one, and for `si3` it says
-`search-records`, because browse-only is stated only in the plan item's rationale.
+advisory is still wrong on two of these states: for `pe7` it says
+`research-exhaustiveness`, because a no-link leaves no record to tell a rejected
+assertion from an unlinked one, and for `si3` it says `search-records`, because
+browse-only is stated only in the plan item's rationale. The router passed both 3
+of 3 regardless until 2026-11-18, when `pe7` began following the advisory (2 of 3
+on `main`).
 
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
