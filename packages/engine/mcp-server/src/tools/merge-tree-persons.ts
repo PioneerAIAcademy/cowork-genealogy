@@ -11,7 +11,7 @@ import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
-import { mergeClaimWarnings } from "../validation/merge-claim-warnings.js";
+import { mergeClaimWarnings, mergeIdentityWarnings } from "../validation/merge-claim-warnings.js";
 import { atomicWriteBoth, withProjectLock } from "../utils/project-io.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -117,7 +117,10 @@ export async function mergeTreePersons(
     //     matched against their survivor and not read as introduced.
     //     Decision 13: the claim states the merge leaves (rules 2, 9, 12) and a
     //     re-created ruled-out pair, computed before the gate persists anything.
-    const claimWarnings = mergeClaimWarnings(before, { research, tree: merged }, merges);
+    const claimWarnings = [
+      ...mergeIdentityWarnings(before, merges),
+      ...mergeClaimWarnings(before, { research, tree: merged }, merges),
+    ];
     const mergeGateResult = await checkWarningGate(
       tree, merged, research, projectPath,
       input.warningJustifications, "merge_tree_persons",

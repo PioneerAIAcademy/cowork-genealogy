@@ -244,6 +244,27 @@ function provedWeakPersons(claim: any, ev: Evidence, allClaims: readonly any[]):
   return namedPersons(claim).filter((p) => !confident.has(p) && !coveredByIdentity.has(p));
 }
 
+/** Decision 13: whether an identity claim records that `survivor` and `collapsed`
+ *  are one person. Affirmed at probable or better, and either a `same_as` naming
+ *  the pair whose cited assertions link to both, or a record identity naming one of
+ *  them whose persona is tied to the other. Links are read as rule 7 reads them. */
+export function identityCoversMerge(claim: any, research: any, summaries: readonly any[], survivor: string, collapsed: string): boolean {
+  const idn = claim?.identity;
+  if (!idn || isDenied(claim) || claim?.proof_tier === "disproved" || !atLeast(claim?.proof_tier, "probable")) return false;
+  const ev = new Evidence(research, summaries);
+  const pair = new Set([survivor, collapsed]);
+  if (typeof idn.same_as === "string") {
+    if (!pair.has(idn.person) || !pair.has(idn.same_as) || idn.person === idn.same_as) return false;
+    return citedIds(claim).some((id) => {
+      const linked = ev.linkedFrom([id]);
+      return linked.has(survivor) && linked.has(collapsed);
+    });
+  }
+  if (typeof idn.record_id !== "string" || !pair.has(idn.person)) return false;
+  const other = idn.person === survivor ? collapsed : survivor;
+  return citedIds(claim).some((id) => ev.tiedTo(id).has(other));
+}
+
 /** Rule 12 for the status lookup: a `proved` claim that would stand at probable. */
 export function claimProvedCapped(claim: any, research: any, summaries: readonly any[] = []): boolean {
   if (claim?.proof_tier !== "proved") return false;

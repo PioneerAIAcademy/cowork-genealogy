@@ -1744,11 +1744,64 @@ describe("tree_edit", () => {
       operation: "update_relationship",
       relationshipId: "R1",
       subtype: "Step",
+      // No claim names Step on this pair, so the retype carries a justification.
+      warningJustifications: [{ warningId: "retypeUnclaimed|R1|Step", justification: "The step-parent deed names him." }],
     } as any);
     expect(r.ok).toBe(true);
     const tree: any = await readTree();
     expect(tree.relationships).toHaveLength(1);
     expect(tree.relationships[0]).toMatchObject({ id: "R1", subtype: "Step" });
+  });
+
+  // #3032 Stage 1b: a retype no claim names, and an import removed with no disproof, need a justification.
+  it("update_relationship to a subtype no claim names needs a justification, and to one a claim names needs none", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    const refused: any = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(refused.reason).toBe("unjustified_warnings");
+    expect(refused.warnings.map((w: any) => w.warningId)).toEqual(["retypeUnclaimed|R1|Step"]);
+
+    await writeProject(t, {
+      ...minimalResearch,
+      proof_summaries: [{ id: "ps_001", question_id: "q_001", tier: "probable", claims: [
+        { claim: "stepfather", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", subtype: "Step", parent: "I1", child: "I2" } },
+      ] }],
+    });
+    const ok: any = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(ok.ok, JSON.stringify(ok)).toBe(true);
+  });
+
+  it("removing an imported Couple edge raises one warning, not one more per fact it held", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ id: "F9", type: "Marriage", date: "1870" }] }];
+    await writeProject(t);
+    const r: any = await treeCorrect({ projectPath: dir, operation: "remove", relationshipId: "R1" } as any);
+    expect(r.warnings?.map((w: any) => w.warningId)).toEqual(["removeImport|R1"]);
+  });
+
+  it("removing an import needs a justification unless a disproved claim rules it out; a non-import needs none", async () => {
+    await writeProject(onePerson());
+    const refused: any = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(refused.reason).toBe("unjustified_warnings");
+    expect(refused.warnings.map((w: any) => w.warningId)).toEqual(["removeImport|I1|F1"]);
+
+    const fact = onePerson().persons[0].facts[0] as any;
+    await writeProject(onePerson(), {
+      ...minimalResearch,
+      proof_summaries: [{ id: "ps_001", question_id: "q_001", tier: "disproved", claims: [
+        { claim: "not born then", proof_tier: "disproved", supporting_assertion_ids: [], fact: { subject: "I1", fact_type: fact.type, date: fact.date } },
+      ] }],
+    });
+    const disproved: any = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(disproved.ok, JSON.stringify(disproved)).toBe(true);
+
+    const sourced = onePerson();
+    (sourced.persons[0].facts[0] as any).sources = [{ ref: "S1" }];
+    (sourced as any).sources = [{ id: "S1", title: "1850 census" }];
+    await writeProject(sourced);
+    const plain: any = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(plain.ok, JSON.stringify(plain)).toBe(true);
   });
 
   it("update_relationship refuses a retype that would duplicate an edge already on the pair", async () => {
@@ -1996,6 +2049,7 @@ describe("tree_edit", () => {
     const r = await treeCorrect({
       projectPath: dir,
       ops: [{ operation: "update_relationship", relationshipId: "R1", subtype: "Adopted" }],
+      warningJustifications: [{ warningId: "retypeUnclaimed|R1|Adopted", justification: "The adoption decree names him." }],
     } as any);
     expect(r.ok).toBe(true);
     expect((await readTree() as any).relationships[0].subtype).toBe("Adopted");
@@ -2035,7 +2089,11 @@ describe("tree_edit", () => {
 
   it("remove (tree_correct): deletes a fact by id; refuses to remove a person", async () => {
     await writeProject(onePerson());
-    const ok = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" });
+    // The ref-less F1 reads as an import (Decision 7), so its removal is justified.
+    const ok = await treeCorrect({
+      projectPath: dir, operation: "remove", factId: "F1",
+      warningJustifications: [{ warningId: "removeImport|I1|F1", justification: "The user withdrew this birth." }],
+    } as any);
     // removing the only Birth is structurally fine (person still has a name); validates.
     expect(ok.ok).toBe(true);
     expect((await readTree()).persons[0].facts).toHaveLength(0);
