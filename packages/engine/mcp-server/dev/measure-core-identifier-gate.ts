@@ -24,6 +24,7 @@ import { join, dirname } from "node:path";
 import { execFileSync } from "node:child_process";
 import * as ra from "../src/tools/research-append.js";
 import * as rp from "../src/utils/record-persona.js";
+import * as sbd from "../src/utils/settled-birth-disputes.js";
 import { lookupWithin } from "../src/utils/place-coords.js";
 import { standardPlaceToCoords } from "../src/utils/place-resolver.js";
 
@@ -57,6 +58,13 @@ const keyer = (rp as any).recordPartyKeyer as ((list: any[]) => (a: any) => stri
 let links = 0, linksRelational = 0;
 let refused = 0, refusedRelational = 0, refusedPlace = 0, refusedDate = 0;
 let refusedWithoutConflicts = 0;
+let refusedAttached = 0;
+let conflictsBirthPlace = 0, conflictsAttachedRefused = 0;
+const conflictRule = (ra as any).attachedBirthConflictInvariants as ((c: any, r: any, t: any, l?: any, coords?: any) => string[]) | undefined;
+const conflictNames = (ra as any).attachedBirthConflictPlaceNames as ((c: any, r: any, l?: any) => string[]) | undefined;
+const isBirthPlace = (sbd as any).isBirthPlaceDispute as ((a: unknown) => boolean) | undefined;
+const judgedAttached = new Set<string>();
+const attachedOf = (ra as any).attachedBirthsOf as ((p: string, r: any, l?: any) => any[]) | undefined;
 let recheckRefusals = 0;
 let conflictsChecked = 0, conflictsRefused = 0;
 let mixedGroups = 0, sharedPids = 0, keyerMoves = 0;
@@ -117,10 +125,37 @@ for (const { label, research, tree } of docs) {
   let coords: any = undefined;
   if (COORDS) {
     const names = new Set<string>();
-    for (const e of live) for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
-    coords = names.size ? await lookupWithin([...names], (n) => standardPlaceToCoords(n), 60_000) : new Map();
+    const withNames = new Set<string>();
+    // One read of each link's scope gives both lists; a revision before the
+    // other-names read exports only the coordinate names.
+    const lookups = (ra as any).birthPlaceLookups as
+      | ((e: any, r: any, t: any, l?: any) => { coordNames: string[]; aliasNames: string[] })
+      | undefined;
+    for (const e of live) {
+      if (!lookups) {
+        for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
+        continue;
+      }
+      const { coordNames, aliasNames } = lookups(e, research, tree, personLinks);
+      for (const n of coordNames) names.add(n);
+      for (const n of aliasNames) withNames.add(n);
+    }
+    if (conflictNames) for (const c of (research.conflicts ?? []) as any[]) for (const n of conflictNames(c, research, personLinks)) withNames.add(n);
+    const info = (ra as any).birthPlaceInfo as ((n: string, w: boolean) => Promise<any>) | undefined;
+    for (const n of withNames) names.add(n);
+    coords = names.size
+      ? await lookupWithin([...names], (n) => (info ? info(n, withNames.has(n)) : standardPlaceToCoords(n)), 60_000)
+      : new Map();
   }
   const noConflicts = { ...research, conflicts: [] };
+
+  // #4444: people whose readable attached births (live or ruled out) number two
+  // or more -- the population the attached-births arm can judge at all.
+  if (attachedOf) {
+    for (const p of new Set(live.map((e) => e.person_id))) {
+      if (attachedOf(p, research, personLinks).length >= 2) judgedAttached.add(`${label}#${p}`);
+    }
+  }
 
   for (const e of live) {
     if (e.confidence !== "confident" && e.confidence !== "probable") continue;
@@ -135,6 +170,10 @@ for (const { label, research, tree } of docs) {
     const text = errs.join(" ");
     if (/the record states '/.test(text)) refusedPlace += 1;
     if (/-year gap/.test(text)) refusedDate += 1;
+    if (/own attached records disagree|ruled is not this person/.test(text)) {
+      refusedAttached += 1;
+      if (LIST) lines.push(`ATTACHED\t${label}\t${e.id}\t${e.person_id}\t${text.slice(0, 260)}`);
+    }
     if (LIST) lines.push(`REFUSE\t${label}\t${e.id}\t${relational ? "relational" : "one-party"}\t${text.slice(0, 220)}`);
   }
 
@@ -147,6 +186,18 @@ for (const { label, research, tree } of docs) {
       if (errs.length === 0) continue;
       recheckRefusals += 1;
       if (LIST) lines.push(`RECHECK\t${label}\t${e.id}\t${errs.join(" ").slice(0, 220)}`);
+    }
+  }
+
+  // #4444: every resolved birthplace fact conflict, replayed through the rule
+  // that refuses resolving one across a person's contradicting attached births.
+  if (conflictRule && isBirthPlace) {
+    for (const c of (research.conflicts ?? []) as any[]) {
+      if (c?.conflict_type !== "fact" || c?.status !== "resolved" || !isBirthPlace(c.disputed_attribute)) continue;
+      conflictsBirthPlace += 1;
+      if (conflictRule(c, research, tree, personLinks, coords).length === 0) continue;
+      conflictsAttachedRefused += 1;
+      if (LIST) lines.push(`CONFLICT-ATTACHED\t${label}\t${c.id}\t${(c.competing_assertion_ids ?? []).join(",")}\tpreferred ${c.preferred_assertion_id}`);
     }
   }
 
@@ -167,9 +218,18 @@ console.log(`documents read                              : ${docs.length}${COORD
 console.log(`confident/probable links                    : ${links} (${linksRelational} on a two-party assertion)`);
 console.log(`  refused by the gate                       : ${refused} (${refusedRelational} two-party; ${refusedPlace} place, ${refusedDate} date)`);
 console.log(`  refused with every conflict removed       : ${refusedWithoutConflicts}`);
+console.log(`  refused by the attached-births arm (#4444): ${attachedOf ? refusedAttached : "-"}${absent(attachedOf)}`);
+console.log(`people with two or more attached births    : ${attachedOf ? judgedAttached.size : "-"}${absent(attachedOf)}`);
+console.log(`resolved birthplace conflicts / refused    : ${conflictRule ? `${conflictsBirthPlace} / ${conflictsAttachedRefused}` : "-"}${absent(conflictRule)}`);
 console.log(`one-party links the re-check refuses        : ${recheck ? recheckRefusals : "-"}${absent(recheck)}`);
 console.log(`fact conflicts / refused as one place       : ${containment ? `${conflictsChecked} / ${conflictsRefused}` : "-"}${absent(containment)}`);
 console.log(`record+role groups with mixed persona ids   : ${mixedGroups}`);
 console.log(`persona ids worn by >1 role in a record     : ${sharedPids}`);
 console.log(`assertions the record-wide party key re-keys: ${keyer ? keyerMoves : "-"}${absent(keyer)}`);
 if (LIST) for (const l of lines.sort()) console.log(l);
+// A floor, so the attached-births figures cannot read as a clean zero when the
+// arm judged nobody: thomas-hanrahan-marriage's 2026-11-09 run must stay in view.
+if (attachedOf && (judgedAttached.size === 0 || refusedAttached === 0)) {
+  console.error("attached-births arm judged no person or refused nothing: the corpus or the arm is broken");
+  process.exit(2);
+}
