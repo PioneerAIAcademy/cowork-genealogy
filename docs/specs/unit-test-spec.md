@@ -1498,7 +1498,7 @@ Three independent layers. Each feeds results into the run log. The layers do not
 | Layer | What | Model | Sees | Output |
 |-------|------|-------|------|--------|
 | Layer 1: Deterministic | Structural correctness | Python (no LLM) | Full before/after state + tool calls | Binary pass/fail per check |
-| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario judge brief (README fallback) + before-state + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
+| Layer 2: LLM judge | Quality evaluation | Sonnet 4.6 | Scenario judge brief (README fallback) + before-state + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
 | Layer 3: Human | Verification | Junior + senior genealogists | Both Layer 1 and Layer 2 results | Agree/disagree per dimension |
 
 **Layer 2 runs on every non-aborted run, including one whose Layer 1 validators failed.** The failing validator names are handed to the judge, which grades the substantive dimensions and discounts the defect itself. The run's outcome is already `fail` (Section 7); grading it buys the per-dimension diagnosis. Only an abort skips Layer 2.
@@ -1651,7 +1651,7 @@ appears under `{file_changes_summary}`, not here.
 Each call's `response_summary` renders **every** result, not a 3-item sample:
 a grounding rubric marks a correct citation of result 4+ as fabricated when the
 judge can only see results 1-3. Prompt size is bounded by the total-size
-guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
+guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole calls, oldest first, with a stated
 marker; per-string and depth caps still apply inside each result. A larger array
 cap was rejected — it only moves the cliff. The drop budget is measured with
 the args of every live call (`matched.kind == "live"`, which is how every writer
@@ -1664,11 +1664,25 @@ The kept calls are then rendered with their real args, held under
 strings to the per-string cap and then the args whole to that marker, never by
 dropping more evidence.
 
+**Excerpts past the cut.** Each string is still cut at
+`_RESPONSE_STRING_MAX` (2,000 chars). When a URL or hostname the agent wrote in
+`{text_response}` or `{file_changes_summary}` first appears in a string past
+that cut, the render appends one excerpt for it after the truncation suffix:
+±150 chars, at most 16 per string, marked `[harness excerpt at char N of M]`,
+and the judge prompt says what that marker is. A wiki page runs 20–34K chars, so
+without this a URL correctly taken from later in the page read to the judge as
+invented. Excerpts are left out of the drop budget, and the guard drops the
+oldest call that carries no excerpt, keeping a cited page until no uncited call
+is left. Past the hard cap the render tries, in order: live args as-is with
+excerpts, live args string-capped with excerpts, string-capped without excerpts,
+then the measured view. `_summarize_response` is unchanged, so e2e run-log
+captures carry no excerpts.
+
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran. The slot names each agent the skill spawned as well, because `skills_invoked` holds `Skill` calls only: a test's `judge_context` can ask whether the skill delegated to an agent (`ut_init_project_q7b` does), and without the spawns the judge answered that blind. The slot is filled as a value, not edited in the template, so adding the spawns did not move `judge_prompt_hash`.
 
 The template is versioned with the harness; its SHA-256 hash is recorded in the run log as `judge_prompt_hash`. The skill rubric's content hash is recorded as `rubric_hash`. A change to either invalidates apples-to-apples comparison with prior runs and forces a re-baseline.
 
-**`make judge-regrade` is the cheap satisfaction path for a judge-prompt edit.** A judge-prompt change does not alter what the skill under test produced — only how that output is graded. A full `make eval-skill` run across every stale suite would cost roughly $95 to answer a question that needs no skill run; a regrade costs roughly $5 of judge-only spend. `make judge-regrade` re-renders the judge prompt from disk for every test (bypasses `judge.judge_prompt_template()`'s `@lru_cache` — nothing stores or replays a rendered prompt, which is how a prose-only judge edit otherwise certifies as a no-op), calls `judge.grade(...)` fresh, re-runs the post-judge pipeline (including `flag_routing_negative_judge_fail` + `_compute_outcome`), and writes the log back with the refreshed `judge_prompt_hash` + `judge_model`. It leaves `review_sample` and every `.ann.json` byte-identical — a human corrected score grades the skill's output, which the regrade did not change. Rule 2b in `check_runlogs.py` BLOCKS on a judge-prompt-only PR until the committed scores and hash are refreshed, with a warn-only fallback when the baseline log is already skill-side stale (rule 2 blocks for its own reason there; a regrade cannot satisfy an inactive log). The regrade **refuses** on a skill-side-stale log rather than silently rewriting scores against inputs the skill never saw. `DRY=1` renders every eligible prompt and hashes it without a model call — used by `make harness-test` to prove the renderer reads from disk on every call.
+**`make judge-regrade` is the cheap satisfaction path for a judge-prompt edit.** A judge-prompt change does not alter what the skill under test produced — only how that output is graded. A full `make eval-skill` run across every stale suite would cost roughly $95 to answer a question that needs no skill run; a regrade costs roughly $30 of judge-only spend for every suite's latest log (about $1 a suite and $0.05 a judged run; measured over each suite's latest log graded by Sonnet 4.6, 2026-11-16). `make judge-regrade` re-renders the judge prompt from disk for every test (bypasses `judge.judge_prompt_template()`'s `@lru_cache` — nothing stores or replays a rendered prompt, which is how a prose-only judge edit otherwise certifies as a no-op), calls `judge.grade(...)` fresh, re-runs the post-judge pipeline (including `flag_routing_negative_judge_fail` + `_compute_outcome`), and writes the log back with the refreshed `judge_prompt_hash` + `judge_model`. It leaves every `.ann.json` byte-identical — a human corrected score grades the skill's output, which the regrade did not change — and adds to `review_sample` any test the fresh grades make mandatory, whose rows rule 3 then requires annotated. Rule 2b in `check_runlogs.py` BLOCKS on a judge-prompt-only PR until the committed scores and hash are refreshed, with a warn-only fallback when the baseline log is already skill-side stale (rule 2 blocks for its own reason there; a regrade cannot satisfy an inactive log). The regrade **refuses** on a skill-side-stale log rather than silently rewriting scores against inputs the skill never saw. `DRY=1` renders every eligible prompt and hashes it without a model call — used by `make harness-test` to prove the renderer reads from disk on every call.
 
 **Move a rule into a deterministic grader rather than rewording it** (lead ruling, 2026-09-27: "I'm happy to move rules into deterministic graders"). Where a rubric or a `judge_context` legislates a rule the judge is shown disobeying, the fix is to move that rule into a validator and delete it from the rubric or prompt text — not to reword the prose and buy another run. This holds only where a reliable mechanical signal exists: the withdrawn per-sentence check in the `search-records` validator is the counter-example, a rule whose mechanical form could not express what it meant. Rewording prose is the last resort, and a prompt has no scope — rewording one rule routinely moves a neighbouring test.
 
@@ -2067,7 +2081,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 
   "harness_version": "string (semver of the harness package — e.g. 0.4.2)",
   "model": "string (pinned model version, e.g. claude-sonnet-4-6-20250514)",
-  "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
+  "judge_model": "string (e.g. claude-sonnet-4-6)",
   "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
   "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
   "judge_render_hash": "string (optional: SHA-256 of the normalized AST of the code that renders the judge's input)",
@@ -2308,17 +2322,17 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 |------|-------|-----------|
 | Main thread (a skill suite's skill, an agent-keyed suite's dispatcher or router) | `packages/engine/plugin/main-thread.json`'s model and effort, passed as `--model` / `--effort` | The one setting the hosted alpha and beta and both harnesses run. A skill cannot set its own model or effort. |
 | Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent on every surface, Cowork included, and outranks the session's effort. |
-| LLM judge | Haiku | Grading against a structured rubric is a classification task, not a reasoning task. ~20x cheaper than Sonnet. Upgrade selectively if specific dimensions prove unreliable. |
+| LLM judge | Sonnet 4.6 | Sonnet 4.6 since 2026-11-06 (lead). Haiku misread a note it quoted on `ut_citation_007` (0/3 vs Sonnet 3/3), and per-misread judge lines did not converge. |
 
-**Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~5x cheaper than Haiku for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.01 per test to ~$0.002. The harness should support configurable judge model selection so the cheapest adequate model can be used.
+**Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~20x cheaper than Sonnet 4.6 for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.05 per judged run (Sonnet 4.6, measured 2026-11-16) to ~$0.0025, if it reads the evidence as well. The harness should support configurable judge model selection so the cheapest adequate model can be used.
 
 ### Cost optimizations
 
-1. **Cheap judge model.** The biggest cost lever. Using Haiku instead of Sonnet for the judge cuts judge cost ~20x. Gemini Flash cuts it ~100x.
+1. **Judge model.** The biggest cost lever. Haiku 4.5 costs a third of Sonnet 4.6 (`JUDGE_PRICING`), but the unit judge moved to Sonnet 4.6 on 2026-11-06 because Haiku misread evidence it quoted. Gemini Flash would cut Sonnet's cost ~20x.
 
 2. **Prompt caching for batched skill runs.** When running 15 tests for one skill, the SKILL.md + references (~5-10K tokens) is identical across all tests. With prompt caching, cached input tokens cost 90% less. The harness structures prompts so cacheable content (skill prompt) comes first and test-specific content (scenario state, user message) comes last.
 
-3. **Judge every non-aborted run.** Grading a structurally-failed run is what makes it diagnosable; it costs ~$0.0135 per validator-failing run. 121 of the 2102 committed runs failed a validator; the 116 of those that are non-aborted are the newly-judged, cost-bearing set (5.5%, re-measured 2026-09-13 after a main merge rotated the corpus — the third rotation this figure has survived, so re-derive rather than quote).
+3. **Judge every non-aborted run.** Grading a structurally-failed run is what makes it diagnosable; it cost ~$0.0135 per validator-failing run on the Haiku judge, ~$0.05 on Sonnet 4.6 (measured 2026-11-16). 121 of the 2102 committed runs failed a validator; the 116 of those that are non-aborted are the newly-judged, cost-bearing set (5.5%, re-measured 2026-09-13 after a main merge rotated the corpus — the third rotation this figure has survived, so re-derive rather than quote).
 
 4. **Input trimming is deferred to a later version.** The earlier draft of this spec proposed trimming `research.json` to only the sections each skill reads. v1 sends the full scenario files unchanged — this matches what Cowork does in production and removes a class of bugs where a skill behaves differently in eval because trimming hid state. Re-evaluate trimming if `cached_input_tokens` rates fall below target and per-run costs prove materially higher than estimated.
 
@@ -2836,7 +2850,7 @@ After the skill executes and output is captured:
      → Yes: record failures in the run log, pass their names to the judge, continue
      → No: continue
      ↓
-2. Run LLM judge (Haiku)
+2. Run LLM judge (Sonnet 4.6)
    Inputs: scenario judge brief (README fallback), before-state, user message, text output, diffs, tool calls, rubric, judge_context
    Output: score + rationale per dimension
      ↓
