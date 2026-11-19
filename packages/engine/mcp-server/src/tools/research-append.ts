@@ -131,9 +131,9 @@ import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId, findDocumentImageArk, toArk } from "../utils/ark.js";
 import { personaFor } from "../utils/record-persona-select.js";
-import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, readStagedResults, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
-import { GUIDE_SECTION_MAX_CHARS, mergeGuideSection } from "../utils/locality-guide-sections.js";
+import { GUIDE_SECTION_MAX_CHARS, LOCALITY_GUIDE_OUTLINE, mergeGuideSection } from "../utils/locality-guide-sections.js";
 import { normalizeRegistrationStart } from "../utils/registration-level.js";
 import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
 
@@ -8027,6 +8027,7 @@ export interface ResearchAppendOp {
   fields?: Record<string, unknown>; // op = update (shallow-merged; id immutable)
   edits?: NarrativeEdit[]; // op = update of proof_summaries: exact-match edits, expanded into `fields`
   guideSection?: string; // op = update of localities: one guide section, placed into `fields.guide_markdown`
+  surveyRef?: string; // localities: locality_survey's staged ref; fills pages_read and volume_summary
   planId?: string; // required for section = "plan_items"
 }
 
@@ -8055,6 +8056,7 @@ export interface ResearchAppendInput {
   fields?: Record<string, unknown>;
   edits?: NarrativeEdit[];
   guideSection?: string;
+  surveyRef?: string;
   planId?: string;
   // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
@@ -11296,23 +11298,28 @@ function localityBody(op: any): unknown {
   return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
 }
 
-/** The locality-guide template's level-two headings a saved guide must carry
- *  (spec §5.14). The template is `agents/locality-guide.md`'s output format;
- *  `tests/packaging/locality-guide-headings.test.ts` fails when they part. */
-export const LOCALITY_GUIDE_HEADINGS = ["Jurisdiction overview", "Available record types", "Research tips"] as const;
+/** Every heading of the locality-guide template a saved guide must carry, `## ` sections and
+ *  `### ` subsections, in template order (spec §5.14). From `LOCALITY_GUIDE_OUTLINE`;
+ *  `tests/packaging/locality-guide-headings.test.ts` fails when the template parts from it. */
+export const LOCALITY_GUIDE_HEADINGS: readonly string[] = LOCALITY_GUIDE_OUTLINE.flatMap(([section, subs]) => [
+  `## ${section}`,
+  ...subs.map((sub) => `### ${sub}`),
+]);
 
 /** `_heading()` in eval/harness/validators/test_locality_guide.py, which grades
- *  the saved guide: `^##[ \t]+<title>` under Python's IGNORECASE | MULTILINE.
+ *  the saved guide: `^<hashes>[ \t]+<title>` under Python's IGNORECASE | MULTILINE.
  *  The lookbehind and `u` keep it to Python's answers: JS `m` also starts a line
  *  after a lone `\r`, U+2028 and U+2029, and `i` without `u` does not fold `ſ`.
  *  Python alone still matches `İ` or `ı` for an `i`. */
-const GUIDE_HEADING_PATTERNS = LOCALITY_GUIDE_HEADINGS.map(
-  (title) => [title, new RegExp(`(?<![^\\n])##[ \\t]+${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "iu")] as const,
-);
+const GUIDE_HEADING_PATTERNS = LOCALITY_GUIDE_HEADINGS.map((heading) => {
+  const [hashes, ...rest] = heading.split(" ");
+  const title = rest.join(" ").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return [heading, new RegExp(`(?<![^\\n])${hashes}[ \\t]+${title}`, "iu")] as const;
+});
 
-/** The template headings `markdown` lacks, in template order. */
+/** The template headings `markdown` lacks, in template order, as `## Title` / `### Title`. */
 export function missingGuideHeadings(markdown: string): string[] {
-  return GUIDE_HEADING_PATTERNS.filter(([, pattern]) => !pattern.test(markdown)).map(([title]) => title);
+  return GUIDE_HEADING_PATTERNS.filter(([, pattern]) => !pattern.test(markdown)).map(([heading]) => heading);
 }
 
 /**
@@ -11360,7 +11367,7 @@ function localityGuideStatus(
         ? { entryId, missing }
         : {
             entryId,
-            missing: missing.map((t) => `## ${t}`),
+            missing,
             next: `Send the guide ${GUIDE_SECTION_HOW} At most ${GUIDE_SECTION_MAX_CHARS} characters a call.`,
           },
     ];
@@ -12865,6 +12872,68 @@ function expandGuideSections(
   return errors;
 }
 
+/** The `localities` fields only a `locality_survey` answer may write. */
+const SURVEY_FIELDS = ["pages_read", "volume_summary"] as const;
+
+const SURVEY_HOW =
+  "call locality_survey with projectPath and pass its staged.resultsRef as `surveyRef`; " +
+  "the tool writes pages_read and volume_summary from it.";
+
+/**
+ * Place a `locality_survey` answer's `pagesRead` and `volumeSummary` into a `localities`
+ * write, in place, and return every refusal (spec §5.14). A `localities` append must carry
+ * `surveyRef`, so a locality is never saved without its survey; neither field is written by hand.
+ */
+async function expandSurveyRefs(
+  ops: ResearchAppendOp[],
+  projectPath: string,
+  fmt: (i: number, msg: string) => string,
+): Promise<string[]> {
+  const errors: string[] = [];
+  for (const [i, op] of ops.entries()) {
+    if (!op || typeof op !== "object") continue;
+    if (op.surveyRef == null) delete op.surveyRef;
+    const refuse = (msg: string) => errors.push(fmt(i, msg));
+    const hasRef = Object.prototype.hasOwnProperty.call(op, "surveyRef");
+    if (op.section !== "localities") {
+      if (hasRef) refuse("`surveyRef` applies only to a `localities` write.");
+      continue;
+    }
+    const holderKey = op.op === "append" ? "entry" : "fields";
+    const holder = op[holderKey];
+    const body = holder && typeof holder === "object" && !Array.isArray(holder) ? (holder as Record<string, unknown>) : undefined;
+    const handWritten = SURVEY_FIELDS.filter((f) => body && Object.prototype.hasOwnProperty.call(body, f));
+    if (handWritten.length > 0) {
+      refuse(`${handWritten.join(" and ")} ${handWritten.length > 1 ? "are" : "is"} not written by hand: drop ${handWritten.length > 1 ? "them" : "it"} and ${SURVEY_HOW}`);
+      continue;
+    }
+    if (!hasRef) {
+      if (op.op === "append") refuse(`a localities append needs its survey: ${SURVEY_HOW}`);
+      continue;
+    }
+    if (typeof op.surveyRef !== "string" || op.surveyRef.trim() === "") {
+      refuse("`surveyRef` must be the `staged.resultsRef` string locality_survey returned.");
+      continue;
+    }
+    let survey: any;
+    try {
+      survey = (await readStagedResults(projectPath, op.surveyRef))[0];
+    } catch (e) {
+      refuse(`surveyRef '${op.surveyRef}': ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
+    if (!survey || typeof survey !== "object" || !Array.isArray(survey.pagesRead)) {
+      refuse(`surveyRef '${op.surveyRef}' is not a locality_survey answer.`);
+      continue;
+    }
+    const filled: Record<string, unknown> = { ...(body ?? {}), pages_read: survey.pagesRead };
+    if (survey.volumeSummary && typeof survey.volumeSummary === "object") filled.volume_summary = survey.volumeSummary;
+    (op as any)[holderKey] = filled;
+    delete op.surveyRef;
+  }
+  return errors;
+}
+
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
@@ -13400,6 +13469,7 @@ export async function researchAppend(
           fields: input.fields,
           ...(input.edits != null ? { edits: input.edits } : {}),
           ...(input.guideSection != null ? { guideSection: input.guideSection } : {}),
+          ...(input.surveyRef != null ? { surveyRef: input.surveyRef } : {}),
           planId: input.planId,
         },
       ];
@@ -13460,6 +13530,8 @@ export async function researchAppend(
     }
     const guideErrors = expandGuideSections(ops, research, fmt);
     if (guideErrors.length > 0) return fail(boundErrors(guideErrors));
+    const surveyErrors = await expandSurveyRefs(ops, input.projectPath, fmt);
+    if (surveyErrors.length > 0) return fail(boundErrors(surveyErrors));
     normalizeLocalityRegistration(ops);
 
     let retracted = new Set<string>();
@@ -14351,6 +14423,15 @@ const EDITS_SCHEMA = {
   },
 };
 
+/** `surveyRef` on the top-level call and on each batch op. */
+const SURVEY_REF_SCHEMA = {
+  type: "string",
+  description:
+    "localities append or update: the `staged.resultsRef` locality_survey returned. The tool writes " +
+    "`pages_read` and `volume_summary` from that survey; a localities append needs it, and neither " +
+    "field is sent by hand.",
+};
+
 /** `guideSection` on the top-level call and on each batch op. */
 const GUIDE_SECTION_SCHEMA = {
   type: "string",
@@ -14422,6 +14503,7 @@ export const researchAppendSchema = {
       },
       edits: EDITS_SCHEMA,
       guideSection: GUIDE_SECTION_SCHEMA,
+      surveyRef: SURVEY_REF_SCHEMA,
       planId: {
         type: "string",
         description: "Required for section 'plan_items' — the pl_ id of the parent plan to write into.",
@@ -14451,6 +14533,7 @@ export const researchAppendSchema = {
             fields: { type: "object", description: "update: fields to shallow-merge (the id is immutable)." },
             edits: EDITS_SCHEMA,
             guideSection: GUIDE_SECTION_SCHEMA,
+            surveyRef: SURVEY_REF_SCHEMA,
             planId: { type: "string", description: "Required when section is 'plan_items' — the parent pl_ id." },
           },
           required: ["section", "op"],

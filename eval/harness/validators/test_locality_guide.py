@@ -294,18 +294,42 @@ def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, tes
 # --- The guide is written once (issue #3442) ---------------------------------
 
 
-def _heading(title):
-    """A level-two template heading: line-anchored, case-insensitive, suffix allowed
-    (`## Jurisdiction overview (1840s)` counts; `### Jurisdiction overview` and the
-    words mid-line do not)."""
-    return re.compile(rf"^##[ \t]+{re.escape(title)}", re.IGNORECASE | re.MULTILINE)
+# Every heading of the locality-guide template, in order: `LOCALITY_GUIDE_HEADINGS` in
+# research-append.ts, pinned to this tuple by tests/packaging/locality-guide-headings.test.ts.
+_GUIDE_HEADING_LINES = (
+    "## Jurisdiction overview",
+    "## Boundary changes",
+    "## Available record types",
+    "### Vital records",
+    "### Church records",
+    "### Census records",
+    "### Probate and court records",
+    "### Land records",
+    "### Military records",
+    "### Cemetery records",
+    "### Newspaper records",
+    "### Immigration/emigration records",
+    "### Tax records",
+    "### Other record types",
+    "## Repository guide",
+    "### Online repositories",
+    "### Physical repositories",
+    "## Records NOT online",
+    "## Known record losses",
+    "## Research tips",
+)
 
 
-_GUIDE_HEADINGS = {
-    title: _heading(title)
-    for title in ("Jurisdiction overview", "Available record types", "Research tips")
-}
-_RECORD_TYPES_HEADING = _GUIDE_HEADINGS["Available record types"]
+def _heading(heading):
+    """A template heading at its own level: line-anchored, case-insensitive, suffix
+    allowed (`## Jurisdiction overview (1840s)` counts; `### Jurisdiction overview`
+    and the words mid-line do not)."""
+    hashes, title = heading.split(" ", 1)
+    return re.compile(rf"^{hashes}[ \t]+{re.escape(title)}", re.IGNORECASE | re.MULTILINE)
+
+
+_GUIDE_HEADINGS = {heading: _heading(heading) for heading in _GUIDE_HEADING_LINES}
+_RECORD_TYPES_HEADING = _GUIDE_HEADINGS["## Available record types"]
 _POINTER = re.compile(
     r"\bsee\s+(the\s+)?(full\s+guide|research\s+log)\b"
     r"|\bfull\s+guide\s+(text\s+)?(as\s+)?presented\b",
@@ -316,9 +340,9 @@ _IN_PROJECT_RETURN_LIMIT = 3000
 
 def test_persisted_guide_is_the_guide(before_state, after_state):
     """Presence-gated: every localities[] entry this run wrote holds the guide
-    itself in `guide_markdown` — a non-empty string carrying the template's
-    `## Jurisdiction overview`, `## Available record types` and `## Research tips`
-    sections, and no pointer to a guide kept somewhere else.
+    itself in `guide_markdown` — a non-empty string carrying every `## ` section and
+    `### ` subsection of the template (`_GUIDE_HEADING_LINES`; issue #4602 item 3), and
+    no pointer to a guide kept somewhere else.
 
     Why the stub guard exists: inside a project the persisted entry is now the
     only copy of the guide. The return carries the `loc_` id instead (see
@@ -347,10 +371,10 @@ def test_persisted_guide_is_the_guide(before_state, after_state):
                 f"localities[{lid}].guide_markdown must hold the whole guide; got {guide!r:.80}"
             )
             continue
-        missing = [title for title, pattern in _GUIDE_HEADINGS.items() if not pattern.search(guide)]
+        missing = [heading for heading, pattern in _GUIDE_HEADINGS.items() if not pattern.search(guide)]
         if missing:
             problems.append(
-                f"localities[{lid}].guide_markdown is missing the `## ` heading(s) {missing}"
+                f"localities[{lid}].guide_markdown is missing the template heading(s) {missing}"
             )
         pointer = _POINTER.search(guide)
         if pointer:

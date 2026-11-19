@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { SURVEY_FIELDS, stageSurvey } from "../helpers/locality-survey.js";
 import {
   configureFsBudget,
   consumeFsBudgetSlot,
@@ -2005,13 +2006,13 @@ describe("research_append (Phase 1)", () => {
       projectPath: dir,
       section: "localities",
       op: "append",
+      surveyRef: await stageSurvey(dir),
       entry: {
         place: "Norway",
         for_place: "Ringebu, Oppland, Norway",
         jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
         collections: [{ id: "4237104", title: "Norway, Church Books", date_range: "1797-1958" }],
         quirks: ["Indexed only at county level."],
-        pages_read: [{ section: "home", url: "u1", found: true }],
         source: "locality-guide",
       },
     });
@@ -7059,7 +7060,7 @@ describe("research_append (Phase 3)", () => {
             { section: "localities", op: "append", entry: {
               place: "Norway", for_place: "Ringebu, Oppland, Norway",
               jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
-              collections: [], quirks: [], pages_read: [{ section: "home", url: "u1", found: true }],
+              collections: [], quirks: [],
               source: "locality-guide" } },
             { section: "proof_summaries", op: "update", entryId: "ps_001",
               edits: [{ field: "narrative_markdown", old: "absent text", new: "x" }] },
@@ -14717,6 +14718,8 @@ describe("research_append — worked examples are themselves valid", () => {
       op: "append",
       entry,
       ...(section === "plan_items" ? { planId: "pl_001" } : {}),
+      // A localities append carries its survey; pages_read and volume_summary come from it.
+      ...(section === "localities" ? { surveyRef: await stageSurvey(dir) } : {}),
       // The evaluations example is a pointer with no file_path by design; the
       // composite `verdict` arg is what fills it.
       ...(section === "evaluations" ? { verdict: { strengths: [], must_address: [] } } : {}),
@@ -18961,11 +18964,17 @@ describe("research_append: a localities first place must be in the place standar
     jurisdictions: [{ name: forPlace, date_range: "1838-" }],
     collections: [],
     quirks: ["Indexed only at county level."],
-    pages_read: [{ section: "home", url: "u1", found: true }],
     source: "locality-guide",
   });
-  const append = (forPlace: string, extra: Record<string, unknown> = {}) =>
-    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: locality(forPlace), ...extra });
+  const append = async (forPlace: string, extra: Record<string, unknown> = {}) =>
+    researchAppend({
+      projectPath: dir,
+      section: "localities",
+      op: "append",
+      entry: locality(forPlace),
+      surveyRef: await stageSurvey(dir),
+      ...extra,
+    });
 
   it("writes a first place the standard holds, with no warning", async () => {
     await writeProject();
@@ -19019,8 +19028,8 @@ describe("research_append: a localities first place must be in the place standar
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal") },
-        { section: "localities", op: "append", entry: locality("Somewhere Unlisted, Hanover") },
+        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal"), surveyRef: await stageSurvey(dir) },
+        { section: "localities", op: "append", entry: locality("Somewhere Unlisted, Hanover"), surveyRef: await stageSurvey(dir) },
       ],
     });
     expect(r.ok).toBe(true);
@@ -19035,7 +19044,7 @@ describe("research_append: a localities first place must be in the place standar
       projectPath: dir,
       ops: [
         { section: "sources", op: "append", entry: { ...sourceNoId, gedcomx_source_description_id: "S999" } },
-        { section: "localities", op: "append", entry: locality("Sierkopas, Germany") },
+        { section: "localities", op: "append", entry: locality("Sierkopas, Germany"), surveyRef: await stageSurvey(dir) },
       ],
     });
     expect(failure(r).errors.join(" ")).toMatch(/'S999' not found/);
@@ -19085,8 +19094,8 @@ describe("research_append: a localities first place must be in the place standar
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal") },
-        { section: "localities", op: "append", entry: locality("Sierkopas, Germany") },
+        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal"), surveyRef: await stageSurvey(dir) },
+        { section: "localities", op: "append", entry: locality("Sierkopas, Germany"), surveyRef: await stageSurvey(dir) },
       ],
     });
     expect(r.ok).toBe(false);
@@ -19124,12 +19133,11 @@ describe("research_append: a localities guide is saved one section per call (#45
     jurisdictions: [{ name: "Funchal, Madeira, Portugal", date_range: "1835-" }],
     collections: [],
     quirks: ["Indexed only at district level."],
-    pages_read: [{ section: "home", url: "u1", found: true }],
     source: "locality-guide",
     ...extra,
   });
-  const append = (extra: Record<string, unknown> = {}) =>
-    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(extra) });
+  const append = async (extra: Record<string, unknown> = {}) =>
+    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(extra), surveyRef: await stageSurvey(dir) });
   const section = (guideSection: unknown, entryId = "loc_001") =>
     researchAppend({ projectPath: dir, section: "localities", op: "update", entryId, guideSection } as never);
   /** The refusal lines alone: a single-op failure also carries the section's worked example. */
@@ -19138,6 +19146,9 @@ describe("research_append: a localities guide is saved one section per call (#45
   const guideOf = (r: Awaited<ReturnType<typeof researchAppend>>) => (r as { guide?: unknown }).guide as
     | { entryId: string; missing: string[]; next?: string }[]
     | undefined;
+  /** Every template heading but those the guide carries. */
+  const missingBut = (...have: string[]) => LOCALITY_GUIDE_HEADINGS.filter((h) => !have.includes(h));
+  const SENT_FOUR = ["## Jurisdiction overview", "## Available record types", "### Church records", "## Research tips"];
 
   it("an append with no guide saves, and says which headings the guide lacks and how to send them", async () => {
     await writeProject();
@@ -19146,7 +19157,7 @@ describe("research_append: a localities guide is saved one section per call (#45
     const guide = guideOf(r)!;
     expect(guide).toHaveLength(1);
     expect(guide[0].entryId).toBe("loc_001");
-    expect(guide[0].missing).toEqual(LOCALITY_GUIDE_HEADINGS.map((t) => `## ${t}`));
+    expect(guide[0].missing).toEqual([...LOCALITY_GUIDE_HEADINGS]);
     expect(guide[0].next).toMatch(/op 'update'.*guideSection/);
     expect(guide[0].next).toContain(`${GUIDE_SECTION_MAX_CHARS} characters`);
   });
@@ -19158,7 +19169,7 @@ describe("research_append: a localities guide is saved one section per call (#45
     expect((await section(CHURCH)).ok).toBe(true);
     const last = await section(TIPS);
     expect(last.ok).toBe(true);
-    expect(guideOf(last)).toEqual([{ entryId: "loc_001", missing: [] }]);
+    expect(guideOf(last)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_FOUR) })]);
     expect(await savedGuide()).toBe(
       [
         "# Locality Guide: Funchal, Madeira, Portugal (1840-1900)",
@@ -19173,8 +19184,8 @@ describe("research_append: a localities guide is saved one section per call (#45
   it("lists what is still missing after each section", async () => {
     await writeProject();
     await append();
-    expect(guideOf(await section(TIPS))![0].missing).toEqual(["## Jurisdiction overview", "## Available record types"]);
-    expect(guideOf(await section(CHURCH))![0].missing).toEqual(["## Jurisdiction overview"]);
+    expect(guideOf(await section(TIPS))![0].missing).toEqual(missingBut("## Research tips"));
+    expect(guideOf(await section(CHURCH))![0].missing).toEqual(missingBut("## Research tips", "## Available record types", "### Church records"));
   });
 
   it("places sections in template order whatever order they arrive in", async () => {
@@ -19253,7 +19264,7 @@ describe("research_append: a localities guide is saved one section per call (#45
     await section(TIPS);
     const headings = (await savedGuide()).split("\n").filter((l) => /^## /.test(l));
     expect(headings).toEqual(["## Research tips", "## Where to look for copies"]);
-    expect(guideOf(await section(OVERVIEW))![0].missing).toEqual(["## Available record types"]);
+    expect(guideOf(await section(OVERVIEW))![0].missing).toEqual(missingBut("## Research tips", "## Jurisdiction overview"));
   });
 
   it("saves text that JSON would need escaped, character for character", async () => {
@@ -19330,7 +19341,7 @@ describe("research_append: a localities guide is saved one section per call (#45
     research.localities = [{ id: "loc_001", ...entry({ guide_markdown: old }), created: "2026-01-01" }];
     await writeProject(research);
     const r = await section(TIPS);
-    expect(guideOf(r)).toEqual([{ entryId: "loc_001", missing: [] }]);
+    expect(guideOf(r)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_FOUR) })]);
     const guide = await savedGuide();
     expect(guide.startsWith("# Locality Guide: Funchal (1840-1900)\n\n## Jurisdiction overview")).toBe(true);
     expect(guide.endsWith(TIPS)).toBe(true);
@@ -19392,6 +19403,7 @@ describe("research_append: a localities guide is saved one section per call (#45
     await writeProject();
     const onAppend = await researchAppend({
       projectPath: dir, section: "localities", op: "append", entry: entry(), guideSection: OVERVIEW,
+      surveyRef: await stageSurvey(dir),
     } as never);
     expect(refusals(onAppend)[0]).toContain("applies only to an update of `localities`");
     const elsewhere = await researchAppend({
@@ -19438,7 +19450,7 @@ describe("research_append: a localities guide is saved one section per call (#45
       ],
     } as never);
     expect(r.ok).toBe(true);
-    expect(guideOf(r)).toEqual([{ entryId: "loc_001", missing: [] }]);
+    expect(guideOf(r)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_FOUR) })]);
     const guide = await savedGuide();
     expect(guide.indexOf("## Jurisdiction overview")).toBeLessThan(guide.indexOf("### Church records"));
     expect(guide.indexOf("### Church records")).toBeLessThan(guide.indexOf("## Research tips"));
@@ -19496,7 +19508,89 @@ describe("research_append: a localities guide is saved one section per call (#45
     expect(results.every((r) => r.ok)).toBe(true);
     const guide = await savedGuide();
     for (const s of sent) expect(guide).toContain(s);
-    expect(missingGuideHeadings(guide)).toEqual([]);
+    expect(missingGuideHeadings(guide)).toEqual(missingBut(...SENT_FOUR, "## Boundary changes", "### Tax records"));
+  });
+
+  it("lists a missing record-type subsection, not only the '## ' sections", async () => {
+    await writeProject();
+    await append();
+    const r = await section(CHURCH);
+    expect(guideOf(r)![0].missing).toContain("### Tax records");
+  });
+
+  describe("surveyRef (#4602)", () => {
+    it("refuses a localities append with no survey, naming locality_survey, and writes nothing", async () => {
+      await writeProject();
+      const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry() });
+      expect(r.ok).toBe(false);
+      expect(refusals(r).join(" ")).toMatch(/needs its survey: call locality_survey with projectPath/);
+      expect((await readResearch()).localities ?? []).toHaveLength(0);
+    });
+
+    it("writes pages_read and volume_summary from the staged survey", async () => {
+      await writeProject();
+      const r = await append();
+      expect(r.ok).toBe(true);
+      const loc = (await readResearch()).localities[0];
+      expect(loc.pages_read).toEqual(SURVEY_FIELDS.pagesRead);
+      expect(loc.volume_summary).toEqual(SURVEY_FIELDS.volumeSummary);
+    });
+
+    it("omits volume_summary when the survey has none", async () => {
+      await writeProject();
+      const ref = await stageSurvey(dir, { place: "Ohio, United States", pagesRead: SURVEY_FIELDS.pagesRead, volumeSummary: null });
+      const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(), surveyRef: ref } as never);
+      expect(r.ok).toBe(true);
+      expect(Object.hasOwn((await readResearch()).localities[0], "volume_summary")).toBe(false);
+    });
+
+    it.each([
+      ["append", "pages_read"],
+      ["append", "volume_summary"],
+      ["update", "pages_read"],
+      ["update", "volume_summary"],
+    ])("refuses %s sending %s by hand", async (op, field) => {
+      await writeProject();
+      if (op === "update") expect((await append()).ok).toBe(true);
+      const value = field === "pages_read" ? SURVEY_FIELDS.pagesRead : SURVEY_FIELDS.volumeSummary;
+      const r =
+        op === "append"
+          ? await researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry({ [field]: value }), surveyRef: await stageSurvey(dir) } as never)
+          : await researchAppend({ projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { [field]: value } });
+      expect(r.ok).toBe(false);
+      expect(refusals(r).join(" ")).toContain(`${field} is not written by hand`);
+    });
+
+    it("refreshes an existing locality's fields from a new survey on an update", async () => {
+      await writeProject();
+      await append();
+      const fresh = { ...SURVEY_FIELDS.volumeSummary, total_volumes: 9 };
+      const ref = await stageSurvey(dir, { place: "Ohio, United States", pagesRead: SURVEY_FIELDS.pagesRead, volumeSummary: fresh });
+      const r = await researchAppend({ projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { quirks: ["New."] }, surveyRef: ref } as never);
+      expect(r.ok).toBe(true);
+      const loc = (await readResearch()).localities[0];
+      expect(loc.volume_summary.total_volumes).toBe(9);
+      expect(loc.quirks).toEqual(["New."]);
+    });
+
+    it("refuses a ref that is not a survey, and one that does not exist", async () => {
+      await writeProject();
+      const notSurvey = await stageSurvey(dir, { place: "x" });
+      for (const ref of [notSurvey, "results/.staging/no-such-file.json"]) {
+        const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(), surveyRef: ref } as never);
+        expect(r.ok).toBe(false);
+        expect(refusals(r).join(" ")).toMatch(/surveyRef/);
+      }
+    });
+
+    it("refuses surveyRef on another section", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir, section: "project", op: "update", fields: { status: "active" }, surveyRef: await stageSurvey(dir),
+      } as never);
+      expect(r.ok).toBe(false);
+      expect(refusals(r).join(" ")).toContain("`surveyRef` applies only to a `localities` write");
+    });
   });
 
   it("the localities worked example carries no guide_markdown, so a refused append is not taught to send one", async () => {
@@ -19583,7 +19677,7 @@ describe("research_append: a localities guide is saved one section per call (#45
 // headings; the same table runs against `_heading()` itself in
 // eval/harness/tests/unit/test_locality_guide_validators.py. Change one, change both.
 describe("missingGuideHeadings agrees with the eval validator's _heading() (#4479)", () => {
-  const BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n";
+  const BEFORE = LOCALITY_GUIDE_HEADINGS.filter((h) => h !== "## Research tips").join("\n\n") + "\n\n";
   it.each([
     ["## Research tips\nx", true],
     ["x\n## Research tips", true],
@@ -19609,13 +19703,11 @@ describe("missingGuideHeadings agrees with the eval validator's _heading() (#447
     ["- ## Research tips", false],
     ["## Research tips and tricks", true],
   ])("%j has the heading: %s", (tail, found) => {
-    expect(missingGuideHeadings(BEFORE + tail)).toEqual(found ? [] : ["Research tips"]);
+    expect(missingGuideHeadings(BEFORE + tail)).toEqual(found ? [] : ["## Research tips"]);
   });
 
   it("does not count a heading behind a byte-order mark at the very start", () => {
-    expect(missingGuideHeadings("\ufeff## Research tips\n## Jurisdiction overview\n## Available record types")).toEqual([
-      "Research tips",
-    ]);
+    expect(missingGuideHeadings(`\ufeff## Research tips\n${BEFORE}`)).toEqual(["## Research tips"]);
   });
 });
 

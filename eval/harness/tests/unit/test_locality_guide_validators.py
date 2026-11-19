@@ -23,6 +23,7 @@ non-gating), so VR2 is deferred pending the skill->agent conversion, not rejecte
 """
 
 import json
+import re
 import sys
 from copy import deepcopy
 from pathlib import Path
@@ -43,6 +44,7 @@ from test_locality_guide import (  # noqa: E402
     test_persisted_guide_is_the_guide as check_guide,
     test_in_project_return_follows_the_contract as check_return_contract,
     test_no_project_return_carries_guide as check_no_project_guide,
+    _GUIDE_HEADING_LINES,
     _heading,
 )
 
@@ -345,14 +347,8 @@ def test_catalog_broadening_skips_for_other_tests():
 # variant through `expect_passes`, so a skip gate that over-matches fails here
 # instead of reading green.
 
-_REQUIRED_HEADINGS = ("Jurisdiction overview", "Available record types", "Research tips")
-_ALL_HEADINGS = (
-    "## Jurisdiction overview",
-    "## Boundary changes",
-    "## Available record types",
-    "## Repository guide",
-    "## Research tips",
-)
+_ALL_HEADINGS = _GUIDE_HEADING_LINES
+_REQUIRED_HEADINGS = _ALL_HEADINGS
 
 
 def _guide(*headings, nl="\n"):
@@ -403,14 +399,18 @@ def _check_guide(*after, before=()):
 
 @pytest.mark.parametrize("dropped", _REQUIRED_HEADINGS)
 def test_guide_fires_when_a_required_heading_is_missing(dropped):
-    headings = [h for h in _ALL_HEADINGS if h != f"## {dropped}"]
+    headings = [h for h in _ALL_HEADINGS if h != dropped]
     expect_fires(
         _check_guide(_guide_entry(_guide(*headings))),
-        rf"localities\[loc_001\].*{dropped}",
+        rf"localities\[loc_001\].*{re.escape(dropped)}",
     )
 
 
-def test_guide_fires_when_the_headings_are_demoted_to_level_three():
+def test_guide_passes_with_every_heading():
+    expect_passes(_check_guide(_guide_entry(_GUIDE)))
+
+
+def test_guide_fires_when_the_headings_are_demoted_a_level():
     demoted = _guide(*(f"#{h}" for h in _ALL_HEADINGS))
     expect_fires(
         _check_guide(_guide_entry(demoted)),
@@ -473,7 +473,7 @@ def test_guide_fires_when_guide_markdown_is_absent():
 # section 5.14), and its twin of this table is in
 # packages/engine/mcp-server/tests/tools/research-append.test.ts. Change _heading() and
 # both tables, and the engine's missingGuideHeadings, move together.
-_HEADING_BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n"
+_HEADING_BEFORE = "\n\n".join(h for h in _ALL_HEADINGS if h != "## Research tips") + "\n\n"
 
 
 @pytest.mark.parametrize(
@@ -505,11 +505,11 @@ _HEADING_BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n"
     ],
 )
 def test_heading_rule_matches_the_engine_twin_table(tail, found):
-    assert bool(_heading("Research tips").search(_HEADING_BEFORE + tail)) is found
+    assert bool(_heading("## Research tips").search(_HEADING_BEFORE + tail)) is found
 
 
 def test_heading_rule_ignores_a_heading_behind_a_byte_order_mark():
-    assert not _heading("Research tips").search("\ufeff## Research tips")
+    assert not _heading("## Research tips").search("\ufeff## Research tips")
 
 
 def test_guide_fires_on_an_in_place_update_that_stubs_the_guide():

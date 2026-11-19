@@ -9,6 +9,7 @@ import { externalLinkRows } from "./external-links-search.js";
 import { findPlacePage, placeTypeOf, topicPageNamesOtherPlace } from "./wiki-place-page.js";
 import { collectionNoticesFor, fetchPage, FS_WIKI_BASE } from "../utils/wiki-page-fetch.js";
 import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { recordExternalCollections, yearNum, type StoredCollectionRow } from "../utils/external-collections-store.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import type { CatalogHit } from "../types/catalog-search.js";
@@ -34,8 +35,9 @@ const COUNTY_OR_LARGER =
 /** Below this, a section is left out rather than cut. */
 const MIN_CUT = 600;
 
-const SECTION_PAGES: WikiPageSection[] = ["getting_started", "online_records", "research_tips"];
-const PAGE_SECTIONS: WikiPageSection[] = ["home", ...SECTION_PAGES];
+/** `pages_read` order: home first, then the three pages that exist only for a state or country. */
+const PAGE_SECTIONS = [...VALIDATOR_ENUMS.locality_page_section] as WikiPageSection[];
+const SECTION_PAGES = PAGE_SECTIONS.filter((s) => s !== "home");
 const VITAL_SUFFIXES = ["Vital_Records", "Civil_Registration"];
 
 /** Headings the saved guides never drew on (28% of wiki text over 112 pages from 17 places). */
@@ -153,7 +155,7 @@ async function settle<T>(run: () => Promise<T>, deadlineAt: number, now: () => n
 /** Climb `levels` until `use` accepts an answer. The last error, or "none found". */
 async function climb<T>(
   levels: string[],
-  fetch: (level: string) => Promise<T>,
+  read: (level: string) => Promise<T>,
   use: (value: T) => boolean,
   deadlineAt: number,
   now: () => number,
@@ -161,7 +163,7 @@ async function climb<T>(
   let lastError: string | null = null;
   for (const level of levels) {
     if (now() >= deadlineAt) return { error: "timed out" };
-    const got = await settle(() => fetch(level), deadlineAt, now);
+    const got = await settle(() => read(level), deadlineAt, now);
     if (!got.ok) {
       if (got.error === "timed out") return { error: "timed out" };
       lastError = got.error;
