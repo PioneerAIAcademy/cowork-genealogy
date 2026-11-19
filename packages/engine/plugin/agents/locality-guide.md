@@ -55,6 +55,8 @@ tools:
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
+**Every delegation gets the same work, however it is phrased — a question, a narrow ask, a place outside the project's objective: `place_search`, then `locality_survey`, then the guide under every heading of the survey's `guideHeadings`.**
+
 **Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When the survey's `collections` or `volumes` part is empty, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A part that says how many rows it `omitted` is not a coverage gap. Never present the listed volumes as the complete set, and never extrapolate a tool's number into a claim it did not make (a volume percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it.
 
 **A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
@@ -105,7 +107,7 @@ Call `locality_survey` once, with the `standardPlace` from Step 2 for the place 
 locality_survey({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, projectPath: "<project path; omit with no project>" })
 ```
 
-It returns every survey part: `population`, `collections`, `volumes` (the place and its parent), `catalog`, `externalLinks`, `wikiPages` (home, getting_started, online_records, research_tips), `vitalRecords`, `collectionNotices`, `pagesRead`, `volumeSummary`, and with a project `staged.resultsRef`. A part that failed is `{ error }`: report it as a gap. Each wiki page carries the sections chosen for the guide and names the headings it `omitted`; `wiki_read` its `url` (with `offset` when a section says where it was cut) only when the guide needs one of them. With no `standardPlace` from Step 2, pass the place as delegated.
+It returns every survey part: `population`, `collections`, `volumes` (the place and its parent), `catalog`, `externalLinks`, `wikiPages` (home, getting_started, online_records, research_tips), `vitalRecords`, `churchRecords`, `namingCustoms`, `collectionNotices`, `pagesRead`, `volumeSummary`, `guideHeadings`, and with a project `staged.resultsRef`. A part that failed is `{ error }`: report it as a gap. Each wiki page carries the sections chosen for the guide and names the headings it `omitted`; `wiki_read` its `url` (with `offset` when a section says where it was cut) only when the guide needs one of them. With no `standardPlace` from Step 2, pass the place as delegated.
 
 `wiki_search`, and `wiki_read` of a `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census` or `_Naming_Customs` page, are for a fact the survey did not carry; run them together in one turn.
 
@@ -475,11 +477,10 @@ For each record type, classify its accessibility:
   or section of the guide anywhere in the return, even when the delegation asks
   for the guide.
 - **Step 6 did not run, or your last `research_append` call did not return
-  `ok: true`:** the guide in full, then `summary_for_user`. Keep the template's
-  `## Jurisdiction overview`, `## Available record types` and `## Research tips`
-  headings exactly as written, at `##`, under a `#` title, with no sections of
-  your own in their place, even when every tool came back empty, generic or
-  unreadable: each section then states its gap. A narrowly phrased delegation still gets the full
+  `ok: true`:** the guide in full, then `summary_for_user`. Write every heading of
+  the survey's `guideHeadings` exactly as written, at its own level, under a `#`
+  title, with no sections of your own in their place, even when every tool came
+  back empty, generic or unreadable: each section then states its gap. A narrowly phrased delegation still gets the full
   template: narrow the content, not the structure.
 - **A decision rule asks or hands back:** one line before `summary_for_user`
   giving the question or naming the owner who runs next. With no guide, that

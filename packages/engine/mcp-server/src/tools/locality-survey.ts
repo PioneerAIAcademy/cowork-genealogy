@@ -9,6 +9,7 @@ import { externalLinkRows } from "./external-links-search.js";
 import { findPlacePage, placeTypeOf, topicPageNamesOtherPlace } from "./wiki-place-page.js";
 import { collectionNoticesFor, fetchPage, FS_WIKI_BASE } from "../utils/wiki-page-fetch.js";
 import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
+import { LOCALITY_GUIDE_OUTLINE } from "../utils/locality-guide-sections.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { recordExternalCollections, yearNum, type StoredCollectionRow } from "../utils/external-collections-store.js";
 import { stageSearchResults } from "../utils/results-staging.js";
@@ -25,7 +26,18 @@ const NOTICE_MARGIN_MS = 5_000;
 /** The data parts' share of the inline answer, in stringified characters. */
 const DATA_SHARES = { collections: 2_500, volumes: 3_000, catalog: 3_000, externalLinks: 3_500 } as const;
 /** The vital-records page goes in first, up to this much. */
-const VITAL_RECORDS_SHARE = 8_000;
+const VITAL_RECORDS_SHARE = 6_000;
+/** The naming-customs page goes in next, up to this much: the body takes a jurisdiction's
+ *  naming practice only from it. */
+const NAMING_CUSTOMS_SHARE = 3_000;
+/** The church-records page, the main source before civil registration, up to this much. */
+const CHURCH_RECORDS_SHARE = 3_000;
+/** Pages read first, each up to its own share, before the rest are ranked. */
+const RESERVED_PAGES: ReadonlyArray<readonly [string, number]> = [
+  ["vitalRecords", VITAL_RECORDS_SHARE],
+  ["churchRecords", CHURCH_RECORDS_SHARE],
+  ["namingCustoms", NAMING_CUSTOMS_SHARE],
+];
 /** How long the survey waits for the place's type before it decides on the parent level. */
 const TYPE_LOOKUP_MS = 8_000;
 /** Places API types at county level or larger: the survey does not also search their parent.
@@ -61,6 +73,16 @@ const RECORD_HEADING =
  *  long opening cannot fill the share. */
 const SECTION_CAP = 6_000;
 
+/** The topic pages the survey reads by slug, outside `pagesRead`. */
+const TOPIC_KEYS = ["vitalRecords", "churchRecords", "namingCustoms"] as const;
+
+/** Every heading of the guide template, `## ` and `### `, in order: the guide's structure,
+ *  returned with the survey so the agent writes it under these headings whatever it found. */
+const GUIDE_HEADINGS: string[] = LOCALITY_GUIDE_OUTLINE.flatMap(([section, subs]) => [
+  `## ${section}`,
+  ...subs.map((sub) => `### ${sub}`),
+]);
+
 // ---------- place names ----------
 
 /** The delegated string without a trailing ` (Type)`. */
@@ -95,14 +117,18 @@ function slug(name: string): string {
   return name.trim().replace(/ /g, "_");
 }
 
-/** `{J}_Vital_Records` then `{J}_Civil_Registration`, J the two-part level's leaf then the country. */
-function vitalRecordsUrls(name: string): string[] {
+/** `{J}_<suffix>` for each suffix, J the two-part level's leaf then the country. */
+function topicUrls(name: string, suffixes: readonly string[]): string[] {
   const parts = partsOf(name);
   const leaves = [...new Set([parts.length >= 2 ? parts[parts.length - 2] : null, parts[parts.length - 1]])];
   return leaves
     .filter((l): l is string => !!l)
-    .flatMap((leaf) => VITAL_SUFFIXES.map((s) => `${FS_WIKI_BASE}/${slug(leaf)}_${s}`));
+    .flatMap((leaf) => suffixes.map((s) => `${FS_WIKI_BASE}/${slug(leaf)}_${s}`));
 }
+
+const vitalRecordsUrls = (name: string) => topicUrls(name, VITAL_SUFFIXES);
+const namingCustomsUrls = (name: string) => topicUrls(name, ["Naming_Customs"]);
+const churchRecordsUrls = (name: string) => topicUrls(name, ["Church_Records"]);
 
 /** Every call the survey could make for `input`, climbs included. */
 export function surveyCallPlan(input: LocalitySurveyInput): SurveyCall[] {
@@ -127,7 +153,7 @@ export function surveyCallPlan(input: LocalitySurveyInput): SurveyCall[] {
     ...SECTION_PAGES.flatMap((section) =>
       sectionLevels(name).map((p): SurveyCall => ({ tool: "wiki_place_page", args: { standardPlace: p, section } })),
     ),
-    ...vitalRecordsUrls(name).map((url): SurveyCall => ({ tool: "wiki_read", args: { url } })),
+    ...[...vitalRecordsUrls(name), ...churchRecordsUrls(name), ...namingCustomsUrls(name)].map((url): SurveyCall => ({ tool: "wiki_read", args: { url } })),
   ];
   const seen = new Set<string>();
   return calls.filter((c) => {
@@ -312,10 +338,13 @@ function choosePageText(
     kept.set(s.page, list);
     return size(text) + (cutNote ? size(cutNote) : 0);
   };
-  const vital = pages.findIndex((p) => p.key === "vitalRecords");
-  if (vital >= 0) {
-    let room = Math.min(VITAL_RECORDS_SHARE, left);
-    for (const s of all.filter((x) => x.page === vital && x.rank >= 0)) {
+  const reserved = new Set<number>();
+  for (const [key, share] of RESERVED_PAGES) {
+    const at = pages.findIndex((p) => p.key === key);
+    if (at < 0) continue;
+    reserved.add(at);
+    let room = Math.min(share, left);
+    for (const s of all.filter((x) => x.page === at && x.rank >= 0)) {
       const used = take(s, room);
       if (!used) break;
       room -= used;
@@ -323,7 +352,7 @@ function choosePageText(
     }
   }
   const rest = all
-    .filter((s) => s.page !== vital && s.rank >= 0)
+    .filter((s) => !reserved.has(s.page) && s.rank >= 0)
     .sort((a, b) => b.rank - a.rank || a.page - b.page || a.order - b.order);
   for (const s of rest) {
     if (left < MIN_CUT) break;
@@ -498,16 +527,20 @@ export async function runLocalitySurvey(
       climb(sectionLevels(name), async (p) => deps.placePage(p, section, noticesBy), (page) => page !== null, deadlineAt, now),
     ),
   );
-  const vital = climb(
-    vitalRecordsUrls(name),
-    async (url) => deps.page(url, noticesBy),
-    (page) => page !== null && !topicPageNamesOtherPlace(page.content, name),
-    deadlineAt,
-    now,
-  );
+  const topic = (urls: string[]) =>
+    climb(
+      urls,
+      async (url) => deps.page(url, noticesBy),
+      (page) => page !== null && !topicPageNamesOtherPlace(page.content, name),
+      deadlineAt,
+      now,
+    );
+  const vital = topic(vitalRecordsUrls(name));
+  const church = topic(churchRecordsUrls(name));
+  const naming = topic(namingCustomsUrls(name));
 
-  const [popR, colR, volR, catR, linkR, homeR, secR, vitalR] = await Promise.all([
-    population, collections, volumes, catalog, links, home, sections, vital,
+  const [popR, colR, volR, catR, linkR, homeR, secR, vitalR, churchR, namingR] = await Promise.all([
+    population, collections, volumes, catalog, links, home, sections, vital, church, naming,
   ]);
 
   // External links: each level stored with its own rows, only when it settled in time.
@@ -593,6 +626,8 @@ export async function runLocalitySurvey(
     pageMeta.set(key, { url: page.url, found: true, totalChars: text.length });
   };
   addPage("vitalRecords", vitalR);
+  addPage("churchRecords", churchR);
+  addPage("namingCustoms", namingR);
   addPage("home", homeR);
   SECTION_PAGES.forEach((s, i) => addPage(s, secR[i]));
 
@@ -627,7 +662,12 @@ export async function runLocalitySurvey(
         return [k, { ...pageMeta.get(k), ...(p ? { content: p.text } : {}) }];
       }),
     ),
-    vitalRecords: { ...pageMeta.get("vitalRecords"), ...(loaded.find((x) => x.key === "vitalRecords") ? { content: loaded.find((x) => x.key === "vitalRecords")!.text } : {}) },
+    ...Object.fromEntries(
+      TOPIC_KEYS.map((k) => {
+        const p = loaded.find((x) => x.key === k);
+        return [k, { ...pageMeta.get(k), ...(p ? { content: p.text } : {}) }];
+      }),
+    ),
     collectionNotices: notices,
     pagesRead,
     volumeSummary,
@@ -666,8 +706,9 @@ export async function runLocalitySurvey(
     catalog: { levels: catInline },
     externalLinks: { levels: linkLevels, results: linkFit.kept, ...(linkFit.omitted ? { omitted: linkFit.omitted } : {}) },
     wikiPages: Object.fromEntries(["home", ...SECTION_PAGES].map((k) => [k, { ...pageMeta.get(k), content: "", omitted: [] as string[] }])),
-    vitalRecords: { ...pageMeta.get("vitalRecords"), content: "", omitted: [] as string[] },
+    ...Object.fromEntries(TOPIC_KEYS.map((k) => [k, { ...pageMeta.get(k), content: "", omitted: [] as string[] }])),
     ...(notices.length ? { collectionNotices: notices } : {}),
+    guideHeadings: GUIDE_HEADINGS,
     pagesRead,
     volumeSummary,
   };
@@ -681,10 +722,10 @@ export async function runLocalitySurvey(
     }
   }
 
-  const slotOf = (key: string) => (key === "vitalRecords" ? inline.vitalRecords : inline.wikiPages[key]);
+  const slotOf = (key: string) => ((TOPIC_KEYS as readonly string[]).includes(key) ? inline[key] : inline.wikiPages[key]);
   const place = (share: number) => {
     const chosen = choosePageText(loaded, Math.max(0, share));
-    for (const key of ["vitalRecords", ...PAGE_SECTIONS]) {
+    for (const key of [...TOPIC_KEYS, ...PAGE_SECTIONS]) {
       const slot = slotOf(key);
       const c = chosen.get(key);
       if (!slot.found || !c) {

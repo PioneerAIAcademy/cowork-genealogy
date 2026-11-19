@@ -119,6 +119,10 @@ describe("surveyCallPlan", () => {
       `${WIKI}/Michigan_Civil_Registration`,
       `${WIKI}/United_States_Vital_Records`,
       `${WIKI}/United_States_Civil_Registration`,
+      `${WIKI}/Michigan_Church_Records`,
+      `${WIKI}/United_States_Church_Records`,
+      `${WIKI}/Michigan_Naming_Customs`,
+      `${WIKI}/United_States_Naming_Customs`,
     ]);
   });
 
@@ -179,6 +183,22 @@ describe("runLocalitySurvey", () => {
     );
     expect(out.vitalRecords).toMatchObject({ found: true, url: `${WIKI}/England_Civil_Registration` });
     expect(out.vitalRecords.content).toContain("1837");
+  });
+
+  it("reads the country's naming-customs page and returns the guide's headings", async () => {
+    const out: any = await runLocalitySurvey(
+      { standardPlace: "Württemberg, Germany" },
+      deps({
+        page: async (url) =>
+          url === `${WIKI}/Germany_Naming_Customs`
+            ? page("Germany_Naming_Customs", "## Given names\nChildren baptised with two names went by the second.")
+            : null,
+      }),
+    );
+    expect(out.namingCustoms).toMatchObject({ found: true, url: `${WIKI}/Germany_Naming_Customs` });
+    expect(out.namingCustoms.content).toContain("went by the second");
+    expect(out.guideHeadings).toContain("### Tax records");
+    expect(out.guideHeadings[0]).toBe("## Jurisdiction overview");
   });
 
   it("refuses a state-level topic page that belongs to another place", async () => {

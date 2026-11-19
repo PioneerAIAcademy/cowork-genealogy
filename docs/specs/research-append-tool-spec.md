@@ -2418,10 +2418,9 @@ saved.
 - **What is still missing.** Every successful `localities` write returns
   `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists
   each of `LOCALITY_GUIDE_HEADINGS` the entry's guide lacks, as `## <title>` or
-  `### <title>`: every section and subsection of `LOCALITY_GUIDE_OUTLINE` (issue #4602
-  item 3), matched by `missingGuideHeadings`; `next` says how to send them and is absent
+  `### <title>`: every section and subsection of `LOCALITY_GUIDE_OUTLINE`, matched by `missingGuideHeadings`; `next` says how to send them and is absent
   when `missing` is empty. No write is refused for a missing heading.
-- **The survey's fields** (issue #4602). A `localities` append must carry `surveyRef`, the
+- **The survey's fields.** A `localities` append must carry `surveyRef`, the
   `staged.resultsRef` of a `locality_survey` call with a `projectPath`; the tool reads that
   staged answer and writes `pages_read` from its `pagesRead` and `volume_summary` from its
   `volumeSummary` (left out when that is null). An update may carry `surveyRef` to refresh both.
@@ -2429,7 +2428,7 @@ saved.
   or an update's `fields`; a `surveyRef` that is not a string, does not exist, or is not a
   survey answer; a `surveyRef` on another section. The wiring is `expandSurveyRefs`. A survey
   cannot be skipped and its counts cannot be copied wrong: 10 of 90 unit saving runs had
-  copied `volume_summary` wrong (issue #4602 item 5).
+  copied `volume_summary` wrong.
 - **Refusals**, one per op, `ops[i]:`-prefixed in a batch, nothing written:
   - `guide_markdown` set to anything but `null` in an append's `entry` or an update's
     `fields`: `guide_markdown is not written directly: this tool builds it. Append this

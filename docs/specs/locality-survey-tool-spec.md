@@ -1,6 +1,6 @@
 # `locality_survey` — tool spec
 
-> **Status:** Live (issue #4602). `src/tools/locality-survey.ts`; types in
+> **Status:** Live. `src/tools/locality-survey.ts`; types in
 > `src/types/locality-survey.ts`; tests in `tests/tools/locality-survey.test.ts`.
 
 ## 1. What it does
@@ -13,7 +13,7 @@ read. locality-guide holds this tool and none of the six.
 
 **Why.** An instruction to make a call is the first thing a cheaper model drops. On Haiku 5.5 at
 low, the most common hard failure of the locality-guide suite was a survey that skipped calls
-(issue #4602, 29 tests × 3 on 2026-11-15: 9 pass, 61 partial, 17 fail). One call cannot be
+(29 tests × 3 on 2026-11-15: 9 pass, 61 partial, 17 fail). One call cannot be
 half-made.
 
 ## 2. Input
@@ -41,6 +41,7 @@ depends only on the input. The survey stops each ladder at its first hit.
 | `wikiPages.home` | `findPlacePage(home)` | the place, then each parent; first found |
 | `wikiPages.{getting_started, online_records, research_tips}` | `findPlacePage` | the two-part state/country level, then the country |
 | `vitalRecords` | `fetchPage` by slug | `{J}_Vital_Records`, then `{J}_Civil_Registration`; J the two-part level's leaf, then the country |
+| `churchRecords`, `namingCustoms` | `fetchPage` by slug | `{J}_Church_Records`, `{J}_Naming_Customs`; J as above |
 
 **The parent level** (lead, 2026-11-19). `volume_search` returns only volumes filed at the exact
 place, so a city misses its county's series (Detroit's probate under Wayne County) and a village
@@ -95,12 +96,15 @@ vital-records page 25,000, outside links 32,000, the rest 20,000).
   place; catalog hits as the tool returns them; volumes as each level's summary and first page,
   deduplicated across levels by `imageGroupNumber`, the place's own level first.
 - **Wiki text**, the rest: `40,000 − JSON.stringify(answer with every page's content empty)`, less
-  the names of every heading a page could leave out. The vital-records page goes first, up to 8,000.
+  the names of every heading a page could leave out. The vital-records page goes first, up to 6,000,
+  then the church-records and naming-customs pages, up to 3,000 each.
   The other pages are split at their `#`–`###` headings and filled best-first: a page's opening and
   its record-type sections share the top rank, other sections the next, skip-list sections never;
   no one section takes more than 6,000; a section larger than the room left is cut at a line end and
   marked `[cut at offset N of <url>; wiki_read it with offset N to read on]`. Each page is one
   `content` string in page order, beside `url`, `found`, `totalChars` and the `omitted` headings.
+- `guideHeadings` lists every heading of the guide template, so the agent writes the guide under
+  them whatever the survey found.
 - A final fit loop re-ranks into a smaller share, then drops the data parts' last rows.
 
 **The heading lists** were measured, not guessed. Over the 336 pages 151 saved e2e guides read

@@ -3079,6 +3079,34 @@ def _make_extraction_append_handler(
 
 #: The survey's wiki sub-calls: a page the test serves no fixture for is a missing page.
 _SURVEY_WIKI_TOOLS = frozenset({"wiki_place_page", "wiki_read"})
+#: `COLLECTION_PAGE_LINK` in utils/wiki-page-fetch.ts: a wiki page's links to collection pages.
+_COLLECTION_PAGE_LINK = re.compile(
+    r"https://www\.familysearch\.org/en/wiki/([^\s()\"#?]+?_-_FamilySearch_Historical_Records)(?=[\s()\"#?]|$)"
+)
+_WIKI_BASE = "https://www.familysearch.org/en/wiki/"
+
+
+def _survey_collection_pages(manifest: dict[str, Any], answers: list[dict[str, Any]]) -> dict[str, str]:
+    """The collection pages the survey's wiki pages link, answered from the test's own
+    `wiki_read` fixtures (never the bare catch-all), keyed by slug, so the compiled survey
+    reads their Legacy notices as production's `collectionNoticesFor` does."""
+    from urllib.parse import unquote
+
+    pages: dict[str, str] = {}
+    for a in answers:
+        value = (a.get("answer") or {}).get("value")
+        content = value.get("content") if isinstance(value, dict) else None
+        if not isinstance(content, str):
+            continue
+        for match in _COLLECTION_PAGE_LINK.finditer(content):
+            slug_ = unquote(match.group(1))
+            if slug_ in pages:
+                continue
+            answer, matched = _survey_answer(manifest, "wiki_read", {"url": _WIKI_BASE + slug_})
+            page = answer.get("value")
+            if isinstance(page, dict) and isinstance(page.get("content"), str):
+                pages[slug_] = page["content"]
+    return pages
 
 
 def _survey_answer(manifest: dict[str, Any], tool_name: str, args: dict[str, Any]) -> tuple[dict[str, Any], str]:
@@ -3147,6 +3175,7 @@ def _make_locality_survey_handler(
     survey_js = _MCP_BUILD / "tools" / "locality-survey.js"
     store_js = _MCP_BUILD / "utils" / "external-collections-store.js"
     staging_js = _MCP_BUILD / "utils" / "results-staging.js"
+    fetch_js = _MCP_BUILD / "utils" / "wiki-page-fetch.js"
 
     async def handler(args, _ws=workspace):
         input_obj = dict(args) if isinstance(args, dict) else {}
@@ -3173,6 +3202,7 @@ def _make_locality_survey_handler(
                     f"import {{ runLocalitySurvey }} from '{_node_module_url(survey_js)}';"
                     f" import {{ dedupeCollections, recordExternalCollections }} from '{_node_module_url(store_js)}';"
                     f" import {{ stageSearchResults }} from '{_node_module_url(staging_js)}';"
+                    f" import {{ collectionPageSlugs, legacyNotice, FS_WIKI_BASE }} from '{_node_module_url(fetch_js)}';"
                     " import { readFileSync } from 'node:fs';"
                     " const p = JSON.parse(readFileSync(0, 'utf-8'));"
                     " const key = (tool, a) => tool + JSON.stringify(Object.keys(a).sort().map((k) => [k, a[k]]));"
@@ -3180,6 +3210,11 @@ def _make_locality_survey_handler(
                     " const get = (tool, a) => { const r = map.get(key(tool, a));"
                     "   if (!r) throw new Error(`no planned answer for ${tool} ${JSON.stringify(a)}`);"
                     "   if (r.error) throw new Error(r.error); return r.missing ? null : r.value; };"
+                    " const noticed = (v) => { if (!v || (v.collectionNotices && v.collectionNotices.length)) return v;"
+                    "   const notices = collectionPageSlugs(v.content).slice(0, 10).flatMap((s) => {"
+                    "     const c = p.collectionPages[s]; const n = c ? legacyNotice(c) : null;"
+                    "     return n ? [{ title: s.replace(/_/g, ' '), url: `${FS_WIKI_BASE}/${s}`, notice: n }] : []; });"
+                    "   return notices.length ? { ...v, collectionNotices: notices } : v; };"
                     " const pp = p.input.projectPath;"
                     " const deps = {"
                     "   population: async (a) => get('place_population', a),"
@@ -3188,8 +3223,8 @@ def _make_locality_survey_handler(
                     "   catalog: async (a) => get('catalog_search', a),"
                     "   linkRows: async (place) => ({ rows: dedupeCollections("
                     "     get('external_links_search', { standardPlace: place }).rows.filter((r) => typeof r.url === 'string'), place) }),"
-                    "   placePage: async (place, section) => get('wiki_place_page', { standardPlace: place, section }),"
-                    "   page: async (url) => get('wiki_read', { url }),"
+                    "   placePage: async (place, section) => noticed(get('wiki_place_page', { standardPlace: place, section })),"
+                    "   page: async (url) => noticed(get('wiki_read', { url })),"
                     "   placeType: async () => null,"
                     "   ...(pp ? {"
                     "     recordLinks: async (place, rows, tooLarge) => {"
@@ -3202,7 +3237,11 @@ def _make_locality_survey_handler(
                 )
                 proc = _run_node_eval(
                     run_script,
-                    json.dumps({"input": input_obj, "answers": answers}),
+                    json.dumps({
+                        "input": input_obj,
+                        "answers": answers,
+                        "collectionPages": _survey_collection_pages(manifest, answers),
+                    }),
                     timeout=NODE_EVAL_TIMEOUT_LONG,
                 )
                 if proc.stdout.strip():
