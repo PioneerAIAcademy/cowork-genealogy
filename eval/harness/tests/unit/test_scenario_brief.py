@@ -391,7 +391,8 @@ def brief_id_violations(scenario_dir: Path, prefixes: set[str]) -> list[str]:
     }
     return [
         f"{scenario_dir.name}: judge-brief.md names `{token}`, which nothing in its research.json "
-        f"or tree.gedcomx.json carries"
+        f"or tree.gedcomx.json carries; a reference that is not a fixture id, such as a "
+        f"microfilm number, goes outside backticks"
         for token in sorted(named - values)
     ]
 
@@ -551,6 +552,11 @@ def test_id_check_ignores_prose_unknown_prefixes_and_lookalikes(tmp_path: Path) 
         "`ark:/61903/1:1:a_999`, `I99x` and `a_999-b` are not checked.\n"
     )
     assert brief_id_violations(_briefed(tmp_path, brief), PREFIXES) == []
+
+
+def test_id_check_tells_the_author_a_film_in_code_goes_outside_backticks(tmp_path: Path) -> None:
+    violations = brief_id_violations(_briefed(tmp_path, "The census is on film `M432`.\n"), PREFIXES | {"M"})
+    assert len(violations) == 1 and "goes outside backticks" in violations[0]
 
 
 def test_corpus_prefixes_come_from_every_key(tmp_path: Path) -> None:
