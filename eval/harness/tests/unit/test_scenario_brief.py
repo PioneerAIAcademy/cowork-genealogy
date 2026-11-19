@@ -284,7 +284,7 @@ WITHOUT_BRIEF_LIST = Path(__file__).with_name("scenarios_without_brief.txt")
 
 # How many names the list may hold. A wave of briefs lowers it by the names it removes, so a
 # name can only join the list by raising this number, which a reviewer sees.
-WITHOUT_BRIEF_CAP = 174
+WITHOUT_BRIEF_CAP = 167
 
 _ID_SHAPE = re.compile(r"([A-Za-z]+_?)(\d+)")
 _ID_TOKEN = re.compile(r"(?<![A-Za-z0-9_\-/:.])([A-Za-z]+_?)(\d+)(?![A-Za-z0-9_\-])")
