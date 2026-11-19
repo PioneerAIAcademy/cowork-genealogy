@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "No Marriage fact on KHGX-XWG or couple R1, so the stated pass condition holds. The tree did add the parish entry's name forms (Thomam Hanrahan, Johan Ryan, sourced to S1) to both subjects.",
+    "f2": "ps_001 offers 1 Feb 1868 Ballylooby at possible and does not reject it on the New York records. It calls the 1865 census negative, though log_007 returned the Northumberland household (Thomas b.1843, Joanna b.1846, Mary b.1865), which was dismissed on a +3-year birth gap."
+  },
+  "findings_hash": "799a66512b93b1154bc48991f1dfefa68e5b0c3a1e4dc6a9c8a2ec4a79a81105",
+  "blind_bundle_digest": "98d5b8dda68b4b57469a86f0ae93361a109c24409a65048765b230e07a231e76"
+}

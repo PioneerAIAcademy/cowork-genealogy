@@ -13,7 +13,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("../../src/tools/image-search.js", () => ({ imageSearchTool: vi.fn() }));
+vi.mock("../../src/tools/image-search.js", () => ({ listGroupImageIds: vi.fn() }));
 // Partial: the network legs are mocked, the pure helpers stay real so the
 // mixed-tool cap test can drive the real image_transcribe through them.
 vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => ({
@@ -38,7 +38,7 @@ import {
   recordImageBrowse,
 } from "../../src/utils/browse-budget.js";
 import { LOCAL } from "../../src/auth/principal.js";
-import { imageSearchTool } from "../../src/tools/image-search.js";
+import { listGroupImageIds } from "../../src/tools/image-search.js";
 import { resolveFsImageInput, fetchFsImageBytes } from "../../src/utils/fs-image-fetch.js";
 import { runOcr } from "../../src/utils/ocr.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../../src/auth/config.js";
@@ -63,7 +63,7 @@ const INDEX_LENGTH = 500;
 const imageIdAt = (position: number) =>
   `${PREFIX}_${String(position).padStart(5, "0")}`;
 
-const search = vi.mocked(imageSearchTool);
+const search = vi.mocked(listGroupImageIds);
 const resolve = vi.mocked(resolveFsImageInput);
 const fetchBytes = vi.mocked(fetchFsImageBytes);
 const ocr = vi.mocked(runOcr);
@@ -76,9 +76,7 @@ beforeEach(() => {
   __clearImageBrowseMemoryForTests();
   nextProbeYear = 1700;
 
-  search.mockResolvedValue({
-    imageIds: Array.from({ length: INDEX_LENGTH }, (_, i) => imageIdAt(i)),
-  });
+  search.mockResolvedValue(Array.from({ length: INDEX_LENGTH }, (_, i) => imageIdAt(i)));
   resolve.mockReturnValue({
     url: "https://example.invalid/image",
     label: "image",
@@ -153,8 +151,10 @@ describe("refuses to converge on a non-monotonic film", () => {
     expect(result.reading).toMatchObject({ position: 297, year: 1690 });
     expect(result.bracket).toMatchObject({
       lowPosition: 297,
+      lowImageId: imageIdAt(297),
       lowYear: 1690,
       highPosition: 299,
+      highImageId: imageIdAt(299),
       highYear: 1729,
     });
   });
@@ -205,6 +205,10 @@ describe("stops when the bracket closes", () => {
     expect(result.nextImageId).toBeUndefined();
     expect(result.stopped).toContain("297");
     expect(result.stopped).toContain("298");
+    // The agent holds no position-to-page list, so the stop names the pages.
+    expect(result.stopped).toContain(imageIdAt(297));
+    expect(result.stopped).toContain(imageIdAt(298));
+    expect(result.stopped).not.toMatch(/position/);
   });
 
   it("still probes while a gap remains between the ends", async () => {
@@ -231,7 +235,7 @@ describe("stops when the bracket closes", () => {
     // An unseeded bracket defaults to 0/lastPosition with null years. On a
     // two-image volume those ends are adjacent, so a check that read positions
     // without requiring both years would resolve without reading anything.
-    search.mockResolvedValue({ imageIds: [imageIdAt(0), imageIdAt(1)] });
+    search.mockResolvedValue([imageIdAt(0), imageIdAt(1)]);
     // 1650, not the target: a probe that lands ON the target makes low and high
     // the same reading, which IS resolved. Here only the low end is dated and
     // the high end is the position default, so the "both ends dated" half of the
@@ -244,6 +248,7 @@ describe("stops when the bracket closes", () => {
 
     expect(ocr).toHaveBeenCalledOnce();
     expect(result.confidence).not.toBe("resolved");
+    expect(result.bracket).toMatchObject({ lowImageId: imageIdAt(0), highImageId: imageIdAt(1) });
   });
 });
 
@@ -341,7 +346,7 @@ describe("input domain", () => {
       LOCAL,
     );
     expect(search).toHaveBeenCalledWith(
-      { imageGroupNumber: GROUP },
+      GROUP,
       LOCAL,
       expect.objectContaining({ timeoutMs: expect.any(Number) }),
     );
@@ -515,7 +520,7 @@ describe("image cap (#3010)", () => {
     // The bisect's own instruction: report the bracket, not just "pivot".
     expect((err as Error).message).toContain("bracket");
     // The actual bracket from the readings, not a generic line: the seed at 40 read 1600.
-    expect((err as Error).message).toMatch(/positions 40\.\.\d+, years 1600\.\./);
+    expect((err as Error).message).toMatch(/images 004516861_00040\.\.004516861_\d{5}, years 1600\.\./);
     expect(fetchBytes).not.toHaveBeenCalled();
   });
 
