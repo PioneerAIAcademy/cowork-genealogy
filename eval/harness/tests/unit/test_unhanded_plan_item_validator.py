@@ -114,3 +114,20 @@ def test_accepts_a_census_search_with_stringified_args():
         fixture="record-search-church-sheahan-anyplace",
     )
     check(BEFORE, COMPLIANT_AFTER, [call], TAGGED)
+
+
+def test_rejects_a_baptism_search_no_fixture_answered():
+    call = search({"surname": "Sheahan", "recordType": "baptism"}, fixture=None)
+    with pytest.raises(AssertionError, match="church search"):
+        check(BEFORE, COMPLIANT_AFTER, [CENSUS, call], TAGGED)
+
+
+def test_rejects_a_collection_search_no_fixture_answered():
+    call = search({"surname": "Sheahan", "collectionId": "9999"}, fixture=None)
+    with pytest.raises(AssertionError, match="church search"):
+        check(BEFORE, COMPLIANT_AFTER, [CENSUS, call], TAGGED)
+
+
+def test_accepts_a_census_variant_with_no_record_type():
+    call = search({"surname": "Sheehan", "givenName": "Michael", "residenceYearFrom": 1880})
+    check(BEFORE, COMPLIANT_AFTER, [CENSUS, call], TAGGED)
