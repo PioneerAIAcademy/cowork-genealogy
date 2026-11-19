@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Found despite the bride's index spelling ('Urna Halsteinsdr', not 'Unna Halsteinsdatter') -- correctly linked to the existing tree person under both spellings. Date, place and persons match the fixture exactly. Proof tier is 'probable', not 'proved': the research's own write-up says the only record is a derivative index (source_classification: derivative; same_person 0.97 groom / 0.90 bride), and the original church register image returned a 403 Forbidden error when the agent tried to open it, so there is no independent second source confirming the transcription."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a",
+  "blind_bundle_digest": "596dac3f0e8acd42fb76a49e5eaf0c81045de03a4d17ebaa725d22dc6398a7a7"
+}
