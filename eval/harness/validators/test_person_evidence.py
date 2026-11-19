@@ -1855,7 +1855,8 @@ _MISSING_LINK = re.compile(
     r"(?:\bno\b|\bmissing\b|\blacks?\b|\bwithout\b)" + _BETWEEN + _LINK_NOUN
     + r"|(?:\bnot|n['’]t)\s+(?:yet\s+)?(?:been\s+)?(?:linked|connected)\b|\bunlinked\b|\bnothing\s+links\b"
     + r"|" + _LINK_NOUN + r"[^.\n]{0,60}?\b(?:is\s+missing|is\s+absent|don['’]t\s+see|do\s+not\s+see"
-    + r"|(?:has|have)(?:\s+not|n['’]t)\s+(?:yet\s+)?been\s+(?:created|made|written|added))\b",
+    + r"|(?:has|have)(?:\s+not|n['’]t)\s+(?:yet\s+)?been\s+(?:created|made|written|added))\b"
+    + r"|" + _LINK_NOUN + r"\s+(?:are\s+)?missing\b",
     re.IGNORECASE,
 )
 _I2_NAMES = re.compile(r"\ba_013\b|\bI2\b|\bThomas\b")
@@ -1864,7 +1865,8 @@ _SCORE_TERM = r"(?:`?match_score`?|\bmatch\s+score|`?same_person`?\s+score|\bsco
 _UNEXPLAINED = (
     r"(?:\bunexplained\b|\bno\s+explanation\b|\bnever\s+says\s+why\b|\bno\s+(?:stated\s+|given\s+)?reason\b"
     r"|\bnot\s+disclosed\b|\b(?:does\s+not|doesn['’]t)\s+(?:say|explain|mention\s+why)\b"
-    r"|\bno\s+rationale\s+for\b"
+    r"|\bno\s+rationale\s+for\b|\bno\s+(?:statement|note)\s+of\s+why\b"
+    r"|\b(?:does\s+not|doesn['’]t)\s+state\s+why\b"
     r"|\bnot\s+(?:recorded|obtained|stated|explained|computed)\b|\bno\s+disclosure\b"
     r"|\bmentions\s+no\b|\bnever\s+computed\b|\bno\s+account\b"
     r"|\bnor\s+(?:says|explains|states|gives)\s+why\b|\bwhy\s+none\s+was\b)"

@@ -2533,6 +2533,10 @@ _NAMES_I2_GAP = {
     # From the first post-change suite run, replaced by a re-run after r0's score
     # wording ("neither gives ... nor says why") was found missed.
     "v11_2026-11-16_22-27-12_run0", "v11_2026-11-16_22-27-12_run1",
+    # A scratch run of 001 on the branch: r0 opens on "Counterpart link missing."
+    # and r2 says "no statement of why match_score is null", both once missed.
+    "scratch_2026-11-19_11-12-40_run0", "scratch_2026-11-19_11-12-40_run1",
+    "scratch_2026-11-19_11-12-40_run2",
 }
 # v2 and v6: Score discipline raised to 3, but Multi-person awareness was N/A
 # under the rubric of the day, and neither reply names the gap.
