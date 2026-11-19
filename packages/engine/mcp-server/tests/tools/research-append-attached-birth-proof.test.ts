@@ -184,6 +184,23 @@ describe("a proof over a family's self-contradicting attached births (#4444)", (
     }
   });
 
+  it("is answered by an identity conflict naming the record through another assertion of the same party, not of another", () => {
+    const name = (id: string, persona: string, role: string) => ({
+      ...birth(id, "ark:/61903/1:1:BAPT-002", "Ardfinnan, Tipperary, Ireland"),
+      fact_type: "name",
+      value: "John Hanrahan",
+      place: null,
+      record_role: role,
+      record_persona_id: persona,
+    });
+    const child = name("a_020", "ark:/61903/1:1:BAPT-002-principal", "principal");
+    const parent = name("a_021", "ark:/61903/1:1:BAPT-002-father", "father");
+    const answered = family({ assertions: [CENSUS, BAPTISM, MARRIAGE, child, parent], conflicts: [identity(["a_020"])] });
+    expect(attachedBirthProofInvariants(proof(), answered.research, answered.tree)).toEqual([]);
+    const other = family({ assertions: [CENSUS, BAPTISM, MARRIAGE, child, parent], conflicts: [identity(["a_021"])] });
+    expect(attachedBirthProofInvariants(proof(), other.research, other.tree)).toHaveLength(1);
+  });
+
   it("is answered by an analysed fact conflict naming both records", () => {
     const fact = { ...identity(["a_001", "a_002"]), conflict_type: "fact", disputed_attribute: "birthplace", identity_question: null };
     const { research, tree } = family({ conflicts: [fact] });

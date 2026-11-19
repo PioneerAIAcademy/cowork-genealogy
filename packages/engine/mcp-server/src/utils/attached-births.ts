@@ -8,7 +8,7 @@
 
 import { isLiveAssertion } from "./assertion-liveness.js";
 import { compatiblePlace } from "./date-comparison.js";
-import { birthPlacesAgree, recordIdOf, recordParties, YEAR_PATTERN } from "./settled-birth-disputes.js";
+import { birthPlacesAgree, recordIdOf, recordPartyKeys, YEAR_PATTERN } from "./settled-birth-disputes.js";
 import { normalizeString } from "./string-similarity.js";
 import {
   canonicalCountry,
@@ -25,6 +25,9 @@ import { birthThresholdMiles, lookupWithin } from "./place-coords.js";
 import { isAttachmentLink } from "./tree-person.js";
 import { isAnalysed, registeredPairConflictIds, type AttachedBirthPair } from "./question-state.js";
 import { haversineDistance } from "../tools/distance.js";
+
+/** A list, or empty when the document holds anything else there. */
+const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 
 /** Only a BIRTH place compares against the tree person's birth place. A
  *  christening place is where the church is, not where the child was born:
@@ -221,7 +224,7 @@ export function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPl
  *  ordering bypass the score gate already closed. */
 export function resolvableAssertions(research: any, batchAssertions?: Map<string, any>): Map<string, any> {
   const assertionById = new Map<string, any>();
-  for (const a of (research?.assertions ?? []) as any[]) {
+  for (const a of arr(research?.assertions)) {
     if (isLiveAssertion(a) && typeof a.id === "string") assertionById.set(a.id, a);
   }
   if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
@@ -261,7 +264,7 @@ export function attachedBirths(
   assertionById: Map<string, any>,
   personLinks?: ReadonlyArray<PersonLink>,
 ): AttachedBirth[] {
-  const all = ((research?.person_evidence ?? []) as any[]).filter((pe: any) => pe && pe.person_id === personId);
+  const all = arr(research?.person_evidence).filter((pe: any) => pe && pe.person_id === personId);
   const began = new Set(all.filter(isAttachmentLink).map((pe: any) => pe.assertion_id));
   if (began.size === 0) return [];
   const live = new Set(
@@ -270,20 +273,12 @@ export function attachedBirths(
       .map((l: any) => l.assertion_id),
   );
   const rejected = new Set(
-    ((research?.rejected_links ?? []) as any[]).filter((r: any) => r?.person_id === personId).map((r: any) => r.assertion_id),
+    arr(research?.rejected_links).filter((r: any) => r?.person_id === personId).map((r: any) => r.assertion_id),
   );
   // A researcher rejects a record for the person through whichever of its
   // assertions they were shown, most often its name: a rejection rules out the
   // birth of the same record party, not only an assertion of the same id.
-  const keyers = new Map<string, (a: any) => string | null>();
-  const partyOf = (a: any): string | null => {
-    const recordId = recordIdOf(a);
-    if (recordId == null) return null;
-    let keyOf = keyers.get(recordId);
-    if (!keyOf) keyers.set(recordId, (keyOf = recordParties(assertionById.values(), recordId).partyKey));
-    const party = keyOf(a);
-    return party == null ? null : `${recordId} ${party}`;
-  };
+  const partyOf = recordPartyKeys(assertionById.values());
   const rejectedParties = new Set<string>();
   for (const id of rejected) {
     const r = assertionById.get(id);
@@ -360,8 +355,8 @@ export function contradictingAttachedPairs(
 
 /** The tree person's Birth fact, which the arms take the year from. */
 export function treeBirthFact(tree: any, personId: string): any {
-  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
-  return ((person?.facts ?? []) as any[]).find((f: any) => String(f?.type ?? "").toLowerCase() === "birth");
+  const person = arr(tree?.persons).find((p: any) => p?.id === personId);
+  return arr(person?.facts).find((f: any) => String(f?.type ?? "").toLowerCase() === "birth");
 }
 
 /** A tree person's live attached births that contradict each other, as the gate
@@ -388,17 +383,17 @@ export function attachedBirthConflictsOf(
  *  scope and nothing wider, so every refusal has a rung that routes it. */
 export function attachedBirthScopePersons(research: any, tree: any, questionId: string): string[] {
   const direct = new Set<string>(
-    ((research?.project?.subject_person_ids ?? []) as unknown[]).filter((id): id is string => typeof id === "string"),
+    arr(research?.project?.subject_person_ids).filter((id): id is string => typeof id === "string"),
   );
   const ids = new Set<unknown>();
-  for (const a of (research?.assertions ?? []) as any[]) {
+  for (const a of arr(research?.assertions)) {
     if (Array.isArray(a?.extracted_for_question_ids) && a.extracted_for_question_ids.includes(questionId)) ids.add(a.id);
   }
-  for (const pe of (research?.person_evidence ?? []) as any[]) {
+  for (const pe of arr(research?.person_evidence)) {
     if (pe?.superseded_by == null && typeof pe?.person_id === "string" && ids.has(pe.assertion_id)) direct.add(pe.person_id);
   }
   const out = new Set(direct);
-  for (const r of (tree?.relationships ?? []) as any[]) {
+  for (const r of arr(tree?.relationships)) {
     const ends = r?.type === "Couple" ? [r.person1, r.person2] : r?.type === "ParentChild" ? [r.parent, r.child] : [];
     if (!ends.some((e: unknown) => typeof e === "string" && direct.has(e))) continue;
     for (const e of ends) if (typeof e === "string") out.add(e);
@@ -412,7 +407,7 @@ export function attachedBirthScopePersons(research: any, tree: any, questionId: 
  *  `attachedBirthConflictInvariants` keeps from being resolved across the pair. */
 export function attachedBirthPairAnswered(research: any, pair: AttachedBirthPair): boolean {
   const named = new Set(registeredPairConflictIds(research, pair));
-  return ((research?.conflicts ?? []) as any[]).some((c: any) => named.has(c?.id) && isAnalysed(c));
+  return arr(research?.conflicts).some((c: any) => named.has(c?.id) && isAnalysed(c));
 }
 
 /** The pairs among `personIds` no analysed conflict has weighed yet: what the
@@ -467,7 +462,7 @@ export async function attachedBirthPairsByQuestion(
   lookup: (coordNames: string[], aliasNames: string[]) => Promise<BirthPlaceCoords> = lookupBirthPlaceInfo,
 ): Promise<Map<string, AttachedBirthPair[]>> {
   const scopes = new Map<string, string[]>();
-  for (const q of (research?.questions ?? []) as any[]) {
+  for (const q of arr(research?.questions)) {
     if (typeof q?.id === "string") scopes.set(q.id, attachedBirthScopePersons(research, tree, q.id));
   }
   // Each person once, however many questions' scopes hold them.

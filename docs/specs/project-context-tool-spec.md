@@ -263,7 +263,8 @@ is never a next step.
 person in the question's family (the project's subjects and everyone live-linked
 to an assertion extracted for the question, each with one tree hop) carries two
 FamilySearch-attached births too far apart to be one birth, and no conflict has
-weighed them (an analysed identity conflict naming either record, or an analysed
+weighed them (an analysed identity conflict naming either record through any
+assertion of the same record party, or an analysed
 fact conflict naming both), `nextStep` is `conflict-resolution — identity: <p>'s
 attached births <a> ('<place>') and <b> ('<place>') cannot both be theirs; <action>,
 blocking <q>`, whether or not the question is resolved. `<action>` names the

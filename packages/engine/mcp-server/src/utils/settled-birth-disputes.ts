@@ -58,6 +58,22 @@ export function recordParties(assertions: Iterable<any>, recordId: string) {
   return { onRecord, partyKey: recordPartyKeyer(onRecord) };
 }
 
+/** Keys an assertion to its record party, `<record id> <party>`, over
+ *  `assertions` (null when it names no record or no party): the party
+ *  `recordParties` reads, one keyer per record. */
+export function recordPartyKeys(assertions: Iterable<any>): (a: any) => string | null {
+  const all = [...assertions];
+  const keyers = new Map<string, (a: any) => string | null>();
+  return (a) => {
+    const recordId = recordIdOf(a);
+    if (recordId == null) return null;
+    let keyOf = keyers.get(recordId);
+    if (!keyOf) keyers.set(recordId, (keyOf = recordParties(all, recordId).partyKey));
+    const party = keyOf(a);
+    return party == null ? null : `${recordId} ${party}`;
+  };
+}
+
 /** `disputed_attribute` values that settle each arm, matched exactly after
  *  lower-casing and folding spaces and hyphens to underscores. The field is free
  *  text, so anything else ("birth year of John Laurie (GPZR-3X2)") settles

@@ -85,6 +85,13 @@ describe("conflictReweighRefusals", () => {
     expect(r[0].message).toContain("without its analysis");
   });
 
+  it("refuses appending a conflict already weighed and resolved while a pre-call sibling is bare", () => {
+    const resolved = analysed("c_004", { status: "resolved", preferred_assertion_id: "a_001", resolution_kind: "competitor", resolution_rationale: "The census." });
+    const r = conflictReweighRefusals(doc([bare("c_001")]), doc([bare("c_001"), resolved]), [upd("c_004")]);
+    expect(r).toHaveLength(1);
+    expect(r[0].message).toContain("c_001");
+  });
+
   it("is silent on a first analysis", () => {
     expect(reweigh([bare("c_001"), bare("c_003")], (c) => { Object.assign(c[1], analysed("c_003")); })).toEqual([]);
   });

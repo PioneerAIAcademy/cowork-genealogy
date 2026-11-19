@@ -37,6 +37,7 @@ import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from
 import { disputeGroups, disputeGroupKey } from "./page-disputes.js";
 import { countsForLinkedRung } from "./tree-person.js";
 import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
+import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 
 export type QuestionState =
@@ -662,16 +663,27 @@ export interface AttachedBirthPair {
 }
 
 /** The conflicts that name a pair the way one answers it: an identity conflict
- *  naming either record, or a fact conflict naming both. Analysed or not: the
- *  pair is answered once one of these is analysed, and while none is, the one
- *  registered is what conflict-resolution has to weigh. */
+ *  naming either record, through any assertion of the same record party (as a
+ *  rejection rules one out), or a fact conflict naming both births. Analysed or
+ *  not: the pair is answered once one of these is analysed, and while none is,
+ *  the one registered is what conflict-resolution has to weigh. */
 export function registeredPairConflictIds(research: any, pair: AttachedBirthPair): string[] {
   const ids = [pair.a?.id, pair.b?.id];
+  const assertions = arr(research?.assertions);
+  const byId = new Map<string, any>(assertions.map((a: any) => [a?.id, a]));
+  const partyOf = recordPartyKeys(assertions);
+  const pairParties = new Set([pair.a, pair.b].map(partyOf).filter((k): k is string => k != null));
   return arr(research?.conflicts)
     .filter((c: any) => {
       if (!Array.isArray(c?.competing_assertion_ids) || typeof c?.id !== "string") return false;
       const named = ids.filter((id) => c.competing_assertion_ids.includes(id)).length;
-      return c.conflict_type === "identity" ? named > 0 : c.conflict_type === "fact" && named === 2;
+      if (c.conflict_type === "identity") {
+        return named > 0 || c.competing_assertion_ids.some((id: unknown) => {
+          const key = partyOf(byId.get(id as string));
+          return key != null && pairParties.has(key);
+        });
+      }
+      return c.conflict_type === "fact" && named === 2;
     })
     .map((c: any) => c.id as string);
 }

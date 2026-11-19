@@ -39,6 +39,7 @@ import {
   datetimeMs,
   endsOnConflict,
   isAnalysed,
+  registeredPairConflictIds,
   questionLastSearchedMs,
   questionOwnedLogEntries,
   questionTiedAssertionIds,
@@ -1101,17 +1102,27 @@ export function attachedBirthConflictInvariants(
       const withX = competitors.find((c) => near(c, x) && !near(c, y));
       const withY = competitors.find((c) => near(c, y) && !near(c, x));
       if (!withX || !withY) continue;
+      const pair = { personId: p, a: x, b: y };
+      const others = { ...research, conflicts: (research?.conflicts ?? []).filter((c: any) => c?.id !== entry?.id) };
+      const byId = new Map<string, any>((others.conflicts as any[]).map((c: any) => [c?.id, c]));
+      // A conflict that already weighs the pair is not weighed again: only the
+      // researcher's rejection lifts this rule then.
+      const weighed = registeredPairConflictIds(others, pair).filter((id) => isAnalysed(byId.get(id)));
+      const next =
+        weighed.length > 0
+          ? `Leave this conflict unresolved: ${weighed.sort().join(", ")} already weighs who these records belong to, ` +
+            `and the researcher's rejection of the attachment that is not theirs (a rejected_links entry) settles it.`
+          : `Leave this conflict unresolved and ${attachedBirthPairsAction([pair], others)}; ` +
+            `it may be resolved by preferring the record that belongs ` +
+            `to '${p}', and the researcher's own rejection of the attachment that is not theirs (a ` +
+            `rejected_links entry) also settles it.`;
       return [
         `conflict '${entry.id ?? "(new)"}' cannot be 'resolved' by preferring one side: its competitors ` +
           `'${withX.id}' ('${withX.place}') and '${withY.id}' ('${withY.place}') follow the two records ` +
           `FamilySearch attaches to '${p}' that put that person's birth too far apart to be one birth ('${x.place}', ` +
           `assertion '${x.id}'; '${y.place}', assertion '${y.id}'). A tree person whose own attached records ` +
           `disagree like this may be two people under one entry, which is an identity question, not a fact ` +
-          `to weigh as one person's. Leave this conflict unresolved and ` +
-          `${attachedBirthPairsAction([{ personId: p, a: x, b: y }], { ...research, conflicts: (research?.conflicts ?? []).filter((c: any) => c?.id !== entry?.id) })}; ` +
-          `it may be resolved by preferring the record that belongs ` +
-          `to '${p}', and the researcher's own rejection of the attachment that is not theirs (a ` +
-          `rejected_links entry) also settles it.`,
+          `to weigh as one person's. ${next}`,
       ];
     }
   }
@@ -5765,8 +5776,8 @@ function questionsBlockedBy(conflict: any, research: any): string[] {
  *  call and still analysed after it, changing a weighing field, whose questions
  *  are read on its pre-call entry (so re-opening a resolved one is not a
  *  re-weigh); a move to `moot` is exempt, since it shrinks the open set. A
- *  weighed append is checked against conflicts bare before the call, so
- *  registering bare conflicts and weighing a new one together passes. */
+ *  weighed append, resolved or not, is checked against conflicts bare before the
+ *  call, so registering bare conflicts and weighing a new one together passes. */
 export function conflictReweighRefusals(
   before: any,
   after: any,
@@ -5786,7 +5797,8 @@ export function conflictReweighRefusals(
     let questions: string[];
     let bareSiblings: (c: any) => boolean;
     if (was === undefined) {
-      questions = questionsBlockedBy(now, after);
+      // Read as open: an append that lands resolved still weighs a conflict.
+      questions = questionsBlockedBy({ ...now, status: "unresolved" }, after);
       // Bare before the call and still bare after it.
       bareSiblings = (c) => beforeById.has(c?.id) && !isAnalysed(beforeById.get(c.id));
     } else {
