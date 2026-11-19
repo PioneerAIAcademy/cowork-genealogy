@@ -129,5 +129,36 @@ def test_rejects_a_collection_search_no_fixture_answered():
 
 
 def test_accepts_a_census_variant_with_no_record_type():
-    call = search({"surname": "Sheehan", "givenName": "Michael", "residenceYearFrom": 1880})
+    call = search({"surname": "Sheahan", "givenName": "Michael", "residenceYearFrom": 1880})
+    check(BEFORE, COMPLIANT_AFTER, [CENSUS, call], TAGGED)
+
+
+def test_rejects_a_church_search_the_census_fixture_answered():
+    call = search(
+        {
+            "surname": "Sheahan",
+            "collectionId": "SYNTH-PA-CHURCH",
+            "recordType": "church",
+            "residenceYearFrom": 1880,
+        }
+    )
+    with pytest.raises(AssertionError, match="church search"):
+        check(BEFORE, COMPLIANT_AFTER, [CENSUS, call], TAGGED)
+
+
+def test_accepts_a_census_named_only_in_its_arguments():
+    call = search(
+        {"surname": "Sheahan", "collectionId": "SYNTH-PA-CENSUS-1880"}, fixture=None
+    )
+    check(BEFORE, COMPLIANT_AFTER, [CENSUS, call], TAGGED)
+
+
+def test_accepts_a_census_search_in_church_hill():
+    call = search(
+        {
+            "surname": "Sheahan",
+            "recordType": "census",
+            "anyPlace": "Church Hill, Pennsylvania",
+        }
+    )
     check(BEFORE, COMPLIANT_AFTER, [CENSUS, call], TAGGED)

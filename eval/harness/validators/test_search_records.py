@@ -1253,8 +1253,13 @@ def test_unhanded_plan_item_stays_planned(before_state, after_state, tool_calls,
         for c in tool_calls or []
         if _bare_tool_name(c.get("tool")) == "record_search"
         and str(_as_mapping(c.get("args")).get("recordType") or "").lower() != "census"
-        and "census" not in (c.get("response_fixture") or "")
-        and "census" not in json.dumps(c.get("args") or {}).lower()
+        and (
+            "church" in json.dumps(c.get("args") or {}).lower()
+            or (
+                "census" not in (c.get("response_fixture") or "")
+                and "census" not in json.dumps(c.get("args") or {}).lower()
+            )
+        )
     ]
     assert not church, f"pli_002's church search ran in this call: {church}"
 
