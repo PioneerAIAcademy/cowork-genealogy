@@ -129,7 +129,10 @@ that would replace it (probed 2026-10-02, §5):
   rationale calls it her maiden name, and a companion item must test it.
 - **A pre-1850 US federal census names only the head.** The
   federal schedules of 1790–1840 name the head of household and count everyone
-  else in age brackets; 1850–1870 name every member without stating a
+  else in age brackets, except that 1840 also names each Revolutionary or
+  military pensioner in the household, with his age, often an aged parent
+  living with a son, so it is the one early census that can name a second
+  member; 1850–1870 name every member without stating a
   relationship; 1880 adds relationship to the head; birthplace first appears in
   1850. It is one national rule, not a jurisdiction fact, and the localities
   entries the agent reads do not carry it. Before the rule, all three baseline

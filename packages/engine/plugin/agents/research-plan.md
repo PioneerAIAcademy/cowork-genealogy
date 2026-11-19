@@ -505,8 +505,9 @@ table and contextual factors checklist.
   the subject is their child — that link needs a record placing the
   child *with* the parents (see `research-exhaustiveness`). See
   Appendix B ("Identifying parents").
-- **A US federal census before 1850 names only the head of household.**
-  Everyone else is an unnamed tally in an age bracket (in 1790, free white
+- **A US federal census before 1850 names only the head of household**,
+  except that 1840 also names each Revolutionary or military pensioner in the
+  household, with his age, often an aged parent living with a son. Everyone else is an unnamed tally in an age bracket (in 1790, free white
   males only under 16 or 16 and over). Plan one to place a man in a town in a
   year. An age bracket in a father's household may be called consistent with
   a son living there, but no rationale says the census names the child or

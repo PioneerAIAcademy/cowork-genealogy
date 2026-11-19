@@ -27,9 +27,15 @@ def _item(n, record_type, date_range, **kw):
 
 
 def _run(items, test=TAGGED):
+    """A skip on a tagged test means the tag gate went dead, which must fail."""
     before = {"research_json": {"plans": []}}
     after = {"research_json": {"plans": [{"id": "pl_001", "items": items}]}}
-    check_order(before, after, test)
+    try:
+        check_order(before, after, test)
+    except pytest.skip.Exception as exc:
+        if "pre1850-census" in test["tags"]:
+            pytest.fail(f"the tagged test was skipped, so the gate is dead: {exc}")
+        raise
 
 
 GOOD = [
