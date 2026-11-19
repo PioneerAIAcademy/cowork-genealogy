@@ -234,13 +234,14 @@ async function homeByTitle(
 
 /**
  * A place to its page, resolved in full: the leaf grammar, then a title found by the wiki's
- * own search, then the Places API's alternate names.
+ * own search, then the Places API's alternate names. Null when the place has no page in this
+ * section; a failed fetch throws. `locality_survey` reads whole pages through this.
  */
-async function resolvePlacePage(
+export async function findPlacePage(
   standardPlace: string,
   section: WikiPageSection,
   baseUrl: string
-): Promise<WikiPlacePageResult> {
+): Promise<WikiPlacePageResult | null> {
   const parts = standardPlace.split(",").map((p) => p.trim()).filter(Boolean);
   const leaf = parts[0] ?? "";
   const slugsFor = (nameSlug: string) => candidateSlugsFor(section, nameSlug);
@@ -274,7 +275,7 @@ async function resolvePlacePage(
     }
   }
 
-  throw new Error(`No wiki page found for "${standardPlace}".`);
+  return null;
 }
 
 /**
@@ -310,6 +311,13 @@ export function topicPageFitsPlace(content: unknown, standardPlace: string): boo
     .map((p) => p.trim().toLowerCase())
     .filter(Boolean)
     .every((p) => parts.has(p));
+}
+
+/** A topic page whose breadcrumb names a place outside `standardPlace` ("Georgia, United States" for
+ *  "Tbilisi, Georgia"). A page with no breadcrumb names none. */
+export function topicPageNamesOtherPlace(content: unknown, standardPlace: string): boolean {
+  if (typeof content !== "string" || !HOME_LINK.test(content.slice(0, HOME_LINK_SEARCH_CHARS))) return false;
+  return !topicPageFitsPlace(content, standardPlace);
 }
 
 /**
@@ -426,8 +434,9 @@ async function readPlacePage(
     resolvedPages.delete(key);
   }
 
-  const hit = await resolvePlacePage(standardPlace, section, baseUrl);
-  // `url` is `${FS_WIKI_BASE}/${slug}` wherever `resolvePlacePage` builds one.
+  const hit = await findPlacePage(standardPlace, section, baseUrl);
+  if (!hit) throw new Error(`No wiki page found for "${standardPlace}".`);
+  // `url` is `${FS_WIKI_BASE}/${slug}` wherever `findPlacePage` builds one.
   resolvedPages.set(key, { slug: hit.url.slice(FS_WIKI_BASE.length + 1), placeName: hit.placeName });
   return hit;
 }
