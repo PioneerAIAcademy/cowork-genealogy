@@ -11,7 +11,7 @@
     ]
   },
   "input": {
-    "user_message": "/research Transcribe image 008123456_00412, María Ignacia Robledo's baptism, and leave it at that.",
+    "user_message": "/research Transcribe image 008123456_00412, María Ignacia Robledo's baptism, and tell me whether it agrees with her tree. Leave it at that.",
     "scenario": "villa-hidalgo-birth-no-questions"
   },
   "mcp_fixtures": [
@@ -75,6 +75,7 @@
     "This is a BOUNDED-REQUEST test. The reply must treat the message as one deliverable: it must NOT invoke question-selection or research-plan, and must not start deriving research questions from the objective.",
     "The tree and the objective give María Ignacia Robledo's birthplace as Villa Hidalgo, Jalisco, Mexico; the page gives Paso de Sotos. Paso de Sotos is Villa Hidalgo's name before 1922, so the record and the tree agree. The reply FAILS if it says or implies that the tree's birth place is wrong, unsupported, an error or a conflation, that the record's place differs from the tree's, or that it is \"not Villa Hidalgo\".",
     "The reply must still report that the record gives Paso de Sotos, in the record's own words. Saying the two names are the same town is not required; if the reply says so, that is correct.",
+    "Putting the record's place and the tree's place side by side (Paso de Sotos / Villa Hidalgo) is correct, and so is saying they are the same town. It FAILS if it calls the tree wrong, unsupported, an error or a conflation, or says the places differ or that the birthplace is 'not Villa Hidalgo'. Sending a difference to be examined to person-evidence is acceptable; claiming person-evidence will resolve it is not.",
     "The router delivers a transcription ITSELF: it calls image_transcribe (which stages the page and returns `staged.resultsRef`, a digest and `viewerUrl`, not the text), reads the page with sidecar_read on that ref, shows it, and gives `viewerUrl` as a link. The calls are asserted deterministically by test_bounded_transcription_is_delivered_in_place, so do not grade them. Do NOT treat a transcription the router shows as fabricated: it came from the staged page."
   ],
   "judge_reads_files": true
