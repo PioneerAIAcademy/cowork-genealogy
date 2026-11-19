@@ -1,0 +1,18 @@
+{
+  "tool": "image_transcribe",
+  "description": "Image 009113284_00716 read with a lookingFor naming Eliza: LEGGAT..LEE, eleven LEE entries; holds ELIZABETH LEE, born 29 Sep 1821, christened 13 Oct 1822, daughter of JAMES LEE and MARIA (06132-2), and ELIZA LEE, born 30 Jul 1822, daughter of JOHN LEE and ELIZABETH (05476-7). Transcription is the real image_transcribe output for this page, copied from the alpha-feedback bundle of issue #4567 (2026-11-13). `found` is FOUND, as the tool's own found check returned it (gemini-3.7-flash, 2026-11-18) for both 'Lee, Eliza, father James Lee' and 'Eliza Lee' once a comma-written name expands to Elizabeth. Order before image-transcribe-marylebone-00716.",
+  "args": {
+    "imageId": "~009113284_00716",
+    "lookingFor": "~eliza"
+  },
+  "response": {
+    "transcription": "```text\nSAINT MARY, ST. MARYLEBONE, LONDON, ENGLAND\nBIRTHS OR CHRISTENINGS          (1821-1827)          BATCH # C 3524-7          PAGE  711\nSURNAME          DATES          GIVEN          REL   PARENTS AND OTHER DATA    SER NUMBER\n\n*LEGGETT\nLEGGAT           BRN 18 MAY 1824 ROBERT         S    ROBERT LEGGAT AND SARAH   11717-0\n                 CHR  7 JUN 1824\n\n*LEIGH\nLEE              BRN 16 NOV 1820 WILLIAM JOHN   S    WILLIAM ANDREW LEE AND ANN 00053-9\n                 CHR 11 JAN 1821\n\nLEE              BRN 10 JAN 1821 MARY           D    GEORGE LEE AND MARY       00392-9\n                 CHR 18 FEB 1821\n\nLEE-             BRN  5 MAR 1821 LUCY           D    JOHN LEE AND SARAH        00624-4\n                 CHR 15 MAR 1821\n\nLEE              BRN 17 AUG 1821 THOMAS         S    THOMAS LEE AND ELIZABETH VERNON 02354-0\n                 CHR 15 SEP 1821\n\nLEE              BRN 26 AUG 1821 MARTHA         D    WILLIAM LEE AND MARY      05700-8\n                 CHR 26 AUG 1822\n\nLEE              BRN 29 SEP 1821 ELIZABETH      D    JAMES LEE AND MARIA       06132-2\n                 CHR 13 OCT 1822\n\nLEE              BRN 24 OCT 1821 JOSIAH         S    JOHN LEE AND ELIZABETH    04231-5\n                 CHR 31 MAR 1822\n\nLEE              BRN 27 JAN 1822 CHARLES        S    EDWARD LEE AND ANN        03646-7\n                 CHR  2 FEB 1822\n\nLEE              BRN  7 MAR 1822 JOHN           S    JOHN LEE AND ANN          04512-2\n                 CHR 28 APR 1822\n\nLEE              BRN 11 MAR 1822 RICHARD        S    RICHARD LEE AND JANE      08944-7\n                 CHR 24 AUG 1823\n\nLEES             BRN 15 MAR 1822 JOSEPHINE      D    CHARLES ABBOTT LEES AND SOPHIA 04390-3\n                 CHR 15 APR 1822\n\nLEES             BRN 15 APR 1822 GEORGE         S    HENRY WILLIAM LEES AND SARAH 04624-2\n                 CHR  9 MAY 1822\n\nLEIGH            BRN  8 MAY 1822 JAMES          S    WILLIAM LEIGH AND ELIZABETH 06379-3\n                 CHR 13 NOV 1822\n\nLEA              BRN 27 JUL 1822 CHARLES        S    CHARLES WADE HOLLESTER LEA AND 05499-8\n                 CHR  6 AUG 1822                     MARY ANN\n\nLEE              BRN 30 JUL 1822 ELIZA          D    JOHN LEE AND ELIZABETH    05476-7\n                 CHR  4 AUG 1822\n```",
+    "viewerUrl": "https://www.familysearch.org/search/film/009113284?i=715",
+    "metadata": {
+      "imageId": "009113284_00716",
+      "contentType": "image/jpeg",
+      "model": "google/gemini-3.7-flash"
+    },
+    "found": "FOUND"
+  }
+}

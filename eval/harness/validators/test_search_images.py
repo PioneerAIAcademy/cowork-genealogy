@@ -367,3 +367,45 @@ def test_browse_log_never_labelled_image_transcribe(before_state, after_state, t
         "Relabelling the entry to attach a staged page file writes a results/ "
         "sidecar and leaves the browse unlogged."
     )
+
+
+# --- A short form of the name sought reaches the return (#4587) --------------
+
+_SHORT_FORM_DATE = re.compile(
+    r"\b29(?:th)?\s+sep(?:t(?:ember)?)?\.?,?\s+1821\b"
+    r"|\bsep(?:t(?:ember)?)?\.?\s+29(?:th)?,?\s+1821\b"
+    r"|\b1821-09-29\b"
+    r"|\b29[/.]0?9[/.]1821\b",
+    re.IGNORECASE,
+)
+
+
+def short_form_row_signals(block: str) -> int:
+    """How many of the 1821 Elizabeth's identifying details one block carries:
+    her birth date in any common order, her mother Maria, her serial 06132-2."""
+    return sum((
+        bool(_SHORT_FORM_DATE.search(block)),
+        bool(re.search(r"\bMaria\b", block, re.IGNORECASE)),
+        "06132-2" in block,
+    ))
+
+
+def test_short_form_row_reaches_return(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated floor: after the final `---`, some paragraph carries the 1821
+    Elizabeth (daughter of James and Maria Lee, image 009113284_00716) with at
+    least two of her birth date, her mother Maria and her serial 06132-2. A
+    return that drops her row fails here. Whether she is called the same name as
+    the Eliza sought is the rubric's "Name forms" dimension: the incident's own
+    return carried her row and dismissed her, which passes this check."""
+    from harness.skill_runner import subject_reply_text, tail_after_final_rule
+
+    if "short-form" not in test.get("tags", []):
+        pytest.skip("not a short-form name test")
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    tail = tail_after_final_rule(reply)
+    blocks = [b for b in re.split(r"\n\s*\n", tail) if b.strip()]
+    assert any(short_form_row_signals(b) >= 2 for b in blocks), (
+        "no paragraph after the final `---` reports the 1821 Elizabeth, daughter "
+        "of James and Maria Lee (image 009113284_00716), with two of: born 29 Sep "
+        "1821, mother Maria, serial 06132-2"
+    )
