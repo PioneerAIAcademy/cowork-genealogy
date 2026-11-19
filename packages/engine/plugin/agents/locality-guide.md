@@ -64,9 +64,9 @@ Produces a structured survey of what records exist for a specific place and time
 
 ### 1. Identify the target
 
-Determine place, time period, and scope from the user's request. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
+Determine place, time period, and scope from the user's request. The request is always to build and save the guide: a question about a place's records, or about what a locality guide says, is answered by building it now. Never ask whether to build it. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
 
-Every delegation names a `projectPath`, and Step 6 always runs. With no `projectPath`, hand back (Decision rules). A delegation asking what a locality guide says about a place is a request to build that guide; a guide already saved for the place is updated (Re-invocation behavior).
+Every delegation names a `projectPath`, and Step 6 always runs. With no `projectPath`, hand back (Decision rules).
 
 A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: the survey, the full template, and Step 6.
 
@@ -98,13 +98,13 @@ actually pins the specific place to one side.
 
 ### 3. Survey available records and repositories
 
-Call `locality_survey` once, with the `standardPlace` from Step 2 for the place as delegated, the period's years, and the delegation's `projectPath` when it gave one:
+Call `locality_survey` once, with the `standardPlace` from Step 2 for the place as delegated, the period's years, the delegation's `projectPath`, and, when the delegation asks something particular (what survived a fire, Quaker meetings, naming), that as `question`:
 
 ```
-locality_survey({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, projectPath: "<project path; omit with no project>" })
+locality_survey({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, projectPath: "<project path>", question: "<the delegation's own question, if any>" })
 ```
 
-It returns every survey part: `population`, `collections`, `volumes` (the place and its parent), `catalog`, `externalLinks`, `wikiPages` (home, getting_started, online_records, research_tips), `vitalRecords`, `churchRecords`, `namingCustoms`, `collectionNotices`, `pagesRead`, `volumeSummary`, `guideHeadings`, and with a project `staged.resultsRef`. A part that failed is `{ error }`: report it as a gap. Each wiki page carries the sections chosen for the guide and names the headings it `omitted`; `wiki_read` its `url` (with `offset` when a section says where it was cut) only when the guide needs one of them. With no `standardPlace` from Step 2, pass the place as delegated.
+It returns every survey part: `population`, `collections`, `volumes` (the place and its parent), `catalog`, `externalLinks`, `wikiPages` (home, getting_started, online_records, research_tips), `question` (the wiki's sections for it), `vitalRecords`, `churchRecords`, `namingCustoms`, `searchHelp`, `collectionNotices`, `pagesRead`, `volumeSummary`, `guideHeadings`, and with a project `staged.resultsRef`. A part that failed is `{ error }`: report it as a gap. Each wiki page carries the sections chosen for the guide and names the headings it `omitted`; `wiki_read` its `url` (with `offset` when a section says where it was cut) only when the guide needs one of them. With no `standardPlace` from Step 2, pass the place as delegated.
 
 `wiki_search`, and `wiki_read` of a `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census` or `_Naming_Customs` page, are for a fact the survey did not carry; run them together in one turn.
 
@@ -208,6 +208,7 @@ field on a jurisdiction or collection.
 
 | Situation | Action |
 |-----------|--------|
+| Delegation asks a question, or asks what a guide says, and no guide is saved | Build the guide now (Steps 2–6), then answer from it; never offer to build it |
 | Delegation names no `projectPath` | Hand back: one line saying a locality guide is saved to a project, naming init-project as the owner who runs first |
 | Place given but no time period | Ask before proceeding |
 | MCP tools return sparse data | State what was found, note gaps, suggest consulting FamilySearch Wiki directly |

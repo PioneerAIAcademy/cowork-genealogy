@@ -3252,6 +3252,7 @@ def _make_locality_survey_handler(
                     "     get('external_links_search', { standardPlace: place }).rows.filter((r) => typeof r.url === 'string'), place) }),"
                     "   placePage: async (place, section) => noticed(get('wiki_place_page', { standardPlace: place, section })),"
                     "   page: async (url) => noticed(get('wiki_read', { url })),"
+                    "   search: async (query) => get('wiki_search', { query, includeText: true }),"
                     "   placeType: async () => null,"
                     "   ...(pp ? {"
                     "     recordLinks: async (place, rows, tooLarge) => {"

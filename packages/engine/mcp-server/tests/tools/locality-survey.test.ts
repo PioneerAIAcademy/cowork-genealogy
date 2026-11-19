@@ -201,6 +201,30 @@ describe("runLocalitySurvey", () => {
     expect(out.guideHeadings[0]).toBe("## Jurisdiction overview");
   });
 
+  it("searches the wiki for the delegation's question and puts those sections first", async () => {
+    const queries: string[] = [];
+    const out: any = await runLocalitySurvey(
+      { standardPlace: "New Orleans, Orleans, Louisiana, United States", question: "records lost to fires and floods" },
+      {
+        ...deps(),
+        search: async (query) => {
+          queries.push(query);
+          return {
+            results: [
+              { page_title: "New Orleans Genealogy", section_heading: "Record loss", source_url: `${WIKI}/New_Orleans#Record_loss`, chunk_text: "The fires of 1788 and 1794 destroyed early records." },
+            ],
+          };
+        },
+      },
+    );
+    expect(queries).toEqual(["New Orleans, Orleans, Louisiana, United States records lost to fires and floods"]);
+    expect(out.question.content).toContain("fires of 1788");
+    expect(surveyCallPlan({ standardPlace: "Ohio, United States", question: "boundaries" }).at(-1)).toEqual({
+      tool: "wiki_search",
+      args: { query: "Ohio, United States boundaries", includeText: true },
+    });
+  });
+
   it("keeps a naming page's Given Names section ahead of its long opening", async () => {
     const content = `${"Link list line.\n".repeat(400)}## Surname Spelling\n${"s".repeat(2000)}\n## Given Names\nChildren baptised with two names went by the second.\n`;
     const out: any = await runLocalitySurvey(

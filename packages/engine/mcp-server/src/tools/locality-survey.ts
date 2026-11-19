@@ -6,6 +6,7 @@ import { collectionsSearchTool } from "./collections-search.js";
 import { volumeSearchTool } from "./volume-search.js";
 import { catalogSearchTool } from "./catalog-search.js";
 import { externalLinkRows } from "./external-links-search.js";
+import { wikiSearch } from "./wiki-search.js";
 import { findPlacePage, placeTypeOf, searchHelpLink, topicPageNamesOtherPlace } from "./wiki-place-page.js";
 import { collectionNoticesFor, fetchPage, FS_WIKI_BASE } from "../utils/wiki-page-fetch.js";
 import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
@@ -30,6 +31,8 @@ const VITAL_RECORDS_SHARE = 6_000;
 /** The naming-customs page goes in next, up to this much: the body takes a jurisdiction's
  *  naming practice only from it. */
 const NAMING_CUSTOMS_SHARE = 3_000;
+/** The wiki's sections for the delegation's own question go in first, up to this much. */
+const QUESTION_SHARE = 4_000;
 /** The search-tips page the research-tips page links (how the place's records were indexed). */
 const SEARCH_HELP_SHARE = 2_000;
 /** The church-records page, the main source before civil registration, up to this much. */
@@ -37,6 +40,7 @@ const CHURCH_RECORDS_SHARE = 3_000;
 /** Pages read first, each up to its own share, before the rest are ranked; within one, the
  *  sections whose headings name its topic go first, then its opening, then the rest. */
 const RESERVED_PAGES: ReadonlyArray<readonly [string, number, RegExp]> = [
+  ["question", QUESTION_SHARE, /./],
   ["vitalRecords", VITAL_RECORDS_SHARE, /regist|birth|death|marriage|vital|civil|certificate|index/i],
   ["churchRecords", CHURCH_RECORDS_SHARE, /church|parish|register|baptis|christen|denomination|record/i],
   ["namingCustoms", NAMING_CUSTOMS_SHARE, /given name|naming|nickname|patronym|surname|name/i],
@@ -78,7 +82,7 @@ const RECORD_HEADING =
 const SECTION_CAP = 6_000;
 
 /** The topic pages the survey reads by slug, outside `pagesRead`. */
-const TOPIC_KEYS = ["vitalRecords", "churchRecords", "namingCustoms", "searchHelp"] as const;
+const TOPIC_KEYS = ["question", "vitalRecords", "churchRecords", "namingCustoms", "searchHelp"] as const;
 
 /** Every heading of the guide template, `## ` and `### `, in order: the guide's structure,
  *  returned with the survey so the agent writes it under these headings whatever it found. */
@@ -134,6 +138,12 @@ const vitalRecordsUrls = (name: string) => topicUrls(name, VITAL_SUFFIXES);
 const namingCustomsUrls = (name: string) => topicUrls(name, ["Naming_Customs"]);
 const churchRecordsUrls = (name: string) => topicUrls(name, ["Church_Records"]);
 
+/** The wiki query for the delegation's own question: the place name and the question. */
+function questionQuery(input: LocalitySurveyInput): string | null {
+  const q = typeof input.question === "string" ? input.question.trim() : "";
+  return q ? `${placeName(input.standardPlace)} ${q}`.slice(0, 300) : null;
+}
+
 /** Every call the survey could make for `input`, climbs included. */
 export function surveyCallPlan(input: LocalitySurveyInput): SurveyCall[] {
   const { standardPlace, startYear, endYear } = input;
@@ -159,6 +169,8 @@ export function surveyCallPlan(input: LocalitySurveyInput): SurveyCall[] {
     ),
     ...[...vitalRecordsUrls(name), ...churchRecordsUrls(name), ...namingCustomsUrls(name)].map((url): SurveyCall => ({ tool: "wiki_read", args: { url } })),
   ];
+  const query = questionQuery(input);
+  if (query) calls.push({ tool: "wiki_search", args: { query, includeText: true } });
   const seen = new Set<string>();
   return calls.filter((c) => {
     const key = JSON.stringify(c);
@@ -550,6 +562,18 @@ export async function runLocalitySurvey(
   // The search-tips page the research-tips page links: where a place's indexing rules are.
   const tipsR = secR[SECTION_PAGES.indexOf("research_tips")];
   const helpLink = "error" in tipsR || !tipsR.value ? null : searchHelpLink(tipsR.value.content);
+  const query = questionQuery(input);
+  const questionR = await (async (): Promise<{ level: string; value: SurveyPage | null } | { error: string; missing?: true }> => {
+    if (!query || !deps.search) return { error: "none found", missing: true };
+    const got = await settle(() => deps.search!(query), deadlineAt, now);
+    if (!got.ok) return { error: got.error };
+    const sections = got.value.results.filter((r) => typeof r.chunk_text === "string" && r.chunk_text.trim());
+    if (!sections.length) return { error: "none found", missing: true };
+    const content = sections
+      .map((r) => `## ${r.page_title} — ${r.section_heading}\n${(r.chunk_text as string).trim()}\n[${r.source_url}]`)
+      .join("\n\n");
+    return { level: query, value: { url: sections[0].source_url, content } };
+  })();
   const helpR = helpLink
     ? await climb([helpLink.url], async (url) => deps.page(url, noticesBy), (page) => page !== null, deadlineAt, now)
     : ({ error: "none found", missing: true } as const);
@@ -636,6 +660,7 @@ export async function runLocalitySurvey(
     loaded.push({ key, url: page.url, text, notices: page.collectionNotices ?? [] });
     pageMeta.set(key, { url: page.url, found: true, totalChars: text.length });
   };
+  addPage("question", questionR);
   addPage("vitalRecords", vitalR);
   addPage("churchRecords", churchR);
   addPage("namingCustoms", namingR);
@@ -789,6 +814,7 @@ export function liveSurveyDeps(principal: Principal, projectPath?: string): Surv
     volumes: (args) => volumeSearchTool(args, principal),
     catalog: (args) => catalogSearchTool(args, principal),
     linkRows: (place) => externalLinkRows(place),
+    search: (query) => wikiSearch({ query, includeText: true }, principal),
     placeType: (place) => placeTypeOf(place),
     placePage: async (place, section, noticesBy) => {
       const hit = await findPlacePage(place, section, await base());
@@ -845,6 +871,11 @@ export const localitySurveySchema = {
       },
       startYear: { type: "integer", description: "First year of the period." },
       endYear: { type: "integer", description: "Last year of the period." },
+      question: {
+        type: "string",
+        description:
+          "The delegation's own question, when it asks one (\"what survived the fires\", \"Quaker meeting records\"): the survey also searches the FamilySearch Wiki for it and puts those sections first.",
+      },
       projectPath: {
         type: "string",
         description: "The project folder. Stages the whole answer and stores the outside links. Omit with no project.",

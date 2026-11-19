@@ -9,6 +9,8 @@ export interface LocalitySurveyInput {
   standardPlace: string;
   startYear?: number;
   endYear?: number;
+  /** The delegation's own question, when it asks one: the survey also searches the wiki for it. */
+  question?: string;
   projectPath?: string;
 }
 
@@ -21,7 +23,8 @@ export type SurveyCall =
   | { tool: "catalog_search"; args: { standardPlace: string } }
   | { tool: "external_links_search"; args: { standardPlace: string } }
   | { tool: "wiki_place_page"; args: { standardPlace: string; section: WikiPageSection } }
-  | { tool: "wiki_read"; args: { url: string } };
+  | { tool: "wiki_read"; args: { url: string } }
+  | { tool: "wiki_search"; args: { query: string; includeText: true } };
 
 /** A wiki page read whole: raw text (before the sidebar is stripped) and its Legacy notices. */
 export interface SurveyPage {
@@ -43,6 +46,8 @@ export interface SurveyDeps {
   placeType?(standardPlace: string): Promise<string | null>;
   placePage(standardPlace: string, section: WikiPageSection, noticesBy: number): Promise<SurveyPage | null>;
   page(url: string, noticesBy: number): Promise<SurveyPage | null>;
+  /** The wiki's sections for a query, with their text. */
+  search?(query: string): Promise<{ results: { page_title: string; section_heading: string; source_url: string; chunk_text?: string }[] }>;
   /** Stores one level's rows in the project, as `external_links_search` does. */
   recordLinks?(queriedPlace: string, rows: StoredCollectionRow[], tooLarge: boolean): Promise<void>;
   /** Stages the whole answer; returns its ref. */
