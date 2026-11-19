@@ -31,8 +31,8 @@ describe("the staged rule registry", () => {
     expect(() => ruleMode("claims-presnet")).toThrow(/no staged rule 'claims-presnet'/);
   });
 
-  it("stages exactly the claim rules the module emits, each in warn mode until Stage 1c", () => {
-    expect(Object.keys(RULE_MODES).sort()).toEqual([...CLAIM_RULE_IDS].sort());
-    for (const id of CLAIM_RULE_IDS) expect(ruleMode(id)).toBe("warn");
+  it("stages exactly the claim rules and the primary rule, each in warn mode until Stage 1c", () => {
+    expect(Object.keys(RULE_MODES).sort()).toEqual([...CLAIM_RULE_IDS, "primary-claimed"].sort());
+    for (const id of [...CLAIM_RULE_IDS, "primary-claimed"]) expect(ruleMode(id)).toBe("warn");
   });
 });

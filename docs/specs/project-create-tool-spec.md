@@ -146,9 +146,9 @@ count, not time.
   sources follow as `S2…`, keeping only `id/title/citation/author/url`: `notes`,
   `text`, `image_ref` and `artifact_url` are response-only and dropped. The
   read's top-level `notes` is dropped too.
-- **References:** every person fact, relationship, and relationship fact gets
-  `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level and
-  relationship-level `sources` refs are re-pointed at their `S` ids.
+- **References:** every person name, person fact, relationship, and relationship
+  fact gets `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level,
+  name-level and relationship-level `sources` refs are re-pointed at their `S` ids.
 - **Relationships** get `R` ids, with every endpoint rewritten to `I` ids.
 - **Loops:** a ParentChild loop in the read (a person recorded as their own
   ancestor, directly or through a chain) is a FamilySearch data error, and the
@@ -217,7 +217,8 @@ A stub is linked by the relative's tree id, and its edge is cited to a
 **The 2026-09-29 rule is retired.** That ruling merged stubs into the create so
 they sat in `starting-tree.gedcomx.json` from the start. It was retired by lead
 ruling 2026-10-20, and the cost is accepted: a stub added after the create is
-absent from that baseline, so `treeEncodingCompletionWarnings` counts it, and the
+absent from that baseline, so `treeEncodingCompletionWarnings` (the completion
+check's legacy arm, which reads claim-less summaries) counts it, and the
 relative it links to, as structure gained this session (`tree-diff.ts`,
 `personsWithNewStructure`), and that warning cannot fire for them. A `subjectPersonIds` PID is matched trimmed and case-insensitively, and the
 requested id of a merged person names the same person.

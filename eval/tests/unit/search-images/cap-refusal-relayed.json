@@ -17,6 +17,7 @@
   },
   "mcp_fixtures": [
     "image-transcribe-cap-reached",
+    "image-search-cap-reached-group",
     "volume-search-any"
   ],
   "execution": {

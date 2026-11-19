@@ -32,10 +32,12 @@
  * gate's population to within two runs.
  */
 
+import { owedFindings, type OwedFinding } from "./owed-findings.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
 import { disputeGroups, disputeGroupKey } from "./page-disputes.js";
 import { countsForLinkedRung } from "./tree-person.js";
-import { isLiveAssertion } from "./assertion-liveness.js";
+import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
+import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 
 export type QuestionState =
@@ -651,6 +653,87 @@ export function endsOnConflict(summary: any, lastSearched: number): boolean {
   return Number.isNaN(written) || written >= lastSearched;
 }
 
+/** One tree person's two FamilySearch-attached births that cannot both be
+ *  theirs and that no analysed conflict has weighed yet (#4444). Computed by
+ *  research_append's pair test (a tool, with place lookups) and passed in. */
+export interface AttachedBirthPair {
+  personId: string;
+  a: any;
+  b: any;
+}
+
+/** The conflicts that name a pair the way one answers it: an identity conflict
+ *  naming either record, through any assertion of the same record party (as a
+ *  rejection rules one out), or a fact conflict naming both births. Analysed or
+ *  not: the pair is answered once one of these is analysed, and while none is,
+ *  the one registered is what conflict-resolution has to weigh. */
+export function registeredPairConflictIds(research: any, pair: AttachedBirthPair): string[] {
+  const ids = [pair.a?.id, pair.b?.id];
+  const assertions = arr(research?.assertions);
+  const byId = new Map<string, any>(assertions.map((a: any) => [a?.id, a]));
+  const partyOf = recordPartyKeys(assertions);
+  const pairParties = new Set([pair.a, pair.b].map(partyOf).filter((k): k is string => k != null));
+  return arr(research?.conflicts)
+    .filter((c: any) => {
+      if (!Array.isArray(c?.competing_assertion_ids) || typeof c?.id !== "string") return false;
+      const named = ids.filter((id) => c.competing_assertion_ids.includes(id)).length;
+      if (c.conflict_type === "identity") {
+        return named > 0 || c.competing_assertion_ids.some((id: unknown) => {
+          const key = partyOf(byId.get(id as string));
+          return key != null && pairParties.has(key);
+        });
+      }
+      return c.conflict_type === "fact" && named === 2;
+    })
+    .map((c: any) => c.id as string);
+}
+
+/** What conflict-resolution does for the pairs: weigh the conflict already
+ *  registered for a pair, or open one where none is. Naming the registered one
+ *  matters: told to open a conflict, an orchestrator asked for John's pair to be
+ *  registered again while c_002 sat unweighed (thomas-hanrahan-marriage,
+ *  2026-11-18 14:12). */
+export function attachedBirthPairsAction(pairs: readonly AttachedBirthPair[], research: any): string {
+  const registered = new Set<string>();
+  const unregistered: string[] = [];
+  for (const pair of pairs) {
+    const ids = registeredPairConflictIds(research, pair);
+    if (ids.length > 0) ids.forEach((id) => registered.add(id));
+    else if (!unregistered.includes(pair.personId)) unregistered.push(pair.personId);
+  }
+  const parts: string[] = [];
+  if (registered.size > 0) {
+    parts.push(`weigh ${[...registered].sort().join(", ")} (registered, not yet analysed)`);
+  }
+  if (unregistered.length > 0) {
+    parts.push(`open a conflict_type 'identity' conflict naming the two records for ${unregistered.join(", ")}`);
+  }
+  return parts.join("; ");
+}
+
+/** The pairs as one clause: the identity rung's text and the proof gate's. */
+export function describeAttachedBirthPairs(pairs: readonly AttachedBirthPair[]): string {
+  return pairs
+    .map(({ personId, a, b }) => `${personId}'s attached births ${a?.id} ('${a?.place}') and ${b?.id} ('${b?.place}')`)
+    .join("; ");
+}
+
+/** This question's owed items of one kind: `encode` items on its summaries, or
+ *  `hypothesis` items on hypotheses that relate to it. */
+function owedFor(all: readonly OwedFinding[], research: any, qid: unknown, summaries: any[], kind: "encode" | "hypothesis"): OwedFinding[] {
+  const owed = all.filter((f) => f.kind === kind);
+  if (kind === "encode") {
+    const ids = new Set(summaries.map((s) => `${s?.id}/`));
+    return owed.filter((f) => [...ids].some((prefix) => f.ref.startsWith(prefix)));
+  }
+  const related = new Set(
+    arr(research?.hypotheses)
+      .filter((h) => arr(h?.related_question_ids).includes(qid))
+      .map((h) => h?.id),
+  );
+  return owed.filter((f) => related.has(f.ref));
+}
+
 /**
  * The state of one question plus the step it is waiting on.
  *
@@ -658,15 +741,22 @@ export function endsOnConflict(summary: any, lastSearched: number): boolean {
  * question with a proof summary is `concluded` even if its plan is thin,
  * because the artifact is what any downstream check joins on.
  */
-export function questionStatus(research: any, question: any, tree: any = null): QuestionStatus {
+export function questionStatus(
+  research: any,
+  question: any,
+  tree: any = null,
+  attachedBirthPairs: readonly AttachedBirthPair[] = [],
+  owed?: readonly OwedFinding[],
+): QuestionStatus {
   const qid = question?.id;
+  // Computed only when an owed-finding arm is reached; questionStates passes it.
+  let owedList = owed;
+  const getOwed = (): readonly OwedFinding[] => (owedList ??= owedFindings(research, tree));
 
   const plans = arr(research?.plans).filter((p) => p?.question_id === qid);
   const itemIds = new Set(plans.flatMap((p) => arr(p?.items).map((i) => i?.id)));
   const logs = arr(research?.log).filter((e) => itemIds.has(e?.plan_item_id));
-  const assertions = arr(research?.assertions).filter((a) =>
-    isLiveAssertion(a) && arr(a?.extracted_for_question_ids).includes(qid),
-  );
+  const assertions = questionAssertions(research, qid);
   const assertionIds = new Set(assertions.map((a) => a?.id));
   const summaries = arr(research?.proof_summaries).filter((s) => s?.question_id === qid);
 
@@ -714,7 +804,14 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   // user asks for one — so `critiqued` never gates what comes next.
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
-  if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
+  if (attachedBirthPairs.length > 0) {
+    // #4444. First, because research_append refuses every proof summary of this
+    // question (any tier but disproved, resolved or not) until a conflict has
+    // weighed each pair: a rung below one that names proof-conclusion would loop.
+    nextStep =
+      `conflict-resolution — identity: ${describeAttachedBirthPairs(attachedBirthPairs)} cannot both ` +
+      `be theirs; ${attachedBirthPairsAction(attachedBirthPairs, research)}, blocking ${qid}`;
+  } else if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
     // Section E. The summary is the terminal marker: once proof-conclusion has
     // written one with `shortfall: "conflict"`, at the tier the evidence reaches,
     // the research has ended on the conflict and nothing further is due. A
@@ -773,6 +870,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     nextStep = `researcher's choice: research-plan or proof-conclusion (default ${
       lowOverturnRisk(question) ? "proof-conclusion" : "research-plan"
     })`;
+  } else if (tree && owedFor(getOwed(), research, qid, summaries, "encode").length > 0) {
+    // A claim affirmed at probable or better that no tree object carries
+    // (Decision 33's `encode`): proof-conclusion encodes it. Above the concluded
+    // and blocked arms, so a resolved question still reports it. Skipped with no
+    // tree, as competingParentSets is: a tree-less reader cannot tell.
+    nextStep = owedFor(getOwed(), research, qid, summaries, "encode")[0].nextStep;
   } else if (summaries.length > 0 && !resolved) {
     // A summary on a question still open was written while the preconditions
     // gate blocked the conclusion: proof-conclusion resolves the question it
@@ -800,7 +903,15 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     const planned = openItems(plans)
       .filter((i) => i?.status === "planned" && !waitingOnUpload.has(i?.id))
       .sort((x, y) => (Number(x?.sequence) || 0) - (Number(y?.sequence) || 0));
-    if (planned.length === 0) {
+    // A supported hypothesis on this question, with nothing left to search and no
+    // summary yet: concluding it is the next step (Decision 33's `hypothesis`).
+    // Below extraction, framing and every planned search, which come first.
+    const supported = planned.length === 0 && summaries.length === 0
+      ? owedFor(getOwed(), research, qid, summaries, "hypothesis")
+      : [];
+    if (supported.length > 0) {
+      nextStep = supported[0].nextStep;
+    } else if (planned.length === 0) {
       nextStep = "research-exhaustiveness, then proof-conclusion";
     } else {
       const lane = searchStepFor(planned[0]);
@@ -838,9 +949,16 @@ export function questionStatus(research: any, question: any, tree: any = null): 
 }
 
 /** Every question's state, in document order. `tree` is optional: without it
- *  `competingParentSets` is always empty. */
-export function questionStates(research: any, tree: any = null): QuestionStatus[] {
+ *  `competingParentSets` is always empty. `attachedBirthPairs` (by question id)
+ *  is optional: without it the identity rung never fires. */
+export function questionStates(
+  research: any,
+  tree: any = null,
+  attachedBirthPairs?: ReadonlyMap<string, readonly AttachedBirthPair[]>,
+): QuestionStatus[] {
+  // The owed list is project-wide: compute it once, not once per question.
+  const owed = owedFindings(research, tree);
   return arr(research?.questions)
     .filter((q) => typeof q?.id === "string")
-    .map((q) => questionStatus(research, q, tree));
+    .map((q) => questionStatus(research, q, tree, attachedBirthPairs?.get(q.id) ?? [], owed));
 }

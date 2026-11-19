@@ -1,0 +1,173 @@
+{
+  "tool": "record_read",
+  "description": "Carved from feedback bundle feedback-2026-10-30T07-56-13-719275Z.zip (issue #4042): Santiago Cedillo's death registration, d. 4 Dec 1918 Santa Lucia, b. 1870, parents Valentin Cedillo + Patrocia Marquez, Couple with Nicolasa Cedillo. Gedcomx from the same record's entry in results/log_001.json (the run never read it).",
+  "args": {
+    "recordId": "~X7LS-KMLK"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_310337433649",
+        "ark": "ark:/61903/1:1:X7LS-KMLK",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "surname": "Cedillo",
+            "given": "Nicolasa"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310337433637",
+        "ark": "ark:/61903/1:1:X7LS-KML4",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "surname": "Cedillo",
+            "given": "Santiago"
+          }
+        ],
+        "facts": [
+          {
+            "type": "DeathRegistration",
+            "primary": true,
+            "date": "5 de diciembre de 1918",
+            "standard_date": "5 Dec 1918",
+            "place": "Santa Lucía, Intibucá, Honduras",
+            "standard_place": "Santa Lucía, Intibucá, Honduras"
+          },
+          {
+            "type": "Death",
+            "date": "4 de diciembre de 1918",
+            "standard_date": "4 Dec 1918"
+          },
+          {
+            "type": "Birth",
+            "date": "1870",
+            "standard_date": "1870"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310337433641",
+        "ark": "ark:/61903/1:1:X7LS-KML8",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "surname": "Cedillo",
+            "given": "Valentin"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310337433646",
+        "ark": "ark:/61903/1:1:X7LS-KMLN",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "surname": "Márquez",
+            "given": "Patrocia"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "p_310337433637",
+        "person2": "p_310337433649"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310337433646",
+        "child": "p_310337433637"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_310337433641",
+        "child": "p_310337433637"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_182644484880",
+        "resource_type": "Record",
+        "title": "Registro para Santiago Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7LS-KML4 : Thu Aug 06 07:10:53 UTC 2026), Entry for Santiago Cedillo and Valentin Cedillo, 5 de diciembre de 1918.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HZN4-MNNM",
+        "coverage": {
+          "date_range": "5 de diciembre de 1918",
+          "record_type": "Death"
+        }
+      },
+      {
+        "id": "sd_c_2135627",
+        "resource_type": "Collection",
+        "title": "Honduras, Civil Registration, 1841-1968",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "coverage": {
+          "place_rep_id": "173",
+          "date_range": "1841/1968",
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QHN-R7CK-5JKY",
+        "coverage": {
+          "place_rep_id": "0",
+          "date_range": "1914-08/1919-11",
+          "record_type": "Death"
+        }
+      },
+      {
+        "id": "sd_auto_M9VM-SQG",
+        "resource_type": "auto",
+        "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+        "coverage": {
+          "place_rep_id": "5270",
+          "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z"
+        }
+      },
+      {
+        "id": "src_p_p_310337433649",
+        "resource_type": "Person",
+        "url": "#p_310337433649"
+      }
+    ],
+    "places": [
+      {
+        "id": "441572",
+        "name": "Santa Lucía, Intibucá, Honduras",
+        "latitude": 13.92,
+        "longitude": -88.3901
+      }
+    ]
+  }
+}

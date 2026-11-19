@@ -180,10 +180,15 @@ export function claimCoversFact(claim: any, holderIds: readonly string[], fact: 
   const subject = factSubjectIds(f.subject);
   if (subject.length === 0 || subject.join("+") !== [...holderIds].sort().join("+")) return false;
   if (toTreeFactType(f.fact_type) !== fact.type) return false;
+  // A fact carries its text as written and, often, a standardized form; a claim
+  // copied from either is the same value ("about 1882" against standard "1882";
+  // a written place beside a resolver's standard_place, right or wrong).
   const claimDate = joinDate(f.date);
-  if (claimDate !== null && claimDate !== joinDate(fact.standard_date ?? fact.date)) return false;
+  if (claimDate !== null && ![fact.standard_date, fact.date].some((d) => joinDate(d) === claimDate)) return false;
   const claimPlace = placeTokens(f.place);
-  if (claimPlace.length > 0 && !placeCovers(claimPlace, placeTokens(fact.standard_place ?? fact.place))) return false;
+  if (claimPlace.length > 0 && ![fact.standard_place, fact.place].some((pl) => placeCovers(claimPlace, placeTokens(pl)))) {
+    return false;
+  }
   if (typeof f.value === "string" && f.value.trim() !== "" && !sameText(f.value, fact.value)) return false;
   return true;
 }

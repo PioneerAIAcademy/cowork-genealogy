@@ -4,12 +4,13 @@
 
 An MCP tool that lists the **individual images within a single image
 group** (a digitized volume — one microfilm roll or book scan). Given an
-`imageGroupNumber`, it returns the sorted list of image IDs in that
-volume.
+`imageGroupNumber`, it returns the volume's image count and its image IDs
+as ranges: one inclusive `[firstId, lastId]` pair per unbroken run.
 
 Each image ID has the form `{imageGroupPrefix}_{imageNumber}` — a
-9-ish-digit image group number, an underscore, and a 5-digit sequence
-number (e.g., `004884748_02613`). A **separate PR** updates `image_read`
+9-digit image group number, an underscore, and a 5-digit sequence
+number (e.g., `004884748_02613`). An id not of the form
+`{9 digits}_{5 digits}` is its own `[id, id]` pair. A **separate PR** updates `image_read`
 to accept an `imageId` directly and construct the DGS URL
 (`https://familysearch.org/das/v2/dgs:{imageId}/dist.jpg`) internally,
 so an `imageId` from this tool feeds `image_read` directly — the caller
@@ -25,7 +26,7 @@ does not build the URL.
 
 ```
 volume_search  →  discovers IMAGE GROUPS (volumes) covering a place + date range
-image_search     →  lists the IMAGE IDs within ONE image group          ← this tool
+image_search     →  counts ONE image group's images, ids as ranges      ← this tool
 image_read       →  reads a SINGLE IMAGE (will accept an imageId directly — separate PR)
 ```
 
@@ -158,7 +159,7 @@ lists    = each child's children/names (6 at a time, defect retry as below)
 target   = the item-th child whose list has ≥ 1 image, read in order
            # a child at or before it whose list was refused, failed, or came
            # back all-null makes every later position unknown → error
-imageIds = target's sorted list;  imageId = imageIds[itemImage - 1]
+ids = target's sorted list;  ranges = toImageIdRanges(ids);  imageId = ids[itemImage - 1]
 name     = GET /group/{target}   # readable → its groupName and place;
                                   # refused → {dgs}_{NNN}_{target}, NNN = position
 ```
@@ -185,7 +186,9 @@ image's **apid** to its **image ID**:
 
 The tool keeps the **values** (the image IDs), discards the apid keys,
 and sorts the values ascending (the trailing 5-digit sequence yields
-page order).
+page order). That sorted list is `listGroupImageIds`'s answer, the one
+source of a group's full list: `image_search` folds it into ranges, and
+`volume_bisect` indexes its positions against it in-process.
 
 ### Defective responses
 
@@ -220,26 +223,29 @@ The tool therefore:
 **This covers only the defect shape the tool can detect.** A response that omits
 a child entirely — the 163-key case — is 163 valid strings and is
 indistinguishable from a genuinely shorter volume from inside this tool. Noticing
-that would require cross-checking `imageIds.length` against `volume_search`'s
+that would require cross-checking `imageCount` against `volume_search`'s
 `imageCount` for the same group, which this tool does not receive.
 
 > **Verify during implementation:** the observed responses are a single
 > flat object with no pagination cursor, so the tool treats one call as
 > returning **all** images. Confirm this holds for a **large** volume
 > (thousands of images); if the endpoint paginates, add cursor handling.
+> The answer no longer grows with the group: a volume of any size that is
+> one unbroken run answers in about 75 characters.
 
 ---
 
 ## Output
 
-A single, deliberately minimal object — just the sorted image IDs, to
-keep the token cost low:
+A single, deliberately small object — the image count and the image IDs as
+ranges, to keep the token cost low whatever the group's size:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `imageIds` | string[] | All image IDs in the group, each `{prefix}_{imageNumber}` (e.g., `"004884748_02613"`), sorted ascending. Empty array when the group has no images. With `item`, the item's images only. |
-| `imageGroupNumber` | string | With `item` only. The item's group: its own `groupName` when readable, else `{dgs}_{NNN}_{id}`. Pass it back to `image_search` (only the last segment is read). |
-| `imageGroupNumberFrom` | `"name"` \| `"position"` | With `item` only. Whether `imageGroupNumber` is FamilySearch's name or was composed from the position — because the group's metadata was refused, or because its readable `groupName` does not start with this film's number. |
+| `imageCount` | number | Every image in the group, each `{prefix}_{imageNumber}` (e.g., `"004884748_02613"`). Always the full count, including images in runs cut by `truncated`. `0` when the group has no images. With `item`, the item's images only. |
+| `imageIdRanges` | `[firstId, lastId][]` | One inclusive pair per run of ids with the same 9-digit prefix whose 5-digit suffix rises by exactly 1, in id order. A lone image is `[id, id]`, and so is an id not of the form `{9 digits}_{5 digits}`. The image at offset k within a run is `firstId` with its suffix raised by k, zero-padded. At most 500 pairs. Empty when the group has no images. |
+| `truncated` | `true` | Present only when the group has more than 500 runs; pairs past the 500th are left off. |
+| `imageGroupNumber` | string | With `item` only. The item's group: its own `groupName` when readable (and starting with this film's number), else `{dgs}_{NNN}_{id}`. Pass it back to `image_search` (only the last segment is read). |
 | `place` | string \| null | With `item` only. The item's coverage place, `null` when its metadata was refused. |
 | `imageId` | string | With `itemImage` only. The `itemImage`-th image of the item. |
 
@@ -247,14 +253,12 @@ keep the token cost low:
 
 ```json
 {
-  "imageIds": [
-    "004884748_02613",
-    "004884748_02614",
-    "004884748_02615",
-    "004884748_02616"
-  ]
+  "imageCount": 6295,
+  "imageIdRanges": [["004884748_00001", "004884748_06295"]]
 }
 ```
+
+An empty group answers `{ "imageCount": 0, "imageIdRanges": [] }`.
 
 Downstream: pass an `imageId` straight to `image_read` to view it. A
 separate PR updates `image_read` to accept an `imageId` and build the
@@ -269,12 +273,20 @@ internally — the caller no longer constructs the URL.
 {
   name: "image_search",
   description:
-    "List the images in a single FamilySearch image group (a digitized " +
-    "volume — one microfilm roll or book scan). Provide an imageGroupNumber " +
-    "(from volume_search) and get back the sorted list of image IDs in that " +
-    "volume, each of the form '004884748_02613'. To view an image, pass its ID " +
-    "to image_read. Use volume_search " +
-    "first to find which image groups cover a place and date range. " +
+    "Count the images in a single FamilySearch image group (a digitized " +
+    "volume — one microfilm roll or book scan) and return their ids as ranges. " +
+    "Provide an imageGroupNumber (from volume_search) and get back imageCount " +
+    "and imageIdRanges: one inclusive [firstId, lastId] pair per unbroken run " +
+    "of ids, each id of the form '004884748_02613'. The image at offset k " +
+    "within a run is firstId with its 5-digit suffix raised by k, zero-padded. " +
+    "Past 500 runs the list is cut and truncated: true is set; imageCount stays " +
+    "the full count. To read an image, pass its id to image_transcribe or " +
+    "image_read. Use volume_search first to find which image groups cover a " +
+    "place and year range. " +
+    "For a citation like 'DGS 004528134, Item 5, Image 10', pass the bare " +
+    "film number with item and itemImage: you get that image's imageId " +
+    "(and the item's imageCount, imageIdRanges, imageGroupNumber and place) " +
+    "without paging through the film. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -285,6 +297,23 @@ internally — the caller no longer constructs the URL.
           "The image group number to list, from volume_search — either a " +
           "split Natural Group name like '007621224_005_M99P-2TQ' or a bare " +
           "number like '007621224'.",
+      },
+      item: {
+        type: "integer",
+        minimum: 1,
+        description:
+          "Bare film only: the film's Nth item, counted as FamilySearch's image " +
+          "groups in film order (1 = the first). This is not always the " +
+          "Catalog's item number; check the returned place against the citation. " +
+          "When place is null the item could not be checked: tell the user it was " +
+          "counted by image group and may not be the Catalog's item.",
+      },
+      itemImage: {
+        type: "integer",
+        minimum: 1,
+        description:
+          "With item: the image counted within that item (1 = the item's first " +
+          "image). Returned as imageId, ready for image_read or image_transcribe.",
       },
     },
     required: ["imageGroupNumber"],
@@ -312,11 +341,11 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `children/names` returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
 | `children/names` other non-OK | Throw: `"FamilySearch image search API error: {status} {statusText}."` |
 | Network error (either call) | Throw: `"Could not reach FamilySearch image search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
-| Group has no images (empty/`{}` response) | Return `{ imageIds: [] }` (not an error) |
+| Group has no images (empty/`{}` response) | Return `{ imageCount: 0, imageIdRanges: [] }` (not an error) |
 | `item` / `itemImage` not an integer ≥ 1 | Throw, naming the parameter and the value |
 | `itemImage` without `item` | Throw |
 | `item` with a split `imageGroupNumber` | Throw: the split form already is one item |
-| A key not in the schema that looks like an address (see Within-item addressing) | Throw, naming the key: "image_search has no parameter `limit`; to address one item use `item` / `itemImage`, or drop it to list the whole group." |
+| A key not in the schema that looks like an address (see Within-item addressing) | Throw, naming the key: "image_search has no parameter `limit`; to address one item use `item` / `itemImage`, or drop it to get the whole group's image ranges." |
 | `item` beyond the film's image groups | Throw, naming the range: `film {dgs} has {K} items with images; item must be 1–{K}` |
 | Bare film with no image-bearing child group | Throw: `film {dgs} is not split into items; call image_search without item` |
 | A child at or before the target refused, failed, or all-null | Throw, naming the child: positions after it are unknown |
@@ -337,7 +366,7 @@ No caching. A volume's image set can change as new images are digitized.
 
 | File | Action |
 |------|--------|
-| `src/types/image-search.ts` | Rewrite — reduce to `ImageSearchInput` (`{ imageGroupNumber: string }`), `ImageSearchResult` (`{ imageIds: string[] }`), and the `children/names` response type (`Record<string, string>`). Remove the old RMS-search and places-lookup types. |
+| `src/types/image-search.ts` | Rewrite — reduce to `ImageSearchInput` (`{ imageGroupNumber: string }`), `ImageSearchResult` (`{ imageCount, imageIdRanges, truncated? }` plus the `item` fields), `ImageIdRange`, and the `children/names` response type (`Record<string, string>`). Remove the old RMS-search and places-lookup types. |
 | `src/tools/image-search.ts` | Rewrite — resolution logic (split vs. apid), `children/names` fetch, value extraction + sort, schema export. Remove `placeIdToRepIds` (relocated to `place-search.ts` for `volume_search`) and `repIdToPlaceId` (deleted — no consumers). |
 | `src/utils/image-group.ts` | The resolution (split vs. apid) and a group's metadata fetch, shared with `image_transcribe`, which reads its film's coverage place there (`image-transcribe-tool-spec.md` §5.5.1). |
 | `src/tool-schemas.ts` | Keep `imageSearchSchema` in `allToolSchemas` (now the image lister). |
@@ -357,21 +386,26 @@ No caching. A volume's image set can change as new images are digitized.
 | 1 | Split form → uses last segment as groupId, calls `children/names` directly | Split-group path |
 | 2 | Bare form → calls apid endpoint, then `children/names` with the apid | Unsplit-group path |
 | 3 | Reads the apid endpoint's plain-text body (not JSON) and trims it | apid parsing |
-| 4 | Returns image-ID **values** (not apid keys), sorted ascending | Output mapping + sort |
+| 4 | `listGroupImageIds` returns image-ID **values** (not apid keys), sorted ascending | Output mapping + sort |
 | 5 | Throws when `imageGroupNumber` is missing | Required-input validation |
 | 6 | Throws when apid lookup fails | apid failure path |
-| 7 | Returns `{ imageIds: [] }` for an empty/`{}` response | Zero-image path |
+| 7 | Returns `{ imageCount: 0, imageIdRanges: [] }` for an empty/`{}` response | Zero-image path |
 | 8 | Throws auth error when not authenticated | Auth propagation |
 | 9 | Throws on 401 with re-login guidance | Token-expired path |
 | 10 | Throws on network error | Connectivity failure |
 | 11 | Sends correct headers (Authorization, Accept, User-Agent, FS-User-Agent-Chain) | Header contract |
-| 12 | `item` 5 / `itemImage` 10 on a mocked 004528134 resolves `imageId`, the item's `imageIds`, name and place | Within-item path |
+| 12 | `item` 5 / `itemImage` 10 on a mocked 004528134 resolves `imageId`, the item's `imageCount` and `imageIdRanges`, name and place | Within-item path |
 | 13 | Out-of-range `item` / `itemImage`, `item` 0, `1.5`, `"five"`, `true`; `"5"` coerced | Address validation |
 | 14 | `itemImage` without `item`; `item` with a split name; not-split film | Address shape |
 | 15 | `itemNumber`, `item_number`, `imageNumber`, `page: 10`, `frame: "632"` throw; `lookingFor` passes | Misspelling guard |
 | 16 | A refused or all-null child before the target throws; one after it does not | Position reliability |
-| 17 | Name 403 → position-built name, `imageGroupNumberFrom: "position"`, `place: null` | Name fallback |
-| 18 | No `item` → output is exactly `{ imageIds }` | Unchanged path |
+| 17 | Name 403 → position-built name, `place: null` | Name fallback |
+| 18 | No `item` → output keys are exactly `imageCount`, `imageIdRanges` | Unchanged path |
+| 19 | A synthetic 6,295-image group, one run: `JSON.stringify(result).length` ≤ 100 (measured 75) | Size bound |
+| 20 | 6,295 images with every other page missing: ≤ 19,100 characters (measured 19,054), `truncated: true`, 500 pairs, `imageCount` 6295 | Worst-case bound |
+| 21 | A gap and a film-prefix change each start a run; a lone image and a malformed id are `[id, id]` | Run definition |
+| 22 | Exactly 500 runs carries no `truncated`; 501 does | Cap edge |
+| 23 | An item list one image short answers two pairs around the gap | Item path ranges |
 
 ### Smoke test
 
@@ -390,15 +424,39 @@ npx tsx dev/try-image-search.ts 004528134 5 10           # item 5, image 10 → 
 
 ## Design notes
 
-### Why the output is just `imageIds`
+### Why ranges, and why 500 pairs
 
-Without `item` it still is; the four `item` fields appear only on that path.
-A volume can contain thousands of images. Returning a list of bare
-strings — rather than `{apid, imageId, url}` objects — keeps the payload
-small. The apid keys from the `children/names` map are dropped because
-`image_read` consumes the `imageId` (the DGS identifier) directly once
-the separate `image_read` PR lands; the apid (ARK identifier) is not
-needed for that path.
+A listed id costs 18 characters (`"004884748_02613",`), with no bound, so the
+old answer (every id in one array under a 13-character key wrapper) for a
+6,295-image group was 113,324 characters, and any
+group past 2,778 images crossed the 50,000-character line above which Claude
+Code saves a tool result to a file and hands the agent a preview
+(`docs/specs/catalog-search-tool-spec.md`, "Answer size" → "Why"). The full list bought the agent
+nothing: it may read at most `IMAGE_BROWSE_CAP` = 20 pages of a group per
+project (`src/utils/browse-budget.ts`), and in every sample and fixture the ids
+form one unbroken run. A run answers in about 75 characters whatever its
+length, and an id inside it is computed, not looked up.
+
+The cap bounds the worst case, a group with every other page missing, where
+every image is its own run. 500 pairs is 19,054 characters for a 6,295-image
+group, under 40% of the spill line, and still more pages than the agent may
+read. `imageCount` stays whole when the list is cut, so a truncated answer
+still says how big the group is.
+
+Reproduce the figures:
+
+```bash
+# 113324: the old answer for a 6,295-image group (the id array plus its 13-character wrapper)
+node -e 'const id=i=>"004884748_"+String(i).padStart(5,"0");console.log(JSON.stringify(Array.from({length:6295},(_,i)=>id(i+1))).length+13)'
+# 2778 50018: the first group size past the spill line under the old answer
+node -e 'const id=i=>"004884748_"+String(i).padStart(5,"0");const s=n=>JSON.stringify(Array.from({length:n},(_,i)=>id(i+1))).length+13;let n=1;while(s(n)<=50000)n++;console.log(n,s(n))'
+```
+
+The 75 and 19,054 are measured by tests 19 and 20.
+
+The apid keys from the `children/names` map are dropped because
+`image_read` and `image_transcribe` consume the `imageId` (the DGS
+identifier) directly; the apid (ARK identifier) is not needed for that path.
 
 ### Resolution rule, restated
 

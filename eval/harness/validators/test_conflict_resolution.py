@@ -1220,3 +1220,105 @@ def test_unsettled_conflict_offers_no_continue(text_response, test, agent_return
     assert reply.strip(), "conflict-resolution returned no reply"
     offers = continue_offers(reply)
     assert not offers, f"the reply offers a next step with nothing left to search: {offers}"
+
+
+# --- Identity conflicts resolve when positive evidence places the subject ----
+#
+# Lead-delegated senior-genealogist ruling, issue #4326: c_002 (is the Patrick
+# in Thomas Flynn's household the 1908 death-certificate Patrick?) resolves to
+# a_001, and the competing-fathers parentage conflict resolves for the
+# Schuylkill Thomas. An identity conflict left open there blocks Proved.
+
+_IDENTITY_RESOLVES = "resolved-flynn-identity"
+_IDENTITY_RESOLVES_IF_WORKED = "resolved-flynn-identity-if-worked"
+_FATHERS_RESOLVES = "resolved-competing-fathers"
+# The Schuylkill Thomas's side of the parentage conflict: his link (a_004) and
+# the two assertions behind sources S2 and S3 that tree_edit's entry names.
+_SCHUYLKILL_SIDE = {"a_004", "a_010", "a_013"}
+
+
+def _assert_identity_resolved(conflict, label, expected_preferred):
+    assert conflict.get("status") == "resolved", (
+        f"{label} should be resolved; got status={conflict.get('status')!r}"
+    )
+    assert conflict.get("preferred_assertion_id") in expected_preferred, (
+        f"{label} preferred_assertion_id should be one of "
+        f"{sorted(expected_preferred)}; got {conflict.get('preferred_assertion_id')!r}"
+    )
+
+
+def _worked(before, after):
+    """True when the pass wrote any analysis field or the status on this conflict."""
+    if before is None:
+        return after is not None
+    if after is None:
+        return False
+    return any(before.get(f) != after.get(f) for f in _ANALYSIS_FIELDS)
+
+
+def test_resolved_flynn_identity(before_state, after_state, test):
+    """c_002 resolves with preferred_assertion_id a_001.
+
+    `resolved-flynn-identity` (test 003, which delegates c_002 directly) asserts
+    it unconditionally. `resolved-flynn-identity-if-worked` (tests 002 and 006,
+    where the agent picks which conflict to take) asserts it only when the pass
+    wrote to c_002, because taking the birthplace conflict first is a defensible
+    choice there.
+    """
+    tags = test.get("tags") or []
+    unconditional = _IDENTITY_RESOLVES in tags
+    if not unconditional and _IDENTITY_RESOLVES_IF_WORKED not in tags:
+        pytest.skip("not a resolved-flynn-identity scenario")
+    after = _conflicts_by_id(after_state.get("research_json") or {}).get("c_002")
+    if not unconditional:
+        before = _conflicts_by_id(before_state.get("research_json") or {}).get("c_002")
+        if not _worked(before, after):
+            pytest.skip("the pass did not work c_002")
+    assert after is not None, "c_002 is gone from conflicts[]"
+    _assert_identity_resolved(after, "c_002", {"a_001"})
+
+
+def test_resolved_competing_fathers(after_state, test):
+    """The parentage conflict resolves for the Schuylkill Thomas.
+
+    The conflict does not exist before the run, so it is found by content, never
+    by id: an identity conflict naming a_018 (I3's baptism link) or a_004 (I2's).
+    """
+    if _FATHERS_RESOLVES not in (test.get("tags") or []):
+        pytest.skip("not a resolved-competing-fathers scenario")
+    after = after_state.get("research_json") or {}
+    target = next(
+        (
+            c
+            for c in _conflict_entries(after)
+            if c.get("conflict_type") == "identity"
+            and {"a_004", "a_018"} & set(_competing_ids(c))
+        ),
+        None,
+    )
+    assert target is not None, (
+        "no identity conflict names a_018 (I3's baptism link) or a_004 (I2's link)"
+    )
+    _assert_identity_resolved(
+        target, f"parentage conflict {target.get('id')}", _SCHUYLKILL_SIDE
+    )
+
+
+def test_unresolved_flynn_identity_thin(after_state, test):
+    """007: only the 1850 census is on file, so c_002 stays open.
+
+    The other half of `test_resolved_flynn_identity`: a pass that resolves
+    c_002 here forced an answer the evidence cannot carry (#4326 review).
+    """
+    if "stays-unresolved-flynn-identity" not in (test.get("tags") or []):
+        pytest.skip("not a stays-unresolved-flynn-identity scenario")
+    c = _conflicts_by_id(after_state.get("research_json") or {}).get("c_002")
+    assert c is not None, "c_002 is gone from conflicts[]"
+    assert c.get("status") != "resolved", (
+        "c_002 was resolved on one 1850 census record; with nothing placing "
+        "the subject it stays unresolved"
+    )
+    assert c.get("preferred_assertion_id") is None, (
+        f"c_002 names a preferred assertion {c.get('preferred_assertion_id')!r} "
+        "with nothing placing the subject"
+    )

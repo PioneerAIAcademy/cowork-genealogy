@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "No Marriage fact in the tree and R1 empty, so the pass rule holds. But the tree carries alternate names Thomam Hanrahan and Johan Ryan sourced to the Ballylooby register, two unconnected stubs (I1 John Hanrahan, I2 Thomas Ryan) minted from the civil copy, and the register marriage is linked to both subjects at probable confidence.",
+    "f2": "No proof summary; q_001 open; run hit the tool cap. c_003 (Ballylooby groom vs Saratoga head) weighed the 1870/1880 NY-born children against the marriage but stayed unresolved and routed back to research-plan; Ballylooby never rejected and the marriage never stated as unidentified."
+  },
+  "findings_hash": "799a66512b93b1154bc48991f1dfefa68e5b0c3a1e4dc6a9c8a2ec4a79a81105",
+  "blind_bundle_digest": "294bafe774480960d23b1109fb2ecece0df589d2438688d1c94560e14538b05e"
+}

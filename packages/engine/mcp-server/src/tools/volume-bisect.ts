@@ -8,7 +8,7 @@
  */
 import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
-import { imageSearchTool } from "./image-search.js";
+import { listGroupImageIds } from "./image-search.js";
 import { resolveFsImageInput, fetchFsImageBytes } from "../utils/fs-image-fetch.js";
 import { runOcr, withTranscriptionSlot } from "../utils/ocr.js";
 import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
@@ -144,8 +144,9 @@ function validateReadings(
 function bracketFrom(
   readings: VolumeBisectReading[],
   targetYear: number,
-  lastPosition: number,
+  imageIds: string[],
 ): VolumeBisectBracket {
+  const lastPosition = imageIds.length - 1;
   const dated = readings
     .filter((r): r is VolumeBisectReading & { year: number } => r.year !== null)
     .sort((a, b) => a.position - b.position);
@@ -155,10 +156,14 @@ function bracketFrom(
     if (r.year <= targetYear) low = r;
     if (r.year >= targetYear && high === undefined) high = r;
   }
+  const lowPosition = low?.position ?? 0;
+  const highPosition = high?.position ?? lastPosition;
   return {
-    lowPosition: low?.position ?? 0,
+    lowPosition,
+    lowImageId: imageIds[lowPosition],
     lowYear: low?.year ?? null,
-    highPosition: high?.position ?? lastPosition,
+    highPosition,
+    highImageId: imageIds[highPosition],
     highYear: high?.year ?? null,
   };
 }
@@ -210,8 +215,8 @@ function isClosed(bracket: VolumeBisectBracket): boolean {
 
 function closedMessage(bracket: VolumeBisectBracket): string {
   return (
-    `The target falls between position ${bracket.lowPosition} (${bracket.lowYear}) and ` +
-    `position ${bracket.highPosition} (${bracket.highYear}), which are adjacent — no ` +
+    `The target falls between image ${bracket.lowImageId} (${bracket.lowYear}) and ` +
+    `image ${bracket.highImageId} (${bracket.highYear}), which are adjacent — no ` +
     `image lies between them, so no further probe can narrow this. Read those pages.`
   );
 }
@@ -319,11 +324,9 @@ async function volumeBisectToolInner(
   const apiKey = await getOpenRouterApiKey(principal);
   const model = await getOpenRouterModel(principal);
 
-  const { imageIds } = await imageSearchTool(
-    { imageGroupNumber: groupName },
-    principal,
-    { timeoutMs: IMAGE_SEARCH_TIMEOUT_MS },
-  );
+  const imageIds = await listGroupImageIds(groupName, principal, {
+    timeoutMs: IMAGE_SEARCH_TIMEOUT_MS,
+  });
   if (imageIds.length === 0) {
     throw new Error(`${groupName} returned no images.`);
   }
@@ -336,7 +339,7 @@ async function volumeBisectToolInner(
   if (contradiction) {
     const [a, b] = contradiction;
     return {
-      bracket: bracketFrom(readings, input.targetYear, lastPosition),
+      bracket: bracketFrom(readings, input.targetYear, imageIds),
       confidence: "non-monotonic",
       stopped:
         `Position ${a.position} reads ${a.year} but the later position ${b.position} ` +
@@ -347,7 +350,7 @@ async function volumeBisectToolInner(
 
   if (trailingNullRun(readings) >= MAX_CONSECUTIVE_NULL_READINGS) {
     return {
-      bracket: bracketFrom(readings, input.targetYear, lastPosition),
+      bracket: bracketFrom(readings, input.targetYear, imageIds),
       confidence: "inconclusive",
       stopped:
         `${MAX_CONSECUTIVE_NULL_READINGS} consecutive probes found no year (covers, ` +
@@ -357,7 +360,7 @@ async function volumeBisectToolInner(
   }
 
   const probed = new Set(readings.map((r) => r.position));
-  const bracketBefore = bracketFrom(readings, input.targetYear, lastPosition);
+  const bracketBefore = bracketFrom(readings, input.targetYear, imageIds);
   if (isClosed(bracketBefore)) {
     return {
       bracket: bracketBefore,
@@ -384,7 +387,7 @@ async function volumeBisectToolInner(
     input.projectPath,
     "volume_bisect",
     principal,
-    `positions ${bracketBefore.lowPosition}..${bracketBefore.highPosition}, ` +
+    `images ${bracketBefore.lowImageId}..${bracketBefore.highImageId}, ` +
       `years ${bracketBefore.lowYear ?? "unknown"}..${bracketBefore.highYear ?? "unknown"}`,
   );
   const fetched = await fetchFsImageBytes(
@@ -412,7 +415,7 @@ async function volumeBisectToolInner(
     year: parseProbeYear(ocr.text),
   };
   const all = [...readings, reading];
-  const bracket = bracketFrom(all, input.targetYear, lastPosition);
+  const bracket = bracketFrom(all, input.targetYear, imageIds);
 
   const after = firstContradiction(all);
   if (after) {

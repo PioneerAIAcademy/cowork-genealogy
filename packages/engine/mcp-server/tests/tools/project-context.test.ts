@@ -363,12 +363,13 @@ describe("project_context", () => {
       expect(keys(r)).toEqual(
         [
           "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "narrationGuidance", "subscriptions",
-          "openQuestions", "questionStatuses", "persons", "sources", "localities", "awaitingUser",
+          "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
           "unregisteredDisagreementCount", "uploads",
         ].sort(),
       );
       expect(keys(r.openQuestions?.[0])).toEqual(["id", "question"]);
+      expect(keys(r.owedFindings?.[0])).toEqual(["blocksCompletion", "kind", "nextStep", "personIds", "ref"]);
       expect(keys(r.questionStatuses?.[0])).toEqual(
         ["id", "question", "state", "nextStep", "openConflictIds", "storedStatus", "unregisteredDisagreements", "competingParentSets"].sort(),
       );
@@ -770,6 +771,22 @@ describe("project_context", () => {
     if (badTree.ok) return;
     expect(badTree.errors.join(" ")).toMatch(/tree\.gedcomx\.json is not valid JSON/);
   });
+  it("skips a malformed entry in the attached-births scope rather than failing (#4444)", async () => {
+    for (const [subjects, facts] of [[["P1"], { type: "Birth" }], ["P1", []]] as const) {
+      await writeProject(
+        {
+          project: { status: "active", subject_person_ids: subjects },
+          questions: [{ id: "q_001", question: "When did P1 marry?", status: "open" }],
+          sources: [],
+          assertions: [],
+        },
+        { persons: [{ id: "P1", facts }], relationships: [] },
+      );
+      const r = await projectContext({ projectPath: dir }, LOCAL);
+      expect(r.ok).toBe(true);
+    }
+  });
+
   // #2126 — project_context is the primary "which build is this?" surface (8
   // skills call it), so the stamp rides on every return branch including the
   // two failure shapes.
@@ -1026,6 +1043,84 @@ describe("project_context and project_create links", () => {
       expect("signInUrl" in (await read(connector({})))).toBe(false);
       expect(familySearch).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("project_context owed findings and status (issue #3032 Stage 1b)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-owed-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any, tree: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree), "utf-8");
+  }
+  const tree = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }], facts: [{ id: "F1", type: "Birth", date: "1850", sources: [{ ref: "S2" }] }] },
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Smith" }] },
+    ],
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+    sources: [{ id: "S2", title: "1850 census" }],
+  };
+  const research = () => ({
+    project: { id: "rp_001", objective: "Parents", status: "active" },
+    questions: [{ id: "q_001", question: "Who?", status: "open" }, { id: "q_002", question: "When?", status: "open" }],
+    plans: [{ id: "pl_001", question_id: "q_002", items: [{ id: "pli_001" }] }],
+    log: [{ id: "log_001", plan_item_id: "pli_001", outcome: "positive" }],
+    sources: [],
+    assertions: [{ id: "a_001", record_id: "r1", source_id: "src_001", record_role: "child", fact_type: "birth", extracted_for_question_ids: ["q_001"] }],
+    person_evidence: [{ id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence: "confident", superseded_by: null }],
+    proof_summaries: [],
+  });
+
+  it("owedFindings lists an unextracted log entry before a question with tied assertions and no summary", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.owedFindings?.map((f) => [f.kind, f.ref])).toEqual([["extract", "log_001"], ["conclude", "q_001"]]);
+    expect(r.owedFindings?.[1]).toMatchObject({ personIds: ["I1"], blocksCompletion: true });
+    expect("status" in r).toBe(false);
+  });
+
+  it("include: ['status'] returns a status for every tree object", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir, include: ["status"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.status?.map((row) => [row.holder, row.label])).toEqual([
+      [{ personId: "I1" }, "found in a record, not yet checked"],
+      [{ relationshipId: "R1" }, "from your starting tree, not yet checked"],
+    ]);
+  });
+
+  it("an include value outside the closed list is refused", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir, include: ["view" as any] }, LOCAL);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors[0]).toMatch(/include must be an array of: persons, sources, status/);
+  });
+
+  it("the default projection has the same length before and after adding 50 facts and 20 edges that cite existing sources", async () => {
+    await writeProject(research(), tree);
+    const measure = async () => {
+      const r = await projectContext({ projectPath: dir }, LOCAL);
+      if (!r.ok) throw new Error(r.errors.join("; "));
+      // persons' family-id arrays grow with edges by design; the rest must not.
+      const { persons: _persons, ...rest } = r as any;
+      return JSON.stringify(rest).length;
+    };
+    const before = await measure();
+    const big = structuredClone(tree) as any;
+    for (let i = 0; i < 50; i++) big.persons[0].facts.push({ id: `FX${i}`, type: "Residence", date: String(1850 + i), sources: [{ ref: "S2" }] });
+    for (let i = 0; i < 20; i++) {
+      big.persons.push({ id: `IX${i}`, gender: "Male", names: [{ id: `NX${i}`, given: "X" }] });
+      big.relationships.push({ id: `RX${i}`, type: "ParentChild", parent: "I1", child: `IX${i}`, sources: [{ ref: "S2" }] });
+    }
+    await writeProject(research(), big);
+    expect(await measure()).toBe(before);
   });
 });
 

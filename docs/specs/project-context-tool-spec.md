@@ -32,19 +32,22 @@ context** facts:
   narrate reuse and route refinement requests);
 - the project status.
 
-That projection is a few hundred tokens where the raw files are tens of
-thousands. This tool computes it host-side.
+That projection is small where the raw files are tens of thousands of
+characters: over the 245 committed e2e final projects its serialized answer has
+a median of 4,864 characters and a maximum of 15,586 (measured on the Stage 1b
+part 2a branch, `owedFindings` included). This tool computes it host-side.
 
 ## 2. The tool
 
 ```typescript
-project_context({ projectPath: string, include?: ("persons" | "sources")[] })
+project_context({ projectPath: string, include?: ("persons" | "sources" | "status")[] })
 ```
 
 `include` is an optional closed list naming the larger lists to return; an
-unknown value is refused with `{ ok: false, errors, buildId }`. This stage
-returns every list whether or not it is passed (§3, "A projection, not a query
-language").
+unknown value is refused with `{ ok: false, errors, buildId }`, the errors
+reading `include must be an array of: persons, sources, status.` `"persons"` and
+`"sources"` are returned whether or not they are passed (§3, "A projection, not
+a query language"); `"status"` is returned only when named (§2.9).
 
 Read-only: opens `research.json` and `tree.gedcomx.json`, writes nothing,
 never creates a `.bak`. Not a validator — malformed *entries* are skipped
@@ -247,13 +250,36 @@ exists and gates nothing. A superseded verdict does not count — a
 replacement is itself present and satisfies the join; if nothing replaced it, the
 critique no longer stands.
 
-`nextStep` orders by what blocks what: **an unsettled conflict that has weighed
-everything** outranks **a conflict that wants evidence already planned**, which
+`nextStep` orders by what blocks what: **an unweighed attached-births identity
+question** outranks **an unsettled conflict that has weighed everything**, which
+outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
+
+**An unweighed attached-births identity question comes first.** When a
+person in the question's family (the project's subjects and everyone live-linked
+to an assertion extracted for the question, each with one tree hop) carries two
+FamilySearch-attached births too far apart to be one birth, and no conflict has
+weighed them (an analysed identity conflict naming either record through any
+assertion of the same record party, or an analysed
+fact conflict naming both), `nextStep` is `conflict-resolution — identity: <p>'s
+attached births <a> ('<place>') and <b> ('<place>') cannot both be theirs; <action>,
+blocking <q>`, whether or not the question is resolved. `<action>` names the
+conflict already registered for a pair (an identity conflict naming either record,
+or a fact conflict naming both, not yet analysed) as `weigh <c> (registered, not yet
+analysed)`, and asks for `open a conflict_type 'identity' conflict naming the two
+records for <p>` only where none is: told to open one beside an unweighed `c_002`,
+an orchestrator asked for it to be registered again (thomas-hanrahan-marriage,
+2026-11-18). project_context computes the pairs with research_append's
+own scope, pair test and place lookup (`attachedBirthPairsByQuestion`), so the
+rung names exactly the pairs `research_append` refuses a proof summary on; it is
+above every rung that names proof-conclusion because that refusal holds every
+tier but `disproved`, and a lower rung would send proof-conclusion back to it.
+project_view's card reads the same pairs; a caller of `questionStates` that
+passes none (the dev replays) never sees this rung.
 
 **An unsettled conflict that has weighed everything ends the research** (step
 mode, section E; decision 12). When the question is unresolved and every open
@@ -673,19 +699,53 @@ answers with one `extraction_append({ attachWaitingPages: true, pageReadings })`
 drops out. It reads every fresh staged file while any source waits, as
 `unloggedStagedSearches` does on a search.
 
+### 2.9 `owedFindings` and `status` — what the project owes, and each object's status
+
+`owedFindings` (default projection, omitted when empty) lists
+`{kind, ref, personIds, nextStep, blocksCompletion}` from
+`src/utils/owed-findings.ts` (Decision 33 of `docs/plan/conclusion-tree.md`), in
+this order: `extract` (a positive log entry on a question's plan item, the
+question holding no assertion), `conclude` (a question with tied assertions and
+no proof summary), `hypothesis` (a `supported` hypothesis with no summary on a
+related question), `encode` (an affirmed relationship, fact or name claim at
+`probable` or better that no tree object carries by Decision 31's join), then the
+advisory `raise`, `claims` and `frame`. `blocksCompletion` is true for `conclude`
+and `hypothesis`; completing a project with one, or with an `encode` item, warns
+(research-append-tool-spec §5.2) and never refuses until Stage 1c. `nextStep`
+keeps the `unit — detail` shape of `questionStatuses`; an `encode` item routes to
+proof-conclusion. It sits before `questionStatuses` in the answer, so a reader
+scoping to that array by its key does not take an owed item's step for a
+question's. Pinned by `docs/specs/schemas/owed-findings-vectors.json`.
+
+`status` (only under `include: ["status"]`) lists one row per tree fact and edge
+from `src/utils/conclusion-status.ts` (Decision 6): `{holder, factId?, label,
+claim?, winner?, rivalsWithoutVerdict?, nearMiss?, subtypeLabel?}`. The label is
+read from claims, never a tree field: the tier labels ("well established",
+"likely", "tentative", "not established", "ruled out"), "set aside in favour of
+<name>" (only when that concluded parent's own biological edge is in the tree, the
+same rule the parent-count warnings skip by), "doubted", "tentative, not yet confirmed to be <name>", "from your
+starting tree, not yet checked", "from an earlier finding, no claim recorded", or
+"found in a record, not yet checked". Imports follow Decision 7
+(`src/utils/import-baseline.ts`), read against `starting-tree.gedcomx.json` when
+the project has one. Pinned by `docs/specs/schemas/conclusion-status-vectors.json`.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** The shape is stable so an agent
   prompt can say "check `persons[].parentIds`"; the only selector is `include`,
-  a **closed list** of the larger lists to return (values `"persons"` and
-  `"sources"`), not open-ended field selection. A list rather than `includeX`
-  booleans because the conclusion-tree work adds `"status"` and `"view"` to the
-  same list (lead, 2026-11-09). *Rejected:* jq-style path parameters
-  (open-ended context cost, un-promptable). **This stage returns every list
-  whether or not `include` is passed** — the parameter is accepted and
-  validated only, and an unknown value is refused (`ok:false`); the default
-  then narrows persons to the subjects' one-hop family and drops `sources`
-  from the default in a later stage.
+  a **closed list** of the larger lists to return (values `"persons"`,
+  `"sources"` and `"status"`), not open-ended field selection. A list rather
+  than `includeX` booleans because the conclusion-tree work adds `"status"` and
+  `"view"` to the same list (lead, 2026-11-09). Several readers consume the tool
+  (the research skill, question-selection, hypothesis-tracking,
+  proof-conclusion, the viewer), and the per-object status list is too large to
+  send to every one of them by default, so `"status"` is returned only when
+  named. *Rejected:* jq-style path parameters (open-ended context cost,
+  un-promptable). **`"persons"` and `"sources"` are returned whether or not
+  `include` is passed** — the parameter is accepted and validated only for
+  them, and an unknown value is refused (`ok:false`); the default then narrows
+  persons to the subjects' one-hop family and drops `sources` from the default
+  in a later stage.
 - **No assertion bodies.** Per-assertion detail (values, classifications) is
   deliberately excluded — it is exactly the growing payload the diet
   removes. Refinement flows get the specific `a_` ids from the delegating

@@ -114,6 +114,21 @@ describe("merge_tree_persons", () => {
     expect(research.project.subject_person_ids).toEqual(["I1"]);
   });
 
+  it("a merge sets no primary (Decision 34): a lone Birth stays unmarked and primarySet is empty", async () => {
+    const tree = baseTree();
+    (tree.persons[0] as any).facts = [{ id: "F1", type: "Birth", date: "1850", standard_date: "1850", sources: [{ ref: "S1" }] }];
+    (tree.persons[1] as any).facts = [{ id: "F2", type: "Birth", date: "10 Jan 1850", standard_date: "10 Jan 1850", sources: [{ ref: "S1" }] }];
+    (tree as any).sources = [{ id: "S1", title: "A source" }];
+    await writeProject(tree, baseResearch());
+    const result = await mergeTreePersons({ projectPath: dir, merges: [["I1", "I2"]] });
+    expect(result.ok, JSON.stringify((result as any).errors)).toBe(true);
+    if (!result.ok) return;
+    expect(result.pairs[0].primarySet).toEqual([]);
+    const births = (await readJson("tree.gedcomx.json")).persons[0].facts.filter((f: any) => f.type === "Birth");
+    expect(births.length).toBeGreaterThan(0);
+    expect(births.every((f: any) => f.primary === undefined)).toBe(true);
+  });
+
   it("merges an initial-form name into the survivor's fuller name", async () => {
     await writeProject(baseTree(), baseResearch());
     const result = await mergeTreePersons({ projectPath: dir, merges: [["I1", "I2"]] });
@@ -1215,8 +1230,15 @@ describe("merge_tree_persons: pair and namesake checks", () => {
       rejection("rj_001", "a_011", T), rejection("rj_002", "a_011", "I7")));
   });
 
-  it("MR5 merges when the rejection names a different assertion", async () => {
-    await merged([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+  it("MR5 refuses when the rejection names a sibling assertion of the link's record entry (#4652)", async () => {
+    const text = await refusedText([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+    expect(text).toContain(`person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, ${T})`);
+  });
+
+  it("MR5b merges when the rejection names another party of the record", async () => {
+    const p = withRejections(moved(), rejection("rj_001", "a_013", T));
+    (p.research as any).assertions.push(assertion("a_013", 1, "spouse", "birth", "", { date: "1875" }));
+    await merged([[T, "I7"]], p);
   });
 
   it("MR6 does not blame the merge for a link and rejection that already stood together", async () => {

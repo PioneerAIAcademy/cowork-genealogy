@@ -25,6 +25,9 @@ export const RULE_MODES: Readonly<Record<string, RuleMode>> = Object.freeze({
   "claims-couple-first": "warn",
   "claims-capped-open": "warn",
   "claims-proved-identity": "warn",
+  // tree_edit / tree_correct: `primary` only on a fact a probable claim covers
+  // (Decision 34); refuses from Stage 1c.
+  "primary-claimed": "warn",
 });
 
 /** A staged rule's mode. Throws on an unknown id, so a misspelt rule id fails

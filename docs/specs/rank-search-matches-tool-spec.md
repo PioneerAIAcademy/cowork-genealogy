@@ -107,8 +107,11 @@ snake_case envelope it reads.
    for re-ranking a logged
    search.
 2. **Build the subject doc.** Read the project's `tree.gedcomx.json`, locate the
-   person whose `id === subjectId`, and assemble a minimal simplified-GedcomX
-   doc `{ persons: [subject] }` (v1), used directly as `gedcomx2`. `same_person`
+   person whose `id === subjectId`, and assemble the subject document used as
+   `gedcomx2`: the enriched subject (below) with the parents, spouses, children
+   and siblings the tree gives them, cut as `same_person` cuts a family
+   (`Mob.matchSubset()`, at most 40 persons). A subject the tree relates to no one
+   is sent alone. `same_person`
    is designed to work **without real FS IDs** — it mints a conforming FS id so
    `matchTwoExamples` never chokes on a malformed/absent id, and the score is
    unaffected because **FS matches on document content** (`buildRawWithAnchor` in `src/utils/match-engine.ts`).
@@ -124,7 +127,24 @@ snake_case envelope it reads.
    valid one (ark-less included), not just to normalize a bad ark.** This makes
    subject scoring deterministic and hardens the external-record path. If
    `subjectId` is absent from the tree, return an LLM-actionable input error.
-   *(Future: enrich with 1-hop relatives; deferred — the minimal doc scored decisively.)*
+   **The family is sent, not the subject alone.** Alone, the subject is a name,
+   a date and a place, so a household record's spouse and children count for
+   nothing. In thomas-hanrahan-marriage the right 1865 household (Thomas, Joanna,
+   Mary; search rank 1) scored 0.003 against Thomas alone, fifth on its page and
+   under the 0.01 floor, so the page read as a real negative; with his family it
+   scored 0.168, twenty times the next row. Across 85 ranked searches replayed
+   from the committed e2e runs (`dev/measure-rank-family.ts`, judged by
+   FamilySearch's own attachments), the family put 63 of the 70 attached records
+   within their page's top k (k = the page's attached records) against 53 alone;
+   no page with an attached record fell under the floor (2 did alone); and no
+   record attached to someone else outranked the best attached one either way.
+   Records attached to someone else clearing the floor rose from 95 to 109. Of
+   the six lifted furthest, three are the subject under a duplicate FamilySearch
+   id, two cannot be judged from the tree, and one is the known cost: a
+   same-named brother with the same parents (isabel-carvajal-daughter, his 1911
+   burial 0.012 → 0.465). Leaving him out of the cut does not change that (0.499;
+   the parents alone give 0.250), so it stays with person-evidence's
+   core-identifier gate, which compares the births.
 
    **Thin subject (guardrail).** A subject that is a sparse local stub (few
    facts, e.g. a not-in-FS `I1` person) can score uniformly near-zero against
@@ -157,7 +177,7 @@ snake_case envelope it reads.
    `RecordSearchResult`) with `matchScore: null` and **no call** — a
    person-less doc is a certain-400 and must not burn three retries. FamilySearch's
    matcher scores the rest as `scorePair(result.gedcomx, result.primaryId,
-   subjectDoc, subjectId)`, the enriched subject alone, 10 at a time with
+   subjectDoc, subjectId)`, the enriched subject with their family, 10 at a time with
    `withRetry`. The matcher service takes the whole page in one POST, each pair's
    tree the project tree with the enriched subject in place of the tree person,
    cut around the subject; a service call that scores no pair throws. **Concurrency 10** — confirmed with the
@@ -691,7 +711,9 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 1. **Threshold** — intentionally none, and no host-side cut either: every
    scored candidate is returned, ordered. Set a threshold later
    from `results/match-scores.jsonl`.
-2. **Subject enrichment** — minimal (subject person only) vs. +1-hop relatives.
-   Minimal scored decisively in the probe; revisit if real cases need more.
+2. **Subject enrichment** — revisited: the enriched subject with their family
+   (step 2). Minimal scored decisively in the first probe, on a
+   well-populated FamilySearch subject; the e2e replay in step 2 shows the
+   household records it missed.
 3. **Score-log path** — `results/match-scores.jsonl` proposed; confirm it stays
    clear of the results-orphan validator.

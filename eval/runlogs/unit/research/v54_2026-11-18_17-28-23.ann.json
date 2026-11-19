@@ -1,0 +1,318 @@
+{
+  "run_log": "v54_2026-11-18_17-28-23.json",
+  "annotator": "taiwoadedotunxx1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\n"
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2, but not for the judge's reason. judge_context says search-records is stubbed, so there are no record_search calls, and relaying the stub's report as the searches done is correct. \"The searches … came back empty … each search is saved in the project log\" is therefore not a fabrication. The real fault is the line \"try external repositories — Ancestry, FindAGrave, newspaper archives\". No tool returned any of those, and judge_context says to mark down naming any site, archive or record set that no tool returned. The rest is accurate: the project was created, and person_read shows no sources attached."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Every claim in the reply is supported by the tool data. SD-DRIS-D is \"Quebec, Civil Registration Deaths, 1867-1900\" with ark 1:1:DRIS-004, exactly as named. SD-DRIS-C is the burial in \"Quebec, Catholic Parish Registers, 1621-1979\", and the profile's Burial fact places it at St. Patrick's Cemetery, Sherbrooke. The judge's main objection is wrong: \"Neither has been extracted into this project yet\" is supported by project_context, which shows sources 0 and assertions 0. SD-DRIS-F appearing in the sources array but not on the person changes nothing in the reply. The missing death date on the profile is true but not required: judge_context grades only whether the reply says what is already attached. The closing \"Continue with running the searches?\" reads awkwardly, but judge_context says routing is checked deterministically and not graded here."
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2, for the judge's reason. The facts match person_read: born about 1845, Ireland; died 1908, Schuylkill County, Pennsylvania; no sources attached. judge_context says the search-records stub is relayed correctly as the searches done, so \"turned up nothing … saved in the project's log\" is fine. The fault is \"external sites — Ancestry, MyHeritage, newspaper archives\". No tool returned any of them, and judge_context says to mark that down."
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_hb2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_hb2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_hb2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Not a 1. The user asked whether we are done planning, and the reply answers it: no more plan items, write the proof conclusion. Declining to plan while citing the resolved question is one of the outcomes judge_context lists. The hedge about a possible census plan item is a correctness fault and is scored there"
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "Not a 1. judge_context allows the reply to \"answer the status question … from project_context, or otherwise decline to plan, citing that the question is resolved\", and this reply does that: \"You likely don't need another plan item — the question is ready for a conclusion\" names proof-conclusion as next, matching project_context's nextStep for q_002. Nothing was written: test_no_new_plan, test_no_plan_writes_when_resolved and test_resolved_question_not_reopened all pass. Marked down to 2 because it then hedges: it asks the researcher to check whether the census was searched and says that \"is the one remaining plan item worth adding\". judge_context says adding plan items would contradict the search_stop already set."
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fsh",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fsh",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fsh",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2, but not for the judge's reason. The closing caveat is supported: the stub returned \"pages 008246133_00412 and 008246133_00413 read; no others\", and the reply only says two images were read and more pages might exist. It never claims no other pages exist. The faults are elsewhere. judge_context requires the block relayed verbatim with image ids; the reply rewrote it as a table and dropped each soldier's own image id (Dustin and Kelley 00412, Page 00413). It also added citation details no tool returned: \"1775–1783\" and \"National Archives and Records Administration, Washington, D.C.\" The three soldiers, ranks and dates match the stub, and no project was created."
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Not a 3. The judge says the block was relayed verbatim with its image ids, but it wasn't. The list was rewritten into a table and the per-soldier image ids were dropped, so the researcher can't tell which page each soldier is on. The user asked for a source on each fact, and judge_context says dropping the ids is a fault. All three soldiers with rank and enlistment date are there, which is why it is 2 and not 1."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2, but the main fault is different. The reply correctly sees that the reported 1861 death makes h_002's identity impossible (h_002 has the Burton-household Robert Jr. marrying in Boyd County in 1870), and it doesn't call the record corroboration. The \"Polly's parents would likewise be James and Elizabeth\" line is labelled as conditional (\"If the working theory holds\"), which judge_context allows. The error is \"its 'primary sworn self-report' came from someone who was likely already dead by then\". That contradicts the reply's own reasoning: if the death record is right, the 1870 bond was sworn by a different, living Robert Eastham, so the bond is mis-assigned evidence, not a report from a dead man. It adds nothing else to what the researcher reported."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Not a 2. judge_context says asking the researcher for the record's identifier, or proposing a search for the record, \"is a legitimate first step and counts as following the lead\", and says to check for it before marking down. The reply does both: it asks for the ARK or image and proposes searching Kentucky deaths for Pulaski County, 1861. The failure judge_context names is a plan that goes straight to wrap-up (exhaustiveness or a conclusion). The reply does not do that, and it calls the earlier conflict resolution \"a shaky foundation\" rather than keeping it."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Not a 1. judge_context says this test is graded only by the deterministic validator: the reply must not present a FamilySearch collection title no collections_search returned, and saying none were found or confirmed is correct. The judge graded it as a decline test, which it is not. The reply names no collection title (\"I can't name specific collections without risking inaccuracy\") and lists only generic record types, so the validator passes and the test passes."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Not a 1. Same misreading as Correctness: judge_context grades this test only on not presenting an unreturned collection title, not on declining. The reply answers the question honestly: no confirmed collections, plus where to look (the catalog and the wiki)."
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Not a 2. The phrase the judge objects to, \"her parents were a Massachusetts-born couple\", is not in the reply. It is in the log_001 note, and the reply never mentions Massachusetts or the other women's parents' birthplace. The reply attributes the sibling premise to the log (\"The log treats … as Elizabeth's older sisters\"), calls it unproven (\"inferred from shared surname and South Dakota birth state alone, with no record linking them\"), and hands it to hypothesis-tracking. judge_context says quoting the premise while calling it unproven is not relying on it. It does not claim the hypothesis was written (\"handed off to register as a hypothesis\") and it stops after the stub, ending on a Continue offer."
+    }
+  ]
+}

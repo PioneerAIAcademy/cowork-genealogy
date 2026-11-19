@@ -200,10 +200,16 @@ what it produces. The trap: the project you have is the state *after* the
 failure, so the bad output is already in it. You must reconstruct the state
 the sub-skill saw **just before it went wrong**, and let the test re-run it.
 
-Write three files under `$REPO/eval/fixtures/scenarios/<slug>/`:
+Write four files under `$REPO/eval/fixtures/scenarios/<slug>/`:
 
 - `README.md` — one paragraph: the scenario and the bug it captures.
   Reference the source (project folder or e2e slug) for traceability. No PII.
+- `judge-brief.md` — what the judge reads in place of the README
+  (`docs/specs/unit-test-spec.md` §3.1): whether the data is synthetic or real,
+  that FamilySearch and wiki answers come from fixtures, and which parts of the
+  state are intentional. Never what a correct run does, and only claims you have
+  checked against the JSON below. A new scenario without one fails
+  `test_scenario_brief.py`.
 - `research.json` — a **minimal** project state containing only the
   entities the sub-skill needed as *input*, with its bad *output* removed.
   (Example: for a bad citation, keep the source the skill was citing and
