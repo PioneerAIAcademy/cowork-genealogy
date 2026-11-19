@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_search_records_cdl",
+    "skill": "search-records",
+    "name": "Two same-named deaths, one matching only the husband's name: neither is ruled out until her parents are established",
+    "type": "positive",
+    "description": "Executing pli_001 (Honduras civil registration, Santa Lucía, 1919-1968, for Nicolasa Cedillo's death), record_search returns two Santa Lucía death registrations of a Nicolasa Cedillo with identical scores and the ranking withheld: a 1943 woman, born 1868, mother Julia Cedillo, spouse Santiago Cedillo with no status; and a 1945 woman, born 1875, parents Ventura Cedillo and María Jesús Amaya, no spouse. The tree gives the subject no parents and a husband, Santiago. A spouse's name alone does not make the 1943 record the subject, the parents the project has not established are no ground to rule the 1945 one out, and Santiago's 1918 death in the same results is not 'a different person'. Both stay candidates until a record naming her parents settles it; a pool row recording that is accepted, not required. Carved from the nicolasa-cedillo-death website run; issue #4042, ruled by chesworthrm on 2026-11-03 and 2026-11-06 (a guard, with no search-records.md edit).",
+    "tags": [
+      "search",
+      "death",
+      "identity",
+      "needs-review",
+      "namesake",
+      "cedillo-no-rule-out",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute plan item pli_001 — search Honduras civil registration at Santa Lucía, Intibucá, 1919-1968, for Nicolasa Cedillo's death registration.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"vital_record\",\n  \"jurisdiction\": \"Santa Lucía, Intibucá, Honduras\",\n  \"date_range\": \"1919-1968\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Nicolasa, wife of Santiago Cedillo, is last attested alive at her daughters' marriages of 1919 and 1927. Honduras Civil Registration, 1841-1968 (collection 2135627) is name-searchable and holds the family's civil registrations at Santa Lucía, Intibucá; a death registration there would state her death date and place.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Nicolasa\",\n      \"surname\": \"Cedillo\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": null,\n  \"death\": null\n}",
+    "scenario": "cedillo-death-unestablished-parentage"
+  },
+  "execution": {
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
+  },
+  "mcp_fixtures": [
+    "record-search-cedillo-nicolasa-death",
+    "rank-search-matches-cedillo-withheld",
+    "record-read-cedillo-x7fs-6t4l",
+    "record-read-cedillo-x7fm-yrgn",
+    "record-read-cedillo-x7ls-kmlk",
+    "record-read-cedillo-x7fs-k2sv",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "record-search-cedillo-sedillo-no-results"
+  ],
+  "judge_context": [
+    "Tool Arguments: score 3 if record_search was called with projectPath, subjectId I1 and parameters appropriate to a death of Nicolasa Cedillo in Honduras civil registration, 1919-1968. Score 2 only if record_search was skipped or had clearly wrong arguments. Do NOT expect a separate rank_search_matches call.",
+    "CORE (Correctness): the two candidates are a 1943 death (b. 1868, mother Julia Cedillo, spouse Santiago Cedillo with no status stated) and a 1945 death (b. 1875, parents Ventura Cedillo and María Jesús Amaya, no spouse). The subject has no parents in the tree and no assertion names them, so neither woman's parents are a ground against her. The 1943 record's spouse matches the tree's husband by name only, which does not make it the subject. The 1943 record never says Santiago was alive. FAIL: either woman ruled out on parents or spouse; the 1943 record presented as her death; the 1943 spouse asserted to be living; Santiago's 4 Dec 1918 death (X7LS-KMLK, which records his wife Nicolasa Cedillo) called a different person without a stated ground.",
+    "Do not require the agent to treat the 1918 death as disproving the 1943 record: a death register naming a spouse is consistent with a widow, so that inference is wrong too.",
+    "Namesake rows: a row listing either woman's record, Santiago's death or a child's record in record_ids is a FAIL. A pool row on I1 (record_ids empty, notes starting 'pool:') naming both women is acceptable but NOT required; do not score its absence down. A row for an unrelated namesake (for example Nicolasa Cedillo Hernandez, b. 1956) is fine.",
+    "Next step: the reply names a record that would state her parents and settle it: her baptism, her marriage, or a child's civil birth such as X7FS-K2SV (the 1904 birth of her daughter Maria Dolores). Do not reward an unrequested extraction_append call.",
+    "The plan item stays in_progress. record_read is stocked but OPTIONAL. Score neither path down."
+  ],
+  "judge_reads_files": true
+}

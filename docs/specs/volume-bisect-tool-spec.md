@@ -83,7 +83,10 @@ forever — rebuilding the 58-call hunt inside the tool written to end it.
 
 **`imageId` is carried and re-checked.** Positions are not stable across calls:
 `image_search`'s null-drop defect shortens the returned list and shifts every later
-position. On a mismatch against `imageIds[position]` the tool refuses with
+position. Positions index the group's full ordered id list, which the tool reads
+in-process from `listGroupImageIds` (`src/tools/image-search.ts`, the one source
+`image_search` builds its ranges from). On a mismatch against the id at that
+position the tool refuses with
 *"the volume list changed between calls, re-seed"* rather than folding a year in at
 a position that now names a different page.
 
@@ -91,11 +94,11 @@ a position that now names a different page.
 
 | field | notes |
 |---|---|
-| `bracket` | `{ lowPosition, lowYear, highPosition, highYear }` — narrowed, never a bare index. |
+| `bracket` | `{ lowPosition, lowImageId, lowYear, highPosition, highImageId, highYear }` — narrowed, never a bare index. `lowImageId` / `highImageId` are the ids at those positions: the caller reads from `lowImageId` forward, since `image_search` returns id ranges, not a list it could index. |
 | `confidence` | `converging` / `inconclusive` / `non-monotonic` / `resolved`. |
 | `nextImageId` | The image to read next, or absent when the tool has stopped. |
 | `reading` | The probe this call took, for the caller to echo into `readings`. |
-| `stopped` | Present with a reason when the tool declines to continue. |
+| `stopped` | Present with a reason when the tool declines to continue. A closed bracket names its two image ids: "The target falls between image {lowImageId} ({lowYear}) and image {highImageId} ({highYear}), which are adjacent — no image lies between them, so no further probe can narrow this. Read those pages." |
 
 ## 5. The probe
 
@@ -146,9 +149,9 @@ nothing. Decided 2026-10-01: the bisect is not exempt.
 
 - **Checked before the probe's fetch, recorded after its OCR succeeds.** The check
   cannot come before every network call: the probe's `imageId` is only known after
-  this call's `image_search`, so that one request is always made.
+  this call's image list (`listGroupImageIds`), so that one request is always made.
 - **The 21st distinct image refuses.** The refusal is the shared one, plus the
-  bracket the readings reached (positions and years) and an instruction to report
+  bracket the readings reached (image ids and years) and an instruction to report
   it as the browse's result. A bisect needs about ten probes, so it is refused
   mid-convergence only when the agent has already spent most of the group's 20 on
   other reads.
@@ -181,7 +184,7 @@ Cowork aborts at 60s, so all three legs are bounded to fit, not just the OCR:
 
 | leg | attempts | why that many | here | worst |
 |---|---|---|---|---|
-| `image_search` | **2** | re-requests once on a defective response (`best.dropped > 0`) | 6s | 12s |
+| image list (`listGroupImageIds`, `image_search`'s lister) | **2** | re-requests once on a defective response (`best.dropped > 0`) | 6s | 12s |
 
 The 6s is real only because that call site caps `fetchWithRetry`'s retry **budget** as well as its per-request timeout. Without the cap the default 10s budget stands and one attempt costs 10s however short the timeout is — measured 2026-09-30 against a hanging `fetch`: **10,001ms over 2 requests uncapped, 6,001ms over 1 capped**, which put the real worst case near the abort while this table said 52s. A count is not enough on its own; the duration it multiplies has to be checked too, and `tests/tools/probe-retry-budget.test.ts` is what checks it.
 | image download | **1** | `fs-image-fetch` can issue a fallback, but only when `resolveFsImageInput` returned a `fallbackUrl`, which it does for the `ark` shape alone. This tool always passes an `imageId`. | 10s | 10s |

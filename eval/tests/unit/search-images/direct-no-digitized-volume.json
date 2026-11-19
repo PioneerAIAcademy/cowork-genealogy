@@ -11,7 +11,7 @@
     "delegation": "Browse the digitized Alabama territorial land records for around 1815 and log the browse. The volume is digitized and unindexed, so paging through the images is the only way in — find the image group and work through it.\n\nstandardPlace: Alabama, United States\nlooking_for: territorial land records around 1815\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["volume-search-alabama-empty"],
+  "mcp_fixtures": ["volume-search-alabama-empty", "catalog-search-empty"],
   "execution": {
     "max_wall_clock_seconds": 600
   },

@@ -58,7 +58,7 @@ Who fills the keys:
 
 | Call site | FamilySearch's matcher | The matcher service |
 |---|---|---|
-| Ranking | `scorePair(record, primaryId, enriched subject alone, subjectId)`, 10 at a time, retried | `tree_record`: the project tree with the enriched subject in place of the tree person, cut around the subject; the whole page in one POST |
+| Ranking | `scorePair(record, primaryId, enriched subject's family cut, subjectId)`, 10 at a time, retried | `tree_record`: the project tree with the enriched subject in place of the tree person, cut around the subject; the whole page in one POST |
 | Project arm | `scorePair(record, persona, subject's family cut without the record's own facts, treePersonId)`, once | `tree_record`: the whole tree without the record's own facts, cut around `treePersonId` (the same document) |
 | Project relatives | `scorePair(record, relative, subject's family cut, tree relative)`, 5 at a time, retried | `tree_record` per pair: the whole tree without the record's own facts, cut around each tree relative |
 | Explicit arm | `scorePair(gedcomx1, primaryId1, gedcomx2, primaryId2)`, once | `record_record` |

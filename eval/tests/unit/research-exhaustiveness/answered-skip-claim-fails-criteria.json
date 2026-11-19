@@ -1,0 +1,40 @@
+{
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_023",
+    "skill": "research-exhaustiveness",
+    "name": "An answered skip is a claim the stop criteria test, and here it fails them",
+    "type": "positive",
+    "description": "q_001 in flynn-answered-skip-unsound asks who Patrick Flynn's father was. Every plan item is closed. pli_007 (the 1870, 1880 and 1900 censuses) is skipped with skip_category 'answered' on the claim that three sources already converge and later censuses 'cannot contradict' them. The claim fails the gate's own criteria: the only source naming the father is the 1908 death certificate (a_013), secondary information from a son-in-law, and the 1850 and 1860 censuses state no relationship; the 1880 census, the first with a relationship column, could show Patrick as a stepson or nephew. The agent tests the claim, finds evidence_class and overturn_risk unmet, and declines. Restores the coverage the 2026-11-16 rebuild of flynn-exhaustive-ready removed (chesworthrm, PR #4628, 2026-11-18). The pair is _d5e, where an answered skip's claim holds and the agent declares.",
+    "tags": [
+      "research-exhaustiveness",
+      "skip-category",
+      "answered-skip",
+      "no-exhaustive-declaration",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording the decline if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-answered-skip-unsound"
+  },
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
+  ],
+  "judge_context": [
+    "A decline WRITES the stop: every item on the plan is closed, so `stopped_because` becomes `resources_spent` with `stop_criteria: null` and `status` left `in_progress`. A stop-GATE value (`question_answered`, `record_exhausted`, `nothing_further_reachable`) or `exhaustive_declared` is a FAIL. Writing nothing is a miss.",
+    "pli_007 (the 1870, 1880 and 1900 censuses) is `skipped` with `skip_category: \"answered\"`. Its `skip_reason` claims that three independent sources already converge on Thomas Flynn and that the later censuses would corroborate but cannot contradict them. `answered` is a judgement, not a fact about access: the agent must test it against the stop criteria, not accept it as written.",
+    "The claim fails. The only source that NAMES the father is the 1908 death certificate (a_013): secondary information, informant James Brown, a son-in-law who was not present at the birth. The 1850 and 1860 censuses (a_004, a_010) state no relationship; Patrick's place in Thomas Flynn's household is an inference. The 1880 census is the first with a relationship-to-head column and could show Patrick as a stepson or a nephew, so it CAN contradict the convergence.",
+    "Claude must NOT declare q_001 reasonably exhaustive. The decline should rest on the criteria: the evidence for the father is one secondary statement plus inferences (`evidence_class` and/or `independent_verification`), and/or the unsearched later censuses, the 1880 one above all, could change the answer (`overturn_risk`). Naming the later censuses or pli_007 as what remains is expected.",
+    "A decline whose ONLY ground is that the item is skipped, with no word on why the evidence or the unsearched census matters, has not tested the claim: score Gate reasoning down, but it is not a fail of the outcome.",
+    "Do NOT credit a reply that accepts the skip reason as fact and declares because 'three sources agree'. That is the failure this test exists to catch.",
+    "pli_009 (naturalization) is also skipped as `answered`. Claude need not rest the decline on it.",
+    "Claude must not claim the later censuses were examined or invent their contents.",
+    "`justification` must open with `Overturn risk: high — <sources>` or `Overturn risk: low`. High is the expected verdict here: an unsearched census could state a different relationship.",
+    "The reply's LAST line is exactly \"Continue with planning the searches?\" on a high verdict or \"Continue with writing the conclusion?\" on a low one."
+  ]
+}

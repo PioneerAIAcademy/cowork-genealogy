@@ -1,0 +1,17 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Carved from feedback bundle feedback-2026-10-30T07-56-13-719275Z.zip (issue #4042): the ranked block the run's record_search carried (agent-a13b083d8505ccda7.jsonl). I1 has no dated or placed fact, so the ranking is withheld (scoredCount 14, matches []). Same branch as rank-search-matches-thin-subject-withheld.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 14,
+    "returnedCount": 0,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "subjectResolvable": false,
+    "diagnostic": "Subject 'I1' carries no fact with a date or place, so FamilySearch's matcher cannot discriminate it from any same-named person and every candidate scored at or below 0.01. The ranking would be search order wearing match scores, so it is withheld. Give the subject at least one dated or placed fact — record it on the tree person, or extract and link an assertion via person_evidence — then rank again. Meanwhile, narrow the search (collection, place, date range) rather than triaging this pool by hand.",
+    "matches": []
+  }
+}
