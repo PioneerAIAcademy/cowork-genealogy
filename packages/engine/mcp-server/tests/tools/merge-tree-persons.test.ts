@@ -1230,8 +1230,15 @@ describe("merge_tree_persons: pair and namesake checks", () => {
       rejection("rj_001", "a_011", T), rejection("rj_002", "a_011", "I7")));
   });
 
-  it("MR5 merges when the rejection names a different assertion", async () => {
-    await merged([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+  it("MR5 refuses when the rejection names a sibling assertion of the link's record entry (#4652)", async () => {
+    const text = await refusedText([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+    expect(text).toContain(`person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, ${T})`);
+  });
+
+  it("MR5b merges when the rejection names another party of the record", async () => {
+    const p = withRejections(moved(), rejection("rj_001", "a_013", T));
+    (p.research as any).assertions.push(assertion("a_013", 1, "spouse", "birth", "", { date: "1875" }));
+    await merged([[T, "I7"]], p);
   });
 
   it("MR6 does not blame the merge for a link and rejection that already stood together", async () => {
