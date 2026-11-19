@@ -151,6 +151,8 @@ def test_a_misread_not_laid_on_the_index_passes(reply):
         GOOD_1880 + " I can't say the index is wrong.",
         GOOD_1880 + " The two readings do not both agree.",
         GOOD_1880 + " I won't say the indexer misread line 43.",
+        # v54_2026-11-19_05-55-23, ut_research_iv2 run 0: "confirmed" about the upload, not a reading
+        "Good, the project is here and the upload is confirmed. " + GOOD_1880,
         # scratch_2026-11-19_05-45-24, ut_research_iv1 run 4: the reading is credited to the transcription
         GOOD_1880 + " The transcription of the image reads the given name as Armistead.",
         GOOD_1880 + " The machine reading of the image reads Armistead.",
