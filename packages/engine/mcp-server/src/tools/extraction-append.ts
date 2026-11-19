@@ -862,7 +862,7 @@ async function personIdMode(
         continue;
       }
       for (const a of ofPersona) {
-        if (isRejectedPair(a.id, to, after.rejected_links)) {
+        if (isRejectedPair(a.id, to, after.rejected_links, after.assertions)) {
           rejectedSkipped++;
           continue;
         }
