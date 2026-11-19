@@ -58,15 +58,19 @@ DORMANT: dict[str, str] = {
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"
     ),
-    "unproven-surname-search": (
-        "its only test, ut_search_records_d33, was deleted by PR #4613 (the agent "
-        "never searched the recalled married surname, 2 of 2 runs); issue #4699 "
-        "restores it"
+    "single-jurisdiction": (
+        "its only test, ut_locality_guide_029, was deleted by PR #4558: it aborts "
+        "on max_tool_calls on main too; issue #4602 restores it"
     ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "
         "kept and no test carries the tag yet"
+    ),
+    "unproven-surname-search": (
+        "its only test, ut_search_records_d33, was deleted by PR #4613 (the agent "
+        "never searched the recalled married surname, 2 of 2 runs); issue #4699 "
+        "restores it"
     ),
 }
 

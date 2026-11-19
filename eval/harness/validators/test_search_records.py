@@ -377,6 +377,22 @@ def test_searched_before_no_collection_hand_back(tool_calls, test):
     )
 
 
+def test_survey_sends_all_three_isprincipal_calls(tool_calls, test):
+    """Issue #4348 -- an every-mention survey sends the plain search, isPrincipal:
+    true and isPrincipal: false, and does not page to retrieve more rows than
+    those three calls return. The judge alone missed both the omitted third call
+    (the original flake) and a run that paged anyway (five `offset` calls plus
+    three per-place calls) despite the agent body saying not to.
+    """
+    if "every-mention-survey" not in test.get("tags", []):
+        pytest.skip("only the every-mention survey test")
+    searches = [c.get("args") or {} for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "record_search"]
+    sent = {a.get("isPrincipal", "omitted") for a in searches}
+    assert {"omitted", True, False} <= sent, f"survey sent isPrincipal values {sent}; it needs none, true and false"
+    paged = [a for a in searches if "offset" in a]
+    assert not paged, f"survey paged {len(paged)} time(s) to retrieve more rows; issue #4348 decided the two filtered totals give the split and a sample is enough"
+
+
 # --- Outside holdings must come from a tool response (issue #4352) -----------
 
 # The outside sites the agent body names (Ancestry, MyHeritage, FindMyPast,

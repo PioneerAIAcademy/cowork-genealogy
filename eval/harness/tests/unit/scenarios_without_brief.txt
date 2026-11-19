@@ -96,7 +96,6 @@ flynn-research-complete-no-proof
 flynn-resolved
 flynn-skip-user-declined
 flynn-skipped-death-cert
-flynn-split-parentage-tiers
 flynn-spouse-stub-marriage
 flynn-stub-needed
 flynn-timeline-links
@@ -118,7 +117,6 @@ job-purnell-parents-identity
 keane-impossible-lifespan
 kolonica-greek-catholic-earliest
 luxembourg-birth-given-name-only
-ma-birth-record-unsearched
 ma-birth-skipped-answered
 ma-state-census-capture-returned
 ma-state-census-external
@@ -165,7 +163,6 @@ recent-birth-sealed
 research-competing-parent-sets-no-hypotheses
 research-unlinked-baptism-evidence
 research-unregistered-census-conflicts
-richardson-parentage-not-exhaustive
 search-continue-authorized-in-message
 search-records-thin-subject
 search-records-ugo-stella-thin-subject
@@ -173,7 +170,6 @@ stockburger-children-collection-pin
 sussex-tennessee-unexplained-move
 tallman-ny-state-census
 whitfield-1850-household
-wilkins-bounded-death
 wilkins-first-plan
 wilkins-first-plan-surveyed
 wilkins-probate-nil

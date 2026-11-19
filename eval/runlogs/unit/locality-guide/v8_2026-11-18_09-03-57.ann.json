@@ -1,5 +1,5 @@
 {
-  "run_log": "v8_2026-11-13_10-38-03.json",
+  "run_log": "v8_2026-11-18_09-03-57.json",
   "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
@@ -8,7 +8,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI treats the Ballylinny film as “the same custody pattern” for Billy without ever naming Ballyclare, the parish where that congregation actually worshipped, so a reader could easily think Billy’s register has effectively been found when it hasn’t."
+      "comment": "The AI stated Presbyterian records exist in Billy but did not surface or resolve the conflict between the FamilySearch Wiki showing an empty Presbyterian section for Billy and the digitized volumes labeled Ballylinny which may belong to a distinct civil parish."
     },
     {
       "test_id": "ut_locality_guide_r7k",
@@ -22,9 +22,9 @@
       "test_id": "ut_locality_guide_r7k",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "catalog_search was called twice with just keywords and no place, which is exactly why those two calls came back empty."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_r7k",
@@ -40,7 +40,7 @@
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it’s right to flag what’s unconfirmed but a researcher still leaves without a single confirmed Billy specific register date."
+      "comment": "The AI named record classes and start dates but repeatedly noted repositories could not be confirmed from tool results without naming specific institutions such as PRONI or the Presbyterian Historical Society of Ireland."
     },
     {
       "test_id": "ut_locality_guide_r7k",
@@ -48,7 +48,7 @@
       "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "pointing at PRONI and the Presbyterian Historical Society is sound but there’s no real order of operations, just a list of things to try."
+      "comment": "The AI provided some guidance on distinguishing Presbyterian from Covenanter registers but did not name FamilySearch collection IDs, PRONI Wiki pages, or give a clear search order as a next step."
     },
     {
       "test_id": "ut_locality_guide_002",
@@ -78,9 +78,9 @@
       "test_id": "ut_locality_guide_002",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "it’s honest that county level boundary history for Cork never came back, and that’s a real gap for a jurisdiction section."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_002",
@@ -147,23 +147,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_k9d",
+      "test_id": "ut_locality_guide_024",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "“not confirmed” is used carefully throughout, but the one unhedged line about the parish structure being fixed since before 1780 is really background knowledge dressed up as a tool finding."
+      "comment": "The AI included a Marriage Records volume covering 1870-1910 without flagging that this range falls outside the 1840-1880 target window, which mischaracterizes what records are available for the research period."
     },
     {
-      "test_id": "ut_locality_guide_k9d",
+      "test_id": "ut_locality_guide_024",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "County Antrim’s 1609 formation and basic civil parish background would have grounded this guide and it’s simply missing."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_locality_guide_k9d",
+      "test_id": "ut_locality_guide_024",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -171,28 +171,28 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_k9d",
+      "test_id": "ut_locality_guide_024",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "same issue as completeness, the guide never gives the reader basic jurisdictional footing."
+      "comment": "The AI correctly identified Schuylkill County’s 1811 formation but could not confirm predecessor jurisdictions from tool results and appropriately flagged this as a gap rather than inventing details."
     },
     {
-      "test_id": "ut_locality_guide_k9d",
+      "test_id": "ut_locality_guide_024",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it’s honest about the tool failures but that honesty is standing in for research that still needs to happen."
+      "comment": "The AI named record classes and repositories but listed the Marriage Records volume as available for the target period when its dates fall entirely outside that window."
     },
     {
-      "test_id": "ut_locality_guide_k9d",
+      "test_id": "ut_locality_guide_024",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "pointing at the RCB Library list is the right first move but there’s no sequence after that.pointing at the RCB Library list is the right first move but there’s no sequence after that."
+      "comment": "The AI correctly recommended prioritizing the 22% name-indexed deed records first but did not provide specific FamilySearch collection IDs or a detailed search order across the five volumes."
     },
     {
       "test_id": "ut_locality_guide_v7h",
@@ -200,7 +200,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it gets the Foundation’s URL right but then lists it and RootsIreland as generic fee services instead of tying either one to the Billy church register gap the guide itself raised."
+      "comment": "The AI listed RootsIreland, FindMyPast, and Ulster Historical Foundation as repositories but did not connect any of them to specific coverage gaps such as the 1780-1836 period, leaving the reader without actionable guidance on whether those services hold Billy-parish records."
     },
     {
       "test_id": "ut_locality_guide_v7h",
@@ -232,31 +232,31 @@
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "the two named FamilySearch image groups are great but Billy’s own church registers are still a blank."
+      "comment": "The AI named repositories but noted none were confirmed as parish-specific without then explaining whether they fill the 1780-1836 gap, failing to connect named indexes to the gaps they address."
     },
     {
       "test_id": "ut_locality_guide_v7h",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "same gap as correctness, naming an index without saying which hole it fills isn’t yet a strategy."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "it treats Pennsylvania’s 1906 registration start as unconfirmed when that’s well established background knowledge it should have just stated."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "not naming a single physical repository like the county courthouse or a historical society, when the brief specifically asked for one, is a real miss."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_001",
@@ -278,28 +278,28 @@
       "test_id": "ut_locality_guide_001",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "the census, probate and church volumes are well described but vital records are left too vague."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_001",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "the census then probate then church order is reasonable but it never gets specific about where to go once FamilySearch runs dry."
-    },
-    {
-      "test_id": "ut_locality_guide_029",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_029",
+      "test_id": "ut_locality_guide_r8f",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI correctly concluded the original register is likely at Christ Church but introduced ambiguity by framing the intermediate reasoning around HSP not being a co-holder, which could mislead readers about whether HSP holds originals."
+    },
+    {
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -307,7 +307,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_029",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -315,7 +315,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_029",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -323,20 +323,20 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_029",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it names the record classes but stays generic on where anything beyond vital records actually sits."
+      "comment": "The AI identified HSP’s abstract collections and noted the original is likely at Christ Church but did not specify whether the original 1734 register is extant, what condition it is in, or what access restrictions apply."
     },
     {
-      "test_id": "ut_locality_guide_029",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "the registration window guidance is useful but the rest of the strategy is fairly boilerplate."
+      "comment": "The AI advised contacting Christ Church directly but gave no contact information, no alternative approaches if access is denied, and no guidance on whether the register has been microfilmed elsewhere."
     },
     {
       "test_id": "ut_locality_guide_004",
@@ -344,15 +344,15 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "stating flatly that no civil vital registration existed in the territorial period is presented as settled fact when no tool actually confirmed that."
+      "comment": "The AI correctly identified the territorial timeline and most record sources but claimed Spanish colonial church records were written in Spanish without any tool result confirming this for the specific place and period."
     },
     {
       "test_id": "ut_locality_guide_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "historical societies were specifically asked for as a repository type and they never appear."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_004",
@@ -376,7 +376,7 @@
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it sometimes says “not confirmed” and sometimes states things as settled, which is an inconsistent way to describe what’s actually known."
+      "comment": "The AI named record classes and FamilySearch collections with IDs but assumed Baptist and Methodist congregations were active on the Alabama frontier without tool confirmation, treating a generic assumption as a confirmed finding."
     },
     {
       "test_id": "ut_locality_guide_004",
@@ -391,8 +391,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "The AI correctly reported that no Gold Rush era California newspaper collection was confirmed online, and named Newspapers.com only as a generic external link rather than claiming specific holdings."
+      "corrected_score": 2,
+      "comment": "The AI claimed San Francisco’s 1906 earthquake destroyed municipal records for the 1848-1860 period with no tool result supporting that claim and explicitly acknowledged this in the same response yet still presented it as known record loss."
     },
     {
       "test_id": "ut_locality_guide_007",
@@ -422,9 +422,9 @@
       "test_id": "ut_locality_guide_007",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI correctly reported that no Gold Rush era California newspaper collection was confirmed online, and named Newspapers.com only as a generic external link rather than claiming specific holdings."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_007",
@@ -432,26 +432,26 @@
       "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it’s useful but light on why to prefer the state census or which county records to chase first."
+      "comment": "The AI provided actionable guidance with specific collection IDs and image group numbers but was generic about which counties or mining districts to target and did not name alternative repositories beyond a generic list."
     },
     {
-      "test_id": "ut_locality_guide_010",
+      "test_id": "ut_locality_guide_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "the guide does say the one digitized notarial volume is “unindexed and partly in French, requiring page by page browsing,” which is really the same fact as browse only with no name index, it just skips the exact image group number."
+      "corrected_score": 2,
+      "comment": "The AI accurately reported what tool results returned but failed to name the New-York Historical Society or any other physical historical society as a repository for colonial-era collections, which the per-test context explicitly requires."
     },
     {
-      "test_id": "ut_locality_guide_010",
+      "test_id": "ut_locality_guide_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "I think this mark undersells what’s actually in the reply about that one surviving volume, though it’s fair that the image group number itself is missing."
+      "corrected_score": 2,
+      "comment": "The AI completed all major guide sections but omitted the per-test requirement to mention historical societies such as the New-York Historical Society as repositories for colonial-era records."
     },
     {
-      "test_id": "ut_locality_guide_010",
+      "test_id": "ut_locality_guide_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -459,7 +459,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_010",
+      "test_id": "ut_locality_guide_008",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -467,76 +467,28 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_010",
+      "test_id": "ut_locality_guide_008",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "the hedging on civil registration dates makes this guide less useful than it could be."
+      "comment": "The AI identified record classes with start dates and FamilySearch repositories but did not name the physical repositories holding colonial records, particularly historical societies, as the per-test context requires."
     },
     {
-      "test_id": "ut_locality_guide_010",
+      "test_id": "ut_locality_guide_008",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "treating the registers and notarial acts as backbone sources is good advice but there’s no real ordering to it."
-    },
-    {
-      "test_id": "ut_locality_guide_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "naming the right rolls is good but there’s no clear order for working through them."
+      "comment": "The AI gave some guidance on using church registers and probate records as civil-registration substitutes but lacked a clear search order and omitted guidance on consulting historical societies."
     },
     {
       "test_id": "ut_locality_guide_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI hedged Friends Historical Library and Haverford College as unconfirmed in the text but then presented them as confirmed repositories in the persisted guide section, creating an inconsistency between what tool results supported and what the guide states."
     },
     {
       "test_id": "ut_locality_guide_013",
@@ -566,9 +518,9 @@
       "test_id": "ut_locality_guide_013",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI named Quaker meeting record classes and correctly noted the Philadelphia Yearly Meeting Minutes volume is browse-only and unindexed, but left land records largely unaddressed and did not confirm whether probate collection 1683-1994 is searchable given its person_count of zero."
     },
     {
       "test_id": "ut_locality_guide_013",
@@ -584,15 +536,15 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI called wiki_place_page for the home section against Allegheny County but called getting_started, online_records, and research_tips against Pennsylvania state level instead, then described the results as generic boilerplate for “this state and county.” That framing blurs which level it actually queried, but the AI’s underlying claim, that none of these pages returned place specific content, matches what the tool results show."
+      "comment": "The AI wrote a factually correct locality guide for Allegheny County and Pittsburgh but the project’s research objective is Schuylkill County, making the guide correct in content but wrong in location."
     },
     {
       "test_id": "ut_locality_guide_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI completed the Allegheny guide structure but never resolved whether Pittsburgh research belonged in this project and did not write a guide for Schuylkill County where the actual objective lies."
     },
     {
       "test_id": "ut_locality_guide_014",
@@ -614,9 +566,9 @@
       "test_id": "ut_locality_guide_014",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "it’s strong on occupational records but vague everywhere else."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_014",
@@ -627,60 +579,108 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_021",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_021",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_021",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "it hedges a lot because the tools gave it little to work with, which is honest but leaves the guide thin."
-    },
-    {
-      "test_id": "ut_locality_guide_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "the Mississippi not Alabama naming tip is good but the rest is fairly generic given how little came back."
-    },
-    {
-      "test_id": "ut_locality_guide_023",
+      "test_id": "ut_locality_guide_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "the repository table lists Ancestry and Fold3 as if they hold Vermont specific material when nothing in this run actually confirmed that, which is exactly the kind of fabrication this test is built to catch."
+      "comment": "The AI correctly identified 1793 yellow fever repositories and record types but described the FamilySearch Wiki as unreachable when the tool calls actually completed and simply returned generic fallback content rather than place-specific pages."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI named repositories including Philadelphia City Archives and the Historical Society of Pennsylvania and correctly flagged Quaker minutes as browse-only unindexed, but did not clarify the accessibility status of most other record classes or confirm probate indexing given a person_count of zero."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI asserted Pottsville as county seat as standard reference without tool confirmation and characterized wiki fallback content as generic placeholder returns rather than noting that the requested county-specific pages simply did not exist in the wiki."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI named death certificates from 1906, church records, probate, and marriage collections with start dates but left the birth registration start date unconfirmed and noted all Schuylkill-specific wiki pages resolved to generic content leaving county-level record details unverified."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI correctly cited the Vermont 1771 Grant Survey Schedule, 1857 civil registration start date, and town histories from tool results but assigned generic external_links_search results (Ancestry, Find A Grave, Newspapers.com, Fold3, NARA) to Vermont pre-statehood research without tool confirmation they hold Vermont-specific records."
     },
     {
       "test_id": "ut_locality_guide_023",
@@ -712,15 +712,15 @@
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "same fabrication issue as correctness, naming repositories the tools never actually returned for this place."
+      "comment": "The AI correctly identified vital record start dates and the 1771 Grant Survey Schedule but listed external repositories from generic links rather than Vermont-specific tool results, conflating repository existence with confirmed Vermont pre-statehood holdings."
     },
     {
       "test_id": "ut_locality_guide_023",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI correctly advised searching under New York, New Hampshire, and Vermont Republic jurisdictional contexts and prioritizing the 1771 Grant Survey Schedule, but could not recommend specific digitized FamilySearch collections since collections_search returned zero results for the pre-statehood period."
     },
     {
       "test_id": "ut_locality_guide_w6j",
@@ -728,7 +728,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it gets the 1837 date right but drops the enforcement caveat from the wiki page even though it did pick up the quarter based indexing detail in its own research tips."
+      "comment": "The AI correctly identified civil registration start dates, the GRO index system, and collection IDs but cited the 1851 census generically in the text response without the collection number 2563939 which appeared only in the persisted guide entry."
     },
     {
       "test_id": "ut_locality_guide_w6j",
