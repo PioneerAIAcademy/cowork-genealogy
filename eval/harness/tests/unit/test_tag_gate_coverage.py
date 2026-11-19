@@ -40,6 +40,14 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
+    "materialize": (
+        "its only test, ut_person_evidence_027, was deleted by PR #4613 (red "
+        "under the Sonnet 4.6 judge); issue #4681 restores it"
+    ),
+    "negative-status-question": (
+        "its only test, ut_research_025, was deleted by PR #4613 (the status "
+        "answer copies project_context's ps_001); issue #4661 restores it"
+    ),
     "not-reached-wiki": (
         "its only test, ut_research_exhaustiveness_019, was deleted by PR #3917: "
         "it fails 2 of 4 on main because the agent skips the localities read; "
