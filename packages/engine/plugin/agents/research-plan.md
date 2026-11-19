@@ -15,7 +15,7 @@ description: >-
   already found (extraction_append, or the record-structurer agent), or, after
   a search comes back empty, to judge whether research is done ("are we done",
   "what's the next step" → research-exhaustiveness).
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 tools:
 

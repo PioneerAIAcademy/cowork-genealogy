@@ -272,6 +272,29 @@ def test_v1_grounds_served_hyphenated_range():
     check_v1(before, after, served)
 
 
+def test_v1_grounds_the_film_number_of_a_served_image_group():
+    """A volume_search answer names image groups as `<film>_<part>_<id>`, and a
+    rationale cites the film. `_` is a word character, so the grounding regex
+    found no number in `008216233_005_M9ZZ-4DD` and the citation read as a
+    fabrication (ut_research_plan_csn, Haiku 5.5 low floor baseline, 2026-11-19).
+    Reds without the fix."""
+    served = [_call("volume_search", {"results": [{"imageGroupNumber": "008216233_005_M9ZZ-4DD"}]})]
+    before, after = _states([
+        _item("pli_010", rationale="Browse the death volume for 1853-1861 (image group 008216233)."),
+    ])
+    check_v1(before, after, served)
+
+
+def test_v1_still_fires_on_an_unserved_film_number():
+    """The looser grounding does not ground a film number no response served."""
+    served = [_call("volume_search", {"results": [{"imageGroupNumber": "008216233_005_M9ZZ-4DD"}]})]
+    before, after = _states([
+        _item("pli_010", rationale="Browse image group 008216999 for the deaths."),
+    ])
+    with pytest.raises(AssertionError, match="008216999"):
+        check_v1(before, after, served)
+
+
 def test_v1_grounds_served_url_path_identifier():
     """A collection id served inside a URL path is grounded.
 

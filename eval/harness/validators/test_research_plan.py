@@ -967,7 +967,7 @@ _TRACEABLE_ID_TOOLS = {
 # — 22 of the 40 across its 16 fixtures — and turned a correct citation into
 # a fabrication flag (ut_research_plan_r3d, v1_2026-09-01_07-35-31). Widening
 # grounding can only clear a false positive, per the invariant above.
-_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:])\d{5,}(?![\w.])")
+_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:])\d{5,}(?=_|(?![\w.]))")
 
 
 def _grounded_identifiers(text: str) -> set[str]:
@@ -975,7 +975,8 @@ def _grounded_identifiers(text: str) -> set[str]:
 
     Superset of candidate_identifiers: the same ARKs and strict numbers, plus
     5+ digit runs that touch a hyphen (the endpoints of a written range), which
-    candidate_identifiers deliberately refuses. Used only for the GROUNDED set
+    candidate_identifiers deliberately refuses, and the film number that leads an
+    image group number (`008216233` in `008216233_005_M9ZZ-4DD`). Used only for the GROUNDED set
     (served responses ∪ before-state), never for the cited identifiers."""
     return candidate_identifiers(text) | set(_GROUNDED_NUM_RE.findall(text))
 
