@@ -131,7 +131,7 @@ On `No wiki page found`, or a page that returns only generic content, record and
 
 ```
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
-wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
+wiki_search({ query: "Schuylkill County Pennsylvania genealogy records", includeText: true })
 wiki_place_page({ standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
@@ -482,7 +482,8 @@ is what tells the researcher where to route the search.
 ### Online repositories
 | Repository | Collections for this place | Gap it fills | Access |
 |---|---|---|---|
-| [Repository] | [list with person counts] | [gap] | [Access] |
+| FamilySearch | [list with person counts] | [gap] | Free |
+| [Repository] | [list] | [gap] | [Access] |
 
 [List a repository or online index only with a URL a tool result returned —
 never one from memory. One row per repository, with the URL a tool result
@@ -490,8 +491,8 @@ gave for that repository; never join two repositories in one row or name
 ("X / Y", "X (Y)") unless a tool result says one runs the other. **Gap it fills** names a gap this guide states — a
 denomination, a span of years, a "Records NOT online" entry, a known loss —
 never "subscription", "additional records" or "more coverage". The same
-index goes on that gap's **Gaps** line above. **Access** is free, paid or
-subscription only where a tool result states it (link text, or the `cost` on a
+index goes on that gap's **Gaps** line above. FamilySearch is free. For any
+other repository, **Access** is free, paid or subscription only where a tool result states it (link text, or the `cost` on a
 `research_query` `external_collections` row); otherwise the cell is only: not
 stated. Never infer access from the repository's name, and never explain this
 rule in the guide.]
@@ -508,9 +509,11 @@ line only when the returned page was the complete result set.]
 |---|---|---|
 | [Repository] | [what they hold] | [access method] |
 
-[List only a repository a tool result names for this place, with the holdings
-and access it gives. When no tool result names one, write that this survey
-named no physical repository, instead of the table.]
+[List every repository a tool result names for this place or its state,
+including those named in a `wiki_search`, `wiki_read` or `wikipedia_search`
+excerpt, with the holdings and access it gives. Name no other. When no tool
+result names one, write that this survey named no physical repository,
+instead of the table.]
 
 ## Records NOT online
 
@@ -528,6 +531,9 @@ result settles the fate, say so and name the repository a tool result says holds
 the records. Note any substitute sources that partially compensate.]
 
 ## Research tips
+- **Search order:** [start with the source named above that is indexed and
+  free, by its collection ID or image group number, and say why it goes first;
+  then the next source and why; then the browse-only or offline ones]
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
   inline per the rule "Cite the FamilySearch Wiki page, not just its title",
   i.e. the claim, then the returned page title linked to its returned URL. Take the
@@ -535,7 +541,6 @@ the records. Note any substitute sources that partially compensate.]
 - [Naming conventions or spelling patterns for this area — quote the cited
   source exactly; do not reverse or alter which relative a naming position names]
 - [Alternative sources when primary records are missing]
-- [Efficient research sequence for this jurisdiction]
 - [Relevant finding aids and research guides to consult]
 ```
 
