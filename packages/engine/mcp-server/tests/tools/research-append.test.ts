@@ -19511,6 +19511,18 @@ describe("research_append: a localities guide is saved one section per call (#45
     expect(missingGuideHeadings(guide)).toEqual(missingBut(...SENT_FOUR, "## Boundary changes", "### Tax records"));
   });
 
+  it("says to return once the guide carries every heading, and not before", async () => {
+    await writeProject();
+    await append();
+    const all = LOCALITY_GUIDE_HEADINGS.map((h) => `${h}\n- x`);
+    let last: Awaited<ReturnType<typeof researchAppend>> | undefined;
+    for (const [i, s] of all.entries()) {
+      last = await section(s);
+      if (i === 0) expect(guideOf(last)![0].next).not.toMatch(/Return now/);
+    }
+    expect(guideOf(last!)![0]).toMatchObject({ missing: [], next: expect.stringMatching(/complete\. Return now/) });
+  });
+
   it("lists a missing record-type subsection, not only the '## ' sections", async () => {
     await writeProject();
     await append();

@@ -2418,8 +2418,10 @@ saved.
 - **What is still missing.** Every successful `localities` write returns
   `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists
   each of `LOCALITY_GUIDE_HEADINGS` the entry's guide lacks, as `## <title>` or
-  `### <title>`: every section and subsection of `LOCALITY_GUIDE_OUTLINE`, matched by `missingGuideHeadings`; `next` says how to send them and is absent
-  when `missing` is empty. No write is refused for a missing heading.
+  `### <title>`: every section and subsection of `LOCALITY_GUIDE_OUTLINE`, matched by `missingGuideHeadings`; `next` says how to send them, and once
+  `missing` is empty says the guide is complete: return now, naming any other place
+  the delegation listed rather than surveying it (Haiku 5.5 went on to survey every
+  county a delegation listed). No write is refused for a missing heading.
 - **The survey's fields.** A `localities` append must carry `surveyRef`, the
   `staged.resultsRef` of a `locality_survey` call with a `projectPath`; the tool reads that
   staged answer and writes `pages_read` from its `pagesRead` and `volume_summary` from its

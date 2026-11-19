@@ -11352,6 +11352,13 @@ function localityGuideWholeRefusals(
   return out;
 }
 
+/** `guide[].next` once an entry's guide carries every heading: the agent's work on this
+ *  delegation is done (issue #4602: Haiku went on to survey the other places a
+ *  delegation listed). */
+const GUIDE_COMPLETE_NEXT =
+  "The guide is complete. Return now: the loc_ id line and summary_for_user, naming any other " +
+  "place the delegation listed as still needing its own survey. Survey no other place.";
+
 /** What each `localities` entry this call wrote still needs in its guide. */
 function localityGuideStatus(
   research: any,
@@ -11364,7 +11371,7 @@ function localityGuideStatus(
     const missing = missingGuideHeadings(typeof entry.guide_markdown === "string" ? entry.guide_markdown : "");
     return [
       missing.length === 0
-        ? { entryId, missing }
+        ? { entryId, missing, next: GUIDE_COMPLETE_NEXT }
         : {
             entryId,
             missing,
