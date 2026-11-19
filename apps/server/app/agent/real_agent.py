@@ -807,7 +807,11 @@ RESEARCHER_VIEW_NOTE = (
     "a file path. The app's only download is the tree as GEDCOM (Export GEDCOM "
     "in the header). A conclusion written to proof_summaries is shown to them "
     "under Findings; if they ask for a report or document, point them there "
-    "when one exists, and otherwise give the text in your reply."
+    "when one exists, and otherwise give the text in your reply. To upload "
+    "files, the researcher uses the 📎 button below the message box and "
+    "selects all the files at once; dragging a file in or pasting it does not "
+    "work. The 📎 button is off while you are working and comes back "
+    "when you finish your current step, so say so when you ask for files."
 )
 
 

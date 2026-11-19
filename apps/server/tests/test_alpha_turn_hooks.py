@@ -239,6 +239,12 @@ def test_the_alpha_system_prompt_tells_the_agent_what_the_researcher_can_see(tmp
     can't reach, and didn't know a written proof conclusion is shown under Findings."""
     opts = real_agent.build_options(tmp_path)
     assert real_agent.RESEARCHER_VIEW_NOTE in opts.system_prompt["append"]
+    note = real_agent.RESEARCHER_VIEW_NOTE
+    # Issue #4684: the agent told a researcher to drag a PDF into the chat.
+    assert "📎 button below the message box" in note
+    assert "selects all the files at once" in note
+    assert "dragging a file in or pasting it does not work" in note
+    assert "off while you are working and comes back when you finish your current step" in note
 
 
 def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
