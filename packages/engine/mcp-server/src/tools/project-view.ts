@@ -13,7 +13,8 @@ import { IMAGE_REF_PATTERN, processImageTokens } from "../utils/image-tokens.js"
 import { classifyProjectPath, fileExists, readProjectJson } from "../utils/project-io.js";
 import { webPublicBase } from "../utils/project-links.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
-import { questionStates, type QuestionStatus } from "../utils/question-state.js";
+import { questionStates, type AttachedBirthPair, type QuestionStatus } from "../utils/question-state.js";
+import { attachedBirthPairsByQuestion } from "../utils/attached-births.js";
 import { readStartingTree } from "../utils/starting-tree.js";
 import { treeDiff, type TreeDiffResult } from "./tree-diff.js";
 
@@ -184,6 +185,8 @@ export function deriveProject(input: {
   tree: any;
   startingTree: any;
   evaluationBodies: Record<string, unknown>;
+  /** By question id; the router's identity rung (#4444). Absent: no rung. */
+  attachedBirthPairs?: ReadonlyMap<string, readonly AttachedBirthPair[]>;
 }): Derived {
   const { research, tree, startingTree } = input;
   const evaluations: Record<string, DerivedEvaluation> = {};
@@ -193,7 +196,7 @@ export function deriveProject(input: {
   }
   return {
     folderName: input.folderName,
-    questions: softly(() => questionStates(research, tree)),
+    questions: softly(() => questionStates(research, tree, input.attachedBirthPairs)),
     awaitingUser: softly(() => awaitingUserHandOffs(research?.log)),
     treeChanges: startingTree ? softly(() => treeDiff({ before: startingTree, after: tree ?? undefined })) : null,
     evaluations,
@@ -231,6 +234,8 @@ async function readDocument(projectPath: string) {
       tree,
       startingTree,
       evaluationBodies: await readEvaluationBodies(projectPath, research),
+      // The card's next step is the router's: the same pairs project_context reads.
+      attachedBirthPairs: await attachedBirthPairsByQuestion(research, tree).catch(() => undefined),
     }),
   };
 }
