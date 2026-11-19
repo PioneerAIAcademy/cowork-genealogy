@@ -117,13 +117,12 @@ replays both over committed run logs.
 ## Agent dispatch tests (issue #1851)
 
 Every agent the routing table spawns is the asserted first hand-off of at least
-one `routes-to:` test. The last five were added together, each copying `ut_research_012`: every neighbour stubbed, the
+one `routes-to:` test. The tests below were added together, each copying `ut_research_012`: every neighbour stubbed, the
 first hand-off asserted by `test_routes_to_expected_skill`, and a `judge_context`
 that keeps the judge off the routing decision.
 
 | Test | Row | Scenario |
 |---|---|---|
-| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
 | `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
 | `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
 | `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
@@ -137,10 +136,9 @@ spells `@plugin:search-images`, and `_paired_names()` picks it up.
 `project_context`'s advisory `nextStep`, which then said `search-records` for any
 planned item whatever its repository. The step now names `search-external-sites`
 for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
-advisory is still wrong on two of these states and the router passed both 3 of 3
-regardless: for `pe7` it says `research-exhaustiveness`, because a no-link leaves
-no record to tell a rejected assertion from an unlinked one, and for `si3` it says
-`search-records`, because browse-only is stated only in the plan item's rationale.
+advisory is still wrong on `si3`'s state and the router passed it 3 of 3
+regardless: it says `search-records`, because browse-only is stated only in the
+plan item's rationale.
 
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
