@@ -124,14 +124,24 @@ async function matchById(
   // decisions. Same failure shape as a wiki outage recorded as "no page for
   // this place" (issue #2130).
   if (body.links?.["not-found"]) {
+    // For a tree person the link is ambiguous: a mistyped id gets it, and so
+    // does a real profile the match service holds no match data for (issue
+    // #4691: KHZQ-SJY, a sparse profile `person_read` returned normally). The
+    // message must not claim the person does not exist.
     throw new Error(
-      `FamilySearch has no ${humanId(cfg)} at ${queryArk}. The id is well-formed ` +
-        `but names nothing, so this is NOT "no matches found" — re-check the id ` +
-        `you passed.` +
-        (cfg.expectedPrefix === "1:1:"
-          ? ` For a record persona use the recordId/ARK from the search result or ` +
-            `record_read, never the results sidecar's internal p_… persona id.`
-          : ``),
+      cfg.expectedPrefix === "4:1:"
+        ? `The FamilySearch match service has no match data for ${queryArk}. ` +
+            `This does NOT mean the person is missing from the tree, and it is ` +
+            `NOT "no matches found": the service answers this way for a ` +
+            `mistyped id and also for a real profile it has never computed ` +
+            `matches for. Call person_read with the same id: if it returns the ` +
+            `person, the id is right and the match service has nothing on them ` +
+            `(report the matches as unavailable, not as zero); if person_read ` +
+            `also fails, re-check the id.`
+        : `FamilySearch has no ${humanId(cfg)} at ${queryArk}. The id is well-formed ` +
+            `but names nothing, so this is NOT "no matches found" — re-check the id ` +
+            `you passed. For a record persona use the recordId/ARK from the search ` +
+            `result or record_read, never the results sidecar's internal p_… persona id.`,
     );
   }
 

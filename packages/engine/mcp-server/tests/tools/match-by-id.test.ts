@@ -214,7 +214,15 @@ describe("Input validation", () => {
         () => null,
         (e: Error) => e,
       );
-      expect(err?.message).toContain(`has no ${human} at`);
+      expect(err?.message).toContain(
+        human === "tree person" ? "no match data for" : `has no ${human} at`,
+      );
+      if (human === "tree person") {
+        // #4691: a real sparse profile gets this answer too, so the text must
+        // not claim the person is absent, and must send the agent to person_read.
+        expect(err?.message).toContain("does NOT mean the person is missing");
+        expect(err?.message).toContain("person_read");
+      }
       // The `p_…` warning is about the results sidecar's record personas, so
       // it must not be handed to a caller who passed a tree PID.
       expect(/p_… persona id/.test(err?.message ?? "")).toBe(expectsPersonaAdvice);
