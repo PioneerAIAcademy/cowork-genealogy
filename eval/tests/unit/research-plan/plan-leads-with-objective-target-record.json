@@ -12,11 +12,10 @@
       "norway",
       "baptism",
       "feedback-1945"
-    ],
-    "expected_outcome": "pass"
+    ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001.",
+    "delegation": "Create the first research plan for q_001 — Where and when was Hoval Hansen (also known as Haaval Hansen and Håval Ziener, died 18 August 1860 in Trysil, Hedmark, Norway) baptized, and who were his parents?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "hansen-kongsberg-baptism"
   },
   "mcp_fixtures": [
@@ -33,11 +32,12 @@
   ],
   "judge_context": [
     "THE CENTRAL REQUIREMENT. The objective asks for a birth or baptism record and already supplies the place (Kongsberg), the approximate year (~1780), and the death date and place. The first plan item MUST target the Kongsberg baptism -- record_type 'church' (or equivalent), jurisdiction Kongsberg. Score Sequencing logic as fail (1) if any item whose jurisdiction is Trysil, or whose record_type targets the death or burial, carries a lower sequence number than the first Kongsberg baptism item.",
+    "research_append refuses a plan that sequences a Trysil item ahead of the Kongsberg baptism, so a refused first write followed by a corrected plan is the intended path, not a defect. Grade the plan as persisted and the reply, never the refused attempt.",
     "Including Trysil death/burial items in the plan is CORRECT and expected -- the death record is legitimate corroboration and may carry an age or a birthplace column. This test is about ORDER, not inclusion. Do not deduct for their presence, only for their position ahead of the baptism.",
-    "A rationale that justifies an early death-record item by saying it will establish the birth year or confirm the birthplace is itself the defect, because the objective states both. Note it in the Sequencing logic rationale where it appears.",
+    "A rationale that justifies an early death-record item by saying it will establish the birth year or confirm the birthplace is itself the defect, because the objective states both. Note it in the Sequencing logic rationale where it appears. This applies only to a Trysil or death item sequenced AHEAD of the baptism; a later Trysil item described as a fallback in case the baptism is not found is correct and earns no deduction.",
     "The browse-only Kongsberg register (vol 008680156_003, 1769-1782, 382 images, 0% indexed) is the correct FALLBACK behind the indexed Norway Baptisms search (col 1467014), linked via fallback_for. An indexed-first ordering between those two is correct and should be credited. Being browse-only is not a reason to defer the baptism behind Trysil work.",
     "Breadth beyond the baptism is expected and should be credited, not penalized: the 1801 censuses, the parents' marriage, probate, and Kongsberg Sølvverk (silver mine) employment records all earn their place. Standard 14 breadth and Standard 17's self-check still apply. This test does not narrow the plan to a single record type -- compare ut_research_plan_016, which tests the opposite failure.",
-    "At least one FAN item is required here: this is a parentage question (who were his parents), so SKILL.md step 4 item 6 makes a relatives/neighbors/associates item mandatory. Baptism sponsors and godparents are the natural candidates.",
+    "At least one FAN item is required here: this is a parentage question (who were his parents), so the research-plan agent makes a relatives/neighbors/associates item mandatory. Baptism sponsors and godparents are the natural candidates.",
     "Do not require or credit any claim about which direction of a date error produces which result. Grade the sequence and the rationales as written."
   ],
   "judge_reads_files": true,
