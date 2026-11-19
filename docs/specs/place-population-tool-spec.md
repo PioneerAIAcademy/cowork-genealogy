@@ -186,6 +186,7 @@ can be overridden per-user via the `popStatsUrl` field in
 | Pop Stats API unreachable | Throw error: `"Population data service is unavailable at {url} ({cause})."` — `{cause}` from `describeFetchError` (`src/utils/http.ts`) |
 | API returns non-OK status | Throw error: `"Population API error: {status} {statusText}"` |
 | API returns 404 / no data | Return the API's response as-is (place info with no population/indexed_records sections) |
+| API returns HTTP 200 with `{ error, place_id }` and no `place` (its answer for a place it has no data for) | Throw: `"No population data found for \"<standardPlace>\"."` — the same `No … found for` form other tools use for a missing place, and never a body the declared `PopulationResponse` does not allow. A body that carries `place` is returned as-is even with an `error` field. |
 
 ---
 
@@ -233,6 +234,8 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 7 | Throws error when API is unreachable | Service availability |
 | 8 | Handles API error responses | HTTP error handling |
 | 9 | Omits empty sections from response | Response structure |
+| 10 | Throws the not-found error on a 200 `{ error, place_id }` body | Missing place |
+| 11 | Returns a body that carries `place` even with an `error` field | Missing-place guard |
 
 ### Smoke-test script
 

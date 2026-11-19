@@ -294,8 +294,9 @@ how to word it:
 > **Direction.** Both gates the §4 law named moved into the tool: the
 > **mentor gate** as a refusal — since removed, with gps-mentor off the default
 > `/research` path — and the **tree-encoding gate** as a warning on
-> `opWarnings`, which diffs the final tree against a write-once
-> `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
+> `opWarnings`: owed findings (an `encode` item for a likely claim no tree object
+> carries) plus, for a summary with no claims, a diff of the final tree against a
+> write-once `starting-tree.gedcomx.json` baseline. It ships warn-only rather than as a
 > refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
 > hard-block correct work when a wrong refusal has no override). **If you are
 > adding a new cross-turn invariant, do not add it as prose.** If it cannot be
@@ -1348,8 +1349,10 @@ on the delegation tools, and one on the tools only agents hold, which the final
    `proof_summaries` to `proof-conclusion`, `person_evidence` and
    `rejected_links` to `person-evidence`, `namesakes` to `search-records` (with
    `search-images` and `search-full-text` as its co-writers, `SECTION_CO_WRITERS`),
-   `evaluations` to `gps-mentor`, and `hit_verdicts` to
-   `evaluate-search-results`, `OWNED_DECLARATIONS` reserves
+   `evaluations` to `gps-mentor`, `hit_verdicts` to
+   `evaluate-search-results`, and `sources` to `citation` (the one agent whose
+   `research_append` writes it; `extraction_append` writes it by tool identity),
+   `OWNED_DECLARATIONS` reserves
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
@@ -1635,7 +1638,10 @@ one:** `research_append`'s assertion-`update` op also rewrites the tree fact
 that assertion minted, and a rewrite that fails validation is rolled back and
 degraded to a warning rather than refusing the assertion correction, which is
 the legitimate write the caller asked for. So that call writes `research.json`
-and not the tree. `tree-materialization-spec.md` §4.4 says why refusing would be
+and not the tree. The `primary` clear (Decision 34 of
+`docs/plan/conclusion-tree.md`: `primary` comes off a fact whose covering claim
+the call lowered or removed) rides the same write and rollback, re-run on the
+restored facts. `tree-materialization-spec.md` §4.4 says why refusing would be
 wrong. The tools assign all ids; callers never predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the

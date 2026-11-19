@@ -1,0 +1,138 @@
+{
+  "tool": "place_search",
+  "description": "place_search for \"Germany\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "Germany"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Germany",
+        "type": "Country",
+        "dateRange": "+1871/",
+        "latitude": 51.5,
+        "longitude": 10,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=222",
+        "wikipediaUrl": "https://fr.wikipedia.org/wiki/Allemagne"
+      },
+      {
+        "standardPlace": "Germany, Pruzhany, Grodno, Russian Empire",
+        "type": "Colony",
+        "dateRange": "+1801/+1920",
+        "latitude": 52.27209,
+        "longitude": 24.05092,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=12156508"
+      },
+      {
+        "standardPlace": "Europe",
+        "type": "Continent",
+        "latitude": 49,
+        "longitude": 13,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Europe&focusedId=280",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Europe"
+      },
+      {
+        "standardPlace": "Germany, Pike, Ohio, United States",
+        "type": "Village",
+        "latitude": 39.0028,
+        "longitude": -82.9056,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=4702560"
+      },
+      {
+        "standardPlace": "Germany, Rabun, Georgia, United States",
+        "type": "Village",
+        "latitude": 34.8958,
+        "longitude": -83.4667,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=3958833"
+      },
+      {
+        "standardPlace": "Germany, Houston County, Texas, United States",
+        "type": "Town",
+        "dateRange": "+1875/",
+        "latitude": 31.4409,
+        "longitude": -95.3522,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=411133",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Germany,_Texas"
+      },
+      {
+        "standardPlace": "Germany, Blissville, Sunbury, New Brunswick, Canada",
+        "type": "Hamlet",
+        "dateRange": "+1867/",
+        "latitude": 45.5702,
+        "longitude": -66.6268,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=9454200"
+      },
+      {
+        "standardPlace": "Germany, West Wheatfield Township, Indiana, Pennsylvania, United States",
+        "type": "Village",
+        "dateRange": "+1776/",
+        "latitude": 40.4203,
+        "longitude": -79.1169,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=8569341",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/West_Wheatfield_Township,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Germany, Charlestown Township, Clark, Indiana, United States",
+        "type": "Village",
+        "latitude": 38.4608,
+        "longitude": -85.5405,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=4109150",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Germany,_Indiana"
+      },
+      {
+        "standardPlace": "Germany, Hamilton, Northwest Territory, United States",
+        "type": "Village",
+        "dateRange": "/+1803",
+        "latitude": 39.1981,
+        "longitude": -84.2889,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany&focusedId=4699437"
+      },
+      {
+        "standardPlace": "Germany Township, Adams, Pennsylvania, United States",
+        "type": "Township",
+        "dateRange": "+1733/",
+        "latitude": 39.7528,
+        "longitude": -77.1333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Germany%20Township&focusedId=4838874",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Germany_Township,_Adams_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Hermany, Kobryn, Polesie, Poland",
+        "type": "Estate",
+        "dateRange": "+1921/+1938",
+        "latitude": 52.27209,
+        "longitude": 24.05092,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Hermany&focusedId=13680706"
+      },
+      {
+        "standardPlace": "Bohemia, La Crosse, Wisconsin, United States",
+        "type": "Hamlet",
+        "latitude": 43.7435,
+        "longitude": -90.96721,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Bohemia&focusedId=12730768"
+      },
+      {
+        "standardPlace": "Buena Vista, Monroe, Alabama, United States",
+        "type": "Town",
+        "dateRange": "+1847/",
+        "latitude": 31.7931,
+        "longitude": -87.2486,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Buena%20Vista&focusedId=3722735",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Buena_Vista,_Alabama"
+      },
+      {
+        "standardPlace": "Camp Dennison, Symmes Township, Hamilton, Ohio, United States",
+        "type": "Village",
+        "dateRange": "+1861/",
+        "latitude": 39.1981,
+        "longitude": -84.2889,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Camp%20Dennison&focusedId=4699435",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Camp_Dennison,_Ohio"
+      }
+    ],
+    "verdict": {
+      "standardPlace": "Germany",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

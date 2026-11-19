@@ -406,7 +406,7 @@ something that changes *how* a specific search must run — a boundary
 succession (records may sit under the event-era jurisdiction or the
 place's present-day one) or an indexing quirk (a parish indexed only at
 county level, a collection filed under the modern country) — write that
-applied decision into the affected plan item's `rationale`.
+applied decision into the `rationale` of every plan item whose search it changes.
 
 **A confirmed boundary split within the target date range is not a
 `fallback_for`.** When the locality guide (or `place_search_all`) shows
