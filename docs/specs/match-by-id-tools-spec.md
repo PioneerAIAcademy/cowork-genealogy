@@ -389,7 +389,7 @@ Mapped output:
 | Upstream 401                             | Re-throws as "FamilySearch match API rejected the request: 401 Unauthorized. Call the login tool to authenticate." In hosted mode, the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, via `rejectedTokenMessage`, since `login` cannot open a sign-in page there. |
 | Upstream 400 (bad ARK)                   | Re-throws as "FamilySearch rejected the id `<value>` as a malformed ARK."                     |
 | Upstream non-2xx                         | Re-throws as "FamilySearch match API error: `<status> <statusText>`."                         |
-| Upstream 200 carrying a `not-found` link | Throws. Record persona: "FamilySearch has no record persona at `<ark>` …". Tree person: "The FamilySearch match service has no match data for `<ark>` …", which says it is not proof the person is absent and sends the agent to `person_read` (issue #4691) — see "Unresolvable ids" |
+| Upstream 200 carrying a `not-found` link | Throws. Record persona: "FamilySearch has no record persona at `<ark>` …". Tree person: "The FamilySearch match service has no match data for `<ark>` …", which says it is not proof the person is absent and sends the agent to `person_read` — see "Unresolvable ids" |
 | Network error                            | Re-throws as "Could not reach FamilySearch match API: `<cause>`." (`<cause>` from `describeFetchError`, `src/utils/http.ts`)                           |
 | Response not JSON / missing entries      | Throws "FamilySearch match API returned an unexpected response body."                          |
 
