@@ -291,7 +291,7 @@ a second time.
 ### 5. Resolve or defer
 
 **If the preponderance is clear:** update the conflict entry with
-`research_append`, filling all four resolved fields plus the status on
+`research_append`, filling all five resolved fields plus the status on
 the same write — the tool enforces the resolved-completeness invariant
 (every field non-null) and `preferred_assertion_id ∈
 competing_assertion_ids`, validates, and writes atomically. **A
@@ -589,12 +589,11 @@ Suggest next steps:
 - **A conflict transitions to `resolved` only when fully populated.**
   Setting `status: "resolved"` requires ALL of the following fields
   to be non-null on the same write: `independence_analysis`,
-  `weighing_analysis`, `preferred_assertion_id`, and
-  `resolution_rationale`. If any is missing — even after thorough
-  weighing — leave `status: "unresolved"` and note what's still
-  needed. A half-filled "resolved" conflict misrepresents the
-  research state downstream (proof-conclusion will treat it as
-  decided when it isn't). A `resolved` conflict always names a
+  `weighing_analysis`, `preferred_assertion_id`,
+  `resolution_rationale`, and `resolution_kind: "competitor"`. If any
+  is missing — even after thorough weighing — leave
+  `status: "unresolved"` and note what's still needed. A `resolved`
+  conflict always names a
   winning assertion in `preferred_assertion_id` — that is the test
   for whether you may set `resolved` at all. If you cannot point to
   one of the `competing_assertion_ids` as the preponderant answer,

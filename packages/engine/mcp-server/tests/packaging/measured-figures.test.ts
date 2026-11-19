@@ -445,8 +445,15 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
   [
     40000,
     {
-      reason: "TOOL_RESULT_CHAR_BUDGET: sidecar_read's page-size cap and collections_search's answer bound (issue #4416), design limits chosen to keep one result inside the host's tool-result budget — not a measurement, so nothing in the artifact can trace it",
-      scope: ["packages/engine/mcp-server/src/tools/sidecar-read.ts", "packages/engine/mcp-server/src/tools/collections-search.ts"],
+      reason: "TOOL_RESULT_CHAR_BUDGET: sidecar_read's page-size cap, collections_search's answer bound (issue #4416) and research_query's page budget (issue #4411), design limits chosen to keep one result inside the host's tool-result budget — not a measurement, so nothing in the artifact can trace it",
+      scope: ["packages/engine/mcp-server/src/tools/sidecar-read.ts", "packages/engine/mcp-server/src/tools/collections-search.ts", "packages/engine/mcp-server/src/tools/research-query.ts"],
+    },
+  ],
+  [
+    24000,
+    {
+      reason: "WIKI_SEARCH_TEXT_BUDGET: the cap on a wiki_search answer that carries section text (issue #4417), a design limit the description must name so the model knows a reference under includeText means the text did not fit — not a measurement, so nothing in the artifact can trace it",
+      scope: ["packages/engine/mcp-server/src/tools/wiki-search.ts"],
     },
   ],
 ]);

@@ -131,6 +131,9 @@ can drop:
     }],
     quirks?: string[],
   }],
+  nationalCollections?: {                // country-wide rows, once per country (US, Canada, Mexico)
+    [country: string]: [{ id, title?, dateRange?, personCount?, recordCount? }],
+  },
   awaitingUser?: [{                      // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site
@@ -207,6 +210,20 @@ Projection rules:
 - **`localities`** — every `research.localities[]` entry, renamed to camelCase. `guide_markdown`
   and `pages_read` are left out; `research_query` serves the whole entry. A collection count
   that is not an integer is left out.
+- **`nationalCollections`** — the country-wide collections the localities hold, for a
+  locality whose country (its `place`, else its first `jurisdictions[].name` with one) is the
+  United States, Canada or Mexico. Their collections are scoped to the state or province, so
+  `research_append` stores the national rows beside the place's own (research-append spec
+  §5.12, "National collections"). A row is national when `isNationalCollectionTitle` holds
+  for its title. It moves out of its locality's `collections` into the country's list, which
+  holds each id once, sorted by title, in the `collections` row shape. Absent when no locality
+  holds one. It says nothing about the years no row covers: a locality cut to its own period,
+  a capped fill or a fill made while the catalog was unreadable stores a partial list, so
+  research-plan reads coverage from the rows and runs `collections_search` for the country
+  for any year it needs and no row covers. The rows are the core national list only (the
+  censuses and broad indexes); research-plan finds the rest with its own search. **Why:**
+  every US locality holds the same national rows, so one list per country keeps an answer
+  with several localities from repeating them.
 - **`projectStatus`** — `research.project.status`.
 - **`objective`** — `research.project.objective`, verbatim and untruncated. It is the
   only surface that returns the objective: `research_query` serves array sections only, so without it a
@@ -250,13 +267,36 @@ exists and gates nothing. A superseded verdict does not count — a
 replacement is itself present and satisfies the join; if nothing replaced it, the
 critique no longer stands.
 
-`nextStep` orders by what blocks what: **an unsettled conflict that has weighed
-everything** outranks **a conflict that wants evidence already planned**, which
+`nextStep` orders by what blocks what: **an unweighed attached-births identity
+question** outranks **an unsettled conflict that has weighed everything**, which
+outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
+
+**An unweighed attached-births identity question comes first.** When a
+person in the question's family (the project's subjects and everyone live-linked
+to an assertion extracted for the question, each with one tree hop) carries two
+FamilySearch-attached births too far apart to be one birth, and no conflict has
+weighed them (an analysed identity conflict naming either record through any
+assertion of the same record party, or an analysed
+fact conflict naming both), `nextStep` is `conflict-resolution — identity: <p>'s
+attached births <a> ('<place>') and <b> ('<place>') cannot both be theirs; <action>,
+blocking <q>`, whether or not the question is resolved. `<action>` names the
+conflict already registered for a pair (an identity conflict naming either record,
+or a fact conflict naming both, not yet analysed) as `weigh <c> (registered, not yet
+analysed)`, and asks for `open a conflict_type 'identity' conflict naming the two
+records for <p>` only where none is: told to open one beside an unweighed `c_002`,
+an orchestrator asked for it to be registered again (thomas-hanrahan-marriage,
+2026-11-18). project_context computes the pairs with research_append's
+own scope, pair test and place lookup (`attachedBirthPairsByQuestion`), so the
+rung names exactly the pairs `research_append` refuses a proof summary on; it is
+above every rung that names proof-conclusion because that refusal holds every
+tier but `disproved`, and a lower rung would send proof-conclusion back to it.
+project_view's card reads the same pairs; a caller of `questionStates` that
+passes none (the dev replays) never sees this rung.
 
 **An unsettled conflict that has weighed everything ends the research** (step
 mode, section E; decision 12). When the question is unresolved and every open

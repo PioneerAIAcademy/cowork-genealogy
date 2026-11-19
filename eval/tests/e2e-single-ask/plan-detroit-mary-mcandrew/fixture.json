@@ -1,0 +1,19 @@
+{
+  "id": "plan-detroit-mary-mcandrew",
+  "message": "Please write the research plan for question q_001.",
+  "expected_owner": "research-plan",
+  "expected_save": {
+    "section": "plans"
+  },
+  "is_plan_ask": true,
+  "setup_units": [],
+  "must_not": "No `question-selection` spawn; no new question",
+  "caps": {
+    "wall_clock_seconds": 900,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 60,
+    "max_turns": 60,
+    "max_cost_usd": 2.0
+  }
+}

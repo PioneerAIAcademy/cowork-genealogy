@@ -700,3 +700,68 @@ def report_refusal_marks_the_blocker_open(before_state, text_response, test, age
         "the reply names the in-progress item but no sentence naming it marks "
         f"it as still open. Sentences naming it: {[seg.strip()[:120] for seg in named]!r}"
     )
+
+
+# --- Tag-gated: the decline names the subject's death record ----------
+
+_DEATH_RECORD_RE = re.compile(
+    r"death\s+(certificate|record|registration)|certificate\s+of\s+death|obituar|funeral\s+notice",
+    re.IGNORECASE,
+)
+_BIRTH_CERTIFICATE_RE = re.compile(r"birth\s+certificate", re.IGNORECASE)
+
+
+def test_decline_names_a_death_record(before_state, after_state, test):
+    """Tag-gated: the stop names a death-era record as what is unsearched, and
+    does not defer the birth certificate.
+
+    `ut_research_exhaustiveness_022` holds no death-era record, and its judge
+    notes call a decline that "names only the sealed birth certificate" a fail.
+    The judge passed 26 of 26 runs on 2026-11-17 because each one declined; two
+    of them never named a death record. The naming is in `justification` or in
+    a `not_reached` description; either is enough.
+
+    A sealed record is listed as `privacy_sealed` or `skipped_plan_item`. A
+    `deferred` entry is a search still to run, so one that describes the birth
+    certificate recommends obtaining it."""
+    if "death-record-gap" not in test.get("tags", []):
+        pytest.skip("not a death-record-gap scenario")
+    bad: list[str] = []
+    for q in _written_questions(before_state, after_state):
+        stop = q["search_stop"]
+        entries = stop.get("not_reached") or []
+        said = " ".join([stop.get("justification") or ""] + [e.get("description") or "" for e in entries])
+        if not _DEATH_RECORD_RE.search(said):
+            bad.append(f"{q.get('id')}: neither justification nor not_reached names a death certificate, "
+                       f"death record or obituary")
+        bad += [f"{q.get('id')}: the birth certificate is a `deferred` search: {(e.get('description') or '')[:120]!r}"
+                for e in entries
+                if e.get("kind") == "deferred" and _BIRTH_CERTIFICATE_RE.search(e.get("description") or "")]
+    assert not bad, "Decline does not rest on the death record:\n  - " + "\n  - ".join(bad)
+
+
+# --- Tag-gated: the declaration MUST have been written -----------------
+
+def test_affirmative_declaration_was_written(before_state, after_state, test):
+    """Tag-gated: a test whose project is ready expects the declaration, so a
+    question moves to `exhaustive_declared` with a stop-gate `stopped_because`.
+
+    The mirror of `test_no_exhaustive_declaration`. Until 2026-11-17 the
+    `affirmative-declaration` tag was read by nothing: a run that declined on a
+    ready project was graded by the judge alone, which passed 5 of 54 such
+    declines that day (018 three times, 012 twice) with full marks."""
+    if "affirmative-declaration" not in test.get("tags", []):
+        pytest.skip("not an affirmative-declaration scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    declared = [q for q in _questions_with_changed_declaration(before, after)
+                if _is_gate_value(q) and q.get("status") == "exhaustive_declared"]
+    if declared:
+        return
+    wrote = [f"{q.get('id')}: stopped_because {(q.get('search_stop') or {}).get('stopped_because')!r}, "
+             f"status {q.get('status')!r}"
+             for q in _questions_with_changed_declaration(before, after)]
+    assert False, ("No question was declared exhaustive on a project the test holds ready. "
+                   + ("Written instead:\n  - " + "\n  - ".join(wrote) if wrote else "Nothing was written."))

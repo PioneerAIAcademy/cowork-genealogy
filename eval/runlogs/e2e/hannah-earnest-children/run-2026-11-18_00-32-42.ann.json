@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Right child identified (Lydia Grice) and the parent-child relationship was materialized in the tree to both parents. Christening date and place match exactly (8 August 1878, Holy Trinity, West Bromwich). The specific birth date (10 July 1878) was never recovered -- only an age-based estimate ('Bet 1878 and 1879') derived from census records."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "2daed0ab345078d5d0ced3e1ec0bf1800988e2882a8502087b0e23d85b2b2910"
+}
