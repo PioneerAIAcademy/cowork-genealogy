@@ -1182,7 +1182,8 @@ _VERDICT = re.compile(
     r"|\bboth\b[^.\n]*\bagree"
     r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)(?<!not\sa\s)(?<!not\san\s)\bconfirmed\b"
     r"|\bmore\s+(?:plausible|likely|accurate)\s+reading\b"
-    r"|\b(?:image|scan)\s+reads\b"
+    r"|(?<!transcription of the )(?<!transcript of the )(?<!reading of the )(?<!OCR of the )"
+    r"\b(?:image|scan)\s+reads\b"
     r"|\bas\s+written\s+on\s+(?:the\s+)?(?:page|image|scan)\b",
     re.IGNORECASE,
 )
