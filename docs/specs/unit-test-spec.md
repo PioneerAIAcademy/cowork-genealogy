@@ -1442,10 +1442,10 @@ the judge, so the score is dropped in code.
   `test_review_names_gaps` (tag `review-names-gaps`): the reply must say that
   a_013 has no pe_ link to Thomas Flynn (I2) and that `pe_005`'s null
   `match_score` is unexplained.
-- **Not a suspect null.** The review sample's targeted slot looks for rubric
-  nulls on positive tests; a dimension named in a
-  `coerced_review_dimension_to_na` warning is skipped there
-  (`review_sample._has_rubric_null_on_positive`). No mandatory-review trigger
+- **Still in the review sample.** The review sample's targeted slot looks for
+  rubric nulls on positive tests, and a coerced null counts there
+  (`review_sample._has_rubric_null_on_positive`); the slot's exhaustion guard
+  keeps such a test from taking it on every run. No mandatory-review trigger
   keys on the warning: the judge's original score is kept in it.
 
 It is a real (non-cosmetic) field, so it is snapshot-tracked: editing it
