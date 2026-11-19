@@ -407,7 +407,7 @@ the registration-level rule under Important rules rather than a default. The hol
 is what tells the researcher where to route the search.
 
 ### Vital records (civil registration)
-- **Start date:** [when civil registration began]
+- **Start date:** [when and at what level civil registration began, from a tool result; otherwise "not confirmed by this survey"]
 - **What exists:** [births, marriages, deaths — with date ranges]
 - **Where held:** [repository and access method]
 - **Gaps:** [any missing years or known losses]
@@ -419,7 +419,7 @@ is what tells the researcher where to route the search.
 - **Where held:** [parish, diocese, FamilySearch microfilm, etc.]
 - **Gaps:** [each denomination or span of years with no surviving or online
   registers] → [the returned index or repository that bears on it, by name]
-- **Language:** [language of records if not English]
+- **Language:** [language of records if not English, from a tool result; otherwise omit this line]
 
 ### Census records
 - **Federal/national census:** [years available, known gaps]
@@ -492,9 +492,9 @@ denomination, a span of years, a "Records NOT online" entry, a known loss —
 never "subscription", "additional records" or "more coverage". The same
 index goes on that gap's **Gaps** line above. **Access** is free, paid or
 subscription only where a tool result states it (link text, or the `cost` on a
-`research_query` `external_collections` row); otherwise exactly "not stated",
-with no guess beside it, hedged or not. Never infer it from the repository's
-name.]
+`research_query` `external_collections` row); otherwise the cell is only: not
+stated. Never infer access from the repository's name, and never explain this
+rule in the guide.]
 
 **Coverage of this survey:** [state how much of the digitized material the
 volumes above represent. When `volume_search` returned a `nextPageToken`, or
