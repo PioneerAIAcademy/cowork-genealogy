@@ -1,9 +1,9 @@
 {
-  "run_log": "v16_2026-11-12_21-03-46.json",
-  "annotator": "dallan@quass.org",
+  "run_log": "v6.json",
+  "annotator": "Promiseemmanuel2019@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_records_d02",
+      "test_id": "ut_research_exhaustiveness_023",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d02",
+      "test_id": "ut_research_exhaustiveness_023",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d02",
+      "test_id": "ut_research_exhaustiveness_023",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,47 +27,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d02",
+      "test_id": "ut_research_exhaustiveness_023",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Gate reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d02",
+      "test_id": "ut_research_exhaustiveness_023",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Declaration honesty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d02",
+      "test_id": "ut_research_exhaustiveness_023",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Stop criteria coverage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d02",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_d01",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_d01",
+      "test_id": "ut_research_exhaustiveness_d9i",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -75,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d01",
+      "test_id": "ut_research_exhaustiveness_d9i",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d01",
+      "test_id": "ut_research_exhaustiveness_d9i",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -91,31 +75,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d01",
+      "test_id": "ut_research_exhaustiveness_d9i",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Gate reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d01",
+      "test_id": "ut_research_exhaustiveness_d9i",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Declaration honesty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d01",
+      "test_id": "ut_research_exhaustiveness_d9i",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Stop criteria coverage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie",
+      "test_id": "ut_research_exhaustiveness_d4d",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -123,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie",
+      "test_id": "ut_research_exhaustiveness_d4d",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -131,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie",
+      "test_id": "ut_research_exhaustiveness_d4d",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -139,39 +123,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie",
+      "test_id": "ut_research_exhaustiveness_d4d",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Gate reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie",
+      "test_id": "ut_research_exhaustiveness_d4d",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Declaration honesty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie",
+      "test_id": "ut_research_exhaustiveness_d4d",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Stop criteria coverage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_021",
+      "test_id": "ut_research_exhaustiveness_022",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -179,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_021",
+      "test_id": "ut_research_exhaustiveness_022",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_021",
+      "test_id": "ut_research_exhaustiveness_022",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,47 +171,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_021",
+      "test_id": "ut_research_exhaustiveness_022",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Gate reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_021",
+      "test_id": "ut_research_exhaustiveness_022",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "review later"
-    },
-    {
-      "test_id": "ut_search_records_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The judge agrees the claim is true: an 1845 birth predates all Pennsylvania registration. \"The 1870, 1880 and 1900 censuses (pli_007)\" is accurate; one plan item covers those three censuses. Both required not_reached entries are present and correct.\n"
     },
     {
-      "test_id": "ut_search_records_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_033",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_033",
+      "test_id": "ut_research_exhaustiveness_019",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -243,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_033",
+      "test_id": "ut_research_exhaustiveness_019",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -251,39 +219,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_033",
+      "test_id": "ut_research_exhaustiveness_019",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The blocking point is stated plainly: the planned census item was skipped on a judgement, not a recorded fact, and the 1880 census is the first to state relationship. The extra context does not hide it.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_033",
+      "test_id": "ut_research_exhaustiveness_019",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The judge says the helper did not explain why the 1880 census matters. It did: it \"bears directly on the weakest link (the census-inferred parent-child relationship)\". A decline owes only the blocking criterion, and that is named and tied to the project.\n"
     },
     {
-      "test_id": "ut_search_records_033",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_033",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_research_exhaustiveness_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -291,7 +251,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_research_exhaustiveness_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -299,7 +259,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_research_exhaustiveness_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -307,35 +267,27 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_research_exhaustiveness_013",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Gate reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_research_exhaustiveness_013",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Declaration honesty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_research_exhaustiveness_013",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Stop criteria coverage",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_d29",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
       "comment": null
     }
   ]
