@@ -1,0 +1,167 @@
+{
+  "tool": "record_read",
+  "description": "Baptism of Karel, 20 Mar 1899: parents Josef Vavrina and Anna Jicinsky. A different husband. Live capture 2026-11-16.",
+  "args": {
+    "recordId": "~6VLT-5W49"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_297964013608",
+        "ark": "ark:/61903/1:1:6VLT-5WWB",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "bd1faefb-08b9-40a8-8d7b-49cf3827132d",
+            "type": "BirthName",
+            "given": "Karel"
+          }
+        ],
+        "facts": [
+          {
+            "id": "dbd49954-781f-4899-99df-3f2a22af9eb4",
+            "type": "Baptism",
+            "primary": true,
+            "date": "20 Mar 1899",
+            "standard_date": "20 Mar 1899",
+            "place": "Tschechien"
+          },
+          {
+            "id": "4049e648-6db2-4cbf-b467-708a60097724",
+            "type": "Birth",
+            "date": "17 Mar 1899",
+            "standard_date": "17 Mar 1899"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_297964013609",
+        "ark": "ark:/61903/1:1:6VLT-5WW1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "869a2854-9d9f-4932-a19a-01ebca2e2651",
+            "type": "BirthName",
+            "given": "Josef",
+            "surname": "Vavrina"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_297964013611",
+        "ark": "ark:/61903/1:1:6VLT-5W49",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "b992d862-9edd-4a83-9cbb-40d7da838a0f",
+            "type": "BirthName",
+            "given": "Anna",
+            "surname": "Jičinský"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "db90d58b-d433-4475-a10b-802238fd9ea1",
+        "type": "Couple",
+        "person1": "p_297964013609",
+        "person2": "p_297964013611"
+      },
+      {
+        "id": "2b1b1706-125c-4925-82f1-fd582b5ab5cd",
+        "type": "ParentChild",
+        "parent": "p_297964013609",
+        "child": "p_297964013608"
+      },
+      {
+        "id": "2d7d865a-d9f7-46bd-be8e-fffea871cded",
+        "type": "ParentChild",
+        "parent": "p_297964013611",
+        "child": "p_297964013608"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_176722108085",
+        "resource_type": "Record",
+        "title": "Entry for Karel, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VLT-5WWB : Sun Aug 25 23:26:02 UTC 2024), Entry for Karel and Josef Vavrina, 20 Mar 1899.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HSDF-64T7",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1804263",
+        "resource_type": "Collection",
+        "title": "Czech Republic, Church Books, 1552-1981",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1804263",
+        "coverage": {
+          "place_rep_id": "132",
+          "date_range": "1552/1963",
+          "record_type": "Vital",
+          "standard_place": "Czechia"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSMM-L35N-2",
+        "coverage": {
+          "place_rep_id": "11900771",
+          "date_range": "1898-1914",
+          "record_type": "Baptism",
+          "standard_place": "Holitz, Bezirk Pardubitz, Bohemia"
+        }
+      },
+      {
+        "id": "sd_p_297964013609",
+        "resource_type": "Person",
+        "title": "Josef Vavrina, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VLT-5WW1 : Sun Aug 25 23:26:02 UTC 2024), Josef Vavrina in entry for Karel, 20 Mar 1899.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VLT-5WW1"
+      },
+      {
+        "id": "sd_p_297964013611",
+        "resource_type": "Person",
+        "title": "Anna Jičinský, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VLT-5W49 : Sun Aug 25 23:26:02 UTC 2024), Anna Jičinský in entry for Karel, 20 Mar 1899.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VLT-5W49"
+      },
+      {
+        "id": "sd_p_297964013608",
+        "resource_type": "Person",
+        "title": "Karel, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VLT-5WWB : Sun Aug 25 23:26:02 UTC 2024), Karel, 20 Mar 1899.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VLT-5WWB"
+      },
+      {
+        "id": "sd_auto_M9RS-8WB",
+        "resource_type": "auto",
+        "title": "Bohemia, Bezirk Pardubitz, Religious, from 1633 to 1949",
+        "coverage": {
+          "place_rep_id": "10705534",
+          "date_range": "+1633-01-01T00:00:00Z/+1949-12-31T23:59:59Z",
+          "standard_place": "Bezirk Pardubitz, Bohemia"
+        }
+      }
+    ]
+  }
+}

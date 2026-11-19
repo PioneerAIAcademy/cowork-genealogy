@@ -1,0 +1,155 @@
+{
+  "project": {
+    "id": "rp_antonio_lucas_spouse",
+    "objective": "Did Antonio Fernandes Lucas of Funchal, Madeira have a wife named Antonia de Jesus, distinct from his tree-recorded wife Maria Joana (m. 1890), and a daughter named Maria who died young?",
+    "subject_person_ids": [
+      "GK89-82B"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did Antonio Fernandes Lucas (born 1838, Santo António, Funchal, Madeira) marry, other than Maria Joana (married 8 February 1890)?",
+      "rationale": "The objective rests on a second wife, Antonia de Jesus, who is not on the tree. Antonio's marriage record set in Funchal, from his plausible marrying ages until his death, is where a prior or additional marriage would be stated. Naming the spouse without presuming Antonia de Jesus keeps the question open to whatever the records show.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "enumerative",
+      "priority": "high",
+      "date_window": "1855-1900",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Madeira, Portugal",
+      "for_place": "Funchal, Madeira, Portugal (parish of Santo António)",
+      "time_period": "1830-1910",
+      "jurisdictions": [
+        {
+          "name": "Funchal, Madeira, Portugal",
+          "date_range": "+1518/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4426199",
+          "title": "Portugal, Madeira, Catholic Church Records, 1044-1990",
+          "date_range": "1044-1990",
+          "person_count": 17724446,
+          "record_count": 1329527
+        },
+        {
+          "id": "1520601",
+          "title": "Portugal Baptisms, 1570-1910",
+          "date_range": "1569-1910",
+          "person_count": 1199038,
+          "record_count": 302869
+        },
+        {
+          "id": "1520605",
+          "title": "Portugal Marriages, 1670-1910",
+          "date_range": "1670-1910",
+          "person_count": 320323,
+          "record_count": 44760
+        },
+        {
+          "id": "1520606",
+          "title": "Portugal Deaths, 1640-1910",
+          "date_range": "1640-1910",
+          "person_count": 247105,
+          "record_count": 98347
+        },
+        {
+          "id": "4474701",
+          "title": "Portugal, Civil Records, 1437-2023",
+          "date_range": "1231-2023",
+          "person_count": 33916020,
+          "record_count": 11196
+        },
+        {
+          "id": "1925427",
+          "title": "Portugal Passport Registers and Application Files, 1800-1946",
+          "date_range": "1800-1946",
+          "person_count": 0,
+          "record_count": 0
+        }
+      ],
+      "quirks": [
+        "Funchal city is divided into several freguesias (church parishes), each with its own register series: Sé, Santa Maria Maior, São Pedro, São Martinho, São Gonçalo, Monte, Santa Luzia, and Santo António — search the Santo António parish register specifically, not a generic 'Funchal' register, per FamilySearch Catalog entries from the Arquivo Regional e Biblioteca Pública da Madeira (ARM, catalog hit olib:3400418).",
+        "In Madeira, priests continued acting as civil registrars until 1911, later than the 1878 date FamilySearch gives for the mainland transition, so for events before 1911 the Catholic parish register, not a civil registry office, is the record to search (FamilySearch Wiki, Madeira Islands Genealogy: https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy).",
+        "Couples usually married in the bride's parish per FamilySearch Wiki Portugal Church Records (https://www.familysearch.org/en/wiki/Portugal_Church_Records) — a second marriage for Antonio Fernandes Lucas besides the known 1890 one may be filed under the bride's home parish rather than Santo António.",
+        "Record naming: Batismos = baptisms (birth info), Casamentos/Matrimônios = marriages, Óbitos = deaths, Índice = index — per the FamilySearch Wiki Madeira Islands Genealogy page.",
+        "place_population returned 'Place not found' for Funchal, Madeira, Portugal in this survey — population figures for this locality were not available from that tool."
+      ],
+      "guide_markdown": "# Locality Guide: Funchal, Madeira, Portugal (1830-1910)\n\n## Jurisdiction overview\n- **Formed:** City status since 1514; capital of the Madeira Islands, settled 1424 (Wikipedia: https://en.wikipedia.org/wiki/Funchal).\n- **County seat / administrative center:** Funchal, divided into parishes (freguesias) including Sé, Santa Maria Maior, São Pedro, São Martinho, São Gonçalo, Monte, Santa Luzia, and Santo António.\n- **Parent jurisdiction:** Madeira Islands, Portugal.\n- **Population during period:** not available from the place_population tool for this survey (query returned 'Place not found'); Wikipedia gives a modern population of ~105,795-112,000, not period-specific.\n- **Religious denominations:** Overwhelmingly Roman Catholic; also a British/Anglican expatriate community (wine trade) with its own chaplaincy and registers in Funchal.\n- **Key historical events:** British wine merchants settled from the 17th century; Funchal was the administrative/ecclesiastical center for the whole archipelago during this period.\n\n## Boundary changes\nNo boundary changes to Funchal itself are indicated by the records surveyed. Funchal city has long been subdivided into multiple parishes (freguesias), each of which generated its OWN baptism/marriage/death register series — this is a parish-level split within one stable municipality, not a jurisdictional boundary change.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date / level:** Civil registration (Registros civis) in Portugal began in 1832 for non-Catholics (national level), became universal in 1878 with priests acting as civil registrars for Catholics, and became fully obligatory with priests removed from that role in 1911 (FamilySearch Wiki, Madeira Islands Genealogy: https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy). For MADEIRA specifically, priests continued as civil registrars through 1911 — later than the mainland transition — so almost the entire 1830-1910 target window for Antonio Fernandes Lucas is covered by CHURCH, not civil, registers.\n- **What exists:** Civil registration records proper begin at the national/municipal level; for Madeira the practical equivalent for 1830-1910 is the Catholic parish register.\n- **Where held:** Conservatória do Registo Civil de Funchal (two addresses given on the FamilySearch Wiki Funchal page) for civil-era records; municipal level, moving to district office after 100 years.\n- **Gaps:** No 19th-century civil registration series distinct from church registers was found for Funchal in this survey.\n\n### Church records\n- **Denominations present:** Roman Catholic (parishes above); also a small Anglican/British chaplaincy community.\n- **Record types:** Batismos (baptisms), Casamentos (marriages), Óbitos (deaths/burials), plus Processos de Casamento (pre-nuptial marriage proceedings) and Dispensação (marriage dispensations, held at diocesan archives, mostly undigitized) (FamilySearch Wiki, Portugal Church Records: https://www.familysearch.org/en/wiki/Portugal_Church_Records).\n- **Where held:** Original registers at the Arquivo Regional e Biblioteca Pública da Madeira (ARM) in Funchal; images for several Funchal parishes are on FamilySearch as browsable (catalog entries olib:3400414 Monte, olib:3400415 civil registros, olib:3400416 Santa Luzia [fully detailed below], olib:3400417 Santa Maria Maior, olib:3400418 Santo António, olib:3400419 São Gonçalo, olib:3400420 São Martinho, olib:3400421 São Pedro, olib:3400423 Sé).\n- **Santa Luzia parish detail (as a model of what the series looks like; catalog hit olib:3400416):** Casamentos (marriage) volumes run PT-ARM-PFUN03-2-160 (1681-1774), -161 (1774-1797), -162 (1797-1810), -164 (1828-1845), -165 (1845-1857), -1239 (1857-1859), then annual volumes 1886-1911 (-1526 through -6505). Batismos run from 1680 through 1911 in similarly numbered volumes. The Santo António parish register (olib:3400418) was found in the Catalog but not hydrated with its own volume list in this survey — the researcher should pull its filmNotes directly.\n- **Gaps:** The Santo António parish's own volume inventory was not retrieved in this pass (catalog hit returned un-hydrated); a follow-up catalog_search with hydration targeted at that single hit is needed before assuming coverage dates.\n- **Language:** Portuguese (Anglican register content noted as English for the British chaplaincy volumes).\n\n### Civil/parish combined collection\n- FamilySearch: **Portugal, Madeira, Catholic Church Records, 1044-1990** (collection 4426199; index & images; 17,724,441 persons) — primary FamilySearch collection for Madeiran baptisms, marriages, deaths across this period.\n- FamilySearch: **Portugal Baptisms, 1570-1910** (1520601), **Portugal Marriages, 1670-1910** (1520605), **Portugal Deaths, 1640-1910** (1520606) — nationwide indexes (index only, no images) that include Madeiran localities; useful as a secondary/cross-check index.\n- FamilySearch: **Portugal, Civil Records, 1437-2023** (4474701) — index & images, 33,916,026 persons, spans into the civil-registration era.\n- MyHeritage ($): Portugal, Madeira, Index of Baptisms, 1738-1910; Portugal, Madeira, Index of Marriages, 1574-1940.\n- Arquivo Regional da Madeira (ABM) online: Baptisms 1860-1911 (incomplete for all parishes) and Marriages \"early to 1911\" (stated by the FamilySearch Wiki Madeira Islands Genealogy page to include all marriages for the entire archipelago) — https://abm.madeira.gov.pt/pesquisa/casamento/.\n- Tombo.pt: Portugal, Madeira, Civil Registration Records — free, browsable images, incomplete for all localities — https://tombo.pt/en/d/madeira.\n\n### Probate and court records\n- Wills (Testamentos) exist per the general Portugal Church Records pattern but no Madeira-specific probate collection was returned by collections_search or catalog_search in this survey; treat as held at ARM/district archive pending confirmation.\n\n### Immigration/emigration records\n- FamilySearch Catalog: **Portugal, Madeira, Funchal, registros de imigração** (multiple parts, e.g. olib:3714413 covering 1846-1878), at ARM; online per catalog listing.\n- Passport applications: Applications for Passport volumes for Funchal 1851-1863 appear in volume_search (imageGroupNumbers 008038197_001/002/003), 0% name-indexed but full-text searchable.\n- FamilySearch collection: Portugal Passport Registers and Application Files, 1800-1946 (1925427, index only).\n\n### Other record types\n- British/Anglican chaplaincy records: Parish registers of the Church of England in Portugal, Anglican Chaplaincy (Funchal, Madeira), 1848-1851 — baptisms and burials for British subjects, catalog hit koha:155172, microfilm 574493; related index koha:603804 (christenings 1848-1851, extracted in English).\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Portugal, Madeira, Catholic Church Records 1044-1990 (4426199); Portugal Baptisms/Marriages/Deaths indexes; parish-level browsable image sets for each Funchal freguesia | Primary index+image source for Madeiran church records | Free |\n| Arquivo Regional da Madeira (ABM) | Baptisms 1860-1911 (incomplete); Marriages early-1911 (archipelago-wide) | ABM's own online search by name, directly from the original custodian | Free, https://abm.madeira.gov.pt/pesquisa/casamento/ |\n| Tombo.pt | Portugal, Madeira, Civil Registration, Catholic Church Records, and Passports | Browsable images including some not on FamilySearch | Free, https://tombo.pt/en/d/madeira |\n| MyHeritage | Portugal, Madeira, Index of Baptisms 1738-1910; Index of Marriages 1574-1940 | Alternate index of the same ARM material | Subscription |\n| Ancestry | Portugal Select Marriages 1670-1910; Portugal, Madeira Passports 1872-1910 | Alternate index access | Subscription |\n\n**Coverage of this survey:** volume_search matched 22,003 volumes for this place/period; only the first 10 were detailed above (a mix of passport, religious marriage, and baptism volumes), and the summary count of volumes by record-type group could not be computed (request to the FamilySearch group-service timed out) — treat the record-type volume counts as unknown, not zero. catalog_search returned 59 total hits; 25 were examined, 10 hydrated with full detail.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Arquivo Regional e Biblioteca Pública da Madeira (ARM), Funchal | Original parish registers for all Funchal freguesias, ARM reference codes PT-ARM-PFUN0x-... | In-person, or via ABM's online database/catalog |\n| Conservatória do Registo Civil de Funchal | Civil registration post-1911 (and any earlier civil-only acts) | In-person / mail; two listed addresses on the FamilySearch Wiki Funchal page |\n| Funchal Portugal FamilySearch Center | Access to digitized/microfilmed holdings | In-person, Rua Tenente Coronel Sarmento 25, Funchal |\n\n## Records NOT online\n- Marriage dispensations (Dispensação), held at diocesan archives, are stated by the FamilySearch Wiki Portugal Church Records page to be mostly undigitized.\n- The Santo António parish's own ARM volume list (image group numbers / date spans) was not retrieved in this survey (catalog hit olib:3400418 not hydrated) — its existence is confirmed by the Catalog, but specific volumes and dates are not yet in hand.\n\n## Known record losses\nNo record loss specific to Funchal or Madeira was stated by any tool result in this survey. The general transfer of Portuguese parish vital records to the state in 1910 is noted by the FamilySearch Wiki (Portugal Church Records, Madeira Islands Genealogy) as having resulted in some records being lost nationally during that transfer, but no Madeira-specific loss was named.\n\n## Research tips\n- Civil registrars did not take over from priests in Madeira until 1911 (later than the mainland's 1878 date) — search the Catholic parish register, not a civil office, for a c.1838 birth and any pre-1911 marriage (FamilySearch Wiki, Madeira Islands Genealogy: https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy).\n- Couples usually married in the bride's parish (FamilySearch Wiki, Portugal Church Records: https://www.familysearch.org/en/wiki/Portugal_Church_Records) — if Antonio Fernandes Lucas married a second time, check neighboring Funchal freguesias (Sé, Santa Maria Maior, São Pedro, São Martinho, São Gonçalo, Monte, Santa Luzia) as well as Santo António, since the bride may have been from a different parish.\n- After the mid-1800s, Catholic marriage records typically add marital status, parents' names and residences for both bride and groom — useful for distinguishing a same-named man in multiple marriage entries (FamilySearch Wiki, Portugal Church Records).\n- Use ARM's own name-search database (https://abm.madeira.gov.pt/pesquisa/casamento/) alongside FamilySearch's browsable images, since ARM's marriage index is stated to cover the whole archipelago to 1911, while FamilySearch's parish-level images must be browsed by freguesia and year.\n- Women in Portugal traditionally retained their maiden surname; adoption of a husband's surname became briefly common only in the late 19th century, fading again by century's end (FamilySearch Wiki, Portugal Naming Customs) — do not expect a wife to appear under her husband's surname in later records.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Funchal,_Madeira_Islands,_Portugal_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Portugal_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Portugal_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Portugal_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "national",
+          "year": 1832,
+          "source_url": "https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy"
+        },
+        {
+          "event": "marriage",
+          "level": "national",
+          "year": 1878,
+          "source_url": "https://www.familysearch.org/en/wiki/Madeira_Islands,_Portugal_Genealogy"
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-11-12"
+    }
+  ]
+}

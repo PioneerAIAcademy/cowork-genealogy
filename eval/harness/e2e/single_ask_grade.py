@@ -47,7 +47,7 @@ from e2e.orchestrator import _is_agent_tool
 from harness.skill_runner import load_step_boundary
 
 ROUTER_UNIT = "research"
-SAVE_SECTIONS = ("log", "sources")
+SAVE_SECTIONS = ("log", "sources", "plans")
 CHECKS = (
     "owner", "no_research_job", "save", "forbidden_tools", "required_tools", "stop",
     "ends_on_offer",
