@@ -443,7 +443,11 @@ agreement/disagreement list).
 **Call `same_person` BEFORE writing any `pe_` link**, for every serious
 candidate tree person. Do **not** score a stub you minted from the persona you
 would be scoring: comparing a record persona to a person created out of it is
-circular. Leave `match_score` null there and say so in the rationale. A person
+circular. Leave `match_score` null there and say so in the rationale. **This
+exception is narrow:** circular means a *fact-less stub whose only source is
+this record*. A tree person who has facts from other records — even if one of
+those facts is currently sourced to the record under review — is a normal
+candidate; scoring them is not circular. A person
 minted from an *earlier* record is a normal candidate, so score it. The tool
 returns a 0.0-1.0 similarity score that *informs* the correlation analysis; it
 never replaces it (see step 3).
@@ -614,10 +618,12 @@ identity that would let you add them).
 
 **The `same_person` score is an input, never a substitute.**
 When a score is available it *modulates* confidence within what
-correlation supports — a high score can firm up a Moderate match; a low
-score you cannot explain should pull a tentative Strong back to Moderate. A low
-score you can explain (a surname spelling variant, a thin tree person) does not
-demote a Strong match: write the link and state the score. But:
+correlation supports — a high score (≥ 0.80) can firm up a Moderate match to
+`confident`; a low score you cannot explain should pull a tentative Strong back
+to Moderate. A low score you can explain (a surname spelling variant, a thin
+tree person) does not demote a Strong match: write the link and state the score.
+A score of 0.80 or above on a qualitatively Strong match supports `confident`
+and does not warrant downgrading to `probable`. But:
 
 - A **qualitative conflict caps confidence regardless of score.** A
   0.85 score paired with a contradicting birthplace, an impossible age,
