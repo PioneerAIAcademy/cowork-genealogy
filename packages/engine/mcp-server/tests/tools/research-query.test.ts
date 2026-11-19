@@ -1701,4 +1701,152 @@ describe("research_query page budget", () => {
     expect(pages.length).toBeGreaterThan(1);
     expect(pages.flatMap((p) => p.items.map((r: any) => r.key))).toEqual(rows.map((r) => r.key));
   });
+
+  it("counts settledConflicts in the page, not the items alone", async () => {
+    // 50 links whose items alone fit under budget; one settledConflicts row per
+    // link (each from a unique record, so each note is unique) pushes it over.
+    const person_evidence = Array.from({ length: 50 }, (_, i) => ({
+      id: `pe_${i}`,
+      assertion_id: `a_b${i}`,
+      person_id: "I1",
+      confidence: "probable",
+      rationale: "r".repeat(550),
+    }));
+    const assertions = Array.from({ length: 50 }, (_, i) => ({
+      id: `a_b${i}`,
+      source_id: "src_001",
+      record_id: `rec_${i}`,
+      record_role: "subject",
+      fact_type: "birth",
+      place: "Pennsylvania",
+    }));
+    // One resolved conflict sets aside every birth assertion except the preferred.
+    const conflicts = [
+      {
+        id: "c_001",
+        conflict_type: "fact",
+        disputed_attribute: "birthplace",
+        competing_assertion_ids: assertions.map((a) => a.id),
+        status: "resolved",
+        preferred_assertion_id: "a_b0",
+      },
+    ];
+    await writeResearch({ person_evidence, assertions, conflicts });
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({ persons: [{ id: "I1", facts: [{ type: "Birth", place: "Ireland" }] }] }),
+      "utf-8",
+    );
+    expect(size(person_evidence)).toBeLessThan(BUDGET);
+
+    const r = await researchQuery({ projectPath: dir, section: "person_evidence" });
+
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(size(r)).toBeLessThanOrEqual(BUDGET);
+    expect(r.items.length).toBeLessThan(50);
+    expect(r.settledConflicts).toBeDefined();
+    // Items alone would fit; settledConflicts notes push the full page over.
+    expect(size(person_evidence) + size(r.settledConflicts)).toBeGreaterThan(BUDGET);
+  });
+});
+
+// ── settledConflicts (#4592) ──────────────────────────────────────────────────
+describe("research_query — person_evidence names settled birth disputes", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-settled-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const CERT = "ark:/61903/1:1:MDEF";
+  const CENSUS = "ark:/61903/1:1:MXHY";
+  const cert = (id: string, over: Record<string, unknown> = {}) => ({
+    id, source_id: "src_001", record_id: CERT, record_role: "deceased", record_persona_id: null,
+    fact_type: "name", value: "Patrick Flynn", ...over,
+  });
+
+  function research(status: string, preferred: string | null) {
+    return {
+      assertions: [
+        cert("a_011"),
+        cert("a_012", { fact_type: "birth", value: "Born in Pennsylvania", place: "Pennsylvania" }),
+        cert("a_013", { fact_type: "death", value: "Died 1908" }),
+        {
+          id: "a_002", source_id: "src_002", record_id: CENSUS, record_role: "child_1",
+          record_persona_id: null, fact_type: "birth", value: "Born in Ireland", place: "Ireland",
+        },
+      ],
+      person_evidence: [
+        { id: "pe_001", assertion_id: "a_002", person_id: "I1", confidence: "confident", superseded_by: null },
+        { id: "pe_004", assertion_id: "a_011", person_id: "I1", confidence: "confident", superseded_by: null },
+        { id: "pe_005", assertion_id: "a_013", person_id: "I1", confidence: "confident", superseded_by: null },
+        { id: "pe_006", assertion_id: "a_012", person_id: "I1", confidence: "probable", superseded_by: "pe_004" },
+      ],
+      conflicts: [
+        {
+          id: "c_001", conflict_type: "fact", disputed_attribute: "birthplace",
+          competing_assertion_ids: ["a_002", "a_012"], status, preferred_assertion_id: preferred,
+        },
+      ],
+    };
+  }
+
+  async function project(r: any, tree: any | null) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(r), "utf-8");
+    if (tree) await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree), "utf-8");
+  }
+
+  const TREE = {
+    persons: [{ id: "I1", names: [{ given: "Patrick", surname: "Flynn" }], facts: [{ type: "Birth", place: "Ireland" }] }],
+  };
+
+  async function links(args: Record<string, unknown> = {}) {
+    const result = await researchQuery({ projectPath: dir, section: "person_evidence", ...args });
+    if (!result.ok) throw new Error(result.errors.join("; "));
+    return result;
+  }
+
+  it("groups the live links of one record person under the sentences they share", async () => {
+    await project(research("resolved", "a_002"), TREE);
+    const result = await links({ personId: "I1" });
+    expect(result.settledConflicts).toHaveLength(1);
+    const [row] = result.settledConflicts!;
+    expect(row.linkIds).toEqual(["pe_004", "pe_005"]);
+    expect(row.notes).toHaveLength(1);
+    expect(row.notes[0]).toContain("'c_001'");
+    expect(row.notes[0]).toContain('"Pennsylvania"');
+  });
+
+  it("covers only the links the call returned", async () => {
+    await project(research("resolved", "a_002"), TREE);
+    const result = await links({ assertionId: "a_013" });
+    expect(result.settledConflicts).toEqual([
+      { linkIds: ["pe_005"], notes: [expect.stringContaining("'c_001'")] },
+    ]);
+  });
+
+  it("is absent while the conflict is unresolved", async () => {
+    await project(research("unresolved", null), TREE);
+    expect(await links({ personId: "I1" })).not.toHaveProperty("settledConflicts");
+  });
+
+  it("is absent for the record the conflict preferred", async () => {
+    await project(research("resolved", "a_002"), TREE);
+    expect(await links({ assertionId: "a_002" })).not.toHaveProperty("settledConflicts");
+  });
+
+  it("is absent when the tree cannot be read, and the links still come back", async () => {
+    await project(research("resolved", "a_002"), null);
+    const result = await links({ personId: "I1" });
+    expect(result.count).toBe(4);
+    expect(result).not.toHaveProperty("settledConflicts");
+  });
+
+  it("is absent on every other section", async () => {
+    await project(research("resolved", "a_002"), TREE);
+    const result = await researchQuery({ projectPath: dir, section: "assertions", recordId: CERT });
+    expect(result).not.toHaveProperty("settledConflicts");
+  });
 });
