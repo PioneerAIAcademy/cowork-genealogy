@@ -56,6 +56,10 @@
         {
           "name": "Hamre prestegjeld, Hordaland, Norway",
           "date_range": "historical"
+        },
+        {
+          "name": "Meland sokn (Hamre prestegjeld), Hordaland, Norway",
+          "date_range": "historical"
         }
       ],
       "collections": [
@@ -72,7 +76,8 @@
       ],
       "quirks": [
         "Norwegian name spellings were set by the recorder and vary between records (the wiki's example: the given name Sivert written as Syver, Sjur, Siver, Sifuer or Siffuer) — search given-name spelling variants, not just the tree's spelling, before concluding a nil. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Church_Records)",
-        "Before about 1850 most Norwegians used patronymics: Halsteinsdatter means daughter of Halstein. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Naming_Customs)"
+        "Before about 1850 most Norwegians used patronymics: Halsteinsdatter means daughter of Halstein. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Naming_Customs)",
+        "Meland, including the farm Hestdal, was a sokn (annex parish) of Hamre prestegjeld; its baptisms, marriages and burials are in the Hamre kirkebøker, 1677-1928. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Meland_Parish,_Hordaland,_Norway_Genealogy)"
       ],
       "guide_markdown": "## Hamre prestegjeld, Hordaland, Norway - 1765-1800\n\nNorwegian name spellings were set by the recorder and vary between records (the wiki's example: the given name Sivert written as Syver, Sjur, Siver, Sifuer or Siffuer) — search given-name spelling variants, not just the tree's spelling, before concluding a nil. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Norway_Church_Records)",
       "pages_read": [
