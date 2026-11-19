@@ -14,12 +14,12 @@
       " jurisdiction-awareness",
       "volume-search",
       "direct-arm",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in Ohio around 1790, before it became a state. How does the locality guide explain boundary changes and what records are available despite gaps in early documentation?",
-    "scenario": null,
+    "delegation": "I'm researching ancestors in Ohio around 1790, before it became a state. How does the locality guide explain boundary changes and what records are available despite gaps in early documentation?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -48,6 +48,8 @@
   ],
   "judge_context": [
     "Recognize Ohio was part of the Northwest Territory in 1790, not yet a state, and highlight territorial land grants, military records, church registers, and tax lists while avoiding Ohio state archives or statewide vital registration, which didn't exist yet.",
-    "locality_survey's volumes part returns two image groups split across the boundary change: one filed under 'Northwest Territory' (1788-1799, browse-only territorial land records) and one filed under 'Washington County, Ohio' (1799-1803, 12% indexed county tax records). The skill should connect both to the same locality despite the differing place names, reflecting the boundary-change discussion already in the guide, rather than only surfacing the county-era volume."
-  ]
+    "locality_survey's volumes part returns two image groups split across the boundary change: one filed under 'Northwest Territory' (1788-1799, browse-only territorial land records) and one filed under 'Washington County, Ohio' (1799-1803, 12% indexed county tax records). The skill should connect both to the same locality despite the differing place names, reflecting the boundary-change discussion already in the guide, rather than only surfacing the county-era volume.",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+  ],
+  "judge_reads_files": true
 }

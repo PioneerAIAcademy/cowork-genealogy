@@ -43,7 +43,6 @@ from test_locality_guide import (  # noqa: E402
     test_catalog_search_called_and_broadened as check_catalog_broadening,
     test_persisted_guide_is_the_guide as check_guide,
     test_in_project_return_follows_the_contract as check_return_contract,
-    test_no_project_return_carries_guide as check_no_project_guide,
     _GUIDE_HEADING_LINES,
     _heading,
 )
@@ -640,124 +639,16 @@ def test_contract_grades_a_project_whose_research_json_is_empty():
     )
 
 
-# --- (c) test_no_project_return_carries_guide ----------------------------
+# --- No test runs locality-guide without a project ---------------------
 
 
-_NO_PROJECT_TEST = {"id": "ut_locality_guide_001", "tags": ["locality", "no-project", "direct-arm"]}
-_NO_GUIDE = r"no `## Available record types` heading in the return"
-
-
-def _check_no_project(returns, test=_NO_PROJECT_TEST):
-    return lambda: check_no_project_guide(test, returns)
-
-
-@pytest.mark.parametrize(
-    "returns",
-    [
-        _returns(_guide("## Jurisdiction overview", "## Research tips")),
-        None,
-        [],
-        _returns(""),
-        _returns(_GUIDE, agent="record-extractor"),
-        _returns(_guide("### Available record types")),
-        _returns("The guide is saved as `loc_001`."),
-        _returns("See the section ## Available record types below."),
-    ],
-    ids=[
-        "heading-missing",
-        "returns-none",
-        "returns-empty",
-        "empty-text",
-        "other-agent-only",
-        "level-three",
-        "loc-line-only",
-        "mid-line",
-    ],
-)
-def test_no_project_fires_when_the_return_carries_no_guide(returns):
-    expect_fires(_check_no_project(returns), _NO_GUIDE)
-
-
-@pytest.mark.parametrize(
-    "text",
-    [
-        _guide("## Available record types (1840-1880)"),
-        _GUIDE,
-        "No research project present.\n\n---\n\n" + _GUIDE + "\n---\n\nSurvey of Schuylkill done.",
-        _guide("## Jurisdiction overview") + "\n---\n\n" + _guide("## Available record types"),
-        _guide(*_ALL_HEADINGS, nl="\r\n"),
-        _guide("## AVAILABLE RECORD TYPES"),
-    ],
-    ids=[
-        "suffixed",
-        "after-other-sections",
-        "preamble-and-separators",
-        "internal-rules",
-        "crlf",
-        "upper-case",
-    ],
-)
-def test_no_project_passes_on_a_return_carrying_the_guide(text):
-    expect_passes(_check_no_project(_returns(text)))
-
-
-def test_no_project_stands_down_on_an_untagged_test():
-    with pytest.raises(pytest.skip.Exception):
-        check_no_project_guide({"id": "ut_locality_guide_004", "tags": ["locality"]}, [])
-
-
-# --- Tag coverage: exactly these no-project tests carry `no-project` ----
-
-_NO_PROJECT_TEST_IDS = {
-    "ut_locality_guide_001",
-    "ut_locality_guide_002",
-    "ut_locality_guide_004",
-    "ut_locality_guide_005",
-    "ut_locality_guide_006",
-    "ut_locality_guide_007",
-    "ut_locality_guide_008",
-    "ut_locality_guide_009",
-    "ut_locality_guide_011",
-    "ut_locality_guide_012",
-    "ut_locality_guide_016",
-    "ut_locality_guide_017",
-    "ut_locality_guide_019",
-    "ut_locality_guide_020",
-    "ut_locality_guide_021",
-    "ut_locality_guide_023",
-    "ut_locality_guide_026",
-    "ut_locality_guide_027",
-    "ut_locality_guide_028",
-    "ut_locality_guide_k9d",
-    "ut_locality_guide_m4t",
-    "ut_locality_guide_r7k",
-    "ut_locality_guide_v7h",
-}
-
-
-def test_exactly_the_no_project_tests_carry_the_no_project_tag():
-    """`test_tag_gate_coverage.py` fails only when NO test carries a gate tag, so a
-    single test dropping `no-project` would silently stop (c) grading it. This pins
-    the population by id, and that each tagged test really runs with no project."""
-    tagged = {}
+def test_every_locality_guide_test_runs_in_a_project():
+    """locality-guide always saves its guide to a project (lead, 2026-11-19): every test's
+    delegation names the project path, and none carries the retired `no-project` tag."""
     for path in sorted(_LOCALITY_TESTS.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
         test = data.get("test") or {}
-        if "no-project" in (test.get("tags") or []):
-            tagged[test.get("id")] = (data.get("input") or {}).get("scenario")
-    assert set(tagged) == _NO_PROJECT_TEST_IDS, (
-        f"`no-project` must be carried by exactly {sorted(_NO_PROJECT_TEST_IDS)}; "
-        f"carried by {sorted(tagged)}"
-    )
-    assert all(scenario is None for scenario in tagged.values()), (
-        f"a `no-project` test must run with no scenario: {tagged}"
-    )
-
-
-def test_no_project_gate_is_recognized_by_the_runnability_scan():
-    """(c) only runs if the harness sees its gate: `tag_gated_validator_tags` reads
-    the literal `"<tag>" not in tags -> pytest.skip` shape, and the tag-coverage
-    lint above it reads the same scan."""
-    from harness.runnability import DEFAULT_VALIDATORS_DIR, tag_gated_validator_tags
-
-    assert "no-project" in tag_gated_validator_tags(DEFAULT_VALIDATORS_DIR, "locality-guide")
+        if test.get("type") == "negative":
+            continue
+        assert "no-project" not in (test.get("tags") or []), test.get("id")
+        assert "projectPath" in ((data.get("input") or {}).get("delegation") or ""), test.get("id")

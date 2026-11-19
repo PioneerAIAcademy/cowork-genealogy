@@ -15,12 +15,12 @@
       "jurisdiction-awareness",
       "volume-search",
       "direct-arm",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors connected to Native American tribes in Oklahoma during the mid-1800s. What records or repositories would help trace families through tribal rolls and treaties?",
-    "scenario": null,
+    "delegation": "I'm researching ancestors connected to Native American tribes in Oklahoma during the mid-1800s. What records or repositories would help trace families through tribal rolls and treaties?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -54,6 +54,8 @@
   ],
   "judge_context": [
     "Recognize Oklahoma was Indian Territory in the mid‑1800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn’t exist yet).",
-    "locality_survey's volumes part returns one image group of tribal enrollment cards (1840-1870) that is 99% indexed and full-text searchable. The skill should note that this volume is highly name-searchable on FamilySearch, contrasting it with the typically harder-to-search treaty and agency records discussed elsewhere in the guide."
-  ]
+    "locality_survey's volumes part returns one image group of tribal enrollment cards (1840-1870) that is 99% indexed and full-text searchable. The skill should note that this volume is highly name-searchable on FamilySearch, contrasting it with the typically harder-to-search treaty and agency records discussed elsewhere in the guide.",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+  ],
+  "judge_reads_files": true
 }

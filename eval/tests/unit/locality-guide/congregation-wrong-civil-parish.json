@@ -13,12 +13,12 @@
       "from-cowork",
       "congregation-wrong-civil-parish",
       "re-invoke-safe",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "I'm building out the parents of an ancestor born about 1825 in Billy civil parish, County Antrim, Ireland (the Bushmills area). Put together a locality guide for Billy parish for roughly 1780-1870: which record types are available, where they are held, and which church registers would cover a Presbyterian family there.",
-    "scenario": null
+    "delegation": "I'm building out the parents of an ancestor born about 1825 in Billy civil parish, County Antrim, Ireland (the Bushmills area). Put together a locality guide for Billy parish for roughly 1780-1870: which record types are available, where they are held, and which church registers would cover a Presbyterian family there.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "execution": {
     "max_wall_clock_seconds": 900,
@@ -29,7 +29,8 @@
     "The ground truth the tools return in this scenario: the FamilySearch digitized-volume place-string labels a set of Presbyterian christening (1837-1868) and marriage (1837-1864) registers 'Ballylinny, Billy, County Antrim', but the retrieved FamilySearch Wiki page states the Ballylinny Presbyterian population attended church in Ballyclare, with registers beginning 1837, and that Ballylinny is a distinct civil parish in the barony of Lower Belfast (adjoining Ballyclare, surrounded by Ballymartin, Ballynure, Carnmoney, Grange of Doagh and Templepatrick) at the opposite end of the county from Billy.",
     "When a digitized-volume place-string and a retrieved parish page disagree about which civil parish a congregation belongs to, the guide must reconcile the conflict rather than silently adopt the volume's hierarchy string. Taking a catalog place-label as proof of ecclesiastical/civil-parish membership is the failure under test.",
     "The guide should not assert, without qualification, that the 'Ballylinny' Presbyterian registers are Billy civil parish's congregation, nor recommend them as Billy's own church records as though their parish membership were settled; flagging the ambiguity, or attributing the congregation to the Ballylinny/Ballyclare parish the wiki evidence names, both satisfy the behavior.",
-    "General class: a claim that a specific congregation's registers belong to the research parish must be grounded in evidence that states the congregation's parish, not inferred from a volume's or catalog entry's place-label alone. Grade the reconciliation of conflicting locality evidence, not any one preferred wording."
+    "General class: a claim that a specific congregation's registers belong to the research parish must be grounded in evidence that states the congregation's parish, not inferred from a volume's or catalog entry's place-label alone. Grade the reconciliation of conflicting locality evidence, not any one preferred wording.",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
   ],
   "mcp_fixtures": [
     "volume-search-billy-antrim",
@@ -51,5 +52,6 @@
     "catalog-search-empty",
     "catalog-search-empty-keywords",
     "catalog-search-empty-title"
-  ]
+  ],
+  "judge_reads_files": true
 }

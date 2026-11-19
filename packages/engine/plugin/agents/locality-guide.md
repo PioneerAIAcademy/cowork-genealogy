@@ -69,9 +69,9 @@ Produces a structured survey of what records exist for a specific place and time
 
 Determine place, time period, and scope from the user's request. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
 
-When the delegation names a `projectPath`, Step 6 runs, whatever its value. With no `projectPath`, Step 6 does not run.
+Every delegation names a `projectPath`, and Step 6 always runs. With no `projectPath`, hand back (Decision rules). A delegation asking what a locality guide says about a place is a request to build that guide; a guide already saved for the place is updated (Re-invocation behavior).
 
-A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: every Step 3 call, the full template, and Step 6 when it applies.
+A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: the survey, the full template, and Step 6.
 
 When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
 
@@ -137,14 +137,12 @@ For each record type, assign a digitization level using the **Digitization level
 
 ### 5. Compile
 
-Use the template under **Locality Guide Output Format** below, with every claim from tool results. Give each record-type subsection at most three bullets and research tips at most six. When Step 6 runs, write the guide only as Step 6's `guideSection` calls, never as text first: the guide is then in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or its first call does not return `ok: true`, the guide is your return.
+Use the template under **Locality Guide Output Format** below, with every claim from tool results. Give each record-type subsection at most three bullets and research tips at most six. Write the guide only as Step 6's `guideSection` calls, never as text first: the guide is in that entry, not your return, even when the delegation asks for a guide.
 
 ### 6. Persist the locality
 
-**Run this step whenever Step 1 says it runs**, whatever the project's objective and
-however the delegation is phrased. Only an answer of `ok: false` with
-`reason: "no_project"` means there is no project; on any other `ok: false`, fix the
-call and send it again. Use `research_append`, first for the entry with no guide in it, with the survey's `staged.resultsRef` as `surveyRef`:
+**Always run this step**, whatever the project's objective and however the delegation
+is phrased. On `ok: false`, fix the call and send it again. Use `research_append`, first for the entry with no guide in it, with the survey's `staged.resultsRef` as `surveyRef`:
 
 ```
 research_append({
@@ -213,6 +211,7 @@ field on a jurisdiction or collection.
 
 | Situation | Action |
 |-----------|--------|
+| Delegation names no `projectPath` | Hand back: one line saying a locality guide is saved to a project, naming init-project as the owner who runs first |
 | Place given but no time period | Ask before proceeding |
 | MCP tools return sparse data | State what was found, note gaps, suggest consulting FamilySearch Wiki directly |
 | Place is an entire country or state with no region/theme | Ask to narrow — but a named sub-region or theme is specific enough, proceed |
@@ -241,7 +240,7 @@ field on a jurisdiction or collection.
 
 ## Re-invocation behavior
 
-**Writes** (whenever Step 1 says Step 6 runs): one `localities[]` entry per place-jurisdiction (via `research_append`). Never modifies `tree.gedcomx.json`.
+**Writes**: one `localities[]` entry per place-jurisdiction (via `research_append`). Never modifies `tree.gedcomx.json`.
 
 **On repeat invocation for the same place:** update the existing `loc_` entry (`op: "update"` with its `entryId`) rather than appending a duplicate — supersede-not-delete, so the knowledge is refreshed in place. A genuinely new place gets a new `loc_` entry.
 
@@ -476,8 +475,8 @@ For each record type, classify its accessibility:
   `loc_` id written or updated, then `summary_for_user` — no heading, list, table
   or section of the guide anywhere in the return, even when the delegation asks
   for the guide.
-- **Step 6 did not run, or your last `research_append` call did not return
-  `ok: true`:** the guide in full, then `summary_for_user`. Write every heading of
+- **Your last `research_append` call did not return `ok: true` after you fixed
+  and resent it:** the guide in full, then `summary_for_user`. Write every heading of
   the survey's `guideHeadings` exactly as written, at its own level, under a `#`
   title, with no sections of your own in their place, even when every tool came
   back empty, generic or unreadable: each section then states its gap. A narrowly phrased delegation still gets the full

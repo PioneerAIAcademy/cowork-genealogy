@@ -13,12 +13,12 @@
       "research-gap",
       "from-cowork",
       "re-invoke-safe",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "Build a locality guide for Billy civil parish, County Antrim, Ireland (1780-1870): include which repositories and online indexes could help close any gap in church-register coverage, with their addresses/URLs.",
-    "scenario": null
+    "delegation": "Build a locality guide for Billy civil parish, County Antrim, Ireland (1780-1870): include which repositories and online indexes could help close any gap in church-register coverage, with their addresses/URLs.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "execution": {
     "max_wall_clock_seconds": 900,
@@ -31,7 +31,8 @@
     "A repository URL the guide prints must be one the tools returned. Printing a URL no tool returned (e.g. ulsterancestry.com) is the first failure under test.",
     "When the guide states a record-availability gap and a tool result names an index/repository that bears on it, the guide should connect them rather than listing the repository as a generic fee-based service. Failing to connect a returned index to the stated gap is the second failure under test.",
     "Passing behavior: cite the returned URL (ancestryireland.com) and tie the Foundation (or an equivalent returned index) to the gap it addresses. Grade URL fidelity and gap-connection, not any exact coverage dates.",
-    "General class: repository details must be grounded in tool output, and a named index should be connected to the gap it fills."
+    "General class: repository details must be grounded in tool output, and a named index should be connected to the gap it fills.",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
   ],
   "mcp_fixtures": [
     "wiki-read-ireland-church-records",
@@ -52,5 +53,6 @@
     "catalog-search-empty",
     "catalog-search-empty-keywords",
     "catalog-search-empty-title"
-  ]
+  ],
+  "judge_reads_files": true
 }

@@ -14,12 +14,12 @@
       " jurisdiction-awareness",
       "volume-search",
       "direct-arm",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in New York City during the 1700s colonial period. What records or repositories would help trace families in that locality and time?",
-    "scenario": null,
+    "delegation": "I'm researching ancestors in New York City during the 1700s colonial period. What records or repositories would help trace families in that locality and time?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -47,6 +47,8 @@
   ],
   "judge_context": [
     "Recognize New York was under British colonial rule in the 1700s; mention parish registers, land deeds, probate records, and colonial court records. Historical societies such as the New-York Historical Society hold significant colonial-era collections and should be mentioned as repositories. Avoid New York State Archives or statewide vital records (those came later).",
-    "locality_survey's volumes part returns one browse-only image group of Dutch Reformed Church registers (1700-1776, language 'nl', no name index). The skill should flag that the volume is written in Dutch and is not full-text or name searchable, so a researcher knows to expect manual page-by-page browsing of a non-English record."
-  ]
+    "locality_survey's volumes part returns one browse-only image group of Dutch Reformed Church registers (1700-1776, language 'nl', no name index). The skill should flag that the volume is written in Dutch and is not full-text or name searchable, so a researcher knows to expect manual page-by-page browsing of a non-English record.",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+  ],
+  "judge_reads_files": true
 }

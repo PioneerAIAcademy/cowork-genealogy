@@ -13,12 +13,12 @@
       "jurisdiction-awareness",
       "colonial records",
       "direct-arm",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "I'm researching an ancestor who lived in the Alabama region around 1800, before statehood. What archives or record repositories will hold for that locality and period?",
-    "scenario": null,
+    "delegation": "I'm researching an ancestor who lived in the Alabama region around 1800, before statehood. What archives or record repositories will hold for that locality and period?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -49,6 +49,8 @@
     "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Must mention territorial, church, land, and court records; historical societies in Alabama likely hold pre-statehood records and should be mentioned as repositories. Must avoid anachronistic record types like state archives or modern databases."
-  ]
+    "Must mention territorial, church, land, and court records; historical societies in Alabama likely hold pre-statehood records and should be mentioned as repositories. Must avoid anachronistic record types like state archives or modern databases.",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+  ],
+  "judge_reads_files": true
 }

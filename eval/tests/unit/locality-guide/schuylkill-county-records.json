@@ -13,12 +13,12 @@
       "pre-1906-vital",
       "volume-search",
       "direct-arm",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "What records are available for genealogical research in Schuylkill County, Pennsylvania in the 1840s-1860s?",
-    "scenario": null
+    "delegation": "What records are available for genealogical research in Schuylkill County, Pennsylvania in the 1840s-1860s?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "execution": {
     "max_wall_clock_seconds": 900,
@@ -50,6 +50,8 @@
     "Should identify at least one repository beyond FamilySearch: the Schuylkill County Historical Society, Pennsylvania State Archives, or the county courthouse for unfilmed records",
     "Should use locality_survey's volumes part to surface the digitized-but-unindexed Lutheran church records volume (recordSearchablePercent 0, fulltextSearchable false) as browse-only — image-by-image access, not name-searchable",
     "Should distinguish the probate records volume (recordSearchablePercent 4, fulltextSearchable true) as full-text searchable but not name-indexed, separately from the census volume (recordSearchablePercent 96) which is fully indexed",
-    "Must NOT report only the indexed locality_survey's collections part results while staying silent on the unindexed locality_survey's volumes part findings — that would understate what's actually digitized and available to browse"
-  ]
+    "Must NOT report only the indexed locality_survey's collections part results while staying silent on the unindexed locality_survey's volumes part findings — that would understate what's actually digitized and available to browse",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+  ],
+  "judge_reads_files": true
 }

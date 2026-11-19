@@ -13,12 +13,12 @@
       "sourced-claims",
       "from-cowork",
       "re-invoke-safe",
-      "no-project"
+      "localities-persist"
     ]
   },
   "input": {
-    "delegation": "Build a locality guide for Billy civil parish, County Antrim, Ireland (Bushmills area) for roughly 1780-1870: which record types are available, where they are held, and whether Church of Ireland registers are available.",
-    "scenario": null
+    "delegation": "Build a locality guide for Billy civil parish, County Antrim, Ireland (Bushmills area) for roughly 1780-1870: which record types are available, where they are held, and whether Church of Ireland registers are available.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "execution": {
     "max_wall_clock_seconds": 900,
@@ -31,7 +31,8 @@
     "The failure under test: asserting (even as 'likely') that Billy's Church of Ireland registers were destroyed in the 1922 fire, on the strength of an empty search plus the general fire statement.",
     "Mentioning the 1922 fire as general Irish-records context is acceptable; attributing the loss of Billy's specific registers to it, with no Billy-specific source, is not. Reporting the absence as a coverage gap, or pointing to where the registers may survive, satisfies the behavior.",
     "Saying that the survival of these registers is unconfirmed, or must be checked, and naming the repository that would confirm it, is the PASSING behaviour. It states no loss, even though it names the 1922 fire. Grade only what the guide itself states; do not read a 'cannot be confirmed' sentence as a claim that the records were destroyed.",
-    "General class: ground a record-loss claim in a source that states the loss; do not infer destruction from a null search result. Do not require or forbid any particular earliest-register date."
+    "General class: ground a record-loss claim in a source that states the loss; do not infer destruction from a null search result. Do not require or forbid any particular earliest-register date.",
+    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
   ],
   "mcp_fixtures": [
     "volume-search-billy-antrim",
@@ -49,5 +50,6 @@
     "catalog-search-empty",
     "catalog-search-empty-keywords",
     "catalog-search-empty-title"
-  ]
+  ],
+  "judge_reads_files": true
 }

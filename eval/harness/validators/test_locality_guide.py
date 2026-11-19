@@ -30,10 +30,10 @@ guard the structural properties a validator can settle without judgment
     so VR1 does not re-check them.
   - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
     a run that produced a guide called locality_survey (issue #4602).
-  - test_persisted_guide_is_the_guide, test_in_project_return_follows_the_contract
-    and test_no_project_return_carries_guide — the guide is written exactly once
-    (issue #3442): into `guide_markdown` inside a project, into the return
-    outside one. Rationale in each docstring.
+  - test_persisted_guide_is_the_guide and test_in_project_return_follows_the_contract
+    — the guide is written exactly once (issue #3442), into `guide_markdown`.
+    locality-guide always runs in a project (lead, 2026-11-19). Rationale in
+    each docstring.
 
 Of the two other checks the deep dive proposed, VR3 was dropped and VR2 is held
 (NOT shipped here, and NOT dropped on the reasons first given — those don't hold):
@@ -424,7 +424,7 @@ def test_in_project_return_follows_the_contract(
     return nothing downstream reads — research-plan reads the persisted entry.
 
     Skips with no project (`before_state["research_json"]` is None):
-    `test_no_project_return_carries_guide` grades that return.
+    locality-guide hands such a delegation back.
 
     Entry written: the return is non-empty, at most 3000 characters (all 32
     October in-project returns that followed this contract are at most 2310) and
@@ -446,7 +446,7 @@ def test_in_project_return_follows_the_contract(
     that writes nothing would fail here; such a test needs a tag exemption.
     """
     if before_state.get("research_json") is None:
-        pytest.skip("no research project: test_no_project_return_carries_guide grades the return")
+        pytest.skip("no research project")
     reply = agent_return_text(agent_returns, "locality-guide")
     written = _written_localities(before_state, after_state)
     if written:
@@ -475,23 +475,4 @@ def test_in_project_return_follows_the_contract(
     assert _RECORD_TYPES_HEADING.search(reply), (
         "a localities write was refused, so the return must carry the guide in full: "
         "no `## Available record types` heading in the return"
-    )
-
-
-def test_no_project_return_carries_guide(test, agent_returns=None):
-    """Tag-gated (`no-project`): with no research project there is nowhere to
-    persist the guide, so the agent's return is the guide in full.
-
-    Searches the whole joined return for a line-anchored `## Available record
-    types` (case-insensitive, suffix allowed). No split on `---`: no-project
-    returns open with a narration preamble and a `---`, guides carry internal
-    `---` rules, and `summary_for_user` carries no headings, so a plain search is
-    both simpler and sufficient.
-    """
-    if "no-project" not in (test.get("tags") or []):
-        pytest.skip("not a no-project test")
-    reply = agent_return_text(agent_returns, "locality-guide")
-    assert _RECORD_TYPES_HEADING.search(reply), (
-        "no `## Available record types` heading in the return; with no project "
-        "the guide is the return"
     )
