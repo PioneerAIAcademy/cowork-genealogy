@@ -2250,8 +2250,13 @@ than the catalog, so a refusal would cost a turn and end in the same state.
     `United States, Kentucky, Agricultural Schedules, 1850-1880`, `United States Virgin
     Islands, Census Records, 1841-1911`, `Canada, Ontario, Births, 1869-1912` and `New
     Mexico, Deaths, 1889-1945` are not.
-  - **Core** (`isCoreNationalCollection`): the population and mortality censuses (a
-    region before `Census` allowed, as in `Canada, Prairie Provinces, Census, 1916`); in
+  - **Core** (`isCoreNationalCollection`): the population and mortality censuses. A
+    regional census (`Canada, Upper Canada, Census, 1842`) is core only for a locality
+    whose place, `for_place` or a jurisdiction name names a province the region covers
+    (`CENSUS_REGION_PROVINCES`: Lower Canada is Quebec, Upper Canada is Ontario, the
+    Prairie and Northwest Provinces are Manitoba, Saskatchewan and Alberta); a region not
+    listed is core nowhere. Those censuses reach no locality any other way: an Ontario
+    locality's place fill matches `Canada, Ontario`, which `Upper Canada` is not. In
     the United States the Social Security Death Index, the NUMIDENT files, the World War I
     and World War II draft registrations and the city directories; in Canada and Mexico
     the country-wide baptism, marriage and death indexes. About 160 of the United

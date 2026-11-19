@@ -242,25 +242,11 @@
           "record_count": 43249
         },
         {
-          "id": "1834340",
-          "title": "Canada, Lower Canada, Census, 1842",
-          "date_range": "1842-1842",
-          "person_count": 46467,
-          "record_count": 46467
-        },
-        {
           "id": "1520608",
           "title": "Canada, Marriages, 1661-1949",
           "date_range": "1661-1949",
           "person_count": 1055781,
           "record_count": 228597
-        },
-        {
-          "id": "1834342",
-          "title": "Canada, Upper Canada, Census, 1842",
-          "date_range": "1842-1842",
-          "person_count": 20851,
-          "record_count": 20851
         }
       ],
       "quirks": [

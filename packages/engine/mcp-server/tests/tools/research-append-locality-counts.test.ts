@@ -429,7 +429,7 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   describe("national collections (spec 5.12): the US, Canada and Mexico get their core country-wide rows", () => {
     const NATIONAL: FSCollectionsResponse = {
-      results: 17,
+      results: 20,
       index: 0,
       entries: [
         catalogEntry("m1", "Michigan, Death Records, 1867-1952", 1, 1, 1867, 1952),
@@ -444,6 +444,9 @@ describe("research_append stamps locality collection counts from the catalog", (
         catalogEntry("ca1901", "Canada, Census, 1901", 1, 1, 1901),
         catalogEntry("caon", "Canada, Ontario, Births, 1869-1912", 1, 1, 1869, 1912),
         catalogEntry("caon61", "Canada, Ontario, Census, 1861", 1, 1, 1861),
+        catalogEntry("cauc42", "Canada, Upper Canada, Census, 1842", 1, 1, 1842),
+        catalogEntry("calc42", "Canada, Lower Canada, Census, 1842", 1, 1, 1842),
+        catalogEntry("capr16", "Canada, Prairie Provinces, Census, 1916", 1, 1, 1916),
         catalogEntry("mx1930", "Mexico, National Census, 1930", 1, 1, 1929, 1931),
         catalogEntry("mxbap", "Mexico, Baptisms, 1560-1950", 1, 1, 1559, 1950),
         catalogEntry("mxja", "Mexico, Jalisco, Civil Registration, 1857-2000", 1, 1, 1857, 2000),
@@ -497,6 +500,23 @@ describe("research_append stamps locality collection counts from the catalog", (
     it("gives Canada its national census, not another province's rows", async () => {
       await appendIn("Halifax, Nova Scotia, Canada", [], { time_period: "1836-1910" });
       expect(await ids()).toEqual(["ca1901"]);
+    });
+
+    it("gives a regional census only to a locality in a province it covers", async () => {
+      await appendIn("Halifax, Nova Scotia, Canada", [], { time_period: "1836-1920" });
+      expect(await ids()).toEqual(["ca1901"]);
+    });
+
+    it("gives Upper Canada's census to an Ontario locality and the Prairie census to an Alberta one", async () => {
+      await appendIn("Toronto, York, Ontario, Canada", [], { time_period: "1836-1920" });
+      await appendIn("Edmonton, Alberta, Canada", [], { time_period: "1900-1920" });
+      const doc = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const [toronto, edmonton] = doc.localities.slice(-2).map((l: any) => l.collections.map((c: any) => c.id));
+      expect(toronto).toContain("cauc42");
+      expect(toronto).not.toContain("calc42");
+      expect(toronto).not.toContain("capr16");
+      expect(edmonton).toEqual(expect.arrayContaining(["capr16"]));
+      expect(edmonton).not.toContain("cauc42");
     });
 
     it("adds no duplicate for a country-level place the place fill already covered", async () => {

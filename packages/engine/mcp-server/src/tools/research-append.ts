@@ -11525,11 +11525,16 @@ function fillNationalCollections(
     if (entry.collections !== undefined && !Array.isArray(entry.collections)) return;
     const country = localityNationalCountry(entry);
     if (!country) return;
+    const places = [
+      entry.place,
+      entry.for_place,
+      ...(Array.isArray(entry.jurisdictions) ? entry.jurisdictions.map((j: any) => j?.name) : []),
+    ];
     const window = yearSpan(entry.time_period);
     const held: unknown[] = entry.collections ?? [];
     const heldIds = new Set(held.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
     const missing = [...catalog].filter(([id, c]) => {
-      if (heldIds.has(id) || typeof c.title !== "string" || !isCoreNationalCollection(c.title, country)) return false;
+      if (heldIds.has(id) || typeof c.title !== "string" || !isCoreNationalCollection(c.title, country, places)) return false;
       if (window === null) return true;
       const span = yearSpan(c.dateRange);
       return span === null || (span[0] <= window[1] && span[1] >= window[0]);
