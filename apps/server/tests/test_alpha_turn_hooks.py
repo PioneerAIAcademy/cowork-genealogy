@@ -241,16 +241,22 @@ def test_the_alpha_system_prompt_tells_the_agent_what_the_researcher_can_see(tmp
     assert real_agent.RESEARCHER_VIEW_NOTE in opts.system_prompt["append"]
 
 
-def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
-    """The server and the plugin hook each define `GENEALOGY_HOSTED_PLANE`. A rename on one
-    side alone leaves every server test green while the hook speaks on both hosted planes,
-    so this loads the hook from the repo and checks its behaviour under the server's name."""
+def _load_no_project_route():
+    """The Cowork plugin hook, loaded from the repo: it runs in the VM and the server cannot import it."""
     import importlib.util
 
     path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/no_project_route.py"
     spec = importlib.util.spec_from_file_location("_no_project_route", path)
     hook = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hook)
+    return hook
+
+
+def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
+    """The server and the plugin hook each define `GENEALOGY_HOSTED_PLANE`. A rename on one
+    side alone leaves every server test green while the hook speaks on both hosted planes,
+    so this loads the hook from the repo and checks its behaviour under the server's name."""
+    hook = _load_no_project_route()
     payload = {"prompt": "Research PID L8PL-3W8."}
     assert hook.decision(payload, {real_agent.HOSTED_PLANE_ENV: "1"}) == {}
     assert hook.decision(payload, {}) != {}
@@ -260,18 +266,24 @@ def test_the_sources_sentence_is_the_one_the_plugin_hook_adds(tmp_path):
     """Issue #4011. The alpha appends `SOURCES_GUIDANCE` and the Cowork hook carries
     its own copy (the hook runs in the VM and cannot import the server); a reword on one
     side alone leaves the two paths saying different things."""
-    import importlib.util
-
     from app.agent.continue_policy import SOURCES_GUIDANCE
 
-    path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/no_project_route.py"
-    spec = importlib.util.spec_from_file_location("_no_project_route", path)
-    hook = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(hook)
+    hook = _load_no_project_route()
     assert hook.SOURCES_NOTE == SOURCES_GUIDANCE
     added = hook.decision({"prompt": "What Kenyan records can I search?"}, {})
     assert SOURCES_GUIDANCE in added["hookSpecificOutput"]["additionalContext"]
     assert SOURCES_GUIDANCE in real_agent.build_options(tmp_path).system_prompt["append"]
+
+
+def test_the_record_set_route_is_the_one_the_plugin_hook_adds(tmp_path):
+    """Issue #4583. The hosted planes end their project note with `RECORD_SET_ROUTE` and
+    the Cowork hook ends `CONTEXT` with its own copy; a reword on one side alone sends the
+    page images of records already found to a different agent on each path."""
+    from app.agent.continue_policy import RECORD_SET_ROUTE
+
+    hook = _load_no_project_route()
+    assert hook.CONTEXT.endswith(RECORD_SET_ROUTE)
+    assert RECORD_SET_ROUTE in real_agent.build_options(tmp_path).system_prompt["append"]
 
 
 class _Turns:

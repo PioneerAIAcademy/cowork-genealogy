@@ -1,0 +1,95 @@
+{
+  "tool": "record_read",
+  "description": "record_read, captured live 2026-11-17 with dev/try-record-read.ts: Hugh Emerson, head of household in Hemmingford township, 1825 Lower Canada census (collection 1834346). His page image is ark:/61903/3:1:9396-MWWN-1, the page that also holds William and Joseph Brisbin. The mock compacts it as the server does, so the agent sees viewerUrl, recordUrl (the 1:2 household record), citation and collectionTitle. Issue #4583.",
+  "args": {
+    "recordId": "~KHJ8-J5C"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14059483029",
+        "ark": "ark:/61903/1:1:KHJ8-J5C",
+        "principal": true,
+        "names": [
+          {
+            "id": "90ff22f5-ae54-47a5-86b3-6be96873ad1f",
+            "type": "BirthName",
+            "suffix": "1825 Lower Canada Census",
+            "given": "Hugh",
+            "surname": "Emerson"
+          }
+        ],
+        "facts": [
+          {
+            "id": "48ca6151-14a4-4e36-a241-d6ea234408c8",
+            "type": "Census",
+            "primary": true,
+            "date": "1825",
+            "standard_date": "1825",
+            "place": "Hemmingford (township), Huntingdon, Quebec, Canada"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22244870329",
+        "resource_type": "Record",
+        "title": "Foyer de Hugh Emerson, 1825 Lower Canada Census, \"Canada, recensement du Bas-Canada, 1825\"",
+        "citation": "\"Canada, recensement du Bas-Canada, 1825\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHJ8-J5C : Tue Aug 18 11:08:57 UTC 2026), Entry for Hugh Emerson, 1825 Lower Canada Census, 1825.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJK",
+        "coverage": {
+          "date_range": "1825",
+          "record_type": "Census"
+        }
+      },
+      {
+        "id": "sd_c_1834346",
+        "resource_type": "Collection",
+        "title": "Canada, Lower Canada, Census, 1825",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1834346",
+        "coverage": {
+          "place_rep_id": "133",
+          "date_range": "1825/1825",
+          "record_type": "Census",
+          "standard_place": "Canada"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:9396-MWWN-1",
+        "coverage": {
+          "place_rep_id": "5783",
+          "date_range": "+1825-01-01T00:00:00Z/+1825-12-31T23:59:59Z",
+          "record_type": "Census",
+          "standard_place": "Lower Canada, British North America"
+        }
+      },
+      {
+        "id": "sd_p_14059483029",
+        "resource_type": "Person",
+        "title": "Hugh Emerson, 1825 Lower Canada Census, \"Canada, recensement du Bas-Canada, 1825\"",
+        "citation": "\"Canada, recensement du Bas-Canada, 1825\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHJ8-J5C : Tue Aug 18 11:08:57 UTC 2026), Hugh Emerson, 1825 Lower Canada Census, 1825.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KHJ8-J5C"
+      },
+      {
+        "id": "sd_auto_M922-43V",
+        "resource_type": "auto",
+        "title": "British North America, Residences, Census, from 1750 to 1998",
+        "coverage": {
+          "place_rep_id": "12730477",
+          "date_range": "+1750-01-01T00:00:00Z/+1998-12-31T23:59:59Z",
+          "standard_place": "British North America"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:9396-MWWN-1",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:9396-MWWN-1"
+  }
+}

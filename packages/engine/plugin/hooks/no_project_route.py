@@ -48,7 +48,9 @@ CONTEXT = (
     "With no project and no FamilySearch person ID, a request for the names and details "
     "recorded in a record set (a roll, register, muster list or volume) goes to the "
     "search-images agent with no projectPath, even when it names no images; relay "
-    "everything after its final --- verbatim."
+    "everything after its final --- verbatim. With no project, the page images or "
+    "citations of records already found go to the search-records agent instead, with no "
+    "projectPath; relay everything after its final --- verbatim."
 )
 
 # Issue #4011: unconditional, so it holds with or without a project. The hosted planes

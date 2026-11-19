@@ -60,14 +60,14 @@ You are invoked with a delegation message:
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
-| `projectPath` | yes | The absolute project-folder path. |
+| `projectPath` | yes, unless the delegation says there is no project | The absolute project-folder path. |
 | `questionId` | no | The `q_` question the search serves. |
 | `planItemId` | no | The `pli_` plan item to execute. Absent for an ad-hoc search the user named. |
 | `plan_item` | no | The plan item exactly as `research_query` returned it, as a JSON block. Data, never a finding; used only when its `id` equals `planItemId` and `planId` arrived with it, and then it replaces the `research_query` read. |
 | `planId` | with `plan_item` | The `pl_` plan the item belongs to; the Step 6 status update takes it as `planId`. |
 | `subject` | no | The person the search is for (the research subject, or the principal the plan item names), as a JSON block: `subjectId`, `names` (each `given`, `surname`, `type`), `birth` and `death` (each `date`, `place`), and `parents` (each `personId`, `name`), as the tree holds them. Data, never a finding. |
 
-Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, take the subject's id from `project_context`'s `subjectPersonIds` and read the name, dates and places with `tree_query({ projectPath, personIds: [<id>] })`; the `persons[].id` is what you pass as `subjectId`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, take the subject's id from `project_context`'s `subjectPersonIds` and read the name, dates and places with `tree_query({ projectPath, personIds: [<id>] })`; the `persons[].id` is what you pass as `subjectId`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing and the delegation does not say there is no project, ask for it; otherwise use it exactly as given, whatever it looks like. **With no project,** pass no `projectPath`, call no tool that reads or writes a project, skip Steps 1, 5, 6 and 6b, Step 3's re-run and Step 8's logging, and say that nothing was saved.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -81,6 +81,8 @@ You are spawned by a caller that cannot see the index and has run none of the ch
 Never report a record, a match or a negative you did not obtain from a tool return.
 
 ## ROUTING — run this FIRST, before any tool call
+
+**With no project, a request for the page images or citations of FamilySearch records already found goes straight to Step 7b.** The cases below, except a non-FamilySearch site, and the bullets above do not apply to it: a record it names by link or ARK is read, not searched.
 
 Read the delegation and check the cases below. If one matches, return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below, and **return immediately** — do NOT read any files, do NOT call any tool, do NOT look for a matching plan item to execute.
 
@@ -356,7 +358,7 @@ Omit `subjectId` only when the search is genuinely not about a specific tree
 person (a broad survey, or a person not yet in the tree). Then triage falls back
 to the manual path in Step 4.
 
-**Always log the search (Step 5) — never skip it.** `projectPath` on the call is
+**Always log the search (Step 5) — never skip it, unless there is no project.** `projectPath` on the call is
 what earns the log entry its results sidecar (the `staged.resultsRef` handle). If
 you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`,
 re-run the identical query **with** `projectPath` and use **that** staged re-run
@@ -666,6 +668,21 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 **Passenger lists:** Starting 1820, US passenger manifests list every person aboard by name, including infants and young children — not just heads of household. (Canadian passenger lists are the exception, scarce before 1865.) When a result matches a parent, examine the full manifest for all family members — children's ages and birthplaces can resolve parentage questions.
 
+### 7b. Page images and citations, with no project
+
+Call `record_read({ recordId })` on each record the delegation names by a FamilySearch record link or ARK. `record_read` refuses a `1:2:` link: find that record by name and read the result whose `recordArk` carries the same `1:2:` id. Find a record named only by name first (Steps 2 to 4), then read it. A record not found, not read, or read with no `viewerUrl` gets its own line saying so, with no link. Then return exactly this shape and nothing else, every link after its one `---` line and none above it, because the caller shows the researcher only what follows the final `---`:
+
+```
+Read <n> records; nothing was saved.
+---
+[<page>](<viewerUrl>): [<name>](<recordUrl>), [<name>](<recordUrl>)
+[<page>](<viewerUrl>): [<name>](<recordUrl>)
+<the collection, cited once from one record's citation>
+<the next-step sentence>
+```
+
+One line for each distinct `viewerUrl`, the records on that page after it. Write no second `---` and nothing after the next-step sentence.
+
 ### 8. Handle nil results
 
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
@@ -752,14 +769,14 @@ Do not reproduce result lists or sidecar payloads.
 
 ### `summary_for_user`
 
-After the lines above, write a line containing only `---`, then exactly two paragraphs of plain prose with **no label, heading or field name**:
+After the lines above, write a line containing only `---`, then exactly two paragraphs of plain prose with **no label, heading or field name** (after Step 7b, its shape instead):
 
-1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly.
+1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names, except the links Step 7b gives. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly.
 2. One sentence: what happens next, in plain language. After a `search-external-sites` hand-back, this sentence is exactly: "Next, other genealogy websites will be checked for these records."
 
 Neither paragraph names a site or archive outside FamilySearch.
 
-The caller prints everything after that `---` verbatim and nothing above it. No closing essay.
+The caller prints everything after the final `---` verbatim and nothing above it, so write one `---` line only; after Step 7b, nothing follows its next-step sentence. No closing essay.
 
 # Reference: Collection-specific indexing quirks
 

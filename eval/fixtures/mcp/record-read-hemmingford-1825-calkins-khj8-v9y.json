@@ -1,0 +1,95 @@
+{
+  "tool": "record_read",
+  "description": "record_read, captured live 2026-11-17 with dev/try-record-read.ts: Ashal Calkins, head of household in Hemmingford township, 1825 Lower Canada census (collection 1834346). His page image is ark:/61903/3:1:9396-MWWB-8, the only one of the five heads on that page. The mock compacts it as the server does, so the agent sees viewerUrl, recordUrl (the 1:2 household record), citation and collectionTitle. Issue #4583.",
+  "args": {
+    "recordId": "~KHJ8-V9Y"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14059483257",
+        "ark": "ark:/61903/1:1:KHJ8-V9Y",
+        "principal": true,
+        "names": [
+          {
+            "id": "3845e72f-57a7-4ec8-aa5f-873c25f0f0f7",
+            "type": "BirthName",
+            "suffix": "1825 Lower Canada Census",
+            "given": "Ashal",
+            "surname": "Calkins"
+          }
+        ],
+        "facts": [
+          {
+            "id": "c87bd34e-2274-41b3-8782-78cee0ffaeef",
+            "type": "Census",
+            "primary": true,
+            "date": "1825",
+            "standard_date": "1825",
+            "place": "Hemmingford (township), Huntingdon, Quebec, Canada"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22244870557",
+        "resource_type": "Record",
+        "title": "Foyer de Ashal Calkins, 1825 Lower Canada Census, \"Canada, recensement du Bas-Canada, 1825\"",
+        "citation": "\"Canada, recensement du Bas-Canada, 1825\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHJ8-V9Y : Tue Aug 18 10:58:07 UTC 2026), Entry for Ashal Calkins, 1825 Lower Canada Census, 1825.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MFD-5SR4",
+        "coverage": {
+          "date_range": "1825",
+          "record_type": "Census"
+        }
+      },
+      {
+        "id": "sd_c_1834346",
+        "resource_type": "Collection",
+        "title": "Canada, Lower Canada, Census, 1825",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1834346",
+        "coverage": {
+          "place_rep_id": "133",
+          "date_range": "1825/1825",
+          "record_type": "Census",
+          "standard_place": "Canada"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-8",
+        "coverage": {
+          "place_rep_id": "5783",
+          "date_range": "+1825-01-01T00:00:00Z/+1825-12-31T23:59:59Z",
+          "record_type": "Census",
+          "standard_place": "Lower Canada, British North America"
+        }
+      },
+      {
+        "id": "sd_p_14059483257",
+        "resource_type": "Person",
+        "title": "Ashal Calkins, 1825 Lower Canada Census, \"Canada, recensement du Bas-Canada, 1825\"",
+        "citation": "\"Canada, recensement du Bas-Canada, 1825\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHJ8-V9Y : Tue Aug 18 10:58:07 UTC 2026), Ashal Calkins, 1825 Lower Canada Census, 1825.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KHJ8-V9Y"
+      },
+      {
+        "id": "sd_auto_M922-43V",
+        "resource_type": "auto",
+        "title": "British North America, Residences, Census, from 1750 to 1998",
+        "coverage": {
+          "place_rep_id": "12730477",
+          "date_range": "+1750-01-01T00:00:00Z/+1998-12-31T23:59:59Z",
+          "standard_place": "British North America"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:9396-MWWB-8",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-8"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "tool": "record_search",
+  "description": "record_search, captured live 2026-11-17 with dev/try-record-search.ts, the shape the tester's search-records sent on #4583: surname Calkins, collection 1834346 (Canada, Lower Canada, Census, 1825), residencePlace Hemmingford, Huntingdon, Quebec, Canada, residence year 1825. Returns Elisha and Ashal Calkins (KHJ8-JTQ, KHJ8-V9Y), each recordId in the ark:/61903/1:1: form. Matches any surname containing \"Calkin\".",
+  "args": {
+    "surname": "~Calkin"
+  },
+  "response": {
+    "query": {
+      "collectionId": "1834346",
+      "residencePlace": "Hemmingford, Huntingdon, Quebec, Canada",
+      "residenceYearFrom": 1825,
+      "residenceYearTo": 1825,
+      "count": 30,
+      "surname": "Calkins"
+    },
+    "totalMatches": 2,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "placeExpansion": {
+      "searches": [
+        {
+          "places": {
+            "residencePlace": "Hemmingford, Huntingdon, Quebec, Canada"
+          },
+          "totalMatches": 2,
+          "returned": 2
+        },
+        {
+          "places": {
+            "residencePlace": "Hemmingford, Les Jardins-de-Napierville, Quebec, Canada"
+          },
+          "totalMatches": 0,
+          "returned": 0
+        },
+        {
+          "places": {
+            "residencePlace": "Hemmingford, Huntingdon, Canada East, British North America"
+          },
+          "totalMatches": 2,
+          "returned": 2
+        },
+        {
+          "places": {
+            "residencePlace": "Hemmingford, Huntingdon, Lower Canada, British North America"
+          },
+          "totalMatches": 2,
+          "returned": 2
+        }
+      ],
+      "mergedCount": 2,
+      "note": "The place was searched under every name FamilySearch has for it and the records merged without duplicates, because an index finds a record only under the name it standardized the place to; totalMatches is the largest single search's total, and each search's own is listed here."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:KHJ8-V9Y",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1825",
+            "place": "Hemmingford (township), Huntingdon, Quebec, Canada"
+          }
+        ],
+        "personName": "Ashal Calkins, 1825 Lower Canada Census",
+        "collectionId": "1834346",
+        "recordTitle": "Foyer de Ashal Calkins, 1825 Lower Canada Census, \"Canada, recensement du Bas-Canada, 1825\"",
+        "recordArk": "ark:/61903/1:2:9MFD-5SR4",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:KHJ8-JTQ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1825",
+            "place": "Hemmingford (township), Huntingdon, Quebec, Canada"
+          }
+        ],
+        "personName": "Elisha Calkins, 1825 Lower Canada Census",
+        "collectionId": "1834346",
+        "recordTitle": "Foyer de Elisha Calkins, 1825 Lower Canada Census, \"Canada, recensement du Bas-Canada, 1825\"",
+        "recordArk": "ark:/61903/1:2:9MFD-5SKX",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1834346": "Canada, Lower Canada, Census, 1825"
+    }
+  }
+}

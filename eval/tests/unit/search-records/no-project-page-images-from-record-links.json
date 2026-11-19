@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_records_img1",
+    "skill": "search-records",
+    "name": "With no project, reads five linked census records and links each page and the records on it",
+    "type": "positive",
+    "description": "Issue #4583. Direct-agent arm in an empty folder, with no projectPath. The router hands search-records an ask for the citations and page images of five 1825 Lower Canada census heads in Hemmingford, each given as a FamilySearch record link (the 1:1 persona link). Step 7b: the agent reads each record with record_read and no projectPath, and after its final `---` gives one line per page, the page linked by its viewerUrl and the records on it linked by their recordUrl, and cites the collection once. Three pages: 3:1:9396-MWWN-1 holds William Brisbin, Joseph Brisbin and Hugh Emerson; 3:1:9396-MWWB-Q holds Elisha Calkins; 3:1:9396-MWWB-8 holds Ashal Calkins. The records are named by link, so it searches nothing, and with no project it writes nothing. All five reads are live captures (2026-11-17).",
+    "tags": [
+      "no-project",
+      "page-images",
+      "gives-record-image-links",
+      "no-project-writes-nothing",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "There is no project; there is no projectPath. The researcher wrote:\n\nGive me the citations and the page images on FamilySearch for these 1825 census records from Hemmingford:\nWilliam Brisbin https://www.familysearch.org/ark:/61903/1:1:KHJ8-J56\nJoseph Brisbin https://www.familysearch.org/ark:/61903/1:1:KHJ8-J5Z\nHugh Emerson https://www.familysearch.org/ark:/61903/1:1:KHJ8-J5C\nElisha Calkins https://www.familysearch.org/ark:/61903/1:1:KHJ8-JTQ\nAshal Calkins https://www.familysearch.org/ark:/61903/1:1:KHJ8-V9Y\n\nCollection: Canada, Lower Canada, Census, 1825. Place: Hemmingford, Huntingdon, Quebec, Canada.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "record-read-hemmingford-1825-brisbin-khj8-j56",
+    "record-read-hemmingford-1825-brisbin-khj8-j5z",
+    "record-read-hemmingford-1825-emerson-khj8-j5c",
+    "record-read-hemmingford-1825-calkins-khj8-jtq",
+    "record-read-hemmingford-1825-calkins-khj8-v9y"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm with NO project: the folder is empty and the delegation carries no projectPath. The agent reads the five records with record_read and no projectPath. Logging is NOT expected: a research_log_append, research_append or extraction_append call, or any call carrying a projectPath, is a fault, not thoroughness. Saying plainly that nothing was saved is correct.",
+    "Every record was named by its FamilySearch link, so a record_search call is a fault: the agent's own instructions say a record named by link is read, not searched. No fixture answers a search here.",
+    "The record_read answers give three pages. https://www.familysearch.org/ark:/61903/3:1:9396-MWWN-1 holds William Brisbin (record https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJP), Joseph Brisbin (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJ2) and Hugh Emerson (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SJK). https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-Q holds Elisha Calkins (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SKX). https://www.familysearch.org/ark:/61903/3:1:9396-MWWB-8 holds Ashal Calkins (https://www.familysearch.org/ark:/61903/1:2:9MFD-5SR4). The collection is \"Canada, Lower Canada, Census, 1825\" (FamilySearch's own citation names it \"Canada, recensement du Bas-Canada, 1825\").",
+    "Each page link is a record_read answer's viewerUrl and each record link its recordUrl (the 1:2 household record): both are in the tool answers, so neither is fabricated.",
+    "PASS requires, after the agent's final `---` line: each page as a markdown link to its viewerUrl with the heads on that page, each as a markdown link to its recordUrl, every page and head above present and on the right page, and the collection cited once. One line per page is the instructed layout; a paragraph that links every page and head with the right grouping is a partial, not a fail. A page or a head that is missing, put on the wrong page, or given as a bare ARK or a link the tool answers did not give, is a fail. A deterministic validator (gives-record-image-links) checks that every link is present; grade the grouping and the citation.",
+    "The block after `---` MAY carry these links: the agent's return contract allows the links Step 7b gives in place of the usual plain-prose first paragraph. Do not mark it down for identifiers or for being a list."
+  ]
+}
