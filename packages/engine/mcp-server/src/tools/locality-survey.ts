@@ -6,7 +6,7 @@ import { collectionsSearchTool } from "./collections-search.js";
 import { volumeSearchTool } from "./volume-search.js";
 import { catalogSearchTool } from "./catalog-search.js";
 import { externalLinkRows } from "./external-links-search.js";
-import { findPlacePage, placeTypeOf, topicPageNamesOtherPlace } from "./wiki-place-page.js";
+import { findPlacePage, placeTypeOf, searchHelpLink, topicPageNamesOtherPlace } from "./wiki-place-page.js";
 import { collectionNoticesFor, fetchPage, FS_WIKI_BASE } from "../utils/wiki-page-fetch.js";
 import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
 import { LOCALITY_GUIDE_OUTLINE } from "../utils/locality-guide-sections.js";
@@ -30,6 +30,8 @@ const VITAL_RECORDS_SHARE = 6_000;
 /** The naming-customs page goes in next, up to this much: the body takes a jurisdiction's
  *  naming practice only from it. */
 const NAMING_CUSTOMS_SHARE = 3_000;
+/** The search-tips page the research-tips page links (how the place's records were indexed). */
+const SEARCH_HELP_SHARE = 2_000;
 /** The church-records page, the main source before civil registration, up to this much. */
 const CHURCH_RECORDS_SHARE = 3_000;
 /** Pages read first, each up to its own share, before the rest are ranked; within one, the
@@ -38,6 +40,7 @@ const RESERVED_PAGES: ReadonlyArray<readonly [string, number, RegExp]> = [
   ["vitalRecords", VITAL_RECORDS_SHARE, /regist|birth|death|marriage|vital|civil|certificate|index/i],
   ["churchRecords", CHURCH_RECORDS_SHARE, /church|parish|register|baptis|christen|denomination|record/i],
   ["namingCustoms", NAMING_CUSTOMS_SHARE, /given name|naming|nickname|patronym|surname|name/i],
+  ["searchHelp", SEARCH_HELP_SHARE, /search|index|surname|tip|name/i],
 ];
 /** How long the survey waits for the place's type before it decides on the parent level. */
 const TYPE_LOOKUP_MS = 8_000;
@@ -75,7 +78,7 @@ const RECORD_HEADING =
 const SECTION_CAP = 6_000;
 
 /** The topic pages the survey reads by slug, outside `pagesRead`. */
-const TOPIC_KEYS = ["vitalRecords", "churchRecords", "namingCustoms"] as const;
+const TOPIC_KEYS = ["vitalRecords", "churchRecords", "namingCustoms", "searchHelp"] as const;
 
 /** Every heading of the guide template, `## ` and `### `, in order: the guide's structure,
  *  returned with the survey so the agent writes it under these headings whatever it found. */
@@ -544,6 +547,12 @@ export async function runLocalitySurvey(
   const [popR, colR, volR, catR, linkR, homeR, secR, vitalR, churchR, namingR] = await Promise.all([
     population, collections, volumes, catalog, links, home, sections, vital, church, naming,
   ]);
+  // The search-tips page the research-tips page links: where a place's indexing rules are.
+  const tipsR = secR[SECTION_PAGES.indexOf("research_tips")];
+  const helpLink = "error" in tipsR || !tipsR.value ? null : searchHelpLink(tipsR.value.content);
+  const helpR = helpLink
+    ? await climb([helpLink.url], async (url) => deps.page(url, noticesBy), (page) => page !== null, deadlineAt, now)
+    : ({ error: "none found", missing: true } as const);
 
   // External links: each level stored with its own rows, only when it settled in time.
   if (deps.recordLinks) {
@@ -630,6 +639,7 @@ export async function runLocalitySurvey(
   addPage("vitalRecords", vitalR);
   addPage("churchRecords", churchR);
   addPage("namingCustoms", namingR);
+  addPage("searchHelp", helpR);
   addPage("home", homeR);
   SECTION_PAGES.forEach((s, i) => addPage(s, secR[i]));
 

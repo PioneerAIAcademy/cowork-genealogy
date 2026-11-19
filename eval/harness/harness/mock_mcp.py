@@ -3084,6 +3084,30 @@ _COLLECTION_PAGE_LINK = re.compile(
     r"https://www\.familysearch\.org/en/wiki/([^\s()\"#?]+?_-_FamilySearch_Historical_Records)(?=[\s()\"#?]|$)"
 )
 _WIKI_BASE = "https://www.familysearch.org/en/wiki/"
+#: `WIKI_LINK` and `SEARCH_HELP_TITLE` in tools/wiki-place-page.ts: a titled wiki link, and
+#: the titles that make it the page on searching a place's records.
+_TITLED_WIKI_LINK = re.compile(r"\]\(https://www\.familysearch\.org/en/wiki/([^)\s\"]+)\s+\"([^\"]+)\"\)")
+_SEARCH_HELP_TITLE = re.compile(r"\b(search results|search tips|searching)\b", re.IGNORECASE)
+
+
+def _survey_search_help(manifest: dict[str, Any], answers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The search-tips page each research-tips answer links (production's `searchHelpLink`),
+    answered from the test's own `wiki_read` fixtures, as extra planned answers."""
+    extra = []
+    for a in answers:
+        if a["tool"] != "wiki_place_page" or a["args"].get("section") != "research_tips":
+            continue
+        value = (a.get("answer") or {}).get("value")
+        content = value.get("content") if isinstance(value, dict) else None
+        if not isinstance(content, str):
+            continue
+        for slug_, title in _TITLED_WIKI_LINK.findall(content):
+            if _SEARCH_HELP_TITLE.search(title):
+                url = _WIKI_BASE + slug_
+                answer, matched = _survey_answer(manifest, "wiki_read", {"url": url})
+                extra.append({"tool": "wiki_read", "args": {"url": url}, "answer": answer, "matched": matched})
+                break
+    return extra
 
 
 def _survey_collection_pages(manifest: dict[str, Any], answers: list[dict[str, Any]]) -> dict[str, str]:
@@ -3198,6 +3222,9 @@ def _make_locality_survey_handler(
                     answer, matched = _survey_answer(manifest, call["tool"], call["args"])
                     answers.append({"tool": call["tool"], "args": call["args"], "answer": answer})
                     parts.append({"tool": call["tool"], "args": call["args"], "matched": matched})
+                for extra in _survey_search_help(manifest, answers):
+                    parts.append({"tool": "wiki_read", "args": extra["args"], "matched": extra.pop("matched")})
+                    answers.append(extra)
                 run_script = (
                     f"import {{ runLocalitySurvey }} from '{_node_module_url(survey_js)}';"
                     f" import {{ dedupeCollections, recordExternalCollections }} from '{_node_module_url(store_js)}';"

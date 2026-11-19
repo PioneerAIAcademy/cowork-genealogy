@@ -367,6 +367,14 @@ export const SEARCH_HELP_TITLE = /\b(search results|search tips|searching)\b/i;
 const SEARCH_HELP_MAX_CHARS = 8_000;
 const WIKI_LINK = /\]\(https:\/\/www\.familysearch\.org\/en\/wiki\/([^)\s"]+)\s+"([^"]+)"\)/g;
 
+/** The first page `content` links whose link title says it is about searching records. */
+export function searchHelpLink(content: string): { url: string; title: string } | null {
+  for (const [, slug, title] of content.matchAll(WIKI_LINK)) {
+    if (SEARCH_HELP_TITLE.test(title)) return { url: `${FS_WIKI_BASE}/${slug}`, title };
+  }
+  return null;
+}
+
 /**
  * The first page the research-tips text links whose link title matches `SEARCH_HELP_TITLE`,
  * read and cut to `SEARCH_HELP_MAX_CHARS`. Undefined when none is linked, it cannot be read, or
