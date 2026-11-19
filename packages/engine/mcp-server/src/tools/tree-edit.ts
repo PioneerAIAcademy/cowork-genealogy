@@ -1313,7 +1313,9 @@ async function treeWriteWarnings(
 
   for (const before of beforeTree.relationships ?? []) {
     const after = before.id !== undefined ? afterEdges.get(before.id) : undefined;
-    if (!after || after.type !== "ParentChild" || sameSubtype(before, after)) continue;
+    const raw = (r: any) => (typeof r?.subtype === "string" ? r.subtype.trim().toLowerCase() : "");
+    // Raw strings: an untyped edge retyped to Biological is a change (Decision 11).
+    if (!after || after.type !== "ParentChild" || raw(before) === raw(after)) continue;
     const named = claims.some(
       (c: any) =>
         c?.polarity !== "denied" &&

@@ -175,8 +175,9 @@ export function joinedPairRefusals(tree: SimplifiedGedcomX, merges: Array<[strin
   if (lines.length === 0) return [];
   return [
     ...lines,
-    "Two people a relationship joins are not one person. If they are, remove that relationship with " +
-      "tree_correct (operation 'remove', relationshipId) and merge again; otherwise do not merge.",
+    "Two people a relationship joins are not one person: do not merge them. Report the relationship. " +
+      "If it is itself wrong, that is a separate correction for the researcher to make from a record, " +
+      "not a step to clear this refusal.",
   ];
 }
 

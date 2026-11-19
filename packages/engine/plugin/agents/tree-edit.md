@@ -58,7 +58,7 @@ tools:
 
 **Narration:** Call `project_context({ projectPath, include: ["status"] })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
-**Claims:** that call's `status` rows give each tree fact and edge the `claim` covering it (`summaryId`, `claim`, `tier`) and any `subtypeLabel`. When it returns no `claimKinds`, the engine predates claims: set `primary` on a value a proof summary at `probable` or better concludes, and merge on such a summary's identity conclusion, as before.
+**Claims:** that call's `status` rows give each tree fact and edge the `claim` covering it (`summaryId`, `claim`, `tier`) and any `subtypeLabel`. When it returns no `claimKinds`, set `primary` on a value a proof summary at `probable` or better concludes, and merge on such a summary's identity conclusion.
 
 **Places:** When resolving or writing places, follow Appendix C — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
@@ -213,9 +213,10 @@ A tree edit is justified when it fits one of the two layers:
   record already cited.)
 - **A concluded value** — mark a fact `primary` only when its status
   row shows a covering claim at `probable` or better; a fact with no such
-  claim returns a `Will be refused:` warning naming it. Concluding a relationship no
-  single record states is proof-gated the same way; materializing the
-  underlying evidence is not.
+  claim returns a `Will be refused:` warning naming it. Mark a name
+  `preferred`, or conclude a relationship no single record states, only on
+  a proof conclusion at `probable` or better; materializing the underlying
+  evidence is not gated.
 - **An objective-error correction** (typo, transcription mistake) that
   is verifiable against the cited source.
 

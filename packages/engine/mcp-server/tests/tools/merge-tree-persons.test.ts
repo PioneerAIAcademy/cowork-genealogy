@@ -373,6 +373,17 @@ describe("merge_tree_persons: the claim warnings (Decision 13)", () => {
     }
   });
 
+  it("a record identity covers only through its own record, not another record it cites", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+      [ps("ps_001", [{ claim: "rec1 is him", proof_tier: "probable", supporting_assertion_ids: ["a_001", "a_002"], identity: { record_id: "rec1", party: "principal", person: "I1" } }])],
+      // a_002 is from rec2 and linked to I5; rec1's own persona has no tie to I5.
+      { ...evidence, person_evidence: [link("pe_001", "a_002", "I5")] },
+    );
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
+  });
+
   it("an identity claim at possible, or denied, does not cover the merge", async () => {
     for (const extra of [{ proof_tier: "possible" }, { polarity: "denied" }]) {
       await writeProject(
@@ -495,7 +506,8 @@ describe("merge_tree_persons: pair and namesake checks", () => {
       relationships: [parentChild("R1", "I50", "I51")],
     }));
     expect(m).toContain("relationship 'R1' (ParentChild) joins 'I50' and 'I51', a pair in this merge");
-    expect(m).toContain("remove that relationship with tree_correct (operation 'remove', relationshipId)");
+    expect(m).toContain("do not merge them. Report the relationship.");
+    expect(m).not.toMatch(/remove that relationship|merge again/);
   });
 
   it("MF3c refuses a pair a Couple relationship joins", async () => {

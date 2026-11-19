@@ -1748,6 +1748,8 @@ describe("tree_edit", () => {
       warningJustifications: [{ warningId: "retypeUnclaimed|R1|Step", justification: "The step-parent deed names him." }],
     } as any);
     expect(r.ok).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.warning_justifications.map((j: any) => j.warning_id)).toContain("retypeUnclaimed|R1|Step");
     const tree: any = await readTree();
     expect(tree.relationships).toHaveLength(1);
     expect(tree.relationships[0]).toMatchObject({ id: "R1", subtype: "Step" });
@@ -1770,6 +1772,14 @@ describe("tree_edit", () => {
     });
     const ok: any = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
     expect(ok.ok, JSON.stringify(ok)).toBe(true);
+  });
+
+  it("retyping an untyped edge to Biological is a retype no claim names, and warns", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    const r: any = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Biological" } as any);
+    expect(r.warnings?.map((w: any) => w.warningId)).toEqual(["retypeUnclaimed|R1|Biological"]);
   });
 
   it("removing an imported Couple edge raises one warning, not one more per fact it held", async () => {
@@ -2096,6 +2106,8 @@ describe("tree_edit", () => {
     } as any);
     // removing the only Birth is structurally fine (person still has a name); validates.
     expect(ok.ok).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.warning_justifications.map((j: any) => j.warning_id)).toContain("removeImport|I1|F1");
     expect((await readTree()).persons[0].facts).toHaveLength(0);
 
     const bad = await treeCorrect({ projectPath: dir, operation: "remove", personId: "I1" });

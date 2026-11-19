@@ -262,7 +262,7 @@ export function identityCoversMerge(claim: any, research: any, summaries: readon
   }
   if (typeof idn.record_id !== "string" || !pair.has(idn.person)) return false;
   const other = idn.person === survivor ? collapsed : survivor;
-  return citedIds(claim).some((id) => ev.tiedTo(id).has(other));
+  return citedIds(claim).some((id) => recordIdOf(ev.assertions.get(id)) === idn.record_id && ev.tiedTo(id).has(other));
 }
 
 /** Rule 12 for the status lookup: a `proved` claim that would stand at probable. */

@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "delegation": "R1 between William Price (I2) and Thomas Hughes (I1) should say step-parent, not just parent. Fix the relationship type.\n\nprojectPath: <workspace>",
+    "delegation": "R1 between William Price (I2) and Thomas Hughes (I1) should be a Step relationship (William is Thomas's step-father), not a plain parent-child one. Fix the relationship type.\n\nprojectPath: <workspace>",
     "scenario": "retype-claimed-subtype"
   },
   "mcp_fixtures": [],
