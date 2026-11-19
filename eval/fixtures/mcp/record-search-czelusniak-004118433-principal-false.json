@@ -1,0 +1,146 @@
+{
+  "tool": "record_search",
+  "description": "Issue #4348. The isPrincipal: false half of the Czelusniak / DGS 004118433 survey split. totalMatches 239 (of 424 unfiltered), confirmed live on 2026-11-10. Row 1 is the one the test exists to protect: the Mathias Opiekum x Marianna Czelusniak marriage, a non-principal hit a silent isPrincipal: true narrowing drops entirely. Must be listed before record-search-czelusniak-004118433.json (the unfiltered catch-all) in a test's mcp_fixtures, since the catch-all's args omit isPrincipal and would otherwise shadow this one.",
+  "args": {
+    "surname": "~Czelusniak",
+    "isPrincipal": false
+  },
+  "response": {
+    "query": {
+      "surname": "Czelusniak",
+      "collectionId": "4135958"
+    },
+    "totalMatches": 239,
+    "paginationCappedAt": 4999,
+    "returned": 10,
+    "offset": 0,
+    "hasMore": true,
+    "rankingSkipped": "No subjectId provided — results are in FamilySearch relevance order.",
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:6V91-SLZ6",
+        "personName": "Marianna Czelusniak",
+        "score": 0.87,
+        "sex": "Female",
+        "role": "Spouse",
+        "events": [
+          { "type": "Marriage", "date": "15 May 1843", "place": "Lipinki, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-SLZ6",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-MOT1",
+        "personName": "Zofia Czelusniak",
+        "score": 0.8,
+        "sex": "Female",
+        "role": "Mother",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-MOT1",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-MOT2",
+        "personName": "Marya Czelusniakowna",
+        "score": 0.79,
+        "sex": "Female",
+        "role": "Mother",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-MOT2",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-FAT1",
+        "personName": "Jan Czelusniak",
+        "score": 0.78,
+        "sex": "Male",
+        "role": "Father",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-FAT1",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-FAT2",
+        "personName": "Wojciech Czelusniak",
+        "score": 0.77,
+        "sex": "Male",
+        "role": "Father",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-FAT2",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-OTH1",
+        "personName": "Agata Czelusiazonka",
+        "score": 0.74,
+        "sex": "Female",
+        "role": "Other",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-OTH1",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-OTH2",
+        "personName": "Franciszek Czelusniak",
+        "score": 0.73,
+        "sex": "Male",
+        "role": "Other",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-OTH2",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-SPO2",
+        "personName": "Katarzyna Czelusniak",
+        "score": 0.72,
+        "sex": "Female",
+        "role": "Spouse",
+        "events": [
+          { "type": "Marriage", "date": "11 February 1838", "place": "Pagorzyna, Gorlice, Województwo Rzeszów, Polska" }
+        ],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-SPO2",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-FAT3",
+        "personName": "Michal Czelusniak",
+        "score": 0.71,
+        "sex": "Male",
+        "role": "Father",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-FAT3",
+        "treeMatches": []
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V91-MOT3",
+        "personName": "Anna Czelusniak",
+        "score": 0.7,
+        "sex": "Female",
+        "role": "Mother",
+        "events": [],
+        "collectionId": "4135958",
+        "collectionTitle": "Poland, Church Books, 1600-1950",
+        "recordArk": "ark:/61903/1:2:6V91-MOT3",
+        "treeMatches": []
+      }
+    ]
+  }
+}
