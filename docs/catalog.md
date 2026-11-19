@@ -36,7 +36,7 @@ under [Connector only](#connector-only).
 | `image_index` | Lists the records FamilySearch has indexed on one page image (its `3:1:` ARK or viewer URL), reading each record for the persona arks and names on it; capped per call with `nextOffset`, and marked unordered (`ordered: false`) because the list's order is not verified as the page's line order | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
-| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. With `item` / `itemImage` on a bare film number, resolves a "DGS 004528134, Item 5, Image 10" citation to its image ID. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
+| `image_search` | Counts the images in one image group (digitized volume) given its image group number and returns their ids as ranges — feeds `image_transcribe` / `image_read`. With `item` / `itemImage` on a bare film number, resolves a "DGS 004528134, Item 5, Image 10" citation to its image ID. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
 | `same_person` | Asks FamilySearch whether two people are the same — a 0–1 score. Takes either two GedcomX documents, or project references (`projectPath`, `assertionId`, `treePersonId`) and assembles both sides itself, recording the score it computed | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
@@ -54,7 +54,7 @@ under [Connector only](#connector-only).
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
+| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server; returns references (page, section, URL) by default, section text with `includeText` | None |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
 | `wiki_place_page` | A FamilySearch Research Wiki page for a place — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`. `home` resolves the place's own page at any level the wiki has one (country, state or province, county, parish, independent city); the other three exist only for a country or a state/province | None |
 
@@ -133,10 +133,10 @@ ask for a login when a search fails on authentication.
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`
 tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
-sidecar APIs (Pop Stats and `wiki-query-api`) that have no public
-deployment yet: the compiled-in defaults point at one developer's machine.
-`wikiApiUrl` and `popStatsUrl` in `~/.familysearch-mcp/config.json` override
-them (CLAUDE.md, "External service dependencies").
+sidecar APIs (Pop Stats and `wiki-query-api`); the compiled-in defaults point at
+a developer's host, publicly reachable through Tailscale Funnel, so every install
+reaches it. `wikiApiUrl` and `popStatsUrl` in `~/.familysearch-mcp/config.json`
+override them (CLAUDE.md, "External service dependencies").
 
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an

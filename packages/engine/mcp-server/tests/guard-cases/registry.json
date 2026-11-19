@@ -22,6 +22,15 @@
       }
     },
     {
+      "name": "attached-birth-proof",
+      "status": "enforcing",
+      "case_file": "attached-birth-proof.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "attachedBirthProofInvariants"
+      }
+    },
+    {
       "name": "namesake-tie",
       "status": "enforcing",
       "case_file": "namesake-tie.json",
@@ -64,6 +73,15 @@
       "writer_guard": {
         "file": "packages/engine/mcp-server/src/tools/research-append.ts",
         "function": "planItemVoidSearchInvariants"
+      }
+    },
+    {
+      "name": "core-identifier-contradiction",
+      "status": "enforcing",
+      "case_file": "core-identifier-contradiction.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "coreIdentifierContradictionInvariants"
       }
     }
   ],
