@@ -190,6 +190,23 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Added with the hook route on `sources` (issue #2475, row from issue #1874).
+  // The hook tells a denied main thread to invoke citation for a citation
+  // refinement, so the agent side pins that citation never creates a source.
+  "research -> citation": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "Refining an existing source's citation goes to `@plugin:citation`, which never creates a source.",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "Never creates a source entry - it refines one extraction already created, and declines when asked to create one.",
+      },
+    ],
+  },
+
   // The three rows /research routes by spawning the agent directly (#2075).
   // All three share one caller-side paragraph, because the failure they guard
   // against is the same one: on the direct route the agent's own body is not
@@ -677,21 +694,16 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 //     would satisfy the quote check. Already true of every pin here, so it is a
 //     property of the mechanism rather than something this adds.
 //
-// THE `citation` ROWS ARE A DIFFERENT SHAPE, and worth reading before adding
-// more like them. `citation` (issue #2799) is the first agent whose name is
-// also an ordinary English word, and `namesAgent` tokenizes and matches any
-// token CONTAINING the name — so "citation", "citations" and "inline citation
-// of individual claims" all trip arm 2 in skills that have nothing to do with
-// the agent. Of the six below, only `record-extraction` means the agent
-// (boundary prose: "format citations (use citation)"); the other five are the
-// common noun. All six are bare-name mentions, so all six take `""` and
-// none can suppress a real delegation.
+// `citation` is an agent whose name is also an ordinary English word, and
+// `namesAgent` tokenizes and matches any token CONTAINING the name, so
+// "citation-before-analysis" trips arm 2 in research/SKILL.md. Its row went when
+// research began delegating to `@plugin:citation` (issue #2475, row from issue
+// #1874): that is now a real edge, and a row here would shadow it.
 //
 // The arm still earns its place for `gps-mentor` and `record-extractor`, whose names no one writes by accident. It does not
 // discriminate for `citation` — a single-word agent name whose bare form can
 // appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
-  ["research -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
@@ -1147,6 +1159,7 @@ describe("agent delegation framing", () => {
       "the hook routes to an agent set this test could not resolve. It reads " +
         "OWNED_SECTIONS, OWNED_DECLARATIONS, OWNED_FIELDS and OWNED_APPENDS; if the routing moved, follow it.",
     ).toEqual([
+      "citation",
       "evaluate-search-results",
       "gps-mentor",
       "person-evidence",

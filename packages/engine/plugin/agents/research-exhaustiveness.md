@@ -14,8 +14,8 @@ description: >-
   question-selection), to plan more searches (use research-plan), to write the
   proof conclusion (use proof-conclusion), or to resolve a conflict (use
   conflict-resolution).
-model: claude-sonnet-5
-effort: medium
+model: claude-haiku-5-5
+effort: low
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
@@ -213,7 +213,11 @@ decline names the blocking criterion and its assessment in `justification`.
   is closed instead, this is the DECLINE (§"The decline"), which writes the
   stop and offers the researcher the choice rather than picking for them. **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
-  - A skipped item's recorded reason is **fact**. Accept it as written. Most
+  - A skipped item's recorded reason is **fact** when it says what happened
+    (`inaccessible`, `no_coverage`, `user_declined`,
+    `fallback_not_triggered`). Accept it as written. `answered` is a claim,
+    not a fact: test it against the seven criteria with that record
+    unsearched, and decline when one fails. Most
     skipped items carry no `skip_category`; its absence says nothing. A
     skipped **decisive** record still gates (below) unless its recorded reason
     is inaccessibility.
@@ -254,7 +258,8 @@ decline names the blocking criterion and its assessment in `justification`.
 ## The decline
 
 Every active-plan item is closed or waiting only on an upload, and a genuinely
-unsearched source remains. Also reached from a `premise_invalidated` verdict
+unsearched source remains. If the Step 1 `wiki_read` has not been called
+yet, call it now, before the write below. Also reached from a `premise_invalidated` verdict
 and the tentative-value (b) path. Write:
 
 - `stopped_because: "resources_spent"`, `stop_criteria: null`, `status` unchanged;
@@ -363,8 +368,9 @@ A `not_reached` entry for a hand-off the user never returned:
 
 **Early termination** (`resources_spent` or `blocked_by_conflict`) — leave
 `status` as `"in_progress"`; pass only `search_stop`, NOT `status`.
-`stop_criteria` must be `null` for non-gate values. Build `not_reached` per
-§"Build `not_reached`":
+`stop_criteria` must be `null` for non-gate values. A `resources_spent` write
+follows the Step 1 `wiki_read`: if it has not been called, call it first. Build
+`not_reached` per §"Build `not_reached`":
 
 ```
 research_append({
@@ -426,7 +432,9 @@ the offending field — do not blindly retry the same payload.
   probate; marriage: the marriage record) — or the draft conclusion
   itself names a record as tier-advancing — do not declare until that
   record has been searched or the declaration explicitly justifies why
-  it is inaccessible. Where civil registration existed, the subject's
+  it is inaccessible. When the death certificate is recorded as sealed or destroyed and
+  the log holds the subject's obituary naming the parents, the death
+  certificate is not a gap. Where civil registration existed, the subject's
   own birth record outranks the death record for parentage. Where the
   jurisdiction's own registration began after that date, its absence is
   not a gap, and the baptism is what to gate on instead. If the `wiki_read` call
@@ -438,6 +446,9 @@ the offending field — do not blindly retry the same payload.
   **sealed by privacy law** (e.g. a recent birth certificate still inside
   its statutory embargo, heir-request only) counts as inaccessible: note the
   limitation and declare on the accessible evidence; do not gate on it.
+  The other decisive records for the question still gate: each is
+  searched, or skipped with a recorded reason that it is sealed, destroyed
+  or was never kept; one the project never mentions blocks the declaration.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary

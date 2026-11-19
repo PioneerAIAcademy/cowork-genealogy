@@ -119,6 +119,28 @@
           "rationale": "Alan's own 1936 Utah birth certificate would name his parents directly. NOT obtainable: Utah birth records are sealed by privacy law for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. Not a reasonably available record for this project.",
           "fallback_for": null,
           "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 8,
+          "record_type": "vital",
+          "jurisdiction": "Utah",
+          "date_range": "1936",
+          "repository": "FamilySearch",
+          "rationale": "Utah Births and Christenings, 1892-1941 (FamilySearch index, collection 1675542) could index Alan's 1936 birth or christening with his parents' names. Searched; no entry for Alan.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 9,
+          "record_type": "vital",
+          "jurisdiction": "Utah",
+          "date_range": "2023",
+          "repository": "Utah Office of Vital Records and Statistics",
+          "rationale": "Alan's 2023 Utah death certificate would name his parents. NOT obtainable: Utah keeps death certificates closed for 50 years after the death (public 2073), released before then only to immediate family or a legal representative. Not a reasonably available record for this project.",
+          "fallback_for": null,
+          "status": "skipped"
         }
       ]
     }
@@ -231,6 +253,37 @@
       "results_examined": 0,
       "notes": "Alan's 1936 Utah birth certificate is NOT publicly accessible: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. The record exists but is not reasonably obtainable for this project. Not an exhaustiveness gap; do not recommend obtaining it as a routine next step.",
       "external_site": null
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-14T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "given": "Alan",
+        "collection": "Utah Births and Christenings, 1892-1941"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Utah Births and Christenings, 1892-1941 (FamilySearch collection 1675542, the online birth index the Utah Vital Records wiki page lists for 1936) searched for Alan Glen Applegarth, b. 1936 Ogden, with surname variants: no entry. The index does not cover his birth.",
+      "external_site": null
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-14T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "given": "Alan",
+        "death_year": 2023,
+        "collection": "Utah Death Certificates"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Alan's 2023 Utah death certificate is NOT publicly accessible: Utah keeps death certificates closed for 50 years after the death (public 2073), released before then only to immediate family or a legal representative. The record exists but is not reasonably obtainable for this project.",
+      "external_site": null
     }
   ],
   "sources": [
@@ -277,7 +330,7 @@
     {
       "id": "src_003",
       "gedcomx_source_description_id": "S3",
-      "citation": "Weber County, Utah, marriage record, John Obrien Applegarth and Olive Annie Harvey, 20 October 1926; FamilySearch.org, accessed 14 July 2026.",
+      "citation": "Weber County, Utah, marriage record, John Obrien Applegarth and Olive Annie Harvey, 20 October 1926; digital image, FamilySearch.org, accessed 14 July 2026.",
       "citation_detail": {
         "who": "Weber County Clerk",
         "what": "County marriage record",
@@ -319,7 +372,7 @@
     {
       "id": "a_001",
       "source_id": "src_003",
-      "record_id": "ancestry:weber-marriages:1926-applegarth-harvey",
+      "record_id": "ark:/61903/1:1:APPLEGARTH-HARVEY-1926",
       "record_role": "groom",
       "fact_type": "name",
       "value": "John Obrien Applegarth",
@@ -343,7 +396,7 @@
     {
       "id": "a_002",
       "source_id": "src_003",
-      "record_id": "ancestry:weber-marriages:1926-applegarth-harvey",
+      "record_id": "ark:/61903/1:1:APPLEGARTH-HARVEY-1926",
       "record_role": "bride",
       "fact_type": "name",
       "value": "Olive Annie Harvey",

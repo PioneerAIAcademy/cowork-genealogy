@@ -424,8 +424,9 @@ message.
    records by **one** `extraction_append({ projectPath, recordIds, questionIds })`
    call for the whole batch, and every other source (a transcription, a PDF,
    pasted text) by **one** `@plugin:record-structurer` spawn for the batch.
-   Relay the summary each returns, verbatim. Classifications come from the
-   extraction table and are final: never re-derive `record_basis` /
+   Relay the summary each returns, verbatim.
+   Refining an existing source's citation goes to `@plugin:citation`, which never creates a source.
+   Classifications come from the extraction table and are final: never re-derive `record_basis` /
    `information_quality` yourself. A disagreement based on evidence outside
    the record goes to conflict-resolution or proof-conclusion.
 
@@ -532,9 +533,9 @@ message.
      all writes go through the writer tools (`research_append`,
      `research_log_append`, `tree_edit`, `tree_correct`), which
      validate-on-write.
-   - **One `research_append` call per record** (composite: source +
-     assertions together); never predict an id (`S`, `src_`, `a_`, `I`)
-     — the tools assign and return them.
+   - **Records go through `extraction_append` or `@plugin:record-structurer`**;
+     never compose a source or assertion yourself, and never predict an id
+     (`S`, `src_`, `a_`, `I`) — the tools assign and return them.
    - On `{ ok: false, errors, opsReceived }` nothing was written: fix
      only the ops named in `errors` and check `opsReceived` equals the
      op count sent (fewer = truncated batch — resend whole).

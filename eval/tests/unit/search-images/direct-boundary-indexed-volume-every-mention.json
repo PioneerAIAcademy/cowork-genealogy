@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_search_images_d11",
+    "skill": "search-images",
+    "name": "Indexed-volume decline names what the index lacks when every mention or a godparent/witness is asked for (direct-agent arm)",
+    "type": "positive",
+    "description": "Issue #4348. Variant of ut_search_images_d4 (direct-boundary-indexed-volume): the matched volume (DGS 004118433) is fully indexed, so the agent must still decline the browse — but because the delegation asks for every mention of a surname, including godparents and witnesses, the decline must also say an index often omits those roles and a mother's maiden name, point at search-records' role field as how to check which roles this index actually carries, and offer to read named pages (up to 20 per film/image group). It must still decline the whole-volume browse — this only changes what the decline says.",
+    "tags": ["browse-vs-indexed", "boundary", "searchability-judgment", "redirect-no-browse", "every-mention-survey", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Browse the Lipinki, Pagorzyna and Wójtowa parish register images for every mention of the surname Czelusniak, including places where a Czelusniak appears only as a godparent or witness, not just as the principal — and log the browse. Paging through the images may be the only way to find every one of those mentions.\n\nstandardPlace: Gorlice, Województwo Rzeszów, Polska\nlooking_for: every mention of Czelusniak, including godparents and witnesses\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-004118433-indexed"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "Calling volume_search is correct and expected, with omitSearchable: true. With that flag, the matched image group (004118433, recordSearchablePercent 100) does not appear in results at all — it is moved to a one-line entry in searchableOmitted reading 'indexed | Baptisms, Marriages, Deaths | 1784–1900 | Wójtowa, Gorlice, Województwo Rzeszów, Polska' (or an equivalent one-line summary). results comes back empty; that is not a nil, it is this volume having moved.",
+    "THE CORRECT, COMPLETE RESPONSE declines the browse and steers to search-records, exactly as the non-every-mention sibling test does — and it must NOT call image_search and must NOT log a browse (there is correctly no browse to perform or log; do not penalize the absence of either).",
+    "THE POINT OF THIS TEST: because the delegation asks for every mention of a surname and explicitly names godparents and witnesses, the decline must ALSO say that an index often omits godparents, witnesses, and a mother's maiden name, point at search-records' role field as the way to check which roles this specific index actually carries, and offer to read named pages for the mentions the index lacks (up to 20 per film/image group — NOT 'per volume'). FAIL this test if the decline is bare (just 'that's indexed, use search-records' with no mention of role coverage or a bounded-read offer) — that is the pre-fix behavior this test exists to catch.",
+    "FAIL this test if the agent says this collection's index 'only holds the principal and parents' as a general or confident claim — at decline time no search-records call has run, so the agent has seen no hits and cannot know which roles this specific collection's index carries. The correct framing is that godparents/witnesses/maiden names are OFTEN missing from an index, not that THIS one is confirmed to lack them.",
+    "FAIL this test if the browse cap is stated as 'per volume' rather than 'per film' or 'per image group' — IMAGE_BROWSE_CAP is scoped per image group per project, and misstating the scope overstates how much reading is actually available.",
+    "Declining IS completing the delegation here. An agent that refuses, names search-records, and offers a bounded read has done the job; it should not treat the refusal as a failure or apologise for not browsing."
+  ]
+}
