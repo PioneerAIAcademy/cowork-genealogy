@@ -1,0 +1,398 @@
+{
+  "run_log": "v16_2026-11-18_22-14-02.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the search and the reply. It searched surname Price, given name Sarah Ann (Mullen read as a middle name), and every fact in the reply matches the two hits. Nothing invented."
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ran pli_001, logged it, set it to in_progress, and said the household link and middle name need the original page before extraction. Nothing left out."
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "record_search sent Price / Sarah Ann / census / 1880 / Dodge County, Wisconsin with subjectId I1 and planItemId pli_001, so ranking ran. No surnameAlt, correctly. The log and status calls were right too."
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Price is the right surname, Mullen stays in the given name, and the year and county match the plan item. One search was enough."
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both ranked hits. Top hit P01 (score 0.91, born 1875 Wisconsin, Dodge County, James Price household) kept as a strong candidate. P02 (score 0.24, born 1870 New York, Milwaukee County) ruled out on county, birthplace and age. Extraction held back until the page is read."
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "log_001 matches what was sent: outcome positive, 2 examined. The notes name both hits, why each was kept or dropped, and what still needs checking. A later reader could act on it."
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The search returned 2 results, so there was no empty search to escalate. Doesn't apply."
+    },
+    {
+      "test_id": "ut_search_records_d02",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against the search result. MXHY-TP4 is Patrick Flynn, born 1845 Ireland, score 0.948, in Thomas Flynn's household. The caveat that the 1850 census has no relationship column is correct. It rightly refused the hand-off's \"mark pli_001 completed\" and left it in_progress until extraction."
+    },
+    {
+      "test_id": "ut_search_records_d02",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ran the search with subjectId, logged it as log_005 with its results file, kept pli_001 in_progress and named extraction as the next step. Nothing missing."
+    },
+    {
+      "test_id": "ut_search_records_d02",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "record_search sent Flynn / Patrick / census / Schuylkill County, Pennsylvania / 1850 with subjectId I1 and planItemId pli_001, so ranking ran. The log call used the staged results, and the status update was correct."
+    },
+    {
+      "test_id": "ut_search_records_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One search matching the plan item exactly: the surname, the county and the 1850 date. The record was already known, so no variants were needed."
+    },
+    {
+      "test_id": "ut_search_records_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One ranked hit: rank 1, score 0.948, already attached to the subject. It checked the birth year and birthplace against the subject, flagged the inferred household as a caveat, and held off extraction. Sound verdict."
+    },
+    {
+      "test_id": "ut_search_records_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "log_005 matches what was sent and is marked positive, with a results file. The notes give the cross-check (birth year and place), the no-relationship-column caveat and the score, so a later reader can act on it."
+    },
+    {
+      "test_id": "ut_search_records_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The search returned 1 result, so there was no empty search to escalate. Doesn't apply."
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the four searches and the reply. All came back empty, and the reply reports that accurately. The collection number 1401638 comes from record_search's census block, not memory. pli_001 stays in_progress, not completed. Nothing invented."
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ran pli_001, tried three further searches, logged all four, kept pli_001 open and handed off to external sites as the next step. Nothing missing."
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The first search had Patrick and Flynn. The given name was dropped only in the third search, as a deliberate step after two full-name searches, and Pat was tried after that. That's not a first search leaving the given name out (JC5). All four calls matched their fixtures."
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Started with the plan item's exact county and year, then broadened to the state, then surname only, then Pat. Each step is sensible for a missing 1850 entry, and each log note says why."
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing came back to triage, and the agent said so (no candidate, nothing to extract) rather than inventing a verdict. Right handling of an empty result."
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "log_001 to log_004 were each written by record_search itself (new in #4527): outcome negative, 0 examined, the query as sent, and the agent's own note per step. log_003 adds the \"hand to external sites\" trigger. Accurate and easy to act on."
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Treated the empty result as something to investigate: three further searches (state, surname only, Pat), each logged. It confirmed the 1850 census is indexed, didn't claim the record doesn't exist, and escalated to external sites."
+    },
+    {
+      "test_id": "ut_search_records_034",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the counts and the table. 424 total, 185 principal plus 239 non-principal, which adds up. The 20 listed records match the search results, and the feminine forms appeared without separate searches. Nothing invented."
+    },
+    {
+      "test_id": "ut_search_records_034",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "20 of 424 is the test fixture's limit, not the agent's: every offset (0 to 400) and every parish filter returned the same 10 rows, so no other filter could reach more here. The agent ran the required three searches and stated the gap plainly (\"Only 20 of the 424… could be retrieved\") with how to narrow further. The missing role note is scored under Result triage, where the judge placed it."
+    },
+    {
+      "test_id": "ut_search_records_034",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls matched their fixtures: surname Czelusniak, image group 004118433, the three isPrincipal searches (none, true, false), the paging counts and offsets, and the parish filters."
+    },
+    {
+      "test_id": "ut_search_records_034",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ran the plain search plus isPrincipal true and false, not principal only, which is the fault this test exists to catch. Kept fuzzy matching so misspellings and feminine forms came through, and explained why it tried paging and the parish filters."
+    },
+    {
+      "test_id": "ut_search_records_034",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Each listed hit has its role (Principal, Father, Mother, Spouse, Other). But the reply never says which roles none of the hits carry (godparent, witness), as the test requires (JC2). The judge credits a note about \"only these five roles… godparent or witness are not searchable\", but that sentence is nowhere in the reply or the agent's return; it appears only in the judge's own rationale."
+    },
+    {
+      "test_id": "ut_search_records_034",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "11 entries matching what was sent: positive for the three main searches, partial for the paging and parish attempts. The notes record what actually happened (count 100 gave only 10 rows, the same rows as offset 0; the parish filter didn't narrow the pool)."
+    },
+    {
+      "test_id": "ut_search_records_034",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 2,
+      "corrected_score": null,
+      "comment": "No search came back empty. Paging and the parish filters each returned 10 rows, just the same ones, which is a fixture limit and not an empty result. So this doesn't apply."
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the search against the tree. It searched the birth name Sarah Ann Mullen for 1860, before the 1872 marriage to Price. The one hit (age about 8 in 1860, William Mullen's household) fits the 1852-03-15 birth, and the reply's facts match the result. Nothing invented."
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ran pli_001 under the right name, triaged the hit, logged it as log_002, and kept pli_001 in_progress, with no extraction since none was asked for. Nothing missing."
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "record_search sent surname Mullen, given name Sarah Ann, census, 1860, Dodge County, Wisconsin, with subjectId I1 and planItemId pli_001, so ranking ran. The log call used the staged results, and the status update was right."
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It picked the BirthName over the MarriedName (Price) for a search before the marriage; the search note says \"(birth name)\". In \"Sarah Mullen Price\", Mullen is her maiden name kept as a middle name. The year and county match the plan item."
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One ranked hit (rank 1, score 0.9376, not attached), checked for age, sex and county against the tree, with no birth-year conflict. It flagged that the father–daughter link is inferred, since the schedule has no relationship column. Sound verdict."
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "log_002 matches what was sent: outcome positive, 1 examined. The notes give the hit, its score, the cross-checks and the inferred-relationship caveat. Easy to act on."
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "The search returned a result, so there was no empty search to escalate. The judge's own rationale says N/A but scored 3."
+    },
+    {
+      "test_id": "ut_search_records_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against the search and the record read. 1893 baptism, Turany, male, and the tree link K81J-CMK are in the search result. Father Andrej Gallo, mother Katarina Križko and the birthplace Šútovo come from the record read. Nothing invented."
+    },
+    {
+      "test_id": "ut_search_records_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Searched under Slovakia as the plan item says, read the record, cross-checked it against the subject, logged it as log_001, and kept pli_001 in_progress with no extraction asked for. Nothing missing."
+    },
+    {
+      "test_id": "ut_search_records_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "record_search sent Gallo / Jan / recordCountry Slovakia / birth years 1892–1894 / church, with subjectId I1. record_read used the ark from the result (KHWD-N5R). The log and status calls were right."
+    },
+    {
+      "test_id": "ut_search_records_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The plan item says Turany was in Turócz County (Kingdom of Hungary) in 1893, but FamilySearch indexes it under present-day Slovakia, and that's where it searched. A narrow birth window around 1893, and \"church\" without guessing the denomination. One search was enough."
+    },
+    {
+      "test_id": "ut_search_records_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One hit. No ranking scores came back in this test, so the agent checked the record's own details: male, 1893, Turany parish, Šútovo birthplace, and the existing tree link K81J-CMK. It read the record before naming the parents. Sound verdict."
+    },
+    {
+      "test_id": "ut_search_records_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Log_001 matches what was sent and is positive. The notes name the collection, the cross-checks and both parents from the record read, and say the page image hasn't been looked at yet. Easy to act on."
+    },
+    {
+      "test_id": "ut_search_records_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The search returned a result, so there was no empty search to escalate. Doesn't apply."
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both searches and the reply. The census hit QK7T-S8M (Michael Sheahan, Schuylkill County, born about 1850 Ireland) and the church search returning that same census record (wrong collection) are reported accurately. Nothing invented."
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The test's rule is one plan item per call: run pli_001, leave pli_002 planned, offer it. The agent also ran pli_002 in the same call: a record_search with planItemId pli_002, log entry log_002, and pli_002 moved to in_progress. The reply opens \"Both plan items for q_001 have been searched and logged.\" The judge's \"pli_002 was NOT executed\" contradicts the transcript. JC4: score Completeness low for exactly this."
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both calls had correct arguments: Sheahan / Michael / 1880 census / Schuylkill County for pli_001, and the 1880–1885 church search with collection SYNTH-PA-CHURCH for pli_002, each with subjectId I1. JC4 scores running pli_002 under Completeness only."
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Each search matched its plan item: the 1880 census near the 1882 directory date, then the church collection named in the plan, 1880–1885. Right name anchors."
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The tree has no birth date for Michael Sheahan, only an 1882 residence and an occupation. The agent said so (\"Tree holds no birth date to cross-check\"), matched the county, and noted the record shows no occupation, the plan's goal. It marked the identity as needing review before extraction. The judge's \"could have cross-checked the birth year\" misses that the tree has none."
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "log_001 and log_002 match what was sent. log_002 is set to partial, not positive, and explains the wrong-collection hit (census QK7T-S8M, collection 1401666). Specific and easy to act on."
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 2,
+      "corrected_score": null,
+      "comment": "Both searches returned a result. The church search's wrong-collection hit is a mismatch, not an empty result, so this doesn't apply (the same call as the earlier annotation of this test)."
+    }
+  ]
+}
