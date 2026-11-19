@@ -1458,6 +1458,299 @@ describe("research_query — fields no caller reads are left out", () => {
   });
 });
 
+// ── page budget (#4411) ──────────────────────────────────────────────────────
+// A page holds at most 50 items and stops short when the WHOLE answer, as
+// writerToolResult sends it (JSON.stringify, compact), would pass
+// TOOL_RESULT_CHAR_BUDGET. Pages are cut greedily from 0, so an offset that is
+// not a page start is refused rather than served from the middle of a page.
+describe("research_query page budget", () => {
+  const BUDGET = 40_000;
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-budget-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeResearch(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+  }
+
+  const size = (r: unknown) => JSON.stringify(r).length;
+
+  /** Every page from 0, following nextOffset; fails on an over-budget page. */
+  async function allPages(args: Record<string, unknown>) {
+    const pages: any[] = [];
+    let offset = 0;
+    for (let i = 0; i < 100; i++) {
+      const r = await researchQuery({ projectPath: dir, ...(args as any), ...(offset ? { offset } : {}) });
+      if (!r.ok) throw new Error(r.errors.join(" "));
+      expect(size(r)).toBeLessThanOrEqual(BUDGET);
+      pages.push(r);
+      if (!r.truncated) {
+        expect(r).not.toHaveProperty("nextOffset");
+        return pages;
+      }
+      expect(r.nextOffset).toBe(offset + r.items.length);
+      offset = r.nextOffset!;
+    }
+    throw new Error("paging did not end");
+  }
+
+  const longLog = () =>
+    Array.from({ length: 50 }, (_, i) => ({
+      id: `log_${String(i + 1).padStart(3, "0")}`,
+      plan_item_id: "pli_001",
+      tool: "record_search",
+      outcome: "positive",
+      notes: `entry ${i} ` + "n".repeat(3300),
+    }));
+
+  it("cuts 50 log entries with 3.3k notes into pages within budget that together hold every entry once", async () => {
+    const log = longLog();
+    await writeResearch({ log });
+
+    const pages = await allPages({ section: "log" });
+
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.flatMap((p) => p.items.map((e: any) => e.id))).toEqual(log.map((e) => e.id));
+    for (const p of pages) expect(p.count).toBe(50);
+  });
+
+  it("cuts a question's 6 active plans of 10 items with long rationales the same way", async () => {
+    const plans = Array.from({ length: 6 }, (_, p) => ({
+      id: `pl_00${p + 1}`,
+      question_id: "q_001",
+      status: "active",
+      items: Array.from({ length: 10 }, (_, i) => ({
+        id: `pli_${p}${i}`,
+        status: "planned",
+        rationale: `plan ${p} item ${i} ` + "r".repeat(1200),
+      })),
+    }));
+    await writeResearch({ plans });
+
+    const pages = await allPages({ section: "plans", questionId: "q_001" });
+
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.flatMap((p) => p.items.map((e: any) => e.id))).toEqual(plans.map((p) => p.id));
+  });
+
+  it("refuses offset 50 after a first page ending at 12, naming 12", async () => {
+    // Twelve 3.1k entries fit in 40k and the thirteenth does not, so page one
+    // is [0,12); the rest are small, so page two is [12,62) and offset 50 lies
+    // inside it.
+    const log = Array.from({ length: 80 }, (_, i) => ({
+      id: `log_${i}`,
+      plan_item_id: "pli_001",
+      notes: i < 13 ? "x".repeat(3150) : "short",
+    }));
+    await writeResearch({ log });
+    const first = await researchQuery({ projectPath: dir, section: "log" });
+    if (!first.ok) throw new Error("failed");
+    expect(first.items).toHaveLength(12);
+    expect(first.nextOffset).toBe(12);
+
+    const stepped = await researchQuery({ projectPath: dir, section: "log", offset: 50 });
+
+    expect(stepped.ok).toBe(false);
+    if (stepped.ok) return;
+    expect(stepped.errors[0]).toMatch(/offset 50 is not where a page of this answer starts/);
+    expect(stepped.errors[0]).toMatch(/starts at offset 12: call again with offset: 12/);
+    // offset 5, inside the first page, names its start, 0.
+    const inside = await researchQuery({ projectPath: dir, section: "log", offset: 5 });
+    expect(inside.ok).toBe(false);
+    if (!inside.ok) expect(inside.errors[0]).toMatch(/offset: 0\./);
+  });
+
+  it("names the start of the page an offset lands in, 12 when it lands in the second", async () => {
+    const log = Array.from({ length: 60 }, (_, i) => ({ id: `log_${i}`, notes: "x".repeat(3150) }));
+    await writeResearch({ log });
+    const stepped = await researchQuery({ projectPath: dir, section: "log", offset: 20 });
+    expect(stepped.ok).toBe(false);
+    if (!stepped.ok) expect(stepped.errors[0]).toMatch(/starts at offset 12: call again with offset: 12/);
+  });
+
+  it("refuses an offset past the end once a page was short, naming the last page start", async () => {
+    // 40 entries: pages [0,12) [12,24) [24,36) [36,40). A step-by-50 caller sends 50.
+    const log = Array.from({ length: 40 }, (_, i) => ({ id: `log_${i}`, notes: "x".repeat(3150) }));
+    await writeResearch({ log });
+
+    const past = await researchQuery({ projectPath: dir, section: "log", offset: 50 });
+
+    expect(past.ok).toBe(false);
+    if (!past.ok) expect(past.errors[0]).toMatch(/offset: 36\./);
+  });
+
+  it("returns an empty page past the end when every page but the last is full", async () => {
+    const log = Array.from({ length: 60 }, (_, i) => ({ id: `log_${i}` }));
+    await writeResearch({ log });
+    const past = await researchQuery({ projectPath: dir, section: "log", offset: 100 });
+    expect(past).toEqual({ ok: true, section: "log", count: 60, items: [], truncated: false });
+  });
+
+  it("keeps the 0/50/100 boundaries when every page fits", async () => {
+    const log = Array.from({ length: 120 }, (_, i) => ({ id: `log_${i}` }));
+    await writeResearch({ log });
+    const pages = await allPages({ section: "log" });
+    expect(pages.map((p) => p.items.length)).toEqual([50, 50, 20]);
+    expect(pages.map((p) => p.nextOffset)).toEqual([50, 100, undefined]);
+  });
+
+  it("counts countById in the page, not the items alone", async () => {
+    // 50 links whose items alone come to just under the budget; the 50-id
+    // countById pushes the whole answer over it.
+    const ids = Array.from({ length: 50 }, (_, i) => `I${1000 + i}`);
+    const person_evidence = ids.map((id, i) => ({
+      id: `pe_${i}`,
+      assertion_id: `a_${i}`,
+      person_id: id,
+      confidence: "probable",
+      rationale: "r".repeat(700),
+    }));
+    await writeResearch({ person_evidence });
+    expect(size(person_evidence)).toBeLessThan(BUDGET);
+
+    const r = await researchQuery({ projectPath: dir, section: "person_evidence", personId: ids });
+
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(size(r)).toBeLessThanOrEqual(BUDGET);
+    expect(r.items.length).toBeLessThan(50);
+    expect(r.truncated).toBe(true);
+    expect(Object.keys(r.countById ?? {})).toHaveLength(50);
+  });
+
+  it("counts reviewReasons in the page, not the items alone", async () => {
+    // Every link carries three reasons; the items alone fit, the reasons tip it.
+    const person_evidence = Array.from({ length: 50 }, (_, i) => ({
+      id: `pe_${i}`,
+      assertion_id: `a_${i}`,
+      person_id: "I1",
+      confidence: "speculative",
+      core_identifier_conflict: "Birth year: record 1853, tree ~1840",
+      superseded_by: `pe_${i + 100}`,
+      rationale: "r".repeat(590),
+    }));
+    await writeResearch({ person_evidence });
+    expect(size(person_evidence)).toBeLessThan(BUDGET);
+
+    const r = await researchQuery({ projectPath: dir, section: "person_evidence", orderBy: "review" });
+
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(size(r)).toBeLessThanOrEqual(BUDGET);
+    expect(r.items.length).toBeLessThan(50);
+    expect(Object.keys(r.reviewReasons ?? {})).toHaveLength(r.items.length);
+    expect(size(person_evidence) + size(r.reviewReasons)).toBeGreaterThan(BUDGET);
+  });
+
+  it("counts unregisteredDisagreements in every conflicts page", async () => {
+    const assertions = Array.from({ length: 30 }, (_, i) => [
+      { id: `a_b${i}`, fact_type: "birth", date: "1850", place: "Ohio" },
+      { id: `a_c${i}`, fact_type: "birth", date: "1861", place: "Texas" },
+    ]).flat();
+    const person_evidence = assertions.map((a, i) => ({
+      id: `pe_${i}`,
+      assertion_id: a.id,
+      person_id: `I${Math.floor(i / 2)}`,
+      confidence: "probable",
+    }));
+    // The 50 conflicts alone fit; only the disagreements push the answer over.
+    const conflicts = Array.from({ length: 50 }, (_, i) => ({
+      id: `c_${i}`,
+      status: "unresolved",
+      competing_assertion_ids: [],
+      description: "d".repeat(670),
+    }));
+    await writeResearch({ assertions, person_evidence, conflicts });
+    expect(size(conflicts)).toBeLessThan(BUDGET);
+
+    const pages = await allPages({ section: "conflicts" });
+
+    expect(size(conflicts) + size(pages[0].unregisteredDisagreements)).toBeGreaterThan(BUDGET);
+    expect(pages[0].items.length).toBeLessThan(50);
+    for (const p of pages) expect(p.unregisteredDisagreements).toEqual(pages[0].unregisteredDisagreements);
+    expect(pages.flatMap((p) => p.items.map((c: any) => c.id))).toEqual(conflicts.map((c) => c.id));
+  });
+
+  it("returns one item alone when it is over budget by itself", async () => {
+    const log = [{ id: "log_0", notes: "x".repeat(45_000) }, { id: "log_1" }];
+    await writeResearch({ log });
+    const r = await researchQuery({ projectPath: dir, section: "log" });
+    if (!r.ok) throw new Error("failed");
+    expect(r.items.map((e: any) => e.id)).toEqual(["log_0"]);
+    expect(r.nextOffset).toBe(1);
+  });
+
+  it("pages external_collections by the same rule", async () => {
+    const rows = Array.from({ length: 50 }, (_, i) => ({
+      key: `k${String(i).padStart(2, "0")}`,
+      place: "Ohio, United States",
+      record_types: ["Births"],
+      title: "t".repeat(3000),
+    }));
+    await writeFile(
+      join(dir, "external-collections.json"),
+      JSON.stringify({ places: { "Ohio, United States": { rows } } }),
+      "utf-8",
+    );
+    await writeResearch({});
+
+    const pages = await allPages({ section: "external_collections" });
+
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.flatMap((p) => p.items.map((r: any) => r.key))).toEqual(rows.map((r) => r.key));
+  });
+
+  it("counts settledConflicts in the page, not the items alone", async () => {
+    // 50 links whose items alone fit under budget; one settledConflicts row per
+    // link (each from a unique record, so each note is unique) pushes it over.
+    const person_evidence = Array.from({ length: 50 }, (_, i) => ({
+      id: `pe_${i}`,
+      assertion_id: `a_b${i}`,
+      person_id: "I1",
+      confidence: "probable",
+      rationale: "r".repeat(550),
+    }));
+    const assertions = Array.from({ length: 50 }, (_, i) => ({
+      id: `a_b${i}`,
+      source_id: "src_001",
+      record_id: `rec_${i}`,
+      record_role: "subject",
+      fact_type: "birth",
+      place: "Pennsylvania",
+    }));
+    // One resolved conflict sets aside every birth assertion except the preferred.
+    const conflicts = [
+      {
+        id: "c_001",
+        conflict_type: "fact",
+        disputed_attribute: "birthplace",
+        competing_assertion_ids: assertions.map((a) => a.id),
+        status: "resolved",
+        preferred_assertion_id: "a_b0",
+      },
+    ];
+    await writeResearch({ person_evidence, assertions, conflicts });
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({ persons: [{ id: "I1", facts: [{ type: "Birth", place: "Ireland" }] }] }),
+      "utf-8",
+    );
+    expect(size(person_evidence)).toBeLessThan(BUDGET);
+
+    const r = await researchQuery({ projectPath: dir, section: "person_evidence" });
+
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(size(r)).toBeLessThanOrEqual(BUDGET);
+    expect(r.items.length).toBeLessThan(50);
+    expect(r.settledConflicts).toBeDefined();
+    // Items alone would fit; settledConflicts notes push the full page over.
+    expect(size(person_evidence) + size(r.settledConflicts)).toBeGreaterThan(BUDGET);
+  });
+});
+
+// ── settledConflicts (#4592) ──────────────────────────────────────────────────
 describe("research_query — person_evidence names settled birth disputes", () => {
   let dir: string;
   beforeEach(async () => {
