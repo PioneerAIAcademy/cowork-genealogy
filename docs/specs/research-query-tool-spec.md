@@ -211,7 +211,7 @@ a different value from `null`:
 
 Measured with `make replay-sizes BASE=<pre-change> TOOLS=research_query
 SECTION=assertions` over the 713 recorded assertion reads that answered (of 715
-replayed, 2026-11-19, against the #4411 pager), the grouped answers are 20.1% smaller;
+replayed, 2026-11-19, against the 40k-budget pager), the grouped answers are 20.1% smaller;
 a single-assertion read grows by the 14 characters of its one-fact wrapper.
 
 **Misreads (probe, 2026-11-17).** `eval/harness/scripts/probe_assertion_shape.py`
