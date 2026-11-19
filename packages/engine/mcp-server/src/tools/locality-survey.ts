@@ -23,7 +23,7 @@ export const SURVEY_DEADLINE_MS = 50_000;
 const NOTICE_MARGIN_MS = 5_000;
 
 /** The data parts' share of the inline answer, in stringified characters. */
-const DATA_SHARES = { collections: 3_000, volumes: 3_500, catalog: 3_000, externalLinks: 2_500 } as const;
+const DATA_SHARES = { collections: 2_500, volumes: 3_000, catalog: 3_000, externalLinks: 3_500 } as const;
 /** The vital-records page goes in first, up to this much. */
 const VITAL_RECORDS_SHARE = 8_000;
 /** How long the survey waits for the place's type before it decides on the parent level. */
@@ -383,10 +383,11 @@ function overlaps(row: StoredCollectionRow, startYear?: number, endYear?: number
   return lo <= (endYear ?? Infinity) && hi >= (startYear ?? -Infinity);
 }
 
-/** Links matching a template record type and the period first, then the most specific place. */
+/** Links covering the most template record types first (a regional BMD index before a
+ *  single-collection link), then those overlapping the period, then the most specific place. */
 function rankLinks(rows: StoredCollectionRow[], startYear?: number, endYear?: number): StoredCollectionRow[] {
   const score = (r: StoredCollectionRow) =>
-    (r.record_types.some((t) => LINK_RECORD_TYPE.test(t)) || LINK_RECORD_TYPE.test(r.link_text) ? 2 : 0) +
+    2 * Math.min(4, new Set([...r.record_types, r.link_text].filter((t) => LINK_RECORD_TYPE.test(t)).map((t) => t.toLowerCase())).size) +
     (overlaps(r, startYear, endYear) ? 1 : 0);
   return rows
     .map((r, i) => ({ r, i }))
@@ -403,7 +404,7 @@ function compactLink(r: StoredCollectionRow) {
   return {
     url: r.url,
     linkText: r.link_text,
-    ...(r.record_types.length ? { recordTypes: r.record_types } : {}),
+    ...(r.record_types.length ? { recordTypes: r.record_types.slice(0, 3) } : {}),
     place: r.place,
     ...(s !== null || e !== null ? { years: `${s ?? e}-${e ?? s}` } : {}),
   };

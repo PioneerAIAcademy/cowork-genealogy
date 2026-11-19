@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { dedupeCollections } from "../../src/utils/external-collections-store.js";
 import {
   parentLevel,
   placeName,
@@ -384,6 +387,26 @@ describe("runLocalitySurvey", () => {
     );
     expect(out.staged).toEqual({ resultsRef: "results/.staging/x.json" });
     expect(staged.pagesRead).toHaveLength(4);
+  });
+});
+
+describe("the Yorkshire fixtures (eval/fixtures/mcp, captured live)", () => {
+  const fixture = (name: string) =>
+    JSON.parse(readFileSync(join(__dirname, "../../../../../eval/fixtures/mcp", `${name}.json`), "utf-8"));
+
+  it("keeps collection 2285341 and yorkshirebmd.org.uk inline", async () => {
+    const collections = fixture("collections-search-yorkshire").response;
+    const links = fixture("external-links-search-yorkshire").stored_rows;
+    const out: any = await runLocalitySurvey(
+      { standardPlace: "Yorkshire, England, United Kingdom", startYear: 1845, endYear: 1855 },
+      deps({
+        collections: async () => collections,
+        linkRows: async (place) =>
+          place.startsWith("Yorkshire") ? { rows: dedupeCollections(links, place) } : { rows: [] },
+      }),
+    );
+    expect(out.collections.results.map((c: any) => c.id)).toContain("2285341");
+    expect(out.externalLinks.results.map((l: any) => l.url)).toContain("http://www.yorkshirebmd.org.uk/");
   });
 });
 

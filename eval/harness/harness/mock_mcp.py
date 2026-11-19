@@ -2358,6 +2358,8 @@ def _make_live_handler(
         return _make_evaluation_append_handler(workspace, call_log)
     if tool_name == "timeline_build":
         return _make_timeline_build_handler(workspace, call_log, place_predicated or [])
+    if tool_name == "locality_survey":
+        return _make_locality_survey_handler(workspace, call_log, manifest or {})
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
@@ -3071,6 +3073,165 @@ def _make_extraction_append_handler(
             }
         )
         return _tool_envelope("extraction_append", response)
+
+    return handler
+
+
+#: The survey's wiki sub-calls: a page the test serves no fixture for is a missing page.
+_SURVEY_WIKI_TOOLS = frozenset({"wiki_place_page", "wiki_read"})
+
+
+def _survey_answer(manifest: dict[str, Any], tool_name: str, args: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    """One planned `locality_survey` sub-call answered from the test's own per-tool
+    fixtures, as `{"value": ...}`, `{"missing": True}` (a page that does not exist)
+    or `{"error": ...}`, with the fixture that answered it (or why none did).
+
+    A by-url `wiki_read` matched only by a bare `"~"` catch-all is a missing page, so a
+    vital-records ladder climbs past `{State}_Vital_Records` to the test's own
+    `_Civil_Registration` fixture. A wiki call with no fixture is a missing page; a data
+    call with none is an error the survey reports as a gap."""
+    bucket = manifest.get(tool_name) or {}
+    hit = None
+    for predicate, resp, src in bucket.get("predicated") or []:
+        if matches(predicate, args):
+            hit = (predicate, resp, src)
+            break
+    if hit is None:
+        if tool_name in _SURVEY_WIKI_TOOLS:
+            return {"missing": True}, "fixture_not_found"
+        return {"error": f"No fixture matched call to {tool_name}."}, "fixture_not_found"
+    predicate, resp, src = hit
+    if tool_name == "wiki_read" and predicate == {"url": "~"}:
+        return {"missing": True}, f"{src} (catch-all read as no page)"
+    if not isinstance(resp, dict) or "error" in resp:
+        if tool_name in _SURVEY_WIKI_TOOLS:
+            return {"missing": True}, src
+        message = resp.get("message") or resp.get("error") if isinstance(resp, dict) else "error"
+        return {"error": str(message)}, src
+    if tool_name in _SURVEY_WIKI_TOOLS:
+        if not isinstance(resp.get("content"), str):
+            return {"missing": True}, src
+        page = {"url": resp.get("url") or args.get("url"), "content": resp["content"]}
+        if resp.get("collectionNotices"):
+            page["collectionNotices"] = resp["collectionNotices"]
+        return {"value": page}, src
+    if tool_name == "external_links_search":
+        stored = (bucket.get("stored_rows") or {}).get(src)
+        rows = stored if stored is not None else [
+            {"url": r.get("url"), "linkText": r.get("linkText", "")}
+            for r in resp.get("results") or []
+            if isinstance(r, dict) and isinstance(r.get("url"), str)
+        ]
+        return {"value": {"rows": rows}}, src
+    return {"value": resp}, src
+
+
+def _make_locality_survey_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    manifest: dict[str, Any],
+):
+    """The live `locality_survey`, its sub-calls answered from the test's own per-tool
+    fixtures (`place_population`, `collections_search`, `volume_search`,
+    `catalog_search`, `external_links_search`, `wiki_place_page`, `wiki_read`), so no
+    test needs a fixture of its own for it.
+
+    The compiled `surveyCallPlan` lists every sub-call the survey could make, climbs
+    included; each is answered by `_survey_answer`; the compiled `runLocalitySurvey`
+    then runs with deps serving that map, so the ladders, the deadline, the ranking and
+    the fit are production's. With a `projectPath` the agent sent, the workspace's
+    `external-collections.json` is written and the answer staged by the compiled
+    store and stager. Logged once: `response` is the answer the agent got,
+    `survey_parts` each sub-call with the fixture that answered it.
+    """
+    survey_js = _MCP_BUILD / "tools" / "locality-survey.js"
+    store_js = _MCP_BUILD / "utils" / "external-collections-store.js"
+    staging_js = _MCP_BUILD / "utils" / "results-staging.js"
+
+    async def handler(args, _ws=workspace):
+        input_obj = dict(args) if isinstance(args, dict) else {}
+        if "projectPath" in input_obj and _ws is not None:
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+        parts: list[dict[str, Any]] = []
+        if not survey_js.exists():
+            response: dict[str, Any] = {"error": f"locality_survey: build not found: {survey_js}"}
+        else:
+            try:
+                plan_script = (
+                    f"import {{ surveyCallPlan }} from '{_node_module_url(survey_js)}';"
+                    " import { readFileSync } from 'node:fs';"
+                    " process.stdout.write(JSON.stringify(surveyCallPlan(JSON.parse(readFileSync(0, 'utf-8')))));"
+                )
+                proc = _run_node_eval(plan_script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                plan = json.loads(proc.stdout) if proc.stdout.strip() else []
+                answers = []
+                for call in plan:
+                    answer, matched = _survey_answer(manifest, call["tool"], call["args"])
+                    answers.append({"tool": call["tool"], "args": call["args"], "answer": answer})
+                    parts.append({"tool": call["tool"], "args": call["args"], "matched": matched})
+                run_script = (
+                    f"import {{ runLocalitySurvey }} from '{_node_module_url(survey_js)}';"
+                    f" import {{ dedupeCollections, recordExternalCollections }} from '{_node_module_url(store_js)}';"
+                    f" import {{ stageSearchResults }} from '{_node_module_url(staging_js)}';"
+                    " import { readFileSync } from 'node:fs';"
+                    " const p = JSON.parse(readFileSync(0, 'utf-8'));"
+                    " const key = (tool, a) => tool + JSON.stringify(Object.keys(a).sort().map((k) => [k, a[k]]));"
+                    " const map = new Map(p.answers.map((a) => [key(a.tool, a.args), a.answer]));"
+                    " const get = (tool, a) => { const r = map.get(key(tool, a));"
+                    "   if (!r) throw new Error(`no planned answer for ${tool} ${JSON.stringify(a)}`);"
+                    "   if (r.error) throw new Error(r.error); return r.missing ? null : r.value; };"
+                    " const pp = p.input.projectPath;"
+                    " const deps = {"
+                    "   population: async (a) => get('place_population', a),"
+                    "   collections: async (a) => get('collections_search', a),"
+                    "   volumes: async (a) => get('volume_search', a),"
+                    "   catalog: async (a) => get('catalog_search', a),"
+                    "   linkRows: async (place) => ({ rows: dedupeCollections("
+                    "     get('external_links_search', { standardPlace: place }).rows.filter((r) => typeof r.url === 'string'), place) }),"
+                    "   placePage: async (place, section) => get('wiki_place_page', { standardPlace: place, section }),"
+                    "   page: async (url) => get('wiki_read', { url }),"
+                    "   placeType: async () => null,"
+                    "   ...(pp ? {"
+                    "     recordLinks: async (place, rows, tooLarge) => {"
+                    "       await recordExternalCollections(pp, place, rows, tooLarge ? { tooLarge: true } : {}); },"
+                    "     stage: async (answer) => (await stageSearchResults({ projectPath: pp, tool: 'locality_survey',"
+                    "       response: { query: { standardPlace: answer.place, ...(answer.period ?? {}) }, results: [answer] } }))?.resultsRef ?? null,"
+                    "   } : {}),"
+                    " };"
+                    " process.stdout.write(JSON.stringify(await runLocalitySurvey(p.input, deps)));"
+                )
+                proc = _run_node_eval(
+                    run_script,
+                    json.dumps({"input": input_obj, "answers": answers}),
+                    timeout=NODE_EVAL_TIMEOUT_LONG,
+                )
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    message = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    m = re.search(r"Error: ([^\n]+)", message)
+                    response = {"error": m.group(1) if m else f"locality_survey: {message}"}
+            except Exception as e:
+                response = {"error": f"locality_survey: {e}"}
+        misses = [p_ for p_ in parts if p_["matched"] == "fixture_not_found" and p_["tool"] not in _SURVEY_WIKI_TOOLS]
+        if misses:
+            warnings.warn(
+                "locality_survey sub-calls no fixture answered (add an mcp_fixture): "
+                + "; ".join(f"{m['tool']} {json.dumps(m['args'], ensure_ascii=False)}" for m in misses),
+                stacklevel=2,
+            )
+        call_log.append(
+            {
+                "tool": "mcp__genealogy__locality_survey",
+                "args": dict(args) if isinstance(args, dict) else args,
+                "expected_args": None,
+                "matched": {"kind": "live", "index": None},
+                "response_fixture": "live:locality_survey",
+                "response": response,
+                "survey_parts": parts,
+            }
+        )
+        return _tool_envelope("locality_survey", response)
 
     return handler
 

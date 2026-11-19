@@ -29,7 +29,7 @@ guard the structural properties a validator can settle without judgment
     `research.schema.json` ($defs.locality, additionalProperties:false),
     so VR1 does not re-check them.
   - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
-    a records survey that called one Step-3 search must have called both.
+    a run that produced a guide called locality_survey (issue #4602).
   - test_persisted_guide_is_the_guide, test_in_project_return_follows_the_contract
     and test_no_project_return_carries_guide — the guide is written exactly once
     (issue #3442): into `guide_markdown` inside a project, into the return
@@ -168,68 +168,50 @@ def test_persisted_localities_entry_shape(before_state, after_state):
         )
 
 
-def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
-    """VR4 (gating) — a records-availability survey that called one of the Step-3
-    searches must have called both: collections_search and volume_search are both
-    required Step-3 calls (agents/locality-guide.md Step 3, "do not drop any call").
+def _survey_calls(tool_calls):
+    return [tc for tc in (tool_calls or []) if bare_tool_name(tc.get("tool")) == "locality_survey"]
 
-    Grades call PRESENCE, not the result: the skill *making* both calls is the
-    behaviour under test. A `fixture_not_found` response means the skill DID call
-    a *registered* tool with args no fixture matched (a test-corpus gap, not
-    skill misbehaviour); in production the call always returns. That is distinct
-    from a tool with NO fixture at all: collections_search and volume_search are
-    fixture-backed and absent from LIVE_TOOLS, so a test that declares no fixture
-    for one never registers it and the skill cannot call it — which is why ut_002
-    (which declares NEITHER search fixture) is a no-search run VR4 skips, not a
-    `fixture_not_found`. Grounding of a result is not this validator's concern.
 
-    LIMIT (documented, not a bug): a run that called NEITHER search is skipped —
-    it cannot be distinguished from a legitimate non-survey (standalone Q&A, a
-    wiki-only guide, or a decline). `ut_locality_guide_023` is exactly such a
-    deliberate no-collection-tool test (its judge_context forbids naming a
-    collection), so VR4 correctly stands down there; `ut_002` is a plain records
-    survey that stands down only because its fixture list omits the searches.
-    Catching "a survey that should have called both but called neither" would
-    need an intent signal (e.g. the `volume-search` tag already on 12 tests, none
-    of them the seven rewired here) VR4 does not yet consult — a deliberate
-    choice, tracked on #1886, not an absence.
+def test_survey_run_calls_both_collections_and_volume_search(before_state, after_state, tool_calls, agent_returns=None):
+    """VR4 (gating, issue #4602) — a run that produced a guide ran the survey:
+    `locality_survey` (one call that makes every Step-3 call: collections, volumes,
+    catalog, outside links, the wiki pages) was called. A guide is a localities entry
+    this run wrote, or a return carrying `## Available record types`.
+
+    Skips a run that produced no guide (a hand-back, a question, a decline). The name
+    is kept so the gate tags and run logs that cite it still resolve.
     """
-    tools = {bare_tool_name(tc.get("tool")) for tc in (tool_calls or [])}
-    called_cs = "collections_search" in tools
-    called_vs = "volume_search" in tools
-    if not (called_cs or called_vs):
-        pytest.skip("not a records survey — called neither collections_search nor volume_search")
-    missing = [
-        name
-        for name, called in (("collections_search", called_cs), ("volume_search", called_vs))
-        if not called
-    ]
-    assert not missing, (
-        f"records survey called {sorted(tools & {'collections_search', 'volume_search'})} "
-        f"but not {missing} — both are required Step-3 calls (agents/locality-guide.md Step 3)"
+    wrote = bool(_written_localities(before_state, after_state))
+    returned = bool(_RECORD_TYPES_HEADING.search(agent_return_text(agent_returns, "locality-guide")))
+    if not (wrote or returned):
+        pytest.skip("no guide produced this run")
+    assert _survey_calls(tool_calls), (
+        "a guide was produced without the survey: locality_survey was never called "
+        "(agents/locality-guide.md Step 3)"
     )
+
+
+def _catalog_places(tool_calls):
+    """The places the survey's catalog part searched, in order, from each
+    `locality_survey` call's `survey_parts` (the sub-calls the mock answered)."""
+    places = []
+    for tc in _survey_calls(tool_calls):
+        response = _response_body(tc.get("response"))
+        levels = ((response.get("catalog") or {}).get("levels")) if isinstance(response, dict) else None
+        if isinstance(levels, list):
+            places += [lvl.get("place") or "" for lvl in levels if isinstance(lvl, dict)]
+    return places
 
 
 def test_catalog_search_called_and_broadened(tool_calls, test):
-    """VR5 (issue #3107) — scoped to ut_locality_guide_028: the agent must call
-    catalog_search, and when it gets 0 hits, broaden by calling catalog_search
-    again on a wider standardPlace.
-
-    Grades call PRESENCE and COUNT, not the result content: the skill *making*
-    the initial call and then broadening is the behaviour under test. Skips for
-    all other tests — they serve catalog_search only the `catalog-search-empty`
-    fallback, so a call there grades nothing.
+    """VR5 (issue #3107) — scoped to ut_locality_guide_028: the survey's catalog part
+    searched the village and, on 0 hits, climbed to a parent jurisdiction (the text after
+    its first comma). Read from the `catalog.levels` of the `locality_survey` answer.
     """
     if (test.get("id") or "") != "ut_locality_guide_028":
         pytest.skip("not the catalog-search broadening test")
-    calls = [
-        tc for tc in (tool_calls or [])
-        if bare_tool_name(tc.get("tool")) == "catalog_search"
-    ]
-    assert calls, (
-        "ut_locality_guide_028 must call catalog_search at least once"
-    )
-    places = [(tc.get("args") or {}).get("standardPlace") or "" for tc in calls]
+    places = _catalog_places(tool_calls)
+    assert places, "ut_locality_guide_028 must run locality_survey, whose catalog part searches the place"
 
     def parts(place):
         return [p.strip().lower() for p in place.split(",") if p.strip()]
@@ -243,9 +225,8 @@ def test_catalog_search_called_and_broadened(tool_calls, test):
         for i in range(len(places))
         for j in range(i + 1, len(places))
     ), (
-        f"catalog_search places in call order: {places}. After the 0-hit village "
-        "call, a later call must name one of its parent jurisdictions (the text "
-        "after its first comma), not a sibling or the same place"
+        f"catalog levels the survey searched, in order: {places}. After the 0-hit village "
+        "level, a later level must name one of its parent jurisdictions"
     )
 
 
@@ -254,8 +235,7 @@ def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, tes
     several separate jurisdictions, the agent must survey only one. Asserts:
 
       1. Exactly one localities[] entry is persisted (not one per county).
-      2. volume_search standardPlace arguments target at most one county
-         (broadening to a parent jurisdiction is allowed).
+      2. locality_survey ran for at most one county.
 
     Guards the context-overflow bug: surveying three counties in parallel
     produces ~30 tool calls whose results exceed the agent's context window.
@@ -268,27 +248,17 @@ def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, tes
         f"expected exactly 1 localities entry, got {len(written)} — "
         "the agent should survey one jurisdiction per call, not all of them"
     )
-    # 2. volume_search calls target at most one county
-    vs_calls = [
-        tc for tc in (tool_calls or [])
-        if bare_tool_name(tc.get("tool")) == "volume_search"
-    ]
-    if vs_calls:
-        # Extract the most-specific component (first comma part) of each
-        # standardPlace argument. Broadening calls (e.g. "Kentucky, United
-        # States") have fewer components than county-level calls (e.g.
-        # "Pulaski, Kentucky, United States"), so only county-level calls
-        # (3+ components for US places) contribute a distinct first part.
-        county_firsts = set()
-        for tc in vs_calls:
-            sp = (tc.get("args") or {}).get("standardPlace") or ""
-            parts = [p.strip() for p in sp.split(",") if p.strip()]
-            if len(parts) >= 3:
-                county_firsts.add(parts[0].lower())
-        assert len(county_firsts) <= 1, (
-            f"volume_search called for multiple counties: {sorted(county_firsts)} — "
-            "the agent should survey only one jurisdiction per call"
-        )
+    # 2. The survey ran for at most one county (its parent level is that county's own).
+    county_firsts = set()
+    for tc in _survey_calls(tool_calls):
+        sp = (as_mapping(tc.get("args")).get("standardPlace") or "")
+        parts = [p.strip() for p in re.sub(r"\s*\([^()]*\)\s*$", "", sp).split(",") if p.strip()]
+        if len(parts) >= 3:
+            county_firsts.add(parts[0].lower())
+    assert len(county_firsts) <= 1, (
+        f"locality_survey ran for several counties: {sorted(county_firsts)} — "
+        "the agent should survey only one jurisdiction per call"
+    )
 
 
 # --- The guide is written once (issue #3442) ---------------------------------

@@ -55,34 +55,6 @@ _EVAL_DIR = Path(__file__).resolve().parents[3]
 _FIXTURES_DIR = _EVAL_DIR / "fixtures" / "mcp"
 _LOCALITY_TESTS = _EVAL_DIR / "tests" / "unit" / "locality-guide"
 
-# The survey tests this PR rewired to exercise VR4: each MUST register both
-# Step-3 searches through its own `mcp_fixtures`, or VR4's assertion silently
-# disarms (an unregistered tool is never called, so VR4 sees neither and skips).
-# Hardcoded by id — NOT discovered by "declares a volume-search fixture" —
-# because the fixture reference is the very thing that can go missing; a
-# discovery scan would shrink its own population and miss the regression.
-_VR4_SURVEY_TEST_IDS = [
-    "ut_locality_guide_004",
-    "ut_locality_guide_009",
-    "ut_locality_guide_014",
-    "ut_locality_guide_015",
-    "ut_locality_guide_017",
-    "ut_locality_guide_019",
-    "ut_locality_guide_020",
-]
-
-
-def _declared_fixtures(test_id):
-    """Resolve a test by its `test.id`, not by assuming the filename matches it:
-    6 of the locality tests are stored under prose filenames (e.g.
-    different-jurisdiction-ireland.json), so `f"{test_id}.json"` would
-    FileNotFoundError instead of failing with this pin's message if one of those
-    ids were ever added to the list below."""
-    for path in sorted(_LOCALITY_TESTS.glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if (data.get("test") or {}).get("id") == test_id:
-            return data.get("mcp_fixtures", [])
-    raise AssertionError(f"no locality-guide test file declares id {test_id!r}")
 
 
 # --- helpers ------------------------------------------------------------
@@ -187,87 +159,49 @@ def test_shape_fires_on_an_in_place_update_that_drops_a_section():
 
 
 # --- VR4: test_survey_run_calls_both_collections_and_volume_search ------
+# A run that produced a guide called locality_survey (issue #4602).
 
 
-def test_both_searches_fires_when_only_collections_search_called():
+def _survey(place="Javorje, Škofja Loka, Slovenia", catalog_places=(), prefix="mcp__genealogy__"):
+    return {
+        "tool": f"{prefix}locality_survey",
+        "args": {"standardPlace": place},
+        "response": {"catalog": {"levels": [{"place": c, "totalHits": 0, "hits": []} for c in catalog_places]}},
+    }
+
+
+_A_RETURNED_GUIDE = [{"subagent_type": "locality-guide", "text": "# Locality Guide: X\n\n## Available record types\n- x"}]
+
+
+def test_survey_fires_when_a_written_guide_had_no_survey():
     with pytest.raises(AssertionError) as exc:
-        check_both_searches([_call("collections_search"), _call("wiki_place_page")])
-    assert "volume_search" in str(exc.value)
+        check_both_searches(_state([]), _state([_guide_entry()]), [_call("wiki_read")])
+    assert "locality_survey" in str(exc.value)
 
 
-def test_both_searches_fires_when_only_volume_search_called():
+def test_survey_fires_when_a_returned_guide_had_no_survey():
     with pytest.raises(AssertionError) as exc:
-        check_both_searches([_call("volume_search")])
-    assert "collections_search" in str(exc.value)
-
-
-def test_both_searches_passes_when_both_called():
-    check_both_searches([_call("collections_search"), _call("volume_search")])
-
-
-def test_both_searches_skips_when_neither_called():
-    """A run that searched neither is not a records survey (Q&A / wiki-only /
-    decline). VR4 must SKIP — not record a bare-return pass on a run it never
-    checked (review B7)."""
-    with pytest.raises(pytest.skip.Exception):
-        check_both_searches([_call("wiki_place_page"), _call("place_search")])
-
-
-# --- B11: VR4 reachability pins (mirrors search-images #1788) -----------
+        check_both_searches(_state([]), _state([]), [_call("wiki_read")], _A_RETURNED_GUIDE)
+    assert "locality_survey" in str(exc.value)
 
 
 @pytest.mark.parametrize(
-    "prefix",
-    [
-        "mcp__genealogy__",
-        # Cowork's two other server spellings; VR4 normalizes on
-        # bare_tool_name() and CLAUDE.md requires all three to resolve.
-        "mcp__remote-devices__Genealogy_Research__",
-        "mcp__Genealogy_Research__",
-    ],
+    "prefix", ["mcp__genealogy__", "mcp__remote-devices__Genealogy_Research__", "mcp__Genealogy_Research__"]
 )
-def test_vr4_recognizes_collections_search_in_every_server_spelling(prefix):
-    """Pins VR4's `bare_tool_name()` normalization. Deleting that call makes VR4
-    compare a qualified name against a bare one, match nothing, and SKIP rather
-    than fire — which pytest reports as *skipped, not failed*, so a plain
-    `pytest.raises` guard would go green-to-skipped and never catch it. So this
-    converts the skip into an explicit failure: with `collections_search` called
-    (in each spelling) and `volume_search` absent, VR4 must FIRE, never skip."""
-    call = {"tool": f"{prefix}collections_search", "args": {}}
-    try:
-        check_both_searches([call])
-    except AssertionError as exc:
-        assert "volume_search" in str(exc)  # recognized cs, fired for missing vs
-    except pytest.skip.Exception:
-        pytest.fail(
-            f"VR4 did not recognize collections_search in spelling {prefix!r} — "
-            "bare_tool_name() normalization dropped, so VR4 is blind to real calls"
-        )
-    else:
-        pytest.fail("VR4 neither fired nor skipped on a one-search survey")
+def test_survey_passes_when_the_survey_ran_in_every_server_spelling(prefix):
+    check_both_searches(_state([]), _state([_guide_entry()]), [_survey(prefix=prefix)])
 
 
-def test_vr4_survey_tests_register_both_step3_searches():
-    """The other half: `mcp_fixtures` is what makes collections_search and
-    volume_search callable (both are fixture-backed, absent from LIVE_TOOLS).
-    Dropping BOTH silently disarms VR4 (it sees neither call and skips); dropping
-    one makes VR4 redden at run time on that test instead — this pin catches
-    either at unit-test time, before a paid run. Reads each survey test's OWN
-    declaration and asserts the mock arms both — removing a fixture reds this.
-    The empty-declaration case documents the both-dropped disarmed state."""
-    for test_id in _VR4_SURVEY_TEST_IDS:
-        declared = _declared_fixtures(test_id)
-        _, _, armed = create_mock_server(declared, _FIXTURES_DIR)
-        assert {"collections_search", "volume_search"} <= set(armed), (
-            f"{test_id}'s mcp_fixtures must register both Step-3 searches or VR4 "
-            f"silently skips it; declared {declared} -> registered {sorted(armed)}"
-        )
+def test_survey_skips_a_run_that_produced_no_guide():
+    with pytest.raises(pytest.skip.Exception):
+        check_both_searches(_state([]), _state([]), [_call("place_search")], [{"subagent_type": "locality-guide", "text": "Which years?"}])
 
-    _, _, unarmed = create_mock_server([], _FIXTURES_DIR)
-    assert not ({"collections_search", "volume_search"} & set(unarmed)), (
-        "with no mcp_fixtures both searches must be absent — if they are now "
-        f"live-registered this pin is obsolete; got {sorted(unarmed)}"
-    )
+
+def test_locality_survey_is_registered_in_every_suite():
+    """The survey is live (no fixture of its own), so VR4 can never be disarmed by a
+    test's fixture list."""
+    _, _, armed = create_mock_server([], _FIXTURES_DIR)
+    assert "locality_survey" in armed
 
 
 # --- VR5: test_catalog_search_called_and_broadened (issue #3107) ----------
@@ -276,70 +210,44 @@ def test_vr4_survey_tests_register_both_step3_searches():
 _UT028_TEST = {"id": "ut_locality_guide_028"}
 
 
-def test_catalog_broadening_fires_when_no_catalog_call():
-    """VR5 must fire when no catalog_search call was made at all."""
+def test_catalog_broadening_fires_when_no_survey():
     with pytest.raises(AssertionError) as exc:
-        check_catalog_broadening(
-            [_call("collections_search"), _call("volume_search")],
-            _UT028_TEST,
-        )
-    assert "catalog_search" in str(exc.value)
+        check_catalog_broadening([_call("wiki_read")], _UT028_TEST)
+    assert "locality_survey" in str(exc.value)
 
 
-def test_catalog_broadening_fires_when_only_one_call():
-    """VR5 must fire when catalog_search was called once (no broadening)."""
+def test_catalog_broadening_fires_when_only_one_level():
     with pytest.raises(AssertionError) as exc:
-        check_catalog_broadening(
-            [_call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia")],
-            _UT028_TEST,
-        )
+        check_catalog_broadening([_survey(catalog_places=["Javorje, Škofja Loka, Slovenia"])], _UT028_TEST)
     assert "parent jurisdictions" in str(exc.value)
 
 
 def test_catalog_broadening_fires_on_sibling_villages():
-    """VR5 must fire when two calls target sibling villages (no climb)."""
     with pytest.raises(AssertionError) as exc:
         check_catalog_broadening(
-            [
-                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-                _call("catalog_search", standardPlace="Javorje, Gorenja Vas-Poljane, Slovenia"),
-            ],
+            [_survey(catalog_places=["Javorje, Škofja Loka, Slovenia", "Javorje, Gorenja Vas-Poljane, Slovenia"])],
             _UT028_TEST,
         )
     assert "parent jurisdictions" in str(exc.value)
 
 
-def test_catalog_broadening_fires_on_same_place_twice():
-    """VR5 must fire when catalog_search is called twice for the same place."""
-    with pytest.raises(AssertionError) as exc:
-        check_catalog_broadening(
-            [
-                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-            ],
-            _UT028_TEST,
-        )
-    assert "parent jurisdictions" in str(exc.value)
-
-
-def test_catalog_broadening_passes_when_called_twice():
-    """VR5 must accept when catalog_search was called twice (initial + broadened)."""
+def test_catalog_broadening_passes_when_the_survey_climbed():
     check_catalog_broadening(
-        [
-            _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-            _call("catalog_search", standardPlace="Škofja Loka, Slovenia"),
-        ],
-        _UT028_TEST,
+        [_survey(catalog_places=["Javorje, Škofja Loka, Slovenia", "Škofja Loka, Slovenia"])], _UT028_TEST
     )
 
 
+def test_catalog_broadening_reads_an_mcp_text_response():
+    call = _survey()
+    call["response"] = {"content": [{"type": "text", "text": json.dumps(
+        {"catalog": {"levels": [{"place": "Javorje, Škofja Loka, Slovenia"}, {"place": "Škofja Loka, Slovenia"}]}}
+    )}]}
+    check_catalog_broadening([call], _UT028_TEST)
+
+
 def test_catalog_broadening_skips_for_other_tests():
-    """VR5 must stand down for any test that is not ut_locality_guide_028."""
     with pytest.raises(pytest.skip.Exception):
-        check_catalog_broadening(
-            [_call("catalog_search", standardPlace="Pennsylvania, United States")],
-            {"id": "ut_locality_guide_004"},
-        )
+        check_catalog_broadening([_survey(catalog_places=["Pennsylvania, United States"])], {"id": "ut_locality_guide_004"})
 
 
 # --- The guide is written once: (a) persisted, (b) in-project return, (c) no-project

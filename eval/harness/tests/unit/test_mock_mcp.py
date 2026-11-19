@@ -1538,10 +1538,24 @@ def test_research_append_keeps_a_locality_count_unstamped_in_the_harness(tmp_pat
     entry = {
         "place": "Illinois, United States",
         "collections": [{"id": "1803969", "title": "Illinois, State Census, 1855", "person_count": 0, "record_count": 5}],
-        "pages_read": [{"section": "home", "url": "u1", "found": True}],
         "source": "locality-guide",
     }
-    result = _invoke(tools_by_name, "research_append", {"projectPath": str(tmp_path), "section": "localities", "op": "append", "entry": entry})
+    survey = json.loads(
+        _invoke(tools_by_name, "locality_survey", {"standardPlace": "Illinois, United States", "projectPath": str(tmp_path)})[
+            "content"
+        ][0]["text"]
+    )
+    result = _invoke(
+        tools_by_name,
+        "research_append",
+        {
+            "projectPath": str(tmp_path),
+            "section": "localities",
+            "op": "append",
+            "entry": entry,
+            "surveyRef": survey["staged"]["resultsRef"],
+        },
+    )
     reply = json.loads(result["content"][0]["text"])
     assert reply["ok"] is True, reply
     assert not any("catalog" in w for w in reply["validation"]["warnings"]), reply
