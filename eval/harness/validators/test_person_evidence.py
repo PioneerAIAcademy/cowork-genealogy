@@ -1916,11 +1916,28 @@ def _names_unexplained_score(text):
     )
 
 
+_OTHER_LINK = re.compile(r"\bpe_(?!005\b)\d+|\ba_(?!013\b)\d+")
+_SAME_PERSON = re.compile(r"\bsame_person\b", re.IGNORECASE)
+
+
+def _reports_computed_score(text):
+    """One sentence gives the `same_person` score the review computed, with its
+    number, and names no other link or assertion. A review calls `same_person` on
+    a null match_score and reports the score without writing it, as the agent's
+    body says, so a stated score answers the gap as well as naming the null does."""
+    return any(
+        _SAME_PERSON.search(s) and _NUMERIC_SCORE.search(s) and not _OTHER_LINK.search(s)
+        for s in _sentences(text)
+    )
+
+
 def test_review_names_gaps(test, agent_returns=None, text_response=None):
     """Tag-gated (`review-names-gaps`): a review of pe_005 names both gaps a
     review owes, because the test marks the linking dimensions N/A
     (`na_dimensions`, #4548): a_013 names Thomas Flynn (I2) as father but no
-    pe_ entry links it to I2, and pe_005's null match_score is unexplained."""
+    pe_ entry links it to I2, and pe_005's null match_score is dealt with: the
+    review gives the `same_person` score it computed, or says the null is
+    unexplained."""
     if "review-names-gaps" not in (test.get("tags") or []):
         pytest.skip("not a review-names-gaps test")
     from harness.skill_runner import subject_reply_text
@@ -1929,8 +1946,9 @@ def test_review_names_gaps(test, agent_returns=None, text_response=None):
     assert _names_missing_i2_link(reply), (
         "the review does not say that a_013 has no pe_ link to Thomas Flynn (I2)"
     )
-    assert _names_unexplained_score(reply), (
-        "the review does not say that pe_005's match_score is null and unexplained"
+    assert _names_unexplained_score(reply) or _reports_computed_score(reply), (
+        "the review neither gives pe_005's computed same_person score nor says its "
+        "match_score is null and unexplained"
     )
 
 

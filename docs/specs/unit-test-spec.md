@@ -1453,8 +1453,9 @@ the judge, so the score is dropped in code.
   the test's tags gates a validator in the skill's file or `test_universal.py`.
   On 001 that is
   `test_review_names_gaps` (tag `review-names-gaps`): the reply must say that
-  a_013 has no pe_ link to Thomas Flynn (I2) and that `pe_005`'s null
-  `match_score` is unexplained.
+  a_013 has no pe_ link to Thomas Flynn (I2), and must deal with `pe_005`'s
+  null `match_score`: give the `same_person` score it computed, or say the null
+  is unexplained.
 - **Still in the review sample.** The review sample's targeted slot looks for
   rubric nulls on positive tests, and a coerced null counts there
   (`review_sample._has_rubric_null_on_positive`); the slot's exhaustion guard
