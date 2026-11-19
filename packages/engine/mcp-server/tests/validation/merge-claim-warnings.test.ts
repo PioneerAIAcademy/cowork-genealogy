@@ -72,6 +72,20 @@ describe("mergeClaimWarnings", () => {
     expect(run(research, twoPersons, onePerson, [["I1", "I5"]])).toEqual([]);
   });
 
+  it("a standing ruled-out Step edge does not hide a ruled-out biological edge the merge creates", () => {
+    const dis = (subtype: string) => ({ claim: `not ${subtype}`, proof_tier: "disproved", supporting_assertion_ids: [], relationship: { type: "ParentChild", subtype, parent: "I3", child: "I1" } });
+    const research = { proof_summaries: [ps("ps_1", [dis("Biological"), dis("Step")])] };
+    const before = { persons: [P("I1"), P("I3"), P("I4")], relationships: [
+      { id: "R1", type: "ParentChild", subtype: "Step", parent: "I3", child: "I1" },
+      { id: "R2", type: "ParentChild", parent: "I4", child: "I1" },
+    ] };
+    const after = { persons: [P("I1"), P("I3")], relationships: [
+      { id: "R1", type: "ParentChild", subtype: "Step", parent: "I3", child: "I1" },
+      { id: "R2", type: "ParentChild", parent: "I3", child: "I1" },
+    ] };
+    expect(run(research, before, after, [["I3", "I4"]]).map((w) => w.warningId)).toEqual(["mergeRuledOut|R2"]);
+  });
+
   it("raises nothing with no claims", () => {
     expect(run({ proof_summaries: [] }, twoPersons, onePerson, [["I1", "I5"]])).toEqual([]);
   });

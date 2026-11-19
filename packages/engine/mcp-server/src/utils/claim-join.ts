@@ -90,7 +90,7 @@ function relationshipKey(r: any): string | null {
  *  affirming one and denying the other is not a contradiction. Only the
  *  claim-to-claim form reads subtype: for status, rival verdicts and encoding an
  *  untyped claim covers its pair (Decision 32). */
-function sameSubtype(a: any, b: any): boolean {
+export function sameSubtype(a: any, b: any): boolean {
   if (a?.type !== "ParentChild") return true;
   const norm = (v: unknown) => {
     const t = typeof v === "string" ? v.trim().toLowerCase() : "";

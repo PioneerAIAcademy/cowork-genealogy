@@ -6,7 +6,7 @@
 
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { claimRuleFindings, namedPersons, type ClaimRuleId } from "./claim-rules.js";
-import { disprovedClaimCovering } from "../utils/claim-join.js";
+import { disprovedClaimCovering, sameSubtype } from "../utils/claim-join.js";
 import { getPersonName } from "../tools/person-warnings.js";
 
 export interface SyntheticWarning {
@@ -124,7 +124,7 @@ export function mergeClaimWarnings(before: Side, after: Side, merges: ReadonlyAr
 function sameEnds(before: any, after: any, merges: ReadonlyArray<readonly [string, string]>): boolean {
   const map = new Map(merges.map(([s, c]) => [c, s]));
   const m = (id: unknown) => (typeof id === "string" ? map.get(id) ?? id : id);
-  if (before?.type !== after?.type) return false;
+  if (before?.type !== after?.type || !sameSubtype(before, after)) return false;
   if (before.type === "ParentChild") return m(before.parent) === after.parent && m(before.child) === after.child;
   const a = [m(before.person1), m(before.person2)].sort().join("+");
   const b = [after.person1, after.person2].sort().join("+");
