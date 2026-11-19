@@ -1,6 +1,6 @@
 {
   "tool": "image_transcribe",
-  "description": "Image 009113284_00716 read with a lookingFor naming Eliza: LEGGAT..LEE, eleven LEE entries; holds ELIZABETH LEE, born 29 Sep 1821, christened 13 Oct 1822, daughter of JAMES LEE and MARIA (06132-2), and ELIZA LEE, born 30 Jul 1822, daughter of JOHN LEE and ELIZABETH (05476-7). Transcription is the real image_transcribe output for this page, copied from the alpha-feedback bundle of issue #4567 (2026-11-13). `found` is FOUND, as the tool's own found check returned it (gemini-3.7-flash, 2026-11-18) for both 'Lee, Eliza, father James Lee' and 'Eliza Lee' once a comma-written name expands to Elizabeth. Order before image-transcribe-marylebone-00716.",
+  "description": "Image 009113284_00716 read with a lookingFor naming Eliza: LEGGAT..LEE, eleven LEE entries; holds ELIZABETH LEE, born 29 Sep 1821, christened 13 Oct 1822, daughter of JAMES LEE and MARIA (06132-2), and ELIZA LEE, born 30 Jul 1822, daughter of JOHN LEE and ELIZABETH (05476-7). Transcription is the real image_transcribe output for this page, copied from the alpha-feedback bundle of issue #4567 (2026-11-13). `found` is FOUND, as the tool's own found check returned it (gemini-3.7-flash, 2026-11-18) for both 'Lee, Eliza, father James Lee' and 'Eliza Lee' once a comma-written name expands to Elizabeth. `matchedForms` is what formsOnPage gives for a lookingFor naming Eliza on this page. Order before image-transcribe-marylebone-00716.",
   "args": {
     "imageId": "~009113284_00716",
     "lookingFor": "~eliza"
@@ -13,6 +13,11 @@
       "contentType": "image/jpeg",
       "model": "google/gemini-3.7-flash"
     },
-    "found": "FOUND"
+    "found": "FOUND",
+    "matchedForms": {
+      "Eliza": [
+        "Elizabeth"
+      ]
+    }
   }
 }

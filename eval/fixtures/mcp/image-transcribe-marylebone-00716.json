@@ -1,6 +1,6 @@
 {
   "tool": "image_transcribe",
-  "description": "Image 009113284_00716: LEGGAT..LEE, eleven LEE entries; holds ELIZABETH LEE, born 29 Sep 1821, christened 13 Oct 1822, daughter of JAMES LEE and MARIA (06132-2), and ELIZA LEE, born 30 Jul 1822, daughter of JOHN LEE and ELIZABETH (05476-7). Transcription is the real image_transcribe output for this page, copied from the alpha-feedback bundle of issue #4567 (2026-11-13). Answers any read of this page with no `found`; a read whose lookingFor names Eliza is answered by image-transcribe-marylebone-00716-eliza when that fixture exists, which must be ordered first.",
+  "description": "Image 009113284_00716: LEGGAT..LEE, eleven LEE entries; holds ELIZABETH LEE, born 29 Sep 1821, christened 13 Oct 1822, daughter of JAMES LEE and MARIA (06132-2), and ELIZA LEE, born 30 Jul 1822, daughter of JOHN LEE and ELIZABETH (05476-7). Transcription is the real image_transcribe output for this page, copied from the alpha-feedback bundle of issue #4567 (2026-11-13). Answers any read of this page with no `found`; a read whose lookingFor names Eliza is answered by image-transcribe-marylebone-00716-eliza, which must be ordered first.",
   "args": {
     "imageId": "~009113284_00716"
   },

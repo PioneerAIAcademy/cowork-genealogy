@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   lookupNameFamily,
   expandLookingFor,
+  formsOnPage,
   __clearVariantCacheForTests,
 } from "../../src/utils/name-variants.js";
 
@@ -173,5 +174,25 @@ describe("expandLookingFor", () => {
     const forms = parts.split(", ");
     const unique = new Set(forms);
     expect(forms.length).toBe(unique.size);
+  });
+});
+
+describe("formsOnPage", () => {
+  it("names the other forms on the page, keyed by the name as written", () => {
+    const { byWrittenName } = expandLookingFor("Lee, Eliza, father James Lee")!;
+    expect(byWrittenName.Eliza).toContain("Elizabeth");
+    const page = "LEE BRN 29 SEP 1821 ELIZABETH D JAMES LEE AND MARIA 06132-2";
+    expect(formsOnPage(byWrittenName, page)).toEqual({ Eliza: ["Elizabeth"] });
+  });
+
+  it("matches whole words only, and a scribal form with its period", () => {
+    const { byWrittenName } = expandLookingFor("Elizabeth Lee")!;
+    expect(formsOnPage(byWrittenName, "BETTYE LEE, BETHANY LEE")).toBeNull();
+    expect(formsOnPage(byWrittenName, "Eliz. Lee, dau. of Jas.")).toEqual({ Elizabeth: ["Eliz", "Eliz."] });
+  });
+
+  it("is null when only the name as written is on the page", () => {
+    const { byWrittenName } = expandLookingFor("Eliza Lee")!;
+    expect(formsOnPage(byWrittenName, "ELIZA, daughter of JOHN LEE")).toBeNull();
   });
 });

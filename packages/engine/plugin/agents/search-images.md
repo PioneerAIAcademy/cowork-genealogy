@@ -364,10 +364,11 @@ perfectly.
 
 For each page, judge from `found`, the `digest` and any page you read whether
 the target record appears and whether the place and approximate date are
-consistent. A short form or diminutive of the name sought (Eliza or Betsy for
-Elizabeth, Polly for Mary, Peggy for Margaret) is the same name: report that
-entry as a candidate, never call it a different name, and never overrule a
-`FOUND` on name form alone. A person of the subject's name on a page you read
+consistent. A form listed in `matchedForms`, or any short form or diminutive of
+the name sought (Eliza or Betsy for Elizabeth, Polly for Mary), is the same
+name: report that entry as a candidate under the name sought, never write that
+it is a different name or "not" the name sought, and never overrule a `FOUND` on
+name form alone. A person of the subject's name on a page you read
 who cannot be the subject is a namesake (step 7b). Present the promising
 images with the image ID, what each shows and its `viewerUrl` as a link; let the user confirm which to
 examine in detail. Never fabricate the contents of a page — report only what

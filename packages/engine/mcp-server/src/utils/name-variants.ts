@@ -33,6 +33,8 @@ interface NameFamily {
 interface NameExpansionResult {
   expanded: string;
   expansions: Record<string, string[]>;
+  /** The same forms keyed by the name as the caller wrote it ("Eliza"). */
+  byWrittenName: Record<string, string[]>;
 }
 
 interface LoadedTable {
@@ -285,6 +287,7 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
 
   const alsoKnownAs: string[] = [];
   const expansions: Record<string, string[]> = {};
+  const byWrittenName: Record<string, string[]> = {};
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
@@ -316,6 +319,7 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
 
     alsoKnownAs.push(...others);
     expansions[family.formal] = others;
+    byWrittenName[name] = others;
   }
 
   if (alsoKnownAs.length === 0) return null;
@@ -326,5 +330,27 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
   return {
     expanded: `${lookingFor} (also known as ${unique.join(", ")})`,
     expansions,
+    byWrittenName,
   };
+}
+
+/**
+ * Which of each sought name's other forms appear on a page, as whole words,
+ * case-insensitively: `{ Eliza: ["Elizabeth"] }`. Names with no form on the
+ * page are left out; null when none has one.
+ */
+export function formsOnPage(
+  byWrittenName: Record<string, string[]>,
+  text: string,
+): Record<string, string[]> | null {
+  const out: Record<string, string[]> = {};
+  for (const [name, forms] of Object.entries(byWrittenName)) {
+    const present = forms.filter((form) => {
+      const escaped = form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const tail = form.endsWith(".") ? "" : "(?![A-Za-z])";
+      return new RegExp(`(?<![A-Za-z])${escaped}${tail}`, "i").test(text);
+    });
+    if (present.length > 0) out[name] = present;
+  }
+  return Object.keys(out).length > 0 ? out : null;
 }

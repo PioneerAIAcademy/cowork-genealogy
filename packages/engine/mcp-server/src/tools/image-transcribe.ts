@@ -15,7 +15,7 @@ import {
   recordImageReadCap,
   projectScope,
 } from "../utils/image-store.js";
-import { expandLookingFor } from "../utils/name-variants.js";
+import { expandLookingFor, formsOnPage } from "../utils/name-variants.js";
 import {
   runOcr,
   runFoundCheck,
@@ -444,6 +444,12 @@ async function imageTranscribeToolInner(
       found = undefined;
     }
   }
+  // Name the forms that let a FOUND page match, so a caller never reads
+  // "Elizabeth" on a FOUND page for "Eliza" as a different person (#4587).
+  const matchedForms =
+    found === "FOUND" && lookingForExpansion
+      ? formsOnPage(lookingForExpansion.byWrittenName, transcription)
+      : null;
 
   // Stage the transcription (issue #2489, merged into #2048): the same channel
   // the search tools use, as a ONE-element results[] so finalize's invariants
@@ -499,6 +505,7 @@ async function imageTranscribeToolInner(
     ...(viewerUrl ? { viewerUrl } : {}),
     ...(truncated ? { truncated: true as const, truncationNotice } : {}),
     ...(found ? { found } : {}),
+    ...(matchedForms ? { matchedForms } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(staged !== undefined ? { staged } : {}),
     ...(stagingError !== undefined ? { stagingError } : {}),
@@ -638,7 +645,10 @@ export const imageTranscribeToolSchema = {
           "or slants the full transcription. The pointer is withheld on a " +
           "truncated read (`truncated: true`): a half-read page cannot support a " +
           "clean NOT FOUND, so `found` is absent there — judge from the returned " +
-          "lines and treat the rest of the page as unread.",
+          "lines and treat the rest of the page as unread. On a FOUND, " +
+          "`matchedForms` lists the other forms of a sought given name that the " +
+          "page carries (`{ Eliza: [\"Elizabeth\"] }`): an entry under one of " +
+          "them carries the name sought, not a different name.",
       },
       projectPath: {
         type: "string",
