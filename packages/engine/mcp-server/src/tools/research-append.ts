@@ -29,12 +29,17 @@ import { isSettledConflict, PROOF_TIER_RANK, VALIDATOR_ENUMS } from "../validati
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  type AttachedBirthPair,
+  attachedBirthPairsAction,
   competingParentSets,
+  conflictBlocksQuestion,
   conflictBlocksCompletion,
+  describeAttachedBirthPairs,
   conflictCoverageLogIds,
   datetimeMs,
   endsOnConflict,
   isAnalysed,
+  registeredPairConflictIds,
   questionLastSearchedMs,
   questionOwnedLogEntries,
   questionTiedAssertionIds,
@@ -64,18 +69,14 @@ import {
   recordIdOf,
   recordParties,
   resolvedAgainstIds,
-  YEAR_PATTERN,
   yearOf,
   type ResolvedAgainst,
+  isBirthPlaceDispute,
 } from "../utils/settled-birth-disputes.js";
-import { normalizeString } from "../utils/string-similarity.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import {
   placeSegments,
   canonicalCountry,
-  standardPlaceToCoords,
-  UK_CONSTITUENTS,
-  placeTypeKey,
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
@@ -87,8 +88,44 @@ import {
 } from "../utils/place-resolver.js";
 import { isProse, judgeSupplied, placeAnswer, unconfirmedByText } from "../utils/place-verdict.js";
 import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
-import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
-import { haversineDistance } from "./distance.js";
+import { birthThresholdMiles } from "../utils/place-coords.js";
+import {
+  attachedBirthPairPlaces,
+  attachedBirths,
+  attachedBirthScopePersons,
+  attachedBirthsOf,
+  attachedPlacesFar,
+  BIRTH_PLACE_FACT_TYPES,
+  birthCountriesDiffer,
+  birthPlacesFarApart,
+  contradictingAttachedPairs,
+  contradictionIsCredible,
+  lookupBirthPlaceInfo,
+  placesAgreeByName,
+  readableBirthPlace,
+  resolvableAssertions,
+  treeBirthFact,
+  unansweredAttachedBirthPairs,
+  type AttachedBirth,
+  type BirthPlaceCoords,
+  type PersonLink,
+} from "../utils/attached-births.js";
+// Moved to the read-only module above so a reader tool can use the pair test;
+// re-exported so the gate's tests and dev measurements keep importing them here.
+export {
+  attachedBirthConflictsOf,
+  attachedBirthPairPlaces,
+  attachedBirthPairsByQuestion,
+  attachedBirthScopePersons,
+  attachedBirthsOf,
+  birthPlaceInfo,
+  lookupBirthPlaceInfo,
+  unansweredAttachedBirthPairs,
+  type AttachedBirth,
+  type BirthPlaceCoords,
+  type BirthPlaceInfo,
+  type PersonLink,
+} from "../utils/attached-births.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -991,6 +1028,107 @@ function resolutionKindInvariants(entry: any, op: { op: string; fields?: Record<
   return [];
 }
 
+/** A resolved birthplace fact conflict's readable competitors and the tree
+ *  people their live links name, sorted; null when the rule does not apply. */
+function birthPlaceConflictScope(
+  entry: any,
+  research: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+): { competitors: any[]; persons: string[] } | null {
+  if (entry?.conflict_type !== "fact" || entry?.status !== "resolved") return null;
+  if (!isBirthPlaceDispute(entry.disputed_attribute)) return null;
+  const ids = new Set<string>(
+    (Array.isArray(entry.competing_assertion_ids) ? entry.competing_assertion_ids : []).filter(
+      (x: unknown): x is string => typeof x === "string",
+    ),
+  );
+  if (ids.size < 2) return null;
+  const byId = resolvableAssertions(research);
+  const competitors = [...ids].map((id) => byId.get(id)).filter((a): a is any => !!a && readableBirthPlace(a));
+  const links = personLinks ?? ((research?.person_evidence ?? []) as any[]).filter((pe: any) => pe && pe.superseded_by == null);
+  const persons = new Set<string>(
+    links
+      .filter((pe: any) => ids.has(pe.assertion_id) && typeof pe.person_id === "string")
+      .map((pe: any) => pe.person_id),
+  );
+  return { competitors, persons: [...persons].sort() };
+}
+
+/** The standard places of the attached births `attachedBirthConflictInvariants`
+ *  compares for one conflict, whose other names the prefetch reads. */
+export function attachedBirthConflictPlaceNames(entry: any, research: any, personLinks?: ReadonlyArray<PersonLink>): string[] {
+  const scope = birthPlaceConflictScope(entry, research, personLinks);
+  if (!scope) return [];
+  const names: string[] = [];
+  for (const p of scope.persons) {
+    for (const b of attachedBirthsOf(p, research, personLinks)) {
+      if (!b.ruledOut && typeof b.assertion.standard_place === "string") names.push(b.assertion.standard_place);
+    }
+  }
+  for (const c of scope.competitors) if (typeof c.standard_place === "string") names.push(c.standard_place);
+  return names;
+}
+
+/** A birthplace fact conflict may not be `resolved` by choosing between the two
+ *  sides of a tree person's self-contradicting attached births (#4444). When the
+ *  records FamilySearch attaches to one person put their birth in different
+ *  countries, that person may be two people under one tree entry: an identity
+ *  question, not a fact to weigh as one person's. thomas-hanrahan-marriage resolved exactly that twice, once
+ *  preferring a stranger's civil registration over the census (run 2026-11-09)
+ *  and once his baptism (2026-11-16). Fires when the conflict's competitors fall
+ *  on both sides of such a pair: one is, or agrees with, each. Read by country,
+ *  once the place's other FamilySearch names (prefetched, as the link gate's
+ *  are) have not made the pair one place: "Upper Canada, British North America"
+ *  and "Ontario, Canada" never fire. A near pair never fires. */
+export function attachedBirthConflictInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+  birthPlaceCoords?: BirthPlaceCoords,
+): string[] {
+  const scope = birthPlaceConflictScope(entry, research, personLinks);
+  if (!scope) return [];
+  const { competitors, persons } = scope;
+  for (const p of persons) {
+    const birth = treeBirthFact(tree, p);
+    if (!birth) continue;
+    // The arm's own tests: the pair it reads as contradicting, and its "near",
+    // so a competitor named by a historical jurisdiction, or within the distance
+    // band, falls on the side it really is.
+    const near = (x: any, y: any) => !attachedPlacesFar(x, y, birth, birthPlaceCoords);
+    const live = attachedBirthsOf(p, research, personLinks).filter((b) => !b.ruledOut).map((b) => b.assertion);
+    for (const [x, y] of contradictingAttachedPairs(live, birth, birthPlaceCoords)) {
+      const withX = competitors.find((c) => near(c, x) && !near(c, y));
+      const withY = competitors.find((c) => near(c, y) && !near(c, x));
+      if (!withX || !withY) continue;
+      const pair = { personId: p, a: x, b: y };
+      const others = { ...research, conflicts: (research?.conflicts ?? []).filter((c: any) => c?.id !== entry?.id) };
+      const byId = new Map<string, any>((others.conflicts as any[]).map((c: any) => [c?.id, c]));
+      // A conflict that already weighs the pair is not weighed again: only the
+      // researcher's rejection lifts this rule then.
+      const weighed = registeredPairConflictIds(others, pair).filter((id) => isAnalysed(byId.get(id)));
+      const next =
+        weighed.length > 0
+          ? `Leave this conflict unresolved: ${weighed.sort().join(", ")} already weighs who these records belong to, ` +
+            `and the researcher's rejection of the attachment that is not theirs (a rejected_links entry) settles it.`
+          : `Leave this conflict unresolved and ${attachedBirthPairsAction([pair], others)}; ` +
+            `it may be resolved by preferring the record that belongs ` +
+            `to '${p}', and the researcher's own rejection of the attachment that is not theirs (a ` +
+            `rejected_links entry) also settles it.`;
+      return [
+        `conflict '${entry.id ?? "(new)"}' cannot be 'resolved' by preferring one side: its competitors ` +
+          `'${withX.id}' ('${withX.place}') and '${withY.id}' ('${withY.place}') follow the two records ` +
+          `FamilySearch attaches to '${p}' that put that person's birth too far apart to be one birth ('${x.place}', ` +
+          `assertion '${x.id}'; '${y.place}', assertion '${y.id}'). A tree person whose own attached records ` +
+          `disagree like this may be two people under one entry, which is an identity question, not a fact ` +
+          `to weigh as one person's. ${next}`,
+      ];
+    }
+  }
+  return [];
+}
+
 /** A [?] assertion cannot win a conflict on its own evidence — it needs
  *  corroboration from a different record with the same fact_type, same value
  *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
@@ -1499,59 +1637,6 @@ const MAX_BIRTH_YEAR_GAP = 5;
  *  value. It cannot see a conflict nobody wrote down, which is the honest limit
  *  of any document-side gate.
  */
-/** Only a BIRTH place compares against the tree person's birth place. A
- *  christening place is where the church is, not where the child was born:
- *  3 of the corpus's false positives were a christening at Ashton-under-Lyne
- *  against a birth at Preston, which is an ordinary Lancashire life, not a
- *  contradiction. The DATE arm is the other way round -- a christening follows
- *  birth closely, so its date IS comparable. */
-const BIRTH_PLACE_FACT_TYPES: ReadonlySet<string> = new Set(["birth"]);
-
-/** An informant with no proximity to the birth cannot contradict it. Senior
- *  genealogist ruling 2026-09-23 (John Mark Peter-Brown): "A baptismal record
- *  carries weight of birth assertion than a death record with a secondary
- *  information by someone who does not have firsthand information about the
- *  birth." 35 of the corpus's 38 false positives were exactly that -- a death
- *  record's `Born 1845, Pennsylvania` against a tree attesting Ireland, at
- *  `information_quality: "secondary"`, `informant_proximity:
- *  "family_not_present"`. Capping a sound identity link because a death
- *  certificate misreported a birthplace would make the tool worse.
- *
- *  This reads `informant_proximity` to decide whether a contradiction is
- *  CREDIBLE, which is evidence weighing. It is not the same as citing it to
- *  justify a tier, which `agents/person-evidence.md` forbids -- that rule is
- *  about raising confidence on source quality alone. Flagged here because the
- *  two sit close enough to be confused. */
-const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
-  "family_not_present", "researcher", "unknown",
-]);
-
-/** Whether this assertion's stated value is credible enough to contradict the
- *  tree. Measured over every committed scenario fixture 2026-09-24: with these
- *  two gates the arm refuses **0 of 323** confident/probable person_evidence
- *  entries, against 38 without them and 274 comparing any place at all. An
- *  assertion a settled conflict set aside, on the attribute that conflict
- *  disputed, is not credible either: one a resolved conflict decided against, or
- *  a competitor in a moot one that carries both analyses (`resolvedAgainstIds`). */
-function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<string>): boolean {
-  if (resolvedAgainst.has(assertion?.id)) return false;
-  if (assertion?.information_quality === "secondary") return false;
-  return !WEAK_INFORMANT_PROXIMITY.has(
-    String(assertion?.informant_proximity ?? "unknown"),
-  );
-}
-
-/** A person_evidence link as the contradiction gate needs it: which assertion,
- *  to which person, at what tier. `id` is absent on a link this call appends;
- *  `fromBatch` marks a link an op of this call wrote, which the gate checks on
- *  that op itself. */
-export interface PersonLink {
-  assertion_id: string;
-  person_id: string;
-  id?: string;
-  confidence?: unknown;
-  fromBatch?: boolean;
-}
 
 function isRelational(a: any): boolean {
   return RELATIONAL_FACT_TYPES.has(String(a?.fact_type ?? "").toLowerCase());
@@ -1677,126 +1762,12 @@ function partiesLinkedTo(
   return [...found];
 }
 
-/** Coordinates of standard places, looked up in `prepareOps` because the gate
- *  below is synchronous. A name that is absent or null was not resolved. */
-export type BirthPlaceCoords = ReadonlyMap<string, PlaceCoords | null>;
-
-/** Places types (as `placeTypeKey` reads them) that name a whole region rather
- *  than somewhere a person is born. Their coordinates are the region's centre,
- *  so a distance from one is not computable and the pair caps. A county,
- *  department or municipality still gets a distance: the cruz-corona-ancestry
- *  record is a Mexican municipality. Two counties against each other cap,
- *  though: two different counties named as a birthplace are two different
- *  places (Perthshire against Forfarshire), not one place measured twice. */
-const REGION_PLACE_TYPES: ReadonlySet<string> = new Set([
-  "continent", "country", "dependency or protectorate", "colony", "state", "province", "territory",
-  "region", "prefecture", "governorate", "principality or emirate",
-]);
-
-/** The write path's whole budget for those lookups. Over it, a pair has no
- *  coordinates and the cap fires. */
-const BIRTH_PLACE_COORDS_BUDGET_MS = 10_000;
-
-/** The country a birth place names: the last segment, read from the end, that
- *  `canonicalCountry` recognizes. A trailing United Kingdom gives way to a
- *  country named before it, so "Bath, Somerset, England" and "Bath, Somerset,
- *  England, United Kingdom" both read England, while England against Scotland,
- *  or against "Dublin, Ireland, United Kingdom", still differs. Null when no
- *  segment is recognized. A US state is not read as the United States: "CA" is
- *  also Canada, and a US place's standard_place names its country anyway. Not
- *  `placeCountry`: that groups countries whose borders moved, which suits a
- *  residence move and would let a census's "born Ireland" against "born
- *  England" through here. */
-function birthCountry(place: unknown): string | null {
-  if (typeof place !== "string") return null;
-  const segments = placeSegments(place);
-  for (let i = segments.length - 1; i >= 0; i--) {
-    const country = canonicalCountry(segments[i]);
-    if (!country) continue;
-    if (country === "united kingdom") {
-      for (let k = i - 1; k >= 0; k--) {
-        const inner = canonicalCountry(segments[k]);
-        if (inner && inner !== "united kingdom") return inner;
-      }
-    }
-    return country;
-  }
-  return null;
-}
-
-/** The country a standard place names. A FamilySearch standard place always
- *  ends at its country, so the last segment is read as one even when
- *  `canonicalCountry` does not know it ("Zagreb, Croatia"). */
-function standardPlaceCountry(standardPlace: unknown): string | null {
-  const known = birthCountry(standardPlace);
-  if (known) return known;
-  if (typeof standardPlace !== "string") return null;
-  const segments = placeSegments(standardPlace);
-  return segments.length > 1 ? normalizeString(segments[segments.length - 1]) : null;
-}
-
-/** Both sides name a country and the two differ. Read from the place text, or
- *  from the standard_place when the text names none. A bare United Kingdom
- *  does not differ from a constituent: it names no constituent to differ from.
- *  Offline. */
-function birthCountriesDiffer(assertion: any, birth: any): boolean {
-  const a = birthCountry(assertion?.place) ?? standardPlaceCountry(assertion?.standard_place);
-  const b = birthCountry(birth?.place) ?? standardPlaceCountry(birth?.standard_place);
-  if (a === null || b === null || a === b) return false;
-  const ukPair = (x: string, y: string) => x === "united kingdom" && UK_CONSTITUENTS.has(y);
-  return !ukPair(a, b) && !ukPair(b, a);
-}
-
-/** Every year `yearOf` would find in each value, not only the first. */
-function yearsIn(...values: unknown[]): number[] {
-  const out: number[] = [];
-  for (const v of values) {
-    for (const m of String(v ?? "").matchAll(new RegExp(YEAR_PATTERN, "g"))) out.push(Number(m[1]));
-  }
-  return out;
-}
-
-/** Whether two birth places that do not agree are far enough apart to be a
- *  contradiction (lead ruling 2026-10-13, issue #3390): different countries, or
- *  further apart than `birthThresholdMiles` allows for the era the dates span.
- *  Fails closed: with no country difference, the pair counts as far apart unless
- *  both sides carry a standard_place with coordinates finer than a region
- *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known.
- *  `unresolvedIsNear` opens the one case a slow lookup decides: a standard
- *  place the lookup returned no coordinates for. */
-function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords, unresolvedIsNear = false): boolean {
-  if (birthCountriesDiffer(assertion, birth)) return true;
-  const sa = assertion?.standard_place;
-  const sb = birth?.standard_place;
-  if (typeof sa !== "string" || typeof sb !== "string") return true;
-  const pa = coords?.get(sa);
-  const pb = coords?.get(sb);
-  if (!pa || !pb) return !unresolvedIsNear;
-  if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
-  if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
-  const years = yearsIn(birth.date, birth.standard_date, assertion.date);
-  if (years.length === 0) return true;
-  const { miles } = haversineDistance(pa.latitude, pa.longitude, pb.latitude, pb.longitude);
-  return miles > birthThresholdMiles(Math.min(...years), Math.max(...years));
-}
-
 interface ContradictionScope {
   birth: any;
   sameRecord: any[];
   resolvedAgainst: ResolvedAgainst;
-}
-
-/** Every assertion this call can resolve: the document's, plus this batch's
- *  predicted appends. Reading only `research.assertions` let a batch that puts
- *  its assertion appends AFTER the person_evidence ops silence the gates, the
- *  ordering bypass the score gate already closed. */
-function resolvableAssertions(research: any, batchAssertions?: Map<string, any>): Map<string, any> {
-  const assertionById = new Map<string, any>();
-  for (const a of (research?.assertions ?? []) as any[]) {
-    if (isLiveAssertion(a) && typeof a.id === "string") assertionById.set(a.id, a);
-  }
-  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
-  return assertionById;
+  /** The tree person's births from records FamilySearch attaches to them (#4444). */
+  attached: AttachedBirth[];
 }
 
 /** What the gate compares for one link, or null when the link is out of scope:
@@ -1856,11 +1827,7 @@ function contradictionScope(
     : own === null ? [] : [own];
   if (parties.length === 0) return null;
 
-  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
-  if (!person) return null;
-  const birth = ((person.facts ?? []) as any[]).find(
-    (f: any) => String(f?.type ?? "").toLowerCase() === "birth",
-  );
+  const birth = treeBirthFact(tree, entry.person_id);
   if (!birth) return null;
 
   // Every assertion this record makes about THE SAME PARTY as the link.
@@ -1870,7 +1837,107 @@ function contradictionScope(
   // against a father who the tree says was born 1818 produced 30 refusals that
   // are all one household, not one contradiction.
   const sameRecord = onRecord.filter((a: any) => parties.includes(partyKey(a) as string));
-  return { birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research, assertionById) };
+  return {
+    birth,
+    sameRecord,
+    resolvedAgainst: resolvedAgainstIds(research, assertionById),
+    // Only a record stating a birth place can side with an attached birth, so
+    // only then are they read, and only then are their places looked up.
+    attached: sameRecord.some(readableBirthPlace)
+      ? attachedBirths(entry.person_id, research, assertionById, personLinks)
+      : [],
+  };
+}
+
+/** How the proof gate's finding reads, matched by tests and the guard case. */
+export const ATTACHED_BIRTH_PROOF_FINDING = "attached births that cannot both be theirs";
+
+/** A proof may not stand over a family whose own FamilySearch-attached records
+ *  put one person's birth too far apart to be one birth (#4444), until a
+ *  conflict has weighed which record is that person's. Such a person may be two
+ *  people under one tree entry, and the records that reach the family through
+ *  the other one are a stranger's: thomas-hanrahan-marriage offered an Irish
+ *  couple's 1868 marriage for a Saratoga couple on 2026-11-09 and 2026-11-17,
+ *  reading their merged children's Irish baptisms as corroboration, and never
+ *  opened a conflict, so neither the link arm nor the conflict rule ran. Every
+ *  tier but `disproved`, resolved question or not: a `not_proved` summary still
+ *  offers its answer. Scope is `attachedBirthScopePersons`, the identity rung's
+ *  own; the pair test is the arm's, with the other names the prefetch read.
+ *  Pre-call research: a batch may not open the conflict and spend it here. The
+ *  tool decides only that the question must be asked; conflict-resolution
+ *  answers it (lead, 2026-11-13: contradicting tree facts may be handled in a
+ *  tool; resolving by preferring one record, the user, 2026-11-18). */
+export function attachedBirthProofInvariants(
+  entry: any,
+  preCallResearch: any,
+  tree: any,
+  coords?: BirthPlaceCoords,
+): string[] {
+  const tier = gatedSummary(entry)?.tier;
+  if (typeof tier !== "string" || tier === "disproved") return [];
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const pairs = unansweredAttachedBirthPairs(attachedBirthScopePersons(preCallResearch, tree, qid), preCallResearch, tree, coords);
+  if (pairs.length === 0) return [];
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: the family this proof bears on carries ` +
+      `${ATTACHED_BIRTH_PROOF_FINDING}: ${describeAttachedBirthPairs(pairs)}. A tree person whose own ` +
+      `attached records put their birth too far apart to be one birth may be two people under one ` +
+      `entry, and a record that reaches this family through the other one is a stranger's. Decline ` +
+      `to conclude and name conflict-resolution as the next step, to ` +
+      `${attachedBirthPairsAction(pairs, preCallResearch)}, with '${qid}' in blocks_question_ids, and ` +
+      `weigh which record belongs to the family this question is about; it may resolve the conflict by ` +
+      `preferring that record. The researcher's rejection of one attachment (a rejected_links entry) ` +
+      `also answers it.`,
+  ];
+}
+
+/** How the attached-births arm's pair finding begins: the only finding a
+ *  rejection of one attachment lifts. Matched at the start, where no place text is. */
+const ATTACHED_PAIR_FINDING = "the tree person's own attached records disagree on birthplace";
+
+/** How the arm's ruled-out finding begins: the rejection already exists, so no
+ *  conflict and no further rejection lifts it. Matched at the start. */
+const RULED_OUT_FINDING = "the researcher ruled an attached record not this person";
+
+/** The record's birth places that side with one of the tree person's
+ *  contradicting attached births, or with one the researcher ruled not theirs
+ *  (#4444): one clause, or null. */
+function attachedBirthFinding(
+  scope: ContradictionScope,
+  coords?: BirthPlaceCoords,
+  unresolvedIsNear = false,
+): string | null {
+  const { birth, sameRecord, attached } = scope;
+  if (attached.length < 2) return null;
+  const near = (x: any, y: any) => !attachedPlacesFar(x, y, birth, coords, unresolvedIsNear);
+  const live = attached.filter((b) => !b.ruledOut).map((b) => b.assertion);
+  const ruledOut = attached.filter((b) => b.ruledOut).map((b) => b.assertion);
+  const pairs = contradictingAttachedPairs(live, birth, coords, unresolvedIsNear);
+  // No settled conflict releases the record's side either. A conflict that
+  // set the record's birth aside against one of the attached births is an agent
+  // weighing the tree's attachments: a `moot` one with both analyses releases
+  // every competitor, and would lift the cap from exactly the link it guards.
+  for (const b of sameRecord) {
+    if (!readableBirthPlace(b)) continue;
+    const sided = pairs.find(([x, y]) => near(b, x) && !near(b, y));
+    if (sided) {
+      const [x, y] = sided;
+      return (
+        `${ATTACHED_PAIR_FINDING} ('${x.place}', assertion ` +
+        `'${x.id}'; '${y.place}', assertion '${y.id}'), and the record states '${b.place}' ` +
+        `(assertion '${b.id}'), which sides with one of them`
+      );
+    }
+    const z = ruledOut.find((r) => near(b, r) && live.every((l) => !near(b, l)));
+    if (z) {
+      return (
+        `${RULED_OUT_FINDING} ('${z.place}', assertion '${z.id}'), and the record states ` +
+        `'${b.place}' (assertion '${b.id}'), which agrees with that birthplace and with none still attached`
+      );
+    }
+  }
+  return null;
 }
 
 /** The record's birth-place assertions that disagree with the tree's Birth
@@ -1893,8 +1960,42 @@ function disagreeingBirthPlaces(scope: ContradictionScope): any[] {
   );
 }
 
-/** The standard places the distance test needs for one link: both sides of
- *  every disagreeing pair whose countries are not already known to differ. */
+/** The standard places the place arms look up for one link, from one read of
+ *  its scope: `coordNames`, both sides of every disagreeing pair whose countries
+ *  are not already known to differ, for the distance test; `aliasNames`, whose
+ *  other FamilySearch names are read too: both sides of every birth place that
+ *  disagrees with the tree's, and the attached-births arm's places (#4444). */
+export function birthPlaceLookups(
+  entry: any,
+  research: any,
+  tree: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+): { coordNames: string[]; aliasNames: string[] } {
+  const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
+  if (!scope) return { coordNames: [], aliasNames: [] };
+  const coordNames: string[] = [];
+  const aliasNames: string[] = [];
+  const birthStd = scope.birth.standard_place;
+  for (const a of disagreeingBirthPlaces(scope)) {
+    if (typeof a.standard_place === "string") aliasNames.push(a.standard_place);
+    if (typeof birthStd === "string") aliasNames.push(birthStd);
+    if (birthCountriesDiffer(a, scope.birth)) continue;
+    if (typeof a.standard_place !== "string" || typeof birthStd !== "string") continue;
+    coordNames.push(a.standard_place, birthStd);
+  }
+  if (scope.attached.length >= 2) {
+    for (const a of [...scope.attached.map((b) => b.assertion), ...scope.sameRecord.filter(readableBirthPlace)]) {
+      if (typeof a.standard_place === "string") {
+        coordNames.push(a.standard_place);
+        aliasNames.push(a.standard_place);
+      }
+    }
+  }
+  return { coordNames, aliasNames };
+}
+
+/** `birthPlaceLookups`' coordinate names alone, for the dev measurements. */
 export function birthPlaceCoordNames(
   entry: any,
   research: any,
@@ -1902,15 +2003,7 @@ export function birthPlaceCoordNames(
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
 ): string[] {
-  const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
-  if (!scope) return [];
-  const names: string[] = [];
-  for (const a of disagreeingBirthPlaces(scope)) {
-    if (birthCountriesDiffer(a, scope.birth)) continue;
-    if (typeof a.standard_place !== "string" || typeof scope.birth.standard_place !== "string") continue;
-    names.push(a.standard_place, scope.birth.standard_place);
-  }
-  return names;
+  return birthPlaceLookups(entry, research, tree, personLinks, batchAssertions).coordNames;
 }
 
 /** What contradicts the tree person's birth on this link's record party, one
@@ -1931,7 +2024,9 @@ function contradictionFindings(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear));
+  const far = disagreeingBirthPlaces(scope).find(
+    (a) => !placesAgreeByName(a, birth, birthPlaceCoords) && birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear),
+  );
   if (far) {
     findings.push(
       `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
@@ -1967,6 +2062,10 @@ function contradictionFindings(
     }
   }
 
+  // ── attached births (#4444) ─────────────────────────────────────────────
+  const attachedFinding = attachedBirthFinding(scope, birthPlaceCoords, unresolvedIsNear);
+  if (attachedFinding) findings.push(attachedFinding);
+
   return findings;
 }
 
@@ -1996,7 +2095,17 @@ export function coreIdentifierContradictionInvariants(
       `'resolved' preferring another assertion, or 'moot' carrying independence_analysis and ` +
       `weighing_analysis (a moot still caps with only a resolution_rationale, or while any ` +
       `identity conflict names that record's person). A confident wrong identity is worse ` +
-      `than an unlinked one.`,
+      `than an unlinked one.` +
+      (findings.some((f) => f.startsWith(ATTACHED_PAIR_FINDING))
+        ? ` Where the tree person's own attached records disagree, a fact conflict between them ` +
+          `does not lift this: what does is the researcher's own rejection of the attachment that ` +
+          `is not this person's (a rejected_links entry carrying their words). Until then the ` +
+          `link is 'speculative'.`
+        : "") +
+      (findings.some((f) => f.startsWith(RULED_OUT_FINDING))
+        ? ` Where the record agrees with an attachment the researcher ruled is not this person, no ` +
+          `conflict lifts this either: the researcher has already ruled, and the link is 'speculative'.`
+        : ""),
   ];
 }
 
@@ -5620,6 +5729,112 @@ function originalWithoutEvidenceRefusals(
         `was examined. original needs a non-empty transcription, a non-empty image_filename, or a ` +
         `FamilySearch image ARK (ark:/61903/3:1:… or 3:2:…) in url. A 1:1 ARK is an index entry, ` +
         `someone else's transcription of the record, so a source read from one is derivative.`,
+    });
+  }
+  return out;
+}
+
+/** The fields that weigh or settle a conflict. A change to any of them on a
+ *  conflict already analysed is a second weighing. `weighed_log_entry_ids` is
+ *  stamped by this tool and `description` only restates the question. */
+const CONFLICT_WEIGHING_FIELDS = [
+  "independence_analysis",
+  "weighing_analysis",
+  "resolution_rationale",
+  "preferred_assertion_id",
+  "resolution_kind",
+  "status",
+] as const;
+
+/** The questions an unresolved conflict blocks, read as the ladder reads it:
+ *  named in `blocks_question_ids` or disputing one of the question's assertions. */
+function questionsBlockedBy(conflict: any, research: any): string[] {
+  const out: string[] = [];
+  for (const q of (Array.isArray(research?.questions) ? research.questions : []) as any[]) {
+    const qid = q?.id;
+    if (typeof qid !== "string") continue;
+    const assertionIds = new Set<string>(
+      ((research?.assertions ?? []) as any[])
+        .filter((a: any) => Array.isArray(a?.extracted_for_question_ids) && a.extracted_for_question_ids.includes(qid))
+        .map((a: any) => a?.id),
+    );
+    if (conflictBlocksQuestion(conflict, qid, assertionIds)) out.push(qid);
+  }
+  return out;
+}
+
+/** Refusals for a call that weighs a conflict a second time, or writes a new one
+ *  already weighed, while another open conflict on the same question has never
+ *  been weighed. conflict-resolution weighs one conflict per pass and picks the
+ *  most foundational; a conflict it leaves open (its body keeps an identity
+ *  question answered "different people" unresolved) is picked every pass,
+ *  and the others are never weighed: thomas-hanrahan-marriage 2026-11-18 14:12
+ *  re-weighed c_003 three times and appended an analysed c_004 while c_001 and
+ *  c_002 sat bare until the tool-call cap. Every conflict is weighed once before
+ *  any is weighed again (GPS: every conflict is addressed).
+ *
+ *  Judged on the call's end state, so a call that also weighs the bare one passes
+ *  in either order. A re-weigh is an update to a conflict analysed before the
+ *  call and still analysed after it, changing a weighing field, whose questions
+ *  are read on its pre-call entry (so re-opening a resolved one is not a
+ *  re-weigh); a move to `moot` is exempt, since it shrinks the open set. A
+ *  weighed append, resolved or not, is checked against conflicts bare before the
+ *  call, so registering bare conflicts and weighing a new one together passes. */
+export function conflictReweighRefusals(
+  before: any,
+  after: any,
+  applied: readonly { section: string; entryId: string; opIndex: number; noop?: boolean }[],
+): { opIndex: number; message: string }[] {
+  const list = (doc: any): any[] => (Array.isArray(doc?.conflicts) ? doc.conflicts : []);
+  const beforeById = new Map<string, any>(list(before).map((c) => [c?.id, c]));
+  const afterById = new Map<string, any>(list(after).map((c) => [c?.id, c]));
+  const out: { opIndex: number; message: string }[] = [];
+  const seen = new Set<string>();
+  for (const a of applied) {
+    if (a.section !== "conflicts" || a.noop || seen.has(a.entryId)) continue;
+    seen.add(a.entryId);
+    const now = afterById.get(a.entryId);
+    if (!now || !isAnalysed(now) || now.status === "moot") continue;
+    const was = beforeById.get(a.entryId);
+    let questions: string[];
+    let bareSiblings: (c: any) => boolean;
+    if (was === undefined) {
+      // Read as open: an append that lands resolved still weighs a conflict.
+      questions = questionsBlockedBy({ ...now, status: "unresolved" }, after);
+      // Bare before the call and still bare after it.
+      bareSiblings = (c) => beforeById.has(c?.id) && !isAnalysed(beforeById.get(c.id));
+    } else {
+      if (!isAnalysed(was)) continue;
+      const changed = CONFLICT_WEIGHING_FIELDS.some((f) => JSON.stringify(was[f] ?? null) !== JSON.stringify(now[f] ?? null));
+      if (!changed) continue;
+      questions = questionsBlockedBy(was, before);
+      bareSiblings = () => true;
+    }
+    if (questions.length === 0) continue;
+    const bare = list(after).filter(
+      (c) =>
+        c?.id !== a.entryId &&
+        c?.status === "unresolved" &&
+        !isAnalysed(c) &&
+        bareSiblings(c) &&
+        questionsBlockedBy(c, after).some((q) => questions.includes(q)),
+    );
+    if (bare.length === 0) continue;
+    const bareIds = bare.map((c) => c.id).sort().join(", ");
+    const shared = [...new Set(bare.flatMap((c) => questionsBlockedBy(c, after)).filter((q) => questions.includes(q)))].sort().join(", ");
+    out.push({
+      opIndex: a.opIndex,
+      message:
+        (was === undefined
+          ? `conflict '${a.entryId}' is written already weighed, `
+          : `conflict '${a.entryId}' is weighed again, `) +
+        `while ${bareIds}, which also ${bare.length === 1 ? "blocks" : "block"} ${shared}, ` +
+        `${bare.length === 1 ? "has" : "have"} never been weighed. Every open conflict on a question is weighed once before any is weighed ` +
+        `again: weigh ${bareIds} first (independence_analysis and weighing_analysis; left unresolved, ` +
+        `with the records that would decide it, is a finding)` +
+        (was === undefined
+          ? `, or register '${a.entryId}' without its analysis and weigh it on a later pass.`
+          : `. '${a.entryId}' can be weighed again once every conflict blocking ${shared} has been.`),
     });
   }
   return out;
@@ -9829,6 +10044,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(conflictFields, "status")
     ) {
       invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
+      invariantErrors.push(...attachedBirthConflictInvariants(resultEntry, research, tree, personLinks, birthPlaceCoords));
     }
   }
   // Either side, as declarationStatusInvariants: an update setting only the
@@ -10344,6 +10560,10 @@ function applyOne(
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
     invariantErrors.push(...competingParentSetsInvariants(gated, preCallResearch, tree));
+    // #4444. Same reading: pre-call research and tree, the entry's standing tier
+    // rather than the fields this op touches, so a narrative edit to a summary
+    // already standing over a merged family is held too.
+    invariantErrors.push(...attachedBirthProofInvariants(resultEntry, preCallResearch, tree, birthPlaceCoords));
     // Judged only when THIS op sets what the budget reads: an append always does,
     // an update when it names the narrative or the vehicle. An unrelated edit to
     // a summary already over budget is not told again, and neither is a narrative
@@ -10905,10 +11125,13 @@ function createdAssertionIds(research: any, ops: ResearchAppendOp[]): Set<string
 }
 
 /** Coordinates for every standard place the contradiction gate's distance test
- *  will need on this batch's person_evidence ops, under one budget. The ops are
- *  replayed in order, the way `applyOne` will apply them: an assertions update
- *  changes the assertion later links compare, and an update's link is its
- *  post-merge one. An update retiring a link is not checked. */
+ *  will need on this batch's person_evidence ops, and the other FamilySearch
+ *  names of those the place arms and the attached-births conflict rule compare,
+ *  under one budget: the two lookups run side by side, so a slow names read
+ *  never costs a place its coordinates. The ops are replayed in order, the way
+ *  `applyOne` will apply them: an assertions update changes the assertion later
+ *  links compare, and an update's link is its post-merge one. An update retiring
+ *  a link is not checked. */
 async function prefetchBirthPlaceCoords(
   research: any,
   ops: ResearchAppendOp[],
@@ -10919,11 +11142,37 @@ async function prefetchBirthPlaceCoords(
   const assertions = new Map(batchAssertions);
   const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
   const names: string[] = [];
+  // Names the place arms compare, whose other names are read too.
+  const withNames = new Set<string>();
   for (const op of ops) {
     const fields = (op as any).fields ?? {};
     if (op.section === "assertions" && op.op === "update" && typeof op.entryId === "string") {
       const cur = assertions.get(op.entryId);
       if (cur) assertions.set(op.entryId, { ...cur, ...fields });
+      continue;
+    }
+    if (op.section === "conflicts") {
+      // The ops `applyOne` checks the attached-births conflict rule on.
+      if (op.op === "update" && !("preferred_assertion_id" in fields) && !("status" in fields)) continue;
+      const prior = op.op === "update" ? ((research?.conflicts ?? []) as any[]).find((c: any) => c?.id === op.entryId) ?? {} : {};
+      const conflict = op.op === "update" ? { ...prior, ...fields } : (op as any).entry;
+      for (const n of attachedBirthConflictPlaceNames(conflict, research, personLinks)) {
+        names.push(n);
+        withNames.add(n);
+      }
+      continue;
+    }
+    if (op.section === "proof_summaries") {
+      // The proof gate's pairs, read as the identity rung reads them
+      // (`attachedBirthPairPlaces`). None for a summary the gate does not judge.
+      const prior = op.op === "update" ? ((research?.proof_summaries ?? []) as any[]).find((s: any) => s?.id === op.entryId) ?? {} : {};
+      const summary = op.op === "update" ? { ...prior, ...fields } : (op as any).entry;
+      const qid = summary?.question_id;
+      if (typeof qid !== "string" || qid === "" || gatedSummary(summary)?.tier === "disproved") continue;
+      const pairs = unansweredAttachedBirthPairs(attachedBirthScopePersons(research, tree, qid), research, tree);
+      const { coordNames, aliasNames } = attachedBirthPairPlaces(pairs);
+      names.push(...coordNames);
+      for (const n of aliasNames) withNames.add(n);
       continue;
     }
     if (op.section !== "person_evidence") continue;
@@ -10944,14 +11193,16 @@ async function prefetchBirthPlaceCoords(
       entry = (op as any).entry;
     }
     if (!entry || typeof entry !== "object") continue;
-    names.push(...birthPlaceCoordNames(entry, research, tree, personLinks, assertions));
+    const gather = (link: any) => {
+      const { coordNames, aliasNames } = birthPlaceLookups(link, research, tree, personLinks, assertions);
+      names.push(...coordNames);
+      for (const n of aliasNames) withNames.add(n);
+    };
+    gather(entry);
     if (!reRaising) continue;
-    for (const l of relationalLinksScopedBy(entry, research, personLinks, assertions)) {
-      names.push(...birthPlaceCoordNames(l, research, tree, personLinks, assertions));
-    }
+    for (const l of relationalLinksScopedBy(entry, research, personLinks, assertions)) gather(l);
   }
-  if (names.length === 0) return new Map();
-  return lookupWithin(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
+  return lookupBirthPlaceInfo(names, withNames);
 }
 
 function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set<string> {
@@ -13332,6 +13583,10 @@ export async function researchAppend(
     const originalRefusals = originalWithoutEvidenceRefusals(beforeResearch, research, ops, applied);
     if (originalRefusals.length > 0) {
       return fail(originalRefusals.map((r) => fmt(r.opIndex, r.message)));
+    }
+    const reweighRefusals = conflictReweighRefusals(beforeResearch, research, applied);
+    if (reweighRefusals.length > 0) {
+      return fail(reweighRefusals.map((r) => fmt(r.opIndex, r.message)));
     }
 
     // #3032 Stage 1b: the claim rules, once per batch against the final in-batch

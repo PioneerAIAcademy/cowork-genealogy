@@ -1435,6 +1435,58 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(r.summary).toMatch(/separate request/);
   });
 
+  // A thomas-hanrahan-marriage e2e run on 2026-11-16 (log not kept): three of the
+  // five records attached to the subject and his relationships failed with "fetch
+  // failed", the call answered ok, and its summary did not name them. record_read
+  // now retries a blip itself; one that outlasts it is named, with the way back.
+  describe("a read that fails", () => {
+    const blip = () => Object.assign(new TypeError("fetch failed"), { cause: Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }) });
+    const failing = (error: () => Error, reads: string[]) => ({
+      readRecord: async (i: any) => {
+        reads.push(i.recordId);
+        throw error();
+      },
+    });
+    const read = async (error: () => Error) => {
+      await writeTree([person("I1", { person: ["S1"] })], [S1]);
+      const reads: string[] = [];
+      const r = await run("I1", failing(error, reads) as any);
+      expect(reads).toHaveLength(1);
+      expect(r.summary).toMatch(/1 record could not be read \(.*MZGS-1B7.*\)/);
+      return r;
+    };
+
+    it("on the network, names the record, its cause and how to retry it", async () => {
+      const r = await read(blip);
+      expect(r.records.find((o: any) => o.status === "read_failed")!.summary).toContain("ECONNRESET");
+      expect(r.summary).toContain("call extraction_append again with personId 'I1'");
+    });
+
+    it("with a 5xx past record_read's retries, says how to retry it", async () => {
+      const r = await read(() => new Error("FamilySearch recapi error: 503"));
+      expect(r.summary).toContain("call extraction_append again with personId 'I1'");
+    });
+
+    it("otherwise, points to the record's own summary for what to do", async () => {
+      const r = await read(() => new Error("FamilySearch API error: 404 Not Found"));
+      expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain("404");
+      expect(r.summary).not.toContain("call extraction_append again");
+      expect(r.summary).toContain("its summary says why, and what, if anything, to do before calling again");
+    });
+
+    // record_read's own 429 says to wait and try again, and its 401 to log in:
+    // the person-mode summary must not tell the agent the record is lost.
+    it.each([
+      ["a rate limit", "FamilySearch rate limit reached and did not clear within the retry budget. Wait a minute and try again."],
+      ["a rejected token", "Your FamilySearch session has expired. Call the login tool to authenticate."],
+    ])("on %s, neither advises an immediate retry nor says calling again cannot read it", async (_, message) => {
+      const r = await read(() => new Error(message));
+      expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain(message);
+      expect(r.summary).not.toContain("call extraction_append again");
+      expect(r.summary).not.toMatch(/will not change/);
+    });
+  });
+
   it("after a re-extraction, links only the live reading and refuses nothing (#3678)", async () => {
     await writeTree([person("I1", { person: ["S1"] })], [S1]);
     const rdr = reader([CENSUS()]);
