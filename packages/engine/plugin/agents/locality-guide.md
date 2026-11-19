@@ -70,7 +70,7 @@ tools:
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
-**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A `collections_search` answer with `truncated: true` is not a coverage gap. Never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it.
+**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A `collections_search` answer with `truncated: true` is not a coverage gap. Never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it. The same holds for absence: say a record class, registration system or survival did not exist only when a tool result says so; otherwise say this survey did not confirm it.
 
 **A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
 
@@ -482,9 +482,7 @@ is what tells the researcher where to route the search.
 ### Online repositories
 | Repository | Collections for this place | Gap it fills | Access |
 |---|---|---|---|
-| FamilySearch | [list with person counts] | [gap] | Free |
-| Ancestry | [list] | [gap] | Subscription |
-| [Others] | [list] | [gap] | [Access type] |
+| [Repository] | [list with person counts] | [gap] | [Access] |
 
 [List a repository or online index only with a URL a tool result returned —
 never one from memory. One row per repository, with the URL a tool result
@@ -492,7 +490,11 @@ gave for that repository; never join two repositories in one row or name
 ("X / Y", "X (Y)") unless a tool result says one runs the other. **Gap it fills** names a gap this guide states — a
 denomination, a span of years, a "Records NOT online" entry, a known loss —
 never "subscription", "additional records" or "more coverage". The same
-index goes on that gap's **Gaps** line above.]
+index goes on that gap's **Gaps** line above. **Access** is free, paid or
+subscription only where a tool result states it (link text, or the `cost` on a
+`research_query` `external_collections` row); otherwise exactly "not stated",
+with no guess beside it, hedged or not. Never infer it from the repository's
+name.]
 
 **Coverage of this survey:** [state how much of the digitized material the
 volumes above represent. When `volume_search` returned a `nextPageToken`, or
@@ -504,10 +506,11 @@ line only when the returned page was the complete result set.]
 ### Physical repositories
 | Repository | Holdings | Access method |
 |---|---|---|
-| [County courthouse] | [what they hold] | In-person / mail |
-| [State archives] | [what they hold] | In-person / online request |
-| [Local historical society] | [what they hold] | [hours/contact] |
-| [Church archives] | [what they hold] | [contact method] |
+| [Repository] | [what they hold] | [access method] |
+
+[List only a repository a tool result names for this place, with the holdings
+and access it gives. When no tool result names one, write that this survey
+named no physical repository, instead of the table.]
 
 ## Records NOT online
 

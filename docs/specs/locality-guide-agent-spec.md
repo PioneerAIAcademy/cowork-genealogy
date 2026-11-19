@@ -181,7 +181,12 @@ period, determine which of these categories may apply:
 
 #### 3. Locate repositories holding those records
 
-For each record type, determine where the records are held:
+For each record type, determine where the records are held. The kinds of
+repository below are where to look, not entries to fill in. The guide names
+a repository, its holdings and its access (free, paid, subscription) only
+where a tool result states them, and otherwise says the survey did not
+confirm one. A repository's name is not evidence of its access level, and
+the output template pre-fills no repository row.
 
 - **Online digital repositories** — FamilySearch, Ancestry, FindMyPast,
   MyHeritage, state digital archives, specialized databases
