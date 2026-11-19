@@ -15,6 +15,22 @@ import { tmpdir } from "os";
 // Stub the network place resolver so the composite place-lever tests are
 // offline and deterministic. The wrong-geocode mapping (England → Cameroon)
 // reproduces the silent-wrong-standard_place theme the country guard catches.
+// What the live Places API listed for these two places on 2026-11-16.
+vi.mock("../../src/utils/place-api.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-api.js")>();
+  const reps: Record<string, string[]> = {
+    P_RUSSIA: ["Russia", "Russia, Soviet Union", "Russian Empire"],
+    P_SELZ: ["Lymans'ke, Rozdilna, Odesa, Ukraine", "Selz, Odessa, Kherson, Russian Empire"],
+    P_ONTARIO: ["Ontario, Canada", "Upper Canada, British North America"],
+  };
+  return {
+    ...actual,
+    getPlaceReps: vi.fn(async (pid: string) =>
+      (reps[pid] ?? []).map((fullName, i) => ({ placeRepId: `${pid}-${i}`, fullName, names: [fullName] })),
+    ),
+  };
+});
+
 vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
   return {
@@ -65,8 +81,22 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
         "Massachusetts, United States": { latitude: 42.3689, longitude: -71.9677, type: "State" },
         "Boston, Suffolk, Massachusetts, United States":
           { latitude: 42.3601, longitude: -71.0589, type: "City" },
+        "Russia": { latitude: 61.524, longitude: 105.3188, type: "Country" },
+        "Selz, Odessa, Kherson, Russian Empire": { latitude: 46.58, longitude: 30.45, type: "Village" },
       };
       return coords[name] ?? null;
+    }),
+    // The place a standard name belongs to, for its other names (#4444). Every
+    // other name is null, so no test reaches the live Places API.
+    standardPlaceToPlaceId: vi.fn(async (name: string) => {
+      const ids: Record<string, string> = {
+        "Russia": "P_RUSSIA",
+        "Selz, Odessa, Kherson, Russian Empire": "P_SELZ",
+        // No coordinates for either: a place's other names are kept without them.
+        "Upper Canada, British North America": "P_ONTARIO",
+        "Ontario, Canada": "P_ONTARIO",
+      };
+      return ids[name] ?? null;
     }),
     // The localities first-place rule (#3696). Unlisted text is lookup_failed,
     // so no test reaches the live Places API.
@@ -134,6 +164,7 @@ import {
   resolveStandardPlace,
   repIdToStandardPlace,
   standardPlaceToCoords,
+  standardPlaceToPlaceId,
   checkFirstPlace,
   familySearchPlace,
   textNamesPlace,
@@ -8039,6 +8070,67 @@ describe("research_append (project singleton section)", () => {
     expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
   });
 
+  // ── Completed-gate: owed findings (issue #3032 Stage 1b, Decision 33) ──
+  // Completing a project that still owes a blocking finding, or an encode item,
+  // warns and never refuses. A summary that states claims is judged by its
+  // claims; the legacy shape match above reads only claim-less summaries.
+
+  const birthClaim = (date: string) => ({
+    claim: "birth", proof_tier: "probable", supporting_assertion_ids: ["a_001"],
+    fact: { subject: "I1", fact_type: "Birth", date },
+  });
+  const withClaims = (claims: any[]) => {
+    const r = withEvidence(withProof());
+    r.proof_summaries[0] = { ...r.proof_summaries[0], tier: "probable", shortfall: "ceiling", claims };
+    return r;
+  };
+  const treeWithBirth = {
+    ...baseTree,
+    persons: [{ ...baseTree.persons[0], facts: [{ id: "f1", type: "Birth", date: "1850" }] }],
+  };
+
+  it("completion with a question that has tied assertions and no summary warns", async () => {
+    const r0 = withEvidence(baseResearch());
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null, resolution_assertion_ids: [] });
+    (r0.assertions[0] as any).extracted_for_question_ids = ["q_001"];
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/completed while it still owes conclude q_001: proof-conclusion — q_001 has 1 tied assertion\(s\) and no proof summary/);
+  });
+
+  it("completion with an encode item warns", async () => {
+    await writeProject(withClaims([birthClaim("1850")]), baseTree);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth from ps_001/);
+  });
+
+  it("the legacy shape match is skipped for a summary that carries claims", async () => {
+    // The same unencoded probable summary without claims draws the legacy
+    // warning (#1490 above); with claims, only the owed encode item speaks.
+    await writeProject(withClaims([birthClaim("1850")]), baseTree);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
+  });
+
+  it("completion with nothing owed is silent", async () => {
+    await writeProject(withClaims([birthClaim("1850")]), treeWithBirth);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).not.toMatch(/still owes/);
+    expect(w).not.toMatch(/no tree person it draws evidence from/);
+  });
+
 });
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────
@@ -13415,13 +13507,65 @@ describe("research_append — detected core-identifier contradiction", () => {
     expect(failure(r).errors?.join(" ")).toMatch(/La Unión/);
   });
 
-  it("caps two different countries with no coordinate lookup", async () => {
+  it("caps two different countries that are not one place under another name", async () => {
     await write(
       { standard_place: "Trier, Rheinland-Pfalz, Germany" },
       { standard_place: "Ireland" },
     );
     expect((await researchAppend(link("confident"))).ok).toBe(false);
     expect(vi.mocked(standardPlaceToCoords)).not.toHaveBeenCalled();
+  });
+
+  it("does not cap a historical jurisdiction against its modern name when neither has coordinates", async () => {
+    await write(
+      { place: "Upper Canada", standard_place: "Upper Canada, British North America" },
+      { place: "Ontario, Canada", standard_place: "Ontario, Canada", date: "1841" },
+    );
+    const r = await researchAppend(link("confident"));
+    expect((r as any).errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  // wendel-weichel-mother (run 2026-09-09): a 1910s census says "Russia" for a
+  // wife the tree has born in Selz, Russian Empire. The two resolve to different
+  // countries, and FamilySearch lists "Russian Empire" among Russia's names.
+  it("does not cap a historical country against its modern name", async () => {
+    await write(
+      { place: "Russia", standard_place: "Russia" },
+      { place: "Selz, near Odessa, Russia (now Ukraine)", standard_place: "Selz, Odessa, Kherson, Russian Empire", date: "7 Sep 1891" },
+    );
+    const r = await researchAppend(link("confident"));
+    expect((r as any).errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  // A spent budget in the names read is a refusal, not "no other names": read
+  // as the latter, the same link was capped for a contradiction it does not have.
+  it("fails the write when the FamilySearch budget refuses the names read", async () => {
+    await write(
+      { place: "Russia", standard_place: "Russia" },
+      { place: "Selz, near Odessa, Russia (now Ukraine)", standard_place: "Selz, Odessa, Kherson, Russian Empire", date: "7 Sep 1891" },
+    );
+    const FS_URL = "https://www.familysearch.org/service/places/search";
+    const stub = vi.mocked(standardPlaceToPlaceId).getMockImplementation()!;
+    try {
+      configureFsBudget({ perMinute: 1 });
+      consumeFsBudgetSlot(FS_URL);
+      let refusal: unknown;
+      try {
+        consumeFsBudgetSlot(FS_URL);
+      } catch (e) {
+        refusal = e;
+      }
+      expect(isFsBudgetExhausted(refusal)).toBe(true);
+      __resetFsBudgetForTests();
+      vi.mocked(standardPlaceToPlaceId).mockRejectedValue(refusal);
+      const err = await researchAppend(link("confident")).then(() => null, (e) => e);
+      expect(isFsBudgetExhausted(err)).toBe(true);
+    } finally {
+      vi.mocked(standardPlaceToPlaceId).mockImplementation(stub);
+      __resetFsBudgetForTests();
+    }
   });
 
   // Six miles apart, but a border between them: the country arm alone caps it,
@@ -14521,7 +14665,12 @@ describe("research_append — worked examples are themselves valid", () => {
       for (const q of fixture.questions) q.status = "resolved";
     }
     await writeFile(join(dir, "research.json"), JSON.stringify(fixture, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    // The proof_summaries example's claim names Thomas Flynn (I2) as Patrick's (I1) father.
+    const exampleTree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] }],
+    };
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(exampleTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
     await writeFile(join(dir, "results", "log_005.json"), JSON.stringify(fulltextSidecar, null, 2));

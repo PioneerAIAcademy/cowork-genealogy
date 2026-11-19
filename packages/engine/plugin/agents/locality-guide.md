@@ -123,6 +123,8 @@ Once `place_search` (step 2) has returned the `standardPlace`, issue the survey 
 
 On `No wiki page found`, or a page that returns only generic content, record and report the gap; do not fill it from memory, and do not drop an instruction that does not depend on the page. Only a `wiki_read` on a URL `wiki_search` returned waits for that call.
 
+**When a page you read, or a `collectionNotices` entry in a `wiki_read` answer, states how a collection was indexed (for example a Legacy or partial-index notice), or how names were spelled in that place's records, save it as a `quirks[]` entry for this locality and cite the page.** A collectionNotices entry is always saved as a quirks[] entry, even when you also mention it elsewhere in the guide.
+
 **An error naming wiki-query-api (`Could not reach wiki-query-api`, `wiki-query-api error: <status>`) is an outage, not a missing page.** Retry each failed call once. If it fails again: record that section `found: false`, `outcome: "unreachable"`, `url: null`; in the guide, say the FamilySearch Wiki could not be reached, never that it has no page; add the quirk `"FamilySearch Wiki unreachable during this survey (<sections>); these pages may exist — re-run locality-guide before relying on their absence."`; and say in `summary_for_user` that the guide was built without the FamilySearch Wiki.
 
 **All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. Pass the most specific `standardPlace` for every section. `home` returns the place's own page at any level the wiki has one; for a county, its *Neighboring Counties* table names the adjoining jurisdictions. The other three sections exist only for a state or country: when one returns `No wiki page found` for a smaller place, broaden the `standardPlace` one jurisdiction level and retry before recording `found: false`.
@@ -565,7 +567,9 @@ For each record type, classify its accessibility:
 - **Step 6 did not run, or your last `research_append` call did not return
   `ok: true`:** the guide in full, then `summary_for_user`. Keep the template's
   `## Jurisdiction overview`, `## Available record types` and `## Research tips`
-  headings as written. A narrowly phrased delegation still gets the full
+  headings exactly as written, at `##`, under a `#` title, with no sections of
+  your own in their place, even when every tool came back empty, generic or
+  unreadable: each section then states its gap. A narrowly phrased delegation still gets the full
   template: narrow the content, not the structure.
 - **A decision rule asks or hands back:** one line before `summary_for_user`
   giving the question or naming the owner who runs next. With no guide, that

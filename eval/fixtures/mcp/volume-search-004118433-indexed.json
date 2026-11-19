@@ -1,0 +1,34 @@
+{
+  "tool": "volume_search",
+  "description": "Issue #4348. Returns the single Czelusniak-bearing image group (DGS 004118433, Poland Church Books, Wójtowa/Pagorzyna/Lipinki parishes) as already fully indexed (recordSearchablePercent 100, fulltextSearchable false). Drives search-images' step-2 decline for the 'every mention' case: the agent must decline the browse on this signal and, because the delegation asks for every occurrence of a surname, say what the index's role coverage leaves out rather than declining silently.",
+  "args": {
+    "standardPlace": "~Gorlice"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Gorlice, Województwo Rzeszów, Polska",
+      "pageSize": 50
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "004118433",
+        "imageCount": 412,
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": false,
+        "languages": ["pl", "la"],
+        "coverages": [
+          {
+            "places": [
+              "Wójtowa, Gorlice, Województwo Rzeszów, Polska",
+              "Pagorzyna, Gorlice, Województwo Rzeszów, Polska",
+              "Lipinki, Gorlice, Województwo Rzeszów, Polska"
+            ],
+            "dateRange": "1784–1900",
+            "recordType": "Baptisms, Marriages, Deaths"
+          }
+        ]
+      }
+    ]
+  }
+}

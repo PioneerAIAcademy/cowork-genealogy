@@ -14,3 +14,5 @@ The guide text is hand-built for this scenario. The MCP fixture `wiki-read-utah-
 The point: the entry's `wiki_title` must be the page title, `Utah_Online_Genealogy_Records`, not the section enum value `online_records`.
 
 Used by `eval/tests/unit/research-exhaustiveness/not-reached-wiki-untouched.json`.
+
+The 1926 marriage (`src_003`) is the county record viewed as a digital image on FamilySearch. Until 2026-11-18 its assertions carried an `ancestry:` record id while the source said `original` on FamilySearch; an agent read the id as an index-only source and declined on `original_substitution` about 1 run in 14.

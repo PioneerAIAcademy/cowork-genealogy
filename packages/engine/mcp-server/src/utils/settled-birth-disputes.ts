@@ -58,6 +58,22 @@ export function recordParties(assertions: Iterable<any>, recordId: string) {
   return { onRecord, partyKey: recordPartyKeyer(onRecord) };
 }
 
+/** Keys an assertion to its record party, `<record id> <party>`, over
+ *  `assertions` (null when it names no record or no party): the party
+ *  `recordParties` reads, one keyer per record. */
+export function recordPartyKeys(assertions: Iterable<any>): (a: any) => string | null {
+  const all = [...assertions];
+  const keyers = new Map<string, (a: any) => string | null>();
+  return (a) => {
+    const recordId = recordIdOf(a);
+    if (recordId == null) return null;
+    let keyOf = keyers.get(recordId);
+    if (!keyOf) keyers.set(recordId, (keyOf = recordParties(all, recordId).partyKey));
+    const party = keyOf(a);
+    return party == null ? null : `${recordId} ${party}`;
+  };
+}
+
 /** `disputed_attribute` values that settle each arm, matched exactly after
  *  lower-casing and folding spaces and hyphens to underscores. The field is free
  *  text, so anything else ("birth year of John Laurie (GPZR-3X2)") settles
@@ -65,6 +81,12 @@ export function recordParties(assertions: Iterable<any>, recordId: string) {
 const BIRTH_PLACE_DISPUTES: ReadonlySet<string> = new Set([
   "birthplace", "birth_place", "place_of_birth",
 ]);
+
+/** Whether a fact conflict's `disputed_attribute` names a birth place, read as
+ *  `resolvedAgainstIds` reads it. */
+export function isBirthPlaceDispute(attribute: unknown): boolean {
+  return BIRTH_PLACE_DISPUTES.has(String(attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_"));
+}
 const BIRTH_DATE_DISPUTES: ReadonlySet<string> = new Set([
   "birth_year", "birth_date", "birthdate", "date_of_birth", "year_of_birth",
   "christening_date", "baptism_date",
@@ -136,7 +158,7 @@ export function resolvedAgainstIds(research: any, assertionById: Map<string, any
   for (const c of conflicts) {
     if (c?.conflict_type !== "fact") continue;
     const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
-    const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
+    const into = isBirthPlaceDispute(c.disputed_attribute) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
     if (!into) continue;
     const ids = competingIds(c);
     const settled =

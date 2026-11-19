@@ -256,3 +256,87 @@ describe("fact-rewrite rollback keeps the last-question removal (#3032)", () => 
     expect(onDisk.persons[0].facts[0].place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
   });
 });
+
+describe("the `primary` clear rides the rewrite's write and rollback (Decision 34)", () => {
+  let dir: string;
+  const WELLBURN = "Wellburn, Thames Centre, Middlesex, Ontario, Canada";
+  const claim = (proof_tier: string) => ({
+    claim: "immigration", proof_tier, supporting_assertion_ids: ["a_011"],
+    fact: { subject: "I1", fact_type: "Immigration", place: WELLBURN },
+  });
+  const withSummary = () => {
+    const r: any = research();
+    r.questions = [{
+      id: "q_001", question: "When did John immigrate?", rationale: "r", selection_basis: "objective_decomposition",
+      priority: "high", status: "open", depends_on: [], unblocks: [], created: "2026-01-01", resolved: null,
+      resolution_assertion_ids: [], search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+    }];
+    r.person_evidence = [{
+      id: "pe_001", assertion_id: "a_011", person_id: "I1", confidence: "confident", match_score: 0.9,
+      rationale: "match", created: "2026-01-02", superseded_by: null,
+    }];
+    r.proof_summaries = [{
+      id: "ps_001", question_id: "q_001", tier: "probable", vehicle: "summary", shortfall: "ceiling",
+      supporting_assertion_ids: ["a_011"], resolved_conflict_ids: [], exhaustive_search_summary: "s",
+      narrative_markdown: "## Conclusion\nJohn immigrated from Wellburn.", claims: [claim("probable")],
+    }];
+    return r;
+  };
+  const primaryTree = () => {
+    const t: any = tree();
+    t.persons[0].facts[0].primary = true;
+    return t;
+  };
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "ra-primary-"));
+    failOnce.remaining = 0;
+    seenTrees.length = 0;
+    await writeFile(join(dir, "research.json"), JSON.stringify(withSummary(), null, 2), "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(primaryTree(), null, 2), "utf-8");
+  });
+  afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
+  const read = async (f: string) => JSON.parse(await readFile(join(dir, f), "utf-8"));
+
+  it("an assertion correction that moves a claimed primary fact off its claim clears primary, with one message", async () => {
+    const r = await researchAppend({
+      projectPath: dir, section: "assertions", op: "update", entryId: "a_011",
+      fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+    });
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    if (!r.ok) return;
+    expect((await read("tree.gedcomx.json")).persons[0].facts[0]).not.toHaveProperty("primary");
+    const w = r.validation.warnings.join("\n");
+    expect(w).toMatch(/personId I1, factId F4: `primary` cleared/);
+    expect(w).not.toMatch(/is marked primary \(a concluded value\) and was rewritten/);
+  });
+
+  it("a rollback re-runs the clear, so a claim lowered in the same call still clears primary", async () => {
+    failOnce.remaining = 1;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update", entryId: "a_011", fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" } },
+        { section: "proof_summaries", op: "update", entryId: "ps_001", fields: { claims: [claim("possible")], tier: "possible" } },
+      ],
+    } as any);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    if (!r.ok) return;
+    const onDisk = (await read("tree.gedcomx.json")).persons[0].facts[0];
+    expect(onDisk.place).toBe(WELLBURN); // the rewrite was rolled back
+    expect(onDisk).not.toHaveProperty("primary"); // the lowered claim still clears it
+    expect(r.filesWritten).toContain("tree.gedcomx.json");
+    expect(r.validation.warnings.join("\n")).toMatch(/could not be updated from this correction[\s\S]*`primary` cleared/);
+  });
+
+  it("a rollback keeps primary when only the rolled-back rewrite had moved the fact off its claim", async () => {
+    failOnce.remaining = 1;
+    const r = await researchAppend({
+      projectPath: dir, section: "assertions", op: "update", entryId: "a_011",
+      fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect((await read("tree.gedcomx.json")).persons[0].facts[0].primary).toBe(true);
+    expect(r.validation.warnings.join("\n")).not.toMatch(/`primary` cleared/);
+  });
+});
