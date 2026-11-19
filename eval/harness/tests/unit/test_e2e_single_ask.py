@@ -41,7 +41,7 @@ def agent(name, thread="main"):
 def final(**extra):
     out = json.loads(json.dumps(START))
     for k, v in extra.items():
-        out[k] = out[k] + v
+        out[k] = out.get(k, []) + v
     return out
 
 
@@ -357,6 +357,34 @@ def test_sources_save_missing_fails_and_present_passes():
         [agent("source-evaluation")], final_research=final(sources=[{"id": "src_1"}]), spec=SOURCES_SPEC
     )
     assert g.passed
+
+
+LOCALITY_SPEC = SingleAskSpec(**{**SPEC.__dict__, "expected_save": {"section": "localities"}})
+
+
+def test_localities_save_passes_only_on_a_complete_guide():
+    from e2e.single_ask_grade import GUIDE_HEADINGS
+
+    whole = "\n\n".join(f"{h}\n- x" for h in GUIDE_HEADINGS)
+    g, _ = run([agent("source-evaluation")], final_research=final(localities=[{"id": "loc_1", "guide_markdown": whole}]), spec=LOCALITY_SPEC)
+    assert g.passed
+    short = whole.replace("### Tax records\n- x", "")
+    g, line = run([agent("source-evaluation")], final_research=final(localities=[{"id": "loc_1", "guide_markdown": short}]), spec=LOCALITY_SPEC)
+    assert not g.passed and "### Tax records" in line
+    g, line = run([agent("source-evaluation")], final_research=final(), spec=LOCALITY_SPEC)
+    assert "missing new localities" in line
+
+
+def test_the_graders_heading_list_is_the_validators():
+    validator = (REPO_ROOT / "eval" / "harness" / "validators" / "test_locality_guide.py").read_text(encoding="utf-8")
+    tree = ast.parse(validator)
+    lines = next(
+        ast.literal_eval(n.value) for n in tree.body
+        if isinstance(n, ast.Assign) and any(getattr(t, "id", None) == "_GUIDE_HEADING_LINES" for t in n.targets)
+    )
+    from e2e.single_ask_grade import GUIDE_HEADINGS
+
+    assert GUIDE_HEADINGS == lines
 
 
 def test_missing_research_json_names_itself_in_the_save_detail():
