@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_023",
+    "skill": "proof-conclusion",
+    "name": "search_stop.stopped_because='blocked_by_conflict': the attempt is recorded at not_proved and routed to conflict-resolution",
+    "type": "positive",
+    "description": "In flynn-conflict-proof-block, q_001 has search_stop.stopped_because set to 'blocked_by_conflict': research-exhaustiveness already ran and found the birthplace conflict (c_001: Ireland vs. Pennsylvania) unresolved. c_001.blocks_question_ids includes q_001 and c_001.status is 'unresolved'. The birthplace conflict is identity-scoped (it goes to whether the census records and the death certificate describe the same Patrick Flynn), so no tier above not_proved is available, and research_append refuses one. The agent must record the blocked attempt as a not_proved proof_summaries entry naming c_001 and route to conflict-resolution. Any tier above not_proved, resolving c_001 itself, or marking q_001 resolved is a FAIL.",
+    "tags": [
+      "proof",
+      "parentage",
+      "GPS-step-5",
+      "precondition-gate",
+      "conflict-gate",
+      "conflict-blocks-proved",
+      "blocked_by_conflict",
+      "identity-conflict",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Conclude q_001 — parentage of Patrick Flynn. Research stopped because an unresolved conflict was found.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-conflict-proof-block"
+  },
+  "judge_context": [
+    "c_001 (birthplace: Ireland vs. Pennsylvania) is status 'unresolved' and blocks_question_ids includes 'q_001'. This is the conflict gate trigger.",
+    "The birthplace conflict is identity-scoped: birthplace goes to whether the 1850/1860 census entries and the 1908 death certificate describe the same Patrick Flynn. No tier above `not_proved` is available, and tiering down to `possible` does not repair it.",
+    "MUST write one `not_proved` proof_summaries entry for q_001: the blocked attempt is a research finding. Its narrative must state that identity across the cited sources is not established, name the birthplace dispute (Ireland vs. Pennsylvania), and say what would settle it. A bare refusal that persists nothing is a FAIL.",
+    "research_append refuses any tier above `not_proved` here. A refused attempt that the agent then corrects is not a failure: GRADE THE PERSISTED PROOF, not a refused draft.",
+    "Must NOT write to tree.gedcomx.json: `not_proved` is below the encoding threshold. Must NOT write to `conflicts` or mark q_001 resolved.",
+    "Must route to conflict-resolution (name the skill or agent) and explain that c_001 must be resolved before the parentage can be concluded.",
+    "The fact that q_001.search_stop.stopped_because is 'blocked_by_conflict' should be consistent with the finding: the agent recognizes why research-exhaustiveness recorded a block."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 300
+  }
+}
