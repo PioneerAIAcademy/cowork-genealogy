@@ -257,6 +257,29 @@ describe("runLocalitySurvey", () => {
     expect(out.volumeSummary.total_volumes).toBe(2);
   });
 
+  it("searches the parent below county level only, and when the type is unknown", async () => {
+    const parentCalls = async (type: string | null | "throws") => {
+      const calls: string[] = [];
+      await runLocalitySurvey(
+        { standardPlace: "Schuylkill, Pennsylvania, United States" },
+        {
+          ...deps({}, calls),
+          placeType: async () => {
+            if (type === "throws") throw new Error("Places API down");
+            return type;
+          },
+        },
+      );
+      return calls.filter((c) => c.includes('"Pennsylvania, United States"') && /^(volumes|linkRows)/.test(c)).length;
+    };
+    expect(await parentCalls("County")).toBe(0);
+    expect(await parentCalls("Parish")).toBe(0);
+    expect(await parentCalls("Civil Parish")).toBe(2);
+    expect(await parentCalls("Town")).toBe(2);
+    expect(await parentCalls(null)).toBe(2);
+    expect(await parentCalls("throws")).toBe(2);
+  });
+
   it("calls a typed place's volumes at its untyped parent and reads the untyped wiki pages", async () => {
     const calls: string[] = [];
     await runLocalitySurvey({ standardPlace: "Halifax, Nova Scotia, Canada (Independent City)" }, deps({}, calls));

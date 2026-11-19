@@ -164,7 +164,7 @@ async function searchTitles(baseUrl: string, query: string): Promise<string[]> {
  * fails — and null rejects every title carrying a type word, so a failed lookup
  * can only cost a page, never return the wrong jurisdiction's.
  */
-async function placeTypeOf(standardPlace: string): Promise<string | null> {
+export async function placeTypeOf(standardPlace: string): Promise<string | null> {
   try {
     const repId = await standardPlaceToRepId(standardPlace);
     if (!repId) return null;

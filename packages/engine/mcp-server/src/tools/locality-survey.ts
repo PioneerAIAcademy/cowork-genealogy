@@ -6,7 +6,7 @@ import { collectionsSearchTool } from "./collections-search.js";
 import { volumeSearchTool } from "./volume-search.js";
 import { catalogSearchTool } from "./catalog-search.js";
 import { externalLinkRows } from "./external-links-search.js";
-import { findPlacePage, topicPageNamesOtherPlace } from "./wiki-place-page.js";
+import { findPlacePage, placeTypeOf, topicPageNamesOtherPlace } from "./wiki-place-page.js";
 import { collectionNoticesFor, fetchPage, FS_WIKI_BASE } from "../utils/wiki-page-fetch.js";
 import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
 import { recordExternalCollections, yearNum, type StoredCollectionRow } from "../utils/external-collections-store.js";
@@ -25,6 +25,12 @@ const NOTICE_MARGIN_MS = 5_000;
 const DATA_SHARES = { collections: 3_000, volumes: 3_500, catalog: 3_000, externalLinks: 2_500 } as const;
 /** The vital-records page goes in first, up to this much. */
 const VITAL_RECORDS_SHARE = 8_000;
+/** How long the survey waits for the place's type before it decides on the parent level. */
+const TYPE_LOOKUP_MS = 8_000;
+/** Places API types at county level or larger: the survey does not also search their parent.
+ *  `Parish` is Louisiana's county; an Irish or English `Civil Parish` is not. */
+const COUNTY_OR_LARGER =
+  /^(county|parish|borough|census area|state|province|territory|country|nation|kingdom|commonwealth|region|department|district|governorate|oblast|canton)$/i;
 /** Below this, a section is left out rather than cut. */
 const MIN_CUT = 600;
 
@@ -433,8 +439,7 @@ export async function runLocalitySurvey(
   const noticesBy = deadlineAt - Math.min(NOTICE_MARGIN_MS, (deps.deadlineMs ?? SURVEY_DEADLINE_MS) / 10);
   const name = placeName(standardPlace);
   const years = { ...(startYear != null ? { startYear } : {}), ...(endYear != null ? { endYear } : {}) };
-  const parent = parentLevel(standardPlace);
-  const levels = [standardPlace, ...(parent ? [parent] : [])];
+  const parentCandidate = parentLevel(standardPlace);
 
   const population = climb(
     [standardPlace, ...ancestors(name)],
@@ -444,6 +449,13 @@ export async function runLocalitySurvey(
     now,
   );
   const collections = settle(() => deps.collections({ standardPlace: name, ...years }), deadlineAt, now);
+  const levels = [standardPlace];
+  if (parentCandidate) {
+    const type = deps.placeType
+      ? await settle(() => deps.placeType!(standardPlace), Math.min(deadlineAt, now() + TYPE_LOOKUP_MS), now)
+      : null;
+    if (!(type?.ok && type.value && COUNTY_OR_LARGER.test(type.value.trim()))) levels.push(parentCandidate);
+  }
   const volumes = Promise.all(
     levels.map((p) => settle(() => deps.volumes({ standardPlace: p, ...years, summary: true }), deadlineAt, now)),
   );
@@ -707,6 +719,7 @@ export function liveSurveyDeps(principal: Principal, projectPath?: string): Surv
     volumes: (args) => volumeSearchTool(args, principal),
     catalog: (args) => catalogSearchTool(args, principal),
     linkRows: (place) => externalLinkRows(place),
+    placeType: (place) => placeTypeOf(place),
     placePage: async (place, section, noticesBy) => {
       const hit = await findPlacePage(place, section, await base());
       if (!hit || typeof hit.content !== "string") return null;

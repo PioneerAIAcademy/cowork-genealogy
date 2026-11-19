@@ -38,6 +38,9 @@ export interface SurveyDeps {
   volumes(args: { standardPlace: string; startYear?: number; endYear?: number; summary: true }): Promise<VolumeSearchResult>;
   catalog(args: { standardPlace: string }): Promise<CatalogSearchResult>;
   linkRows(standardPlace: string): Promise<{ rows: StoredCollectionRow[] } | { tooLarge: number }>;
+  /** The Places API type of the place (`County`, `Town`, `Civil Parish`), or null when unknown.
+   *  Absent or null: the survey also searches the parent. */
+  placeType?(standardPlace: string): Promise<string | null>;
   placePage(standardPlace: string, section: WikiPageSection, noticesBy: number): Promise<SurveyPage | null>;
   page(url: string, noticesBy: number): Promise<SurveyPage | null>;
   /** Stores one level's rows in the project, as `external_links_search` does. */
