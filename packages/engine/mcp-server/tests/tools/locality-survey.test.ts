@@ -388,13 +388,33 @@ describe("runLocalitySurvey", () => {
 });
 
 describe("splitSections", () => {
-  it("ranks the opening first and skip-list headings below zero", () => {
+  it("ranks the opening with record types, and skip-list headings below zero", () => {
     const s = splitSections("Opening\n## References\nr\n## Church Records\nc\n## Odd\no\n");
     expect(s.map((x) => [x.heading, x.rank])).toEqual([
-      [null, 3],
+      [null, 2],
       ["References", -1],
       ["Church Records", 2],
       ["Odd", 1],
     ]);
+  });
+
+  it.each([
+    ["Cemeteries", 2],
+    ["Naturalization and Citizenship", 2],
+    ["County Courthouse", 2],
+    ["Newspapers", 2],
+    ["Probate Records", 2],
+    ["England", 1],
+    ["Libraries", 1],
+    ["References", -1],
+    ["How to Research", -1],
+    ["Step 1: Gather and Choose", -1],
+    ["A", -1],
+    ["Counties", -1],
+    ["Counties and Parishes", -1],
+    ["Language Helps", -1],
+    ["Information in the Records", -1],
+  ])("ranks the measured heading %j at %i", (heading, rank) => {
+    expect(splitSections(`x\n## ${heading}\nbody\n`)[1].rank).toBe(rank);
   });
 });

@@ -40,12 +40,26 @@ const PAGE_SECTIONS = [...VALIDATOR_ENUMS.locality_page_section] as WikiPageSect
 const SECTION_PAGES = PAGE_SECTIONS.filter((s) => s !== "home");
 const VITAL_SUFFIXES = ["Vital_Records", "Civil_Registration"];
 
-/** Headings the saved guides never drew on (28% of wiki text over 112 pages from 17 places). */
-const SKIP_HEADING =
-  /\b(references?|sources?|footnotes?|notes|see also|contents|navigation|categories|populated places|cities and towns|towns and villages|communities|how to (research|use|find|search)|research strategy|wiki articles|help us|contributors?)\b/i;
-/** Headings that name a record type of the guide's template. */
+/** Headings the saved guides never drew on. Over 151 e2e guides and the 336 pages they read
+ *  (5,562 sections; a section counts as used when it shares a run of six words with the guide),
+ *  these held 0.4% of the text the guides used. docs/specs/locality-survey-tool-spec.md. */
+const SKIP_HEADING = new RegExp(
+  "^(?:[a-z]|counties|parishes|counties and parishes|townships|step \\d+\\b.*|key words|general word list|" +
+    "numbers|dates and time|alphabetical order|accent marks|abbreviations|variant forms of words|spelling|" +
+    "information in the records|familysearch centers|additional resources|research helps|research guides)$" +
+    "|\\b(?:references?|sources?|footnotes?|notes|see also|contents|navigation|categories|populated places|" +
+    "cities and towns|towns and villages|communities|how to (?:research|use|find|search)|research strategy|" +
+    "wiki articles|help us|contributors?|language (?:helps|characteristics))\\b",
+  "i",
+);
+/** Headings that name a record type of the guide's template: used in 16.7% of appearances,
+ *  against 3.6% for other headings. Stems match at a word start (`Cemeteries`, `Naturalization`). */
 const RECORD_HEADING =
-  /\b(vital|civil registration|births?|marriages?|deaths?|church|parish|religio|census|probate|wills?|court|land|propert|deeds?|military|cemeter|burial|newspaper|obituar|immigra|emigra|naturali|passenger|tax|record|archive|librar|online|getting started|research tips|jurisdiction|boundar|history)\b/i;
+  /\b(?:vital|civil registration|births?\b|marriages?\b|deaths?\b|church|parish|religio|census|probate|wills?\b|court|land|propert|deeds?\b|military|cemeter|burial|newspaper|obituar|immigra|emigra|naturali|passenger|tax|record|archive|online|getting started|research tips|jurisdiction|boundar|history)/i;
+/** A page's opening and its record-type sections were drawn on alike (70% and 23% of the used text,
+ *  48% and 16% of all text), so they share a rank; no one section takes more than this, so one
+ *  long opening cannot fill the share. */
+const SECTION_CAP = 6_000;
 
 // ---------- place names ----------
 
@@ -216,7 +230,7 @@ export function splitSections(text: string, page = 0): Section[] {
   const push = (end: number) => {
     const body = text.slice(start, end);
     if (body.trim()) {
-      const rank = heading === null ? 3 : SKIP_HEADING.test(heading) ? -1 : RECORD_HEADING.test(heading) ? 2 : 1;
+      const rank = heading === null ? 2 : SKIP_HEADING.test(heading.trim()) ? -1 : RECORD_HEADING.test(heading) ? 2 : 1;
       out.push({ page, order: order++, heading, text: body, start, rank });
     }
   };
@@ -313,7 +327,7 @@ function choosePageText(
     .sort((a, b) => b.rank - a.rank || a.page - b.page || a.order - b.order);
   for (const s of rest) {
     if (left < MIN_CUT) break;
-    left -= take(s, left);
+    left -= take(s, Math.min(left, SECTION_CAP));
   }
   for (const s of all) {
     const isKept = (kept.get(s.page) ?? []).some((k) => k.section === s);
