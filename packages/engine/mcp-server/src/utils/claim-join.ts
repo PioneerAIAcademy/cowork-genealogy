@@ -221,3 +221,16 @@ export function setAsideRival(
     );
   });
 }
+
+/** The first live `disproved` claim covering this edge, if any (Decision 10): a
+ *  pair a proof summary rules out. */
+export function disprovedClaimCovering(research: any, edge: any): { summaryId: string; label: string } | null {
+  for (const s of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
+    for (const [i, c] of (Array.isArray(s?.claims) ? s.claims : []).entries()) {
+      if (c?.proof_tier === "disproved" && claimCoversEdge(c, edge)) {
+        return { summaryId: String(s.id), label: typeof c.claim === "string" ? c.claim : `claims[${i}]` };
+      }
+    }
+  }
+  return null;
+}

@@ -3464,6 +3464,40 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect((r as any).reason).toBe("unjustified_warnings");
   });
 
+  // Decision 10: a pair a proof summary rules out cannot be added or corroborated.
+  const ruledOutResearch = (parent = "I3") => ({
+    ...minimalResearch,
+    proof_summaries: [{
+      id: "ps_009", question_id: "q_001", tier: "disproved",
+      claims: [{ claim: "not John", proof_tier: "disproved", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent, child: "I1" } }],
+    }],
+  });
+
+  it("add_relationship refuses a pair a disproved claim covers, naming the summary", async () => {
+    await writeProject(parentage(), ruledOutResearch());
+    const before = await readTree();
+    const r = await addParent("I3");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/proof summary ps_009 rules this pair out \(claim 'not John', disproved\)/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("the corroborate path refuses it too", async () => {
+    await writeProject(parentage(), ruledOutResearch("I2"));
+    const r = await addParent("I2");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/rules this pair out/);
+  });
+
+  it("a disproved claim on another pair does not refuse", async () => {
+    await writeProject(parentage(), ruledOutResearch("I3"));
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "S1" }] },
+    } as any);
+    expect((r as any).errors?.join(" ") ?? "").not.toMatch(/rules this pair out/);
+  });
+
   it("lets a ParentChild edge to a parent of the other sex through", async () => {
     await writeProject(parentage());
 

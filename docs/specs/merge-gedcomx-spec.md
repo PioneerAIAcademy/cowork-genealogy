@@ -319,7 +319,18 @@ Sequence inside each tool:
    merge that introduces an unjustified genealogical warning writes nothing
    and returns `reason: "unjustified_warnings"` (§8); a warning that stood on a
    collapsed person before the merge is matched against its survivor, not read
-   as introduced.
+   as introduced. The merge also raises **claim warnings** (Decision 13 of
+   `docs/plan/conclusion-tree.md`, `src/validation/merge-claim-warnings.ts`),
+   justified the same way: research_append's claim rules 2 (one per slot), 9
+   (polarity) and 12 (proved identity) re-run on every summary before and
+   after the merge, and each finding present after and absent before is a
+   warning (collapsed ids rewritten to the survivor outside quoted claim labels
+   before comparing, so a finding standing on the collapsed person is not
+   raised again); and an edge the merge leaves joining a pair a `disproved`
+   claim covers, matching no pre-merge ruled-out edge through the collapse, is
+   one. Ids are `mergeClaim|<rule>|<summaryId>|<hash>` and
+   `mergeRuledOut|<relationshipId>`; each names the survivor its message
+   names, else the first. They fire only where a summary carries claims.
 7. Persist. `merge_record_into_tree` writes **only `tree.gedcomx.json`**
    (`research.json` is unchanged — see §10). `merge_tree_persons` writes **both**
    files **both-or-neither** (write both temps → rename both back-to-back). Note:
@@ -600,7 +611,7 @@ Tool-level (the rows above are the pure core's throws):
 | `merge_tree_persons`: a pair member holds a `namesakes` row, and the merge would carry onto it a name, fact, person-level source or relationship of the other member citing a record that has a link to either member and no live probable or confident link to them that passes the cap (`mergeCarryRefusals`, `carryTriggerSources`) | as above. One line per item and research source, `fact 'F2' (Residence) on 'I7' cites 'S5' (research source 'src_005'), and no probable or confident link from that record to 'I7' or 'KWCB-111' passes the namesake cap ('pe_005' refused above). The merge would carry it onto 'KWCB-111', who has a recorded namesake.`; an item that folds into one of the row holder's reads `name 'John Smith' on 'I9' would fold into 'KWCB-111''s and add the citation 'S1' (research source 'src_001'), ...` and is judged only on the refs it adds. Each link reads `'pe_…' speculative`, `withdrawn`, `refused above` or `untied on '<row holder>'`. Then one routing paragraph per row holder: remove each listed fact or relationship from the other member with `tree_correct` `remove` (the row holder's own matching one stays); remove nothing from a record whose link says "do not lower it"; no tool removes a name or a person-level source, so for those tie the record to the row holder with person-evidence or do not merge |
 | `merge_tree_persons`: the merge would leave a live link on a pair `rejected_links` names, because it moves the link or the rejection onto the survivor (`mergeRejectedPairRefusals`) | as above. One line per pair, `person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, KWCB-111) after this merge: the researcher rejected that pair, and the merge would leave a live link on it. The link stands today on (a_011, I7).`, then `Nothing was written, and no justification overrides this. Ask the researcher whether each listed link's record is the person it stands on today. If they say it is not, have person-evidence record their rejection of that pair, which retires the link, then merge again. Otherwise do not merge.` |
 | `merge_tree_persons`: a link the merge moves onto a survivor fails a check a `research_append` update re-pointing it there would run (`mergeLinkCheckRefusals`): the contradiction cap, with an unresolved birth place read as near; the move rule; or the score gate's fabrication arm | as above. One line per finding, `person_evidence 'pe_001' would move from 'I7' to 'KWCB-111' in this merge: ` followed by that check's own message, then `Nothing was written. A merge moves each link onto the survivor, so it must pass the checks a link written there directly would. Before merging again, fix each listed link where it stands: record the same_person score for the survivor, or have person-evidence lower the link or name its move_bridge. If the record does not belong to the survivor, do not merge.` |
-| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message, warnings: [...], conflicts_surfaced? }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. A merge that joins two biological parents of one sex onto a child is refused with `conflicts_surfaced`, and no `warningJustifications` entry passes it (`tree-edit-tool-spec.md` §6). |
+| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message, warnings: [...], conflicts_surfaced? }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. A merge that joins two biological parents of one sex onto a child is refused with `conflicts_surfaced`, and no `warningJustifications` entry passes it (`tree-edit-tool-spec.md` §6). The claim warnings of §5b.2 item 6 ride the same refusal and are justified the same way. |
 
 ---
 

@@ -288,6 +288,11 @@ tree_edit({
   - **A self-Couple is refused** — a person cannot be their own spouse, and the
     pair would survive every downstream rule that reads the two endpoints as
     different people.
+  - **A pair a proof summary rules out is refused** (Decision 10 of `docs/plan/conclusion-tree.md`) — when a
+    live claim with `proof_tier: "disproved"` covers the proposed edge (Decision
+    31's join), neither a new edge nor a corroboration lands, and the error names
+    the summary and the claim. Revising that claim first lifts it. It refuses at
+    once, with no warn mode: no disproved claim existed before Stage 1b.
   - **`sourceAssertionId` (source-ref resolution).** The edge requires a
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree
@@ -867,6 +872,7 @@ Sequence (validate-before-persist, tree-only):
 | `projectPath` missing `tree.gedcomx.json` / invalid JSON | input error; write nothing |
 | An op cites a record onto a fact or name of a person with a namesake row, and the record does not tie to them (§4.5) | refused; write nothing; the error names the record, why it does not tie, and the route |
 | `personId` / `factId` / `nameId` / `relationshipId` / `sourceId` not found in the on-disk tree | staleness error; write nothing |
+| `add_relationship` proposes a pair a live `disproved` claim covers | refused, new edge and corroboration alike; write nothing; the error names the summary and claim |
 | `operation` requires a payload that is absent (e.g. `add_fact` with no `fact`, `add_source` with no `source`, `update_source` with no `sourceId`/`source`) | input error |
 | `add_source` / `update_source` payload carries an `id` | rejected (add) / ignored (update — `id` is immutable) |
 | `add_source` with a source missing `title` | validation failure; write nothing (the shared validate-before-persist pass requires `[id, title]`) |
@@ -915,6 +921,10 @@ The caller (`tree-edit` skill) still:
 ---
 
 ## 9. Test plan (vitest, mirroring the merge tool tests)
+
+- **disproved pair** — `add_relationship` refuses a pair a disproved claim covers,
+  naming the summary; the corroborate path refuses it too; a disproved claim on
+  another pair does not refuse.
 
 - **add_fact** — appends with the next `F` id; `primary: true` clears the prior
   same-type primary; `primary: false` is deleted rather than stored, on
