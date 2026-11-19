@@ -13,6 +13,7 @@ import {
 } from "../../src/tools/research-query.js";
 import { readBuildInfo } from "../../src/utils/build-info.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
+import { callTool } from "../helpers/call-tool.js";
 import { getProjectStore, runWithProjectStore } from "../../src/store/project-store.js";
 import { LOCAL, bearerPrincipal, connectorPrincipal, type Principal } from "../../src/auth/principal.js";
 import { __resetSessionChecksForTests } from "../../src/utils/session-check.js";
@@ -362,12 +363,13 @@ describe("project_context", () => {
       expect(keys(r)).toEqual(
         [
           "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "narrationGuidance", "subscriptions",
-          "openQuestions", "questionStatuses", "persons", "sources", "localities", "awaitingUser",
+          "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
           "unregisteredDisagreementCount", "uploads",
         ].sort(),
       );
       expect(keys(r.openQuestions?.[0])).toEqual(["id", "question"]);
+      expect(keys(r.owedFindings?.[0])).toEqual(["blocksCompletion", "kind", "nextStep", "personIds", "ref"]);
       expect(keys(r.questionStatuses?.[0])).toEqual(
         ["id", "question", "state", "nextStep", "openConflictIds", "storedStatus", "unregisteredDisagreements", "competingParentSets"].sort(),
       );
@@ -1025,5 +1027,185 @@ describe("project_context and project_create links", () => {
       expect("signInUrl" in (await read(connector({})))).toBe(false);
       expect(familySearch).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("project_context owed findings and status (issue #3032 Stage 1b)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-owed-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any, tree: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree), "utf-8");
+  }
+  const tree = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }], facts: [{ id: "F1", type: "Birth", date: "1850", sources: [{ ref: "S2" }] }] },
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Smith" }] },
+    ],
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+    sources: [{ id: "S2", title: "1850 census" }],
+  };
+  const research = () => ({
+    project: { id: "rp_001", objective: "Parents", status: "active" },
+    questions: [{ id: "q_001", question: "Who?", status: "open" }, { id: "q_002", question: "When?", status: "open" }],
+    plans: [{ id: "pl_001", question_id: "q_002", items: [{ id: "pli_001" }] }],
+    log: [{ id: "log_001", plan_item_id: "pli_001", outcome: "positive" }],
+    sources: [],
+    assertions: [{ id: "a_001", record_id: "r1", source_id: "src_001", record_role: "child", fact_type: "birth", extracted_for_question_ids: ["q_001"] }],
+    person_evidence: [{ id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence: "confident", superseded_by: null }],
+    proof_summaries: [],
+  });
+
+  it("owedFindings lists an unextracted log entry before a question with tied assertions and no summary", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.owedFindings?.map((f) => [f.kind, f.ref])).toEqual([["extract", "log_001"], ["conclude", "q_001"]]);
+    expect(r.owedFindings?.[1]).toMatchObject({ personIds: ["I1"], blocksCompletion: true });
+    expect("status" in r).toBe(false);
+  });
+
+  it("include: ['status'] returns a status for every tree object", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir, include: ["status"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.status?.map((row) => [row.holder, row.label])).toEqual([
+      [{ personId: "I1" }, "found in a record, not yet checked"],
+      [{ relationshipId: "R1" }, "from your starting tree, not yet checked"],
+    ]);
+  });
+
+  it("an include value outside the closed list is refused", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir, include: ["view" as any] }, LOCAL);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors[0]).toMatch(/include must be an array of: persons, sources, status/);
+  });
+
+  it("the default projection has the same length before and after adding 50 facts and 20 edges that cite existing sources", async () => {
+    await writeProject(research(), tree);
+    const measure = async () => {
+      const r = await projectContext({ projectPath: dir }, LOCAL);
+      if (!r.ok) throw new Error(r.errors.join("; "));
+      // persons' family-id arrays grow with edges by design; the rest must not.
+      const { persons: _persons, ...rest } = r as any;
+      return JSON.stringify(rest).length;
+    };
+    const before = await measure();
+    const big = structuredClone(tree) as any;
+    for (let i = 0; i < 50; i++) big.persons[0].facts.push({ id: `FX${i}`, type: "Residence", date: String(1850 + i), sources: [{ ref: "S2" }] });
+    for (let i = 0; i < 20; i++) {
+      big.persons.push({ id: `IX${i}`, gender: "Male", names: [{ id: `NX${i}`, given: "X" }] });
+      big.relationships.push({ id: `RX${i}`, type: "ParentChild", parent: "I1", child: `IX${i}`, sources: [{ ref: "S2" }] });
+    }
+    await writeProject(research(), big);
+    expect(await measure()).toBe(before);
+  });
+});
+
+// Stage 1 of #4422 introduces `include` inert: accepted and validated, but the
+// answer is byte-identical whether or not it is passed. The default flip
+// (persons → subjects' one-hop family, sources on request) is a later stage.
+describe("project_context include parameter (#4422 stage 1)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-include-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writePopulated() {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify(
+        {
+          project: {
+            id: "rp_001",
+            objective: "Test",
+            status: "active",
+            subject_person_ids: ["I1"],
+            created: "2026-01-01",
+            updated: "2026-01-01",
+          },
+          questions: [{ id: "q_001", question: "Who were William's parents?", status: "open" }],
+          sources: [{ id: "src_001", repository: "FamilySearch", gedcomx_source_description_id: "S1" }],
+          assertions: [{ id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:AAAA-111" }],
+        },
+        null,
+        2,
+      ),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify(
+        {
+          persons: [
+            { id: "I1", gender: "Male", names: [{ id: "N1", given: "William", surname: "Bottermiller", preferred: true }] },
+            { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Bottermiller" }] },
+            // I3 is outside the subject's one-hop family (no edge). A Stage-3
+            // narrowing to subjects + one hop would drop it, so the inert and
+            // pinned-default checks below can see a premature narrowing.
+            { id: "I3", gender: "Male", names: [{ id: "N3", given: "John", surname: "Hale" }] },
+          ],
+          relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
+          sources: [{ id: "S1", title: "1880 census" }],
+        },
+        null,
+        2,
+      ),
+    );
+  }
+
+  it("is inert: the answer is byte-identical with include omitted, each value, and both", async () => {
+    await writePopulated();
+    const omitted = await projectContext({ projectPath: dir }, LOCAL);
+    const variants = [
+      await projectContext({ projectPath: dir, include: ["persons"] }, LOCAL),
+      await projectContext({ projectPath: dir, include: ["sources"] }, LOCAL),
+      await projectContext({ projectPath: dir, include: ["persons", "sources"] }, LOCAL),
+      await projectContext({ projectPath: dir, include: [] }, LOCAL),
+    ];
+    expect(omitted.ok).toBe(true);
+    // Pin the default list: a narrowing that ignores include (always narrows)
+    // leaves every variant byte-identical, so only this line catches it.
+    expect(omitted.ok && omitted.persons?.map((p) => p.id)).toEqual(["I1", "I2", "I3"]);
+    const baseline = JSON.stringify(omitted);
+    for (const v of variants) expect(JSON.stringify(v)).toBe(baseline);
+  });
+
+  it("refuses an unknown value, keeping buildId, and does not read the project", async () => {
+    // No project files written: validation happens before the file reads, so an
+    // unknown value is refused on its own merits rather than erroring on the read.
+    for (const include of [["view"], ["bogus"], ["persons", "nope"]]) {
+      const r = await projectContext({ projectPath: dir, include: include as any }, LOCAL);
+      expect(r.ok).toBe(false);
+      if (r.ok) continue;
+      expect(r.reason).toBeUndefined();
+      expect(r.buildId).toBe(readBuildInfo().version);
+      expect(r.errors.join(" ")).toContain("persons, sources");
+    }
+  });
+
+  it("refuses a non-array include", async () => {
+    const r = await projectContext({ projectPath: dir, include: "persons" as any }, LOCAL);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.join(" ")).toContain("persons, sources");
+  });
+
+  it("is taken at the server's door, and an unknown value is refused there by the tool", async () => {
+    // Through createServer: the schema property is what lets include past
+    // rejectUnknownArgs, and the tool's own check is what refuses an unknown
+    // value. Calling projectContext() directly would exercise neither.
+    const taken = await callTool("project_context", { projectPath: dir, include: ["persons", "sources"] });
+    expect(taken.text).not.toContain("has no parameter");
+    const bad = await callTool("project_context", { projectPath: dir, include: ["view"] });
+    expect(bad.isError).toBe(true);
+    expect(bad.text).toContain("persons, sources");
   });
 });

@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_question_selection_005",
     "skill": "question-selection",
-    "name": "FAN pivot when all direct evidence searches are complete and unresolved",
+    "name": "No new question when every direct search on the open question is done",
     "type": "positive",
-    "description": "The flynn-fan-pivot scenario has q_001 in_progress with all plans completed (1850, 1860 censuses, death cert, and 1870/1880/1900 censuses — all negative). Direct evidence is exhausted. A FAN pivot is plan items on q_001 for research-plan, not a new question.",
+    "description": "The flynn-fan-pivot scenario has q_001 in_progress with every plan completed and all direct searches negative. q_001 is still open, so no new question is written. Whether further research is owed is research-exhaustiveness's and research-plan's call, not this agent's.",
     "tags": [
       "question-selection",
       "fan-pivot",
@@ -18,9 +18,9 @@
     "scenario": "flynn-fan-pivot"
   },
   "judge_context": [
-    "Should recognize that all planned direct searches are complete (1850, 1860, 1870, 1880, 1900 censuses and death certificate) and no further direct evidence paths remain unexplored",
-    "Should name FAN (Family/Associates/Neighbors) avenues for research-plan to add as items on q_001 — examples: Thomas Flynn's neighbors in the 1850 census, witnesses to his land deeds, others from the same Irish emigrant community in Schuylkill County records.",
+    "Should recognize that q_001 is still open and its plan is finished, so further work on it is q_001's own, not a new question.",
     "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial.",
-    "**A FAN pivot is plan items, not a new question** (step mode, section E). The tool ADMITS a write here — q_001 carries a proof summary and has nothing open, which is the exemption — so this one is not refused; it is the prose that changed. Pivoting to an associate is a search on the question already open, so it routes to `research-plan`. Writing a second question is the failure this test now grades."
+    "**No question is proposed.** The tool ADMITS a write here — q_001 carries a proof summary and has nothing open, which is the exemption — so this one is not refused. Any further work on q_001 is q_001's own work, not a second question. Writing a second question is the failure this test grades.",
+    "JOB BOUNDARY: the reply is graded on the question decision only — that no new question is written, and why. Whether, and which, further research is owed on q_001 is research-exhaustiveness's and research-plan's call, not this agent's; the reply is neither required nor credited for naming it."
   ]
 }

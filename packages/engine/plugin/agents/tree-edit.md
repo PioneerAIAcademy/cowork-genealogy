@@ -117,7 +117,7 @@ On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
 ## Record and duplicate checking
 
-When the user asks what records are attached, call `person_record_matches({ id: "KWCJ-RN4", status: ["accepted"] })`; for every match whatever its status, omit `status` — the default returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
+To list record matches, call `person_record_matches({ id: "KWCJ-RN4", minConfidence: 1 })`; the default floor of 2 leaves out confidence 1. Pass `status` only to narrow to what the user asked for: `["accepted"]` when only attached records were asked for, `["accepted", "pending"]` when pending ones were asked for too. With no `status` it returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
 
 When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; merge decisions still require proof-conclusion.
 
@@ -146,7 +146,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 **Conflicting evidence not yet resolved:** Do not pick a side. Coexisting sourced evidence facts may both live in the tree, each carrying its own ref — what waits for proof-conclusion is the *concluded* value (`primary`/`preferred`), not the evidence itself. Do not set the concluded value until the conflict is resolved in proof-conclusion. Clearing is the opposite case: retire a `primary`/`preferred` the new conflict has undercut (`primary: false`) — an open conflict calls for it, and this agent may do it.
 
-**Requested state already satisfied:** Read the tree only through `tree_query({ projectPath, personIds })`. If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence` or any field the spec doesn't define for that object type (`docs/specs/simplified-gedcomx-spec.md` §4.1 facts / §4.2 relationships) — e.g. a fact has no `notes` field. The audit trail belongs in your reply, not in tree fields.
+**Requested state already satisfied:** Read the tree only through `tree_query({ projectPath, personIds })`, adding `includeSources: true` when the check rests on what a cited source says. If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence` or any field the spec doesn't define for that object type (`docs/specs/simplified-gedcomx-spec.md` §4.1 facts / §4.2 relationships) — e.g. a fact has no `notes` field. The audit trail belongs in your reply, not in tree fields.
 
 **Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` (via `tree_correct`) against that id rather than adding a second entry.
 

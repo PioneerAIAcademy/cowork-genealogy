@@ -22,6 +22,7 @@ drift too.
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -105,3 +106,47 @@ def test_the_clause_and_its_sanctioned_report_both_survive(phrase):
     Pinned per-phrase so the failure names which half went.
     """
     assert phrase in _HOUSE_STYLE
+
+
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "Never sound surer than the evidence was rated",
+        "probably for a likely one",
+        "possibly for a tentative one",
+        "never write that someone is the parent, spouse or child of another",
+        "Say match or search result, never hit",
+        "never write ARK",
+    ],
+)
+def test_the_hedging_and_plain_word_clauses_survive(phrase):
+    """Professional genealogists read our replies as too sure ("John is the father"
+    where the evidence was only rated likely) and full of our own words ("hits",
+    "ARK"). The fix is these clauses: the reply's certainty follows the rating the
+    project already recorded, in the words the viewer's `statusLabelMap` shows for
+    it (well established / likely / tentative), so the chat never sounds surer
+    than the card beside it.
+
+    Pinned per-phrase so the failure names which clause went.
+    """
+    assert phrase in _HOUSE_STYLE
+
+
+def _template_guidance() -> str:
+    path = REPO / "eval" / "harness" / "e2e" / "templates" / "starting-research.json"
+    return json.loads(path.read_text(encoding="utf-8"))["researcher_profile"]["narration_guidance"]
+
+
+def _mock_agent_guidance() -> str:
+    path = REPO / "apps" / "server" / "app" / "agent" / "mock_agent.py"
+    m = re.search(r"^_NARRATION = '([^'\\]*)'$", path.read_text(encoding="utf-8"), re.MULTILINE)
+    assert m, "could not find mock_agent.py's _NARRATION; fix this locator, do not delete the test"
+    return m.group(1)
+
+
+@pytest.mark.parametrize("read", [_template_guidance, _mock_agent_guidance], ids=["e2e-template", "mock-agent"])
+def test_the_seeded_copies_carry_the_shipped_string(read):
+    """The e2e template seeds every e2e project, so a stale copy there would
+    measure every future e2e reply against the OLD string; the mock agent stands
+    in for production's project. Both were hand-copied and nothing compared them."""
+    assert read() == _shipped_guidance()

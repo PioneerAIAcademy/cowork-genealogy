@@ -19,6 +19,21 @@ conversation, through the kit:
 2. Replace its `StubCard` entry in `registry.ts`.
 3. Test it in `cards.test.tsx` over the committed fixtures in `test-views.ts`.
 
+## Seeing a card
+
+```
+make mcp-viewer-sweep
+make viewer PROJECT=releases/mcp-viewer-sweep/projects/<end state>
+```
+
+- `make viewer` opens a tab on the `latest` card. Add `?show=<step>` to the URL to draw one
+  step's card (`?show=link`), and `&questionId=q_002` to draw it for another question.
+- The tab follows the browser's light or dark setting. To check dark, switch the operating
+  system's appearance, or in Chrome use DevTools, Rendering, "Emulate CSS media feature
+  prefers-color-scheme".
+- On Windows, run both targets from Git Bash or WSL: `scripts\windows` has no wrapper for
+  them.
+
 ## A card is finished when
 
 - `make mcp-viewer-sweep` passes: it draws every card for every question of every

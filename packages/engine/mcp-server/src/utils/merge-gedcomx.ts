@@ -87,12 +87,15 @@ function mergeCrossDocument(
   // candidate source id → deduped target id (by title) or fresh S id.
   const sourceIdMap = buildSourceIdMap(result, candidate.sources ?? [], counters);
 
+  // Each survivor's own facts, before any collapsed fact lands beside them.
+  const ownFacts = new Map<string, Set<SimplifiedFact>>();
   for (const person of candidate.persons ?? []) {
     if (person.id === undefined) continue;
     const content = remapPersonContent(person, counters, sourceIdMap);
     const survivorId = collapseMap.get(person.id);
     if (survivorId !== undefined) {
       const surv = result.persons.find((p) => p.id === survivorId)!;
+      if (!ownFacts.has(survivorId)) ownFacts.set(survivorId, new Set(surv.facts ?? []));
       if (!surv.ark && content.ark) surv.ark = content.ark;
       if (!surv.gender && content.gender) surv.gender = content.gender;
       if (content.names.length) (surv.names ??= []).push(...content.names);
@@ -115,7 +118,7 @@ function mergeCrossDocument(
   for (const survivorId of new Set(merges.map(([s]) => s))) {
     const surv = result.persons.find((p) => p.id === survivorId);
     if (surv?.names) surv.names = mergeNames(surv.names);
-    if (surv?.facts) surv.facts = mergeFacts(surv.facts);
+    if (surv?.facts) surv.facts = mergeFacts(surv.facts, ownFacts.get(survivorId));
   }
 
   const remappedRels = (candidate.relationships ?? []).map((rel) =>
@@ -153,9 +156,11 @@ function mergeSameDocument(
   const collapseMap = new Map<string, string>();
   for (const [s, c] of merges) collapseMap.set(c, s);
 
+  const ownFacts = new Map<string, Set<SimplifiedFact>>();
   for (const [survivorId, collapsedId] of merges) {
     const surv = result.persons.find((p) => p.id === survivorId)!;
     const coll = result.persons.find((p) => p.id === collapsedId)!;
+    if (!ownFacts.has(survivorId)) ownFacts.set(survivorId, new Set(surv.facts ?? []));
     if (!surv.ark && coll.ark) surv.ark = coll.ark;
     if (!surv.gender && coll.gender) surv.gender = coll.gender;
     if (coll.names?.length) (surv.names ??= []).push(...structuredClone(coll.names));
@@ -185,7 +190,7 @@ function mergeSameDocument(
   for (const survivorId of new Set(merges.map(([s]) => s))) {
     const surv = result.persons.find((p) => p.id === survivorId);
     if (surv?.names) surv.names = mergeNames(surv.names);
-    if (surv?.facts) surv.facts = mergeFacts(surv.facts);
+    if (surv?.facts) surv.facts = mergeFacts(surv.facts, ownFacts.get(survivorId));
   }
 
   ensureUniqueFactAndNameIds(result);
@@ -621,7 +626,7 @@ function firstDuplicate(ids: string[]): string | undefined {
 
 // ─── Fact equivalence (spec §7.2) ───────────────────────────────────────────
 
-/** Single-occurrence vital types: exactly one of each is marked `primary`.
+/** Single-occurrence vital types: at most one of each carries `primary`.
  *  Exported so assertion-driven writers (materialize_facts) can gate
  *  conflict-surfacing to these single-valued types without re-declaring the set
  *  (CLAUDE.md code-reuse rule). */
@@ -634,11 +639,13 @@ export const VITAL_PRIMARY_TYPES: ReadonlySet<string> = new Set([
 
 /**
  * Collapse equivalent facts (same type + compatible date + compatible place),
- * taking the most-specific date and place; keep genuinely distinct facts. For
- * each single-occurrence vital type the most-complete surviving fact is marked
- * `primary`. Other types keep an input `primary` if one was set.
+ * taking the most-specific date and place; keep genuinely distinct facts. A
+ * merge never sets `primary` (Decision 34 of docs/plan/conclusion-tree.md: it
+ * follows a claim): each input's flag is kept, except that when two facts of one
+ * single-occurrence vital type would both carry it, the survivor's own (`own`,
+ * its facts before the merge) keeps it, else the first.
  */
-function mergeFacts(facts: SimplifiedFact[]): SimplifiedFact[] {
+function mergeFacts(facts: SimplifiedFact[], own?: ReadonlySet<SimplifiedFact>): SimplifiedFact[] {
   if (facts.length === 0) return facts;
 
   const classes: SimplifiedFact[][] = [];
@@ -650,11 +657,9 @@ function mergeFacts(facts: SimplifiedFact[]): SimplifiedFact[] {
   const reps = classes.map(mergeFactGroup);
 
   for (const type of VITAL_PRIMARY_TYPES) {
-    const group = reps.filter((r) => r.type === type);
-    if (group.length === 0) continue;
-    for (const r of group) delete r.primary;
-    const best = group.reduce((a, b) => (factMoreComplete(b, a) ? b : a));
-    best.primary = true;
+    const flagged = reps.map((r, i) => i).filter((i) => reps[i].type === type && reps[i].primary === true);
+    const keep = flagged.find((i) => classes[i].some((m) => m.primary === true && own?.has(m) === true)) ?? flagged[0];
+    for (const i of flagged) if (i !== keep) delete reps[i].primary;
   }
   return reps;
 }
@@ -776,10 +781,3 @@ function factDateWidth(f: SimplifiedFact): number {
   return r.max - r.min;
 }
 
-/** True when `a` is strictly more complete than `b` (date first, then place). */
-function factMoreComplete(a: SimplifiedFact, b: SimplifiedFact): boolean {
-  const da = factDateWidth(a);
-  const db = factDateWidth(b);
-  if (da !== db) return da < db;
-  return placeChainLength(a) > placeChainLength(b);
-}

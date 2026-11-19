@@ -1,0 +1,21 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the baptism's Patrick Flynn against the tree's Patrick (I1). Score measured on 2026-11-15 with the FamilySearch matcher: the canned Kilrush baptism (record-read-flynn-baptism-bapt-k1q) against flynn-baptism-mother-named-differently's tree.",
+  "args": {
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.40811285,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "BP1",
+      "name": "Patrick Flynn",
+      "role": "child"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Patrick Flynn"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "marriage-victoriana-vasquez",
+  "message": "Research PID GFG9-7H4. When and where did Victoriana Vasquez, daughter of Remigio Vasquez and Bernarda Sandoval, marry Jose Cleofas Gutierrez?",
+  "expected_owner": "search-records",
+  "expected_save": [
+    {
+      "section": "log",
+      "tool": "record_search"
+    }
+  ],
+  "setup_units": [
+    "init-project"
+  ],
+  "ends_on_offer": true,
+  "must_not": "No verdict from one search with no offer (the #3898 failure); no 1875 velación reported as the marriage at face value",
+  "caps": {
+    "wall_clock_seconds": 1800,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 80,
+    "max_turns": 80,
+    "max_cost_usd": 4.0
+  },
+  "is_plan_ask": false
+}

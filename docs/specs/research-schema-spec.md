@@ -123,7 +123,7 @@ flagged. (One row below is the exception, and says so.)
 | `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. `validate_research_schema` checks it at every `pages_read[]` item — the one place it descends into a locality's nested objects; the items' required and stray keys are still not deep-checked at the writer |
 | `locality_page_outcome` | `unreachable` | localities' optional `pages_read[].outcome` (Section 5.13) — set beside `found: false` when the wiki server failed (5xx or no connection) after a retry, so the page may exist; absent when `found: false` means a real 404. Checked at every `pages_read[]` item that carries it |
 | `registration_event` | `birth`, `marriage`, `death` | localities' optional `registration_start[].event` (Section 5.13) — which vital event the entry dates |
-| `registration_level` | `town`, `parish`, `county`, `state`, `national` | localities' optional `registration_start[].level` (Section 5.13) — the jurisdiction level at which registration of that event began. A place can carry an early town series and a later statewide one, so one event can have two entries |
+| `registration_level` | `town`, `municipality`, `parish`, `district`, `county`, `state`, `province`, `national` | localities' optional `registration_start[].level` (Section 5.13) — the jurisdiction level at which registration of that event began. `municipality`, `district` and `province` are for places whose registering unit is one: a Dutch municipality, a registration district, a Canadian province. A place can carry an early town series and a later statewide one, so one event can have two entries |
 | `stopped_because` | `question_answered`, `record_exhausted`, `nothing_further_reachable`, `resources_spent`, `blocked_by_conflict` | questions' `search_stop.stopped_because` (Section 5.2). The first three are stop-gate values that permit `status: "exhaustive_declared"` and the two CONCLUSIVE tiers, `proved` and `disproved`; `probable`, `possible` and `not_proved` are writable on a non-gate stop too, which is what lets the "not exhaustive" choice offer concluding at all; the last two (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Replaces `exhaustive_declaration.declared` (2026-10-07) |
 | `stopped_because_gate` | `question_answered`, `record_exhausted`, `nothing_further_reachable` | Strict subset of `stopped_because`; the gate condition in `search_stop.allOf` that permits `status: "exhaustive_declared"`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum (ADR-0008 policy: no inline enums in `research.schema.json`) |
 | `stopped_because_non_gate` | `resources_spent`, `blocked_by_conflict` | The two non-gate values of `stopped_because` that keep status `in_progress`. Complement of `stopped_because_gate` within `stopped_because`; the non-gate `if` condition in `search_stop.allOf` that sets `stop_criteria: null`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum |
@@ -378,7 +378,9 @@ names the holder on must equal the rows the tool reaches:
   for every caller, so the row names no holder for it: `merge_tree_persons` on
   the research.json rows it repoints ids in, and `research_append` /
   `extraction_append` on tree `persons`, which they reach only through the
-  assertion-backlink fact rewrite. The unit plane reads the same field
+  assertion-backlink fact rewrite and, for `research_append`, the `primary`
+  clear (Decision 34); and `research_append` on tree `relationships`, which it
+  reaches only through that clear, on a Couple fact. The unit plane reads the same field
   (`harness/ownership.py:writer_tool_sets`) and still requires the delta to be
   that tool's own write. Widening `callers` instead would grant the section by
   any path, which is why these writers are not callers.
@@ -388,7 +390,8 @@ names the holder on must equal the rows the tool reaches:
   `AGENT_WRITABLE_SECTIONS` lane, minus any section `OWNED_SECTIONS` routes to
   another agent, and a tree row only through the one section that writes it —
   tree `persons` via an `assertions` update, tree `sources` via a `sources`
-  append. That tool and that map are the manifest's `hookRouting`, the one
+  append — plus the `primary` clear on tree `persons` and `relationships`,
+  which tool identity authorizes and no section routes. That tool and that map are the manifest's `hookRouting`, the one
   copy both the packaging guard and `make e2e-writer-attribution` read, and
   `plugin-hooks.test.ts` pins the tool to the one the hook gates. Every agent
   granted `research_append` must have a lane (`plugin-hooks.test.ts`, which
@@ -490,8 +493,9 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
-*conclusion* on the tree — marking the concluded value `primary` and
-writing the concluded relationship (see Section 8 "tree.gedcomx.json
+*conclusion* on the tree — marking the concluded value `primary`, which any
+writer may set only on a fact a live affirmed claim at `probable` or better
+covers (Decision 34), and writing the concluded relationship (see Section 8 "tree.gedcomx.json
 update timing" and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
 `person-evidence` **owns the household skeleton**: it mints a `person`
 when a newly discovered persona matches no one in the tree — with its
@@ -501,10 +505,13 @@ never a name-only stub — and writes the parent-child / spouse edges via
 **assertion-only**: it writes `sources` (the GedcomX `S` entry that
 mirrors each `src_` it appends to `research.json`) plus the assertions,
 and is **not a writer of `persons` or `relationships`**. The validator
-still admits, by tool identity, one derived tree delta: an assertion
+still admits, by tool identity, two derived tree deltas: an assertion
 update that rewrites `place`/`standard_place`/`date`/`value` on a fact
 already carrying that assertion's `assertion_id`
-(`tree-materialization-spec.md` §4.4), and nothing else. Nothing reaches
+(`tree-materialization-spec.md` §4.4), and `research_append`'s `primary`
+clear (Decision 34 of `docs/plan/conclusion-tree.md`), which removes `primary`
+from a person or Couple fact whose covering claim the same call lowered or
+removed; nothing else. Nothing reaches
 it today: `research_append` refuses every assertions write except an
 update setting only `informant_bias_notes` (genealogist ruling
 2026-10-05, option B), and `extraction_append` makes one update only, which
@@ -1102,9 +1109,8 @@ researches; it accumulates across the project's questions (reused, not per-quest
 
 `for_place` is checked at write time: `research_append` refuses an entry whose
 first place FamilySearch's place standard does not have (`research-append-tool-spec.md` §5.8).
-So is `guide_markdown` when a write sets it: `research_append` refuses a value other
-than a string or `null`, and a string without the template's `## Jurisdiction overview`,
-`## Available record types` and `## Research tips` lines
+`guide_markdown` is built by `research_append` from the sections a caller sends one
+per call; a write that sets the field itself to anything but `null` is refused
 (`research-append-tool-spec.md` §5.14).
 
 | Field | Type | Required | Description |
@@ -1114,11 +1120,11 @@ than a string or `null`, and a string without the template's `## Jurisdiction ov
 | `for_place` | string or null | no | The specific place of interest that prompted it, when narrower than `place` |
 | `time_period` | string or null | no | Era the guide was scoped to |
 | `jurisdictions` | array | no | Border/name succession from `place_search_all`: `{ name, date_range? }` |
-| `collections` | array | no | Record sets covering the place from `collections_search`: `{ id, title, date_range?, person_count?, record_count? }`. `person_count` is `collections_search`'s `personCount`; `record_count` is the collection's indexed record count, which `collections_search` does not return (integer or null for both). `research_append` stamps them from FamilySearch's collection catalog, and sets them null when the id is not in the catalog or the catalog could not be read (research-append-tool-spec §5.12); research-plan decides a name search vs an image browse on `person_count > 0` |
+| `collections` | array | no | Record sets covering the place: the ones locality-guide copied from `collections_search`, then every other FamilySearch collection for the place, added by `research_append` on the append (research-append-tool-spec, "The whole list"): `{ id, title, date_range?, person_count?, record_count? }`. `person_count` is `collections_search`'s `personCount`; `record_count` is the collection's indexed record count, which `collections_search` does not return (integer or null for both). `research_append` stamps them from FamilySearch's collection catalog, and sets them null when the id is not in the catalog or the catalog could not be read (research-append-tool-spec §5.12); research-plan decides a name search vs an image browse on `person_count > 0` |
 | `quirks` | string[] | no | Short, actionable gotchas (e.g. "indexed only at county level") |
 | `guide_markdown` | string or null | no | The distilled research guide (from the wiki place pages) — what the viewer renders |
 | `pages_read` | array | yes | Provenance: which wiki sections were fetched — `{ section, url?, found, outcome? }`, `section` ∈ `home` / `getting_started` / `online_records` / `research_tips` (the `locality_page_section` enum). `outcome: "unreachable"` (the `locality_page_outcome` enum) marks a `found: false` caused by a wiki outage rather than a missing page. Makes read-coverage checkable |
-| `registration_start` | array | no | When civil registration began, from the `{Jurisdiction}_Vital_Records` page: `{ event, level, year, source_url }`, one per event and level (the `registration_event` / `registration_level` enums). Saved so research-exhaustiveness need not re-read that page |
+| `registration_start` | array | no | When civil registration began, from the `{Jurisdiction}_Vital_Records` page: `{ event, level, year, source_url, note? }`, one per event and level (the `registration_event` / `registration_level` enums). `note` is the level as the agent wrote it, kept when it said more than the level (`national (GRO)`). Saved so research-exhaustiveness need not re-read that page |
 | `volume_summary` | object | no | `volume_search`'s `summary` for the place and period, copied: `{ start_year?, end_year?, total_volumes, complete, by_record_type: [{ group, volumes, browse_only, fulltext_only }], untyped: { volumes, browse_only, fulltext_only } }`. Counts, never a volume list. A volume counts in every record-type group it reaches, so buckets can sum past `total_volumes`; of the unindexed volumes, `fulltext_only` are full-text searchable and `browse_only` are not, and both are null when the full-text check failed. `complete: false` means the tool hit its cap |
 | `source` | string | yes | Always `"locality-guide"` |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
@@ -1500,9 +1506,9 @@ Users may manually edit `tree.gedcomx.json` — adding a person, correcting a fa
 
 **Layer 1 — evidence, materialized at identity-link time.** When person-evidence links a persona to a tree person, the evidence facts and names that persona asserts materialize onto the person via `materialize_facts`. Each materialized fact and name carries **provenance** — a non-null source reference back to the record it came from. This happens as soon as the identity link is made, **independent of any proof summary**. The tree therefore accumulates evidence facts as research proceeds, not only once a conclusion is reached; conflicting values of the same fact type **coexist as separate sourced facts** rather than being withheld until the conflict is resolved.
 
-**Layer 2 — conclusion, governed by `primary`/`preferred`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags — written by **proof-conclusion alone**; its strength lives in the proof summary (`tier`, and each claim's `proof_tier` when claims are present). Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`; the underlying evidence facts stay in the tree as evidence.
+**Layer 2 — conclusion, governed by `primary`/`preferred`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags. `primary` follows a claim (Decision 34 of `docs/plan/conclusion-tree.md`): any writer sets it only on a fact a live affirmed claim at `probable` or better covers (the tree writers warn until Stage 1c), and a merge never sets it; its strength lives in the proof summary (`tier`, and each claim's `proof_tier` when claims are present). Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised so no live claim at `probable` or better covers the fact any more, `research_append` clears `primary` in the same write; the underlying evidence facts stay in the tree as evidence.
 
-The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary` flag on the birthplace fact and by ps_001 (`probable`), not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but the birthplace's `primary` flag would be cleared.
+The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by ps_001's two `probable` claims, which the birthplace fact's `primary` flag follows (Decision 34), not by the facts' mere presence in the file. Were ps_001's birth claim lowered below `probable` or removed, R1 and the birthplace evidence would remain, but `research_append` would clear the birthplace's `primary` flag in the same write. F3's `primary` predates any claim and is left alone (Decision 24).
 
 **Two further evidence-layer writes during active research:**
 - **Source descriptions (`S` entries)** are created by `extraction_append` — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."
@@ -2296,6 +2302,20 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "tier": "probable",
       "vehicle": "summary",
       "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
+      "claims": [
+        {
+          "claim": "Thomas Flynn is Patrick's father",
+          "proof_tier": "probable",
+          "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
+          "relationship": { "type": "ParentChild", "parent": "I2", "child": "I1" }
+        },
+        {
+          "claim": "Patrick was born about 1845 in Ireland",
+          "proof_tier": "probable",
+          "supporting_assertion_ids": ["a_002", "a_009"],
+          "fact": { "subject": "I1", "fact_type": "Birth", "date": "~1845", "place": "Ireland" }
+        }
+      ],
       "resolved_conflict_ids": ["c_001"],
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
       "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."

@@ -1,0 +1,25 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "given": "María Guadalupe",
+          "surname": "Hernández Ramírez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "about 1895",
+          "place": "Guadalajara, Jalisco, Mexico"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

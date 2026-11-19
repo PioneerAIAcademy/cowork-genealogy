@@ -4,8 +4,9 @@
 // Clerks wrote the patronymic ending -datter / -dotter ("daughter") short, and
 // the indexes transcribe the short form without its period: the bride the tree
 // calls "Unna Halsteinsdatter" is indexed "Urna Halsteinsdr" in Norway,
-// Marriages, 1660-1926. A search on the full spelling finds nothing, and the
-// model, told this in prose, applied it in about half of measured runs
+// Marriages, 1660-1926. (A live check on 2026-11-16 found her with the full
+// surname once the given name was Urna, and under neither surname with Unna.)
+// The model, told this in prose, applied it in about half of measured runs
 // (issue #3054). So the tool computes the forms itself — the same reasoning as
 // `jurisdictionHints` — and the caller is told on the call it already makes.
 //
@@ -27,11 +28,10 @@
 // of the compiled build, inside a node process it already spawns, so the model
 // under test sees what production sends rather than a hand-written copy.
 
-/** Every input field that carries a surname, in `RecordSearchInput` order. The
- *  bride in the case that motivated this is not indexed as a principal at all —
- *  only `spouseSurname: "Halsteinsdr"` finds her — so `surname` alone would miss
- *  the shape the real index answers. `surnameAlt` is the maiden-name union, the
- *  field a woman's patronymic most often travels in. */
+/** Every input field that carries a surname, in `RecordSearchInput` order: a
+ *  woman's patronymic may be sent as her own `surname` or as a spouse's or
+ *  parent's surname, so every field is checked. `surnameAlt` is the maiden-name
+ *  union, the field a woman's patronymic most often travels in. */
 export const SURNAME_FIELDS = [
   "surname",
   "surnameAlt",

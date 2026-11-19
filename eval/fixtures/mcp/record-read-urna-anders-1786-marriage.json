@@ -1,87 +1,101 @@
 {
   "tool": "record_read",
-  "description": "Full record for the 25 Jun 1786 Hamre marriage of Anders Monsen and Urna Halsteinsdr (ark:/61903/1:1:NW44-PM2). Mirrors the gedcomx already embedded in record-search-urna-halsteinsdr-marriage-match — same two persons, same Couple relationship, same date and place, no new genealogical claims. Exists for the same reason as record-read-gallo-1893-baptism: record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found, but ut_search_records_023 stocked only record_search fixtures, so record_read was never registered in the mock and calling it aborted the whole run as an unregistered tool (Type 1) — validators had already passed and the search work was correct. Coverage for record_read originally lived in ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "description": "Live capture (2026-11-16, engine recordReadTool) of record_read ark:/61903/1:1:NW44-PM2 -- the groom Anders Monsen's persona on the 25 Jun 1786 Hamre marriage (record MY3L-FH3) of Anders Monsen and Urna Halsteinsdr. Exists because record_read is in search-records' tools and the skill sometimes reads a record it has just found; without a registered record_read fixture that call aborted the whole run as an unregistered tool. The bride's persona NW44-PMK is record-read-urna-anders-1786-marriage-bride.",
   "args": {
     "recordId": "~NW44-PM2"
   },
   "response": {
     "persons": [
       {
-        "id": "p_groom_11820171332",
+        "id": "p_11815679720",
         "ark": "ark:/61903/1:1:NW44-PM2",
+        "principal": true,
         "gender": "Male",
         "names": [
           {
-            "id": "N1",
-            "preferred": true,
-            "given": "Anders",
+            "id": "28425958-f5fc-4735-beeb-be7d96b905d4",
+            "type": "BirthName",
             "surname": "Monsen",
-            "type": "BirthName"
-          }
-        ],
-        "facts": [
-          {
-            "id": "F1",
-            "type": "Marriage",
-            "date": "25 Jun 1786",
-            "place": "Hamre, Hordaland, Norway"
-          }
-        ],
-        "sources": [
-          {
-            "id": "S1",
-            "title": "Norway, Marriages, 1660-1926"
+            "given": "Anders"
           }
         ]
       },
       {
-        "id": "p_bride_11820171331",
+        "id": "p_11815679719",
+        "ark": "ark:/61903/1:1:NW44-PMK",
         "gender": "Female",
         "names": [
           {
-            "id": "N2",
-            "preferred": true,
+            "id": "f3e867e2-6b2a-46f0-9750-d135d69916f3",
+            "type": "BirthName",
             "given": "Urna",
-            "surname": "Halsteinsdr",
-            "type": "BirthName"
-          }
-        ],
-        "facts": [
-          {
-            "id": "F2",
-            "type": "Marriage",
-            "date": "25 Jun 1786",
-            "place": "Hamre, Hordaland, Norway"
-          }
-        ],
-        "sources": [
-          {
-            "id": "S1",
-            "title": "Norway, Marriages, 1660-1926"
+            "surname": "Halsteinsdr"
           }
         ]
       }
     ],
     "relationships": [
       {
-        "id": "R1",
+        "id": "4bc918ba-885e-457a-8a85-0e568ab970f5",
         "type": "Couple",
-        "person1": "p_groom_11820171332",
-        "person2": "p_bride_11820171331"
+        "person1": "p_11815679720",
+        "person2": "p_11815679719",
+        "facts": [
+          {
+            "id": "795c239b-8c43-4410-be3f-0306bb66d6bd",
+            "type": "Marriage",
+            "primary": true,
+            "date": "25 June 1786",
+            "standard_date": "25 Jun 1786",
+            "place": "Hamre, Hordaland, Norway"
+          }
+        ]
       }
     ],
     "sources": [
       {
-        "id": "S1",
+        "id": "src_r_659110743",
+        "resource_type": "Record",
+        "title": "Entry for Anders Monsen, \"Norway, Marriages, 1660-1926\"",
+        "citation": "\"Norway, Marriages, 1660-1926\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW44-PM2 : Thu Oct 08 17:58:07 UTC 2026), Entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:MY3L-FH3",
+        "coverage": {
+          "place_rep_id": "11575237",
+          "date_range": "25 June 1786",
+          "record_type": "Marriage",
+          "standard_place": "Hamre, Hordaland, Norway"
+        }
+      },
+      {
+        "id": "sd_c_1468080",
+        "resource_type": "Collection",
         "title": "Norway, Marriages, 1660-1926",
-        "collectionId": "1468080",
-        "ark": "ark:/61903/1:1:NW44-PM2"
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1468080",
+        "coverage": {
+          "place_rep_id": "40",
+          "date_range": "1660/1926",
+          "record_type": "Marriage",
+          "standard_place": "Norway"
+        }
+      },
+      {
+        "id": "sd_p_11815679719",
+        "resource_type": "Person",
+        "title": "Urna Halsteinsdr, \"Norway, Marriages, 1660-1926\"",
+        "citation": "\"Norway, Marriages, 1660-1926\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW44-PMK : Thu Oct 08 17:58:07 UTC 2026), Urna Halsteinsdr in entry for Anders Monsen, 25 June 1786.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:NW44-PMK"
+      },
+      {
+        "id": "sd_p_11815679720",
+        "resource_type": "Person",
+        "title": "Anders Monsen, \"Norway, Marriages, 1660-1926\"",
+        "citation": "\"Norway, Marriages, 1660-1926\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW44-PM2 : Thu Oct 08 17:58:07 UTC 2026), Anders Monsen, 25 June 1786.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:NW44-PM2"
       }
     ],
     "places": [
       {
-        "id": "PL1",
-        "name": "Hamre, Hordaland, Norway"
+        "id": "place_11575237"
       }
     ]
   }
