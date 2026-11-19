@@ -152,6 +152,7 @@ function filesForTest(entry: TestEntry, skill: string): string[] {
       `eval/fixtures/scenarios/${entry.scenario}/research.json`,
       `eval/fixtures/scenarios/${entry.scenario}/tree.gedcomx.json`,
       `eval/fixtures/scenarios/${entry.scenario}/README.md`,
+      `eval/fixtures/scenarios/${entry.scenario}/judge-brief.md`,
     );
   }
   for (const f of entry.mcp_fixtures) {

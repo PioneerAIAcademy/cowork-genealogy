@@ -110,7 +110,7 @@ eval/fixtures/scenarios/<scenario-name>/
   research.json        # Starting research.json state
   tree.gedcomx.json    # Starting tree.gedcomx.json state
   README.md            # Human-readable description for the UI dropdown
-  judge-brief.md       # What the judge reads about this scenario (optional)
+  judge-brief.md       # What the judge reads about this scenario (required for a new scenario)
 ```
 
 Both JSON files must conform to their respective schemas (`docs/specs/research-schema-spec.md` and `docs/specs/simplified-gedcomx-spec.md`).
@@ -120,8 +120,10 @@ Both JSON files must conform to their respective schemas (`docs/specs/research-s
 only when it does not (`harness/scenario_brief.py::load_scenario_brief`, shared by
 the live run and `make judge-regrade`). A brief carries only what the fixture JSON
 cannot say, because `{before_state}` already renders the project state from the
-JSON: that the data is synthetic and every tool response mocked, and which parts
-of the state are intentional rather than defects. It never states what a correct
+JSON: whether the data is synthetic or real, that FamilySearch and wiki answers
+come from test fixtures while the tools that read or write the project's own
+files run for real against a copy of it, and which parts of the state are
+intentional rather than defects. It never states what a correct
 run does, and every concrete claim in it is checked against the fixture files: a
 false statement of content leaks as badly as a verdict. Provenance, authoring
 notes and "what it exercises" stay in the README, which reaches no grader once a
@@ -136,7 +138,18 @@ entry in `output.warnings` (a harness advisory, not a judge rule), or
 `scenario_brief_missing` when the scenario has neither file, the end of every
 suite prints `N test(s) graded without a judge brief, on a README or nothing`,
 and a regrade prints the same count. Removing the fallback is the last step of
-the brief sweep. A scenario name must match its directory exactly; a mis-cased
+the brief sweep.
+
+A new scenario needs a `judge-brief.md`. Every scenario a unit test references
+has one unless it is named in `eval/harness/tests/unit/scenarios_without_brief.txt`,
+the scenarios that had none when the sweep began. The list only shrinks:
+`test_scenario_brief.py` holds it to `WITHOUT_BRIEF_CAP` names, which each wave of
+briefs lowers, and fails a listed scenario that has a brief, a list out of byte order,
+a repeated name, and a name that no longer exists or no test reads. Every fixture id
+a brief names in code, inline or fenced (`a_017`, `p_2`, `I12`, `N3`, …), must exist
+somewhere in that scenario's JSON; an id is a letter prefix the fixtures use,
+followed by digits. A PR that edits a scenario's JSON re-checks the claims in its
+`judge-brief.md` in the same PR. A scenario name must match its directory exactly; a mis-cased
 name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
 An `oversize_tool_result` entry in `output.warnings` (a harness advisory) means
@@ -1661,9 +1674,9 @@ The template is versioned with the harness; its SHA-256 hash is recorded in the 
 
 **The regrade builds the before-state the way a live run does**: `build_workspace` stages the scenario and `snapshot_files` reads it back, the two calls the orchestrator makes. It once hand-built that snapshot under the file names as keys, which `_summarize_before_state` does not read, so every regraded prompt carried a `(none)` before-state the live run never sent. The two committed logs regraded that way (`validate-schema/v1`, `gps-mentor/v3`) moved no score. The parity test now builds its live side from those calls rather than from any regrade helper, and gives the scenario a source so the slot is not empty on both sides.
 
-**Scratch mode measures a judge input without certifying anything.** `make judge-regrade SCRATCH=<dir>` (`--runlogs-root`) copies each skill's latest committed log into `<dir>/<skill>/` and regrades the copy; the committed log is never written. It waives both refusals above, because the input it exists to measure, a scenario `judge-brief.md`, stales the skill-side snapshot without moving `judge_prompt_hash`. `SCENARIO="a b"` keeps only tests on those scenarios, `SLOT=readme` forces each scenario's README into the judge slot so an A/B runs both arms on one tree, and `DRY=1` renders and counts without a model call or a write. Each pass needs a fresh dir, given as an absolute path. Scratch mode refuses a relative path, a `SCENARIO` that names no scenario directory, and any `<skill>/` dir that already holds a log, all before the first judge call, so no pass regrades another's output; it exits non-zero when no test matched; and it deletes a skill's copy whose regrade failed, since that copy still holds the committed scores. Copies are not schema-validated on write: they are never committed, and a stale log can predate a later schema field. `eval/harness/scripts/compare_regrades.py <dir> <dir> …` lines the passes up per test, run and dimension. Compare arm against arm, never against the committed score, which was graded on whatever inputs that run saw.
+**Scratch mode measures a judge input without certifying anything.** `make judge-regrade SCRATCH=<dir>` (`--runlogs-root`) copies each skill's latest committed log into `<dir>/<skill>/` and regrades the copy; the committed log is never written. It waives both refusals above, because the input it exists to measure, an edited scenario `judge-brief.md`, stales the skill-side snapshot without moving `judge_prompt_hash`. `SCENARIO="a b"` keeps only tests on those scenarios, `SLOT=readme` forces each scenario's README into the judge slot so an A/B runs both arms on one tree, and `DRY=1` renders and counts without a model call or a write. Each pass needs a fresh dir, given as an absolute path. Scratch mode refuses a relative path, a `SCENARIO` that names no scenario directory, and any `<skill>/` dir that already holds a log, all before the first judge call, so no pass regrades another's output; it exits non-zero when no test matched; and it deletes a skill's copy whose regrade failed, since that copy still holds the committed scores. Copies are not schema-validated on write: they are never committed, and a stale log can predate a later schema field. `eval/harness/scripts/compare_regrades.py <dir> <dir> …` lines the passes up per test, run and dimension. Compare arm against arm, never against the committed score, which was graded on whatever inputs that run saw.
 
-**Why a brief stays in the skill-side snapshot.** A judge brief changes only grades, like `rubric.md` and `judge_context`, and all three sit in the snapshot, so editing any of them stales the committed log and owes a paid `make eval-skill` run for it; a scratch regrade measures the effect but does not refresh the committed log. Moving judge-only files out of the snapshot (a judge-side snapshot partition) was ruled not planned on 2026-09-10 (1 of 1009 PR-level commits since 2026-06-01 changed a judge-side file with no skill-side file), so that is a separate decision, not this mode's.
+**Why a brief stays in the skill-side snapshot.** A judge brief changes only grades, like `rubric.md` and `judge_context`, and all three sit in the snapshot, so editing any of them stales the committed log and owes a paid `make eval-skill` run for it; a scratch regrade measures the effect but does not refresh the committed log. A brief added after a suite's latest run stales nothing: `diff_snapshot_vs_disk` (`harness/snapshot.py`) skips files the snapshot never held, so the new brief changes what the judge reads under a log that still reads active until the suite's next run, and the fixture arm prints no warning. Moving judge-only files out of the snapshot (a judge-side snapshot partition) was ruled not planned on 2026-09-10 (1 of 1009 PR-level commits since 2026-06-01 changed a judge-side file with no skill-side file), so that is a separate decision, not this mode's.
 
 **Structured output.** The judge invokes Claude with tool_use forcing a single tool call against a `submit_grading` tool with this input schema:
 
