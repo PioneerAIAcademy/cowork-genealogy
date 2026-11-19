@@ -97,8 +97,18 @@ export function unsupportedGivenName(
   const given = typeof raw === "string" ? raw.trim() : "";
   const word = nameWords(given)[0];
   if (word === undefined) return undefined;
-  const carried = linkedNameValues.some((v) => nameWords(v).includes(word));
+  const carried = linkedNameValues.some((v) => nameWords(v).some((w) => carriesGiven(w, word)));
   return carried ? undefined : { given, searchAs: `${word[0].toUpperCase()}*` };
+}
+
+/** "Saml", "Wm", "Herm" or an initial carries the name it shortens: a prefix of
+ *  it, or its first and last letters with the rest in order. */
+function carriesGiven(w: string, given: string): boolean {
+  if (given.startsWith(w)) return true;
+  if (w[0] !== given[0] || w.at(-1) !== given.at(-1)) return false;
+  let i = 0;
+  for (const c of given) if (c === w[i]) i++;
+  return i === w.length;
 }
 
 /** A name's words, lower-cased, split the same way on both sides of a comparison. */

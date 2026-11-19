@@ -203,6 +203,9 @@ describe("project_context", () => {
           { id: "a_005", source_id: "src_001", record_id: "r", fact_type: "sex", value: "Female" },
           name("a_006", "Wm. Tyler"),
           name("a_007", "Anthony Tyler"), // a namesake's record, linked to I1 once and revised away
+          name("a_008", "Saml Tarrant"),
+          name("a_009", "Herm Gaetjen"),
+          name("a_010", "Ann Tone Lightfoot"),
         ],
         person_evidence: [
           link(1, "I1", "a_001"), link(2, "I1", "a_004"), link(3, "I1", "a_005"),
@@ -211,6 +214,9 @@ describe("project_context", () => {
           link(5, "I3", "a_003"),
           link(6, "I5", "a_005"),
           link(7, "I7", "a_006"),
+          { ...link(0, "I9", "a_008"), id: "pe_010" },
+          { ...link(0, "I10", "a_009"), id: "pe_011" },
+          { ...link(0, "I11", "a_010"), id: "pe_012" },
         ],
       },
       {
@@ -223,6 +229,9 @@ describe("project_context", () => {
           person("I6", ""), // no given name to judge
           person("I7", "Wm."), // an abbreviation, carried as written
           person("I8", "Anthony"), // carried by the namesake's live link
+          person("I9", "Samuel", "Tarrant"), // "Saml": a contraction carries it
+          person("I10", "Hermann", "Gaetjen"), // "Herm": a prefix carries it
+          person("I11", "Anthony"), // "Ann Tone": letters in order, but not a contraction
         ],
         relationships: [],
         sources: [],
@@ -235,6 +244,7 @@ describe("project_context", () => {
     expect(flags).toEqual({
       I1: { given: "Anthony", searchAs: "A*" },
       I2: null, I3: null, I4: null, I5: null, I6: null, I7: null, I8: null,
+      I9: null, I10: null, I11: { given: "Anthony", searchAs: "A*" },
     });
   });
 

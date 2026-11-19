@@ -203,7 +203,10 @@ Projection rules:
   it holds reads the tree's edges.
   `unsupportedGivenName` is the preferred name's `given` when the person has at
   least one linked live `name` assertion (through `person_evidence`) and none of
-  them carries the given name's first word, compared case-blind as a whole word.
+  them carries the given name's first word, compared case-blind word by word. A
+  word carries it when it is a prefix of it (an initial, "Herm" for Hermann) or a
+  contraction with the same first and last letters and the rest in order ("Saml",
+  "Wm"); "Ann" does not carry "Anthony".
   A person with no linked name assertion is not judged, so a tree read from
   FamilySearch before any evidence is linked carries none. `searchAs` is the
   given name's first letter and `*`: one handwritten name read several ways agrees
