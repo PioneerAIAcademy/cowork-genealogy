@@ -149,5 +149,13 @@ export interface RankSearchMatchesResult {
   subjectTooThin?: true;
   /** Present with `subjectTooThin`: what the agent reading the rows must do. */
   subjectTooThinNote?: string;
+  /** The active matcher's `floors.realNegative`. `annotateResultsWithRanking`
+   *  slims a row scoring at or below it (#4419); absent on canned fixtures, where
+   *  it falls back to `FAMILYSEARCH_FLOORS.realNegative`. */
+  realNegativeFloor?: number;
+  /** Present and `false` only when attachments were requested and could not be
+   *  checked (the call failed, or the subject has no FamilySearch id). Rows then
+   *  carry no `attachedTo*` flag, which does NOT mean attached to nobody. */
+  attachmentsChecked?: false;
   matches: RankedMatch[];
 }
