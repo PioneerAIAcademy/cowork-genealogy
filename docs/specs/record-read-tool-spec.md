@@ -40,6 +40,13 @@ The handler throws; the server returns `{ error }` with `isError: true`.
 - FamilySearch 401 (the rejected-token message), 403 (restricted), 404 (not
   found), 429 (rate limit not cleared within the retry budget), any other
   non-2xx.
+- A network failure, timeout, 429 or 5xx is retried first: five attempts with
+  backoff from 400 ms, every one inside `fetchWithRetry`'s 10 s budget
+  (`RECORD_READ_RETRY`). The request's default three attempts span about a
+  second, and a network blip outlasted them in a thomas-hanrahan-marriage e2e run
+  on 2026-11-16, losing three of the five records attached to its subject. A first
+  attempt that times out spends the budget, so a read never retries past its own
+  timeout.
 - Sidecar mode with no `projectPath`, or no element matching the id.
 
 ## 4. Fields the handler adds

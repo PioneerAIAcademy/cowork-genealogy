@@ -771,6 +771,22 @@ describe("project_context", () => {
     if (badTree.ok) return;
     expect(badTree.errors.join(" ")).toMatch(/tree\.gedcomx\.json is not valid JSON/);
   });
+  it("skips a malformed entry in the attached-births scope rather than failing (#4444)", async () => {
+    for (const [subjects, facts] of [[["P1"], { type: "Birth" }], ["P1", []]] as const) {
+      await writeProject(
+        {
+          project: { status: "active", subject_person_ids: subjects },
+          questions: [{ id: "q_001", question: "When did P1 marry?", status: "open" }],
+          sources: [],
+          assertions: [],
+        },
+        { persons: [{ id: "P1", facts }], relationships: [] },
+      );
+      const r = await projectContext({ projectPath: dir }, LOCAL);
+      expect(r.ok).toBe(true);
+    }
+  });
+
   // #2126 — project_context is the primary "which build is this?" surface (8
   // skills call it), so the stamp rides on every return branch including the
   // two failure shapes.

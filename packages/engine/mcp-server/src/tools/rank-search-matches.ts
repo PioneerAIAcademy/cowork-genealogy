@@ -2,6 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { connectorReauthMessage, isConnector } from "../auth/config.js";
 import { getProjectStore } from "../store/project-store.js";
 import { matchPairs } from "../utils/matcher.js";
+import { Mob } from "../utils/mob.js";
 import type { MatchCall, MatcherBackend } from "../types/matcher.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
@@ -825,7 +826,8 @@ function tooThinField(subject: SubjectDoc): { subjectTooThin?: true; subjectTooT
 }
 
 interface SubjectDoc {
-  /** The enriched subject alone: what FamilySearch's matcher is sent. */
+  /** What FamilySearch's matcher is sent: the enriched subject with the parents,
+   *  spouses, children and siblings the tree gives them (`familyCut`). */
   doc: SimplifiedGedcomX;
   /** The project tree with the enriched subject in place of the tree person:
    *  what the matcher service is sent, cut around the subject. */
@@ -867,6 +869,23 @@ function subjectFamilySearchId(person: SimplifiedPerson): string | undefined {
   if (linked) return linked.toUpperCase();
   const id = person.id ?? "";
   return isFamilySearchPersonId(id) ? id.toUpperCase() : undefined;
+}
+
+/**
+ * The enriched subject with their family, cut as `same_person` and the matcher
+ * service cut it (`Mob.matchSubset()`), so a household record's spouse and
+ * children are compared with the tree's. Sent alone, the subject is a lone name,
+ * date and place: in thomas-hanrahan-marriage the right 1865 household (Thomas,
+ * Joanna, Mary) scored 0.003 against Thomas alone, under the 0.01 floor, so the
+ * page read as a real negative, and 0.168 with his family, top by twenty times.
+ * A subject the tree relates to no one is sent alone, as before.
+ */
+function familyCut(tree: SimplifiedGedcomX, subjectId: string, enriched: SimplifiedPerson): SimplifiedGedcomX {
+  try {
+    return new Mob(tree, subjectId).matchSubset().gedcomx;
+  } catch {
+    return { persons: [enriched] };
+  }
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
@@ -1016,12 +1035,13 @@ export async function buildSubjectDoc(
     surnames = [];
   }
 
+  const withSubject: SimplifiedGedcomX = {
+    ...safeTree,
+    persons: (safeTree.persons ?? []).map((p) => (p.id === subjectId ? enriched : p)),
+  };
   return {
-    doc: { persons: [enriched] },
-    tree: {
-      ...safeTree,
-      persons: (safeTree.persons ?? []).map((p) => (p.id === subjectId ? enriched : p)),
-    },
+    doc: familyCut(withSubject, subjectId, enriched),
+    tree: withSubject,
     birthYear: subjectBirthYear(enriched),
     discriminatingFacts: discriminatingFactCount(enriched),
     enrichedFacts: (enriched.facts ?? []).length - before,
