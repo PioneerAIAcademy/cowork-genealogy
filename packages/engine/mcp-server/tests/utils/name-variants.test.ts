@@ -196,3 +196,15 @@ describe("formsOnPage", () => {
     expect(formsOnPage(byWrittenName, "ELIZA, daughter of JOHN LEE")).toBeNull();
   });
 });
+
+describe("formsOnPage — ordinary words", () => {
+  it("does not report a month or common word as a matched name form", () => {
+    expect(formsOnPage(expandLookingFor("Mary Lee")!.byWrittenName, "LEE BRN 12 MAY 1821 SARAH D JOHN LEE")).toBeNull();
+    expect(formsOnPage(expandLookingFor("William Lee")!.byWrittenName, "the last will and testament of John Lee")).toBeNull();
+    expect(formsOnPage(expandLookingFor("Edward Lee")!.byWrittenName, "John Lee, Ed. note")).toBeNull();
+  });
+
+  it("strips curly quotes beside a name", () => {
+    expect(expandLookingFor("\u201cPolly\u201d Lee")!.expansions).toHaveProperty("Mary");
+  });
+});

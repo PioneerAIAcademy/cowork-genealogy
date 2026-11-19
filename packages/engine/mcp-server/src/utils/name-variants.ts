@@ -281,7 +281,7 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
   // A trailing period is kept: the table's scribal forms carry one ("Jas.").
   const tokens = lookingFor
     .split(/\s+/)
-    .map((t) => t.replace(/^[("'[]+/, "").replace(/[,;:!?)"'\]]+$/, ""))
+    .map((t) => t.replace(/^[("'[“‘]+/, "").replace(/[,;:!?)"'\]”’]+$/, ""))
     .filter(Boolean);
   if (tokens.length === 0) return null;
 
@@ -346,6 +346,8 @@ export function formsOnPage(
   const out: Record<string, string[]> = {};
   for (const [name, forms] of Object.entries(byWrittenName)) {
     const present = forms.filter((form) => {
+      // "12 MAY 1821" or "last will" is not the name May or Will.
+      if (AMBIGUOUS_WORDS.has(form.toLowerCase())) return false;
       const escaped = form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const tail = form.endsWith(".") ? "" : "(?![A-Za-z])";
       return new RegExp(`(?<![A-Za-z])${escaped}${tail}`, "i").test(text);

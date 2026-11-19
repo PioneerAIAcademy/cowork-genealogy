@@ -525,7 +525,8 @@ Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
 A name is matched with the punctuation beside it stripped: leading `(`, `[`
-and quotes, and trailing `,`, `;`, `:`, `!`, `?`, `)`, `]` and quotes. A
+and quotes (straight or curly), and trailing `,`, `;`, `:`, `!`, `?`, `)`, `]`
+and quotes. A
 trailing period is kept when the form with it is in the table (`Jas.`) and
 dropped otherwise (`daughter of James.`). So `"Lee, Eliza, father James Lee"`
 expands both Eliza and James, and a page holding Elizabeth, daughter of James
@@ -548,8 +549,9 @@ that appear on the page, keyed by the name as the caller wrote it —
 `{ "Eliza": ["Elizabeth"] }` for `"Lee, Eliza, father James Lee"` on a page
 holding ELIZABETH, daughter of JAMES LEE. A form counts when it appears as a
 whole word, ignoring case (`formsOnPage`, `src/utils/name-variants.ts`); a name
-whose only form on the page is itself is left out, and the field is absent when
-none qualifies. A caller told only `FOUND` reads the Elizabeth entry, sees a
+whose only form on the page is itself is left out, a form that is also an
+ordinary word (`May`, `Will`, `Ed`) is never counted, and the field is absent
+when none qualifies. A caller told only `FOUND` reads the Elizabeth entry, sees a
 name that differs from the one sought, and reports it as a different person;
 `matchedForms` states, from the table, that it is the same name.
 
