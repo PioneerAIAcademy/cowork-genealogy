@@ -5,7 +5,7 @@
 // Fires only where a summary carries claims.
 
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
-import { claimRuleFindings, type ClaimRuleId } from "./claim-rules.js";
+import { claimRuleFindings, namedPersons, type ClaimRuleId } from "./claim-rules.js";
 import { disprovedClaimCovering } from "../utils/claim-join.js";
 import { getPersonName } from "../tools/person-warnings.js";
 
@@ -58,27 +58,43 @@ export function mergeClaimWarnings(before: Side, after: Side, merges: ReadonlyAr
 
   const survivors = merges.map(([s]) => s);
   // Collapsed ids become their survivor, except inside quoted claim labels, which
-  // the merge's remap leaves alone.
-  const toSurvivor = (text: string) =>
-    text
-      .split(/('[^']*')/)
-      .map((part) =>
-        part.startsWith("'")
-          ? part
-          : merges.reduce((t, [s, c]) => t.replace(new RegExp(`(?<![A-Za-z0-9_-])${escape(c)}(?![A-Za-z0-9_-])`, "g"), s), part),
-      )
-      .join("");
-  const personFor = (text: string) =>
-    survivors.find((s) => new RegExp(`(?<![A-Za-z0-9_-])${escape(s)}(?![A-Za-z0-9_-])`).test(text)) ?? survivors[0];
+  // the merge's remap leaves alone: each known label is set aside verbatim first.
+  const labels = [
+    ...new Set(
+      arr(before.research?.proof_summaries)
+        .flatMap((s) => arr(s?.claims))
+        .map((c) => c?.claim)
+        .filter((l): l is string => typeof l === "string" && l !== ""),
+    ),
+  ].sort((a, b) => b.length - a.length);
+  const token = (id: string) => new RegExp(`(?<![A-Za-z0-9_-])${escape(id)}(?![A-Za-z0-9_-])`, "g");
+  const toSurvivor = (text: string) => {
+    const held: string[] = [];
+    let t = text;
+    for (const l of labels) {
+      t = t.split(`'${l}'`).join(`\u0000${held.length}\u0000`);
+      held.push(`'${l}'`);
+    }
+    t = merges.reduce((acc, [s, c]) => acc.replace(token(c), s), t);
+    return t.replace(/\u0000(\d+)\u0000/g, (_m, i) => held[Number(i)]);
+  };
+  // The survivor a warning concerns: one the claims it quotes (or its edge) name,
+  // else one its text names, else the first.
+  const afterClaims = arr(after.research?.proof_summaries).flatMap((s) => arr(s?.claims));
+  const personFor = (text: string, ends: readonly unknown[] = []): string => {
+    const quoted = afterClaims.filter((c) => typeof c?.claim === "string" && text.includes(`'${c.claim}'`));
+    const named = new Set<string>([...quoted.flatMap((c) => namedPersons(c)), ...ends.filter((e): e is string => typeof e === "string")]);
+    return survivors.find((s) => named.has(s)) ?? survivors.find((s) => token(s).test(text)) ?? survivors[0];
+  };
   const nameOf = (id: string) => {
     const p = (after.tree.persons ?? []).find((x) => x.id === id);
     return p ? getPersonName(p) : "";
   };
 
   const out = new Map<string, SyntheticWarning>();
-  const add = (warningId: string, issueType: string, message: string) => {
+  const add = (warningId: string, issueType: string, message: string, ends: readonly unknown[] = []) => {
     if (out.has(warningId)) return;
-    const personId = personFor(message);
+    const personId = personFor(message, ends);
     out.set(warningId, { warningId, issueType, severity: "implausible", personId, personName: nameOf(personId), message });
   };
 
@@ -98,6 +114,7 @@ export function mergeClaimWarnings(before: Side, after: Side, merges: ReadonlyAr
       `mergeRuledOut|${r.id}`,
       "mergeRuledOut",
       `This merge makes relationship ${r.id} join a pair that proof summary ${ruled.summaryId} rules out (claim '${ruled.label}', disproved).`,
+      [r.parent, r.child, r.person1, r.person2],
     );
   }
   return [...out.values()];

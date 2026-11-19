@@ -227,7 +227,10 @@ export function setAsideRival(
 export function disprovedClaimCovering(research: any, edge: any): { summaryId: string; label: string } | null {
   for (const s of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
     for (const [i, c] of (Array.isArray(s?.claims) ? s.claims : []).entries()) {
-      if (c?.proof_tier === "disproved" && claimCoversEdge(c, edge)) {
+      // A disproof naming a subtype rules out only that subtype (Decision 32):
+      // "not the biological father" leaves a Step edge free.
+      const typed = typeof c?.relationship?.subtype === "string" && c.relationship.subtype.trim() !== "";
+      if (c?.proof_tier === "disproved" && claimCoversEdge(c, edge) && (!typed || sameSubtype(c.relationship, edge))) {
         return { summaryId: String(s.id), label: typeof c.claim === "string" ? c.claim : `claims[${i}]` };
       }
     }

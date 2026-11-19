@@ -3489,6 +3489,18 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect((r as any).errors.join(" ")).toMatch(/rules this pair out/);
   });
 
+  it("a disproof of the biological father leaves a Step edge on the same pair free", async () => {
+    const research = ruledOutResearch("I3");
+    (research.proof_summaries[0].claims[0].relationship as any).subtype = "Biological";
+    await writeProject(parentage(), research);
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_relationship",
+      relationship: { type: "ParentChild", subtype: "Step", parent: "I3", child: "I1", sources: [{ ref: "S1" }] },
+    } as any);
+    expect((r as any).errors?.join(" ") ?? "").not.toMatch(/rules this pair out/);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
   it("a disproved claim on another pair does not refuse", async () => {
     await writeProject(parentage(), ruledOutResearch("I3"));
     const r = await treeEdit({

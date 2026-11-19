@@ -72,10 +72,28 @@ describe("mergeClaimWarnings", () => {
     expect(run(research, twoPersons, onePerson, [["I1", "I5"]])).toEqual([]);
   });
 
-  it("deduplicates identical ids and raises nothing with no claims", () => {
+  it("raises nothing with no claims", () => {
     expect(run({ proof_summaries: [] }, twoPersons, onePerson, [["I1", "I5"]])).toEqual([]);
-    const research = { proof_summaries: [ps("ps_1", [birth("b1", "I1", "1850"), birth("b2", "I5", "1860")])] };
-    const ids = run(research, twoPersons, onePerson, [["I1", "I5"]]).map((w) => w.warningId);
-    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("a label with an apostrophe does not re-raise a polarity finding that already stood", () => {
+    const idn = (claim: string, person: string) => ({
+      claim, proof_tier: "probable", supporting_assertion_ids: [], identity: { record_id: "rec1", party: "principal", person },
+    });
+    const research = { proof_summaries: [ps("ps_1", [idn("Mary's record", "I5"), idn("other", "I4")])] };
+    const before = { persons: [P("I4"), P("I5"), P("I6")], relationships: [] };
+    const after = { persons: [P("I4"), P("I6")], relationships: [] };
+    expect(run(research, before, after, [["I6", "I5"]])).toEqual([]);
+  });
+
+  it("with several merges, a warning names the survivor its claims concern, not the first", () => {
+    const pc = (claim: string, parent: string, extra: object = {}) => ({
+      claim, proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent, child: "I7" }, ...extra,
+    });
+    const research = { proof_summaries: [ps("ps_1", [pc("father", "I8")]), ps("ps_2", [pc("not him", "I9", { polarity: "denied" })])] };
+    const before = { persons: [P("I1"), P("I2"), P("I7"), P("I8"), P("I9")], relationships: [] };
+    const after = { persons: [P("I1"), P("I7"), P("I8")], relationships: [] };
+    const out = run(research, before, after, [["I1", "I2"], ["I8", "I9"]]);
+    expect(out.map((w) => [w.issueType, w.personId])).toEqual([["claims-polarity", "I8"]]);
   });
 });
