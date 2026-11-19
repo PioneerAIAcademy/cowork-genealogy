@@ -60,7 +60,9 @@ function readingsOf(assertion: any): Relation[] {
     const own = relationshipCategory(word);
     const out: Relation[] = [];
     const inverse = own === undefined ? undefined : INVERSE[own];
-    if (inverse) out.push({ category: inverse, word: inverse });
+    const role = typeof sv.related_person_role === "string" ? sv.related_person_role.toLowerCase().trim() : "";
+    const gender = MALE_WORDS.has(role) ? "male" : FEMALE_WORDS.has(role) ? "female" : undefined;
+    if (inverse) out.push({ category: inverse, word: gender ? role : inverse, gender });
     const other = asOther(word);
     if (other) out.push(other);
     return out;

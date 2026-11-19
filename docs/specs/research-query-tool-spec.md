@@ -319,7 +319,8 @@ one tree person and the tree names the other, who has no link to it:
   one person, P. The second person is read from the tree:
   - from `structured_value.relationship_type`, read first as the record subject's
     own role (research-schema-spec.md, "Direction, for `relationship`"): `child`
-    means P's parents, `parent` P's children, `spouse` P's `Couple` partners;
+    means P's parents (only the father when `related_person_role` is `father`, only
+    the mother when it is `mother`), `parent` P's children, `spouse` P's `Couple` partners;
   - if that finds nobody, read as the other person's role (older data spells
     "Father: Thomas Flynn" as `father`), where `father`/`son`/`husband`/`widower`
     keep only a male (or ungendered) tree person and `mother`/`daughter`/`wife`/`widow`

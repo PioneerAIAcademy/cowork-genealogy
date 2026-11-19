@@ -1668,6 +1668,15 @@ describe("research_query — person_evidence names a two-party assertion's unlin
     expect(rows[0].note).toContain("The tree's parent of 'I1' is 'I2' (Thomas Flynn)");
   });
 
+  it("keeps only the parent related_person_role names: a death certificate's father is not the mother", async () => {
+    await project(
+      [REL("a_010", { value: "Father: Thomas Flynn", structured_value: { relationship_type: "child", related_person_role: "father" } })],
+      [pe("pe_004", "a_010", "I1")],
+    );
+    const rows = (await links({ assertionId: "a_010" })).unlinkedParties!;
+    expect(rows.map((r) => r.unlinkedPersonId)).toEqual(["I2"]);
+  });
+
   it("reads the relation from the fact_type when there is no relationship_type", async () => {
     await project(
       [
