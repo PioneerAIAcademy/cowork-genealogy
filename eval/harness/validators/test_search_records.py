@@ -1241,6 +1241,45 @@ def _research_query_calls(tool_calls):
     ]
 
 
+def test_unhanded_plan_item_stays_planned(before_state, after_state, tool_calls, test):
+    """Tag-gated (one-plan-item-per-call): the delegation names pli_001 only, so
+    pli_002 stays ``planned``, gets no log entry, and is not searched.
+
+    The judge scored Completeness 3 on every committed run that ran both items
+    (#4330), and the rule can be read off research.json.
+    """
+    if "one-plan-item-per-call" not in test.get("tags", []):
+        pytest.skip("not a one-plan-item-per-call scenario")
+    after = after_state.get("research_json") or {}
+    statuses = [
+        item.get("status")
+        for plan in after.get("plans") or []
+        for item in plan.get("items") or []
+        if item.get("id") == "pli_002"
+    ]
+    assert statuses == ["planned"], f"pli_002 left `planned`: status {statuses}"
+    logged = [
+        e.get("id")
+        for e in _new_log_entries(before_state, after_state)
+        if e.get("plan_item_id") == "pli_002"
+    ]
+    assert not logged, f"pli_002 was logged in this call: {logged}"
+    church = [
+        c.get("args")
+        for c in tool_calls or []
+        if _bare_tool_name(c.get("tool")) == "record_search"
+        and str(_as_mapping(c.get("args")).get("recordType") or "").lower() != "census"
+        and (
+            "church" in json.dumps(c.get("args") or {}).lower()
+            or (
+                "census" not in (c.get("response_fixture") or "")
+                and "census" not in json.dumps(c.get("args") or {}).lower()
+            )
+        )
+    ]
+    assert not church, f"pli_002's church search ran in this call: {church}"
+
+
 def test_handed_plan_item_skips_research_query(tool_calls, test):
     """Tag-gated (handed-plan-item): the delegation carries the plan item whose
     ``id`` equals ``planItemId``, so the agent has the item and its status and

@@ -289,6 +289,54 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Correctly says research isn't done; names probate and post-1860 census as unsearched"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Did the main job, but left out some log entries"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls were right"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly refused to call it done, and named why"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly left the status \"in progress\""
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Named the blocking reason, but coverage was thin"
     }
   ]
 }
