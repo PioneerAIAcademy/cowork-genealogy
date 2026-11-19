@@ -1628,13 +1628,18 @@ def _total_matches(call) -> int | None:
 # A death placed by the absence of records: "died between 1900 and approximately
 # 1912", "deceased before 1910", or "suggests she died" in a sentence that also
 # names the empty searches. A death read off a record ("she died 29 October 1923",
-# "the 1923 death registration is likely her") is not one.
+# "the 1923 death registration is likely her") is not one, and neither is a
+# record type searched ("Virginia death records between 1912 and 1940").
+_DEATH_EVENT = (
+    r"\b(?:died|deceased|death(?!\s+(?:records?|certificates?|registers?|"
+    r"registrations?|returns?|indexe?s?|indices|collections?|searches?)\b))\b"
+)
 _DEATH_RANGE = re.compile(
-    r"\b(?:died|death|deceased)\b[^.\n]{0,40}?\b(?:between|before|by|prior to)\b[^.\n]{0,30}?\b1[89]\d\d\b",
+    _DEATH_EVENT + r"[^.\n]{0,40}?\b(?:between|before|by|prior to)\b[^.\n]{0,30}?\b1[89]\d\d\b",
     re.IGNORECASE,
 )
 _DEATH_SUGGESTED = re.compile(
-    r"\b(?:suggest|indicat|impl)\w*\b[^.\n]{0,60}?\b(?:died|deceased|death)\b",
+    r"\b(?:suggest|indicat|impl)\w*\b[^.\n]{0,60}?" + _DEATH_EVENT,
     re.IGNORECASE,
 )
 _NIL_WORDS = re.compile(

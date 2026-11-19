@@ -62,6 +62,9 @@ def test_death_inference_fires(text):
         "She died 29 October 1923 in Cunningham, per the death registration.",
         "The Lightfoot record suggests she died in 1923.",
         "Antone Lightfoot, born 1837, is a candidate needing review.",
+        # A death-record search reported, not a death placed.
+        "I searched Virginia death records between 1912 and 1940 and found no match.",
+        "Death certificates by 1925 returned nothing under Tyler.",
     ],
 )
 def test_death_inference_accepts_correct_reporting(text):
