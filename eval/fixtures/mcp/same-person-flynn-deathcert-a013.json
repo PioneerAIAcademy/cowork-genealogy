@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1908 death certificate's decedent (a_013, role deceased) against the tree's Patrick Flynn (I1), for the pe_005 review in mid-research-flynn. Score hand-set high, consistent with the test's premise that the certificate matches the subject's name, place and time of death. The mock adds `warningsIfLinked` itself.",
+  "args": {
+    "assertionId": "a_013",
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.86,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "P1",
+      "name": "Patrick Flynn",
+      "role": "deceased"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Patrick Flynn"
+    }
+  }
+}

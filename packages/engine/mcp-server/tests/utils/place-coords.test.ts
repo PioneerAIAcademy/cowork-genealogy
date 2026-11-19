@@ -4,6 +4,7 @@ import {
   configureFsBudget,
   consumeFsBudgetSlot,
   isFsBudgetExhausted,
+  markFsRefusal,
   __resetFsBudgetForTests,
 } from "../../src/utils/fs-budget.js";
 
@@ -79,5 +80,27 @@ describe("lookupWithin and a spent FamilySearch budget", () => {
       throw new Error("502 Bad Gateway");
     }, 1000);
     expect(answers.get("Lexington")).toBeNull();
+  });
+});
+
+describe("lookupWithin: a refusal after the budget", () => {
+  it("is observed, not left as an unhandled rejection", async () => {
+    const unhandled: unknown[] = [];
+    const listener = (reason: unknown) => unhandled.push(reason);
+    process.on("unhandledRejection", listener);
+    try {
+      const refusal = () => new Promise<string | null>((_, reject) => setTimeout(() => reject(markFsRefusal(new Error("budget"))), 30));
+      const answers = await lookupWithin(["late"], refusal, 5);
+      expect(answers.get("late") ?? null).toBeNull();
+      await wait(80);
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", listener);
+    }
+  });
+
+  it("still reaches the caller when it arrives inside the budget", async () => {
+    const refusal = () => Promise.reject(markFsRefusal(new Error("budget")));
+    await expect(lookupWithin(["now"], refusal, 1000)).rejects.toSatisfy(isFsBudgetExhausted);
   });
 });
