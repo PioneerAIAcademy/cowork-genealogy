@@ -34,7 +34,7 @@ PASS plan-halifax-patrick-hoban  expected=research-plan  first=research-plan  sa
   - its run `run-2026-11-12_20-49-46`'s question as `q_001`, reset to `open` with an empty `search_stop`:
     "Do independent records confirm or refute that Catherine Donovan was the wife of Patrick Hoban, born 1836 in Halifax, Nova Scotia?"
   - that run's `localities` entry for Halifax, Nova Scotia, Canada, 1836-1900, re-filled from FamilySearch's live catalog on
-    2026-11-19 with `npx tsx dev/fill-locality-fixtures.ts --all <starting-research.json>`: 12 rows the guide saved, 5 more Nova Scotia rows and 10 core national rows (the Canada censuses 1851-1901, the 1871 mortality schedule and the country-wide baptism, marriage and death indexes).
+    2026-11-19 with `npx tsx dev/fill-locality-fixtures.ts --all <starting-research.json>`: 12 rows the guide saved, 5 more Nova Scotia rows and 10 core national rows (the Canada censuses of 1851, 1871, 1881 and 1891, the 1842 Lower Canada and Upper Canada censuses, the 1871 mortality schedule and the country-wide baptism, marriage and death indexes).
 - `starting-tree.gedcomx.json`: the e2e fixture's own.
 
 ## Caps

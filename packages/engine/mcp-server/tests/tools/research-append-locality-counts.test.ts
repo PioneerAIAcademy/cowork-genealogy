@@ -42,7 +42,7 @@ function catalogEntry(id: string, title: string, records: number, persons: numbe
               { count: persons, resourceType: "http://gedcomx.org/Person" },
               { count: 7754, resourceType: "http://gedcomx.org/DigitalArtifact#FamilySearch" },
             ],
-            searchMetadata: [{ imageCount: 7754, recordCount: records, ...(startYear === null ? {} : { startYear, endYear }) }],
+            searchMetadata: [{ imageCount: 7754, recordCount: records, ...(startYear === null ? {} : { startYear, endYear: endYear ?? startYear }) }],
           },
         ],
       },
@@ -429,7 +429,7 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   describe("national collections (spec 5.12): the US, Canada and Mexico get their core country-wide rows", () => {
     const NATIONAL: FSCollectionsResponse = {
-      results: 16,
+      results: 17,
       index: 0,
       entries: [
         catalogEntry("m1", "Michigan, Death Records, 1867-1952", 1, 1, 1867, 1952),
@@ -443,6 +443,7 @@ describe("research_append stamps locality collection counts from the catalog", (
         catalogEntry("ussdi", "United States, Social Security Death Index", 1, 1, null),
         catalogEntry("ca1901", "Canada, Census, 1901", 1, 1, 1901),
         catalogEntry("caon", "Canada, Ontario, Births, 1869-1912", 1, 1, 1869, 1912),
+        catalogEntry("caon61", "Canada, Ontario, Census, 1861", 1, 1, 1861),
         catalogEntry("mx1930", "Mexico, National Census, 1930", 1, 1, 1929, 1931),
         catalogEntry("mxbap", "Mexico, Baptisms, 1560-1950", 1, 1, 1559, 1950),
         catalogEntry("mxja", "Mexico, Jalisco, Civil Registration, 1857-2000", 1, 1, 1857, 2000),
