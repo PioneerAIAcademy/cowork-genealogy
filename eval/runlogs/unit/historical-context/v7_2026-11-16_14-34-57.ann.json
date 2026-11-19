@@ -393,6 +393,118 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Sources list present, but one cited wiki result isn't in it."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Some Welsh surname detail goes beyond what the tools returned."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }

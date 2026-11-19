@@ -18,7 +18,7 @@
 // all three phases (sources/assertions/person_evidence, the status-transition
 // sections, the phase-3 sections, and the `project` singleton).
 
-import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
+import { assertionsCoveredBy, rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
@@ -1448,7 +1448,7 @@ function rejectedLinkInvariants(
   const rejected = Array.isArray(research?.rejected_links)
     ? (research.rejected_links as RejectedLink[])
     : [];
-  const hit = rejectionFor(assertionId, personId, rejected);
+  const hit = rejectionFor(assertionId, personId, rejected, research?.assertions);
   if (!hit) return [];
   const because = typeof hit.reason === "string" && hit.reason.trim()
     ? ` The researcher's reason: ${hit.reason}`
@@ -1495,7 +1495,7 @@ function supersedeTargetInvariants(
   const target = ((research?.person_evidence ?? []) as any[]).find((pe: any) => pe?.id === set);
   if (!target) {
     const rejection = ((research?.rejected_links ?? []) as any[]).find((rj: any) => rj?.id === set);
-    if (rejection && rejection.assertion_id === entry.assertion_id && rejection.person_id === entry.person_id) {
+    if (rejection && rejectionFor(entry.assertion_id, entry.person_id, [rejection], research?.assertions)) {
       return [];
     }
     return [
@@ -5566,7 +5566,9 @@ function mergeRejectedPairRefusals(
   // matches the post-merge one.
   const alreadyRejected = new Set(
     live(before.research)
-      .filter((e) => rejectionFor(e.assertion_id, e.person_id, rejections(before.research)))
+      .filter((e) =>
+        rejectionFor(e.assertion_id, e.person_id, rejections(before.research), before.research?.assertions),
+      )
       .map((e) => e.id),
   );
   const priorPersonOf = new Map<string, string>(live(before.research).map((e) => [e.id, e.person_id]));
@@ -5580,7 +5582,7 @@ function mergeRejectedPairRefusals(
   );
   const lines: string[] = [];
   for (const e of live(after.research)) {
-    const hit = rejectionFor(e.assertion_id, e.person_id, rejections(after.research));
+    const hit = rejectionFor(e.assertion_id, e.person_id, rejections(after.research), after.research?.assertions);
     if (!hit || !(movedLinks.has(e.id) || movedRejections.has(hit.id))) continue;
     if (alreadyRejected.has(e.id)) continue;
     lines.push(
@@ -8684,6 +8686,9 @@ function retireRejectedLinks(
     if (a.section !== "rejected_links" || a.op !== "append" || a.noop) continue;
     const rj = rejections.find((r) => r && r.id === a.entryId);
     if (!rj || typeof rj.assertion_id !== "string" || typeof rj.person_id !== "string") continue;
+    // A rejection covers the whole record entry, not one assertion
+    // (`assertionsCoveredBy`: the party `recordPartyKeyer` keys, else the exact one).
+    const covered = assertionsCoveredBy(rj, assertions);
     const live = links.filter(
       // A link claims its whole record entry, so retiring it must retire the rows
       // derived from it too (#4355 review). The derived rationale names the
@@ -8692,16 +8697,17 @@ function retireRejectedLinks(
         pe &&
         !pe.superseded_by &&
         pe.person_id === rj.person_id &&
-        (pe.assertion_id === rj.assertion_id ||
+        (covered.has(pe.assertion_id) ||
           (isDerivedEntryLink(pe) &&
-            pe.rationale.startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${rj.assertion_id}:`))),
+            [...covered].some((id) => pe.rationale.startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${id}:`)))),
     );
     if (live.length === 0) continue;
     for (const pe of live) pe.superseded_by = rj.id;
 
-    const assertion = assertions.find((x) => x && x.id === rj.assertion_id);
-    const source = sources.find((s) => s && s.id === assertion?.source_id);
-    const ownRef = source?.gedcomx_source_description_id;
+    const ownRefOf = (assertionId: unknown): unknown => {
+      const assertion = assertions.find((x) => x && x.id === assertionId);
+      return sources.find((s) => s && s.id === assertion?.source_id)?.gedcomx_source_description_id;
+    };
     const person = (tree?.persons ?? []).find((p) => p && p.id === rj.person_id);
     const removed: string[] = [];
     const kept: string[] = [];
@@ -8710,6 +8716,7 @@ function retireRejectedLinks(
     if (person && Array.isArray(person.facts)) {
       person.facts = person.facts.filter((f) => {
         if (!f || !retiredAssertions.has(f.assertion_id)) return true;
+        const ownRef = ownRefOf(f.assertion_id);
         const otherEvidence = (f.sources ?? []).some((s) => typeof s?.ref === "string" && s.ref !== ownRef);
         if (otherEvidence) {
           kept.push(f.id ?? f.type ?? "(fact)");
@@ -8722,8 +8729,9 @@ function retireRejectedLinks(
     if (removed.length > 0) mutated = true;
 
     const retired = live.map((pe) => pe.id).join(", ");
+    const retiredIds = [...retiredAssertions].filter((x) => typeof x === "string").join(", ");
     warnings.push(
-      `${rj.id} retired ${retired} (superseded_by '${rj.id}')` +
+      `${rj.id} retired ${retired} (superseded_by '${rj.id}'; assertions ${retiredIds})` +
         (removed.length > 0 ? ` and removed ${removed.join(", ")} from ${rj.person_id}` : "") +
         `. ${rj.person_id} may still carry names or relationships from ${rj.assertion_id}'s record; ` +
         "check them with person_read and correct with tree_correct.",

@@ -2348,8 +2348,9 @@ correction.
 **A rejection retires what the rejected link derived.** The rule above is what
 makes this necessary: if a link claims the whole entry, then ruling that link out
 rules out the rows it produced. So a `rejected_links` append retires, on the same
-person, both the link naming that assertion **and** every derived row whose
-rationale names it as the trigger — matched on the rationale's
+person, the link on every assertion of the rejected assertion's record party
+(`assertionsCoveredBy`) **and** every derived row whose rationale names any of
+them as the trigger — matched on the rationale's
 `<prefix><assertion_id>:` form, whose trailing colon keeps `a_001` from matching
 `a_0011`. Each retired row's fact leaves the person's tree too, unless another
 source also cites it, the same as the rejected link's own fact. The same set is
@@ -4040,7 +4041,7 @@ there is no `same_person` gate. Checking the attachments is a separate request.
   attach the record. A persona is linked only when none of its
   assertions has a live link yet, so a persona someone already decided about
   is never split across two tree persons; it is counted in `alreadyLinked`. A
-  pair `rejected_links` names is never re-linked, and is counted in
+  pair `rejected_links` names, or any assertion of the same record party, is never re-linked, and is counted in
   `rejectedSkipped`. Each group's links are one write, retried one link at a
   time on a refusal, so one refused pair never sinks the rest; a link still
   refused is counted in `refused`. A record whose persona cannot be found (a
