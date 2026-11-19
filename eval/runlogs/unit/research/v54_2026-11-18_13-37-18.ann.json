@@ -101,22 +101,6 @@
     {
       "test_id": "ut_research_ken",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_research_ken`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> Claude performed the locality-guide skill's task when it should have declined. The per-test context explicitly states this is a NEGATIVE test where the correct behavior is to decline without invoking any skill, because the request is out of scope for every skill. FamilySearch has no record collections for Kenya (collections_search returns none). Instead of declining, Claude provided substantive output including historical context about Kenya's administrative periods and recommendations for searching FamilySearch directly. This is the wrong behavior regardless of output quality.\n\nJunior: (Fail. Claude should have declined because this is a negative test where the request is out of scope for every skill. Instead, it performed the locality-guide task by providing historical context about Kenya and search recommendations. Since the expected behavior was to decline without invoking any skill, the response fails regardless of the quality or accuracy of the information provided.)"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_research_ken`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> On a negative test, completeness is graded on the quality of the decline/routing decision. Claude did not decline; it performed the task it should have refused. The correct outcome was to recognize the request is out of scope and decline without invoking any skill. Claude instead produced a full response with historical context and search recommendations, which is the opposite of the required behavior.\n\nJunior: (Fail. On a negative test, Completeness is measured by whether the skill correctly declined and routed. Claude did neither. Instead of recognizing the request was out of scope and declining, it produced substantive output with historical context and search recommendations. Because it performed the task it was supposed to refuse, the response fails the completeness requirement.)"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
@@ -289,6 +273,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_gm4`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two tool calls: project_list (no args expected) and project_context with projectPath matching the test fixture. Both calls used correct arguments. The research_query call for hypotheses section also used correct arguments. No tool calls returned fixture_not_found errors. All MCP tool calls were properly formed.\n\nJunior: (Pass - All MCP tool calls were properly formed.)"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "**`ut_research_ken`** — `base` / `Correctness`\nLLM: 1 → Junior: N/A\n\n> Claude performed the locality-guide skill's task when it should have declined. The per-test context explicitly states this is a NEGATIVE test where the correct behavior is to decline without invoking any skill, because the request is out of scope for every skill. FamilySearch has no record collections for Kenya (collections_search returns none). Instead of declining, Claude provided substantive output including historical context about Kenya's administrative periods and recommendations for searching FamilySearch directly. This is the wrong behavior regardless of output quality.\n\nJunior: (Graded on invariant: a tag-gated validator decided the outcome, so Correctness/Completeness are diagnostic only — N/A.)"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "**`ut_research_ken`** — `base` / `Completeness`\nLLM: 1 → Junior: N/A\n\n> On a negative test, completeness is graded on the quality of the decline/routing decision. Claude did not decline; it performed the task it should have refused. The correct outcome was to recognize the request is out of scope and decline without invoking any skill. Claude instead produced a full response with historical context and search recommendations, which is the opposite of the required behavior.\n\nJunior: (Graded on invariant: a tag-gated validator decided the outcome, so Correctness/Completeness are diagnostic only — N/A.)"
     }
   ]
 }
