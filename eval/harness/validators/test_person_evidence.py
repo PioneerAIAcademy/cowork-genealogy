@@ -1918,17 +1918,28 @@ def _names_unexplained_score(text):
 
 _OTHER_LINK = re.compile(r"\bpe_(?!005\b)\d+|\ba_(?!013\b)\d+")
 _SAME_PERSON = re.compile(r"\bsame_person\b", re.IGNORECASE)
+_SAME_PERSON_NOT_RUN = re.compile(
+    r"(?:\bno\b|\bnot\b|\bnever\b|n['’]t\b)[^.\n]{0,30}\bsame_person\b"
+    r"|\bsame_person\b[^.\n]{0,30}(?:\bnot\b|\bnever\b|n['’]t\b)",
+    re.IGNORECASE,
+)
 
 
 def _reports_computed_score(text):
-    """One sentence gives the `same_person` score the review computed, with its
-    number, and names no other link or assertion. A review calls `same_person` on
-    a null match_score and reports the score without writing it, as the agent's
-    body says, so a stated score answers the gap as well as naming the null does."""
-    return any(
-        _SAME_PERSON.search(s) and _NUMERIC_SCORE.search(s) and not _OTHER_LINK.search(s)
-        for s in _sentences(text)
-    )
+    """Two adjacent sentences give the `same_person` score the review computed:
+    one says it ran `same_person` and one gives the number ("I ran same_person
+    for a_013 against I1. That call returned 0.86."), and the one with the number
+    names no other link or assertion. A review calls `same_person` on a null
+    match_score and reports the score without writing it, as the agent's body
+    says, so a stated score answers the gap as well as naming the null does."""
+    sents = _sentences(text)
+    for i in range(len(sents)):
+        pair = sents[i:i + 2]
+        if not any(_SAME_PERSON.search(s) and not _SAME_PERSON_NOT_RUN.search(s) for s in pair):
+            continue
+        if any(_NUMERIC_SCORE.search(s) and not _OTHER_LINK.search(s) for s in pair):
+            return True
+    return False
 
 
 def test_review_names_gaps(test, agent_returns=None, text_response=None):

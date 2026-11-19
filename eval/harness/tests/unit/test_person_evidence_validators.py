@@ -2455,6 +2455,9 @@ def test_review_gaps_passes_a_review_naming_both():
     "no pe_ entry for a_013 to I2. Score: `same_person` returned 0.86 for a_013 against "
     "I1, which is strong.",
     _I2_OK_LEAD + "same_person score 0.86 (strong); pe_005 itself still shows a null match_score.",
+    # The call and its number in adjacent sentences.
+    _I2_OK_LEAD + "I also ran `same_person` for a_013 against I1. That call returned a score "
+    "of 0.86 and recorded it in the project, but it did not change the entry.",
 ])
 def test_review_gaps_accepts_other_wordings(text):
     _gaps(text)
@@ -2501,6 +2504,9 @@ _SCORE_OK = "The match_score is null and the rationale never says why."
     (_I2_OK + "The confidence score is fine.", "match_score"),
     # A same_person score for another assertion is not pe_005's.
     (_I2_OK + "`same_person` returned 0.84 for a_010 against I2.", "match_score"),
+    # A same_person the review did not run, beside an unrelated number.
+    (_I2_OK + "I did not run same_person. The match_score is 0.91 and was never questioned.",
+     "match_score"),
     (_I2_OK + "The score was never in doubt.", "match_score"),
     # A score that exists, with a number, is not the null-score gap.
     (_I2_OK + "pe_005's match_score of 0.88 is not explained in the rationale.",
@@ -2549,6 +2555,11 @@ _NAMES_I2_GAP = {
     "scratch_2026-11-19_11-12-40_run2",
     # #4613's suite run, after the agent began computing the score with same_person.
     "v11_2026-11-18_16-04-39_run0",
+    # A scratch run of 001 after #4613 merged: r0 runs same_person in one sentence and
+    # gives 0.86 in the next.
+    "scratch_2026-11-19_16-58-04_run0",
+    "scratch_2026-11-19_16-58-04_run1",
+    "scratch_2026-11-19_16-58-04_run2",
 }
 # v2 and v6: Score discipline raised to 3, but Multi-person awareness was N/A
 # under the rubric of the day, and neither reply names the gap.
