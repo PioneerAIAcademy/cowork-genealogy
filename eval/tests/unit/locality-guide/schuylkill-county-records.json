@@ -4,7 +4,7 @@
     "skill": "locality-guide",
     "name": "Schuylkill County, PA records guide for 1840s-1860s research",
     "type": "positive",
-    "description": "Provide a research-records guide for Schuylkill County in the 1840s-1860s. Tests whether the skill consults the place_search/collections_search/external_links_search/volume_search MCP tools and produces a guide that names specific record classes, repositories, time-period-aware caveats (e.g., that Pennsylvania didn't register vital records statewide until 1906), and the unindexed volumes volume_search surfaces.",
+    "description": "Provide a research-records guide for Schuylkill County in the 1840s-1860s. Tests whether the skill consults the place_search/locality_survey's collections part/locality_survey's externalLinks part/locality_survey's volumes part MCP tools and produces a guide that names specific record classes, repositories, time-period-aware caveats (e.g., that Pennsylvania didn't register vital records statewide until 1906), and the unindexed volumes locality_survey's volumes part surfaces.",
     "tags": [
       "locality",
       "pennsylvania",
@@ -48,8 +48,8 @@
     "Should note that Pennsylvania statewide vital registration began in 1906 — earlier births, marriages, and deaths require county-courthouse records, church baptismal/marriage/burial registers, or cemetery records",
     "Should reference the collections-search-schuylkill fixture data to name actual FamilySearch collections, not generic record-type names",
     "Should identify at least one repository beyond FamilySearch: the Schuylkill County Historical Society, Pennsylvania State Archives, or the county courthouse for unfilmed records",
-    "Should call volume_search and use it to surface the digitized-but-unindexed Lutheran church records volume (recordSearchablePercent 0, fulltextSearchable false) as browse-only — image-by-image access, not name-searchable",
+    "Should use locality_survey's volumes part to surface the digitized-but-unindexed Lutheran church records volume (recordSearchablePercent 0, fulltextSearchable false) as browse-only — image-by-image access, not name-searchable",
     "Should distinguish the probate records volume (recordSearchablePercent 4, fulltextSearchable true) as full-text searchable but not name-indexed, separately from the census volume (recordSearchablePercent 96) which is fully indexed",
-    "Must NOT report only the indexed collections_search results while staying silent on the unindexed volume_search findings — that would understate what's actually digitized and available to browse"
+    "Must NOT report only the indexed locality_survey's collections part results while staying silent on the unindexed locality_survey's volumes part findings — that would understate what's actually digitized and available to browse"
   ]
 }

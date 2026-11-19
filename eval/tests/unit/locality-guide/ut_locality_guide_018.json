@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_locality_guide_018",
     "skill": "locality-guide",
-    "name": "Locality guide for Pennsylvania, late 1800s \u2014 coal mining records",
+    "name": "Locality guide for Pennsylvania, late 1800s — coal mining records",
     "type": "positive",
-    "description": "Checks if the skill recognizes Pennsylvania\u2019s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers. Wall-clock cap 480 -> 720s as insurance, NOT because this test needs it (issue #2252). In v1_2026-09-03_14-07-35 it was killed at 485s against the 480s cap having already COMPLETED the job — file_changes shows loc_001 written to research.json — dying during the closing message, so a finished run scored aborted with zero graded dimensions (49 turns). But that does not reproduce: re-run alone at --concurrency 1 on 2026-09-08 it passed in 188s, and made MORE tool calls (32 vs 21) in FEWER turns (37 vs 49) — 2.6x inside the OLD cap. So 485s reflected run conditions (machine contention is the likely cause and matches this box's known behaviour above concurrency 1), not the test's cost. The raised ceiling costs nothing when a run finishes in 188s and prevents a contended run from discarding a completed test. It is NOT issue #2025, whose signature is an ok:false writer-tool result from a 30s node subprocess cap, absent here.",
+    "description": "Checks if the skill recognizes Pennsylvania’s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers. Wall-clock cap 480 -> 720s as insurance, NOT because this test needs it (issue #2252). In v1_2026-09-03_14-07-35 it was killed at 485s against the 480s cap having already COMPLETED the job — file_changes shows loc_001 written to research.json — dying during the closing message, so a finished run scored aborted with zero graded dimensions (49 turns). But that does not reproduce: re-run alone at --concurrency 1 on 2026-09-08 it passed in 188s, and made MORE tool calls (32 vs 21) in FEWER turns (37 vs 49) — 2.6x inside the OLD cap. So 485s reflected run conditions (machine contention is the likely cause and matches this box's known behaviour above concurrency 1), not the test's cost. The raised ceiling costs nothing when a run finishes in 188s and prevents a contended run from discarding a completed test. It is NOT issue #2025, whose signature is an ok:false writer-tool result from a 30s node subprocess cap, absent here.",
     "tags": [
       "Pennsylvania",
       "coal mining",
@@ -52,6 +52,6 @@
   ],
   "judge_context": [
     "Must mention coal mining industry context. Must highlight employment registers, union rolls, census, and church records. Must not suggest modern HR databases or statewide vital registration as the main source.",
-    "volume_search returns 23 total results (paginated, nextPageToken present) spanning all three named counties: a 95%-indexed mine worker employment card volume in Schuylkill, and browse-only mine accident reports (Luzerne) and colliery payroll ledgers (Lackawanna). The skill should reflect that digitized coverage varies by county and access level rather than treating the multi-county region as a single uniform source."
+    "locality_survey's volumes part returns 23 total results (paginated, nextPageToken present) spanning all three named counties: a 95%-indexed mine worker employment card volume in Schuylkill, and browse-only mine accident reports (Luzerne) and colliery payroll ledgers (Lackawanna). The skill should reflect that digitized coverage varies by county and access level rather than treating the multi-county region as a single uniform source."
   ]
 }

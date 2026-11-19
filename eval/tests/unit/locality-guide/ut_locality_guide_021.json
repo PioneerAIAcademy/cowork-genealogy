@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_locality_guide_021",
     "skill": "locality-guide",
-    "name": "Locality guide for pre-statehood Alabama \u2014 volume_search returns no digitized volumes",
+    "name": "Locality guide for pre-statehood Alabama — locality_survey's volumes part returns no digitized volumes",
     "type": "positive",
-    "description": "Verifies that when volume_search returns zero digitized image groups for the place/period, the skill explains this as a digitization coverage gap rather than implying no such records exist or were ever created. Reuses the Alabama pre-statehood scenario (collections_search/wiki fixtures shared with ut_locality_guide_004) paired with a dedicated empty-result volume_search fixture.",
+    "description": "Verifies that when locality_survey's volumes part returns zero digitized image groups for the place/period, the skill explains this as a digitization coverage gap rather than implying no such records exist or were ever created. Reuses the Alabama pre-statehood scenario (locality_survey's collections part/wiki fixtures shared with ut_locality_guide_004) paired with a dedicated empty-result locality_survey's volumes part fixture.",
     "tags": [
       "Alabama",
       "pre-statehood",
@@ -47,7 +47,7 @@
     "catalog-search-empty-title"
   ],
   "judge_context": [
-    "volume_search returns totalResults 0 for the Alabama/Mississippi Territory pre-statehood period. The skill must state that FamilySearch currently has no digitized image groups (browsable or indexed) for this place/period \u2014 and must not phrase this as evidence that no records were ever created or survived. It should still point to the territorial, church, and court record classes already covered by collections_search/wiki_search, since record existence and FamilySearch digitization coverage are separate facts.",
+    "locality_survey's volumes part returns totalResults 0 for the Alabama/Mississippi Territory pre-statehood period. The skill must state that FamilySearch currently has no digitized image groups (browsable or indexed) for this place/period — and must not phrase this as evidence that no records were ever created or survived. It should still point to the territorial, church, and court record classes already covered by locality_survey's collections part/wiki_search, since record existence and FamilySearch digitization coverage are separate facts.",
     "Must not fabricate a volume, image group number, or count that wasn't in the tool result."
   ]
 }

@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_locality_guide_005",
     "skill": "locality-guide",
-    "name": "Locality guide for Arkansas region, pre-1800 \u2014 Spanish colonial records",
+    "name": "Locality guide for Arkansas region, pre-1800 — Spanish colonial records",
     "type": "positive",
     "description": "Verifies that the skill recognizes Arkansas was not yet a U.S. state before 1800 and directs researchers to Spanish colonial, territorial, and church records instead of modern state archives. Ensures jurisdiction-aware guidance by highlighting repositories like colonial offices, parish registers, and land grant records.",
     "tags": [
@@ -51,6 +51,6 @@
   ],
   "judge_context": [
     "Recognizes Arkansas was under Spanish control before 1800 and mentions Spanish colonial land grants, church registers, and territorial records and must not mention modern databases as if they existed in 1800.",
-    "volume_search surfaces one digitized image group of Spanish-language sacramental registers (Arkansas Post, 1763-1800) that is entirely browse-only (recordSearchablePercent 0, fulltextSearchable false). The skill should mention this volume exists and is browseable on FamilySearch even though it has no name index, rather than implying no FamilySearch digitized images exist for the period."
+    "locality_survey's volumes part surfaces one digitized image group of Spanish-language sacramental registers (Arkansas Post, 1763-1800) that is entirely browse-only (recordSearchablePercent 0, fulltextSearchable false). The skill should mention this volume exists and is browseable on FamilySearch even though it has no name index, rather than implying no FamilySearch digitized images exist for the period."
   ]
 }
