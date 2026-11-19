@@ -2416,11 +2416,20 @@ saved.
   the project lock on the guide the one before it left. In a batch, each op is placed
   on the guide the earlier op left.
 - **What is still missing.** Every successful `localities` write returns
-  `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists,
-  as `## <title>`, each of `LOCALITY_GUIDE_HEADINGS` (`## Jurisdiction overview`,
-  `## Available record types`, `## Research tips`) the entry's guide lacks, matched by
-  `missingGuideHeadings`; `next` says how to send them and is absent when `missing` is
-  empty. No write is refused for a missing heading.
+  `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists
+  each of `LOCALITY_GUIDE_HEADINGS` the entry's guide lacks, as `## <title>` or
+  `### <title>`: every section and subsection of `LOCALITY_GUIDE_OUTLINE` (issue #4602
+  item 3), matched by `missingGuideHeadings`; `next` says how to send them and is absent
+  when `missing` is empty. No write is refused for a missing heading.
+- **The survey's fields** (issue #4602). A `localities` append must carry `surveyRef`, the
+  `staged.resultsRef` of a `locality_survey` call with a `projectPath`; the tool reads that
+  staged answer and writes `pages_read` from its `pagesRead` and `volume_summary` from its
+  `volumeSummary` (left out when that is null). An update may carry `surveyRef` to refresh both.
+  Refused: an append with no `surveyRef`; `pages_read` or `volume_summary` in an append's `entry`
+  or an update's `fields`; a `surveyRef` that is not a string, does not exist, or is not a
+  survey answer; a `surveyRef` on another section. The wiring is `expandSurveyRefs`. A survey
+  cannot be skipped and its counts cannot be copied wrong: 10 of 90 unit saving runs had
+  copied `volume_summary` wrong (issue #4602 item 5).
 - **Refusals**, one per op, `ops[i]:`-prefixed in a batch, nothing written:
   - `guide_markdown` set to anything but `null` in an append's `entry` or an update's
     `fields`: `guide_markdown is not written directly: this tool builds it. Append this
@@ -2436,7 +2445,8 @@ saved.
   sent to it is placed into it.
 - **The heading matcher.** `missingGuideHeadings` is the eval validator's `_heading()`
   (`eval/harness/validators/test_locality_guide.py`): a line that starts with exactly
-  two `#`s, then spaces or tabs, then the title, in any case, with anything after it.
+  the heading's `#`s (two or three), then spaces or tabs, then the title, in any case,
+  with anything after it.
   The JS form is `(?<![^\n])##[ \t]+<title>` with the flags `iu`, because JS's `m`
   also starts a line after a lone `\r`, U+2028 or U+2029, and JS's `i` without `u`
   does not match `ſ` for `s`. The parity table in `research-append.test.ts` and its
