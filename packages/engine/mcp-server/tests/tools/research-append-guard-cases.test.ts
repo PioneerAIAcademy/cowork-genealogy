@@ -13,6 +13,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  attachedBirthProofInvariants,
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
   coreIdentifierContradictionInvariants,
@@ -35,6 +36,9 @@ const WRITER_GUARDS: Record<
 > = {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
+  // A wrapper: bound bare, the replay's fourth argument (a case's starting tree)
+  // would arrive as the place data.
+  attachedBirthProofInvariants: (entry, research, tree) => attachedBirthProofInvariants(entry, research, tree),
   namesakeTieInvariants: (entry, research, tree, startingTree) =>
     namesakeTieInvariants(entry, research, tree, startingTree ? startingPersonIdsOf(startingTree) : undefined, startingTree),
   planItemCompletionRecordTypeInvariants,

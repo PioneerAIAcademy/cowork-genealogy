@@ -328,6 +328,18 @@ describe("a birthplace conflict across a person's self-contradicting attached bi
     expect(r[0]).toContain("identity");
   });
 
+  it("tells the agent to open an identity conflict when none names the pair, and to weigh the one that does", () => {
+    const { research, tree } = project();
+    const open = judge(conflict(["a_001", "a_002"]), research, tree);
+    expect(open[0]).toContain("open a conflict_type 'identity' conflict");
+    (research as any).conflicts = [
+      { id: "c_009", conflict_type: "identity", identity_question: "Whose baptism?", competing_assertion_ids: ["a_002"], status: "unresolved", preferred_assertion_id: null, blocks_question_ids: [] },
+    ];
+    const weigh = judge(conflict(["a_001", "a_002"]), research, tree);
+    expect(weigh[0]).toContain("weigh c_009");
+    expect(weigh[0]).not.toContain("open a conflict_type 'identity' conflict");
+  });
+
   it("refuses resolving an attached birth against a record that sides with the other one", () => {
     const { research, tree } = project();
     expect(judge(conflict(["a_001", "a_003"]), research, tree)).toHaveLength(1);
