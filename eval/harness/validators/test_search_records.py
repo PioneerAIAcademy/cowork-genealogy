@@ -377,6 +377,22 @@ def test_searched_before_no_collection_hand_back(tool_calls, test):
     )
 
 
+def test_survey_sends_all_three_isprincipal_calls(tool_calls, test):
+    """Issue #4348 -- an every-mention survey sends the plain search, isPrincipal:
+    true and isPrincipal: false, and does not page to retrieve more rows than
+    those three calls return. The judge alone missed both the omitted third call
+    (the original flake) and a run that paged anyway (five `offset` calls plus
+    three per-place calls) despite the agent body saying not to.
+    """
+    if "every-mention-survey" not in test.get("tags", []):
+        pytest.skip("only the every-mention survey test")
+    searches = [c.get("args") or {} for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "record_search"]
+    sent = {a.get("isPrincipal", "omitted") for a in searches}
+    assert {"omitted", True, False} <= sent, f"survey sent isPrincipal values {sent}; it needs none, true and false"
+    paged = [a for a in searches if "offset" in a]
+    assert not paged, f"survey paged {len(paged)} time(s) to retrieve more rows; issue #4348 decided the two filtered totals give the split and a sample is enough"
+
+
 # --- Outside holdings must come from a tool response (issue #4352) -----------
 
 # The outside sites the agent body names (Ancestry, MyHeritage, FindMyPast,
@@ -1223,6 +1239,45 @@ def _research_query_calls(tool_calls):
         c for c in (tool_calls or [])
         if _bare_tool_name(c.get("tool")) == "research_query"
     ]
+
+
+def test_unhanded_plan_item_stays_planned(before_state, after_state, tool_calls, test):
+    """Tag-gated (one-plan-item-per-call): the delegation names pli_001 only, so
+    pli_002 stays ``planned``, gets no log entry, and is not searched.
+
+    The judge scored Completeness 3 on every committed run that ran both items
+    (#4330), and the rule can be read off research.json.
+    """
+    if "one-plan-item-per-call" not in test.get("tags", []):
+        pytest.skip("not a one-plan-item-per-call scenario")
+    after = after_state.get("research_json") or {}
+    statuses = [
+        item.get("status")
+        for plan in after.get("plans") or []
+        for item in plan.get("items") or []
+        if item.get("id") == "pli_002"
+    ]
+    assert statuses == ["planned"], f"pli_002 left `planned`: status {statuses}"
+    logged = [
+        e.get("id")
+        for e in _new_log_entries(before_state, after_state)
+        if e.get("plan_item_id") == "pli_002"
+    ]
+    assert not logged, f"pli_002 was logged in this call: {logged}"
+    church = [
+        c.get("args")
+        for c in tool_calls or []
+        if _bare_tool_name(c.get("tool")) == "record_search"
+        and str(_as_mapping(c.get("args")).get("recordType") or "").lower() != "census"
+        and (
+            "church" in json.dumps(c.get("args") or {}).lower()
+            or (
+                "census" not in (c.get("response_fixture") or "")
+                and "census" not in json.dumps(c.get("args") or {}).lower()
+            )
+        )
+    ]
+    assert not church, f"pli_002's church search ran in this call: {church}"
 
 
 def test_handed_plan_item_skips_research_query(tool_calls, test):

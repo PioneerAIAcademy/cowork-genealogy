@@ -1729,8 +1729,8 @@ export async function placeSearchNames(
 }
 
 /** Every representation a placeId has had, with its name and range; empty on
- *  failure (not cached). */
-async function placeReps(placeId: string): Promise<PlaceRep[]> {
+ *  failure (not cached). Throws only the FS budget refusal. */
+export async function placeReps(placeId: string): Promise<PlaceRep[]> {
   const cached = placeRepsCache.get(placeId);
   if (cached) return cached;
   let reps: PlaceRep[];

@@ -1,0 +1,4031 @@
+{
+  "project": {
+    "id": "rp_thomas_hanrahan_marriage",
+    "objective": "When and where did Thomas Hanrahan, born about 1840 in Ireland and living in Saratoga, New York, in 1880, marry Johanna Ryan?",
+    "subject_person_ids": [
+      "KHGX-XWG"
+    ],
+    "status": "completed",
+    "created": "2026-10-12",
+    "updated": "2026-11-17"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Thomas Hanrahan (born about 1840 in Ireland) marry Johanna Ryan (born about 1845 in Ireland)?",
+      "rationale": "The objective is a single marriage event and no question yet covers it. The couple's ties are already documented: the 1880 census shows them married in Saratoga, New York, and Irish baptisms for two children in 1871 and 1872 name both as parents. The tree records no marriage date or place. The first child on the tree was born in New York City in 1869, so the marriage most likely falls before that.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1858-1870",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-11-17",
+      "resolution_assertion_ids": [
+        "a_082",
+        "a_083",
+        "a_084",
+        "a_085",
+        "a_086"
+      ],
+      "search_stop": {
+        "stopped_because": "resources_spent",
+        "justification": "Researcher chose to wrap up q_001 before completing the plan. Evidence in hand: the 1880 Saratoga census shows Thomas and Johanna married with four US-born children, and an Irish Catholic parish register entry (src_004) records Thomam Hanrahan marrying Johan Ryan on 1 Feb 1868 at Ballylooby, County Tipperary \u2014 plausibly linked to the subject via the 1871/1872 Ardfinnan baptisms of their children, though the given names (Johan/Judy vs Johanna) are not an exact match and the link is marked probable, not confirmed. Completed searches: the Irish parish-register and marriage-index search that found the Ballylooby entry (pli_002); the 1865 and 1875 New York State censuses for Saratoga (pli_003), both negative; and a New York City marriage-records search 1858-1871 (pli_005), negative on the top 50 of 2,365 hits. Six plan items were not run at the researcher's request: FamilySearch hint review (blocked, tool disabled), Saratoga-area church marriage registers (only broader, non-targeted church-collection searches were logged), Tipperary civil registration 1864-1872, the Ardfinnan baptism register images, immigration/naturalization records, and death/burial records.",
+        "log_entry_ids": [
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012"
+        ],
+        "stop_criteria": null,
+        "not_reached": [
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Pending FamilySearch hints on Thomas Hanrahan (KHGX-XWG) were never reviewed \u2014 the hint-matching tool was disabled in this run."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "A targeted search of Saratoga-area (and neighboring-county) Catholic/church marriage registers was not completed \u2014 only broader, non-church-specific collection searches (log_005, log_006) were run, both negative."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Irish civil registration indexes/records for County Tipperary, 1864-1872, were not searched; they could independently corroborate the Ballylooby parish entry and supply the couple's fathers' names."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Original baptism register images for Mary (1871) and John (1872) at Ardfinnan were not read; they could corroborate the parentage link and name sponsors (FAN)."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Immigration and naturalization records for Thomas Hanrahan were not searched; they could establish whether his arrival in New York came before or after the 1868 Ballylooby marriage."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Death, burial and obituary records for Thomas Hanrahan and Johanna Ryan were not searched; they might state a marriage anniversary or Johanna's parents' names."
+          }
+        ]
+      },
+      "created": "2026-11-17"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-17",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "fs_hints",
+          "jurisdiction": "FamilySearch Family Tree",
+          "date_range": "1858-1871",
+          "repository": "FamilySearch",
+          "rationale": "Review pending FamilySearch hints on KHGX-XWG before searching \u2014 an attached hint may already answer the question.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "person_record_matches is disabled in this run (PreToolUse hook refused the call: 'disabled in e2e benchmark runs'), so the pending FamilySearch hints on KHGX-XWG could not be read. No hint was reviewed or logged."
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Ardfinnan, County Tipperary, Ireland",
+          "date_range": "1858-1872",
+          "repository": "FamilySearch",
+          "rationale": "Tree facts: John Hanrahan baptised 28 Nov 1872 at Ardfinnan and Mary baptised 17 Feb 1871 in Ireland, both naming Thomas Hanrahan and Johanna Ryan as parents. The couple was therefore in Tipperary by 1871, so an Irish Catholic marriage is a strong candidate. Civil registration did not cover Catholic marriages before 1864 (loc_002), so before then only parish registers apply. Ireland, Catholic Parish Registers, 1740-1900 is name-searchable; search Hanrahan/Hanrehan/Hanraghan/Hourigan with Ryan/Ryn and Johanna/Hanora/Joan/Julia variants, without a parish filter first, since loc_002 says Ardfinnan's own register volume was not located in the catalog and parish may rank rather than filter. Ireland, Marriages, 1619-1898 is name-searchable and is a second index.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Saratoga, New York, United States",
+          "date_range": "1865-1875",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 census shows Thomas (about 40) and Johanna (about 35) in Saratoga with four children said to be born in New York, but the tree also holds Irish baptisms for Mary (1871) and John (1872), so the census birthplaces and the baptisms conflict. The 1865 and 1875 New York State Censuses (both name-searchable) show where the couple lived and which children were with them, which tells us whether the marriage was before emigration or in New York. Per loc_001, each of these censuses has a marriage schedule after the population schedule, browsed by county and town; check it for a marriage in the year ending 1 June 1865 or 1875.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Saratoga, New York, United States",
+          "date_range": "1858-1871",
+          "repository": "FamilySearch",
+          "rationale": "Per loc_001 there was no civil marriage registration in New York before 1880 and Catholic registers under the Diocese of Albany are the main source for an Irish Catholic couple. Search New York, Church Records, 1660-1954 and New York, Church and Civil Marriages, 1704-1995 (both name-searchable) for Hanrahan and Ryan. The guide named no specific parish, so once step 3 fixes the town of residence, the parish register or Diocese of Albany archives must be approached directly. Include adjoining counties (Albany, Rensselaer, Washington, Warren), as the guide advises.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "user_declined",
+          "skip_reason": "Researcher wrapped up q_001. Two Saratoga church/marriage searches (log_005, log_006) ran and were negative, but the log does not name a church register search, so the item could not be marked completed; closed as skipped."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York, United States",
+          "date_range": "1858-1871",
+          "repository": "FamilySearch",
+          "rationale": "The tree places the births of Elizabeth (about 1869) and Thomas Jr (about 1870) in New York City, so the couple may have married there. New York, New York City Marriage Records, 1829-1938 is name-searchable. This also tests whether the Saratoga-centred approach is too narrow.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "County Tipperary, Ireland",
+          "date_range": "1864-1872",
+          "repository": "FamilySearch",
+          "rationale": "Catholic marriages entered civil registration from 1 April 1864 (loc_002), so a Tipperary marriage from 1864 to about 1871 should also have a civil entry. Ireland, Civil Registration Indexes, 1845-1958 and Ireland, Civil Registration, 1845-1913 are both name-searchable. Entries are filed by registration district, not parish, so the index may not pin down Ardfinnan; the original entry may give residences and the fathers' names, which would name Johanna's Ryan parents.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "user_declined",
+          "skip_reason": "Researcher wrapped up q_001 after the Ballylooby parish register entry (1 Feb 1868) was extracted; Irish civil registration search not run."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Ardfinnan, County Tipperary, Ireland",
+          "date_range": "1871-1872",
+          "repository": "FamilySearch",
+          "rationale": "Read the original images of the Mary (1871) and John (1872) baptism entries (Ireland, Births and Baptisms, 1620-1881, and the Catholic register images). Check the parents' residence, sponsors (FAN, likely relatives of Thomas or Johanna) and whether Mary is the same Mary as in the 1880 census, who was said to be about 15 there and so could be an older sibling. This tests the conflict before relying on it, and the sponsor surnames supply Ryan and Hanrahan relatives to search for in marriage registers.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "user_declined",
+          "skip_reason": "Researcher wrapped up q_001; Ardfinnan baptism image review (corroborating only) not run."
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "immigration",
+          "jurisdiction": "Saratoga, New York, United States",
+          "date_range": "1850-1880",
+          "repository": "FamilySearch",
+          "rationale": "Thomas's arrival date separates an Irish marriage from a New York one. New York, Record of Naturalized Voters Registered, 1872-1878, New York, County Naturalization Records, 1791-1980 and New York, Passenger Lists, 1820-1920 are all name-searchable; naturalization papers often state arrival year and port. Unresolved whether the family emigrated before or after 1872.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "user_declined",
+          "skip_reason": "Researcher wrapped up q_001; immigration/naturalization search (corroborating only) not run."
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "Saratoga, New York, United States",
+          "date_range": "1880-1930",
+          "repository": "FamilySearch",
+          "rationale": "Death and burial entries of Thomas and Johanna, and obituaries, may state age, birthplace, and years married or a marriage place. Their death years are not in the tree. New York, State Death Index, 1880-1956 and New York, Deaths and Burials, 1795-1952 are name-searchable; Saratoga cemetery records and local newspaper obituaries can supply a marriage anniversary or Johanna's parents' names. Window runs well past 1880 because these records were created decades after the marriage.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "user_declined",
+          "skip_reason": "Researcher wrapped up q_001; death/burial search (corroborating only) not run."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-11-17T12:26:40.654Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MZF2-Y55"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "staged_ref": "results/.staging/6f31c3e0-373e-47c2-9b60-0224f436448e.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-11-17T12:26:40.656Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:F5GR-QBN"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "staged_ref": "results/.staging/f81af9b2-cf65-4b9e-baba-22caf218389a.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": null,
+      "performed": "2026-11-17T12:26:40.658Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:F5YK-84C"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "staged_ref": "results/.staging/14a0fd96-570a-4ca5-b6b4-dc24635a486a.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-17T12:32:57.507Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hanrahan",
+        "recordCountry": "Ireland",
+        "marriageYearFrom": 1858,
+        "marriageYearTo": 1872,
+        "subjectId": "KHGX-XWG"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 200110,
+      "notes": "Broad first pass, no parish filter, as the plan item directs. Returned 200,110 hits, all from Ireland, Civil Registration Indexes, 1845-1958 (collection 1408347), not the Catholic parish registers the plan names. Ranker: no candidate scored above 0.01 against KHGX-XWG (subjectResolvable false, diagnostic says real negative for this query). Top rows are other Hanrahans (Thomas at Ennis 1868, Clogheen 1868; James, Patrick, etc.) with no spouse or parent overlap to the subject. Cross-check: none of the 50 is a Thomas Hanrahan with a marriage that fits a couple with children baptised 1871-1872 at Ardfinnan; not adopted. Jurisdiction hint points to Saratoga, New York (1880 residence), which is after the window and is not a marriage place. Next: query the Catholic parish register collection with spouse Ryan/Johanna and the Ardfinnan area.",
+      "staged_ref": "results/.staging/ad365a35-bb78-42df-9ff9-ba1510a9c3f4.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-17T12:33:09.897Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hanrahan",
+        "givenName": "Thomas",
+        "recordType": "church",
+        "anyPlace": "Saratoga, New York, United States",
+        "anyYearFrom": 1858,
+        "anyYearTo": 1871,
+        "subjectId": "KHGX-XWG"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1173,
+      "notes": "Total 1173. Top 50 read with subject ranking. No Hanrahan church or marriage record in Saratoga County or 1858-1871 appears in the pool; the church filter returned mostly civil death, cemetery and Find a Grave entries. Same-named persons seen and not tied to subject: Thomas Hanrahan b.1842 Ireland, d.1898 Manhattan (birth-year consistent, but no Saratoga link and no spouse evidence; needs-review, not the subject on present evidence); Thomas Hanrahan d.1914 Schuylerville (no birth date, no marriage link; needs-review). Other rows carry birthYearConflict or surnameNotOnSubject. Pool is not a Hanrahan marriage in the target place; subject not resolvable on the marriage question from this pool.",
+      "staged_ref": "results/.staging/cc7e760d-7536-41d8-a4d6-56b3e0c6377e.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-17T12:33:09.904Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ryan",
+        "recordType": "church",
+        "anyPlace": "Saratoga, New York, United States",
+        "anyYearFrom": 1858,
+        "anyYearTo": 1871,
+        "subjectId": "KHGX-XWG"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 43327,
+      "notes": "Total 43327, far too broad to read to the end; only the ranked top 50 read. Ranker: subjectResolvable false, no candidate above 0.01, so the pool holds no match for the subject. One church-collection row (New York, Church Records 1660-1954, John Ryan and Mary Flood, Providence, Saratoga, date field reads only '24') is not dated in range and is not tied to the subject; needs-review. Ryan search has no spouse anchor, so it cannot confirm a Hanrahan-Ryan marriage. Next step is a narrower spouse-anchored search (spouseSurname Ryan with surname Hanrahan, and the reverse) rather than more surname-only pages.",
+      "staged_ref": "results/.staging/a557d039-e0cd-41f9-a36c-ddcc77b5566e.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-17T12:33:10.042Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hanrahan",
+        "residencePlace": "Saratoga, New York, United States",
+        "residenceYearFrom": 1865,
+        "residenceYearTo": 1865,
+        "recordType": "census",
+        "subjectId": "KHGX-XWG"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 197,
+      "notes": "NY State Census 1865, Saratoga. Census block lists no indexed Saratoga 1865 census schedule, though collection 1491284 (NY State Census 1865) returned rows. Ranked pool: no candidate scored above 0.01; subjectResolvable false. Only same-name row within a few years of the subject's about-1840 birth is Thomas b.1843 in Northumberland (gap +3, birthYearConflict flagged), listed in one dwelling with Joanna b.1846 and Mary b.1865; family structure inferred from surname, ages and order, not stated. Needs-review, not confirmed. Thomas b.1825 Providence (gap -15) not matched on birth year. Surname variants (Hanshan, Hannay, Hannan) carry surnameNotOnSubject. No marriage schedule returned by this search.",
+      "staged_ref": "results/.staging/d2fab74e-a6e3-43b0-aa93-ab579c74f497.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-17T12:33:11.865Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hanrahan",
+        "residencePlace": "Saratoga, New York, United States",
+        "residenceYearFrom": 1875,
+        "residenceYearTo": 1875,
+        "recordType": "census",
+        "subjectId": "KHGX-XWG"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 230,
+      "notes": "NY State Census 1875, Saratoga. Census block lists no indexed Saratoga 1875 census schedule, though collection 1918735 (NY State Census 1875) returned rows. Ranked pool: no candidate scored above 0.01; subjectResolvable false. Thomas Hanrahan rows (Cohoes b.1817, gap -23; Cohoes b.1870, gap +30) excluded on birth-year gap. No Thomas of about 1840 located in the top 50 with a spouse named Johanna; any household structure on these rows is inferred from surname, ages and order, not stated. Surname variants (Hanehan, Hannan, Hannaw, Hannay) carry surnameNotOnSubject. Marriage schedule not returned by this search.",
+      "staged_ref": "results/.staging/5370199a-7a24-4de1-9c06-b2734cf50fd8.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-17T12:33:12.830Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hanrahan",
+        "recordCountry": "Ireland",
+        "givenName": "Thomas",
+        "spouseSurname": "Ryan",
+        "marriageYearFrom": 1858,
+        "marriageYearTo": 1872,
+        "marriagePlace": "Ardfinnan, County Tipperary, Ireland",
+        "subjectId": "KHGX-XWG"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 1263,
+      "notes": "Second pass, spouse surname Ryan and marriage place Ardfinnan with the 1858-1872 window. The place filter expands upward (Tipperary, Ireland), so the place is not a firm scope. 1,263 hits across five collections. Candidates to triage: (a) Ireland, Catholic Parish Registers 1740-1900 (2820100), marriage 1 Feb 1868 Ballylooby, County Tipperary, Thomam Hanrahan with spouse Johan Ryan, record 6267-W22Q, matchRank 26, not attached; (b) Ireland, Marriages 1619-1898 (1584964) and Civil Registration (2659409), Thomas Hanrahan and Judy Ryan, marriage 1 Feb 1868 Ballylooby, matchRank 28-29; (c) Ireland, Births and Baptisms 1620-1881 (1584963), entries F5GR-QBN (Mary Hanrahan) and F5XQ-CGZ (John Hanrahan), father Thomas, spouse Johanna Ryan, both attached to the subject, which corroborate the tree's children and parents but are not marriage records. Remaining rows are other Thomas Hanrahans or Thomas Hannan/Hannon with Ryan spouses, unrelated surnames, or birth/death rows dated decades away from the subject (birthYearConflict). Ranker scores are very low (top 0.039) and the subject is thin, so no row is a confident match. Candidate (a) and (b) are needs-review: same place and month, but the spouse given name is Johan/Judy, not Johanna, and no child or parent link ties the 1868 couple to the subject yet. Next: read candidate (a) and the Ballylooby entries.",
+      "staged_ref": "results/.staging/35a2e2bc-95cd-4185-8481-f5da686a4f08.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-17T12:33:15.849Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hanrahan",
+        "givenName": "Thomas",
+        "recordType": "vital_record",
+        "marriagePlace": "New York City, New York, United States",
+        "marriageYearFrom": 1858,
+        "marriageYearTo": 1871
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1060,
+      "notes": "Unscoped (no collection) search. 1060 matches across births, deaths, burials and marriages; most rows are death, birth and burial entries from other collections, not marriages. Collection-mismatch for the marriage question. No row is a marriage of a Thomas Hanrahan as groom. Top ranked rows: Thomas Hanrahan as father on christening/birth entries (not the subject's marriage). Thomas Hanrahan deaths 1898, 1911, 1916 and 1883 are not marriage evidence. Ranker scored 82 rows; none adopted. Follow-up collection-scoped search logged separately.",
+      "staged_ref": "results/.staging/9a242299-247a-4d3f-9525-756333c2ea18.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-17T12:33:15.859Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hanrahan",
+        "collectionId": "2143225",
+        "recordType": "vital_record",
+        "marriageYearFrom": 1858,
+        "marriageYearTo": 1871
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 2365,
+      "notes": "Scoped to New York, New York City Marriage Records, 1829-1938 (collection 2143225); 2365 matches, first 50 examined. The ranker found no candidate above 0.01 and reports subjectResolvable false: a real negative for this pool at the top 50. Rows are Hanrahan grooms, brides and fathers/mothers of other couples, none a Thomas Hanrahan marrying in 1858-1871. Thomas Hanrahan as Groom not present in top 50. No namesake of the subject's name attached as groom. Pool not exhausted (2365 total): page deeper or add a bride-name anchor before a firm nil. Not run: marriage-place-exact search, bride-name search (no spouse name on the tree yet).",
+      "staged_ref": "results/.staging/d8e8455d-5903-4da0-8294-a26f9ceabca5.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-17T12:33:25.988Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6267-W22Q"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "notes": "Read of the Catholic parish marriage candidate from log_009. Ireland, Catholic Parish Registers, 1740-1900. Principal indexed as Thomam Hanrahan (Latinised Thomas), spouse Johan Ryan, marriage 1 Feb 1868, Ballylooby (standard place Ballylooby, Tubbrid, County Tipperary). Not Ardfinnan, not attached to the subject, and the spouse is indexed Johan, not Johanna. Needs-review: no link yet to the subject's children (Mary 1871, John 1872, Ardfinnan). Image ark 3:1:3Q9M-CSR6-M3SY-1 available, not read.",
+      "staged_ref": "results/.staging/3f62c973-c62a-4efd-a8c5-c8d7826c8e9f.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y55 : Wed Sep 09 10:55:38 UTC 2026), Entry for Thomas Hanrahan and Johannah Hanrahan, 1880.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Thomas Hanrahan, \"United States, Census, 1880\"",
+        "when_created": "1880",
+        "when_accessed": "2026-11-17",
+        "where": "United States, Census, 1880",
+        "where_within": "ark:/61903/1:1:MZF2-Y55"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_001",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:M4JL-D7T",
+      "image_ark": "ark:/61903/3:1:33S7-9YBJ-QL4",
+      "gedcomx_source_description_id": "Q7PL-HS1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:935T-T1R : 13 September 2026), Entry for Mary Hanrahan, 1871.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Mary Hanrahan, \"Ireland, Births and Baptisms, 1620-1881\"",
+        "when_created": "1871",
+        "when_accessed": "2026-11-17",
+        "where": "Ireland, Births and Baptisms, 1620-1881",
+        "where_within": "ark:/61903/1:1:F5GR-QBN"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_002",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:935T-T1R",
+      "image_ark": "ark:/61903/3:1:3Q9M-C9BX-XSS2-6?cc=1584963",
+      "gedcomx_source_description_id": "93KG-V2Y"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:93RM-M8S : 13 September 2026), Entry for John Hanrahan, 1872.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for John Hanrahan, \"Ireland, Births and Baptisms, 1620-1881\"",
+        "when_created": "1872",
+        "when_accessed": "2026-11-17",
+        "where": "Ireland, Births and Baptisms, 1620-1881",
+        "where_within": "ark:/61903/1:1:F5YK-84C"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_003",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:93RM-M8S",
+      "image_ark": "ark:/61903/3:1:3Q9M-C9BX-ZQVP-2?cc=1584963",
+      "gedcomx_source_description_id": "9QMW-WDT"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Ireland, Catholic Parish Registers, 1740-1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6267-W22Q : Thu Nov 21 12:34:58 UTC 2024), Entry for Thomam Hanrahan and Johan Ryan, 1 Feb 1868.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Thomam Hanrahan, \"Ireland, Catholic Parish Registers, 1740-1900\"",
+        "when_created": "1868",
+        "when_accessed": "2026-11-17",
+        "where": "Ireland, Catholic Parish Registers, 1740-1900",
+        "where_within": "ark:/61903/1:1:6267-W22Q"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-17",
+      "log_entry_id": "log_012",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H3W4-3ZR3",
+      "image_ark": "ark:/61903/3:1:3Q9M-CSR6-M3SY-1",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "40 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Stone Mason",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "Ireland",
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Bet 1839 and 1840",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "Bet 1839 and 1840",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1880",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "1880",
+      "place": "Saratoga, District 2, Saratoga, NY, United States",
+      "standard_place": "Saratoga, Saratoga, New York, United States",
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Johannah Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Johannah",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "35 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "occupation",
+      "value": "Keeping House",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "census",
+      "value": "1880",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "1880",
+      "place": "Saratoga, District 2, Saratoga, NY, United States",
+      "standard_place": "Saratoga, Saratoga, New York, United States",
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "Ireland",
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Bet 1844 and 1845",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "Bet 1844 and 1845",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Mary Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "15 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "occupation",
+      "value": "Works In Cotton Mill",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "census",
+      "value": "1880",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "1880",
+      "place": "Saratoga, District 2, Saratoga, NY, United States",
+      "standard_place": "Saratoga, Saratoga, New York, United States",
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "New York, United States",
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Bet 1864 and 1865",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "Bet 1864 and 1865",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Elizabeth Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "age",
+      "value": "11 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "occupation",
+      "value": "At School",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "census",
+      "value": "1880",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "1880",
+      "place": "Saratoga, District 2, Saratoga, NY, United States",
+      "standard_place": "Saratoga, Saratoga, New York, United States",
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "New York, United States",
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Bet 1868 and 1869",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "Bet 1868 and 1869",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Thomas Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "age",
+      "value": "10 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "occupation",
+      "value": "At School",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "New York, United States",
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Bet 1869 and 1870",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "Bet 1869 and 1870",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "census",
+      "value": "1880",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "1880",
+      "place": "Saratoga, District 2, Saratoga, NY, United States",
+      "standard_place": "Saratoga, Saratoga, New York, United States",
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "John Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "John",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "age",
+      "value": "8 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "occupation",
+      "value": "At School",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "New York, United States",
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "Bet 1871 and 1872",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "Bet 1871 and 1872",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "census",
+      "value": "1880",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "date": "1880",
+      "place": "Saratoga, District 2, Saratoga, NY, United States",
+      "standard_place": "Saratoga, Saratoga, New York, United States",
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of Thomas Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of Thomas Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_255715046",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of Thomas Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_255715047",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "son of Thomas Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_255715048",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "son of Thomas Hanrahan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_255715049",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Ireland",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "Ireland",
+      "record_persona_id": "p_255715044",
+      "informant_bias_notes": "the father's birthplace as stated on 4 household member line(s); no household respondent could have witnessed it",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:MZF2-Y55",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Ireland",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "place": "Ireland",
+      "record_persona_id": "p_255715045",
+      "informant_bias_notes": "the mother's birthplace as stated on 4 household member line(s); no household respondent could have witnessed it",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:M4JL-D7T",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Mary Hanrahan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_11536699455",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_11536699455",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "17 Feb 1871",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "date": "17 Feb 1871",
+      "place": "Irel, Ireland",
+      "standard_place": "Ireland",
+      "record_persona_id": "p_11536699455",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thomas Hanrahan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_11536699456",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_11536699456",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Johanna Ryan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Johanna",
+        "surname": "Ryan"
+      },
+      "record_persona_id": "p_11536699457",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_11536699457",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Thomas Hanrahan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_11536699455",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Johanna Ryan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_11536699455",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:F5GR-QBN",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Johanna Ryan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_11536699456",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:935T-T1R"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "John Hanrahan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "John",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_11540593118",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_11540593118",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "28 Nov 1872",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "date": "28 Nov 1872",
+      "place": "Ardfinnan, Tipperary, Ireland",
+      "standard_place": "Ardfinnan, County Tipperary, Ireland",
+      "record_persona_id": "p_11540593118",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thomas Hanrahan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_11540593119",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_11540593119",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Johanna Ryan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Johanna",
+        "surname": "Ryan"
+      },
+      "record_persona_id": "p_11540593120",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_11540593120",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Thomas Hanrahan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_11540593118",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Johanna Ryan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_11540593118",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:F5YK-84C",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Johanna Ryan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_11540593119",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:93RM-M8S"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:6267-W22Q",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Thomam Hanrahan",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Thomam",
+        "surname": "Hanrahan"
+      },
+      "record_persona_id": "p_299210130604",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H3W4-3ZR3"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:6267-W22Q",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Johan Ryan",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Johan",
+        "surname": "Ryan"
+      },
+      "record_persona_id": "p_299210130605",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H3W4-3ZR3"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:6267-W22Q",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "1 Feb 1868",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1 Feb 1868",
+      "place": "Ballylooby, County Tipperary, Ireland",
+      "standard_place": "Ballylooby, Tubbrid, County Tipperary, Ireland",
+      "record_persona_id": "p_299210130604",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H3W4-3ZR3"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:6267-W22Q",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "1 Feb 1868",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1 Feb 1868",
+      "place": "Ballylooby, County Tipperary, Ireland",
+      "standard_place": "Ballylooby, Tubbrid, County Tipperary, Ireland",
+      "record_persona_id": "p_299210130605",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H3W4-3ZR3"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:6267-W22Q",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Johan Ryan",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_299210130604",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:H3W4-3ZR3"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_060",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_016",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_017",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_018",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_055",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_061",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_025",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_026",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_027",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_056",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_028",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_029",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_030",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_031",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_032",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_033",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_034",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_035",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_036",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_057",
+      "person_id": "GKS5-2GC",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_037",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_038",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_039",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_040",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_041",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_042",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_043",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_044",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_045",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_058",
+      "person_id": "GKSP-13R",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_046",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_047",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_048",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_049",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_050",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_051",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_052",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_053",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_054",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_059",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_062",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_063",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_064",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_069",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_070",
+      "person_id": "93RB-RTD",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_065",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_066",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_071",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_067",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_068",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_072",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_073",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_074",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_079",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_080",
+      "person_id": "M8R7-2TR",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_075",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_076",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_081",
+      "person_id": "KHGX-XWG",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_077",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_078",
+      "person_id": "KC1J-LVB",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_082",
+      "person_id": "KHGX-XWG",
+      "confidence": "probable",
+      "match_score": 0.6502303,
+      "rationale": "Date check: none stated (the record gives no age or birth year for the groom) vs 1840: gap none stated. Residence check: 1 Feb 1868 Ballylooby, County Tipperary, Ireland vs nearest attested residence 1880 Saratoga, New York: outside, 4846 km (place_distance), no bridge: the Ireland Emigration and Immigration wiki page was retrieved and names no arrival corridor for this origin and era, and no project record bridges the move; capped at probable. Name: Thomam vs Thomas Hanrahan, a transcription variant of the given name; surname exact. Birthplace Ireland agrees with the tree's birth fact. Score 0.65 (moderate). No core-identifier conflict.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_084",
+      "person_id": "KHGX-XWG",
+      "confidence": "probable",
+      "match_score": 0.6502303,
+      "rationale": "Groom's marriage fact on the same persona as a_082, so the same identity score applies. Date check: none stated vs 1840: gap none stated. Residence check: Ballylooby, Ireland 1868 vs Saratoga, New York 1880: outside, 4846 km, nothing bridges it (Ireland Emigration and Immigration page names no qualifying corridor); capped at probable. Marriage 1 Feb 1868 at Ballylooby is consistent with a birth in Ireland c.1840. Score 0.65 (moderate).",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_086",
+      "person_id": "KHGX-XWG",
+      "confidence": "probable",
+      "match_score": 0.6502303,
+      "rationale": "Groom's spousal statement naming Johan Ryan as bride; the link to the groom rests on the same persona score as a_082 (0.65). Date check: none stated vs 1840: gap none stated. Residence check: Ballylooby, Ireland 1868 vs Saratoga, New York 1880: outside, 4846 km, nothing bridges it; capped at probable. The spouse named matches the tree's spouse, Johanna Ryan, on surname and Irish origin, see the bride link.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_083",
+      "person_id": "KC1J-LVB",
+      "confidence": "probable",
+      "match_score": 0.09781719,
+      "rationale": "Date check: none stated vs 1845: gap none stated. Residence check: Ballylooby, Ireland 1868 vs nearest attested residence 1880 Saratoga, New York: outside, 4846 km (place_distance), nothing bridges it (the Ireland Emigration and Immigration wiki page names no qualifying corridor); capped at probable. Name: Johan vs Johanna Ryan, a short form of the given name; surname exact. Birthplace Ireland agrees with the tree. Relationship fit: the record names her as the spouse of the groom, who is linked probable to Thomas Hanrahan (KHGX-XWG), and the tree shows Johanna Ryan as his spouse. Score 0.098 is very low: the bride persona carries no age or parentage to compare against a thin tree subject, and the score is not explained by any conflict in the record; the link rests on name variant plus spousal fit, not on the score, so it stays probable and not confident.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_085",
+      "person_id": "KC1J-LVB",
+      "confidence": "probable",
+      "match_score": 0.09781719,
+      "rationale": "Bride's marriage fact on the same persona as a_083, so the same identity score applies (0.098, very low; see a_083). Date check: none stated vs 1845: gap none stated. Residence check: Ballylooby, Ireland 1868 vs Saratoga, New York 1880: outside, 4846 km, nothing bridges it; capped at probable. Marriage 1 Feb 1868 at Ballylooby is consistent with an Irish-born bride c.1845.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_084",
+      "person_id": "KC1J-LVB",
+      "confidence": "probable",
+      "match_score": 0.09781719,
+      "rationale": "Second party of the groom's marriage assertion (scored with the bride's persona as recordRole bride, score 0.098). Same reasoning as a_083 and a_085: name variant with exact surname, spousal fit with the linked groom, Irish origin consistent; residence outside the cluster by 4846 km with no bridge, capped at probable. Date check: none stated vs 1845: gap none stated.",
+      "created": "2026-11-17"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_086",
+      "person_id": "KC1J-LVB",
+      "confidence": "probable",
+      "match_score": 0.09781719,
+      "rationale": "Second party of the groom's spousal assertion, named as Johan Ryan; scored with the bride's persona as recordRole bride (0.098). Name variant Johan/Johanna with exact surname; the record names her as the groom's spouse, which matches the tree's Couple edge for Thomas Hanrahan and Johanna Ryan. Date check: none stated vs 1845: gap none stated. Residence check: outside, 4846 km, nothing bridges; capped at probable.",
+      "created": "2026-11-17"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [
+    {
+      "id": "t_001",
+      "label": "Thomas Hanrahan \u2014 person timeline",
+      "events": [
+        {
+          "date": "1839-1840",
+          "date_certainty": "estimated",
+          "event_type": "birth",
+          "place": "Ireland",
+          "standard_place": "Ireland",
+          "description": "Unverified attachment: Birth \u2014 birth: Bet 1839 and 1840; birth: Ireland (recorded as Bet 1839 and 1840)",
+          "assertion_ids": [
+            "a_008",
+            "a_007",
+            "a_060"
+          ],
+          "distance_from_previous_km": null,
+          "conflict_ids": null,
+          "conflict_note": null
+        },
+        {
+          "date": "1880",
+          "date_certainty": "exact",
+          "event_type": "census",
+          "place": "Saratoga, District 2, Saratoga, NY, United States",
+          "standard_place": "Saratoga, Saratoga, New York, United States",
+          "description": "Unverified attachment: Census \u2014 census: 1880",
+          "assertion_ids": [
+            "a_009"
+          ],
+          "distance_from_previous_km": 4825,
+          "conflict_ids": null,
+          "conflict_note": null
+        }
+      ],
+      "gaps": [
+        {
+          "start": "1839-1840",
+          "end": "1880",
+          "expected_events": [
+            "residence"
+          ],
+          "severity": "high",
+          "notes": null
+        },
+        {
+          "start": "1839-1840",
+          "end": "1880",
+          "expected_events": [
+            "marriage"
+          ],
+          "severity": "high",
+          "notes": null
+        }
+      ],
+      "person_ids": [
+        "KHGX-XWG"
+      ],
+      "generated": "2026-11-17T12:26:45.119Z"
+    }
+  ],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "vehicle": "argument",
+      "shortfall": "gap",
+      "supporting_assertion_ids": [
+        "a_082",
+        "a_083",
+        "a_084",
+        "a_085",
+        "a_086"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched: the 1880 US census household in Saratoga, New York; two Irish baptism entries (Mary, 1871; John, 1872, Ardfinnan, Tipperary) naming Thomas Hanrahan and Johanna Ryan as parents; the Irish Catholic parish register index entry for the 1 Feb 1868 Ballylooby marriage (an index entry, derivative; no image read); the 1865 and 1875 New York State censuses for Saratoga (negative, including the marriage schedules as searched); a New York City marriage search 1858-1871 (negative, only the top 50 of 2,365 hits reviewed). Not searched and reachable: Irish civil registration for County Tipperary 1864-1872 (could corroborate the marriage and give the fathers' names); the original Ballylooby marriage and Ardfinnan baptism register images (could confirm identities and sponsors); Saratoga-area and neighbouring-county Catholic marriage registers (Diocese of Albany); immigration and naturalization records (could show whether Thomas was in Ireland in 1868); death, burial and obituary records; pending FamilySearch hints (tool disabled). The Ardfinnan baptisms and a record of emigration after 1872 would narrow whether the Ballylooby couple is the Saratoga couple, so the gap bears on the answer itself, not only on corroboration.",
+      "narrative_markdown": "## Question\nWhen and where did Thomas Hanrahan (born about 1840 in Ireland; living in Saratoga, New York, in 1880) marry Johanna Ryan (born about 1845 in Ireland)?\n\n## Answer\nA possible answer: they married on 1 February 1868 at Ballylooby, County Tipperary, Ireland. This is a possible finding, not a firm conclusion, because the one record that gives the date and place is an index entry whose link to this couple is only moderately supported and is in tension with the 1880 census.\n\n## The record that gives an answer\nThe FamilySearch index of \"Ireland, Catholic Parish Registers, 1740-1900\" has an entry for \"Thomam Hanrahan and Johan Ryan, 1 Feb 1868\" at Ballylooby, County Tipperary (https://www.familysearch.org/ark:/61903/1:1:6267-W22Q). It is an index (derivative) of a church register; the entry states the marriage directly and the parties are the informants of their own marriage, so the information is primary and direct. I have not read the register image. \"Thomam\" is the Latin accusative of Thomas and \"Johan\" a short form of Johanna, so the names fit; the surnames match exactly. The groom was linked to Thomas Hanrahan (KHGX-XWG) at probable (score 0.65) and the bride to Johanna Ryan (KC1J-LVB) at probable, but with a very low score (0.098) because the entry gives no age, parents or residence to compare. Those links rest on name variants and spousal fit, not on independent identifiers.\n\n## Supporting context\nIrish baptism entries for Mary (17 Feb 1871) and John (28 Nov 1872, Ardfinnan, Tipperary) name Thomas Hanrahan and Johanna Ryan as parents (FamilySearch, \"Ireland, Births and Baptisms, 1620-1881\"). Ardfinnan lies near Ballylooby, so a couple married at Ballylooby in 1868 and baptising children at Ardfinnan in 1871-72 is coherent. The 1880 census (\"United States, Census, 1880\", Saratoga, New York) shows Thomas (about 40, born Ireland, stone mason) and Johannah (about 35, born Ireland) with four children. No marriage in New York was found: the 1865 and 1875 state censuses for Saratoga and a partial New York City marriage search were negative. Statewide New York marriage registration did not begin until 1880, so a negative there is weak evidence either way.\n\n## The tension that holds the tier down\nThe 1880 census gives all four children as born in New York, roughly 1864-65 (Mary), 1868-69 (Elizabeth), 1869-70 (Thomas) and 1871-72 (John). An 1868 marriage would postdate Mary's census-implied birth, and the Irish baptisms of a Mary in 1871 and a John in 1872 in Tipperary conflict with New York births for the same children in the same years. Either the census ages and birthplaces are loose, the family went back and forth, or the Tipperary couple and baptisms belong to a different Thomas and Johanna Hanrahan. These disagreements were not registered as formal conflicts, but they bear on whether the Ballylooby couple is the Saratoga couple, so they limit the answer to possible. The census was reported by an unknown household informant and is derivative; the baptism and marriage entries are also indexes. Nothing found contradicts the marriage entry itself, and no competing marriage record exists.\n\n## What could settle it\nThe original Ballylooby marriage and Ardfinnan baptism register images (sponsors and residences); Irish civil registration for Tipperary 1864-1872; Catholic registers in the Diocese of Albany for Saratoga and neighbouring counties; immigration and naturalization records showing when Thomas arrived; and death or obituary records for either spouse.\n\n## Tier\nPossible. The 1 February 1868 Ballylooby date and place is the only candidate and is uncontradicted by any other marriage record, but identity with the Saratoga couple is not established. Proofs are never final; new evidence may change this.",
+      "claims": [],
+      "updated": "2026-11-17T12:40:49.124Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Saratoga, New York, United States",
+      "for_place": "Saratoga County, New York",
+      "time_period": "1855-1875",
+      "jurisdictions": [
+        {
+          "name": "Saratoga, New York, United States",
+          "date_range": "+1791/"
+        },
+        {
+          "name": "Albany, New York, United States",
+          "date_range": "+1776/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1937366",
+          "title": "New York, State Census, 1855",
+          "date_range": "1855-1855",
+          "person_count": 2791632,
+          "record_count": 2791632
+        },
+        {
+          "id": "1491284",
+          "title": "New York, State Census, 1865",
+          "date_range": "1865-1865",
+          "person_count": 2693523,
+          "record_count": 2642022
+        },
+        {
+          "id": "1918735",
+          "title": "New York, State Census, 1875",
+          "date_range": "1875-1875",
+          "person_count": 3124780,
+          "record_count": 3124780
+        },
+        {
+          "id": "1618491",
+          "title": "New York, County Marriages, 1778-1848; 1908-1937",
+          "date_range": "1778-1937",
+          "person_count": 6491569,
+          "record_count": 1371329
+        },
+        {
+          "id": "1680847",
+          "title": "New York, Marriages, 1686-1980",
+          "date_range": "1686-1980",
+          "person_count": 1142835,
+          "record_count": 266138
+        },
+        {
+          "id": "2373836",
+          "title": "New York, Church and Civil Marriages, 1704-1995",
+          "date_range": "1704-1995",
+          "person_count": 41948,
+          "record_count": 7001
+        },
+        {
+          "id": "2787817",
+          "title": "New York, Church Records, 1660-1954",
+          "date_range": "1660-1954",
+          "person_count": 303598,
+          "record_count": 127105
+        },
+        {
+          "id": "1999177",
+          "title": "New York, County Naturalization Records, 1791-1980",
+          "date_range": "1791-1980",
+          "person_count": 3858917,
+          "record_count": 3332563
+        },
+        {
+          "id": "4117523",
+          "title": "New York, Record of Naturalized Voters Registered, 1872-1878",
+          "date_range": "1872-1878",
+          "person_count": 584240,
+          "record_count": 584240
+        },
+        {
+          "id": "4460198",
+          "title": "New York, Birth Indexes outside of New York City, 1881-1942",
+          "date_range": "1881-1942",
+          "person_count": 59306,
+          "record_count": 59306
+        },
+        {
+          "id": "1680842",
+          "title": "New York, Births and Christenings, 1640-1962",
+          "date_range": "1640-1962",
+          "person_count": 2301088,
+          "record_count": 794468
+        },
+        {
+          "id": "2299396",
+          "title": "New York, Book Indexes to Passenger Lists, 1906-1942",
+          "date_range": "1906-1942",
+          "person_count": 15223513,
+          "record_count": 15223402
+        },
+        {
+          "id": "2552111",
+          "title": "New York, Cemetery Abstracts, 1800-1965",
+          "date_range": "1800-1965",
+          "person_count": 251828,
+          "record_count": 175959
+        },
+        {
+          "id": "2443988",
+          "title": "New York, Church and Civil Births and Baptisms, 1704-1962",
+          "date_range": "1704-1962",
+          "person_count": 119571,
+          "record_count": 39566
+        },
+        {
+          "id": "2373798",
+          "title": "New York, Church and Civil Deaths, 1797-1963",
+          "date_range": "1797-1963",
+          "person_count": 308440,
+          "record_count": 253898
+        },
+        {
+          "id": "1932388",
+          "title": "New York, Civil War Service Records of Union Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 60000,
+          "record_count": 60000
+        },
+        {
+          "id": "1680846",
+          "title": "New York, Deaths and Burials, 1795-1952",
+          "date_range": "1795-1952",
+          "person_count": 137076,
+          "record_count": 77505
+        },
+        {
+          "id": "1840491",
+          "title": "New York, Eastern District Naturalization Petitions, Index, 1865-1957",
+          "date_range": "1865-1957",
+          "person_count": 751240,
+          "record_count": 675035
+        },
+        {
+          "id": "2058668",
+          "title": "New York, Frank S. Rowland Church Register, 1889-1917",
+          "date_range": "1889-1917",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1466356",
+          "title": "New York, Kings County Estate Files, 1866-1923",
+          "date_range": "1866-1923",
+          "person_count": 168478,
+          "record_count": 168543
+        },
+        {
+          "id": "2078654",
+          "title": "New York, Land Records, 1630-1975",
+          "date_range": "1630-1975",
+          "person_count": 135738896,
+          "record_count": 65562377
+        },
+        {
+          "id": "4229127",
+          "title": "New York, Military Discharges, 1865-1953",
+          "date_range": "1865-1953",
+          "person_count": 53510,
+          "record_count": 53510
+        },
+        {
+          "id": "2043782",
+          "title": "New York, Naturalization Index (Soundex), 1792-1906",
+          "date_range": "1792-1906",
+          "person_count": 744952,
+          "record_count": 744919
+        },
+        {
+          "id": "2240282",
+          "title": "New York, New York City Births, 1846-1909",
+          "date_range": "1846-1909",
+          "person_count": 8357582,
+          "record_count": 2795266
+        },
+        {
+          "id": "2727138",
+          "title": "New York, New York City Marriage Licenses Index, 1950-1995",
+          "date_range": "1950-1995",
+          "person_count": 6249148,
+          "record_count": 3124555
+        },
+        {
+          "id": "2143225",
+          "title": "New York, New York City Marriage Records, 1829-1938",
+          "date_range": "1829-1940",
+          "person_count": 16963079,
+          "record_count": 2942326
+        },
+        {
+          "id": "2240477",
+          "title": "New York, New York City Municipal Deaths, 1795-1949",
+          "date_range": "1846-1909",
+          "person_count": 17211525,
+          "record_count": 6209923
+        },
+        {
+          "id": "2109939",
+          "title": "New York, New York City, Church of the Transfiguration Records, 1847-1938",
+          "date_range": "1847-1938",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "3029266",
+          "title": "New York, New York City, Index to Passengers Arriving at New York City, compiled 1944-1948",
+          "date_range": "1944-1948",
+          "person_count": 1129934,
+          "record_count": 1129705
+        },
+        {
+          "id": "2381996",
+          "title": "New York, New York City, Police Census, 1890",
+          "date_range": "1890-1890",
+          "person_count": 1479855,
+          "record_count": 1479855
+        },
+        {
+          "id": "1921435",
+          "title": "New York, New York City, Saint Peter's Lutheran Church Records, 1862-1955",
+          "date_range": "1862-1955",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "3288447",
+          "title": "New York, New York City, World War II Draft Registration Cards, 1940-1947",
+          "date_range": "1940-1947",
+          "person_count": 6898367,
+          "record_count": 2333631
+        },
+        {
+          "id": "1923888",
+          "title": "New York, New York Passenger and Crew Lists, 1909, 1925-1958",
+          "date_range": "1909-1958",
+          "person_count": 28826914,
+          "record_count": 28826162
+        },
+        {
+          "id": "2467808",
+          "title": "New York, New York, Index to Alien Crewmen Who Were Discharged or Who Deserted, 1917-1957",
+          "date_range": "1917-1957",
+          "person_count": 1270045,
+          "record_count": 1270045
+        },
+        {
+          "id": "1919703",
+          "title": "New York, New York, Index to Passenger Lists, 1820-1846",
+          "date_range": "1820-1846",
+          "person_count": 526422,
+          "record_count": 526400
+        },
+        {
+          "id": "3031525",
+          "title": "New York, New York, Index to Passengers Lists of Vessels, 1897-1902",
+          "date_range": "1897-1902",
+          "person_count": 1728223,
+          "record_count": 1728001
+        },
+        {
+          "id": "2451053",
+          "title": "New York, New York, Index to Vessels, 1897-1956",
+          "date_range": "1897-1956",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2443349",
+          "title": "New York, New York, Soundex to Passenger and Crew Lists, 1887-1921",
+          "date_range": "1887-1921",
+          "person_count": 5785,
+          "record_count": 5785
+        },
+        {
+          "id": "1876434",
+          "title": "New York, Northern Arrival Manifests, 1902-1967",
+          "date_range": "1902-1967",
+          "person_count": 1374704,
+          "record_count": 1374584
+        },
+        {
+          "id": "1918465",
+          "title": "New York, Orange County Probate Records, 1787-1938",
+          "date_range": "1787-1938",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1368704",
+          "title": "New York, Passenger Arrival Lists (Ellis Island), 1892-1925",
+          "date_range": "1892-1925",
+          "person_count": 47287217,
+          "record_count": 24541092
+        },
+        {
+          "id": "1849782",
+          "title": "New York, Passenger Lists, 1820-1920",
+          "date_range": "1820-1920",
+          "person_count": 13476299,
+          "record_count": 13475967
+        },
+        {
+          "id": "1920234",
+          "title": "New York, Probate Records, 1629-1971",
+          "date_range": "1629-1971",
+          "person_count": 59,
+          "record_count": 0
+        },
+        {
+          "id": "1916211",
+          "title": "New York, Queens County Probate Records, 1785-1950",
+          "date_range": "1785-1950",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2329262",
+          "title": "New York, Records of the State National Guard, 1906-1954",
+          "date_range": "1906-1954",
+          "person_count": 724535,
+          "record_count": 724527
+        },
+        {
+          "id": "1840501",
+          "title": "New York, Southern District Index to Petitions for Naturalization, 1824-1941",
+          "date_range": "1824-1941",
+          "person_count": 527965,
+          "record_count": 462441
+        },
+        {
+          "id": "1840493",
+          "title": "New York, Southern District Naturalization Index, 1917-1950",
+          "date_range": "1917-1950",
+          "person_count": 560546,
+          "record_count": 560546
+        },
+        {
+          "id": "1529100",
+          "title": "New York, State Census, 1892",
+          "date_range": "1892-1915",
+          "person_count": 3766269,
+          "record_count": 3766269
+        },
+        {
+          "id": "1463113",
+          "title": "New York, State Census, 1905",
+          "date_range": "1905-1905",
+          "person_count": 7547642,
+          "record_count": 7547642
+        },
+        {
+          "id": "1937454",
+          "title": "New York, State Census, 1915",
+          "date_range": "1915-1915",
+          "person_count": 9604770,
+          "record_count": 9742867
+        },
+        {
+          "id": "1937489",
+          "title": "New York, State Census, 1925",
+          "date_range": "1925-1925",
+          "person_count": 11117922,
+          "record_count": 11117922
+        },
+        {
+          "id": "2803479",
+          "title": "New York, State Death Index, 1880-1956",
+          "date_range": "1880-1956",
+          "person_count": 4749395,
+          "record_count": 4749322
+        },
+        {
+          "id": "2285574",
+          "title": "New York, State Health Department, Genealogical Research Death Index, 1957-1963",
+          "date_range": "1957-1963",
+          "person_count": 590658,
+          "record_count": 590658
+        },
+        {
+          "id": "2060123",
+          "title": "New York, U.S. District and Circuit Court Naturalization Records, 1824-1991",
+          "date_range": "1824-1991",
+          "person_count": 6983515,
+          "record_count": 5196573
+        },
+        {
+          "id": "1854307",
+          "title": "New York, Western District, Naturalization Index, 1907-1966",
+          "date_range": "1907-1966",
+          "person_count": 89554,
+          "record_count": 89554
+        },
+        {
+          "id": "2739057",
+          "title": "New York, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 172,
+          "record_count": 1
+        },
+        {
+          "id": "1880619",
+          "title": "New York, Yates County, Swann Vital Records Collection, 1723-2009",
+          "date_range": "1723-2009",
+          "person_count": 151885,
+          "record_count": 94601
+        }
+      ],
+      "quirks": [
+        "Statewide civil registration of marriages did not begin until 1880, so a marriage in 1855-1875 will not be in any state marriage index; the 1847-1849 town/city registration law was widely ignored and compliance stopped within a few years, so a 1855-1875 Saratoga County marriage is unlikely to have a surviving civil record at all.",
+        "For this period, church marriage records are the primary source for an Irish Catholic couple; Saratoga County parishes fall under the Diocese of Albany, per the FamilySearch Wiki's New York Church Records page, but no tool result in this survey named the specific parish serving the couple's town in 1855-1875 \u2014 contact the Diocese of Albany archives or the parish directly once the town of residence is established.",
+        "The 1865 and 1875 New York State Censuses each include a Marriage schedule recording marriages in the 12 months before the census (ending 1 June) \u2014 these are easy to overlook since they appear only after the population schedule, browsed by county then town to the end of the volume; a marriage near June 1864-1865 or 1874-1875 could appear there.",
+        "Saratoga County has had no courthouse record-loss event reported by the FamilySearch Wiki, unlike several other NY counties (Albany, Niagara, Orange, Schoharie, Sullivan) \u2014 but this does not mean civil marriage records exist for 1855-1875, since statewide/town registration simply did not require or reliably produce them in that period.",
+        "A family near the Albany/Saratoga/Washington/Rensselaer county lines may have married in an adjoining county \u2014 Albany, Fulton, Hamilton, Montgomery, Rensselaer, Schenectady, Warren, and Washington Counties all border Saratoga County per the FamilySearch Wiki's Neighboring Counties table; search their Catholic parishes and the 1847-1848 and 1908-1936 New York County Marriages collection as well.",
+        "FamilySearch's digitized Saratoga County volumes for this window are dominated by legal/probate/land material (108 Legal, 68 Land, 40 Court, 38 Probate volumes per the volume survey) rather than vital or marriage records, and the few marriage-related church volumes found (Schuylerville Reformed Dutch, Ballston Presbyterian, Vischer Ferry Reformed Dutch, Charlton Presbyterian) are Protestant congregations, not Catholic."
+      ],
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Saratoga_County,_New_York_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/New_York_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/New_York_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/New_York_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "marriage",
+          "level": "town",
+          "year": 1847,
+          "source_url": "https://www.familysearch.org/en/wiki/New_York_Vital_Records",
+          "note": "city/town/village"
+        },
+        {
+          "event": "marriage",
+          "level": "state",
+          "year": 1880,
+          "source_url": "https://www.familysearch.org/en/wiki/New_York_Vital_Records"
+        },
+        {
+          "event": "birth",
+          "level": "town",
+          "year": 1847,
+          "source_url": "https://www.familysearch.org/en/wiki/New_York_Vital_Records",
+          "note": "city/town/village"
+        },
+        {
+          "event": "birth",
+          "level": "state",
+          "year": 1880,
+          "source_url": "https://www.familysearch.org/en/wiki/New_York_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "town",
+          "year": 1847,
+          "source_url": "https://www.familysearch.org/en/wiki/New_York_Vital_Records",
+          "note": "city/town/village"
+        },
+        {
+          "event": "death",
+          "level": "state",
+          "year": 1880,
+          "source_url": "https://www.familysearch.org/en/wiki/New_York_Vital_Records"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1855,
+        "end_year": 1875,
+        "total_volumes": 171,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 26,
+            "browse_only": 11,
+            "fulltext_only": 9
+          },
+          {
+            "group": "Marriage",
+            "volumes": 25,
+            "browse_only": 11,
+            "fulltext_only": 8
+          },
+          {
+            "group": "Religious",
+            "volumes": 27,
+            "browse_only": 13,
+            "fulltext_only": 10
+          },
+          {
+            "group": "Census",
+            "volumes": 20,
+            "browse_only": 12,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Legal",
+            "volumes": 108,
+            "browse_only": 8,
+            "fulltext_only": 70
+          },
+          {
+            "group": "Land",
+            "volumes": 68,
+            "browse_only": 8,
+            "fulltext_only": 33
+          },
+          {
+            "group": "Court",
+            "volumes": 40,
+            "browse_only": 8,
+            "fulltext_only": 31
+          },
+          {
+            "group": "Probate",
+            "volumes": 38,
+            "browse_only": 8,
+            "fulltext_only": 30
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-17",
+      "guide_markdown": "# Locality Guide: Saratoga County, New York (1855-1875)\n\n## Jurisdiction overview\n- **Formed:** February 7, 1791, from Albany County (FamilySearch Wiki, [Saratoga County, New York Genealogy](https://www.familysearch.org/en/wiki/Saratoga_County,_New_York_Genealogy))\n- **County seat:** Ballston Spa\n- **Parent jurisdiction:** New York, United States\n- **Population during period:** 51,729 (1860 census), 51,529 (1870 census) \u2014 flat growth in this window, per the FamilySearch Wiki county page\n- **Economy:** Saratoga Springs' mineral-spring resort trade and Hudson River/canal-linked manufacturing and farming towns\n- **Ethnic composition:** The wiki names large 19th-century Irish and other European Catholic immigration as the driver of Roman Catholic Church growth statewide; no Saratoga-County-specific ethnic breakdown was returned by these tools\n- **Religious denominations present in the county (per NYGenWeb/FamilySearch Wiki):** Baptist, Episcopal, Methodist, Reformed Protestant Dutch, Presbyterian, Society of Friends (Quaker), and Roman Catholic (jurisdiction of the Diocese of Albany)\n- **Key historical events affecting records:** none specific to this county and period were returned; no courthouse disaster is recorded for Saratoga County\n\n## Boundary changes\nSaratoga County's boundaries have been stable since its 1791 formation from Albany County; the FamilySearch Wiki's Boundary Changes section for the county names no later splits or annexations. No change affects records for 1855-1875.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date (level):** City/town/village \u2014 1847 (law required but widely unenforced, compliance lapsing within a few years); State \u2014 1880, general compliance for deaths by 1890 and births by 1913. (FamilySearch Wiki, [New York Vital Records](https://www.familysearch.org/en/wiki/New_York_Vital_Records))\n- **What exists for 1855-1875:** No statewide marriage registration existed yet. The county-level page's own record-date chart independently gives marriage registration starting 1908 for Saratoga County, later than the state's general 1847/1880 framework \u2014 both figures come from the FamilySearch Wiki and are reported as given. In practice, a marriage occurring 1855-1875 is unlikely to have any surviving civil register entry.\n- **Where held:** Town/village clerks for any surviving 1847-era entries; Saratoga County Clerk's office for any later county-held marriage records; New York State Department of Health for anything from 1880 forward.\n- **Gaps:** The entire 1855-1875 window falls in the gap between the lapsed 1847 local law and the 1880 state system \u2014 civil marriage records very likely do not exist for this couple.\n- **Pre-registration alternatives:** Church marriage records (see Church records, below); the 1865 and 1875 New York State Census Marriage schedules (see Census records, below); newspaper marriage notices.\n\n### Church records\n- **Denominations present:** Baptist, Episcopal, Methodist, Reformed Protestant Dutch, Presbyterian, Society of Friends, and Roman Catholic \u2014 per NYGenWeb's Saratoga Church Records page and the FamilySearch Wiki county page.\n- **Catholic parishes:** Saratoga County parishes fall under the Diocese of Albany (FamilySearch Wiki, [New York Church Records](https://www.familysearch.org/en/wiki/New_York_Church_Records), Roman Catholic section). No tool result in this survey names the specific parish serving a particular Saratoga County town in 1855-1875, so no parish is recommended here; the [Local Catholic Church and Family History Genealogical Research Guide](https://freepages.rootsweb.com/~localcatholic/history/US-NewYorkNY.htm) cited by the wiki identifies New York parishes and their founding years and is the next place to check once the couple's town of residence is known.\n- **Record types:** Baptisms, marriages, burials \u2014 standard Catholic parish registers; confirmations also kept separately.\n- **Where held:** Original parish registers typically remain with the parish or have been transferred to the Diocese of Albany archives; FamilySearch's digitized Saratoga County church volumes located in this survey (Schuylerville Reformed Dutch Church marriages 1790-1857, Ballston Presbyterian marriages 1783-1865, Vischer Ferry Reformed Dutch marriages 1840-1855, Charlton Presbyterian marriages 1801-1862) are all Protestant congregations, not Catholic, so they do not cover this couple.\n- **Gaps:** No Catholic parish marriage register for any Saratoga County town was found digitized or indexed by FamilySearch in this survey \u2014 this is a coverage gap, not evidence the register does not exist. Findmypast's \"New York Roman Catholic Parish Marriages\" and \"New York Catholic Parish Registers Browse\" collections (subscription) were named by the FamilySearch Wiki as covering Catholic parish marriages statewide and should be checked for Saratoga County coverage.\n- **Language:** English expected for a New York Catholic parish of this era, though Latin sacramental formulas are typical in the register entries themselves.\n\n### Census records\n- **Federal census:** 1860 and 1870 federal censuses cover this window; federal mortality schedules for 1850-1880 (deaths in the 12 months before each census) are at Ancestry and on FS Library microfilm.\n- **State census:** New York took state censuses in 1855, 1865, and 1875 \u2014 all three fall inside this window and are indexed with images at FamilySearch (\"New York, State Census, 1855/1865/1875\") and also at Ancestry.\n- **Other enumerations:** The 1865 and 1875 state censuses each carry a Marriage schedule (and the 1865 also a Mortality and a Soldier Mortality schedule) recording events in the 12 months before the census, ending 1 June of the census year \u2014 found by browsing the images to the end of the town's population schedule. The marriage entry gives husband's and wife's names, ages, prior marital status, date and place of marriage, and whether it was a church or civil ceremony \u2014 a close match for this couple if their marriage fell in June 1864-May 1865 or June 1874-May 1875.\n- **Access:** 1855/1865/1875 state censuses are indexed and image-searchable at FamilySearch; the marriage/mortality schedules are browse-only images at the end of each town's population schedule, not separately indexed by name.\n\n### Probate and court records\n- **Types:** Wills, administrations, guardianships, inventories, petitions \u2014 held by the Surrogate Court per the FamilySearch Wiki county page.\n- **Testate or intestate:** Unknown for this couple; check both will and administration series once a death date/place is known.\n- **Date range:** From the county's 1791 formation; FamilySearch's digitized Saratoga probate volumes cover an 1799-1893 will index and 1909-1929 probate/guardianship/wills, per the volume survey.\n- **Where held:** Saratoga County Surrogate Court; FS Library microfilm (e.g. Record of Wills Index 1799-1893, FS Library Film 555744) and FamilySearch digital images for parts of this material.\n- **Relevance here:** Unlikely to name a marriage directly, but a later probate record for either spouse could confirm the marriage and name children.\n\n### Land records\n- **Survey system:** Not stated by the tools consulted for this county; New York generally used metes-and-bounds patents.\n- **Land-distribution jurisdiction:** The FamilySearch Wiki's Land and Property section for Saratoga County names no specific granting office beyond directing researchers to the FamilySearch Catalog's Saratoga County land-records topic page.\n- **Types:** Deeds, grants, patents \u2014 the volume survey found 68 Land-group volumes for this county and period, 33 full-text searchable, 8 browse-only, the rest unclassified by searchability.\n- **Date range:** Earliest available not stated by these tools; FamilySearch's statewide \"New York, Land Records, 1630-1975\" collection (index & images) covers the period.\n- **Where held:** Saratoga County Clerk's office (per the Courthouse section of the wiki page, which also handles marriage, divorce, court and land records); FamilySearch digitized images for part of the collection.\n- **Relevance here:** A land deed naming \"Thomas Hanrahan and wife Johanna\" would confirm the marriage had occurred by that deed's date, even without finding the marriage record itself.\n\n### Military records\n- **Relevant conflicts:** The Civil War (1861-1865) falls inside this window.\n- **Record types:** Town clerks' registers of Civil War soldiers (listing name, residence, birth date/place, parents' names, marital status, enlistment, discharge/death) exist for several Saratoga County towns \u2014 Ballston, Charlton, Clifton Park, Corinth, Edinburg, Galway, Greenfield, Halfmoon, Providence, Saratoga Springs, Stillwater, Waterford, Wilton \u2014 per the FamilySearch Wiki county page; originals are at the New York State Archives, microfilmed at FamilySearch (FS Library Film 1993401-37) and indexed at Ancestry.\n- **Where held:** New York State Archives, Albany (originals); FamilySearch Library microfilm; Ancestry (index).\n- **Relevance here:** If Thomas Hanrahan served, his town register entry could state his marital status and possibly his wife's name at a given date, bracketing the marriage.\n\n### Cemetery records\n- **Major cemeteries:** None named specifically for this couple by the tools consulted; county-wide cemetery indexes exist (see below).\n- **Online coverage:** FindAGrave and BillionGraves both have county-level search pages for Saratoga County per the FamilySearch Wiki; FamilySearch's \"New York, Cemetery Abstracts, 1800-1965\" (index & images, 251,828 people) also covers the county.\n- **Physical records:** Sexton records and burial registers are held locally; the wiki names no specific Catholic cemetery for this county/period.\n\n### Newspaper records\n- **Local papers:** The Saratoga Sentinel (indexed for marriage/death notices 1819-1837, so just before this window) and the digital Saratogian index (1999-present, too late) are named by the FamilySearch Wiki county page; no newspaper index specifically covering 1855-1875 Saratoga County was found.\n- **Where held:** Statewide marriage-notice indexes at Ancestry cover part of the window: \"New York Marriage Notices\" (1800-1855) and \"New York Marriage Newspaper Extracts (Barber Collection)\" (1801-1880) \u2014 the latter spans the full 1855-1875 period but is drawn from the Brooklyn Eagle and New York Evening Post, not Saratoga-local papers.\n- **Content value:** A marriage or engagement notice could independently confirm date and place even without a parish or civil record.\n\n### Immigration/emigration records\n- **Relevant ports:** Port of New York (the family's most likely port of arrival from Ireland, given the period).\n- **Record types:** Passenger lists and naturalization records. FamilySearch's \"US Famine Irish Passenger Index, 1846-1851\" covers arrivals from Ireland just before this couple's likely immigration if they came during or just after the Famine; \"New York, County Naturalization Records, 1791-1980\" and \"New York, Record of Naturalized Voters Registered, 1872-1878\" both cover the window and could place Thomas Hanrahan in Saratoga County with a naturalization date.\n- **Where held:** FamilySearch (indexed & imaged for naturalizations); National Archives (passenger-list originals).\n- **Content note:** Examine any located passenger manifest for the whole family group, not just Thomas or Johanna individually \u2014 infants and other relatives are listed alongside them.\n\n### Tax records\n- **Types:** Property and personal tax assessment rolls \u2014 the FamilySearch Catalog lists an 1840 Saratoga County assessment roll; the volume survey found Legal/Land-group volumes that may include later tax material, but none was named specifically for 1855-1875 marriage-adjacent use.\n- **Where held:** Saratoga County Clerk/Treasurer; FamilySearch Library microfilm for located rolls.\n- **Substitute value:** Could place Thomas Hanrahan in a specific town in a given year, narrowing where to search for a parish, but was not confirmed by these tools to include marital-status detail.\n\n### Other record types\n- **Naturalization/voter records:** \"New York, Record of Naturalized Voters Registered, 1872-1878\" (FamilySearch, index & images) falls inside this window and could place Thomas Hanrahan in Saratoga County with a specific naturalization date and former residence/origin, useful corroborating evidence even though it does not record marriages.\n- **County and town histories:** Cornell University's \"Guide to Historical Resources in Saratoga County, New York Repositories\" (1983) and Gordon Remington's \"New York Towns, Villages, and Cities\" guide are named by the FamilySearch Wiki as finding aids for locating further published/transcribed town records, including church and cemetery sources by town.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | New York, State Census 1855/1865/1875 (index & images); New York, County Marriages 1778-1848, 1908-1937 (index & images); New York, Church Records 1660-1954 (index & images, incomplete); New York, County Naturalization Records 1791-1980; New York, Record of Naturalized Voters Registered 1872-1878 | No statewide civil marriage registration exists for 1855-1875 \u2014 the state census marriage schedules and county/church marriage collections are the closest substitutes | Free |\n| Findmypast | New York Roman Catholic Parish Marriages (index & images); New York Catholic Parish Registers Browse (images); New York State Religious Records 1716-1914 (images) | No digitized Catholic parish marriage register for Saratoga County was located on FamilySearch in this survey | Subscription |\n| Ancestry | New York Marriage Newspaper Extracts (Barber Collection) 1801-1880 (index & images); New York State Census 1855/1865/1875; US Famine Irish Passenger Index 1846-1851 | Newspaper marriage notices and a dedicated Irish-arrivals index, neither held by FamilySearch | Subscription |\n| NYGenWeb (saratoganygenweb.com) | Saratoga Church Records page (Baptist, Episcopal, Methodist, Reformed Protestant Dutch, Society of Friends transcriptions, 1700s-1800s); Saratoga County Cemeteries index | Free county-level church/cemetery transcriptions outside the Catholic denomination | Free |\n\n**Coverage of this survey:** 171 digitized volumes match Saratoga County for 1855-1875 per the volume search; the first page of up to 10 (returned with `summary: true`) is detailed above, and the rest were not examined individually \u2014 the by-record-type summary (e.g. 25 Marriage-group volumes, 11 browse-only and 8 full-text-only) covers all 171.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Saratoga County Clerk's office, Ballston Spa | Marriage, divorce, court and land records | In-person or mail request |\n| Saratoga County Surrogate Court | Probate records | In-person or mail request |\n| Saratoga County Historian, Ballston Spa | Obituaries, vital records, church records, maps, family files | Contact office; some search services offered |\n| Saratoga County Historical Society (Brookside Museum), Ballston Spa | Surname files, local collections | In-person, or fee-based surname-file search |\n| New York State Archives, Albany | Civil War town clerk registers; probate index copies | In-person or online request |\n| Diocese of Albany archives | Catholic parish records for Saratoga County congregations (jurisdiction stated by FamilySearch Wiki; no specific parish or archive holdings confirmed by these tools) | Contact archive directly |\n\n## Records NOT online\nNo Catholic parish marriage register for any Saratoga County town was found digitized, indexed, or image-browsable through FamilySearch in this survey \u2014 if such registers survive, they are very likely physical-only, held by the parish or the Diocese of Albany. Town clerk vital-record ledgers from the 1847-era local law (if any survive for Saratoga County towns) are not described as digitized by any tool here and would be physical-only at the town clerk's office. Saratoga County Surrogate Court probate case files outside the digitized will-index ranges are physical-only at the Surrogate Court or State Archives.\n\n## Known record losses\nNo courthouse disaster or record loss is recorded for Saratoga County by the FamilySearch Wiki's Saratoga County Genealogy page (\"There is no known history of courthouse disasters in this county\"). The absence of a digitized Catholic marriage register for the county is a coverage/digitization gap, not a documented loss \u2014 no tool result states these registers were destroyed.\n\n## Research tips\n- Civil marriage registration did not reach the state level until 1880 (FamilySearch Wiki, [New York Vital Records](https://www.familysearch.org/en/wiki/New_York_Vital_Records)), so for a marriage dated 1855-1875 go straight to church records and census marriage schedules rather than expecting a civil certificate.\n- Check the 1865 and 1875 New York State Census marriage schedules by browsing to the end of each candidate town's population schedule (FamilySearch Wiki county page, Census Records section) \u2014 these are browse-only, not name-indexed, so they must be paged through town by town.\n- Saratoga County parishes are under the Diocese of Albany (FamilySearch Wiki, [New York Church Records](https://www.familysearch.org/en/wiki/New_York_Church_Records)); identify the couple's town of residence first, then use the Local Catholic Church and Family History Genealogical Research Guide to find which parish served that town in this period, since no tool result here pins a specific parish.\n- Search the adjoining counties' Catholic parishes as well as Saratoga's own \u2014 Albany, Fulton, Hamilton, Montgomery, Rensselaer, Schenectady, Warren, and Washington Counties all border Saratoga County (FamilySearch Wiki's Neighboring Counties table) and an Irish Catholic couple could easily have married in a larger parish just across a county line, particularly Albany (a major Diocese seat).\n- Use \"New York, County Marriages, 1778-1848; 1908-1937\" and \"New York, Church and Civil Marriages, 1704-1995\" at FamilySearch as broad statewide searches even though Saratoga-specific coverage for 1855-1875 was not confirmed \u2014 both are indexed and may surface an entry outside the gap years this county's own chart implies.\n- If a marriage record cannot be found directly, pursue naturalization records (1872-1878 voter registration, county naturalization records) and land or probate records naming \"Thomas Hanrahan and wife Johanna\" to establish that the marriage had already occurred by a known date, narrowing the search window."
+    },
+    {
+      "id": "loc_002",
+      "place": "County Tipperary, Ireland",
+      "for_place": "Ardfinnan, County Tipperary, Ireland",
+      "time_period": "1855-1870",
+      "jurisdictions": [
+        {
+          "name": "County Tipperary, Ireland",
+          "date_range": "1328/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1408347",
+          "title": "Ireland, Civil Registration Indexes, 1845-1958",
+          "date_range": "1845-1958",
+          "person_count": 55451607,
+          "record_count": 18958897
+        },
+        {
+          "id": "2659409",
+          "title": "Ireland, Civil Registration, 1845-1913",
+          "date_range": "1806-1913",
+          "person_count": 9988787,
+          "record_count": 3624476
+        },
+        {
+          "id": "1584964",
+          "title": "Ireland, Marriages, 1619-1898",
+          "date_range": "1619-1898",
+          "person_count": 1374205,
+          "record_count": 381057
+        },
+        {
+          "id": "2820100",
+          "title": "Ireland, Catholic Parish Registers, 1740-1900",
+          "date_range": "1740-1900",
+          "person_count": 27172041,
+          "record_count": 9535478
+        },
+        {
+          "id": "3460239",
+          "title": "Ireland, Diocesan and Prerogative Marriage License Bonds Indexes, 1623-1866",
+          "date_range": "1623-1866",
+          "person_count": 436874,
+          "record_count": 218434
+        },
+        {
+          "id": "2329951",
+          "title": "Ireland, Valuation Office Books, 1831-1856",
+          "date_range": "1831-1856",
+          "person_count": 13485480,
+          "record_count": 7284359
+        },
+        {
+          "id": "1804886",
+          "title": "Ireland Tithe Applotment Books, 1824-1855",
+          "date_range": "1814-1855",
+          "person_count": 753820,
+          "record_count": 393198
+        },
+        {
+          "id": "3736264",
+          "title": "Ireland, Ashe's Limerick and Clare Directory, 1891-1892",
+          "date_range": "1891-1892",
+          "person_count": 11558,
+          "record_count": 11559
+        },
+        {
+          "id": "4496119",
+          "title": "Ireland, Betham Genealogical Abstracts, 1179-1830",
+          "date_range": "1179-1830",
+          "person_count": 691910,
+          "record_count": 442529
+        },
+        {
+          "id": "1584963",
+          "title": "Ireland, Births and Baptisms, 1620-1881",
+          "date_range": "1620-1881",
+          "person_count": 9532260,
+          "record_count": 3628796
+        },
+        {
+          "id": "1921305",
+          "title": "Ireland, Calendar of Wills and Administrations, 1858-1920",
+          "date_range": "1858-1920",
+          "person_count": 1070511,
+          "record_count": 518567
+        },
+        {
+          "id": "3499248",
+          "title": "Ireland, Catholic Qualification & Convert Rolls, 1701-1845",
+          "date_range": "1701-1845",
+          "person_count": 52060,
+          "record_count": 52060
+        },
+        {
+          "id": "2346275",
+          "title": "Ireland, Census Search Forms, 1841 and 1851",
+          "date_range": "1841-1851",
+          "person_count": 136152,
+          "record_count": 136152
+        },
+        {
+          "id": "2345228",
+          "title": "Ireland, Census, 1821",
+          "date_range": "1821-1821",
+          "person_count": 275103,
+          "record_count": 275103
+        },
+        {
+          "id": "2334949",
+          "title": "Ireland, Census, 1831",
+          "date_range": "1831-1831",
+          "person_count": 80337,
+          "record_count": 80337
+        },
+        {
+          "id": "2346276",
+          "title": "Ireland, Census, 1841",
+          "date_range": "1841-1841",
+          "person_count": 15850,
+          "record_count": 15850
+        },
+        {
+          "id": "2340880",
+          "title": "Ireland, Census, 1851",
+          "date_range": "1851-1851",
+          "person_count": 58795,
+          "record_count": 58795
+        },
+        {
+          "id": "1626180",
+          "title": "Ireland, Census, 1901",
+          "date_range": "1901-1901",
+          "person_count": 4379702,
+          "record_count": 4379702
+        },
+        {
+          "id": "2854327",
+          "title": "Ireland, Census, 1911",
+          "date_range": "1911-1911",
+          "person_count": 4385217,
+          "record_count": 4385217
+        },
+        {
+          "id": "4496117",
+          "title": "Ireland, Court of Chancery Bill Books, 1627-1884",
+          "date_range": "1627-1884",
+          "person_count": 1217568,
+          "record_count": 1217591
+        },
+        {
+          "id": "5000022",
+          "title": "Ireland, Court of Exchequer Bill Books, 1627-1884",
+          "date_range": "1628-1884",
+          "person_count": 1036876,
+          "record_count": 1028032
+        },
+        {
+          "id": "1584965",
+          "title": "Ireland, Deaths, 1864-1870",
+          "date_range": "1864-1870",
+          "person_count": 1361205,
+          "record_count": 182377
+        },
+        {
+          "id": "3460908",
+          "title": "Ireland, Diocesan and Prerogative Wills & Administrations Indexes, 1595-1858",
+          "date_range": "1595-1858",
+          "person_count": 364524,
+          "record_count": 358897
+        },
+        {
+          "id": "5000212",
+          "title": "Ireland, Dog License Registrations, 1810-1926",
+          "date_range": "1810-1926",
+          "person_count": 7349631,
+          "record_count": 7270375
+        },
+        {
+          "id": "3736275",
+          "title": "Ireland, Estate Commissioners Offices, Applications from Evicted Tenants, 1907",
+          "date_range": "1907-1907",
+          "person_count": 5328,
+          "record_count": 3403
+        },
+        {
+          "id": "5000207",
+          "title": "Ireland, Inland Revenue Wills & Administration, Will Registers, 1828-1879",
+          "date_range": "1828-1879",
+          "person_count": 993922,
+          "record_count": 305529
+        },
+        {
+          "id": "2040586",
+          "title": "Ireland, Landed Estate Court Files, 1850-1885",
+          "date_range": "1850-1885",
+          "person_count": 681798,
+          "record_count": 668008
+        },
+        {
+          "id": "3535180",
+          "title": "Ireland, Medical Directory for Ireland, 1858",
+          "date_range": "1858-1858",
+          "person_count": 2373,
+          "record_count": 2373
+        },
+        {
+          "id": "3511725",
+          "title": "Ireland, Memorial Record: World War I, 1914-1918",
+          "date_range": "1914-1918",
+          "person_count": 49646,
+          "record_count": 49646
+        },
+        {
+          "id": "4316495",
+          "title": "Ireland, Merchant Navy Crew Lists, 1857-1922",
+          "date_range": "1857-1922",
+          "person_count": 830645,
+          "record_count": 832770
+        },
+        {
+          "id": "4496116",
+          "title": "Ireland, National School Registers, 1847-1954",
+          "date_range": "1847-1954",
+          "person_count": 104149,
+          "record_count": 104149
+        },
+        {
+          "id": "4496112",
+          "title": "Ireland, Original Will Registers, 1858-1920",
+          "date_range": "1858-1920",
+          "person_count": 362509,
+          "record_count": 181411
+        },
+        {
+          "id": "3736278",
+          "title": "Ireland, Parliamentary Papers on Emigration to Canada, 1826",
+          "date_range": "1826-1826",
+          "person_count": 316,
+          "record_count": 316
+        },
+        {
+          "id": "2487287",
+          "title": "Ireland, Petty Sessions Court Registers, 1828-1912",
+          "date_range": "1828-1912",
+          "person_count": 25694964,
+          "record_count": 21821540
+        },
+        {
+          "id": "3499247",
+          "title": "Ireland, Poverty Relief Funds, 1810-1887",
+          "date_range": "1810-1887",
+          "person_count": 690198,
+          "record_count": 690232
+        },
+        {
+          "id": "4279963",
+          "title": "Ireland, Prison Registers, 1798-1928",
+          "date_range": "1798-1928",
+          "person_count": 3127582,
+          "record_count": 2885515
+        },
+        {
+          "id": "3736263",
+          "title": "Ireland, Registers of Queen's Colleges, 1849-1858",
+          "date_range": "1849-1858",
+          "person_count": 2056,
+          "record_count": 2056
+        },
+        {
+          "id": "3499157",
+          "title": "Ireland, The Treble Almanac, 1783-1829",
+          "date_range": "1783-1829",
+          "person_count": 74838,
+          "record_count": 74843
+        },
+        {
+          "id": "3511727",
+          "title": "Ireland, Thom's Irish Almanac & Official Directory 1868",
+          "date_range": "1868-1868",
+          "person_count": 103352,
+          "record_count": 103355
+        },
+        {
+          "id": "3520239",
+          "title": "Ireland, Thom's Irish Almanac & Official Directory 1884",
+          "date_range": "1884-1884",
+          "person_count": 114020,
+          "record_count": 114026
+        },
+        {
+          "id": "3523521",
+          "title": "Ireland, Thom's Irish Almanac, 1880",
+          "date_range": "1880-1880",
+          "person_count": 114356,
+          "record_count": 114362
+        },
+        {
+          "id": "3499257",
+          "title": "Ireland, Thom's Irish Who's Who, 1923",
+          "date_range": "1923-1923",
+          "person_count": 2356,
+          "record_count": 2356
+        },
+        {
+          "id": "3499256",
+          "title": "Ireland, Thom's Official Directory, 1910",
+          "date_range": "1910-1910",
+          "person_count": 131727,
+          "record_count": 131734
+        },
+        {
+          "id": "3535097",
+          "title": "Ireland, the Register of Derry Cathedral, 1642-1703",
+          "date_range": "1642-1703",
+          "person_count": 23545,
+          "record_count": 11254
+        }
+      ],
+      "quirks": [
+        "Civil registration of marriage began in 1845 for non-Catholic (mostly Protestant) marriages only; it was not extended to Catholic marriages, or to births and deaths, until 1864 \u2014 so a Catholic marriage before 1864, such as this one is believed to be, will not appear in the civil marriage registers at all and must be sought in Catholic parish registers (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).",
+        "Civil registration records are filed by registration district, not by parish or townland, and one district covers many villages, so the index alone cannot pin down the exact place \u2014 the original register entry may give a more precise residence (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).",
+        "Ardfinnan's own FamilySearch Wiki page has empty Catholic/Church of Ireland/Civil Registration subsections with no specifics for this parish \u2014 only generic links back to the Ireland-wide pages; it names no start year or holding for Ardfinnan itself.",
+        "Griffith's Valuation (1847-1864) and the Valuation Office Books (1831-1856) predate or only partly overlap the suspected marriage window and record property occupiers, not marriages \u2014 use them only to place the Hanrahan/Ryan families in the area, not to find the marriage itself.",
+        "volume_search found Catholic parish-register microfilm volumes for numerous individual Tipperary parishes (e.g. Cloughjordan, Borrisokane, Moneygall/Cullenwaine) covering the 1855-1870 window, but none of the returned coverage rows name Ardfinnan parish specifically \u2014 its own register volume was not among the volumes this survey's coverages returned, so it must be searched for directly in the catalog or collection by parish name."
+      ],
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Ireland_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Ireland_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Ireland_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "marriage",
+          "level": "national",
+          "year": 1845,
+          "source_url": "https://www.familysearch.org/en/wiki/Ireland_Civil_Registration"
+        },
+        {
+          "event": "birth",
+          "level": "national",
+          "year": 1864,
+          "source_url": "https://www.familysearch.org/en/wiki/Ireland_Civil_Registration"
+        },
+        {
+          "event": "death",
+          "level": "national",
+          "year": 1864,
+          "source_url": "https://www.familysearch.org/en/wiki/Ireland_Civil_Registration"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1855,
+        "end_year": 1870,
+        "total_volumes": 252,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 79,
+            "browse_only": 72,
+            "fulltext_only": 7
+          },
+          {
+            "group": "Marriage",
+            "volumes": 78,
+            "browse_only": 72,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Religious",
+            "volumes": 94,
+            "browse_only": 88,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Baptism",
+            "volumes": 94,
+            "browse_only": 88,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Legal",
+            "volumes": 105,
+            "browse_only": 6,
+            "fulltext_only": 97
+          },
+          {
+            "group": "Court",
+            "volumes": 104,
+            "browse_only": 6,
+            "fulltext_only": 97
+          },
+          {
+            "group": "Probate",
+            "volumes": 5,
+            "browse_only": 0,
+            "fulltext_only": 4
+          },
+          {
+            "group": "Land",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Government",
+            "volumes": 17,
+            "browse_only": 8,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Tax",
+            "volumes": 6,
+            "browse_only": 0,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Prison",
+            "volumes": 3,
+            "browse_only": 0,
+            "fulltext_only": 0
+          },
+          {
+            "group": "School",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Miscellaneous",
+            "volumes": 3,
+            "browse_only": 0,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-17",
+      "guide_markdown": "# Locality Guide: Ardfinnan, County Tipperary, Ireland (1855-1870)\n\n## Jurisdiction overview\n- **Formed:** County Tipperary dates from the early 13th century, shortly after the Norman invasion of Ireland (source: https://en.wikipedia.org/wiki/County_Tipperary; and https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy).\n- **County seat / administrative center:** the county has long been split administratively between North Tipperary (centred on Nenagh) and South Tipperary (centred on Clonmel); the two were reunited into one authority in 2012 (source: https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy).\n- **Parent jurisdiction:** province of Munster, Ireland.\n- **Population during period:** 346,896 in 1821, rising to 435,553, then falling sharply after the Famine to 331,567 in 1851, and continuing to decline through the rest of the 19th century (source: https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy). A direct population figure for the 1855-1870 window itself was not returned by this survey's population lookup (the tool could not resolve the place for that query).\n- **Religious composition:** in 1871, 93.8% of the county's population was Roman Catholic, 5.4% Church of Ireland, and 0.3% each Presbyterian and Methodist (source: https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy).\n- **Key historical events affecting records:** the Great Famine (late 1840s) sharply reduced the population and disrupted record-keeping in the years just before this window; Catholic emancipation (1829) is the point after which most surviving Catholic parish registers begin (source: https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy and https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n\n## Boundary changes\n- County Tipperary's own boundaries were stable through 1855-1870; what changed nationally in this window was civil registration machinery, not the county itself.\n- Civil registration marriage districts were established covering the county from 1845 (non-Catholic only) and from 1864 (all marriages); these registration districts, not the older civil/Catholic parishes, are the unit by which civil marriage records are filed (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n- Below the county, Ardfinnan is one of many Tipperary civil parishes; its own FamilySearch Wiki page carries no parish-specific record detail (see quirks).\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** marriage registration began nationally in 1845 for non-Catholic marriages only; it was extended to all marriages, and to births and deaths, in 1864 (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n- **What exists:** \"Ireland, Civil Registration, 1845-1913\" (collection 2659409, index & images, 9,988,787 people) and \"Ireland, Civil Registration Indexes, 1845-1958\" (collection 1408347, index, 55,451,607 people) both cover the 1855-1870 window at FamilySearch.\n- **Where held:** FamilySearch (online, free); also IrishGenealogy.ie (index & images, marriages from 1845); General Register Office microfilm for 1864-1870 marriages is separately cataloged (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n- **Gaps:** because Thomas Hanrahan and Johanna Ryan were apparently Catholic and the marriage is believed to predate 1865, it falls in the gap where civil registration did not yet cover Catholic marriages (pre-1864) \u2014 the civil index will show nothing for a pre-1864 Catholic marriage.\n- **Pre-registration alternatives:** Catholic parish registers (see Church records, below) are the primary source for a Catholic marriage before 1864.\n\n### Church records\n- **Denominations present:** Roman Catholic was overwhelmingly dominant in the county (93.8% in 1871); Church of Ireland, Presbyterian and Methodist congregations were also present in small numbers (source: https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy).\n- **Record types:** \"Ireland, Catholic Parish Registers, 1740-1900\" (collection 2820100, index & images, 27,172,041 people) covers baptisms, marriages and burials for this period; \"Ireland, Diocesan and Prerogative Marriage License Bonds Indexes, 1623-1866\" (collection 3460239, index) is a separate marriage-bond index.\n- **Where held:** FamilySearch holds the indexed/imaged Catholic Parish Registers collection online; the underlying registers remain parish property, filmed by FamilySearch. volume_search found individually cataloged marriage/baptism microfilm volumes for specific Tipperary parishes in this window (e.g. Cloughjordan 1833-1858 and 1858-1881, Borrisokane 1844-1883, Moneygall/Cullenwaine 1820-1873) \u2014 but none of the returned coverage rows named Ardfinnan parish itself, so its register volume was not surfaced by this survey and must be located by a separate parish-name search of the catalog or collection.\n- **Gaps:** most Catholic parish registers begin only around the time of emancipation (1829), so pre-1829 Catholic records are often absent; Ardfinnan's own register start date was not found by this survey.\n- **Language:** Catholic registers of this period were commonly kept in Latin for sacramental entries (seen in nearby Tipperary volumes, e.g. \"baptisms, marriages\" noted with language codes en/la); expect some Latin terms even where the surrounding register is in English.\n\n### Census records\n- **Federal/national census:** only the 1901 and 1911 censuses for Ireland survive complete; all earlier 19th-century censuses, including any from the 1855-1870 window, were destroyed or survive only in fragments (source: https://www.familysearch.org/en/wiki/Ireland_Getting_Started and https://www.familysearch.org/en/wiki/County_Tipperary,_Ireland_Genealogy, which lists only 1901 and 1911 collections for the county).\n- **State/provincial census:** none found for this county and period.\n- **Other enumerations:** Griffith's Valuation (1847-1864) and the Tithe Applotment Books (1824-1855) are the standard substitutes for a missing census in this era; see Land records below.\n- **Access:** the 1901/1911 Ireland censuses are indexed & images online at FamilySearch; no online census coverage exists for 1855-1870.\n\n### Probate and court records\n- **Types:** wills, administrations, probate and marriage-license bonds were handled through diocesan consistory courts in this period; the Diocese of Cashel and Emly's consistory court covered 118 parishes in County Tipperary.\n- **Testate or intestate:** unknown for Thomas Hanrahan and Johanna Ryan at this stage; a will would be sought via the wills indexes, an administration via the administrations indexes, if no will is known to exist.\n- **Date range:** \"Ireland, Diocesan and Prerogative Wills & Administrations Indexes\" covers 1595-1858; \"Ireland, Diocesan and Prerogative Marriage License Bonds Indexes\" covers 1623-1866 and is directly relevant to a pre-1864 marriage search.\n- **Where held:** originals were at the Public Record Office, Dublin, per catalog note on the Diocese of Cashel and Emly act books (catalog entry koha:158619); FamilySearch holds microfilm copies, some online.\n\n### Land records\n- **Survey system:** metes and bounds, as administered through the Valuation Office and Griffith's Valuation survey process.\n- **Land-distribution jurisdiction:** the Valuation Office (Dublin) produced both the earlier Valuation Office Books and Griffith's Valuation; this survey's wiki page did not name a separate land-grant authority for Tipperary.\n- **Types:** \"Ireland, Valuation Office Books, 1831-1856\" (collection 2329951, index & images, 13,485,480 people) and Griffith's Valuation, 1847-1864 (named in the county wiki page, held at MyHeritage/Ancestry, index & images, subscription).\n- **Date range:** 1824-1864 across these two land-valuation series, overlapping the early part of the 1855-1870 window.\n- **Where held:** FamilySearch (Valuation Office Books, free); Griffith's Valuation itself is on MyHeritage and Ancestry (subscription) and on Ask About Ireland (free index only, per the external-links results).\n\n### Military records\n- **Relevant conflicts:** no Irish conflict fell within 1855-1870 itself; the Crimean War (1853-1856) and later British Army service are the nearest-period conflicts that could have drawn in a man of Thomas Hanrahan's generation, though this survey found no Tipperary-specific record of such service.\n- **Record types:** \"Ireland, Merchant Navy Crew Lists, 1857-1922\" overlaps this window if a maritime occupation is suspected; otherwise general British Army service records (1760-1915) are listed among the external links for the county.\n- **Where held:** FamilySearch (Merchant Navy Crew Lists, online); British Army records via Findmypast (subscription), per the external-links results.\n\n### Cemetery records\n- **Major cemeteries:** none named specifically for Ardfinnan or Thomas Hanrahan/Johanna Ryan by any tool result in this survey.\n- **Online coverage:** Find a Grave's Ireland cemetery index and the Ireland Cemetery Collection, 1865-2023 (Ancestry, index only) both overlap the tail of this window.\n- **Physical records:** none identified by this survey for this specific locality; a local sexton or parish burial register would need to be checked directly.\n\n### Newspaper records\n- **Local papers:** The Cork Examiner (1841-1871) and The Freeman's Journal (1800-1949) are both indexed at Findmypast and could carry Tipperary notices in this window, per the external-links results.\n- **Where held:** Findmypast (subscription, images); no free online Tipperary-specific newspaper archive was returned by this survey.\n- **Content value:** marriage, birth and death notices, useful as a substitute lead when register entries are not found.\n\n### Immigration/emigration records\n- **Relevant ports:** the family is known to have emigrated to the United States (Saratoga, New York by 1880); Irish emigration in this era commonly left through Cork (Queenstown/Cobh) or Liverpool.\n- **Record types:** \"Irish Passenger Lists, 1847-1871\" (Ancestry, images only) and \"Ireland and Britain, Transatlantic Migration from North America, 1858-1870\" (FamilySearch collection 3499249) both fall inside this window.\n- **Where held:** Ancestry (subscription, images); FamilySearch (free, for the transatlantic-migration collection).\n- **Content note:** passenger manifests list every person aboard including children, so if the couple emigrated together or with children, check the full manifest, not just the named head of household.\n\n### Tax records\n- **Types:** the Tithe Applotment Books (1814-1855, FamilySearch collection 1804886, 753,820 people) and the Valuation Office Books (1831-1856) serve as the main substitute tax/property records for this county and period.\n- **Date range:** both end at or just before 1855-1856, so they mainly document the years immediately preceding this window rather than inside it.\n- **Where held:** FamilySearch (both, free, index & images); the Tithe Applotment Books are also at the National Archives of Ireland online (free, images only).\n- **Substitute value:** useful for placing the Hanrahan and Ryan families on the land just before the suspected marriage date, in the absence of a census.\n\n### Other record types\n- National School Registers, 1847-1954 (FamilySearch collection 4496116, 104,149 people) could record children of the couple if they were of school age within the county before emigration.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Ireland, Civil Registration 1845-1913 (2659409); Ireland, Civil Registration Indexes 1845-1958 (1408347); Ireland, Catholic Parish Registers 1740-1900 (2820100); Ireland, Diocesan and Prerogative Marriage License Bonds Indexes 1623-1866 (3460239); Ireland, Valuation Office Books 1831-1856 (2329951) | pre-1864 Catholic marriage is not in civil registers, so the Catholic Parish Registers and Marriage License Bonds Indexes fill that gap | Free |\n| IrishGenealogy.ie | civil marriage index & images, 1845-1948 | index & images of civil marriages in the years this survey's marriage is believed to fall in | Free (https://civilrecords.irishgenealogy.ie/churchrecords/civil-search.jsp) |\n| Ancestry | Ireland, Griffith's Valuation 1847-1864 (https://search.ancestry.com/search/db.aspx?dbid=1269); Irish Passenger Lists 1847-1871 (https://www.ancestry.com/search/collections/48579/) | land occupier records and post-emigration passenger lists | Subscription |\n| MyHeritage | Ireland, Griffith's Valuation 1847-1864 (https://www.myheritage.com/research/collection-10309/ireland-griffiths-valuation-1847-1864) | land occupier records, as an alternative to the Ancestry copy | Subscription |\n| Findmypast | The Cork Examiner 1841-1871 newspaper archive | marriage/death notices as a substitute when register entries are not found | Subscription |\n\n**Coverage of this survey:** 252 digitized volumes matched County Tipperary for 1855-1870 in the volume search; only the first 10 are detailed in the body of this guide (full totals by record type are given in the Available record types notes above) \u2014 the remaining volumes were not examined individually. Likewise this guide's catalog search returned 570 total catalog hits for County Tipperary, of which only the first 25 were retrieved with full detail.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Public Record Office / National Archives, Dublin | original Diocese of Cashel and Emly consistory court act books (probates, administrations, marriage licences), originals of Catholic parish registers | In-person or by written request; FamilySearch holds microfilm copies of some |\n| FamilySearch Library | microfilm of Catholic parish registers for individual Tipperary parishes (e.g. Cloughjordan, Borrisokane, Moneygall/Cullenwaine), and of the 1821/1901 census fragments for the county | In-person at the library, or through a local FamilySearch Center/affiliate library |\n| County/diocesan archives | parish-held original registers not yet filmed or digitized, where they survive | In-person or by written request to the parish or diocese |\n\n## Records NOT online\n- The original Catholic parish register for Ardfinnan itself was not located online by this survey's collection and volume searches; it may exist only as a parish-held original or an unindexed microfilm not surfaced by these searches.\n- Pre-1864 Irish censuses: none survive for this county and period in any form, online or physical, beyond scattered fragments (see Known record losses).\n- Physical probate and consistory-court act books for the Diocese of Cashel and Emly exist only as originals or microfilm, not as an online searchable index for this period.\n\n## Known record losses\n- Pre-1901 Irish censuses do not survive in whole; the 1821 and 1901/1911 census fragments found in the catalog for this county are the exception, not the rule, and no 1855-1870 census exists to consult (source: https://www.familysearch.org/en/wiki/Ireland_Getting_Started, which states only 1901 and 1911 survive in whole). No tool result in this survey states that Ardfinnan's own Catholic registers were destroyed; their absence from the online results is a coverage gap, not a confirmed loss.\n\n## Research tips\n- Because the marriage is believed to predate 1865 and the couple was apparently Catholic, search the Catholic Parish Registers collection (and the Marriage License Bonds Indexes, 1623-1866) before the civil marriage index, which will be empty for a pre-1864 Catholic marriage (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n- Civil marriage registers, once they do apply (1864 onward), record the names and occupations of both fathers and the denomination of the church where the marriage occurred \u2014 useful for confirming parentage once a civil-era record is found (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n- \"Marriages were usually performed in the bride's parish\" per the civil registration guidance \u2014 so if Johanna Ryan's home parish differs from Ardfinnan (where a child was later baptised), search that parish's registers for the marriage itself, not only Ardfinnan's (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n- Civil registration districts cover many villages at once and do not align with parish boundaries, so use John Grenham's place-search tool or the S. Wilson registration-district map to confirm which district and parishes correspond to Ardfinnan before assuming a search is complete (source: https://www.familysearch.org/en/wiki/Ireland_Civil_Registration).\n- Because no census survives for this county before 1901, use Griffith's Valuation and the Valuation Office Books to place the Hanrahan and Ryan households in the Ardfinnan area in the years just before the marriage.\n- Ardfinnan's own FamilySearch Wiki page carries no parish-specific detail, so search the Catholic Parish Registers collection directly by parish name (\"Ardfinnan\") rather than relying on that page."
+    }
+  ]
+}

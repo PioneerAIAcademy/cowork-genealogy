@@ -1296,7 +1296,8 @@ eval-health: ## Weekly: unit tests below the 95% pass bar, and consistently-part
 .PHONY: judge-regrade
 judge-regrade: ## Regrade committed unit run logs against the current judge prompt AND render code (satisfies rule 2b, both halves): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
 	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
-	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
+	# is the cheap satisfaction path (~$30 of judge-only spend for every suite's
+	# latest log, ~$1 a suite on the Sonnet 4.6 judge, measured 2026-11-16).
 	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
 	# `make harness-test` to prove the renderer reads from disk on every call.
 	# A log that is already skill-side stale (rule 2) is REFUSED, not regraded.

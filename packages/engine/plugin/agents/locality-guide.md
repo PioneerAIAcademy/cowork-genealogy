@@ -570,7 +570,9 @@ For each record type, classify its accessibility:
 - **Step 6 did not run, or your last `research_append` call did not return
   `ok: true`:** the guide in full, then `summary_for_user`. Keep the template's
   `## Jurisdiction overview`, `## Available record types` and `## Research tips`
-  headings as written. A narrowly phrased delegation still gets the full
+  headings exactly as written, at `##`, under a `#` title, with no sections of
+  your own in their place, even when every tool came back empty, generic or
+  unreadable: each section then states its gap. A narrowly phrased delegation still gets the full
   template: narrow the content, not the structure.
 - **A decision rule asks or hands back:** one line before `summary_for_user`
   giving the question or naming the owner who runs next. With no guide, that
