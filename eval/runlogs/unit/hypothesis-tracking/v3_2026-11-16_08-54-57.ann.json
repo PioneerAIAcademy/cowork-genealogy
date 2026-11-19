@@ -1,9 +1,9 @@
 {
-  "run_log": "v16_2026-11-18_04-48-16.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v3_2026-11-16_08-54-57.json",
+  "annotator": "Francisbucci2@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_records_hbk",
+      "test_id": "ut_hypothesis_tracking_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hbk",
+      "test_id": "ut_hypothesis_tracking_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,23 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hbk",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_034",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_034",
+      "test_id": "ut_hypothesis_tracking_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -43,119 +27,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_034",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_034",
+      "test_id": "ut_hypothesis_tracking_002",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Claim clarity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_034",
+      "test_id": "ut_hypothesis_tracking_002",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_034",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_034",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_022",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_022",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_022",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Evidence linkage",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "The AI sent the bride’s own id as the ranking subject on every call, but the mock tool’s own ranked block in its response named the groom as the ranked subject regardless of what was actually sent, and the AI noticed this and honestly logged the mismatch rather than hiding it."
+      "corrected_score": 2,
+      "comment": "judge is correct"
     },
     {
-      "test_id": "ut_search_records_022",
+      "test_id": "ut_hypothesis_tracking_006",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Status transitions",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_022",
+      "test_id": "ut_hypothesis_tracking_006",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Evidence linkage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "test_id": "ut_hypothesis_tracking_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_030",
+      "test_id": "ut_hypothesis_tracking_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -163,47 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_jurisdiction_hint",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_jurisdiction_hint",
+      "test_id": "ut_hypothesis_tracking_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,87 +83,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_jurisdiction_hint",
+      "test_id": "ut_hypothesis_tracking_006",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_jurisdiction_hint",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_jurisdiction_hint",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_jurisdiction_hint",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_jurisdiction_hint",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "test_id": "ut_hypothesis_tracking_008",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "test_id": "ut_hypothesis_tracking_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -299,12 +107,188 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "judge is right"
     }
   ]
 }

@@ -249,6 +249,11 @@ In this mode:
   match threshold policy, rationale quality, multi-attribute
   corroboration. Look for daylight between the recorded confidence
   and what the evidence actually supports.
+- When the entry under review has a null `match_score`, call
+  `same_person({ projectPath, assertionId, treePersonId })` for it before
+  judging the tier, as Step 2 requires when linking. It changes neither
+  `research.json` nor the tree. Report the score in your analysis; do not
+  write it onto the entry.
 - **Produce a written analysis only.** Do NOT write to `research.json`
   or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
   modify the entry under review (not its `confidence`, not its
