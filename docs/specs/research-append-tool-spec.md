@@ -943,6 +943,19 @@ stays an opt-out, as on an append. The levers:
   actually land. A contradiction still fires when the garbage sits *behind* a
   genuine polity ("Moravia, …, South Hwanghae, North Korea").
 
+  **One level down: a state/province contradiction (`divisionContradiction`).**
+  A value this lever itself filled — sidecar-copied or geocoded, never a
+  caller-supplied `standard_place`, which is out of scope here — is also
+  **dropped**, with a warning and never a refusal, when the place text's last
+  part names a US state, Puerto Rico or Canadian province (by full name, postal
+  code, or an abbreviation the lead's one-word list gives that division — "Miss"
+  is Mississippi) other than the one the standard place's jurisdictions name:
+  "Forest, Miss, United States" drops "Forest, Wisconsin, United States". The
+  check runs whether or not the country guard above could judge the pair, and
+  before it pushes its own "verify this" warning for a geocoded, country-unverifiable
+  answer, so a value the division check is about to drop is never also echoed
+  with a warning describing it as kept.
+
 A `localities` entry's `for_place` is checked against the place standard by a
 separate rule, which refuses rather than geocodes: §5.8.
 
