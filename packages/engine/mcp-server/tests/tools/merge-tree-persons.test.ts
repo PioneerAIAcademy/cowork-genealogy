@@ -10,7 +10,8 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { standardPlaceToCoords } from "../../src/utils/place-resolver.js";
-import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
+import { mergeTreePersons as mergeRaw } from "../../src/tools/merge-tree-persons.js";
+import { instructedMerge as mergeTreePersons } from "../helpers/instructed-merge.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { writeProjectFile } from "../helpers/project-files.js";
 
@@ -324,10 +325,91 @@ describe("merge_tree_persons: the claim warnings (Decision 13)", () => {
     await refusedThenJustified([["I1", "I5"]], /claims-proved-identity/);
   });
 
-  it("a merge with no claims raises no claim warning", async () => {
+  it("a merge with no claims raises only the identity warning, and the user's instruction justifies it", async () => {
     await writeProject({ persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] }, []);
-    const r: any = await mergeTreePersons({ projectPath: dir, merges: [["I1", "I5"]] });
-    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.reason).toBe("unjustified_warnings");
+    expect(r.warnings.map((w: any) => w.warningId)).toEqual(["mergeIdentity|I1|I5"]);
+    const ok: any = await mergeRaw({
+      projectPath: dir, merges: [["I1", "I5"]],
+      warningJustifications: [{ warningId: "mergeIdentity|I1|I5", justification: "The user said: merge Pat into Patrick." }],
+    });
+    expect(ok.ok, JSON.stringify(ok.errors)).toBe(true);
+    expect((await readJson("research.json")).warning_justifications).toEqual(
+      expect.arrayContaining([expect.objectContaining({ warning_id: "mergeIdentity|I1|I5", person_ids: ["I1"] })]),
+    );
+  });
+
+  // Decision 13: an identity claim at probable or better covering the pair needs no justification.
+  const evidence = {
+    assertions: [
+      { id: "a_001", record_id: "rec1", source_id: "src_001", record_role: "principal", fact_type: "name", value: "Pat Flynn", record_basis: "stated" },
+      { id: "a_002", record_id: "rec2", source_id: "src_001", record_role: "principal", fact_type: "name", value: "Patrick Flynn", record_basis: "stated" },
+    ],
+  };
+  const link = (id: string, assertion_id: string, person_id: string) =>
+    ({ id, assertion_id, person_id, confidence: "confident", superseded_by: null });
+
+  it("a same_as claim citing an assertion linked to both persons covers the merge", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+      [ps("ps_001", [{ claim: "same man", proof_tier: "probable", supporting_assertion_ids: ["a_001"], identity: { person: "I1", same_as: "I5" } }])],
+      { ...evidence, person_evidence: [link("pe_001", "a_001", "I1"), link("pe_002", "a_001", "I5")] },
+    );
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.ok, JSON.stringify(r.warnings ?? r.errors)).toBe(true);
+  });
+
+  it.each(["I1", "I5"])("a record identity covers the merge in either direction (claim names %s)", async (person) => {
+    {
+      const other = person === "I1" ? "I5" : "I1";
+      await writeProject(
+        { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+        [ps("ps_001", [{ claim: "rec1 is him", proof_tier: "probable", supporting_assertion_ids: ["a_001"], identity: { record_id: "rec1", party: "principal", person } }])],
+        { ...evidence, person_evidence: [link("pe_001", "a_001", other)] },
+      );
+      const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+      expect(r.ok, `${person}: ${JSON.stringify(r.warnings ?? r.errors)}`).toBe(true);
+    }
+  });
+
+  it("a record identity covers only through its own record, not another record it cites", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+      [ps("ps_001", [{ claim: "rec1 is him", proof_tier: "probable", supporting_assertion_ids: ["a_001", "a_002"], identity: { record_id: "rec1", party: "principal", person: "I1" } }])],
+      // a_002 is from rec2 and linked to I5; rec1's own persona has no tie to I5.
+      { ...evidence, person_evidence: [link("pe_001", "a_002", "I5")] },
+    );
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
+  });
+
+  it("a record identity covers only through its own party, not another party on the same record", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Mary")], relationships: [] },
+      [ps("ps_001", [{ claim: "the groom is him", proof_tier: "probable", supporting_assertion_ids: ["a_101", "a_102"], identity: { record_id: "recM", party: "groom", person: "I1" } }])],
+      {
+        assertions: [
+          { id: "a_101", record_id: "recM", source_id: "src_001", record_role: "groom", fact_type: "name", value: "Patrick Flynn", record_basis: "stated" },
+          { id: "a_102", record_id: "recM", source_id: "src_001", record_role: "bride", fact_type: "name", value: "Mary Kelly", record_basis: "stated" },
+        ],
+        person_evidence: [link("pe_001", "a_101", "I1"), link("pe_002", "a_102", "I5")],
+      },
+    );
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
+  });
+
+  it("an identity claim at possible, or denied, does not cover the merge", async () => {
+    for (const extra of [{ proof_tier: "possible" }, { polarity: "denied" }]) {
+      await writeProject(
+        { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+        [ps("ps_001", [{ claim: "same man", proof_tier: "probable", supporting_assertion_ids: ["a_001"], identity: { person: "I1", same_as: "I5" }, ...extra }])],
+        { ...evidence, person_evidence: [link("pe_001", "a_001", "I1"), link("pe_002", "a_001", "I5")] },
+      );
+      const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+      expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
+    }
   });
 });
 
@@ -440,7 +522,8 @@ describe("merge_tree_persons: pair and namesake checks", () => {
       relationships: [parentChild("R1", "I50", "I51")],
     }));
     expect(m).toContain("relationship 'R1' (ParentChild) joins 'I50' and 'I51', a pair in this merge");
-    expect(m).toContain("remove that relationship with tree_correct (operation 'remove', relationshipId)");
+    expect(m).toContain("do not merge them. Report the relationship.");
+    expect(m).not.toMatch(/remove that relationship|merge again/);
   });
 
   it("MF3c refuses a pair a Couple relationship joins", async () => {

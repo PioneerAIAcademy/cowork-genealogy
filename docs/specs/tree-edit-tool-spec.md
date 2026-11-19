@@ -293,6 +293,16 @@ tree_edit({
     31's join), neither a new edge nor a corroboration lands, and the error names
     the summary and the claim. Revising that claim first lifts it. It refuses at
     once, with no warn mode: no disproved claim existed before Stage 1b.
+- **Synthetic warnings that fire without claims** (Decisions 7 and 32 of `docs/plan/conclusion-tree.md`), justified through the warning gate like any
+  introduced warning:
+  - `removeImport|<holder>|<factId>` or `removeImport|<relationshipId>` — a `remove`
+    that drops a fact or edge the import baseline (Decision 7, built on the
+    pre-call tree from `starting-tree.gedcomx.json`) reads as an import, which no
+    live `disproved` claim covers. A fact that leaves with its removed Couple edge
+    is that edge's warning, not its own.
+  - `retypeUnclaimed|<relationshipId>|<subtype>` — an `update_relationship` to a
+    subtype no live affirmed claim covering the edge names (untyped and
+    Biological agreeing).
   - **`sourceAssertionId` (source-ref resolution).** The edge requires a
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree

@@ -653,9 +653,32 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     },
   },
   {
+    // No identity claim covers P1 and P2, so the merge is refused until justified
+    // (Decision 13 of docs/plan/conclusion-tree.md).
     tool: "merge_tree_persons",
+    label: "merge_tree_persons (refused: no identity claim)",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath, merges: [["P1", "P2"]] }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && res.body?.reason === "unjustified_warnings",
+      detail: brief(res),
+    }),
+    after: (res, ctx) => {
+      ctx.values.mergeWarningIds = (res.body?.warnings ?? []).map((w: any) => w?.warningId).filter(Boolean);
+    },
+  },
+  {
+    tool: "merge_tree_persons",
+    label: "merge_tree_persons (justified)",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      merges: [["P1", "P2"]],
+      warningJustifications: ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).map((warningId) => ({
+        warningId,
+        justification: "The user instructed this merge.",
+      })),
+    }),
     expect: okTrue,
   },
   {
