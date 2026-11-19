@@ -650,6 +650,62 @@ def test_v5_still_fires_on_browse_claim_about_the_collection_itself():
         check_v5(before, after, _SERVED)
 
 
+# Issue #4163, both verbatim but for the id: an unindexed adjective on entries
+# or files, before or after the noun, describes those, not the collection.
+@pytest.mark.parametrize("rationale", [
+    "Use the collection (1921317, name-searchable) and, for unindexed entries, "
+    "the full-text-searchable volumes.",
+    "If pli_001 yields nothing (collection 1921317 may have incomplete coverage), "
+    "Ancestry may hold estate files not yet indexed on FamilySearch.",
+])
+def test_v5_ignores_unindexed_on_entries_or_files(rationale):
+    before, after = _states([_item("pli_012", rationale=rationale)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Collection 1921317 is not yet indexed.",
+    "Collection 1921317's records are not indexed.",
+    "Collection 1921317 (unindexed) holds the estate files.",
+])
+def test_v5_still_fires_on_not_yet_indexed_about_the_collection(rationale):
+    before, after = _states([_item("pli_012", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1921317"):
+        check_v5(before, after, _SERVED)
+
+
+# Issue #4163, ut_research_plan_wzk, v18_2026-11-11_09-44-58, both runs
+# verbatim (trimmed): the collection is name-searchable and only the county's
+# volumes are not. A sentence making both claims is skipped, not read as
+# browse-only.
+_SERVED_AL = [_call("collections_search", _collections([
+    {"id": "1537764", "title": "Alabama, Probate Records, 1809-1985", "personCount": 438210},
+]))]
+
+
+@pytest.mark.parametrize("rationale", [
+    "'Alabama, Probate Records, 1809-1985' (collection 1537764) is name-searchable "
+    "at the statewide level, but loc_001 specifically flags that Blount County "
+    "probate volumes (1845-1957) are full-text searchable but NOT name-indexed "
+    "(0-3%) — a keyword search on 'Wood' is required rather than a name search.",
+    "Alabama, Probate Records, 1809-1985 (collection 1537764) is name-searchable at "
+    "the statewide level, but loc_001 specifically flags Blount County probate "
+    "1845-1957 as full-text searchable but NOT name-indexed (0-3%) — keyword-search "
+    "required.",
+])
+def test_v5_skips_a_sentence_calling_the_collection_both_indexed_and_not(rationale):
+    before, after = _states([_item("pli_007", rationale=rationale)])
+    check_v5(before, after, _SERVED_AL)
+
+
+def test_v5_still_fires_on_not_name_indexed_alone_against_an_indexed_collection():
+    before, after = _states([_item("pli_007", rationale=(
+        "Collection 1537764 is NOT name-indexed; keyword search required."
+    ))])
+    with pytest.raises(AssertionError, match="1537764"):
+        check_v5(before, after, _SERVED_AL)
+
+
 def test_v5_still_fires_on_indexed_collection_beside_a_browsed_volume():
     before, after = _states([_item("pli_010", rationale=(
         "Search the indexed collection 1999196 before browsing volume 007936749."
