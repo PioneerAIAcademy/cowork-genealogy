@@ -56,7 +56,9 @@ tools:
 
 # Tree Edit
 
-**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath, include: ["status"] })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
+
+**Claims:** that call's `status` rows give each tree fact and edge the `claim` covering it (`summaryId`, `claim`, `tier`) and any `subtypeLabel`. When it returns no `claimKinds`, the engine predates claims: set `primary` on a value a proof summary at `probable` or better concludes, and merge on such a summary's identity conclusion, as before.
 
 **Places:** When resolving or writing places, follow Appendix C — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
@@ -94,7 +96,7 @@ tree_edit({
 })
 ```
 
-Other additions via `tree_edit`: `add_person` · `add_relationship` · `add_source`. Corrections and removals via **`tree_correct`**: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `update_source` (by `sourceId`) · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). For corrections pass only the changed fields — e.g. fix a wrong death date with `tree_correct({ projectPath, operation: "update_fact", personId: "I1", factId: "F2", fact: { date: "1908-03-12" } })`. When something already exists at that id, use `update_*` via `tree_correct` rather than adding a duplicate.
+Other additions via `tree_edit`: `add_person` · `add_relationship` · `add_source`. Corrections and removals via **`tree_correct`**: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `update_source` (by `sourceId`) · `update_relationship` (by `relationshipId`, sets a ParentChild `subtype`) · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). Removing a fact or edge from the starting tree that no disproved claim rules out returns a `removeImport` warning: justify it with the user's reason, or leave it. For corrections pass only the changed fields — e.g. fix a wrong death date with `tree_correct({ projectPath, operation: "update_fact", personId: "I1", factId: "F2", fact: { date: "1908-03-12" } })`. When something already exists at that id, use `update_*` via `tree_correct` rather than adding a duplicate.
 
 ### Writing facts correctly
 
@@ -103,7 +105,7 @@ Other additions via `tree_edit`: `add_person` · `add_relationship` · `add_sour
 
 ## Person merging
 
-When proof-conclusion confirms two persons are the same individual, execute the merge here. The tool does all clerical work (folding names/facts, repointing relationships, repointing every `research.json` reference, removing the collapsed person); your job is to pick the survivor and confirm pairs.
+Merge two persons when proof-conclusion has recorded that they are one person, or when the user instructs the merge. The tool does all clerical work (folding names/facts, repointing relationships, repointing every `research.json` reference, removing the collapsed person); your job is to pick the survivor and confirm pairs.
 
 **Survivor-selection:** prefer the FamilySearch ID over a synthetic stub; otherwise the most complete record; otherwise the id in `project.subject_person_ids`.
 
@@ -119,7 +121,7 @@ On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
 To list record matches, call `person_record_matches({ id: "KWCJ-RN4", minConfidence: 1 })`; the default floor of 2 leaves out confidence 1. Pass `status` only to narrow to what the user asked for: `["accepted"]` when only attached records were asked for, `["accepted", "pending"]` when pending ones were asked for too. With no `status` it returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
 
-When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; merge decisions still require proof-conclusion.
+When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; a merge needs proof-conclusion's identity decision or the user's instruction.
 
 Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I`-prefix ids are local stubs — FamilySearch has no match data for them.
 
@@ -130,7 +132,8 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 ## Important rules
 
 - **Merges are irreversible in practice.** Present the merge plan and get confirmation before executing: "I will merge I5 (James Flynn, stub) into KWCJ-RN7 (James Patrick Flynn). This will update 3 person_evidence entries and 1 timeline. Proceed?"
-- **Only merge when proof-conclusion confirms identity.** The threshold is a `probable` or higher proof_summary confirming the two persons are the same. Never merge on a speculative link or unresolved hypothesis.
+- **A merge rests on an identity decision or the user's instruction.** When `merge_tree_persons` returns a `mergeIdentity` warning, justify it only with the user's instruction to merge, quoted. With no such instruction, stop and hand back to proof-conclusion. Never merge on a speculative link or unresolved hypothesis.
+- **A merge refused because a relationship joins the pair stops there.** Report the relationship and do not remove it to clear the refusal.
 - **Preserve the more complete record.** Keep the person with more data and the more authoritative ID (FamilySearch ID > synthetic).
 - **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
 
@@ -139,6 +142,8 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 **Conflicting facts during merge:** Keep BOTH facts on the surviving person when no proof conclusion specifies which value is correct, and flag for proof-conclusion to resolve. Do not silently discard either value.
 
 **Relationship type unknown:** When a source shows a person in a household without clarifying the connection (biological, adoptive, step, foster), record the relationship without asserting a specific subtype. Do not default to biological.
+
+**Retyping an edge:** retype with `update_relationship` to the subtype a claim names for that pair, and name the claim in your reply. A subtype no claim names returns a `retypeUnclaimed` warning: justify it with the source the user gives, or leave the edge as it is.
 
 **Edit without source support:** Ask the user to identify the source. Typo corrections verifiable against an already-cited source may proceed; otherwise require at least one source reference before writing.
 
@@ -206,11 +211,11 @@ A tree edit is justified when it fits one of the two layers:
   `materialize_facts` path; ad-hoc, tree-edit may add such a fact when
   its source is already linked — e.g. an occupation found in a census
   record already cited.)
-- **A concluded value** — a proof conclusion at "probable" tier or
-  higher supports marking which value is `primary`/`preferred`, or
-  concluding a relationship no single record states. Setting the
-  concluded value is proof-gated; materializing the underlying evidence
-  is not.
+- **A concluded value** — mark a fact `primary` only when its status
+  row shows a covering claim at `probable` or better; a fact with no such
+  claim returns a `Will be refused:` warning naming it. Concluding a relationship no
+  single record states is proof-gated the same way; materializing the
+  underlying evidence is not.
 - **An objective-error correction** (typo, transcription mistake) that
   is verifiable against the cited source.
 

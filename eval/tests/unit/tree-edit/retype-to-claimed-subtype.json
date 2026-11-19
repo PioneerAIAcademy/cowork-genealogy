@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_tree_edit_021",
+    "skill": "tree-edit",
+    "name": "A retype names the claim that covers the subtype",
+    "type": "positive",
+    "description": "Decision 32 of docs/plan/conclusion-tree.md: retyping a ParentChild edge to a subtype no claim names needs a justification; to the subtype a claim names, none. In retype-claimed-subtype, ps_001 claims William Price is Thomas Hughes's Step father, and R1 joins them untyped. Retyping R1 to Step with tree_correct update_relationship lands with no warning, and the reply names the claim that covers it.",
+    "tags": [
+      "tree-edit",
+      "retype",
+      "claims",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "R1 between William Price (I2) and Thomas Hughes (I1) should say step-parent, not just parent. Fix the relationship type.\n\nprojectPath: <workspace>",
+    "scenario": "retype-claimed-subtype"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "GROUNDING: decide what the run did from its tool calls. The correct outcome is one tree_correct update_relationship call setting R1's subtype to Step, which lands with no warning because ps_001's claim names Step for this pair. R1 keeps its id, endpoints and source.",
+    "The reply should name the covering claim: ps_001's claim that William Price is Thomas's step-father.",
+    "Removing R1 and adding a new Step edge in its place is wrong: update_relationship is the op for a retype.",
+    "Asking for a justification, or attaching one, is unnecessary here but not wrong; do not score it down.",
+    "Should NOT need a separate validate_research_schema call. Do not score down for omitting it; do not reward calling it."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}
