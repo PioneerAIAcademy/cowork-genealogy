@@ -11,7 +11,7 @@
 // The build follows the rules init-project's Step 3 gave the model: local
 // `I`/`N`/`F`/`R`/`S` ids, the canonical `ark`, the response-only source fields
 // dropped, one FamilySearch-tree source as `S1` with a `quality: 1` ref on every
-// fact and relationship, and the person-level and relationship-level refs
+// name, fact and relationship, and the person-level and relationship-level refs
 // re-pointed. Step 3 never fixed that source's wording; it names the Family Tree
 // and the page the read came from, not one person, since it is cited on every
 // relative's facts too.
@@ -238,8 +238,8 @@ export async function buildFromStagedRead(args: {
       out.ark = typeof p.ark === "string" && p.ark ? p.ark : `ark:/61903/4:1:${p.id}`;
       for (const k of COPIED_PERSON_FIELDS) if (p[k] !== undefined) out[k] = p[k];
       out.names = arr(p.names).map((n) => {
-        const { id: _id, ...rest } = n;
-        return { id: minter.mint("N"), ...rest };
+        const { id: _id, sources: nameRefs, ...rest } = n;
+        return { id: minter.mint("N"), ...rest, sources: withRef(remapRefs(nameRefs), fsRef) };
       });
       const facts = arr(p.facts).map(buildFact);
       if (facts.length) out.facts = facts;

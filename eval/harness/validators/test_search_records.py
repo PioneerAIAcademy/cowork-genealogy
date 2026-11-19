@@ -377,6 +377,22 @@ def test_searched_before_no_collection_hand_back(tool_calls, test):
     )
 
 
+def test_survey_sends_all_three_isprincipal_calls(tool_calls, test):
+    """Issue #4348 -- an every-mention survey sends the plain search, isPrincipal:
+    true and isPrincipal: false, and does not page to retrieve more rows than
+    those three calls return. The judge alone missed both the omitted third call
+    (the original flake) and a run that paged anyway (five `offset` calls plus
+    three per-place calls) despite the agent body saying not to.
+    """
+    if "every-mention-survey" not in test.get("tags", []):
+        pytest.skip("only the every-mention survey test")
+    searches = [c.get("args") or {} for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "record_search"]
+    sent = {a.get("isPrincipal", "omitted") for a in searches}
+    assert {"omitted", True, False} <= sent, f"survey sent isPrincipal values {sent}; it needs none, true and false"
+    paged = [a for a in searches if "offset" in a]
+    assert not paged, f"survey paged {len(paged)} time(s) to retrieve more rows; issue #4348 decided the two filtered totals give the split and a sample is enough"
+
+
 # --- Outside holdings must come from a tool response (issue #4352) -----------
 
 # The outside sites the agent body names (Ancestry, MyHeritage, FindMyPast,
@@ -1225,6 +1241,45 @@ def _research_query_calls(tool_calls):
     ]
 
 
+def test_unhanded_plan_item_stays_planned(before_state, after_state, tool_calls, test):
+    """Tag-gated (one-plan-item-per-call): the delegation names pli_001 only, so
+    pli_002 stays ``planned``, gets no log entry, and is not searched.
+
+    The judge scored Completeness 3 on every committed run that ran both items
+    (#4330), and the rule can be read off research.json.
+    """
+    if "one-plan-item-per-call" not in test.get("tags", []):
+        pytest.skip("not a one-plan-item-per-call scenario")
+    after = after_state.get("research_json") or {}
+    statuses = [
+        item.get("status")
+        for plan in after.get("plans") or []
+        for item in plan.get("items") or []
+        if item.get("id") == "pli_002"
+    ]
+    assert statuses == ["planned"], f"pli_002 left `planned`: status {statuses}"
+    logged = [
+        e.get("id")
+        for e in _new_log_entries(before_state, after_state)
+        if e.get("plan_item_id") == "pli_002"
+    ]
+    assert not logged, f"pli_002 was logged in this call: {logged}"
+    church = [
+        c.get("args")
+        for c in tool_calls or []
+        if _bare_tool_name(c.get("tool")) == "record_search"
+        and str(_as_mapping(c.get("args")).get("recordType") or "").lower() != "census"
+        and (
+            "church" in json.dumps(c.get("args") or {}).lower()
+            or (
+                "census" not in (c.get("response_fixture") or "")
+                and "census" not in json.dumps(c.get("args") or {}).lower()
+            )
+        )
+    ]
+    assert not church, f"pli_002's church search ran in this call: {church}"
+
+
 def test_handed_plan_item_skips_research_query(tool_calls, test):
     """Tag-gated (handed-plan-item): the delegation carries the plan item whose
     ``id`` equals ``planItemId``, so the agent has the item and its status and
@@ -1393,6 +1448,13 @@ POOL_BAPTISM_IDS = ("Q7FB-T45", "Q7FB-M45")
 #: a son of Thomas, of the second a son of Michael.
 MARRIAGE_MATCHING_PARENTS_ID = "Q7FM-T70"
 MARRIAGE_OTHER_PARENTS_ID = "Q7FM-M70"
+#: Two Santa Lucía deaths of a Nicolasa Cedillo (record-search-cedillo-nicolasa-death,
+#: issue #4042): 1943, spouse Santiago with no status; 1945, parents Ventura
+#: Cedillo and María Jesús Amaya. The subject has no parents in the tree.
+CEDILLO_1943_IDS = ("X7FS-6T4L", "X7FM-RFHS", "X7KG-W4V1")
+CEDILLO_1945_IDS = ("X7FM-YRGN", "X7LQ-QZVH")
+#: Records naming her as Santiago's wife: his 1918 death and two children's.
+CEDILLO_FAMILY_IDS = ("X7LS-KMLK", "X7FS-X3LL", "X7LS-8L8G")
 
 
 def test_namesake_pool_row_recorded(before_state, after_state, test):
@@ -1447,6 +1509,21 @@ def test_namesake_other_parents_row(before_state, after_state, test):
     assert MARRIAGE_MATCHING_PARENTS_ID not in listed, (
         f"the row lists {MARRIAGE_MATCHING_PARENTS_ID}, whose groom's parents match the subject's: he may still be the subject"
     )
+
+
+def test_cedillo_neither_woman_ruled_out(before_state, after_state, test):
+    """Tag-gated (cedillo-no-rule-out): neither Cedillo woman is ruled out, so no
+    namesakes row lists her records, Santiago's death or a child's. A pool row
+    (record_ids empty) is accepted and not required; a row for an unrelated
+    namesake passes."""
+    if "cedillo-no-rule-out" not in test.get("tags", []):
+        pytest.skip("not a cedillo-no-rule-out scenario")
+    rows = _new_section_entries(before_state, after_state, "namesakes")
+    barred = set(CEDILLO_1943_IDS + CEDILLO_1945_IDS + CEDILLO_FAMILY_IDS)
+    listed = sorted(
+        {_namesake_bare_id(r) for row in rows for r in row.get("record_ids") or []} & barred
+    )
+    assert not listed, f"a namesakes row lists {listed}: neither woman, nor her husband or children, may be ruled out"
 
 
 PARENT_NAME_FIELDS = ("fatherGivenName", "fatherSurname", "motherGivenName", "motherSurname")

@@ -1,0 +1,1484 @@
+{
+  "guard": "attached-birth-proof",
+  "description": "A proof_summaries write at any tier but disproved while a person in the question's family (the project's subjects and everyone live-linked to the question's assertions, each with one tree hop) carries two live FamilySearch-attached births too far apart to be one birth, and no analysed conflict has weighed them: an identity conflict naming either record, or a fact conflict naming both, each with an independence_analysis. Replayed by the research_append precondition (attachedBirthProofInvariants), offline: with no place data, the pair test reads by country.",
+  "format": "expect: fire | silent, judged for the summary named by `write` in `research` (the pre-call document). `tree` holds the pre-call tree.gedcomx.json state. Every fire case carries a `shape`; a guard needs at least two distinct fire shapes and at least one silent case.",
+  "cases": [
+    {
+      "id": "subjects-child-two-countries",
+      "expect": "fire",
+      "shape": "subject-family-pair",
+      "why": "The subject's child carries an attached 1880 census birth in New York and an attached baptism in Ardfinnan, too far apart to be one birth, and no conflict has weighed them (thomas-hanrahan-marriage 2026-11-17, reduced).",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "not-proved-still-held",
+      "expect": "fire",
+      "shape": "subject-family-pair",
+      "why": "A not_proved summary still offers its answer, so the tier does not release it.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "linked-person-no-subject",
+      "expect": "fire",
+      "shape": "question-link-family-pair",
+      "why": "No subject is set; the groom is linked to the question's own marriage assertion and his child carries the pair.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": []
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_010",
+            "assertion_id": "a_010",
+            "person_id": "prs-001",
+            "confidence": "probable",
+            "rationale": "Groom.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "unanalysed-identity-conflict",
+      "expect": "fire",
+      "shape": "subject-family-pair",
+      "why": "An identity conflict naming both records with no independence_analysis has weighed nothing.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [
+          {
+            "id": "c_001",
+            "conflict_type": "identity",
+            "identity_question": "Which of these births is prs-002's?",
+            "competing_assertion_ids": [
+              "a_001",
+              "a_002"
+            ],
+            "status": "unresolved",
+            "preferred_assertion_id": null,
+            "independence_analysis": null,
+            "weighing_analysis": "The census places the boy with the family in New York; the baptism is another boy.",
+            "resolution_rationale": null,
+            "blocks_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fact-conflict-on-one-record",
+      "expect": "fire",
+      "shape": "subject-family-pair",
+      "why": "A fact conflict naming only one record of the pair weighs it against something else, not against the other attached birth.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [
+          {
+            "id": "c_001",
+            "conflict_type": "fact",
+            "identity_question": null,
+            "competing_assertion_ids": [
+              "a_001",
+              "a_003"
+            ],
+            "status": "unresolved",
+            "preferred_assertion_id": null,
+            "independence_analysis": "Different creators and informants.",
+            "weighing_analysis": "The census places the boy with the family in New York; the baptism is another boy.",
+            "resolution_rationale": null,
+            "blocks_question_ids": [
+              "q_001"
+            ],
+            "disputed_attribute": "birthplace"
+          }
+        ],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "analysed-identity-conflict-one-record",
+      "expect": "silent",
+      "why": "conflict-resolution opened a single-entry identity conflict on the baptism and weighed it.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [
+          {
+            "id": "c_001",
+            "conflict_type": "identity",
+            "identity_question": "Which of these births is prs-002's?",
+            "competing_assertion_ids": [
+              "a_002"
+            ],
+            "status": "unresolved",
+            "preferred_assertion_id": null,
+            "independence_analysis": "Different creators and informants.",
+            "weighing_analysis": "The census places the boy with the family in New York; the baptism is another boy.",
+            "resolution_rationale": null,
+            "blocks_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "analysed-fact-conflict-both-records",
+      "expect": "silent",
+      "why": "An analysed fact conflict naming both attached births has weighed the pair, and the conflict rule keeps it from being resolved across them.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [
+          {
+            "id": "c_001",
+            "conflict_type": "fact",
+            "identity_question": null,
+            "competing_assertion_ids": [
+              "a_001",
+              "a_002"
+            ],
+            "status": "unresolved",
+            "preferred_assertion_id": null,
+            "independence_analysis": "Different creators and informants.",
+            "weighing_analysis": "The census places the boy with the family in New York; the baptism is another boy.",
+            "resolution_rationale": null,
+            "blocks_question_ids": [
+              "q_001"
+            ],
+            "disputed_attribute": "birthplace"
+          }
+        ],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disproved",
+      "expect": "silent",
+      "why": "A disproved summary concludes against its claim.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "disproved",
+            "shortfall": "none",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "researcher-rejected-one",
+      "expect": "silent",
+      "why": "The researcher ruled the baptism not the child's, so the pair is no longer live.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": "rj_001"
+          }
+        ],
+        "rejected_links": [
+          {
+            "id": "rj_001",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "researcher_words": "Another John.",
+            "created": "2026-11-03"
+          }
+        ],
+        "conflicts": [],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "outside-the-family",
+      "expect": "silent",
+      "why": "The person with the pair has no tree edge to the subject and no link to the question's assertions.",
+      "write": "ps_001",
+      "research": {
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        },
+        "questions": [
+          {
+            "id": "q_001",
+            "question": "When did prs-001 marry?",
+            "status": "open"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_010",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:MARR-010",
+            "record_role": "groom",
+            "record_persona_id": "ark:/61903/1:1:MARR-010-principal",
+            "fact_type": "marriage",
+            "value": "Ballylooby, Tipperary, Ireland",
+            "place": "Ballylooby, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": [
+              "q_001"
+            ]
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "prs-002",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": [],
+        "hypotheses": [],
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "possible",
+            "shortfall": "gap",
+            "supporting_assertion_ids": [
+              "a_010"
+            ]
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "prs-001",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "1840",
+                "place": "Ireland"
+              }
+            ]
+          },
+          {
+            "id": "prs-002",
+            "facts": [
+              {
+                "id": "F2",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ],
+        "relationships": []
+      }
+    }
+  ]
+}

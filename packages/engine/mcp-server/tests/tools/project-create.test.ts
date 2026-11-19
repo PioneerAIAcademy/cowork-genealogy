@@ -514,7 +514,7 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
       persons: [
         {
           id: "I1", ark: "ark:/61903/4:1:LZNY-BRF", gender: "Male", living: false,
-          names: [{ id: "N1", preferred: true, given: "Patrick", surname: "Flynn" }],
+          names: [{ id: "N1", preferred: true, given: "Patrick", surname: "Flynn", sources: [FS] }],
           facts: [
             fact("F1", { type: "Birth", date: "~1845", standard_date: "Abt 1845", place: "Ireland", standard_place: "Ireland" }),
             fact("F2", { type: "Death", date: "1908", standard_date: "1908", place: "Schuylkill County, Pennsylvania, United States", standard_place: "Schuylkill, Pennsylvania, United States" }),
@@ -522,27 +522,27 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
         },
         {
           id: "I2", ark: "ark:/61903/4:1:LZNY-K2M", gender: "Female", living: false,
-          names: [{ id: "N2", preferred: true, given: "Mary", surname: "Kelly" }],
+          names: [{ id: "N2", preferred: true, given: "Mary", surname: "Kelly", sources: [FS] }],
           facts: [fact("F3", { type: "Birth", date: "1849", standard_date: "1849", place: "Ireland", standard_place: "Ireland" })],
         },
         {
           id: "I3", ark: "ark:/61903/4:1:LZNY-P7Q", gender: "Male", living: false,
-          names: [{ id: "N3", preferred: true, given: "James", surname: "Flynn" }],
+          names: [{ id: "N3", preferred: true, given: "James", surname: "Flynn", sources: [FS] }],
           facts: [fact("F4", { type: "Birth", date: "1871", standard_date: "1871", place: "Branch Township, Schuylkill County, Pennsylvania, United States", standard_place: "Branch, Schuylkill, Pennsylvania, United States" })],
         },
         {
           id: "I4", ark: "ark:/61903/4:1:LZNY-R4T", gender: "Female", living: false,
-          names: [{ id: "N4", preferred: true, given: "Margaret", surname: "Flynn" }],
+          names: [{ id: "N4", preferred: true, given: "Margaret", surname: "Flynn", sources: [FS] }],
           facts: [fact("F5", { type: "Birth", date: "1874", standard_date: "1874", place: "Branch Township, Schuylkill County, Pennsylvania, United States", standard_place: "Branch, Schuylkill, Pennsylvania, United States" })],
         },
         {
           id: "I5", ark: "ark:/61903/4:1:LZNY-M3F", gender: "Male", living: false,
-          names: [{ id: "N5", preferred: true, given: "Michael", surname: "Flynn" }],
+          names: [{ id: "N5", preferred: true, given: "Michael", surname: "Flynn", sources: [FS] }],
           facts: [fact("F6", { type: "Birth", date: "~1815", standard_date: "Abt 1815", place: "Ireland", standard_place: "Ireland" })],
         },
         {
           id: "I6", ark: "ark:/61903/4:1:LZNY-B8S", gender: "Female", living: false,
-          names: [{ id: "N6", preferred: true, given: "Bridget", surname: "Flynn" }],
+          names: [{ id: "N6", preferred: true, given: "Bridget", surname: "Flynn", sources: [FS] }],
           facts: [fact("F7", { type: "Birth", date: "1848", standard_date: "1848", place: "Ireland", standard_place: "Ireland" })],
         },
       ],
