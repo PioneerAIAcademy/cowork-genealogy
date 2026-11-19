@@ -1,0 +1,13 @@
+{
+  "tool": "image_search",
+  "description": "image_search for the group the image-cap test browses (image-transcribe-cap-reached): 20 of its pages were already read in the project, so it holds more than 21. The count is test data, not a live read. Serves an agent that lists the group before reading the page the delegation names, which the agent body asks for (read only ids inside a returned range).",
+  "args": {
+    "imageGroupNumber": "004452257"
+  },
+  "response": {
+    "imageCount": 64,
+    "imageIdRanges": [
+      ["004452257_00001", "004452257_00064"]
+    ]
+  }
+}
