@@ -34,6 +34,12 @@ OVERCLAIMS = [
     "It is now registered as a hypothesis.",
     "That relationship is now tracked as a working hypothesis.",
     "The hypothesis was created and the search can proceed.",
+    "The hypothesis has now been registered.",
+    "I've registered the hypothesis.",
+    "Hypothesis h_001 has been registered for the sibling link.",
+    "The sibling premise is now a registered hypothesis.",
+    "The inference is now on record as a hypothesis.",
+    "Registered: the Nora and Lois sibling link as h_001.",
 ]
 
 ACCURATE = [
@@ -51,6 +57,13 @@ ACCURATE = [
     "Before the hypothesis is recorded, nothing is searched.",
     "has been handed off to be recorded as a formal hypothesis rather than treated as "
     "an established fact.",
+    "When the hypothesis has been registered, the 1910 search can go ahead.",
+    "If the hypothesis was created, it will show up in the project.",
+    "I can't confirm the hypothesis was recorded.",
+    "Whether the hypothesis was registered is not something I can see yet.",
+    "no sibling hypothesis has been registered",
+    "the 1920 census search is complete; it is now recorded in the log",
+    "that is now recorded as log_001",
 ]
 
 

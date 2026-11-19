@@ -1921,15 +1921,31 @@ def test_names_works_only_from_tool_results(text_response, tool_calls, test):
 # `claims-no-hypothesis-write` tag
 # ---------------------------------------------------------------------------
 
+_WRITTEN = r"(?:registered|recorded|written|created|tracked|logged|on\s+record)"
 _HYPOTHESIS_WRITTEN_RE = re.compile(
     r"formal tracking entry"
-    r"|\b(?:it|this|that|the (?:sibling )?(?:hypothesis|relationship|inference))"
-    r" (?:is|has been|was) now (?:registered|recorded|tracked|written)\b"
-    r"|\bis now (?:registered|recorded|tracked) as an? (?:working )?hypothesis\b"
-    r"|(?<!\bno )(?<!\bonce the )(?<!\buntil the )(?<!\bbefore the )(?<!\bafter the )"
-    r"\bhypothesis (?:has been|is now|was) (?:registered|recorded|written|created)\b",
+    r"|\bhypothes[ie]s\b(?:\s+h_\d+)?\s+(?:(?:has|have)\s+(?:now\s+)?been|is|are|was|were)"
+    rf"\s+(?:now\s+)?{_WRITTEN}\b"
+    rf"|\bnow\s+(?:{_WRITTEN}\s+as\s+an?\s+(?:\w+\s+)?hypothesis"
+    r"|an?\s+(?:registered|recorded|tracked)\s+hypothesis)\b"
+    r"|\bI(?:['’]ve|\s+have)?\s+(?:now\s+)?(?:registered|recorded|created|written|logged)"
+    r"\s+(?:the|a|this|that)\s+(?:\w+\s+)?hypothesis\b"
+    r"|\b(?:registered|recorded|created)\b[^.\n]{0,80}?\bas\s+h_\d+\b",
     re.IGNORECASE,
 )
+_CLAUSE_BOUNDARY_RE = re.compile(r"[.;:!?\n,—–]")
+_CONDITION_OR_NEGATION_RE = re.compile(
+    r"\b(?:when|if|whether|once|until|before|after|unless|no|not|never|cannot)\b|n['’]t\b",
+    re.IGNORECASE,
+)
+
+
+def _hypothesis_written_claim(reply: str) -> str | None:
+    for m in _HYPOTHESIS_WRITTEN_RE.finditer(reply):
+        start = max((b.end() for b in _CLAUSE_BOUNDARY_RE.finditer(reply, 0, m.start())), default=0)
+        if not _CONDITION_OR_NEGATION_RE.search(reply[start:m.start()]):
+            return m.group(0)
+    return None
 
 
 def test_reply_does_not_claim_hypothesis_written(text_response, test):
@@ -1939,14 +1955,15 @@ def test_reply_does_not_claim_hypothesis_written(text_response, test):
     tracking entry" under a judge_context that names that very phrase.
 
     A hand-off described by its purpose ("handed off to register it as a
-    hypothesis"), a negation ("no hypothesis has been registered") and a condition
-    ("once the hypothesis is registered") all pass. Proven both ways in
-    ``tests/unit/test_research_hypothesis_written_validator.py``.
+    hypothesis"), and a claim whose own clause carries a negation ("no sibling
+    hypothesis has been registered") or a condition ("when", "if", "whether",
+    "once") all pass, as does "now recorded" said of anything but a hypothesis.
+    Proven both ways in ``tests/unit/test_research_hypothesis_written_validator.py``.
     """
     if "claims-no-hypothesis-write" not in test.get("tags", []):
         pytest.skip("not a claims-no-hypothesis-write test")
-    m = _HYPOTHESIS_WRITTEN_RE.search(text_response or "")
-    assert m is None, (
-        f"the reply claims the hypothesis now exists: {m.group(0)!r}. The router only "
+    claim = _hypothesis_written_claim(text_response or "")
+    assert claim is None, (
+        f"the reply claims the hypothesis now exists: {claim!r}. The router only "
         "handed it to hypothesis-tracking; describe the hand-off by its purpose."
     )
