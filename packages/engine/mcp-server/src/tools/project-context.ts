@@ -10,6 +10,7 @@
 // Spec: docs/specs/project-context-tool-spec.md.
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
+import { attachedBirthPairsByQuestion } from "../utils/attached-births.js";
 import {
   RESEARCH_QUERY_SECTIONS,
   RESEARCH_QUERY_OPTIONAL_SECTIONS,
@@ -452,7 +453,10 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       questionText.set(q.id, truncateQuestion(typeof q.question === "string" ? q.question : ""));
     }
   }
-  const questionStatuses = questionStates(research, tree).map(
+  // #4444: the identity rung's pairs, by research_append's own pair test and
+  // place lookup, so the rung and the proof gate cannot disagree.
+  const attachedBirthPairs = await attachedBirthPairsByQuestion(research, tree);
+  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map(
     ({ id, ...rest }) =>
       omitEmpty({ id, question: questionText.get(id) ?? "", ...rest }, ["nextStep"]) as ProjectContextQuestionStatus,
   );

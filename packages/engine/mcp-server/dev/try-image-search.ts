@@ -41,12 +41,6 @@ try {
   console.error(`${Date.now() - started} ms`);
   process.exit(1);
 }
-const { imageIds, ...rest } = result;
-console.log(
-  JSON.stringify(
-    { ...rest, imageCount: imageIds.length, first: imageIds[0], last: imageIds.at(-1) },
-    null,
-    2,
-  ),
-);
+console.log(JSON.stringify(result, null, 2));
+console.log(`${JSON.stringify(result).length} chars`);
 console.log(`${Date.now() - started} ms`);
