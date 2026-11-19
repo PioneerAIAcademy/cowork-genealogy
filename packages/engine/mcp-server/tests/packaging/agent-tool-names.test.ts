@@ -690,8 +690,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // locality-guide runs its whole survey through `locality_survey` (issue #4602),
   // which replaced the six survey tools it held, so no partial survey can be made
-  // by hand. `wiki_read` and `wiki_search` stay for a page the survey left out;
-  // `research_query` reads the stored external links past the inline list (#2995).
+  // by hand. `wiki_read` and `wiki_search` stay for a page the survey left out.
   "locality-guide.md": {
     tools: [
       "locality_survey",
@@ -699,7 +698,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "place_search_all",
       "project_context",
       "research_append",
-      "research_query",
       "wiki_read",
       "wiki_search",
       "wikipedia_search",

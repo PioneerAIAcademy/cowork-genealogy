@@ -12,8 +12,7 @@
       "record-availability",
       "pre-1906-vital",
       "volume-search",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -51,7 +50,7 @@
     "Should use locality_survey's volumes part to surface the digitized-but-unindexed Lutheran church records volume (recordSearchablePercent 0, fulltextSearchable false) as browse-only — image-by-image access, not name-searchable",
     "Should distinguish the probate records volume (recordSearchablePercent 4, fulltextSearchable true) as full-text searchable but not name-indexed, separately from the census volume (recordSearchablePercent 96) which is fully indexed",
     "Must NOT report only the indexed locality_survey's collections part results while staying silent on the unindexed locality_survey's volumes part findings — that would understate what's actually digitized and available to browse",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

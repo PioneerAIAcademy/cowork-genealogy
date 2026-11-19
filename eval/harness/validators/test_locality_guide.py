@@ -401,9 +401,20 @@ def _refused_localities_write(tool_calls):
             or any(op.get("section") == "localities" for op in _append_ops(tc.get("args")))
         )
         and _response_body(tc.get("response")).get("ok") is False
-        and _response_body(tc.get("response")).get("reason") == "no_project"
+        and (
+            _response_body(tc.get("response")).get("reason") == "no_project"
+            or any(
+                _UNRESOLVED_PLACE in str(e) for e in (_response_body(tc.get("response")).get("errors") or [])
+            )
+        )
         for tc in (tool_calls or [])
     )
+
+
+# research_append's localities first-place refusal: the place is not in FamilySearch's
+# standard, and the tool tells the agent not to write the entry (spec section 5.8), so
+# the guide goes in the return.
+_UNRESOLVED_PLACE = "FamilySearch's place standard has no place"
 
 
 def _names_id(reply, lid):

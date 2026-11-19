@@ -13,8 +13,7 @@
       "territorial records",
       " jurisdiction-awareness",
       "volume-search",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -49,7 +48,7 @@
   "judge_context": [
     "Recognize Ohio was part of the Northwest Territory in 1790, not yet a state, and highlight territorial land grants, military records, church registers, and tax lists while avoiding Ohio state archives or statewide vital registration, which didn't exist yet.",
     "locality_survey's volumes part returns two image groups split across the boundary change: one filed under 'Northwest Territory' (1788-1799, browse-only territorial land records) and one filed under 'Washington County, Ohio' (1799-1803, 12% indexed county tax records). The skill should connect both to the same locality despite the differing place names, reflecting the boundary-change discussion already in the guide, rather than only surfacing the county-era volume.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

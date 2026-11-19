@@ -14,8 +14,7 @@
       "archives",
       "jurisdiction-awareness",
       "volume-search",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -51,7 +50,7 @@
   "judge_context": [
     "Recognize Boston was a major immigration port in the 1840s. Mention passenger lists, customs records, naturalization files, and church registers. Highlight repositories like the National Archives (Boston), the Massachusetts State Archives, and parish archives. Avoid Ellis Island records for the 1840s.",
     "locality_survey's volumes part returns one digitized image group of Port of Boston passenger lists (1840-1850) with fulltextSearchable true but recordSearchablePercent only 3. The skill should distinguish that this volume is full-text/OCR searchable even though almost no records are individually name-indexed — different from a plain browse-only volume — and should explain what that distinction means for a researcher's search strategy.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

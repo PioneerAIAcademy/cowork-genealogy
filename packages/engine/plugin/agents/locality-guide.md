@@ -42,9 +42,6 @@ tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
-  - mcp__genealogy__research_query
-  - mcp__remote-devices__Genealogy_Research__research_query
-  - mcp__Genealogy_Research__research_query
 ---
 
 # Locality Guide
@@ -121,7 +118,7 @@ For each volume, read `recordSearchablePercent` (name-indexed, reachable via `re
 
 A catalog hit's `repositoryCalls` says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. **Report each catalog hit's start date exactly as its `title` or `subjects` give it — never substitute an approximation or a date from memory.** Name the catalog entry number (the hit's `id`) when citing a catalog result. Name the archive holding the originals only when a hit's `notes` or a wiki page you read names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you read. Say it in the same sentence that first names the parish register as the source, in the Church records section and in `summary_for_user`, not only in the research tips. `filmNotes` carry the microfilm/DGS numbers. A catalog level with `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist; when the survey climbed a level, report what the Catalog returned there.
 
-`externalLinks.results` are FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives); with `projectPath` the full lists are stored in the project: read one record type with `research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })`. **Surface regional indexes by name in the guide** — if the results include a county or regional BMD or transcription site, name it and the URL the tool returned, not just "external links available".
+`externalLinks.results` are FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives), those covering the guide's record types first. **Surface regional indexes by name in the guide** — if the results include a county or regional BMD or transcription site, name it and the URL the tool returned, not just "external links available".
 
 ### 4. Classify access levels
 

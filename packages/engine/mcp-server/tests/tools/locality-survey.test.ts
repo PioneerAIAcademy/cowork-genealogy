@@ -201,6 +201,15 @@ describe("runLocalitySurvey", () => {
     expect(out.guideHeadings[0]).toBe("## Jurisdiction overview");
   });
 
+  it("keeps a naming page's Given Names section ahead of its long opening", async () => {
+    const content = `${"Link list line.\n".repeat(400)}## Surname Spelling\n${"s".repeat(2000)}\n## Given Names\nChildren baptised with two names went by the second.\n`;
+    const out: any = await runLocalitySurvey(
+      { standardPlace: "Württemberg, Germany" },
+      deps({ page: async (url) => (url === `${WIKI}/Germany_Naming_Customs` ? page("Germany_Naming_Customs", content) : null) }),
+    );
+    expect(out.namingCustoms.content).toContain("went by the second");
+  });
+
   it("refuses a state-level topic page that belongs to another place", async () => {
     const georgia = "[Georgia](https://www.familysearch.org/en/wiki/Georgia,_United_States_Genealogy \"x\")\nStatewide 1919.";
     const out: any = await runLocalitySurvey(

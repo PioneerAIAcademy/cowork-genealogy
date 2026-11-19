@@ -10,8 +10,7 @@
       "server-migration",
       "uses-tool-response",
       "vermont",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -45,7 +44,7 @@
     "The skill MUST reference the distinctive content the fixture returns — name the 'Vermont 1771 Grant Survey Schedule' (or its approximate-1,800-grantees scope, or the New Hampshire-grants-rejected-by-New-York provenance) somewhere in the locality guide. This proves the skill consumed the server's response rather than generating Vermont commentary from memory. A guide that talks about Vermont records in general terms without ever citing that specific grant-survey schedule has not actually consumed the locality_survey's wikiPages part response.",
     "The skill MAY also cite the 1857 civil-registration start date or the town-history reprints — those are bonus signals that the response was read in full.",
     "Grounding of specifics: every concrete factual claim in the guide — a named FamilySearch collection, a record count, a digitization level (e.g. 'indexed + images', 'browse-only'), a records-begin or registration date, a specific record series — must trace to content actually returned by a tool call in THIS run. locality_survey's collections part and locality_survey's volumes part return no results here, so the guide must NOT name a specific FamilySearch collection or assign it a digitization level; with no collection returned by any tool, any such claim is fabricated. Vermont specifics are legitimate only where they appear in the locality_survey's wikiPages part response this test exercises (the 1771 Grant Survey Schedule, the 1857 registration date, town-history reprints); specifics beyond that response — especially ones attributed to the FamilySearch Wiki when the wiki_search and wiki_read fixtures returned only generic content — are ungrounded and must not pass on plausibility.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

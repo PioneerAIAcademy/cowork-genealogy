@@ -32,11 +32,12 @@ const VITAL_RECORDS_SHARE = 6_000;
 const NAMING_CUSTOMS_SHARE = 3_000;
 /** The church-records page, the main source before civil registration, up to this much. */
 const CHURCH_RECORDS_SHARE = 3_000;
-/** Pages read first, each up to its own share, before the rest are ranked. */
-const RESERVED_PAGES: ReadonlyArray<readonly [string, number]> = [
-  ["vitalRecords", VITAL_RECORDS_SHARE],
-  ["churchRecords", CHURCH_RECORDS_SHARE],
-  ["namingCustoms", NAMING_CUSTOMS_SHARE],
+/** Pages read first, each up to its own share, before the rest are ranked; within one, the
+ *  sections whose headings name its topic go first, then its opening, then the rest. */
+const RESERVED_PAGES: ReadonlyArray<readonly [string, number, RegExp]> = [
+  ["vitalRecords", VITAL_RECORDS_SHARE, /regist|birth|death|marriage|vital|civil|certificate|index/i],
+  ["churchRecords", CHURCH_RECORDS_SHARE, /church|parish|register|baptis|christen|denomination|record/i],
+  ["namingCustoms", NAMING_CUSTOMS_SHARE, /given name|naming|nickname|patronym|surname|name/i],
 ];
 /** How long the survey waits for the place's type before it decides on the parent level. */
 const TYPE_LOOKUP_MS = 8_000;
@@ -339,12 +340,13 @@ function choosePageText(
     return size(text) + (cutNote ? size(cutNote) : 0);
   };
   const reserved = new Set<number>();
-  for (const [key, share] of RESERVED_PAGES) {
+  for (const [key, share, topic] of RESERVED_PAGES) {
     const at = pages.findIndex((p) => p.key === key);
     if (at < 0) continue;
     reserved.add(at);
     let room = Math.min(share, left);
-    for (const s of all.filter((x) => x.page === at && x.rank >= 0)) {
+    const order = (x: Section) => (x.heading && topic.test(x.heading) ? 0 : x.heading === null ? 1 : 2);
+    for (const s of all.filter((x) => x.page === at && x.rank >= 0).sort((a, b) => order(a) - order(b) || a.order - b.order)) {
       const used = take(s, room);
       if (!used) break;
       room -= used;

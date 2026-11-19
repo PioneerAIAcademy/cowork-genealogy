@@ -625,6 +625,26 @@ def test_contract_passes_when_a_refused_localities_write_falls_back_to_the_guide
     expect_passes(_check_contract(_returns(_GUIDE), calls=[call]))
 
 
+_UNRESOLVED = {
+    "ok": False,
+    "errors": [
+        "for_place 'Billy, County Antrim, Ireland': FamilySearch's place standard has no place 'Billy' there. "
+        "Look up 'Billy' with place_search, contextName 'Ireland'."
+    ],
+}
+
+
+def test_contract_passes_when_an_unresolved_place_falls_back_to_the_guide():
+    expect_passes(_check_contract(_returns(_GUIDE), calls=[_append(_UNRESOLVED, **_LOC_OP)]))
+
+
+def test_contract_fires_when_an_unresolved_place_returns_no_guide():
+    expect_fires(
+        _check_contract(_returns("The place did not resolve."), calls=[_append(_UNRESOLVED, **_LOC_OP)]),
+        r"Available record types",
+    )
+
+
 def test_contract_stands_down_outside_a_project():
     with pytest.raises(pytest.skip.Exception):
         check_return_contract(_no_project_state(), _no_project_state(), [], _returns(_GUIDE))

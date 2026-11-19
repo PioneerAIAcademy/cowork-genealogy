@@ -12,8 +12,7 @@
       "archives",
       "jurisdiction-awareness",
       "colonial records",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -50,7 +49,7 @@
   ],
   "judge_context": [
     "Must mention territorial, church, land, and court records; historical societies in Alabama likely hold pre-statehood records and should be mentioned as repositories. Must avoid anachronistic record types like state archives or modern databases.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

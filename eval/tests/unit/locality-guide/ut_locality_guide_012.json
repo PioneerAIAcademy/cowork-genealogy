@@ -14,8 +14,7 @@
       "archives",
       "jurisdiction-awareness",
       "volume-search",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -55,7 +54,7 @@
   "judge_context": [
     "Recognize Oklahoma was Indian Territory in the mid‑1800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn’t exist yet).",
     "locality_survey's volumes part returns one image group of tribal enrollment cards (1840-1870) that is 99% indexed and full-text searchable. The skill should note that this volume is highly name-searchable on FamilySearch, contrasting it with the typically harder-to-search treaty and agency records discussed elsewhere in the guide.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

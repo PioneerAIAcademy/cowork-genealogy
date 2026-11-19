@@ -13,8 +13,7 @@
       "archives",
       " jurisdiction-awareness",
       "volume-search",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -52,7 +51,7 @@
   "judge_context": [
     "Recognizes Arkansas was under Spanish control before 1800 and mentions Spanish colonial land grants, church registers, and territorial records and must not mention modern databases as if they existed in 1800.",
     "locality_survey's volumes part surfaces one digitized image group of Spanish-language sacramental registers (Arkansas Post, 1763-1800) that is entirely browse-only (recordSearchablePercent 0, fulltextSearchable false). The skill should mention this volume exists and is browseable on FamilySearch even though it has no name index, rather than implying no FamilySearch digitized images exist for the period.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

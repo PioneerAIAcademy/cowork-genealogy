@@ -11,8 +11,7 @@
       "colonial records",
       "church registers",
       "town meetings",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -47,7 +46,7 @@
   ],
   "judge_context": [
     "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

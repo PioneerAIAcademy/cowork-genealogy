@@ -12,8 +12,7 @@
       "reconstruction",
       "archives",
       "volume-search",
-      "direct-arm",
-      "localities-persist"
+      "direct-arm"
     ]
   },
   "input": {
@@ -48,7 +47,7 @@
   "judge_context": [
     "Must mention record loss due to the fire. Must highlight substitutes (church registers, insurance claims, reconstructed deeds). Newspaper collections documented the fire and its aftermath and are a valuable source for this period. Must not suggest uninterrupted civil records.",
     "locality_survey's volumes part returns only two small image groups (38 and 112 images) covering pre- and post-fire court/property records, far smaller than typical county collections. Credit the skill for surfacing these locality_survey's volumes part results and conveying that digitized coverage for this period is unusually thin — consistent with the fire's destruction of records. Citing the specific image counts is a plus but not required; a vague restatement of the numbers should not by itself fail the response.",
-    "The guide is saved in the project's localities entry (guide_markdown), not returned; grade the saved guide."
+    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }
