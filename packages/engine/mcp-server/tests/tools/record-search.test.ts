@@ -1163,6 +1163,10 @@ describe("recordSearchTool — inline compaction", () => {
       });
       expect(again.ok).toBe(true);
       if (!again.ok) return;
+      // The single-op form returns the entry; the batch form returns `results`.
+      // Narrow rather than cast: a cast would turn a shape regression into a
+      // silently undefined `logId` and a confusing failure here.
+      if ("results" in again) throw new Error("expected the single-op result");
       expect(again.logId).toBe(out.logId);
       expect(again.alreadyLogged).toBe(true);
       const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -1198,6 +1202,7 @@ describe("recordSearchTool — inline compaction", () => {
       });
       expect(one.ok && two.ok).toBe(true);
       if (!one.ok || !two.ok) return;
+      if ("results" in one || "results" in two) throw new Error("expected the single-op result");
       expect(two.logId).not.toBe(one.logId);
       expect(two.alreadyLogged).toBeUndefined();
       const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
