@@ -61,12 +61,16 @@ function fold(s: string): string {
 }
 
 /** The first capitalised word after `in`/`at` (`of` too for a census) in the
- *  clause following the event's own verb. `of` is excluded otherwise because
- *  it usually introduces a person ("the baptism record of Hoval Hansen"). */
+ *  clause following the event's own verb, stopping at another event's verb.
+ *  `of` is excluded otherwise because it usually introduces a person ("the baptism record of Hoval Hansen"). */
 function eventPlace(objective: string, event: TargetEvent): string | null {
   const preps = event === "census" ? "in|at|of" : "in|at";
+  const others = (Object.keys(EVENT_VERB) as TargetEvent[])
+    .filter((e) => e !== event)
+    .map((e) => EVENT_VERB[e])
+    .join("|");
   const rx = new RegExp(
-    `\\b(?:${EVENT_VERB[event]})\\b[^.;?]*?\\b(?:${preps})\\s+(?:the\\s+)?(?:city\\s+of\\s+|parish\\s+of\\s+)?(\\p{Lu}[\\p{L}'’\\-]*)`,
+    `\\b(?:${EVENT_VERB[event]})\\b(?:(?!\\b(?:${others})\\b)[^.;?])*?\\b(?:${preps})\\s+(?:the\\s+)?(?:city\\s+of\\s+|parish\\s+of\\s+)?(\\p{Lu}[\\p{L}'’\\-]*)`,
     "giu",
   );
   for (const m of objective.matchAll(rx)) {

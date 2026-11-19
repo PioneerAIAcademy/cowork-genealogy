@@ -36,6 +36,14 @@ describe("objectiveTarget — reading the objective", () => {
     expect(t).toMatchObject({ event: "census", place: "trowbridge" });
   });
 
+  it("does not read another event's place as the target's", () => {
+    expect(
+      objectiveTarget(
+        "Find the birth record of Hoval Hansen, born about 1780, who later died in Trysil, Hedmark, Norway in 1860.",
+      ),
+    ).toBeNull();
+  });
+
   it("is null when the objective names an event but no record", () => {
     expect(
       objectiveTarget("Did Anna Macek and her husband of Rohovládova Bělá have a son named František, baptized 1867?"),
