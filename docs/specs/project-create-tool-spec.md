@@ -146,9 +146,9 @@ count, not time.
   sources follow as `S2…`, keeping only `id/title/citation/author/url`: `notes`,
   `text`, `image_ref` and `artifact_url` are response-only and dropped. The
   read's top-level `notes` is dropped too.
-- **References:** every person fact, relationship, and relationship fact gets
-  `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level and
-  relationship-level `sources` refs are re-pointed at their `S` ids.
+- **References:** every person name, person fact, relationship, and relationship
+  fact gets `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level,
+  name-level and relationship-level `sources` refs are re-pointed at their `S` ids.
 - **Relationships** get `R` ids, with every endpoint rewritten to `I` ids.
 - **Loops:** a ParentChild loop in the read (a person recorded as their own
   ancestor, directly or through a chain) is a FamilySearch data error, and the
