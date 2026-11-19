@@ -384,6 +384,22 @@ describe("merge_tree_persons: the claim warnings (Decision 13)", () => {
     expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
   });
 
+  it("a record identity covers only through its own party, not another party on the same record", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Mary")], relationships: [] },
+      [ps("ps_001", [{ claim: "the groom is him", proof_tier: "probable", supporting_assertion_ids: ["a_101", "a_102"], identity: { record_id: "recM", party: "groom", person: "I1" } }])],
+      {
+        assertions: [
+          { id: "a_101", record_id: "recM", source_id: "src_001", record_role: "groom", fact_type: "name", value: "Patrick Flynn", record_basis: "stated" },
+          { id: "a_102", record_id: "recM", source_id: "src_001", record_role: "bride", fact_type: "name", value: "Mary Kelly", record_basis: "stated" },
+        ],
+        person_evidence: [link("pe_001", "a_101", "I1"), link("pe_002", "a_102", "I5")],
+      },
+    );
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
+  });
+
   it("an identity claim at possible, or denied, does not cover the merge", async () => {
     for (const extra of [{ proof_tier: "possible" }, { polarity: "denied" }]) {
       await writeProject(
