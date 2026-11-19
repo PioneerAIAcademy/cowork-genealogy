@@ -1,0 +1,45 @@
+{
+  "tool": "record_search",
+  "description": "Live capture (2026-11-17, engine recordSearchTool) of givenName Una, surname Halsteinsdatter, collection 1468080, marriage 1770-1800, count 50. 1 matches; the bride NW44-PMK is not among the 1 rows returned. Captured without subjectId; its ranking against KZHH-VTX is rank-search-matches-hamre-1786-una-halsteinsdatter-1468080, which the mock folds in when the call names that subject. Response verbatim except staged, rankingSkipped and unloggedSearches, which the mock adds per run. Shared by ut_search_records_022 and ut_search_records_023.",
+  "args": {
+    "givenName": "Una",
+    "surname": "Halsteinsdatter",
+    "collectionId": "1468080"
+  },
+  "response": {
+    "query": {
+      "givenName": "Una",
+      "surname": "Halsteinsdatter",
+      "collectionId": "1468080",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800,
+      "count": 50
+    },
+    "totalMatches": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NWD5-3L9",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "19 Sep 1778",
+            "place": "Herøy, Møre og Romsdal, Norway"
+          }
+        ],
+        "personName": "Halstensdr",
+        "sex": "Female",
+        "collectionId": "1468080",
+        "recordTitle": "Entry for Anders Andersen",
+        "recordArk": "ark:/61903/1:2:MY3K-SBX",
+        "batchNumber": "M42205-1",
+        "role": "Bride"
+      }
+    ],
+    "collections": {
+      "1468080": "Norway, Marriages, 1660-1926"
+    }
+  }
+}

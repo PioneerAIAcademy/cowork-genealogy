@@ -1311,3 +1311,55 @@ describe("questionStatus — the dispatch arm skips an item waiting on an upload
     expect(questionStatus(d, question()).nextStep).toBe("search-records");
   });
 });
+
+describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
+  const tree = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John" }] },
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Pedro" }] },
+    ],
+    relationships: [],
+  };
+  const father = {
+    claim: "father", proof_tier: "probable", supporting_assertion_ids: ["a_1"],
+    relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+  };
+  const concluded = (claims: any[]) =>
+    doc({
+      questions: [question({ status: "resolved" })],
+      assertions: [{ id: "a_1", record_id: "r", extracted_for_question_ids: [Q] }],
+      proof_summaries: [{ id: "ps_001", question_id: Q, tier: "probable", claims }],
+    });
+
+  it("an unencoded claim reports the encode step", () => {
+    const s = questionStatus(concluded([father]), question({ status: "resolved" }), tree);
+    expect(s.nextStep).toBe("proof-conclusion — encode father from ps_001");
+  });
+
+  it("an encoded claim reports nothing, and with no tree the arm is skipped", () => {
+    const encoded = { ...tree, relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }] };
+    expect(questionStatus(concluded([father]), question({ status: "resolved" }), encoded).nextStep).toBeNull();
+    expect(questionStatus(concluded([father]), question({ status: "resolved" })).nextStep).toBeNull();
+  });
+
+  it("a supported hypothesis with no summary routes to proof-conclusion", () => {
+    const d = doc({
+      assertions: [{ id: "a_1", record_id: "r", extracted_for_question_ids: [Q] }],
+      hypotheses: [{ id: "h_001", status: "supported", related_question_ids: [Q] }],
+      person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
+    });
+    expect(questionStatus(d, question(), tree).nextStep).toBe(
+      "proof-conclusion — hypothesis h_001 is supported and no related question has a proof summary",
+    );
+  });
+
+  it("a supported hypothesis does not jump ahead of a planned search", () => {
+    const d = doc({
+      plans: [{ id: "pl_001", question_id: Q, status: "active", items: [{ id: "pli_001", status: "planned", sequence: 1, repository: "FamilySearch", record_type: "census" }] }],
+      assertions: [{ id: "a_1", record_id: "r", extracted_for_question_ids: [Q] }],
+      hypotheses: [{ id: "h_001", status: "supported", related_question_ids: [Q] }],
+      person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
+    });
+    expect(questionStatus(d, question(), tree).nextStep ?? "").not.toMatch(/^proof-conclusion — hypothesis/);
+  });
+});

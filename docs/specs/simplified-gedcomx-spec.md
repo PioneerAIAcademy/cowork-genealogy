@@ -418,18 +418,13 @@ fact of a vital type lands, so a pre-existing flag keeps asserting a concluded
 value while the conflict is open (10 such persons across the committed e2e final
 trees, measured 2026-09-10). On `add_fact` it means "add this without a primary"
 and leaves any existing primary of that type alone; it never clears the type.
-**A later merge re-marks it, and that is intended.** `mergeFacts`
-(`src/utils/merge-gedcomx.ts`) marks the most complete fact of every vital type
-primary unconditionally, so a person whose primary was cleared comes out of
-`merge_tree_persons` — or out of folding a FamilySearch candidate document —
-with the flag restored, and a vital type that never carried one gains it.
-**Ruled intended 2026-09-11**: a merge concludes, so it is entitled to name the
-best fact of a type; gating the re-mark on the group having already had a
-primary was considered and rejected. Three tests in
-`tests/utils/merge-gedcomx.test.ts` specify the current behaviour by name,
-including "marks a lone vital fact primary even when nothing was merged into
-it" — do not treat them as stale. The operational consequence is the only thing
-to carry: if the conflict is still open after a merge, clear the flag again.
+**A merge never sets it.** `primary` follows a claim (Decision 34 of
+`docs/plan/conclusion-tree.md`): any writer sets it only on a fact a live
+affirmed claim at `probable` or better covers, and `research_append` clears it
+when that claim goes. `mergeFacts` (`src/utils/merge-gedcomx.ts`) keeps each
+input's flag and marks nothing; when two facts of one vital type would both
+carry it, the survivor's own keeps it. A cleared primary stays cleared through a
+merge.
 
 `preferred` on names has the same shape and no equivalent, because nothing has
 needed one.
