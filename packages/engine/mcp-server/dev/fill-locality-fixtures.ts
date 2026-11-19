@@ -3,14 +3,14 @@
  * caller's `research_append` now stores them: counts stamped, then the place's
  * and (in the United States, Canada and Mexico) the country's collections filled
  * from FamilySearch's live catalog. Only entries in those three countries are
- * touched; ids, order and every other field are kept. A collection the catalog
+ * touched unless `--all` is given; ids, order and every other field are kept. A collection the catalog
  * does not hold is a fixture's own synthetic one, served by its mock fixtures, so
  * it keeps the counts the fixture gave it rather than the null the stamp sets.
  *
  * Needs a FamilySearch login (`~/.familysearch-mcp/tokens.json`).
  *
  * Usage:
- *   npx tsx dev/fill-locality-fixtures.ts <research.json> [<research.json> ...]
+ *   npx tsx dev/fill-locality-fixtures.ts [--all] <research.json> [<research.json> ...]
  */
 import { readFile, writeFile } from "fs/promises";
 import { fillLocalityEntryFromCatalog } from "../src/tools/research-append.js";
@@ -18,7 +18,8 @@ import { collectionCatalogLoader } from "../src/tools/collections-search.js";
 import { localityNationalCountry } from "../src/utils/collection-scope.js";
 import { LOCAL } from "../src/auth/principal.js";
 
-const files = process.argv.slice(2);
+const all = process.argv.includes("--all");
+const files = process.argv.slice(2).filter((a) => a !== "--all");
 if (files.length === 0) {
   console.error("usage: npx tsx dev/fill-locality-fixtures.ts <research.json> [...]");
   process.exit(2);
@@ -29,7 +30,7 @@ let touched = 0;
 for (const file of files) {
   const research = JSON.parse(await readFile(file, "utf-8"));
   for (const entry of Array.isArray(research.localities) ? research.localities : []) {
-    if (!localityNationalCountry(entry)) continue;
+    if (!all && !localityNationalCountry(entry)) continue;
     const sent: any[] = Array.isArray(entry.collections) ? entry.collections.map((c: any) => ({ ...c })) : [];
     const before = sent.length;
     const warnings = fillLocalityEntryFromCatalog(entry, catalog).filter((w) => !w.includes("is not in FamilySearch's collection catalog"));
@@ -50,6 +51,6 @@ for (const file of files) {
   await writeFile(file, JSON.stringify(research, null, 2) + "\n");
 }
 if (touched === 0) {
-  console.error("no United States, Canada or Mexico locality in the files given");
+  console.error(all ? "no locality in the files given" : "no United States, Canada or Mexico locality in the files given");
   process.exit(1);
 }
