@@ -200,7 +200,8 @@ contract:
   give a table in transcription order, one row per line, then one `unmatched`
   row per index entry left over: the index reading, the new reading, and
   `same` or `differ — check this line on the image`, each row cited by the
-  image id. Never call either reading the error, never state a
+  image id. That `---` is the return's only one: the table and any prose come
+  after it, with no `summary_for_user` `---` below. Never call either reading the error, never state a
   correction, and never write that a name is missing from the index; an entry
   with no pair is `unmatched`. Exempt from the searchable-volume decline below.
 - A searchable volume is still declined (step 2), with nothing logged. A page

@@ -470,6 +470,10 @@ def test_reindex_reply_pairs_readings_without_a_verdict(agent_returns, text_resp
     block = _after_final_rule(reply)
     assert block is not None and block.strip(), "the reply has no block after a final `---`"
     for left, right in _REINDEX_PAIRS:
+        assert _line_pairs(block, left, right) or not _line_pairs(reply, left, right), (
+            f"the line pairing {' '.join(left)} with {' '.join(right)} is above the final `---`, "
+            "and the router relays only what follows it; write no `---` after the table"
+        )
         assert _line_pairs(block, left, right), (
             f"no line pairs the index reading {' '.join(left)} with the page reading "
             f"{' '.join(right)}; listing them as separate unmatched rows is the failure this test exists for"

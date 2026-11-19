@@ -80,6 +80,14 @@ def test_bad_reply_fails_with_a_message(name):
     assert str(err.value).strip(), f"{name}: the validator failed without saying why"
 
 
+def test_a_table_above_a_second_rule_fails_naming_the_rule():
+    """Scratch run 2026-11-19, runs 4-5: the pairs were right but sat above a
+    second `---`, so the router relays only the summary below it."""
+    reply = GOOD + "---\nI compared the page with its index; fifteen lines differ.\n"
+    with pytest.raises(AssertionError, match="above the final `---`"):
+        check_reply([], reply, TEST)
+
+
 def test_negation_is_scoped_to_its_own_clause():
     """'Neither … index error' is negated; a second clause's verdict is not."""
     reply = GOOD + "Not every line differs; the index was wrong on line 1.\n"
