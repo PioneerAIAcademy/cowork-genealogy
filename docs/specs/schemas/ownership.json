@@ -48,7 +48,7 @@
         "unit",
         "hook"
       ],
-      "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation.",
+      "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation. research_append sets `status` from `completed` back to `active` when a write leaves a question unresolved. That is an engine write, not a caller write, so it adds no caller here — and deliberately no `toolAuthorized` entry either: that field is read section-wide by the packaging guard and the e2e attribution report, neither of which can narrow it to the one delta, so granting it there would stop the guard seeing a missing caller on this row at all. Only the unit validator authorizes it, narrowed to `completed` -> `active` on a call that does not itself write `status`.",
       "failure": "A subagent rewrites the objective, or anyone rewrites the title or subject persons, or a non-owner sets status mid-project, and every later skill plans against a changed goal it never agreed to.",
       "remedy": "Route a status change through proof-conclusion. The main conversation rewrites the objective when the user asks; a subagent cannot. The title and subject persons are fixed for the life of the project.",
       "override": "none",

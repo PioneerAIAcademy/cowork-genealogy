@@ -2161,6 +2161,73 @@ ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91
 `person_evidence` links.
 
+### 5.11a A write that leaves a question open reopens a completed project
+
+When a call leaves a question **it wrote** at a status other than `resolved`,
+on a project whose status was `completed` before the call, the same write sets
+`project.status` to `active`, stamps `project.updated`, and returns a warning
+naming the question and its status.
+
+**Why.** A researcher named two questions; only the first was written. The first
+was concluded, proof-conclusion marked the project `completed` — correctly, as
+every question then stood resolved — and the hosted completion halt ended the
+turn. The second question was written afterwards, and nothing reopened the
+project, so it was researched inside a completed one.
+
+**Reopen only; no refusal** (review-ready, 2026-11-19). Refusing a `completed`
+write while a question is open would not have caught this: the first question
+was the only one when `completed` was written. It would also fire on 12 of 181 completed
+end-to-end runs — measured 2026-11-19 by walking
+`eval/runlogs/e2e/**/*.final-research.json` for `project.status == "completed"`
+with any `questions[].status != "resolved"` (8 `open`, 7 `exhaustive_declared`;
+the count moves as new runs are committed) — and the ADR on writer-tool
+preconditions requires every one of those refusals to be read before such a
+gate ships.
+
+Four properties of the trigger, each load-bearing:
+
+- **The outcome, not the op.** An `update` that sets a question's status back
+  from `resolved` reopens, exactly as an `append` of an open question does.
+  Testing the op leaves a question reopened by update sitting in a completed
+  project.
+- **Every status but `resolved`.** The predicate is derived from the
+  `question_status` enum, so a status added later reopens by default.
+  `exhaustive_declared` and `in_progress` reopen; only `resolved` does not.
+- **Questions this call actually wrote.** The set comes from the applied ops
+  with their no-ops excluded. A settled no-op write changes no file, and the
+  warning channel reaches the result whether or not the document was written,
+  so counting no-ops would report a reopen that never happened.
+- **Only `completed`.** A `paused` project stays paused: the researcher chose
+  that.
+- **A caller's own `project.status` write stands, when it changes the field.**
+  Suppression is keyed on a change, not on the field being present: a call that
+  re-asserts the status the project already had asserts nothing, so it does not
+  suppress the reopen. Keyed on presence, a batch appending an open question
+  beside `{status: "completed"}` on an already-completed project reproduced the
+  incident this rule exists to fix. A write of `active` or `paused` does change
+  the field, so it stands and the engine leaves it.
+
+**This is an engine write, not a caller write.** The ownership row for `project`
+still names only init-project and proof-conclusion as callers, and the plugin
+hook keys on `project.status` in the call's *input*, so it does not see this
+write.
+
+**What else reads `project.status`.** The hosted halt keys on the transition
+*into* `completed`, so a reopened project that proof-conclusion completes again
+halts again — intended. The beta web tier's session card reads the field from
+the newest `research.json`, so after a reopen a card that read "done" reads
+"stopped" or "needs you" — the intended direction, since calling an unfinished
+project done is the failure that card guards against.
+
+Two end-to-end **corpus** readers also key on it, and for them "intended
+direction" does not apply — they classify committed runs after the fact, so the
+number simply moves. `derive_stop_reason` reads the final `research.json`, so a
+run that completed and was then reopened by a later question write is recorded
+`natural_end` rather than `completed`. The nudge report tallies on
+`project.status == "completed"`, so the same run moves from a completion to a
+vetoed-yield run. Neither is wrong, but a metric drawn across the change date
+mixes two populations.
+
 ### 5.12 A caller's `localities` collection counts are stamped from the catalog
 
 On a `localities` append, and on an update whose `fields` sets `collections`,
