@@ -12,7 +12,12 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { mkdtemp, copyFile, readFile, rm } from "fs/promises";
 import { join, resolve } from "path";
 import { tmpdir } from "os";
-import { researchAppend, researchAppendFromCaller, CATALOG_READ_BUDGET_MS } from "../../src/tools/research-append.js";
+import {
+  researchAppend,
+  researchAppendFromCaller,
+  CATALOG_READ_BUDGET_MS,
+  LOCALITY_COLLECTIONS_FILL_MAX,
+} from "../../src/tools/research-append.js";
 import { markFsRefusal } from "../../src/utils/fs-budget.js";
 import { clearCollectionsCache, collectionCatalogLoader } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
@@ -24,7 +29,7 @@ const SCENARIO = resolve(__dirname, "../../../../../eval/fixtures/scenarios/mid-
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
 
-function catalogEntry(id: string, title: string, records: number, persons: number) {
+function catalogEntry(id: string, title: string, records: number, persons: number, startYear: number | null = 1855, endYear: number | null = startYear) {
   return {
     content: {
       gedcomx: {
@@ -37,7 +42,7 @@ function catalogEntry(id: string, title: string, records: number, persons: numbe
               { count: persons, resourceType: "http://gedcomx.org/Person" },
               { count: 7754, resourceType: "http://gedcomx.org/DigitalArtifact#FamilySearch" },
             ],
-            searchMetadata: [{ imageCount: 7754, recordCount: records, startYear: 1855, endYear: 1855 }],
+            searchMetadata: [{ imageCount: 7754, recordCount: records, ...(startYear === null ? {} : { startYear, endYear: endYear ?? startYear }) }],
           },
         ],
       },
@@ -419,6 +424,112 @@ describe("research_append stamps locality collection counts from the catalog", (
     it("with no part below the scope, adds only what names no part", async () => {
       await appendIn("Portugal", []);
       expect((await storedCollections()).map((c: any) => c.id)).toEqual(["4", "5", "6"]);
+    });
+  });
+
+  describe("national collections (spec 5.12): the US, Canada and Mexico get their core country-wide rows", () => {
+    const NATIONAL: FSCollectionsResponse = {
+      results: 17,
+      index: 0,
+      entries: [
+        catalogEntry("m1", "Michigan, Death Records, 1867-1952", 1, 1, 1867, 1952),
+        catalogEntry("us1850", "United States, Census, 1850", 1, 1, 1850),
+        catalogEntry("us1900", "United States, Census, 1900", 1, 1, 1900),
+        catalogEntry("us1940", "United States, Census, 1940", 1, 1, 1940),
+        catalogEntry("usmort", "United States Census (Mortality Schedule), 1850-1880", 1, 1, 1850, 1880),
+        catalogEntry("usfb", "United States, Freedmen's Bureau Marriages, 1859-1873", 1, 1, 1859, 1873),
+        catalogEntry("usky", "United States, Kentucky, Agricultural Schedules, 1850-1880", 1, 1, 1850, 1880),
+        catalogEntry("usvi", "United States Virgin Islands, Census Records, 1841-1911", 1, 1, 1841, 1911),
+        catalogEntry("ussdi", "United States, Social Security Death Index", 1, 1, null),
+        catalogEntry("ca1901", "Canada, Census, 1901", 1, 1, 1901),
+        catalogEntry("caon", "Canada, Ontario, Births, 1869-1912", 1, 1, 1869, 1912),
+        catalogEntry("caon61", "Canada, Ontario, Census, 1861", 1, 1, 1861),
+        catalogEntry("mx1930", "Mexico, National Census, 1930", 1, 1, 1929, 1931),
+        catalogEntry("mxbap", "Mexico, Baptisms, 1560-1950", 1, 1, 1559, 1950),
+        catalogEntry("mxja", "Mexico, Jalisco, Civil Registration, 1857-2000", 1, 1, 1857, 2000),
+        catalogEntry("mxso", "Mexico, Sonora, Catholic Church Records, 1657-1994", 1, 1, 1657, 1994),
+        catalogEntry("nm", "New Mexico, Deaths, 1889-1945", 1, 1, 1889, 1945),
+      ],
+    };
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(NATIONAL), { status: 200 }));
+    });
+    const ids = async () => (await storedCollections()).map((c: any) => c.id);
+    const DETROIT = "Wayne, Michigan, United States";
+
+    it("adds the core national rows that overlap the time period, after the place's own, and says so", async () => {
+      const r = await appendIn(DETROIT, [], { time_period: "1870-1930" });
+      expect(await ids()).toEqual(["m1", "us1900", "usmort", "ussdi"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 1 other FamilySearch collections for "Michigan" from the catalog, after the 0 sent',
+        'localities collections: added the 3 core national FamilySearch collections for "United States" overlapping 1870-1930 from the catalog',
+      ]);
+    });
+
+    it("gives a bare Mexico place its country-wide baptism index when no census falls in the period", async () => {
+      await appendIn("Mexico", [], { time_period: "1880-1920" });
+      expect(await ids()).toEqual(["mxbap"]);
+    });
+
+    it("leaves a national collection that depends on who the person was to the planner's own search", async () => {
+      await appendIn(DETROIT, [], { time_period: "1859-1873" });
+      expect(await ids()).not.toContain("usfb");
+    });
+
+    it("gives a bare country-level place the core rows only, not the country's whole list", async () => {
+      await appendIn("United States", [], { time_period: "1870-1930" });
+      expect(await ids()).toEqual(["us1900", "usmort", "ussdi"]);
+    });
+
+    it("keeps an undated national row, and cuts nothing for a time period with no year", async () => {
+      await appendIn(DETROIT, [], { time_period: "the Detroit years" });
+      expect(await ids()).toEqual(["m1", "us1850", "us1900", "us1940", "usmort", "ussdi"]);
+    });
+
+    it("still adds national rows to an entry that already sent every place row", async () => {
+      const r = await appendIn(DETROIT, [{ id: "m1", title: "Michigan, Death Records, 1867-1952", person_count: 1, record_count: 1 }], { time_period: "1895-1905" });
+      expect(await ids()).toEqual(["m1", "us1900", "ussdi"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 2 core national FamilySearch collections for "United States" overlapping 1895-1905 from the catalog',
+      ]);
+    });
+
+    it("gives Canada its national census, not another province's rows", async () => {
+      await appendIn("Halifax, Nova Scotia, Canada", [], { time_period: "1836-1910" });
+      expect(await ids()).toEqual(["ca1901"]);
+    });
+
+    it("adds no duplicate for a country-level place the place fill already covered", async () => {
+      await appendIn("Canada", [], { time_period: "1890-1910" });
+      const stored = await ids();
+      expect(stored.filter((id: string) => id === "ca1901")).toHaveLength(1);
+    });
+
+    it("gives Mexico its national census, not New Mexico's or another state's rows", async () => {
+      await appendIn("Guadalajara, Jalisco, Mexico", [], { time_period: "1920-1940" });
+      expect(await ids()).toEqual(["mxja", "mx1930", "mxbap"]);
+    });
+
+    it("adds nothing national for a place outside the three countries", async () => {
+      const r = await appendIn("Funchal, Madeira, Portugal", [], { time_period: "1830-1910" });
+      expect(r.ok).toBe(true);
+      expect(warningsOf(r).some((w) => w.includes("national"))).toBe(false);
+    });
+
+    it("holds the whole list at the cap, and says how many of the national rows it added", async () => {
+      const many: FSCollectionsResponse = {
+        results: LOCALITY_COLLECTIONS_FILL_MAX + 5,
+        index: 0,
+        entries: Array.from({ length: LOCALITY_COLLECTIONS_FILL_MAX + 5 }, (_, j) =>
+          catalogEntry(`n${j}`, "United States, Census, 1900", 1, 1, 1900),
+        ),
+      };
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(many), { status: 200 }));
+      const r = await appendIn(DETROIT, [], { time_period: "1870-1930" });
+      expect(await storedCollections()).toHaveLength(LOCALITY_COLLECTIONS_FILL_MAX);
+      expect(warningsOf(r)).toEqual([
+        `localities collections: added ${LOCALITY_COLLECTIONS_FILL_MAX} of the ${LOCALITY_COLLECTIONS_FILL_MAX + 5} core national FamilySearch collections for "United States" overlapping 1870-1930 from the catalog`,
+      ]);
     });
   });
 
