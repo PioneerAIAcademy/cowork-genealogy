@@ -2477,6 +2477,98 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(r.escalationDue).toContain("census plan item pli_002");
   });
 
+  describe("the tool-written nil dedupe (issue #4527)", () => {
+    // The entry record_search wrote for itself: same query and plan item as nilOp().
+    const written = (extra: any = {}) =>
+      nil(1, { written_by: "record_search", query: { surname: "Flynn", givenName: "Patrick" }, ...extra });
+
+    it("answers an identical hand-logged nil with the entry the tool wrote", async () => {
+      await write(project([written()]));
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_001");
+      expect(r.alreadyLogged).toBe(true);
+    });
+
+    it("names the nil search, not a stagedResultsRef the op never sent", async () => {
+      await write(project([written()]));
+      const r: any = await logNil();
+      const warning = r.validation.warnings.join(" ");
+      expect(warning).toContain("record_search already logged this nil search as log_001");
+      expect(warning).not.toContain("stagedResultsRef");
+    });
+
+    // A query plus a plan item names a SHAPE that is deliberately re-run, not one
+    // search. So a re-send claiming a different result is a second search event
+    // and must be written; swallowing it files a positive under the old negative.
+    it("writes a later positive on the same query instead of returning the nil", async () => {
+      await write(project([written()]));
+      const r: any = await logNil({ ...nilOp(), outcome: "positive", resultsExamined: 12 });
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_002");
+      expect(r.alreadyLogged ?? false).toBe(false);
+    });
+
+    it("writes a re-send that examined rows even if it still calls itself negative", async () => {
+      await write(project([written()]));
+      const r: any = await logNil({ ...nilOp(), resultsExamined: 3 });
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_002");
+    });
+
+    // The tool writes at the moment of the nil, before the agent knows the
+    // variants are exhausted. That conclusion arrives only on a later hand-log.
+    it("writes a re-log carrying notes the tool's entry does not have", async () => {
+      await write(project([written()]));
+      const notes = "FamilySearch spelling variants exhausted; escalate to Ancestry.";
+      const r: any = await logNil({ ...nilOp(), notes });
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_002");
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(after.log.at(-1).notes).toBe(notes);
+    });
+
+    it("still dedupes when the note only repeats what the entry already says", async () => {
+      const notes = "Checking the 1850 census.";
+      await write(project([written({ notes })]));
+      const r: any = await logNil({ ...nilOp(), notes });
+      expect(r.logId).toBe("log_001");
+      expect(r.alreadyLogged).toBe(true);
+    });
+
+    it("does not dedupe a different query on the same plan item", async () => {
+      await write(project([written()]));
+      const r: any = await logNil(nilOp("Flinn"));
+      expect(r.logId).toBe("log_002");
+    });
+
+    it("refuses a batch op's forged `writtenBy` rather than stamping it", async () => {
+      await write(project([]));
+      const r: any = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ ...nilOp(), writtenBy: "record_search" } as any],
+      });
+      expect(r.ok).toBe(true);
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(after.log.at(-1).written_by).toBeUndefined();
+    });
+
+    // A forged stamp is not merely a false provenance line: it makes the entry a
+    // dedupe target, so the agent's own next genuine nil is answered with it and
+    // never written — the swallowed negative the dedupe exists to avoid.
+    it("leaves a later genuine nil writable after a forged stamp attempt", async () => {
+      await write(project([]));
+      await researchLogAppend({
+        projectPath: dir,
+        ops: [{ ...nilOp(), writtenBy: "record_search" } as any],
+      });
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.alreadyLogged ?? false).toBe(false);
+      expect(r.logId).toBe("log_002");
+    });
+  });
+
   describe("planRationale, on the first nil for a plan item", () => {
     const RATIONALE = "The 1850 census places Patrick in a household.";
 

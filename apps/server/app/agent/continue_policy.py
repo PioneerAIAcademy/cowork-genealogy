@@ -69,12 +69,17 @@ NO_PROJECT_NOTE = (
 # denies it), so the sentence names the agents that hold it. Both hosted planes append it,
 # and the plugin's `no_project_route.py` carries the same text to Cowork as
 # `SOURCES_NOTE`; `test_the_sources_sentence_is_the_one_the_plugin_hook_adds`
-# fails if the two differ.
+# fails if the two differ. Issue #4676 appended the last two sentences: the alpha offered
+# to merge two persons on FamilySearch's Family Tree, which no tool here can write.
 SOURCES_GUIDANCE = (
     "Name a source, collection, book or citation only if a tool result in this session "
     "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
     "collections_search, which locality-guide and research-plan run. This rule is about "
-    "what you name, not about which agent a question goes to."
+    "what you name, not about which agent a question goes to. "
+    "Nothing here can change FamilySearch's Family Tree: tree_edit, tree_correct and the "
+    "merge tools change the project's own tree only. When a change belongs on FamilySearch, "
+    "such as a merge or a wrong parent link, give the researcher the steps to make it on "
+    "FamilySearch.org, and never offer to make it yourself."
 )
 
 
