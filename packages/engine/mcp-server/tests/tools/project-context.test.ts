@@ -392,8 +392,8 @@ describe("project_context", () => {
       expect(keys(r.sources?.[0])).toEqual(["assertionCount", "gedcomxSourceDescriptionId", "id", "recordIds", "repository"]);
       expect(keys(r.localities?.[0])).toEqual(["collections", "forPlace", "id", "jurisdictions", "place", "quirks", "timePeriod"]);
       expect(keys(r.localities?.[0].jurisdictions?.[0])).toEqual(["dateRange", "name"]);
-      expect(keys(r.localities?.[0].collections?.[0])).toEqual(["dateRange", "id", "personCount", "recordCount", "title"]);
-      expect(keys(r.nationalCollections?.["United States"]?.[0])).toEqual(["dateRange", "id", "personCount", "recordCount", "title"]);
+      expect(keys(r.localities?.[0].collections?.[0])).toEqual(["availability", "dateRange", "id", "personCount", "recordCount", "title"]);
+      expect(keys(r.nationalCollections?.["United States"]?.[0])).toEqual(["availability", "dateRange", "id", "personCount", "recordCount", "title"]);
       expect(keys(r.awaitingUser?.[0])).toEqual(["logId", "performed", "planItemId", "site", "urlGenerated"]);
       expect(r.exhaustedImageGroups).toEqual([{ imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_001"] }]);
       expect(keys(r.uploads?.[0])).toEqual(["hasText", "name", "uploaded"]);
@@ -731,7 +731,7 @@ describe("project_context", () => {
         timePeriod: "1870-1880",
         jurisdictions: [{ name: "Ringebu, Oppland, Norway", dateRange: "1838-" }],
         collections: [
-          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12 },
+          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12, availability: "browse-only" },
           { id: "1", title: "Uncounted" },
           { id: "2", title: "Bad count" },
         ],
@@ -774,9 +774,9 @@ describe("project_context", () => {
       ]);
       expect(r.nationalCollections).toEqual({
         "United States": [
-          { id: "us1880", title: "United States, Census, 1880", dateRange: "1880-1880", personCount: 1, recordCount: 1 },
-          { id: "us1900", title: "United States, Census, 1900", dateRange: "1900-1900", personCount: 1, recordCount: 1 },
-          { id: "us1940", title: "United States, Census, 1940", dateRange: "1940-1940", personCount: 1, recordCount: 1 },
+          { id: "us1880", title: "United States, Census, 1880", dateRange: "1880-1880", personCount: 1, recordCount: 1, availability: "name-searchable" },
+          { id: "us1900", title: "United States, Census, 1900", dateRange: "1900-1900", personCount: 1, recordCount: 1, availability: "name-searchable" },
+          { id: "us1940", title: "United States, Census, 1940", dateRange: "1940-1940", personCount: 1, recordCount: 1, availability: "name-searchable" },
         ],
       });
       expect(r.localities?.[0].collections?.map((c) => c.id)).toEqual(["m1"]);
@@ -800,6 +800,21 @@ describe("project_context", () => {
       ]);
       expect(r.nationalCollections).toEqual({ Canada: [{ id: "ca1901", title: "Canada, Census, 1901" }] });
       expect(r.localities?.[0].collections?.map((c) => c.id)).toEqual(["cans"]);
+    });
+
+    it("keeps a stored availability over the count, and labels an older row from its count", async () => {
+      const r = await run([
+        loc("loc_001", "Schuylkill, Pennsylvania, United States", "1845-1908", [
+          { id: "1999196", title: "Pennsylvania, Probate Records, 1683-1994", person_count: 52, availability: "browse-only" },
+          { id: "2466360", title: "Pennsylvania, Church Marriages, 1682-1976", person_count: 17743 },
+          { id: "old0", title: "Pennsylvania, Old Browse Set", person_count: 0 },
+        ]),
+      ]);
+      expect(Object.fromEntries((r.localities?.[0].collections ?? []).map((c) => [c.id, c.availability]))).toEqual({
+        "1999196": "browse-only",
+        "2466360": "name-searchable",
+        old0: "browse-only",
+      });
     });
 
     it("leaves a place outside the three countries alone, and gives no key", async () => {

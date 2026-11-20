@@ -78,175 +78,200 @@
           "title": "Canada, Nova Scotia, Marriages, 1711-1909",
           "date_range": "1711-1909",
           "person_count": 52949,
-          "record_count": 17717
+          "record_count": 17717,
+          "availability": "name-searchable"
         },
         {
           "id": "2242886",
           "title": "Canada, Nova Scotia, Marriages, 1864-1918",
           "date_range": "1864-1918",
           "person_count": 1747251,
-          "record_count": 372511
+          "record_count": 372511,
+          "availability": "name-searchable"
         },
         {
           "id": "2241441",
           "title": "Canada, Nova Scotia, Marriages, 1907-1932",
           "date_range": "1907-1932",
           "person_count": 383421,
-          "record_count": 66106
+          "record_count": 66106,
+          "availability": "name-searchable"
         },
         {
           "id": "1952893",
           "title": "Canada, Nova Scotia, Vital Records, 1763-1957",
           "date_range": "1763-1957",
           "person_count": 1615154,
-          "record_count": 807577
+          "record_count": 807577,
+          "availability": "name-searchable"
         },
         {
           "id": "2365251",
           "title": "Canada, Nova Scotia Church and Civil Records, 1727-1884",
           "date_range": "1727-1884",
           "person_count": 2705,
-          "record_count": 870
+          "record_count": 870,
+          "availability": "name-searchable"
         },
         {
           "id": "1810407",
           "title": "Canada, Nova Scotia, Births and Baptisms, 1702-1896",
           "date_range": "1702-1896",
           "person_count": 434515,
-          "record_count": 136014
+          "record_count": 136014,
+          "availability": "name-searchable"
         },
         {
           "id": "2241429",
           "title": "Canada, Nova Scotia, Delayed Births, 1837-1907",
           "date_range": "1837-1907",
           "person_count": 343576,
-          "record_count": 117056
+          "record_count": 117056,
+          "availability": "name-searchable"
         },
         {
           "id": "2243378",
           "title": "Canada, Nova Scotia, Births, 1864-1877",
           "date_range": "1864-1877",
           "person_count": 932167,
-          "record_count": 322088
+          "record_count": 322088,
+          "availability": "name-searchable"
         },
         {
           "id": "2242825",
           "title": "Canada, Nova Scotia, Deaths, 1864-1877",
           "date_range": "1864-1877",
           "person_count": 414186,
-          "record_count": 171773
+          "record_count": 171773,
+          "availability": "name-searchable"
         },
         {
           "id": "1460163",
           "title": "Canada, Nova Scotia, Census, 1861",
           "date_range": "1861-1861",
           "person_count": 57457,
-          "record_count": 57453
+          "record_count": 57453,
+          "availability": "name-searchable"
         },
         {
           "id": "1925428",
           "title": "Canada, Nova Scotia, Church Records, 1720-2001",
           "date_range": "1720-2001",
           "person_count": 619803,
-          "record_count": 204328
+          "record_count": 204328,
+          "availability": "name-searchable"
         },
         {
           "id": "1392507",
           "title": "Canada, Nova Scotia, Antigonish Catholic Diocese, 1823-1905",
           "date_range": "1823-1905",
           "person_count": 274473,
-          "record_count": 91875
+          "record_count": 91875,
+          "availability": "name-searchable"
         },
         {
           "id": "2251294",
           "title": "Canada, Nova Scotia, Deaths, 1890-1955",
           "date_range": "1890-1955",
           "person_count": 883671,
-          "record_count": 280653
+          "record_count": 280653,
+          "availability": "name-searchable"
         },
         {
           "id": "2251301",
           "title": "Canada, Nova Scotia, Deaths, 1956-1957",
           "date_range": "1956-1957",
           "person_count": 40243,
-          "record_count": 1074
+          "record_count": 1074,
+          "availability": "name-searchable"
         },
         {
           "id": "1808846",
           "title": "Canada, Nova Scotia, Halifax County Deed Indexes, 1749-1958",
           "date_range": "1749-1958",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "2134302",
           "title": "Canada, Nova Scotia, Probate Records, 1760-1993",
           "date_range": "1760-1993",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "1918186",
           "title": "Canada, Nova Scotia, Queens County Notes of Thomas Brenton Smith, 1700-1950",
           "date_range": "1700-1950",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "1520604",
           "title": "Canada, Births and Baptisms, 1661-1959",
           "date_range": "1661-1959",
           "person_count": 665942,
-          "record_count": 165363
+          "record_count": 165363,
+          "availability": "name-searchable"
         },
         {
           "id": "1554429",
           "title": "Canada, Census Mortality Schedules, 1871",
           "date_range": "1871-1871",
           "person_count": 45371,
-          "record_count": 45371
+          "record_count": 45371,
+          "availability": "name-searchable"
         },
         {
           "id": "1325192",
           "title": "Canada, Census, 1851",
           "date_range": "1851-1851",
           "person_count": 2199027,
-          "record_count": 2199027
+          "record_count": 2199027,
+          "availability": "name-searchable"
         },
         {
           "id": "1551612",
           "title": "Canada, Census, 1871",
           "date_range": "1871-1871",
           "person_count": 3519941,
-          "record_count": 3519941
+          "record_count": 3519941,
+          "availability": "name-searchable"
         },
         {
           "id": "1804541",
           "title": "Canada, Census, 1881",
           "date_range": "1881-1881",
           "person_count": 4499529,
-          "record_count": 4281160
+          "record_count": 4281160,
+          "availability": "name-searchable"
         },
         {
           "id": "1583536",
           "title": "Canada, Census, 1891",
           "date_range": "1891-1891",
           "person_count": 4787225,
-          "record_count": 4787225
+          "record_count": 4787225,
+          "availability": "name-searchable"
         },
         {
           "id": "1520609",
           "title": "Canada, Deaths and Burials, 1664-1955",
           "date_range": "1664-1955",
-          "person_count": 134944,
-          "record_count": 43249
+          "person_count": 134938,
+          "record_count": 43249,
+          "availability": "name-searchable"
         },
         {
           "id": "1520608",
           "title": "Canada, Marriages, 1661-1949",
           "date_range": "1661-1949",
           "person_count": 1055781,
-          "record_count": 228597
+          "record_count": 228597,
+          "availability": "name-searchable"
         }
       ],
       "quirks": [

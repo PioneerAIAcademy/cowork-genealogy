@@ -112,6 +112,17 @@ Each `Collection` object is the same for every caller:
 | `title` | string | Human-readable collection name |
 | `dateRange` | string | Time period the collection covers (e.g., `"1809-1950"`) |
 | `personCount` | number | Number of persons indexed in the collection |
+| `availability` | `"browse-only"`, optional | Present only on a collection with no indexed person or fewer than one per thousand page images (`collectionAvailability`, `utils/collection-availability.ts`); a row without it is name-searchable. research-plan copies the label rather than reading counts |
+
+**Why `availability`.** About 27 of the catalog's 3,519 collections hold a
+handful of indexed persons over millions of page images (Pennsylvania, Probate
+Records: 52 persons, 3.2 million images; New York, Probate Records: 59 in 14
+million; catalog, 2026-11-20). A `personCount > 0` rule called them
+name-searchable, and a name search there finds nothing and reads as a real nil.
+The next collection up holds about 400 persons per million images. It is written
+only on browse-only rows because a label on every row took Italy's answer from
+35,692 to 39,934 characters and cut 24 of its 257 rows at the budget; marking the
+browse-only ones costs 928.
 
 Rows used to carry `recordCount`, `imageCount` and their own
 `url`. Only locality-guide read them, and they took Italy-scoped answers to
@@ -190,7 +201,8 @@ likeliest first answer to be truncated.
     "so results come back at that scope (the tool derives it and returns it as " +
     "`scope`). Optionally filter by startYear/endYear to keep only collections " +
     "whose date range overlaps that window. Each row is {id, title, dateRange, " +
-    "personCount}; a collection's page is `collectionUrl` with `{id}` replaced by " +
+    "personCount, availability?}: availability \"browse-only\" marks a collection with no " +
+    "indexed person or under one per thousand page images; a row without it is name-searchable; a collection's page is `collectionUrl` with `{id}` replaced by " +
     "the row's id. There is no pagination: the matched set comes back in one " +
     "response, held to 40,000 characters. When it is over that, `truncated: true` " +
     "is set, `matched` gives how many rows matched, and rows whose title names " +
@@ -375,8 +387,8 @@ and output types (`Collection`, `CollectionsSearchResult`).
 - `filterByQuery(entries, query)` — case-insensitive title matching
 - `fitToBudget(result, standardPlace, budget?)` — the answer budget above
 - `subPlaceTerms(standardPlace)` — the parts of `standardPlace` below its scope
-- `collectionCountsById(data)` — every collection's `personCount` and `/Record`
-  count by id, for `research_append`
+- `collectionCountsById(data)` — every collection's `personCount`, `/Record`
+  count and image count by id, for `research_append`'s stamp and its `availability`
 - `clearCollectionsCache()` — empties the cache, for testing
 
 ### `packages/engine/mcp-server/src/index.ts`

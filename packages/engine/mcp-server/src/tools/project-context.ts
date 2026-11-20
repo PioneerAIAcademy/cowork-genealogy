@@ -20,6 +20,7 @@ import {
 import { readProjectJson, NoProjectError, NO_PROJECT_MESSAGE_CONTEXT } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { isNationalCollectionTitle, localityNationalCountry } from "../utils/collection-scope.js";
+import { collectionAvailability, type CollectionAvailability } from "../utils/collection-availability.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -99,6 +100,8 @@ export interface ProjectContextLocality {
     dateRange?: string;
     personCount?: number;
     recordCount?: number;
+    /** The stored label, else `collectionAvailability(personCount)`. */
+    availability?: CollectionAvailability;
   }[];
   quirks?: string[];
 }
@@ -425,6 +428,10 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         dateRange: typeof c.date_range === "string" ? c.date_range : null,
         personCount: Number.isInteger(c.person_count) ? c.person_count : null,
         recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
+        availability:
+          c.availability === "name-searchable" || c.availability === "browse-only"
+            ? c.availability
+            : collectionAvailability(c.person_count),
       });
       if (country && typeof c.title === "string" && isNationalCollectionTitle(c.title, country)) {
         const rows = national.get(country) ?? new Map<string, ProjectContextCollection>();
@@ -640,7 +647,7 @@ export const projectContextSchema = {
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
-    "recordCount}], quirks}] — the " +
+    "recordCount, availability}], quirks}] — availability is \"name-searchable\" or \"browse-only\"; the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and nationalCollections " +
     "{country: [same rows]} — the localities' country-wide collections for the United States, " +

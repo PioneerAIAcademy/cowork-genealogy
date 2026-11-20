@@ -128,6 +128,7 @@ can drop:
       dateRange?: string,
       personCount?: number,
       recordCount?: number,
+      availability?: "name-searchable" | "browse-only",  // the stored label, else from personCount
     }],
     quirks?: string[],
   }],
@@ -209,7 +210,10 @@ Projection rules:
   source's id; `assertionCount` counts those assertions.
 - **`localities`** — every `research.localities[]` entry, renamed to camelCase. `guide_markdown`
   and `pages_read` are left out; `research_query` serves the whole entry. A collection count
-  that is not an integer is left out.
+  that is not an integer is left out. Each collection's `availability` is its stored label
+  (research-append spec §5.12), else `collectionAvailability(person_count)` for a row saved
+  before the label existed: `browse-only` at 0, `name-searchable` above; absent when the count
+  is unknown.
 - **`nationalCollections`** — the country-wide collections the localities hold, for a
   locality whose country (its `place`, else its first `jurisdictions[].name` with one) is the
   United States, Canada or Mexico. Their collections are scoped to the state or province, so

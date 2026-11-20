@@ -295,6 +295,17 @@ def test_v1_still_fires_on_an_unserved_film_number():
         check_v1(before, after, served)
 
 
+def test_v1_fires_on_an_unserved_id_that_ends_a_sentence():
+    """The cited side read a number before a full stop as a decimal and skipped
+    it, so an id ending a sentence was never checked. A decimal still is not an
+    id. Reds without the fix."""
+    before, after = _states([_item("pli_010", rationale="Browse image group 008216999.")])
+    with pytest.raises(AssertionError, match="008216999"):
+        check_v1(before, after, [])
+    before, after = _states([_item("pli_011", rationale="About 12345.6 images per film.")])
+    check_v1(before, after, [])
+
+
 def test_v1_grounds_served_url_path_identifier():
     """A collection id served inside a URL path is grounded.
 
@@ -392,6 +403,34 @@ def test_v5_served_count_wins_over_the_entry_count():
                     {"standardPlace": "Pennsylvania, United States"})]
     with pytest.raises(AssertionError, match="1999196"):
         check_v5(_with_locality(before), after, served)
+
+
+def _thin_locality(state):
+    """A localities entry storing 1999196 at its real 52 persons, labelled
+    browse-only by research_append (52 persons over 3.2 million images)."""
+    out = _with_locality(state, counts=(52, 1048378))
+    out["research_json"]["localities"][0]["collections"][0]["availability"] = "browse-only"
+    return out
+
+
+def test_v5_a_browse_only_label_wins_over_a_nonzero_count():
+    # ut_research_plan_pshape, Haiku 5.5 low floor baseline: "1999196 ... is
+    # likely image-only" failed against its 52 persons. The label decides.
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only.")])
+    _no_skip(check_v5, _thin_locality(before), after, [])
+
+
+def test_v5_fires_on_an_indexed_claim_against_a_browse_only_label():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        _no_skip(check_v5, _thin_locality(before), after, [])
+
+
+def test_v5_a_served_label_wins_over_the_served_count():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only.")])
+    served = [_call("collections_search", {"results": [{"id": "1999196", "personCount": 52, "availability": "browse-only"}]},
+                    {"standardPlace": "Pennsylvania, United States"})]
+    check_v5(before, after, served)
 
 
 def test_v5_still_skips_with_no_entry_and_no_call():

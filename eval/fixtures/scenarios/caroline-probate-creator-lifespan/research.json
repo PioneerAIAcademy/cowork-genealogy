@@ -147,294 +147,336 @@
         {
           "id": "4000201",
           "title": "North Carolina, Rowan County Probate Records, 1753-1970",
-          "date_range": "1753-1970"
+          "date_range": "1753-1970",
+          "availability": null
         },
         {
           "id": "5000132",
           "title": "North Carolina, Alien Registration Cards, 1927-1954",
           "date_range": "1927-1954",
           "person_count": 1002,
-          "record_count": 1001
+          "record_count": 1001,
+          "availability": "name-searchable"
         },
         {
           "id": "1949336",
           "title": "North Carolina, Birth Index, 1800-2000",
           "date_range": "1800-2000",
           "person_count": 16953587,
-          "record_count": 6957257
+          "record_count": 6957257,
+          "availability": "name-searchable"
         },
         {
           "id": "1675484",
           "title": "North Carolina, Births and Christenings, 1866-1964",
           "date_range": "1866-1964",
           "person_count": 393731,
-          "record_count": 147778
+          "record_count": 147778,
+          "availability": "name-searchable"
         },
         {
           "id": "2790262",
           "title": "North Carolina, Church Records, 1700-1970",
           "date_range": "1700-1970",
           "person_count": 121840,
-          "record_count": 70086
+          "record_count": 70086,
+          "availability": "name-searchable"
         },
         {
           "id": "1930242",
           "title": "North Carolina, Civil Action Court Papers, 1712-1970",
           "date_range": "1712-1970",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "2524877",
           "title": "North Carolina, Civil Marriages, 1763-1868",
           "date_range": "1763-1868",
           "person_count": 8715,
-          "record_count": 4360
+          "record_count": 4360,
+          "availability": "name-searchable"
         },
         {
           "id": "1932376",
           "title": "North Carolina, Civil War Service Records of Confederate Soldiers, 1861-1865",
           "date_range": "1861-1865",
           "person_count": 1773886,
-          "record_count": 1773886
+          "record_count": 1773886,
+          "availability": "name-searchable"
         },
         {
           "id": "1932416",
           "title": "North Carolina, Civil War Service Records of Union Soldiers, 1861-1865",
           "date_range": "1861-1865",
           "person_count": 58417,
-          "record_count": 58417
+          "record_count": 58417,
+          "availability": "name-searchable"
         },
         {
           "id": "1911763",
           "title": "North Carolina, Confederate Soldiers and Widows Pension Applications, 1885-1953",
           "date_range": "1885-1953",
           "person_count": 80380,
-          "record_count": 55883
+          "record_count": 55883,
+          "availability": "name-searchable"
         },
         {
           "id": "2848500",
           "title": "North Carolina, County Divorce Records, 1926-1975",
           "date_range": "1926-1975",
           "person_count": 40393,
-          "record_count": 20414
+          "record_count": 20414,
+          "availability": "name-searchable"
         },
         {
           "id": "1726957",
           "title": "North Carolina, County Marriages, 1762-2011 ",
           "date_range": "1762-2011",
           "person_count": 25606924,
-          "record_count": 7908591
+          "record_count": 7908591,
+          "availability": "name-searchable"
         },
         {
           "id": "1916185",
           "title": "North Carolina, County Records, 1833-1970",
           "date_range": "1833-1970",
           "person_count": 28,
-          "record_count": 11
+          "record_count": 11,
+          "availability": "browse-only"
         },
         {
           "id": "1387049",
           "title": "North Carolina, Davidson County Vital Records, 1867-2006",
           "date_range": "1867-2006",
           "person_count": 505296,
-          "record_count": 163192
+          "record_count": 163192,
+          "availability": "name-searchable"
         },
         {
           "id": "1675510",
           "title": "North Carolina, Deaths and Burials, 1898-1994",
           "date_range": "1898-1994",
           "person_count": 3,
-          "record_count": 2719982
+          "record_count": 2719982,
+          "availability": "name-searchable"
         },
         {
           "id": "1609799",
           "title": "North Carolina, Deaths, 1906-1930",
           "date_range": "1906-1930",
           "person_count": 1892213,
-          "record_count": 615657
+          "record_count": 615657,
+          "availability": "name-searchable"
         },
         {
           "id": "1584959",
           "title": "North Carolina, Deaths, 1931-1994",
           "date_range": "1931-1994",
           "person_count": 8990279,
-          "record_count": 2641890
+          "record_count": 2641890,
+          "availability": "name-searchable"
         },
         {
           "id": "2053639",
           "title": "North Carolina, Discharge and Statement of Service Records, 1940-1948",
           "date_range": "1940-1948",
           "person_count": 196207,
-          "record_count": 196206
+          "record_count": 196206,
+          "availability": "name-searchable"
         },
         {
           "id": "1911121",
           "title": "North Carolina, Estate Files, 1663-1979",
           "date_range": "1663-1979",
           "person_count": 277714,
-          "record_count": 271177
+          "record_count": 271177,
+          "availability": "name-searchable"
         },
         {
           "id": "2431127",
           "title": "North Carolina, First Draft Registration Cards, 1940-1945",
           "date_range": "1940-1945",
           "person_count": 1957157,
-          "record_count": 982979
+          "record_count": 982979,
+          "availability": "name-searchable"
         },
         {
           "id": "1803698",
           "title": "North Carolina, Freedmen's Bureau Assistant Commissioner Records, 1862-1870",
           "date_range": "1862-1870",
           "person_count": 127318,
-          "record_count": 127316
+          "record_count": 127316,
+          "availability": "name-searchable"
         },
         {
           "id": "2143119",
           "title": "North Carolina, Freedmen's Bureau Field Office Records, 1863-1872",
           "date_range": "1863-1872",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "3015313",
           "title": "North Carolina, Historical Records Survey, Cemetery Inscription Card Index",
           "date_range": "1800-1972",
           "person_count": 298353,
-          "record_count": 178438
+          "record_count": 178438,
+          "availability": "name-searchable"
         },
         {
           "id": "1675514",
           "title": "North Carolina, Marriages, 1759-1979",
           "date_range": "1759-1979",
           "person_count": 5260511,
-          "record_count": 1741054
+          "record_count": 1741054,
+          "availability": "name-searchable"
         },
         {
           "id": "4163858",
           "title": "North Carolina, Military Discharge Records, 1915-1981",
           "date_range": "1915-1981",
           "person_count": 9410,
-          "record_count": 9410
+          "record_count": 9410,
+          "availability": "name-searchable"
         },
         {
           "id": "5000235",
           "title": "North Carolina, Naturalization Records, 1909-1945",
           "date_range": "1909-1945",
           "person_count": 3122,
-          "record_count": 2458
+          "record_count": 2458,
+          "availability": "name-searchable"
         },
         {
           "id": "1867501",
           "title": "North Carolina, Probate Records, 1735-1970",
           "date_range": "1735-1970",
           "person_count": 11,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "1498361",
           "title": "North Carolina, Revolutionary Pay Vouchers, 1779-1782",
           "date_range": "1779-1782",
           "person_count": 48898,
-          "record_count": 48887
+          "record_count": 48887,
+          "availability": "name-searchable"
         },
         {
           "id": "1878751",
           "title": "North Carolina, State Supreme Court Case Files, 1800-1909",
           "date_range": "1800-1909",
           "person_count": 32513,
-          "record_count": 17625
+          "record_count": 17625,
+          "availability": "name-searchable"
         },
         {
           "id": "3326982",
           "title": "North Carolina, Voter Registers and Certificates of Registration, 1843-1965",
           "date_range": "1843-1965",
           "person_count": 163208,
-          "record_count": 163212
+          "record_count": 163212,
+          "availability": "name-searchable"
         },
         {
           "id": "1949206",
           "title": "North Carolina, Wake County, Death Records, 1900-1909",
           "date_range": "1900-1909",
           "person_count": 8992,
-          "record_count": 4291
+          "record_count": 4291,
+          "availability": "name-searchable"
         },
         {
           "id": "3158816",
           "title": "North Carolina, Wills and Deeds, ca. 1700s-2017",
           "date_range": "1700-2017",
           "person_count": 115160,
-          "record_count": 1
+          "record_count": 1,
+          "availability": "name-searchable"
         },
         {
           "id": "2568864",
           "title": "North Carolina, World War I Service Cards, 1917-1919",
           "date_range": "1917-1919",
           "person_count": 92649,
-          "record_count": 92649
+          "record_count": 92649,
+          "availability": "name-searchable"
         },
         {
           "id": "1420441",
           "title": "United States Census (Mortality Schedule), 1850-1880",
           "date_range": "1850-1880",
           "person_count": 1356791,
-          "record_count": 1356791
+          "record_count": 1356791,
+          "availability": "name-searchable"
         },
         {
           "id": "3754697",
           "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
           "date_range": "1748-1991",
           "person_count": 233239069,
-          "record_count": 67418133
+          "record_count": 67418133,
+          "availability": "name-searchable"
         },
         {
           "id": "1786457",
           "title": "United States, Census, 1840",
           "date_range": "1840-1840",
           "person_count": 2566652,
-          "record_count": 2566652
+          "record_count": 2566652,
+          "availability": "name-searchable"
         },
         {
           "id": "1401638",
           "title": "United States, Census, 1850",
           "date_range": "1850-1850",
           "person_count": 20224571,
-          "record_count": 20224571
+          "record_count": 20224571,
+          "availability": "name-searchable"
         },
         {
           "id": "1473181",
           "title": "United States, Census, 1860",
           "date_range": "1860-1860",
           "person_count": 27176265,
-          "record_count": 27176265
+          "record_count": 27176265,
+          "availability": "name-searchable"
         },
         {
           "id": "1438024",
           "title": "United States, Census, 1870",
           "date_range": "1870-1870",
-          "person_count": 42384137,
-          "record_count": 40350030
+          "person_count": 42384138,
+          "record_count": 40350030,
+          "availability": "name-searchable"
         },
         {
           "id": "1417683",
           "title": "United States, Census, 1880",
           "date_range": "1880-1880",
           "person_count": 50472677,
-          "record_count": 50472677
+          "record_count": 50472677,
+          "availability": "name-searchable"
         },
         {
           "id": "1610551",
           "title": "United States, Census, 1890",
           "date_range": "1890-1890",
           "person_count": 7393,
-          "record_count": 6285
+          "record_count": 6285,
+          "availability": "name-searchable"
         },
         {
           "id": "1202535",
           "title": "United States, Social Security Death Index",
           "date_range": "1875-2014",
           "person_count": 93945885,
-          "record_count": 93945885
+          "record_count": 93945885,
+          "availability": "name-searchable"
         }
       ],
       "quirks": [

@@ -343,6 +343,13 @@
         "national"
       ]
     },
+    "collection_availability": {
+      "description": "How a FamilySearch collection can be searched (localities collections[].availability): name-searchable, or browse-only when it has no indexed person or fewer than one per thousand page images. Set by research_append from the catalog.",
+      "enum": [
+        "name-searchable",
+        "browse-only"
+      ]
+    },
     "locality_page_outcome": {
       "description": "Why a locality's pages_read[] entry has found: false when the cause was not a missing page (localities section). unreachable: the wiki server failed (5xx or no connection) after a retry, so the page may exist.",
       "enum": [

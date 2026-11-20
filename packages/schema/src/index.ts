@@ -25,7 +25,7 @@ import type {
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionKind, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
+  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, CollectionAvailability, ResolutionKind,
   SkipCategory, RegistrationEvent, RegistrationLevel, ClaimPolarity, FindingType, HitVerdict,
 } from './enums.generated.js'
 
@@ -421,6 +421,7 @@ export interface LocalityCollection {
   date_range?: string | null
   person_count?: number | null
   record_count?: number | null
+  availability?: CollectionAvailability | null
 }
 
 export interface LocalityRegistrationStart {

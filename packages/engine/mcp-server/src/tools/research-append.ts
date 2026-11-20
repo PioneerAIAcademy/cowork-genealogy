@@ -18,6 +18,7 @@
 // all three phases (sources/assertions/person_evidence, the status-transition
 // sections, the phase-3 sections, and the `project` singleton).
 
+import { collectionAvailability } from "../utils/collection-availability.js";
 import { assertionsCoveredBy, rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
@@ -11486,6 +11487,7 @@ function fillLocalityCollections(
         date_range: c.dateRange ?? null,
         person_count: c.personCount,
         record_count: c.recordCount,
+        availability: collectionAvailability(c.personCount, c.imageCount),
       }));
       if (missing.length === 0) return;
       entry.collections = [...sent, ...added];
@@ -11547,6 +11549,7 @@ function fillNationalCollections(
       date_range: c.dateRange ?? null,
       person_count: c.personCount,
       record_count: c.recordCount,
+      availability: collectionAvailability(c.personCount, c.imageCount),
     }));
     entry.collections = [...held, ...added];
     warnings.push(
@@ -11595,6 +11598,7 @@ function stampLocalityCollectionCounts(
       for (const c of items) {
         c.person_count = null;
         c.record_count = null;
+        c.availability = null;
       }
       warnings.push(
         fmt(
@@ -11609,6 +11613,7 @@ function stampLocalityCollectionCounts(
       if (typeof c.id !== "string" || c.id === "") {
         c.person_count = null;
         c.record_count = null;
+        c.availability = null;
         warnings.push(
           fmt(i, "localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)"),
         );
@@ -11619,6 +11624,7 @@ function stampLocalityCollectionCounts(
       if (!counts) {
         c.person_count = null;
         c.record_count = null;
+        c.availability = null;
         warnings.push(
           fmt(
             i,
@@ -11642,6 +11648,7 @@ function stampLocalityCollectionCounts(
         }
         c[key] = value;
       }
+      c.availability = collectionAvailability(counts.personCount, counts.imageCount);
       if (changes.length > 0) {
         warnings.push(
           fmt(i, `localities collections '${id}': ${changes.join(", ")}, set from FamilySearch's catalog`),
