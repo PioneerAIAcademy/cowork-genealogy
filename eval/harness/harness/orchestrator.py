@@ -868,29 +868,13 @@ async def _execute_single_run(
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
-    # Deterministic-validator deference: a passing expected_classifications
-    # check floors the classification judge-dimensions so a fuzzy re-grade can't
-    # override verified ground truth (the dominant flap source). Runs before the
-    # outcome is computed so the floored scores drive pass/partial/fail.
-    apply_deterministic_deference(
-        judge_result.dimensions,
-        validator_results,
-        has_expected_classifications=bool(spec.raw.get("expected_classifications")),
-    )
-
-    # A judge FAIL on a correctly-routed negative test is COERCED to N/A (#2196):
-    # routing already decided the outcome, so these dimensions never gated it,
-    # and the judge was grading a transcript the harness usually truncated at
-    # the hand-off. NOT floored to 2 - that shipped once and the corpus refuted
-    # it (20 of 24 cells human-confirmed at 1). The original score and rationale
-    # survive in output.warnings, which is what keeps the 1 trendable.
-    #
-    # Runs unconditionally, OUTSIDE the judge gate above, and before #2057 that
-    # was invisible: a validator-failing run had no dimensions, so this
-    # no-opped on the whole class. It now fires there too.
-    flag_routing_negative_judge_fail(
+    # The judge-dimension rewrites that run before the outcome: deterministic
+    # deference, the routing-negative coercion (#2196) and `na_dimensions`
+    # (#4548). One helper, so `judge_regrade` applies exactly the same steps.
+    apply_post_judge_pipeline(
         judge_result.dimensions,
         spec=spec,
+        validator_results=validator_results,
         activated=activated,
         skills_invoked=result.skills_invoked,
         warnings=judge_dimension_warnings,
@@ -1643,6 +1627,45 @@ _CLASSIFICATION_DIMENSIONS = frozenset(
 _ROUTING_DIAGNOSTIC_DIMENSIONS = frozenset({"Correctness", "Completeness"})
 
 
+def apply_post_judge_pipeline(
+    dimensions, *, spec: TestSpec, validator_results, activated, skills_invoked, warnings
+):
+    """Every rewrite of the judge's dimensions that runs before the outcome is
+    computed, in order. A fresh run (`_execute_single_run`) and a regrade
+    (`judge_regrade.regrade_run_log`) both call this, so a step added here
+    cannot be missing from one of them.
+
+    1. Deterministic deference: a passing `test_expected_classifications`
+       floors a classification dimension's judge 1 to 2, so a fuzzy re-grade
+       cannot override verified ground truth (the dominant flap source).
+    2. A judge 1 on a correctly-routed negative test is coerced to N/A (#2196):
+       routing already decided the outcome, and the judge was grading a
+       transcript the harness usually truncated at the hand-off. NOT floored to
+       2 - that shipped once and the corpus refuted it (20 of 24 cells
+       human-confirmed at 1). The original score and rationale survive in
+       `warnings`, which keeps the 1 trendable. Runs even when a failing
+       validator left no dimensions (#2057).
+    3. Dimensions the test names in `na_dimensions` are coerced to null (#4548).
+
+    `validator_results` items need `.name` and `.passed`. Mutates and returns
+    `dimensions`.
+    """
+    apply_deterministic_deference(
+        dimensions,
+        validator_results,
+        has_expected_classifications=bool(spec.raw.get("expected_classifications")),
+    )
+    flag_routing_negative_judge_fail(
+        dimensions,
+        spec=spec,
+        activated=activated,
+        skills_invoked=skills_invoked,
+        warnings=warnings,
+    )
+    coerce_review_dimensions_to_na(dimensions, spec=spec, warnings=warnings)
+    return dimensions
+
+
 def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):
     """Floor the classification judge-dimensions at partial(2) when the
     deterministic `test_expected_classifications` validator verified the declared
@@ -1839,6 +1862,57 @@ def flag_routing_negative_judge_fail(
                 f"Original judge rationale: {orig}"
             )
             dd["score"] = None
+    return dimensions
+
+
+def coerce_review_dimensions_to_na(
+    dimensions: list[dict[str, Any]] | None,
+    *,
+    spec: TestSpec,
+    warnings: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]] | None:
+    """Coerce the rubric dimensions a test names in `na_dimensions` to null (#4548).
+
+    For a review or audit test whose rubric dimensions grade linking work the
+    test does not ask for. Prose in the rubric and in judge_context did not hold
+    the judge there, so the harness drops those scores after judging, never in
+    what the judge is sent (that would move `judge_render_hash`). Every non-null
+    score is coerced, a 3 as well as a 2: N/A is a property of the test, and
+    coercing only the low scores would make the aggregate depend on which way
+    the judge fell. A gating validator on the test owns what the dimension held.
+
+    The warning is appended BEFORE the mutation and is the only place the
+    judge's original score and rationale survive intact. Base dimensions are
+    never touched, and the runnability gate refuses a base name outright.
+    """
+    names = set(spec.na_dimensions or ())
+    if not dimensions or not names:
+        return dimensions
+    for dd in dimensions:
+        if dd.get("source") == "base" or dd.get("name") not in names:
+            continue
+        if dd.get("score") is None:
+            continue
+        if warnings is not None:
+            warnings.append({
+                "kind": "coerced_review_dimension_to_na",
+                "advisory": (
+                    f"the test names {dd['name']} in na_dimensions, so the "
+                    f"judge's {dd.get('score')} was coerced to null; a gating "
+                    f"validator on the test grades what this dimension held."
+                ),
+                "name": dd["name"],
+                "score": dd.get("score"),
+                # `or ""`: the only durable record of the judge's reasoning.
+                "rationale": dd.get("rationale") or "",
+            })
+        orig = dd.get("rationale") or ""
+        dd["rationale"] = (
+            f"[coerced-to-na] the test names {dd['name']} in na_dimensions, so "
+            f"the judge's {dd.get('score')} was coerced to null. "
+            f"Original judge rationale: {orig}"
+        )
+        dd["score"] = None
     return dimensions
 
 
