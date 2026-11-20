@@ -18,11 +18,13 @@ import type {
   SourceScreenSignals,
   SourceScreenVerdict,
 } from "../types/source-screen.js";
-import { RECORD_TOKEN, arkToBareId } from "../utils/ark.js";
+import { RECORD_TOKEN } from "../utils/ark.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import {
   type AttachmentSupport,
+  bareRecordId,
   factsDisagree,
+  foldFactType,
   leaveOneOut,
   personaLinks,
   relationshipMatches,
@@ -32,6 +34,8 @@ import {
 } from "../utils/attachment-support.js";
 import { matchPairs as realMatchPairs } from "../utils/matcher.js";
 import { Mob } from "../utils/mob.js";
+import { mapWithConcurrency } from "../utils/place-resolver.js";
+import { relationshipCategory } from "../utils/relationship-category.js";
 import { introducedByLink } from "../utils/persona-copy.js";
 import { NoProjectError, noProjectResult, readProjectJson } from "../utils/project-io.js";
 import { VITAL_EVENT, yearsOf } from "../utils/question-state.js";
@@ -48,9 +52,13 @@ export type { SourceScreenInput, SourceScreenResponse } from "../types/source-sc
 export const MISATTRIBUTED_BELOW = 0.5;
 /** A score from `MISATTRIBUTED_BELOW` up to this is the grey band: weak. */
 export const WEAK_BELOW = 0.8;
+/** The matcher call (a, c) finishes within this much of the call's entry. */
+export const MATCHER_DEADLINE_MS = 30_000;
 /** Every image read finishes within this much of the call's entry (Cowork
  *  aborts an MCP call at 60 s). */
 export const OCR_DEADLINE_MS = 45_000;
+/** Image reads at once: a transcription slot cap is shared with other users. */
+export const OCR_CONCURRENCY = 2;
 
 /** Whether an attachment gets the page-image read (check e): a or c called it
  *  misattributed, b raised any warning (an implausible one included — a wrong
@@ -68,7 +76,10 @@ export interface SourceScreenOptions {
   matchPairs?: typeof realMatchPairs;
   imageTranscribe?: typeof imageTranscribeTool;
   now?: () => number;
+  /** The image reads' deadline from entry; `OCR_DEADLINE_MS` by default. */
   deadlineMs?: number;
+  /** The matcher call's deadline from entry; `MATCHER_DEADLINE_MS` by default. */
+  matcherDeadlineMs?: number;
 }
 
 export const sourceScreenToolSchema = {
@@ -114,6 +125,8 @@ interface Row {
   parties?: Array<{ personId: string; personaId: string }>;
   mis: string[];
   soft: string[];
+  /** The vital events (birth, death) of the record facts b's warnings rest on. */
+  bEvents?: string[];
 }
 
 function notScored(row: Row, reason: SourceScreenNotScored, sentence: string): void {
@@ -131,7 +144,9 @@ export async function sourceScreenTool(
   opts: SourceScreenOptions = {},
 ): Promise<SourceScreenResponse> {
   const now = opts.now ?? Date.now;
-  const deadline = now() + (opts.deadlineMs ?? OCR_DEADLINE_MS);
+  const enteredAt = now();
+  const deadline = enteredAt + (opts.deadlineMs ?? OCR_DEADLINE_MS);
+  const matcherDeadline = enteredAt + (opts.matcherDeadlineMs ?? MATCHER_DEADLINE_MS);
   const on = new Set(opts.checks ?? ALL_CHECKS);
   const matchPairs = opts.matchPairs ?? realMatchPairs;
   const transcribe = opts.imageTranscribe ?? imageTranscribeTool;
@@ -159,7 +174,7 @@ export async function sourceScreenTool(
   const sourceById = new Map<string, any>(arr(tree.sources).filter((s) => typeof s?.id === "string").map((s) => [s.id, s]));
   const bareOf = (sid: string): string | undefined => {
     const m = RECORD_TOKEN.exec(String(sourceById.get(sid)?.url ?? ""));
-    return m ? m[1].toUpperCase() : undefined;
+    return m ? bareRecordId(m[1]) : undefined;
   };
   const rows: Row[] = [];
   const bySid = new Map<string, Row>();
@@ -199,7 +214,7 @@ export async function sourceScreenTool(
       const bares = new Set<string>(
         [r?.recordId, ...arr(g.persons).map((p: any) => p?.ark)]
           .filter((x): x is string => typeof x === "string" && x !== "")
-          .map((x) => arkToBareId(x).toUpperCase()),
+          .map(bareRecordId),
       );
       const entry = { gedcomx: g, bares };
       for (const b of bares) if (!records.has(b)) records.set(b, entry);
@@ -267,9 +282,9 @@ export async function sourceScreenTool(
     }
     row.out.personaId = row.personaId;
     row.assertions = live.filter(
-      (a) => a?.record_persona_id === row.personaId && typeof a?.record_id === "string" && rec.bares.has(arkToBareId(a.record_id).toUpperCase()),
+      (a) => a?.record_persona_id === row.personaId && typeof a?.record_id === "string" && rec.bares.has(bareRecordId(a.record_id)),
     );
-    const linked = row.assertions.some((a) => linkedTo(arkToBareId(a.record_id), row.personaId!).has(pid));
+    const linked = row.assertions.some((a) => linkedTo(bareRecordId(a.record_id), row.personaId!).has(pid));
     if (!linked) notScored(row, "unlinked", `persona ${row.personaId} has no live link to ${pid}.`);
   }
   const scored = rows.filter((r) => r.out.verdict !== "not_scored");
@@ -307,11 +322,10 @@ export async function sourceScreenTool(
   let scores: PairScore[] = [];
   let matcherError: string | undefined;
   if (pairs.length > 0) {
-    try {
-      scores = (await matchPairs(pairs, principal, { concurrency: 4, retry: false })).results;
-    } catch (e) {
-      matcherError = e instanceof Error ? e.message : String(e);
-    }
+    const out = await withDeadline(matchPairs(pairs, principal, { concurrency: 4, retry: false }), matcherDeadline - now());
+    if (out === "timeout") matcherError = "budget";
+    else if ("err" in out) matcherError = out.err instanceof Error ? out.err.message : String(out.err);
+    else scores = out.r.results;
   }
   const scoreAt = (i: number | undefined): number | null => (i === undefined ? null : (scores[i]?.score ?? null));
   const whyNot = (i: number | undefined): string =>
@@ -322,8 +336,6 @@ export async function sourceScreenTool(
   for (const row of scored) {
     const sig: SourceScreenSignals = row.out.signals;
     const p = plan.get(row)!;
-    const persona = arr(row.record?.persons).find((x: any) => x?.id === row.personaId);
-    const recName = preferredName(persona?.names) ?? {};
     if (on.has("a")) {
       const s = scoreAt(p.a);
       if (s === null) sig.a = { not_run: whyNot(p.a) };
@@ -339,15 +351,19 @@ export async function sourceScreenTool(
       const loo = leaveOneOut(tree, supportFor(pid), row.recordBares!);
       const warns = introducedByLink(research, loo, first.record_id, first.record_role, pid);
       sig.b = { impossible: warns.filter((w) => w.impossible).map((w) => w.sentence), implausible: warns.filter((w) => !w.impossible).map((w) => w.sentence) };
+      row.bEvents = [...new Set(warns.flatMap((w) => w.recordFactTypes.map(foldFactType)).filter((t) => t === "birth" || t === "death"))];
       for (const w of sig.b.impossible) row.mis.push(`b: ${w}`);
       for (const w of sig.b.implausible) row.soft.push(`b: ${w}`);
     }
     if (on.has("c")) {
-      const parties: PartyScore[] = p.parties.map(([x, i]) => ({ ...x, score: scoreAt(i) }));
+      const parties: PartyScore[] = p.parties.map(([x, i]) => {
+        const score = scoreAt(i);
+        return score === null ? { ...x, score, not_run: whyNot(i) } : { ...x, score };
+      });
       const disagreements: string[] = [];
       for (const b of row.recordBares!) {
         for (const s of statedRelationships(research, links, b)) {
-          if (s.from !== pid && s.to !== pid) continue;
+          if ((s.from !== pid && s.to !== pid) || relationshipCategory(s.type) === undefined) continue;
           const between = arr(tree.relationships).filter(
             (r) => [r?.person1, r?.person2, r?.parent, r?.child].includes(s.from) && [r?.person1, r?.person2, r?.parent, r?.child].includes(s.to),
           );
@@ -403,44 +419,39 @@ export async function sourceScreenTool(
     }
   }
 
-  // ── e: the page image, for flagged attachments only ──
+  // ── e: the page image, for a disputed vital fact on a flagged attachment ──
   const flagged = scored.filter((r) => flaggedForImage(r.mis, r.soft, r.out.contradicts));
   if (on.has("e")) {
     const sourcesById = new Map<string, any>(arr(research?.sources).map((s) => [s?.id, s]));
-    await Promise.all(
-      flagged.map(async (row) => {
-        const imageArk = sourcesById.get(row.assertions?.[0]?.source_id)?.image_ark;
-        if (typeof imageArk !== "string" || imageArk === "") {
-          row.out.signals.e = { not_run: "no_image: the record's source has no page image" };
-          return;
-        }
-        const vital = row.out.signals.h?.contradicts[0]?.fact ?? (row.mis.some((m) => m.startsWith("b:")) ? "birth year" : undefined);
-        const treeYear = vital ? treeEventYear(person, vital.startsWith("death") ? "death" : "birth") : undefined;
-        const lookingFor = treeYear ? `${treeName}, ${vital!.split(" ")[0]} ${treeYear}` : treeName;
-        const remaining = deadline - now();
-        if (remaining <= 0) {
-          row.out.signals.e = { not_run: "budget" };
-          return;
-        }
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        const timeout = new Promise<"timeout">((resolve) => {
-          timer = setTimeout(() => resolve("timeout"), remaining);
-        });
-        const call = transcribe({ ark: imageArk, lookingFor }, principal, { ocrTimeoutMs: remaining }).then(
-          (r) => ({ r }),
-          (err: unknown) => ({ err }),
-        );
-        const out = await Promise.race([call, timeout]);
-        clearTimeout(timer);
-        if (out === "timeout") row.out.signals.e = { not_run: "budget" };
-        else if ("err" in out) {
-          const msg = out.err instanceof Error ? out.err.message : String(out.err);
-          row.out.signals.e = { not_run: /already running .*transcription/i.test(msg) ? `slot_limit: ${msg}` : `error: ${msg}` };
-        } else if ("ok" in out.r) row.out.signals.e = { not_run: `error: ${out.r.errors.join(" ")}` };
-        else if (out.r.found) row.out.signals.e = { lookingFor, found: out.r.found };
-        else row.out.signals.e = { not_run: "no_answer: the image read gave no FOUND / NOT FOUND" };
-      }),
-    );
+    const reads: Array<{ row: Row; imageArk: string; lookingFor: string; fact: string }> = [];
+    for (const row of flagged) {
+      const disputed = disputedFact(person, row, treeName);
+      if (!disputed) {
+        row.out.signals.e = { not_run: "no_disputed_fact" };
+        continue;
+      }
+      const imageArk = sourcesById.get(row.assertions?.[0]?.source_id)?.image_ark;
+      if (typeof imageArk !== "string" || imageArk === "") {
+        row.out.signals.e = { not_run: "no_image: the record's source has no page image" };
+        continue;
+      }
+      reads.push({ row, imageArk, ...disputed });
+    }
+    await mapWithConcurrency(reads, OCR_CONCURRENCY, async ({ row, imageArk, lookingFor, fact }) => {
+      const remaining = Math.floor(deadline - now());
+      if (remaining <= 0) {
+        row.out.signals.e = { not_run: "budget" };
+        return;
+      }
+      const out = await withDeadline(transcribe({ ark: imageArk, lookingFor }, principal, { budgetMs: remaining }), remaining);
+      if (out === "timeout") row.out.signals.e = { not_run: "budget" };
+      else if ("err" in out) {
+        const msg = out.err instanceof Error ? out.err.message : String(out.err);
+        row.out.signals.e = { not_run: /already running .*transcription/i.test(msg) ? `slot_limit: ${msg}` : `error: ${msg}` };
+      } else if ("ok" in out.r) row.out.signals.e = { not_run: `error: ${out.r.errors.join(" ")}` };
+      else if (out.r.found) row.out.signals.e = { lookingFor, fact, found: out.r.found };
+      else row.out.signals.e = { not_run: "no_answer: the image read gave no FOUND / NOT FOUND" };
+    });
   }
 
   // ── verdicts ──
@@ -473,13 +484,37 @@ export async function sourceScreenTool(
   return { ok: true, personId: pid, attachments: rows.map((r) => r.out), counts };
 }
 
-/** The year of the person's tree birth or death, for an image read's search key. */
-function treeEventYear(person: SimplifiedPerson, event: "birth" | "death"): number | undefined {
-  for (const f of person.facts ?? []) {
-    const t = String(f.type ?? "").split("/").pop()!.toLowerCase();
-    if (VITAL_EVENT[t] !== event) continue;
-    const y = yearsOf(f);
-    if (y && Number.isFinite(y[0])) return y[0];
+/** `p`, or "timeout" once `ms` has passed; a rejection comes back as `{ err }`. */
+async function withDeadline<T>(p: Promise<T>, ms: number): Promise<{ r: T } | { err: unknown } | "timeout"> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"timeout">((resolve) => {
+    timer = setTimeout(() => resolve("timeout"), Math.max(0, ms));
+  });
+  const out = await Promise.race([p.then((r) => ({ r }), (err: unknown) => ({ err })), timeout]);
+  clearTimeout(timer);
+  return out;
+}
+
+/**
+ * The vital fact an image read can settle for this attachment, and what to look
+ * for: a birth or death year or place — one this row's h contradictions or b
+ * warnings name, or, when a or c marked it misattributed, any — where this
+ * record's own stated value disagrees with the tree's. Undefined when there is none — a name alone, or an index that
+ * already agrees with the tree on the fact, is nothing the page can settle.
+ */
+function disputedFact(person: SimplifiedPerson, row: Row, treeName: string): { lookingFor: string; fact: string } | undefined {
+  const named = (row.out.signals.h?.contradicts ?? []).filter((c) => row.out.contradicts?.includes(c.sourceId)).map((c) => c.fact);
+  const scored = row.mis.some((m) => /^[ac]:/.test(m)) ? ["birth year", "birth place", "death year", "death place"] : [];
+  const candidates = [...new Set([...named, ...(row.bEvents ?? []).map((e) => `${e} year`), ...scored])];
+  for (const fact of candidates) {
+    const [event, aspect] = fact.split(" ") as [string, "year" | "place"];
+    const mine = (row.assertions ?? []).filter((a) => foldFactType(a?.fact_type) === event);
+    for (const t of (person.facts ?? []).filter((f) => foldFactType(f.type) === event)) {
+      if (!mine.some((a) => factsDisagree(t, a)[aspect])) continue;
+      const value = aspect === "year" ? String(yearsOf(t)?.[0] ?? "") : String(t.place ?? "").trim();
+      if (value === "") continue;
+      return { fact, lookingFor: `${treeName}, ${event}${aspect === "place" ? " place" : ""} ${value}` };
+    }
   }
   return undefined;
 }

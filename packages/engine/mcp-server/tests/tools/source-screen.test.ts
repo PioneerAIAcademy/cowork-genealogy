@@ -108,6 +108,19 @@ describe("source_screen", () => {
     return r as SourceScreenResult;
   };
   const row = (r: SourceScreenResult, sid: string) => r.attachments.find((a) => a.sourceId === sid) as SourceScreenAttachment;
+  const editResearch = async (fn: (r: any) => void) => {
+    const p = join(dir, "research.json");
+    const r = JSON.parse(await readFile(p, "utf8"));
+    fn(r);
+    await writeProjectFile(p, JSON.stringify(r));
+    return r;
+  };
+  /** Give every research source a page image, so a read is decided by the dispute alone. */
+  const withImages = () => editResearch((r) => r.sources.forEach((s: any, i: number) => { s.image_ark ??= `ark:/61903/3:1:TEST-IMG${i}`; }));
+  const imageOf = async (sid: string) =>
+    JSON.parse(await readFile(join(dir, "research.json"), "utf8")).sources.find((s: any) => s.gedcomx_source_description_id === sid).image_ark;
+  /** The tree has John born 1852; the census says 1845, so its index disputes the birth year. */
+  const JOHN_1852 = (refs: string[], more: any[] = []) => JOHN(refs, [{ type: "Birth", date: "1852", place: "Pennsylvania" }, ...more]);
 
   const S1 = { id: "S1", title: "United States Census, 1870", url: url("MZGS-1B7") };
   const S2 = { id: "S2", title: "Ohio death", url: url("DDDD-111") };
@@ -176,6 +189,20 @@ describe("source_screen", () => {
     expect(calls).toHaveLength(1);
   });
 
+  it("a lowercase record_id is the same record: leave-one-out still removes what only it supports", async () => {
+    await writeTree([JOHN(["S1", "S2"], [
+      { type: "Birth", date: "1845", place: "Pennsylvania" },
+      { type: "Death", date: "1900", place: "Carbon, Pennsylvania" },
+    ])], [S1, S2]);
+    await build("I1", [CENSUS(), DEATH_OK()]);
+    await editResearch((r) => r.assertions.forEach((a: any) => { a.record_id = a.record_id.replace(/1:1:(.+)$/, (_m: string, id: string) => `1:1:${id.toLowerCase()}`); }));
+    const calls: any[][] = [];
+    const r = await screen({ matchPairs: matcher({}, calls) });
+    expect(r.attachments.map((a) => a.verdict)).toEqual(["fine", "fine"]);
+    const forDeath = calls[0].find((p: any) => p.personaId === "p_DDDD-111");
+    expect(forDeath.tree.persons.find((x: any) => x.id === "I1").facts.map((f: any) => f.type)).toEqual(["Birth"]);
+  });
+
   it("contradicts: two attachments whose births disagree, each naming the other", async () => {
     await writeTree([JOHN(["S1", "S2"])], [S1, S2]);
     await build("I1", [CENSUS(), deathOf("DDDD-111", "John", "Boyer", { date: "1860", place: "Jackson Co., Ohio" })]);
@@ -202,29 +229,61 @@ describe("source_screen", () => {
     expect(transcribe).toHaveBeenCalledTimes(row(r, "S2").signals.e ? 1 : 0);
   });
 
-  it("indexing_error: a flagged attachment whose page shows the tree's value; OCR only for flagged attachments", async () => {
-    await writeTree([JOHN(["S1", "S2"])], [S1, S2]);
-    await build("I1", [CENSUS(), DEATH_OK()]);
-    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
-    const census = research.sources.find((s: any) => s.gedcomx_source_description_id === "S1");
-    expect(census.image_ark).toMatch(/^ark:\/61903\/3:1:/);
-    const ocr = vi.fn(async (input: any, _p: any, opts: any) => ({ transcription: "x", found: "FOUND" as const, input, opts }));
-    const r = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }), imageTranscribe: ocr as any });
+  it("indexing_error: the page shows the tree's value of a fact this attachment's index disputes", async () => {
+    await writeTree([JOHN_1852(["S1", "S2"])], [S1, S2]);
+    await build("I1", [CENSUS(), deathOf("DDDD-111", "John", "Boyer", { date: "1852", place: "Pennsylvania" })]);
+    await withImages();
+    const ocr = vi.fn(async (input: any) => ({ transcription: "x", found: "FOUND" as const, input }));
+    const r = await screen({ matchPairs: matcher(), imageTranscribe: ocr as any });
+    // h flags both; only the census disagrees with the tree, so only it is read.
     expect(ocr).toHaveBeenCalledTimes(1);
-    expect(ocr.mock.calls[0][0]).toEqual({ ark: census.image_ark, lookingFor: "John Boyer" });
+    expect(ocr.mock.calls[0][0]).toEqual({ ark: await imageOf("S1"), lookingFor: "John Boyer, birth 1852" });
     expect(ocr.mock.calls[0][0]).not.toHaveProperty("projectPath");
-    expect(ocr.mock.calls[0][2].ocrTimeoutMs).toBeGreaterThan(0);
+    expect((ocr.mock.calls[0] as any[])[2].budgetMs).toBeGreaterThan(0);
     expect(row(r, "S1").verdict).toBe("indexing_error");
-    expect(row(r, "S2").verdict).toBe("fine");
+    expect(row(r, "S1").signals.e).toEqual({ lookingFor: "John Boyer, birth 1852", fact: "birth year", found: "FOUND" });
+    expect(row(r, "S2")).toMatchObject({ verdict: "contradicts", signals: { e: { not_run: "no_disputed_fact" } } });
+  });
+
+  it("a flag that names no vital fact the index disputes is not image-read", async () => {
+    await writeTree([JOHN(["S1"])], [S1]);
+    await build("I1", [CENSUS()]);
+    const ocr = vi.fn(async () => ({ transcription: "x", found: "FOUND" as const }));
+    const r = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }), imageTranscribe: ocr as any });
+    expect(ocr).not.toHaveBeenCalled();
+    expect(row(r, "S1")).toMatchObject({ verdict: "misattributed", signals: { e: { not_run: "no_disputed_fact" } } });
+  });
+
+  it("a place-only contradiction looks for the tree's place, not a year", async () => {
+    await writeTree([JOHN(["S1", "S2"])], [S1, S2]);
+    await build("I1", [CENSUS(), deathOf("DDDD-111", "John", "Boyer", { date: "1845", place: "Jackson Co., Ohio" })]);
+    await withImages();
+    const ocr = vi.fn(async () => ({ transcription: "x", found: "NOT FOUND" as const }));
+    const r = await screen({ matchPairs: matcher(), imageTranscribe: ocr as any });
+    expect(ocr).toHaveBeenCalledTimes(1);
+    expect((ocr.mock.calls[0] as any[])[0]).toEqual({ ark: await imageOf("S2"), lookingFor: "John Boyer, birth place Pennsylvania" });
+    expect(row(r, "S1").signals.e).toEqual({ not_run: "no_disputed_fact" });
+    expect(row(r, "S2").verdict).toBe("contradicts");
+  });
+
+  it("a b warning's own fact is the one read: a death year, not the birth", async () => {
+    await writeTree([JOHN(["S2"], [{ type: "Birth", date: "1845", place: "Pennsylvania" }, { type: "Death", date: "1900", place: "Carbon, Pennsylvania" }])], [S2]);
+    await build("I1", [deathOf("DDDD-111", "John", "Boyer", { date: "1845", place: "Pennsylvania" }, { date: "1800", place: "Carbon, Pennsylvania, United States" })]);
+    await withImages();
+    const ocr = vi.fn(async () => ({ transcription: "x", found: "NOT FOUND" as const }));
+    const r = await screen({ matchPairs: matcher(), imageTranscribe: ocr as any });
+    expect(row(r, "S2").signals.b!.impossible.length).toBeGreaterThan(0);
+    expect((ocr.mock.calls[0] as any[])[0].lookingFor).toBe("John Boyer, death 1900");
+    expect(row(r, "S2").verdict).toBe("misattributed");
   });
 
   it("an image that does not show the tree's value leaves the attachment misattributed", async () => {
-    await writeTree([JOHN(["S1"])], [S1]);
+    await writeTree([JOHN_1852(["S1"])], [S1]);
     await build("I1", [CENSUS()]);
     const ocr = vi.fn(async () => ({ transcription: "x", found: "NOT FOUND" as const }));
     const r = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }), imageTranscribe: ocr as any });
     expect(row(r, "S1").verdict).toBe("misattributed");
-    expect(row(r, "S1").signals.e).toEqual({ lookingFor: "John Boyer", found: "NOT FOUND" });
+    expect(row(r, "S1").signals.e).toEqual({ lookingFor: "John Boyer, birth 1852", fact: "birth year", found: "NOT FOUND" });
   });
 
   it("checks: leaving a check out removes its signal and its verdict", async () => {
@@ -253,6 +312,30 @@ describe("source_screen", () => {
     expect(row(r, "S1").verdict).toBe("misattributed");
     expect(row(r, "S1").signals.b).toEqual({ impossible: [], implausible: [] });
     expect(row(r, "S1").reasons).toEqual([expect.stringMatching(/^c: the record states I2 is spouse of I1/)]);
+  });
+
+  it("c: a stated 'son' or 'Son' matches the tree's ParentChild edge, so it is no disagreement", async () => {
+    for (const word of ["son", "Son"]) {
+      const C1 = { id: "S1", title: "1880", url: url("MNH8-SHT") };
+      const C2 = { id: "S2", title: "1880", url: url("MNH8-SHY") };
+      await writeFile(join(dir, "research.json"), JSON.stringify(PROJECT), "utf8");
+      await writeTree(
+        [
+          person("I1", "Charles", "Miller", "Male", ["S1"], [{ type: "Birth", date: "1832", place: "France" }]),
+          person("I2", "Theresa", "Miller", "Female", ["S2"], [{ type: "Birth", date: "1860", place: "Germany" }]),
+        ],
+        [C1, C2],
+        [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }],
+      );
+      await build("I1", [CENSUS_1880()]);
+      const research = await editResearch((r) => {
+        for (const a of r.assertions) if (a.fact_type === "relationship") a.structured_value.relationship_type = word;
+      });
+      expect(research.assertions.some((a: any) => a.structured_value?.relationship_type === word)).toBe(true);
+      const r = await screen({ matchPairs: matcher() });
+      expect(row(r, "S1").signals.c!.disagreements).toEqual([]);
+      expect(row(r, "S1").verdict, JSON.stringify(row(r, "S1"))).toBe("fine");
+    }
   });
 
   it("KW8N-2TB: a census that states no relationship gives no role, so a 'Household of' title flags nothing", async () => {
@@ -367,7 +450,7 @@ describe("source_screen", () => {
   });
 
   it("is read-only: no project file changes", async () => {
-    await writeTree([JOHN(["S1", "S2"])], [S1, S2]);
+    await writeTree([JOHN_1852(["S1", "S2"])], [S1, S2]);
     await build("I1", [CENSUS(), DEATH_OK()]);
     const snapshot = async () => {
       const out: Record<string, string> = {};
@@ -383,14 +466,14 @@ describe("source_screen", () => {
     };
     const before = await snapshot();
     const ocr = vi.fn(async () => ({ transcription: "x", found: "FOUND" as const }));
-    await screen({ matchPairs: matcher({ "I1|p_DDDD-111": 0.1 }), imageTranscribe: ocr as any });
+    await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }), imageTranscribe: ocr as any });
     expect(ocr).toHaveBeenCalled();
     expect(await snapshot()).toEqual(before);
   });
 
   describe("time budget", () => {
     it("an image read unfinished at the deadline is not_run: budget, and the call returns", async () => {
-      await writeTree([JOHN(["S1"])], [S1]);
+      await writeTree([JOHN_1852(["S1"])], [S1]);
       await build("I1", [CENSUS()]);
       const slow = vi.fn(() => new Promise<any>(() => {}));
       const t0 = Date.now();
@@ -398,12 +481,51 @@ describe("source_screen", () => {
       expect(Date.now() - t0).toBeLessThan(2000);
       expect(row(r, "S1").signals.e).toEqual({ not_run: "budget" });
       expect(row(r, "S1").verdict).toBe("misattributed");
-      expect((slow.mock.calls[0] as any[])[2].ocrTimeoutMs).toBeLessThanOrEqual(300);
+      const budgetMs = (slow.mock.calls[0] as any[])[2].budgetMs;
+      expect(budgetMs).toBeGreaterThan(0);
+      expect(budgetMs).toBeLessThanOrEqual(300);
+    });
+
+    it("a matcher unfinished at its deadline leaves a and c not_run: budget, and the call returns", async () => {
+      const C1 = { id: "S1", title: "1880", url: url("MNH8-SHT") };
+      const W = { id: "S4", title: "1880", url: url("MNH8-SHY") };
+      await writeTree(
+        [person("I1", "Charles", "Miller", "Male", ["S1"], [{ type: "Birth", date: "1832", place: "France" }]), person("I2", "Theresa", "Miller", "Female", [])],
+        [C1, W],
+        [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S4" }] }],
+      );
+      await build("I1", [CENSUS_1880()]);
+      const hang = vi.fn(() => new Promise<any>(() => {}));
+      const t0 = Date.now();
+      const r = await screen({ matchPairs: hang as any, matcherDeadlineMs: 200 });
+      expect(Date.now() - t0).toBeLessThan(2000);
+      expect(row(r, "S1").signals.a).toEqual({ not_run: "budget" });
+      expect(row(r, "S4").level).toBe("relationship");
+      expect(row(r, "S4").signals.c!.parties).toEqual([{ personId: "I2", personaId: expect.any(String), score: null, not_run: "budget" }]);
+    });
+
+    it("image reads run two at a time", async () => {
+      const bares = ["DDDD-111", "DDDD-222", "DDDD-333", "DDDD-444"];
+      const srcs = bares.map((b, i) => ({ id: `S${i + 1}`, title: "death", url: url(b) }));
+      await writeTree([JOHN_1852(srcs.map((x) => x.id))], srcs);
+      await build("I1", bares.map((b) => deathOf(b, "John", "Boyer", { date: "1845", place: "Pennsylvania" })));
+      await withImages();
+      let inFlight = 0, most = 0;
+      const ocr = vi.fn(async () => {
+        most = Math.max(most, ++inFlight);
+        await new Promise((res) => setTimeout(res, 20));
+        inFlight--;
+        return { transcription: "x", found: "NOT FOUND" as const };
+      });
+      await screen({ matchPairs: matcher(Object.fromEntries(bares.map((b) => [`I1|p_${b}`, 0.1]))), imageTranscribe: ocr as any });
+      expect(ocr).toHaveBeenCalledTimes(4);
+      expect(most).toBe(2);
     });
 
     it("a transcription slot refused is not_run with the slot reason", async () => {
-      await writeTree([JOHN(["S1", "S2"])], [S1, S2]);
+      await writeTree([JOHN_1852(["S1", "S2"])], [S1, S2]);
       await build("I1", [CENSUS(), DEATH_OK()]);
+      await withImages();
       configureTranscriptionCap({ max: 1 });
       const ocr = vi.fn((_i: any) => withTranscriptionSlot(async () => {
         await new Promise((r) => setTimeout(r, 50));
@@ -416,7 +538,7 @@ describe("source_screen", () => {
     });
 
     it("no OpenRouter key: e is not_run with the key error and the verdict stands", async () => {
-      await writeTree([JOHN(["S1"])], [S1]);
+      await writeTree([JOHN_1852(["S1"])], [S1]);
       await build("I1", [CENSUS()]);
       const ocr = vi.fn(async () => { throw new Error("No OpenRouter API key is configured."); });
       const r = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }), imageTranscribe: ocr as any });

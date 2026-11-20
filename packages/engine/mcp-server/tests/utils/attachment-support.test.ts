@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { givenNamesRelated, leaveOneOut, nameRelation, supportOf } from "../../src/utils/attachment-support.js";
+import { givenNamesRelated, leaveOneOut, nameRelation, relationshipMatches, supportOf } from "../../src/utils/attachment-support.js";
 
 const R1 = "ark:/61903/1:1:AAAA-111";
 const R2 = "ark:/61903/1:1:BBBB-222";
@@ -117,6 +117,32 @@ describe("supportOf / leaveOneOut", () => {
     expect([...s.relationships.get("R1")!]).toEqual(["AAAA-111"]);
     expect(leaveOneOut(t as any, s, R1).relationships).toEqual([]);
     expect(leaveOneOut(t as any, s, R2).relationships).toEqual([rel]);
+  });
+});
+
+describe("relationshipMatches", () => {
+  it("reads the stated type through its category, whatever the word or case", () => {
+    const pc = { type: "ParentChild", parent: "I2", child: "I1" };
+    const couple = { type: "Couple", person1: "I1", person2: "I2" };
+    expect(relationshipMatches("son", "I1", "I2", pc)).toBe(true);
+    expect(relationshipMatches("Daughter", "I1", "I2", pc)).toBe(true);
+    expect(relationshipMatches("child_inferred", "I1", "I2", pc)).toBe(true);
+    expect(relationshipMatches("father", "I2", "I1", pc)).toBe(true);
+    expect(relationshipMatches("Wife", "I2", "I1", couple)).toBe(true);
+    expect(relationshipMatches("son", "I2", "I1", pc)).toBe(false);
+    expect(relationshipMatches("wife", "I1", "I2", pc)).toBe(false);
+    expect(relationshipMatches("constructor", "I1", "I2", pc)).toBe(false);
+    expect(relationshipMatches("toString", "I1", "I2", couple)).toBe(false);
+  });
+});
+
+describe("record id case", () => {
+  it("a lowercase record_id is the record leave-one-out names", () => {
+    const t = tree([{ id: "F1", type: "Death", date: "1900" }]);
+    const r = research([a("ark:/61903/1:1:bbbb-222", "p9", "deceased", "death", { date: "1900" })]);
+    const s = supportOf(t as any, r, "I1");
+    expect([...s.facts.get("F1")!]).toEqual(["BBBB-222"]);
+    expect(leaveOneOut(t as any, s, R2).persons![0].facts).toEqual([]);
   });
 });
 

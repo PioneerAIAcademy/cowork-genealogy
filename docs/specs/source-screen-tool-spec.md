@@ -29,7 +29,7 @@ returns one row per attachment. A mode would give one tool two return shapes.
 `checks` is **not** on the MCP schema. `sourceScreenTool(input, principal,
 { checks })` takes a subset of `a b c e h` so the measurement script can
 score each check's absence. Tests also inject `matchPairs`, `imageTranscribe`,
-`now` and `deadlineMs`.
+`now`, `deadlineMs` and `matcherDeadlineMs`.
 
 ## Precondition: person mode has run
 
@@ -125,22 +125,37 @@ review.
   one below the threshold flags it. For every attachment, a stated relationship
   (a `relationship` assertion) between the person and another linked tree person
   that the tree's direct relationship between them contradicts — the record
-  calls his wife someone the tree has as his mother — flags it. A role is read
+  calls his wife someone the tree has as his mother — flags it. The stated
+  `relationship_type` is read through `relationshipCategory`, so `son`, `Wife`
+  and `child_inferred` name their category; a type with no category (a cousin,
+  a boarder) is not compared. A role is read
   only from a stated relationship: a census with no relationship column states
   none, so its positional `head_of_household` label and a "Household of" title
   give no role (KW8N-2TB, 2026-11-01).
-- **e. Image read, flagged attachments only.** Decided (Richard, 2026-10-27):
-  OCR runs only on attachments the rules already flagged — a or c marked it
-  misattributed, b raised any warning (an implausible one included: a wrong year
-  in the index is what b sees first), or h named a contradiction — truth sets
-  included (`flaggedForImage`).
-  `imageTranscribeTool` reads the research source's `image_ark` **without a
-  `projectPath`**, so nothing is staged or saved, with `lookingFor` the tree's
-  value of the disputed field (the person's name, plus the tree's birth or death
-  year when b or h raised it). `FOUND` — the page shows the tree's value where
-  the index differs — is `indexing_error`; `NOT FOUND` leaves the verdict on the
-  rules. No key, no image, a refused transcription slot, an error, or no answer
-  is `e: { not_run }` and the verdict stands on the rules.
+- **e. Image read, for a disputed vital fact on a flagged attachment.**
+  Decided (Richard, 2026-10-27): OCR runs only on attachments the rules already
+  flagged — a or c marked it misattributed, b raised any warning (an implausible
+  one included: a wrong year in the index is what b sees first), or h named a
+  contradiction — truth sets included (`flaggedForImage`, the eligibility gate).
+  A flagged attachment is read only for a **specific disputed fact on this
+  attachment**: a birth or death year or place where this record's own stated
+  value differs from the tree's. The candidate facts are the ones this row's
+  contradictions name (`contradicts[]`, after the misattribution filter in h),
+  then the events of the record facts a b warning rests on (their year), then,
+  when a or c marked it misattributed, any birth or death year or place. The
+  first candidate whose stated value disagrees with the tree's is read, with
+  `lookingFor` the person's name and the tree's value of that fact
+  (`John Boyer, birth 1852`, `John Boyer, birth place Pennsylvania`). With no
+  such fact — a flag that names only a name, or an index that already agrees
+  with the tree on the fact — there is no read: `e: { not_run:
+  "no_disputed_fact" }`. A census age is not a stated birth year, so it is never
+  the disputed value. The read is `imageTranscribeTool` on the research
+  source's `image_ark` **without a `projectPath`**, so nothing is staged or
+  saved. `FOUND` — the page shows the tree's value of a fact this row's index
+  states differently — is `indexing_error`, and `signals.e` names the `fact`;
+  `NOT FOUND` leaves the verdict on the rules. No key, no image, a refused
+  transcription slot, an error, or no answer is `e: { not_run }` and the
+  verdict stands on the rules.
 - **h. Contradictions.** Two attachments on the person whose birth or death
   year or place disagree (the same comparators; a census birth as its window)
   each get `contradicts`, naming the other — except that a disagreement with an
@@ -155,7 +170,8 @@ review.
 In order, first match wins:
 
 1. `not_scored` — a reason from the table above.
-2. `indexing_error` — e found the tree's value on the page.
+2. `indexing_error` — e found on the page the tree's value of a vital fact this
+   attachment's index states differently.
 3. `misattributed` — a below `MISATTRIBUTED_BELOW`, b impossible, or c: a party
    below the threshold or a contradicted relationship.
 4. `contradicts` — h alone.
@@ -232,14 +248,19 @@ drops: the planted set carries two fixtures per must-not-flag type. The
 
 ## Time budget
 
-Cowork aborts every MCP call at 60 s. All matcher pairs (a, c) go in **one**
-`matchPairs` call. The image reads run concurrently under one deadline,
-`OCR_DEADLINE_MS = 45_000` measured from the call's entry; each gets
-`{ ocrTimeoutMs: deadline − now }`, so an overrun is aborted rather than left
-billing. A read unfinished at the deadline marks that attachment's
+Cowork aborts every MCP call at 60 s. One clock starts at the call's entry. All
+matcher pairs (a, c) go in **one** `matchPairs` call, which must finish by
+`MATCHER_DEADLINE_MS = 30_000`; unfinished, every pair is `a: { not_run:
+"budget" }` and every c party `{ score: null, not_run: "budget" }` (the matcher
+offers no abort, so its requests are abandoned, not cancelled). The image reads
+then run two at a time (`OCR_CONCURRENCY`, so a `GENEALOGY_MAX_TRANSCRIPTIONS`
+cap shared with other users is not taken whole) and must finish by
+`OCR_DEADLINE_MS = 45_000`. Each read gets `{ budgetMs: deadline − now }`, an
+internal `imageTranscribeTool` option that bounds the image fetch (one attempt)
+and the OCR together, so an overrun is aborted rather than left billing. A read
+unfinished at the deadline, or not started before it, marks that attachment's
 `e: { not_run: "budget" }` and its verdict stands on the rules. A
-transcription-slot refusal (`GENEALOGY_MAX_TRANSCRIPTIONS`) is
-`e: { not_run: "slot_limit: …" }`.
+transcription-slot refusal is `e: { not_run: "slot_limit: …" }`.
 
 ## Read-only
 

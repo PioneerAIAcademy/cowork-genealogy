@@ -25,6 +25,8 @@ export interface PartyScore {
   personId: string;
   personaId: string;
   score: number | null;
+  /** Why the party has no score (the matcher's budget, or its error). */
+  not_run?: string;
 }
 
 export interface SourceScreenSignals {
@@ -34,8 +36,9 @@ export interface SourceScreenSignals {
   b?: { impossible: string[]; implausible: string[] };
   /** Relationship-level parties scored, and stated relationships the tree contradicts. */
   c?: { parties: PartyScore[]; disagreements: string[] };
-  /** The page image read for the disputed value (flagged attachments only). */
-  e?: { lookingFor: string; found: "FOUND" | "NOT FOUND" } | NotRun;
+  /** The page image read for the disputed vital fact (flagged attachments only):
+   *  `fact` is e.g. "birth year", `lookingFor` the tree's value of it. */
+  e?: { lookingFor: string; fact: string; found: "FOUND" | "NOT FOUND" } | NotRun;
   /** Other attachments whose birth or death year or place disagrees with this one. */
   h?: { contradicts: Array<{ sourceId: string; fact: string }> };
 }

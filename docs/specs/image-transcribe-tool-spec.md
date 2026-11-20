@@ -834,6 +834,13 @@ group-service calls) not drawn from this budget — so the true worst case on
 that one narrow path is "the 180s budget, plus up to ~20s of staging-time place
 lookup," not a hard 180s ceiling on every path.
 
+**An in-process caller can set a tighter whole-call budget.** The internal
+`budgetMs` option (never on the MCP schema) is a budget from entry like the
+connector's, for any principal: one download attempt clamped to what is left,
+then the OCR on the rest; under a connector principal the tighter of the two
+budgets wins. `source_screen` passes it so each page read stops at that tool's
+own deadline (`source-screen-tool-spec.md`, "Time budget").
+
 ### 5.8 Image cap (hard, shared, persisted)
 
 An agent can enter an unbounded page-by-page hunt through a browse-only image

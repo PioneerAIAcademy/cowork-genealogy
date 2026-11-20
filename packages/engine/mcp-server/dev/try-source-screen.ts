@@ -9,7 +9,7 @@
  * OpenRouter (needs `openRouterApiKey` in ~/.familysearch-mcp/config.json).
  *
  * Example:
- *   npx tsx dev/try-source-screen.ts /home/me/projects/flynn I1 --checks a,b,d,h
+ *   npx tsx dev/try-source-screen.ts /home/me/projects/flynn I1 --checks a,b,h
  */
 import { LOCAL } from "../src/auth/principal.js";
 import { ALL_CHECKS, sourceScreenTool } from "../src/tools/source-screen.js";

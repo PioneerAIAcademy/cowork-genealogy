@@ -13,6 +13,7 @@ import { lookupNameFamily, lookupNameVariants } from "./name-variants.js";
 import { VITAL_EVENT, YEAR_TOLERANCE, placeForms, placesAgree, yearsOf } from "./question-state.js";
 import { birthRangeFromAge } from "./record-extract.js";
 import { normalizeString } from "./string-similarity.js";
+import { relationshipCategory } from "./relationship-category.js";
 import { patronymicVariants } from "./surname-variant-hints.js";
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
@@ -116,7 +117,11 @@ export function assertionName(a: any): { given?: string; surname?: string } {
   return { given: words.slice(0, -1).join(" "), surname: words[words.length - 1] };
 }
 
-const recordKey = (a: any): string => (typeof a?.record_id === "string" ? arkToBareId(a.record_id) : "");
+/** A record id or ARK as the bare id this module and `source_screen` key
+ *  records by: upper-cased, so `mzgs-1b7` and `MZGS-1B7` are one record. */
+export const bareRecordId = (id: string): string => arkToBareId(id).toUpperCase();
+
+const recordKey = (a: any): string => (typeof a?.record_id === "string" ? bareRecordId(a.record_id) : "");
 const personaKey = (a: any): string => `${recordKey(a)}\u0000${a?.record_persona_id ?? ""}`;
 
 /** Live person_evidence links: persona (record + persona id) -> tree person ids. */
@@ -149,11 +154,12 @@ export function vitalAssertions(personaAssertions: readonly any[]): any[] {
   return out;
 }
 
-const REL_TYPE: Record<string, (x: string, y: string, r: any) => boolean> = {
-  spouse: (x, y, r) => r?.type === "Couple" && ((r.person1 === x && r.person2 === y) || (r.person1 === y && r.person2 === x)),
-  child: (x, y, r) => r?.type === "ParentChild" && r.child === x && r.parent === y,
-  parent: (x, y, r) => r?.type === "ParentChild" && r.parent === x && r.child === y,
-};
+type RelTest = (x: string, y: string, r: any) => boolean;
+const REL_TYPE: Record<string, RelTest> = Object.assign(Object.create(null) as Record<string, RelTest>, {
+  spouse: (x: string, y: string, r: any) => r?.type === "Couple" && ((r.person1 === x && r.person2 === y) || (r.person1 === y && r.person2 === x)),
+  child: (x: string, y: string, r: any) => r?.type === "ParentChild" && r.child === x && r.parent === y,
+  parent: (x: string, y: string, r: any) => r?.type === "ParentChild" && r.parent === x && r.child === y,
+});
 
 /** A record's stated relationships between linked tree persons: each relationship
  *  assertion whose persona and related persona both link to a tree person. */
@@ -182,9 +188,12 @@ export function statedRelationships(
   return out;
 }
 
-/** Whether a tree relationship is the one a stated relationship names. */
+/** Whether a tree relationship is the one a stated relationship names. The
+ *  type is read through `relationshipCategory`, so `son`, `Wife` and
+ *  `child_inferred` name their category. */
 export function relationshipMatches(type: string, from: string, to: string, r: any): boolean {
-  return REL_TYPE[type]?.(from, to, r) ?? false;
+  const category = relationshipCategory(type);
+  return category !== undefined && (REL_TYPE[category]?.(from, to, r) ?? false);
 }
 
 /**
@@ -247,7 +256,7 @@ export function leaveOneOut(
   support: AttachmentSupport,
   recordId: string | ReadonlySet<string>,
 ): SimplifiedGedcomX {
-  const ids = typeof recordId === "string" ? new Set([arkToBareId(recordId)]) : new Set([...recordId].map(arkToBareId));
+  const ids = new Set([...(typeof recordId === "string" ? [recordId] : recordId)].map(bareRecordId));
   const only = (s: Set<string> | undefined): boolean => !!s && s.size > 0 && [...s].every((r) => ids.has(r));
   const persons = (tree.persons ?? []).map((p) => {
     if (p?.id !== support.personId) return p;
