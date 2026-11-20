@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-10-24_13-35-00.json",
-  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
+  "run_log": "v1_2026-11-17_15-04-27.json",
+  "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
       "test_id": "ut_survey_surname_d4",
@@ -24,10 +24,10 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": null
+      "comment": "No MCP tool calls were made, and the skill correctly declined to invoke tools as required by the negative test. Therefore, the Tool Arguments dimension does not apply."
     },
     {
-      "test_id": "ut_survey_surname_d5",
+      "test_id": "ut_survey_surname_d6",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d5",
+      "test_id": "ut_survey_surname_d6",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d5",
+      "test_id": "ut_survey_surname_d6",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -51,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d5",
+      "test_id": "ut_survey_surname_d6",
       "dimension_source": "rubric",
       "dimension_name": "Place resolution",
       "llm_score": 3,
@@ -59,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d5",
+      "test_id": "ut_survey_surname_d6",
       "dimension_source": "rubric",
       "dimension_name": "Census coverage",
       "llm_score": 3,
@@ -67,15 +67,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d5",
+      "test_id": "ut_survey_surname_d6",
       "dimension_source": "rubric",
       "dimension_name": "Threshold compliance",
       "llm_score": null,
       "corrected_score": null,
+      "comment": "The total match count was only 6, below the 600-per-year threshold. Therefore, the high-volume condition was not triggered and this dimension does not apply."
+    },
+    {
+      "test_id": "ut_survey_surname_d6",
+      "dimension_source": "rubric",
+      "dimension_name": "Table structure",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d5",
+      "test_id": "ut_survey_surname_d2",
       "dimension_source": "rubric",
       "dimension_name": "Table structure",
       "llm_score": 3,
@@ -88,12 +96,20 @@
       "dimension_name": "Threshold compliance",
       "llm_score": null,
       "corrected_score": null,
+      "comment": "The 1820 search returned only 3 matches, well below the 600-per-year threshold. Therefore, the high-volume condition was not triggered, so this dimension does not apply."
+    },
+    {
+      "test_id": "ut_survey_surname_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Census coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_survey_surname_d2",
       "dimension_source": "rubric",
-      "dimension_name": "Table structure",
+      "dimension_name": "Place resolution",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -101,7 +117,7 @@
     {
       "test_id": "ut_survey_surname_d2",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -117,13 +133,37 @@
     {
       "test_id": "ut_survey_surname_d2",
       "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d1",
+      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d2",
+      "test_id": "ut_survey_surname_d1",
       "dimension_source": "rubric",
       "dimension_name": "Place resolution",
       "llm_score": 3,
@@ -131,7 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d2",
+      "test_id": "ut_survey_surname_d1",
       "dimension_source": "rubric",
       "dimension_name": "Census coverage",
       "llm_score": 3,
@@ -155,81 +195,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_survey_surname_d1",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d1",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d1",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d1",
-      "dimension_source": "rubric",
-      "dimension_name": "Place resolution",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d1",
-      "dimension_source": "rubric",
-      "dimension_name": "Census coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d3",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d3",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d3",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_survey_surname_d3",
       "dimension_source": "rubric",
-      "dimension_name": "Place resolution",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d3",
-      "dimension_source": "rubric",
-      "dimension_name": "Census coverage",
+      "dimension_name": "Table structure",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -245,7 +213,39 @@
     {
       "test_id": "ut_survey_surname_d3",
       "dimension_source": "rubric",
-      "dimension_name": "Table structure",
+      "dimension_name": "Census coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Place resolution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
