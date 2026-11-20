@@ -44,6 +44,7 @@ from test_locality_guide import (  # noqa: E402
     test_persisted_guide_is_the_guide as check_guide,
     test_in_project_return_follows_the_contract as check_return_contract,
     _GUIDE_HEADING_LINES,
+    _LOCALITY_RECORD_TYPES,
     _heading,
 )
 
@@ -169,7 +170,7 @@ def _survey(place="Javorje, Škofja Loka, Slovenia", catalog_places=(), prefix="
     }
 
 
-_A_RETURNED_GUIDE = [{"subagent_type": "locality-guide", "text": "# Locality Guide: X\n\n## Available record types\n- x"}]
+_A_RETURNED_GUIDE = [{"subagent_type": "locality-guide", "text": "# Locality Guide: X\n\n## Jurisdiction overview\n- x"}]
 
 
 def test_survey_fires_when_a_written_guide_had_no_survey():
@@ -268,9 +269,10 @@ def _guide(*headings, nl="\n"):
 _GUIDE = _guide(*_ALL_HEADINGS)
 
 
-def _guide_entry(guide=_GUIDE, *, lid="loc_001"):
+def _guide_entry(guide=_GUIDE, *, lid="loc_001", types=_LOCALITY_RECORD_TYPES):
     entry = _entry(lid=lid)
     entry["guide_markdown"] = guide
+    entry["record_types"] = [{"type": t, "access": "unknown", "summary": "Not confirmed."} for t in types]
     return entry
 
 
@@ -317,11 +319,30 @@ def test_guide_passes_with_every_heading():
     expect_passes(_check_guide(_guide_entry(_GUIDE)))
 
 
+@pytest.mark.parametrize("dropped", ["vital_record", "tax", "other"])
+def test_guide_fires_when_a_record_type_has_no_row(dropped):
+    expect_fires(
+        _check_guide(_guide_entry(types=[t for t in _LOCALITY_RECORD_TYPES if t != dropped])),
+        rf"loc_001.*record_types has no row for \['{dropped}'\]",
+    )
+
+
+def test_guide_fires_on_an_entry_with_no_rows():
+    entry = _guide_entry()
+    del entry["record_types"]
+    expect_fires(_check_guide(entry), r"record_types has no row for \['census'")
+
+
+def test_record_types_are_the_schema_enum():
+    assert _LOCALITY_RECORD_TYPES[0] == "census" and "vital_record" in _LOCALITY_RECORD_TYPES
+    assert len(_LOCALITY_RECORD_TYPES) == 12
+
+
 def test_guide_fires_when_the_headings_are_demoted_a_level():
     demoted = _guide(*(f"#{h}" for h in _ALL_HEADINGS))
     expect_fires(
         _check_guide(_guide_entry(demoted)),
-        r"loc_001.*Jurisdiction overview.*Available record types.*Research tips",
+        r"loc_001.*Jurisdiction overview.*Boundary changes.*Research tips",
     )
 
 
@@ -594,7 +615,7 @@ def test_contract_fires_when_a_refused_write_leaves_the_guide_out_of_the_return(
         _check_contract(
             _returns("The write failed.\n\n---\n\nSummary."), calls=[_append(_REFUSED, **_LOC_OP)]
         ),
-        r"Available record types",
+        r"Jurisdiction overview",
     )
 
 
@@ -641,7 +662,7 @@ def test_contract_passes_when_an_unresolved_place_falls_back_to_the_guide():
 def test_contract_fires_when_an_unresolved_place_returns_no_guide():
     expect_fires(
         _check_contract(_returns("The place did not resolve."), calls=[_append(_UNRESOLVED, **_LOC_OP)]),
-        r"Available record types",
+        r"Jurisdiction overview",
     )
 
 

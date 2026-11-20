@@ -91,6 +91,9 @@ const GUIDE_HEADINGS: string[] = LOCALITY_GUIDE_OUTLINE.flatMap(([section, subs]
   ...subs.map((sub) => `### ${sub}`),
 ]);
 
+/** The record types a guide's `record_types` rows cover, one row or more each. */
+const RECORD_TYPES: string[] = [...VALIDATOR_ENUMS.locality_record_type];
+
 // ---------- place names ----------
 
 /** The delegated string without a trailing ` (Type)`. */
@@ -749,6 +752,7 @@ export async function runLocalitySurvey(
     ...Object.fromEntries(TOPIC_KEYS.map((k) => [k, { ...pageMeta.get(k), content: "", omitted: [] as string[] }])),
     ...(notices.length ? { collectionNotices: notices } : {}),
     guideHeadings: GUIDE_HEADINGS,
+    recordTypes: RECORD_TYPES,
     pagesRead,
     volumeSummary,
   };
@@ -760,6 +764,7 @@ export async function runLocalitySurvey(
         inline.staged = { resultsRef: ref };
         inline.next =
           `Save the guide now: research_append({ section: "localities", op: "append", surveyRef: "${ref}", entry }), ` +
+          "the entry carrying record_types (one row or more for each of recordTypes), repositories and losses, " +
           "then each heading of guideHeadings as its own guideSection update. The guide is never only your reply.";
       }
     } catch (e) {

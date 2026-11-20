@@ -52,11 +52,18 @@ eval harness's 180-second silence watchdog, so every locality-guide test sets
 The `localities` entry carries what research-plan and research-exhaustiveness
 otherwise re-fetched:
 
-- `guide_markdown`, the whole guide as one markdown string, built by research_append.
-  Step 6 appends the entry without it and then sends the guide one `guideSection`
-  per call, all in one turn; a call that fails is sent again alone. Each answer's
-  `guide[0].missing` names the required headings not yet saved
-  (research-append-tool-spec §5.14).
+- `guide_markdown`, three prose sections (Jurisdiction overview, Boundary changes,
+  Research tips), built by research_append. Step 6 appends the entry without it and
+  then sends the guide one `guideSection` per call, all in one turn; a call that fails
+  is sent again alone. Each answer's `guide[0].missing` names the headings not yet
+  saved and the record types with no row (research-append-tool-spec §5.14).
+- `record_types[]` — `{ type, years, level, held_at, access, collection_ids, summary,
+  source_url }`, one row or more per `locality_record_type` value, sent with the
+  append; `access` is how the records are reached (the `locality_access` enum).
+  research-plan and research-exhaustiveness read a record type's reach here.
+- `repositories[]` — `{ name, holds, access, url }`, and `losses[]` — `{ record_set,
+  years, source_url }`, a loss always with the page that states it.
+- `catalog[]` — the survey's Catalog hits, written by research_append from `surveyRef`.
 - `collections[].person_count`, copied from `locality_survey`'s collections part
   (`collections_search`'s `personCount`), and `record_count`, which the agent leaves
   out: `collections_search` no longer

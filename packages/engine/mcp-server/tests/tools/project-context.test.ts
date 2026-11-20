@@ -700,6 +700,15 @@ describe("project_context", () => {
               { id: "2", title: "Bad count", person_count: "5", record_count: 1.5 },
             ],
             quirks: ["Indexed only at county level."],
+            record_types: [
+              { type: "church", years: "1814-1900", level: "parish", held_at: "Statsarkivet", access: "browse",
+                collection_ids: ["4237104"], summary: "Church books by parish.", source_url: "https://x/church" },
+              { type: "tax", years: null, level: null, held_at: null, access: "unknown", collection_ids: [],
+                summary: "Not confirmed.", source_url: null },
+            ],
+            repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", access: null, url: "https://x/hamar" }],
+            losses: [{ record_set: "Ringebu church book", years: "1740-1760", source_url: "https://x/loss" }],
+            catalog: [{ id: "koha:1", title: "Kirkebøker catalog row", place: "Ringebu", repository_calls: [], film_count: 3 }],
             guide_markdown: "## Norway\nlong prose that must not leak into the compact projection",
             pages_read: [
               { section: "home", url: "u1", found: true },
@@ -728,9 +737,17 @@ describe("project_context", () => {
           { id: "2", title: "Bad count" },
         ],
         quirks: ["Indexed only at county level."],
+        recordTypes: [
+          { type: "church", years: "1814-1900", level: "parish", heldAt: "Statsarkivet", access: "browse",
+            collectionIds: ["4237104"], summary: "Church books by parish." },
+          { type: "tax", access: "unknown", summary: "Not confirmed." },
+        ],
+        repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", url: "https://x/hamar" }],
+        losses: [{ recordSet: "Ringebu church book", years: "1740-1760" }],
       },
     ]);
     expect(JSON.stringify(r.localities)).not.toContain("long prose");
+    expect(JSON.stringify(r.localities)).not.toContain("catalog row");
   });
 
   it("truncates a long question to 140 chars ending in an ellipsis; leaves a 140-char one alone", async () => {

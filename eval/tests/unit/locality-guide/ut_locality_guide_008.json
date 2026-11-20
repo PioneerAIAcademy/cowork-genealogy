@@ -47,7 +47,7 @@
   "judge_context": [
     "Recognize New York was under British colonial rule in the 1700s; mention parish registers, land deeds, probate records, and colonial court records. Historical societies such as the New-York Historical Society hold significant colonial-era collections and should be mentioned as repositories. Avoid New York State Archives or statewide vital records (those came later).",
     "locality_survey's volumes part returns one browse-only image group of Dutch Reformed Church registers (1700-1776, language 'nl', no name index). The skill should flag that the volume is written in Dutch and is not full-text or name searchable, so a researcher knows to expect manual page-by-page browsing of a non-English record.",
-    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

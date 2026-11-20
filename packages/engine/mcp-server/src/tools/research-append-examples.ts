@@ -243,6 +243,13 @@ const EXAMPLES: Record<string, string> = {
   "registration_start": [
     { "event": "birth", "level": "state", "year": 1906, "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" }
   ],
+  "record_types": [
+    { "type": "vital_record", "years": "1906-1968", "level": "state", "held_at": "Pennsylvania Department of Health", "access": "indexed", "collection_ids": ["2542790"], "summary": "State death certificates from 1906; earlier deaths from church and probate records.", "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" }
+  ],
+  "repositories": [
+    { "name": "Schuylkill County Register of Wills", "holds": "wills and estate files from 1811", "access": "on site", "url": null }
+  ],
+  "losses": [],
   "source": "locality-guide",
   "created": "2026-07-18"
 }`,

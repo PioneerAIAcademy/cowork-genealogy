@@ -43,7 +43,7 @@
   ],
   "judge_context": [
     "Must mention Louisiana under French colonial rule. Must highlight parish registers, land grants, and colonial court records. Must not suggest U.S. state vital records for the 1700s.",
-    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

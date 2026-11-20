@@ -145,7 +145,9 @@ import {
   planItemCompletionRecordTypeInvariants,
   recordDocumentArk,
   LOCALITY_GUIDE_HEADINGS,
+  LOCALITY_RECORD_TYPES,
   missingGuideHeadings,
+  catalogRowsFromSurvey,
 } from "../../src/tools/research-append.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { GUIDE_SECTION_MAX_CHARS } from "../../src/utils/locality-guide-sections.js";
@@ -19124,7 +19126,9 @@ describe("research_append: a localities guide is saved one section per call (#45
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
   const savedGuide = async (i = 0) => (await readResearch()).localities[i].guide_markdown as string;
   const OVERVIEW = "## Jurisdiction overview\n- **Formed:** 1835 as a district of Madeira";
-  const CHURCH = "### Church records\n- Parish registers from 1539 (Funchal, Se).";
+  const SUB = "### Parishes\n- Parish registers from 1539 (Funchal, Se).";
+  const SUB_CALL = `## Jurisdiction overview\n${SUB}`;
+  const BOUNDARY = "## Boundary changes\n- None in the period.";
   const TIPS = '## Research tips\n- Search the parish, not the district: the wiki says "early to 1911".';
   const entry = (extra: Record<string, unknown> = {}) => ({
     place: "Portugal",
@@ -19146,9 +19150,14 @@ describe("research_append: a localities guide is saved one section per call (#45
   const guideOf = (r: Awaited<ReturnType<typeof researchAppend>>) => (r as { guide?: unknown }).guide as
     | { entryId: string; missing: string[]; next?: string }[]
     | undefined;
-  /** Every template heading but those the guide carries. */
-  const missingBut = (...have: string[]) => LOCALITY_GUIDE_HEADINGS.filter((h) => !have.includes(h));
-  const SENT_FOUR = ["## Jurisdiction overview", "## Available record types", "### Church records", "## Research tips"];
+  const ROWS_MISSING = LOCALITY_RECORD_TYPES.map((t) => `record_types: ${t}`);
+  /** Every template heading but those the guide carries, then every record type (no rows sent). */
+  const missingBut = (...have: string[]) => [...LOCALITY_GUIDE_HEADINGS.filter((h) => !have.includes(h)), ...ROWS_MISSING];
+  const SENT_TWO = ["## Jurisdiction overview", "## Research tips"];
+  const row = (type: string, extra: Record<string, unknown> = {}) => ({
+    type, access: "unknown", summary: `No tool result settles ${type}.`, ...extra,
+  });
+  const allRows = () => LOCALITY_RECORD_TYPES.map((t) => row(t));
 
   it("an append with no guide saves, and says which headings the guide lacks and how to send them", async () => {
     await writeProject();
@@ -19157,8 +19166,9 @@ describe("research_append: a localities guide is saved one section per call (#45
     const guide = guideOf(r)!;
     expect(guide).toHaveLength(1);
     expect(guide[0].entryId).toBe("loc_001");
-    expect(guide[0].missing).toEqual([...LOCALITY_GUIDE_HEADINGS]);
+    expect(guide[0].missing).toEqual([...LOCALITY_GUIDE_HEADINGS, ...ROWS_MISSING]);
     expect(guide[0].next).toMatch(/op 'update'.*guideSection/);
+    expect(guide[0].next).toMatch(/record_types/);
     expect(guide[0].next).toContain(`${GUIDE_SECTION_MAX_CHARS} characters`);
   });
 
@@ -19166,18 +19176,12 @@ describe("research_append: a localities guide is saved one section per call (#45
     await writeProject();
     await append();
     expect((await section(OVERVIEW)).ok).toBe(true);
-    expect((await section(CHURCH)).ok).toBe(true);
+    expect((await section(SUB_CALL)).ok).toBe(true);
     const last = await section(TIPS);
     expect(last.ok).toBe(true);
-    expect(guideOf(last)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_FOUR) })]);
+    expect(guideOf(last)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_TWO) })]);
     expect(await savedGuide()).toBe(
-      [
-        "# Locality Guide: Funchal, Madeira, Portugal (1840-1900)",
-        OVERVIEW,
-        "## Available record types",
-        CHURCH,
-        TIPS,
-      ].join("\n\n"),
+      ["# Locality Guide: Funchal, Madeira, Portugal (1840-1900)", OVERVIEW, SUB, TIPS].join("\n\n"),
     );
   });
 
@@ -19185,34 +19189,21 @@ describe("research_append: a localities guide is saved one section per call (#45
     await writeProject();
     await append();
     expect(guideOf(await section(TIPS))![0].missing).toEqual(missingBut("## Research tips"));
-    expect(guideOf(await section(CHURCH))![0].missing).toEqual(missingBut("## Research tips", "## Available record types", "### Church records"));
+    expect(guideOf(await section(BOUNDARY))![0].missing).toEqual(missingBut("## Research tips", "## Boundary changes"));
   });
 
   it("places sections in template order whatever order they arrive in", async () => {
     await writeProject();
     await append();
-    for (const s of [
-      TIPS,
-      "### Online repositories\n| Repository |\n|---|\n| FamilySearch |",
-      "### Tax records\n- Decima books.",
-      "## Boundary changes\n- None in the period.",
-      CHURCH,
-      "### Vital records (civil registration)\n- From 1911.",
-      OVERVIEW,
-    ]) {
+    for (const s of [TIPS, BOUNDARY, SUB_CALL, OVERVIEW]) {
       expect((await section(s)).ok).toBe(true);
     }
     const headings = (await savedGuide()).split("\n").filter((l) => /^#{1,3} /.test(l));
     expect(headings).toEqual([
       "# Locality Guide: Funchal, Madeira, Portugal (1840-1900)",
       "## Jurisdiction overview",
+      "### Parishes",
       "## Boundary changes",
-      "## Available record types",
-      "### Vital records (civil registration)",
-      "### Church records",
-      "### Tax records",
-      "## Repository guide",
-      "### Online repositories",
       "## Research tips",
     ]);
   });
@@ -19221,9 +19212,9 @@ describe("research_append: a localities guide is saved one section per call (#45
     await writeProject();
     await append();
     await section(OVERVIEW);
-    await section(CHURCH);
+    await section(SUB_CALL);
     await section(TIPS);
-    expect((await section("### church records\n- Registers from 1539, at the district archive.")).ok).toBe(true);
+    expect((await section("## Jurisdiction overview\n### parishes\n- Registers from 1539, at the district archive.")).ok).toBe(true);
     const guide = await savedGuide();
     expect(guide).toContain("- Registers from 1539, at the district archive.");
     expect(guide).not.toContain("(Funchal, Se)");
@@ -19235,19 +19226,20 @@ describe("research_append: a localities guide is saved one section per call (#45
   it("a '## ' section sent again keeps the '### ' subsections under it", async () => {
     await writeProject();
     await append();
-    await section(CHURCH);
-    expect((await section("## Available record types\nHeld at parish level throughout.")).ok).toBe(true);
+    await section(SUB_CALL);
+    expect((await section("## Jurisdiction overview\nHeld at parish level throughout.")).ok).toBe(true);
     const guide = await savedGuide();
-    expect(guide).toContain("## Available record types\nHeld at parish level throughout.\n\n### Church records");
+    expect(guide).toContain("## Jurisdiction overview\nHeld at parish level throughout.\n\n### Parishes");
   });
 
-  it("puts a '### ' the template does not name under Available record types, after the named ones", async () => {
+  it("refuses a '### ' with no '## ' above it in the call, naming the sections, and saves nothing", async () => {
     await writeProject();
     await append();
-    await section("### Naturalization records\n- District court, from 1911.");
-    await section(CHURCH);
-    const headings = (await savedGuide()).split("\n").filter((l) => /^#{2,3} /.test(l));
-    expect(headings).toEqual(["## Available record types", "### Church records", "### Naturalization records"]);
+    const r = await section("### Naturalization records\n- District court, from 1911.");
+    expect(r.ok).toBe(false);
+    expect(refusals(r)[0]).toContain("has no '## ' section above it");
+    expect(refusals(r)[0]).toContain("'## Research tips'");
+    expect((await readResearch()).localities[0].guide_markdown).toBeUndefined();
   });
 
   it("puts a '### ' under the '## ' sent above it in the same call", async () => {
@@ -19277,7 +19269,7 @@ describe("research_append: a localities guide is saved one section per call (#45
 
   it("refuses a guide sent whole on an append, says how to send it, and writes nothing", async () => {
     await writeProject();
-    const r = await append({ guide_markdown: [OVERVIEW, "## Available record types", CHURCH, TIPS].join("\n\n") });
+    const r = await append({ guide_markdown: [OVERVIEW, "## Available record types", SUB, TIPS].join("\n\n") });
     expect(r.ok).toBe(false);
     expect(refusals(r)).toHaveLength(1);
     const msg = refusals(r)[0];
@@ -19337,14 +19329,15 @@ describe("research_append: a localities guide is saved one section per call (#45
 
   it("adds a section to a guide saved whole before the rule, keeping its text", async () => {
     const research: any = baseResearch();
-    const old = `# Locality Guide: Funchal (1840-1900)\n\n${OVERVIEW}\n\n## Available record types\n${CHURCH}`;
+    const old = `# Locality Guide: Funchal (1840-1900)\n\n${OVERVIEW}\n\n## Available record types\n\n### Church records\n- From 1539.`;
     research.localities = [{ id: "loc_001", ...entry({ guide_markdown: old }), created: "2026-01-01" }];
     await writeProject(research);
     const r = await section(TIPS);
-    expect(guideOf(r)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_FOUR) })]);
+    expect(guideOf(r)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_TWO) })]);
     const guide = await savedGuide();
     expect(guide.startsWith("# Locality Guide: Funchal (1840-1900)\n\n## Jurisdiction overview")).toBe(true);
-    expect(guide.endsWith(TIPS)).toBe(true);
+    expect(guide).toContain(TIPS);
+    expect(guide.endsWith("## Available record types\n\n### Church records\n- From 1539.")).toBe(true);
   });
 
   it("refuses a section over the size limit, says to split it, and saves nothing of it", async () => {
@@ -19446,14 +19439,15 @@ describe("research_append: a localities guide is saved one section per call (#45
       ops: [
         { section: "localities", op: "update", entryId: "loc_001", guideSection: TIPS },
         { section: "localities", op: "update", entryId: "loc_001", guideSection: OVERVIEW },
-        { section: "localities", op: "update", entryId: "loc_001", guideSection: CHURCH },
+        { section: "localities", op: "update", entryId: "loc_001", guideSection: SUB_CALL },
       ],
     } as never);
     expect(r.ok).toBe(true);
-    expect(guideOf(r)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_FOUR) })]);
+    expect(guideOf(r)).toEqual([expect.objectContaining({ entryId: "loc_001", missing: missingBut(...SENT_TWO) })]);
     const guide = await savedGuide();
-    expect(guide.indexOf("## Jurisdiction overview")).toBeLessThan(guide.indexOf("### Church records"));
-    expect(guide.indexOf("### Church records")).toBeLessThan(guide.indexOf("## Research tips"));
+    expect(guide).toContain(OVERVIEW);
+    expect(guide.indexOf("## Jurisdiction overview")).toBeLessThan(guide.indexOf("### Parishes"));
+    expect(guide.indexOf("### Parishes")).toBeLessThan(guide.indexOf("## Research tips"));
   });
 
   it("refuses a batch whose sections together pass the size limit, and says to send each alone", async () => {
@@ -19503,12 +19497,12 @@ describe("research_append: a localities guide is saved one section per call (#45
   it("sections sent at once to one entry all land", async () => {
     await writeProject();
     await append();
-    const sent = [OVERVIEW, CHURCH, TIPS, "## Boundary changes\n- None.", "### Tax records\n- Decima books."];
+    const sent = [OVERVIEW, SUB_CALL, TIPS, BOUNDARY];
     const results = await Promise.all(sent.map((s) => section(s)));
     expect(results.every((r) => r.ok)).toBe(true);
     const guide = await savedGuide();
-    for (const s of sent) expect(guide).toContain(s);
-    expect(missingGuideHeadings(guide)).toEqual(missingBut(...SENT_FOUR, "## Boundary changes", "### Tax records"));
+    for (const s of [OVERVIEW, SUB, TIPS, BOUNDARY]) expect(guide).toContain(s);
+    expect(missingGuideHeadings(guide)).toEqual([]);
   });
 
   it("says to return once the guide carries every heading, and not before", async () => {
@@ -19516,18 +19510,96 @@ describe("research_append: a localities guide is saved one section per call (#45
     await append();
     const all = LOCALITY_GUIDE_HEADINGS.map((h) => `${h}\n- x`);
     let last: Awaited<ReturnType<typeof researchAppend>> | undefined;
-    for (const [i, s] of all.entries()) {
+    for (const s of all) {
       last = await section(s);
-      if (i === 0) expect(guideOf(last)![0].next).not.toMatch(/Return now/);
+      expect(guideOf(last)![0].next).not.toMatch(/Return now/);
     }
-    expect(guideOf(last!)![0]).toMatchObject({ missing: [], next: expect.stringMatching(/complete\. Return now/) });
+    expect(guideOf(last!)![0].missing).toEqual(ROWS_MISSING);
+    const rows = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { record_types: allRows() },
+    });
+    expect(guideOf(rows)![0]).toMatchObject({ missing: [], next: expect.stringMatching(/complete\. Return now/) });
   });
 
-  it("lists a missing record-type subsection, not only the '## ' sections", async () => {
+  it("lists each record type with no row, and an update's rows replace only the rows of their types", async () => {
+    await writeProject();
+    const first = await append({
+      record_types: [row("vital_record", { years: "1860-1911", access: "browse" }), row("church", { held_at: "Funchal diocese" })],
+    });
+    expect(guideOf(first)![0].missing).toContain("record_types: tax");
+    expect(guideOf(first)![0].missing).not.toContain("record_types: vital_record");
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { record_types: [row("vital_record", { access: "indexed" }), row("tax")] },
+    });
+    expect(r.ok).toBe(true);
+    const rows = (await readResearch()).localities[0].record_types;
+    expect(rows.map((x: any) => [x.type, x.access])).toEqual([["vital_record", "indexed"], ["church", "unknown"], ["tax", "unknown"]]);
+    expect(guideOf(r)![0].missing).not.toContain("record_types: tax");
+  });
+
+  it("fills a row's collections, years and online access from the entry's collections", async () => {
+    await writeProject();
+    const r = await append({
+      collections: [{ id: "4237104", title: "Portugal, Madeira, Catholic Church Records, 1539-1911", date_range: "1539-1911" }],
+      record_types: [{ type: "church", held_at: "Arquivo Regional da Madeira", summary: "Parish registers from 1539." }],
+    });
+    expect(r.ok).toBe(true);
+    const [row] = (await readResearch()).localities[0].record_types;
+    expect(row).toMatchObject({ type: "church", collection_ids: ["4237104"], years: "1539-1911", held_at: "Arquivo Regional da Madeira" });
+    expect(typeof row.access).toBe("string");
+  });
+
+  it("in a batch, each update's rows merge onto the rows the op before left", async () => {
     await writeProject();
     await append();
-    const r = await section(CHURCH);
-    expect(guideOf(r)![0].missing).toContain("### Tax records");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "update", entryId: "loc_001", fields: { record_types: [row("census")] } },
+        { section: "localities", op: "update", entryId: "loc_001", fields: { record_types: [row("land")] } },
+      ],
+    } as never);
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).localities[0].record_types.map((x: any) => x.type)).toEqual(["census", "land"]);
+  });
+
+  it("reads a row's free-text level into the narrowest level it names, keeping the text in the summary", async () => {
+    await writeProject();
+    const r = await append({
+      record_types: [
+        row("vital_record", { level: "county or state" }),
+        row("church", { level: "diocese", summary: "Registers by parish." }),
+        row("census", { level: "national" }),
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const [vital, church, census] = (await readResearch()).localities[0].record_types;
+    expect(vital.level).toBe("county");
+    expect(vital.summary).toContain("county or state");
+    expect(church.level).toBeNull();
+    expect(church.summary).toBe("Registers by parish. (held at: diocese)");
+    expect(census).toEqual(row("census", { level: "national" }));
+    expect(Object.hasOwn(vital, "note")).toBe(false);
+  });
+
+  it.each([
+    ["an unknown type", { type: "probate_court", access: "indexed", summary: "x" }, "locality_record_type"],
+    ["an unknown access", { type: "land", access: "online", summary: "x" }, "locality_access"],
+    ["an empty summary", { type: "land", access: "indexed", summary: " " }, "summary"],
+    ["a stray key", { type: "land", access: "indexed", summary: "x", note: "y" }, "note"],
+  ])("refuses a record_types row with %s", async (_label, bad, want) => {
+    await writeProject();
+    const r = await append({ record_types: [bad] });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors.join(" ")).toContain(want);
+  });
+
+  it("refuses a loss with no source_url", async () => {
+    await writeProject();
+    const r = await append({ losses: [{ record_set: "Courthouse fire", years: "1859" }] });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors.join(" ")).toContain("source_url");
   });
 
   describe("surveyRef (#4602)", () => {
@@ -19546,6 +19618,36 @@ describe("research_append: a localities guide is saved one section per call (#45
       const loc = (await readResearch()).localities[0];
       expect(loc.pages_read).toEqual(SURVEY_FIELDS.pagesRead);
       expect(loc.volume_summary).toEqual(SURVEY_FIELDS.volumeSummary);
+    });
+
+    it("writes catalog from the staged survey and refuses one sent by hand", async () => {
+      await writeProject();
+      const ref = await stageSurvey(dir, {
+        place: "Madeira, Portugal",
+        pagesRead: SURVEY_FIELDS.pagesRead,
+        volumeSummary: null,
+        catalog: {
+          levels: [
+            { place: "Madeira, Portugal", totalHits: 2, hits: [
+              { id: "koha:1", title: "Registos paroquiais", repositoryCalls: ["Online"], hydrated: true, filmNotes: [{}, {}], filmNotesTotal: 40 },
+              { title: "Recenseamento", repositoryCalls: [], hydrated: false },
+            ] },
+            { place: "Portugal", error: "timed out" },
+          ],
+        },
+      });
+      const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", entry: entry(), surveyRef: ref } as never);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).localities[0].catalog).toEqual([
+        { id: "koha:1", title: "Registos paroquiais", place: "Madeira, Portugal", repository_calls: ["Online"], film_count: 40 },
+        { id: null, title: "Recenseamento", place: "Madeira, Portugal", repository_calls: [], film_count: null },
+      ]);
+      const byHand = await researchAppend({
+        projectPath: dir, section: "localities", op: "append", entry: entry({ catalog: [] }), surveyRef: ref,
+      } as never);
+      expect(byHand.ok).toBe(false);
+      expect(refusals(byHand)[0]).toContain("catalog is not written by hand");
+      expect(catalogRowsFromSurvey({})).toEqual([]);
     });
 
     it("omits volume_summary when the survey has none", async () => {

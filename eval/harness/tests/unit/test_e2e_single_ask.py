@@ -365,12 +365,18 @@ LOCALITY_SPEC = SingleAskSpec(**{**SPEC.__dict__, "expected_save": {"section": "
 def test_localities_save_passes_only_on_a_complete_guide():
     from e2e.single_ask_grade import GUIDE_HEADINGS
 
+    from e2e.single_ask_grade import LOCALITY_RECORD_TYPES as _LOCALITY_RECORD_TYPES
+
     whole = "\n\n".join(f"{h}\n- x" for h in GUIDE_HEADINGS)
-    g, _ = run([agent("source-evaluation")], final_research=final(localities=[{"id": "loc_1", "guide_markdown": whole}]), spec=LOCALITY_SPEC)
+    rows = [{"type": t, "access": "unknown", "summary": "x"} for t in _LOCALITY_RECORD_TYPES]
+    loc = {"id": "loc_1", "guide_markdown": whole, "record_types": rows}
+    g, _ = run([agent("source-evaluation")], final_research=final(localities=[loc]), spec=LOCALITY_SPEC)
     assert g.passed
-    short = whole.replace("### Tax records\n- x", "")
-    g, line = run([agent("source-evaluation")], final_research=final(localities=[{"id": "loc_1", "guide_markdown": short}]), spec=LOCALITY_SPEC)
-    assert not g.passed and "### Tax records" in line
+    short = whole.replace("## Boundary changes\n- x", "")
+    g, line = run([agent("source-evaluation")], final_research=final(localities=[{**loc, "guide_markdown": short}]), spec=LOCALITY_SPEC)
+    assert not g.passed and "## Boundary changes" in line
+    g, line = run([agent("source-evaluation")], final_research=final(localities=[{**loc, "record_types": rows[1:]}]), spec=LOCALITY_SPEC)
+    assert not g.passed and "record_types: census" in line
     g, line = run([agent("source-evaluation")], final_research=final(), spec=LOCALITY_SPEC)
     assert "missing new localities" in line
 

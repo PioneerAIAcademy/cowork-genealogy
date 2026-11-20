@@ -335,8 +335,10 @@ records actually exist** there.
 **(a) The know-how + facts come from the `localities` entry — you read
 it, you do not invoke `locality-guide`.** The orchestrator runs
 `locality-guide` first, so the `localities` section should already hold an
-entry for the target place (`jurisdictions`,
-`quirks`, `guide_markdown`). **Read it** with `research_query`. If it is **missing** for a place you
+entry for the target place (`jurisdictions`, `quirks`, `record_types`,
+`repositories`, `losses`, `catalog`, `guide_markdown`). **Read it** with `research_query`.
+Each `record_types` row gives a record type's years, where it is held and how it is
+reached (`access`); an entry with no `record_types` carries these in `guide_markdown`. If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the
@@ -1241,8 +1243,8 @@ Before finalizing record selection, verify these factors:
   creating jurisdiction.
 - [ ] **Record availability dates:** When did civil registration begin
   in this jurisdiction? Earlier events require church or other records.
-- [ ] **Record destruction:** Does the `localities` entry record a
-  courthouse fire, flood, or wartime loss? Plan the substitute sources
+- [ ] **Record destruction:** Does the `localities` entry's `losses` (or,
+  with none, its `guide_markdown`) record a courthouse fire, flood, or wartime loss? Plan the substitute sources
   it names for the lost series.
 - [ ] **Wars and military service:** Was the subject of service age
   during a conflict? Check military service, pension, and draft records.

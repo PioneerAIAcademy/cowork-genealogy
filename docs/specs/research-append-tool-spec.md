@@ -2376,6 +2376,10 @@ facts belong to that person and are already linked to them.
 `guide_markdown` on a `localities` entry is built by this tool. The caller appends
 the entry without it, then sends the guide one section per call with `guideSection`
 on an update of that entry. A write that sets `guide_markdown` itself is refused.
+The guide is three prose sections (Jurisdiction overview, Boundary changes, Research
+tips); what the place's records are, where they are held and what was lost are the
+entry's `record_types`, `repositories` and `losses` rows, sent with the append, and the
+Catalog hits are its `catalog` rows, written from the survey.
 The wiring is `expandGuideSections` and `localityGuideWholeRefusals` in
 `research-append.ts`; the placing is `mergeGuideSection` in
 `src/utils/locality-guide-sections.ts`.
@@ -2398,12 +2402,11 @@ saved.
   (compared without case, at the same level and, for a `### `, under the same `## `).
   A new `## ` block goes in the order of `LOCALITY_GUIDE_OUTLINE`, the template's
   headings; one the outline does not name goes after those it does. A `### ` block
-  goes under the `## ` heading sent above it in the same call; else under the outline
-  section that names it; else under `## Available record types`. The tool adds that
-  `## ` line when the guide has none. A sent heading matches an outline title when it
-  begins with it, so `### Vital records (civil registration)` is `Vital records`. A
-  `## ` block sent again replaces that section's heading and the text before its first
-  `### `; the `### ` blocks under it stay.
+  goes under the `## ` heading sent above it in the same call, and a `### ` block with
+  none above it is refused, naming the three sections. A sent heading matches an
+  outline title when it begins with it, ignoring case. A `## ` block sent again
+  replaces that section's heading and the text before its first `### `; the `### `
+  blocks under it stay.
 - **The title line.** The guide's `# Locality Guide: <for_place or place> (<time_period>)`
   line is written by the tool, unless the stored guide already has text before its
   first heading or the call sends a `# ` line above its first block.
@@ -2417,20 +2420,46 @@ saved.
   on the guide the earlier op left.
 - **What is still missing.** Every successful `localities` write returns
   `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists
-  each of `LOCALITY_GUIDE_HEADINGS` the entry's guide lacks, as `## <title>` or
-  `### <title>`: every section and subsection of `LOCALITY_GUIDE_OUTLINE`, matched by `missingGuideHeadings`; `next` says how to send them, and once
+  each of `LOCALITY_GUIDE_HEADINGS` the entry's guide lacks, as `## <title>`, matched by
+  `missingGuideHeadings`, then each `locality_record_type` value the entry has no
+  `record_types` row for, as `record_types: <type>` (`missingRecordTypes`); `next` says
+  how to send them, and once
   `missing` is empty says the guide is complete: return now, naming any other place
   the delegation listed rather than surveying it (Haiku 5.5 went on to survey every
   county a delegation listed). No write is refused for a missing heading.
 - **The survey's fields.** A `localities` append must carry `surveyRef`, the
   `staged.resultsRef` of a `locality_survey` call with a `projectPath`; the tool reads that
-  staged answer and writes `pages_read` from its `pagesRead` and `volume_summary` from its
-  `volumeSummary` (left out when that is null). An update may carry `surveyRef` to refresh both.
-  Refused: an append with no `surveyRef`; `pages_read` or `volume_summary` in an append's `entry`
+  staged answer and writes `pages_read` from its `pagesRead`, `volume_summary` from its
+  `volumeSummary` (left out when that is null), and `catalog` from its `catalog.levels[]`
+  (`catalogRowsFromSurvey`: a level that failed is skipped; one row per hit, the first of
+  any id; `{ id or null, title, place: the level searched, repository_calls, film_count:
+  filmNotesTotal else the number of filmNotes, null when the hit's detail was not read }`;
+  left out when no level returned a hit). An update may carry `surveyRef` to refresh all three.
+  Refused: an append with no `surveyRef`; `pages_read`, `volume_summary` or `catalog` in an append's `entry`
   or an update's `fields`; a `surveyRef` that is not a string, does not exist, or is not a
   survey answer; a `surveyRef` on another section. The wiring is `expandSurveyRefs`. A survey
   cannot be skipped and its counts cannot be copied wrong: 10 of 90 unit saving runs had
   copied `volume_summary` wrong.
+- **The record-type rows.** An update's `fields.record_types` is merged into the stored
+  list before validation (`expandRecordTypeRows`): its rows of a type replace every stored
+  row of that type, rows of other types are kept, and the list is ordered by the enum. In a
+  batch, each op merges onto the list the op before left. So an update carrying only the
+  rows `missing` named keeps the others. An append's `record_types` is stored as sent.
+  After the ops apply and before validation, every localities entry's rows are filled from the
+  entry's own `collections` and `volume_summary` (`fillRecordTypeRows`,
+  `utils/locality-record-types.ts`): a collection goes to the first type its title names
+  (`recordTypeOfTitle`, an ordered word list; a title naming none goes to no row); the first row
+  of a type gets those collections' ids as `collection_ids` and their year span as `years` when it
+  sent neither, and an online `access` when it sent none or `unknown` — `indexed` when one of them
+  has `person_count > 0`, else from the type's `volume_summary` group (`indexed` when volumes are
+  neither browse-only nor full-text-only, else `fulltext`, else `browse`; court has no group, its
+  counts include probate), else `browse` when every one has `person_count: 0`. A row left with no
+  `access` gets `unknown`. A field the agent sent is never changed, so the agent sends `access`
+  only for `microfilm`, `physical` or `lost`.
+  A row's `level` is read into the closed list the way `registration_start`'s is (below),
+  except that a row is never split and gains no key (`normalizeRowLevels`): the narrowest
+  level the text names, in enum order, becomes `level`; text naming none sets `level: null`;
+  text that said more than one level word is appended to `summary` as `(held at: <text>)`.
 - **Refusals**, one per op, `ops[i]:`-prefixed in a batch, nothing written:
   - `guide_markdown` set to anything but `null` in an append's `entry` or an update's
     `fields`: `guide_markdown is not written directly: this tool builds it. Append this
@@ -2461,6 +2490,8 @@ saved.
   drops one of `LOCALITY_GUIDE_HEADINGS`, when its `## ` and `### ` headings differ
   from `LOCALITY_GUIDE_OUTLINE` in title or order, or when the eval validator's title
   tuple differs from `LOCALITY_GUIDE_HEADINGS`.
+  `tests/packaging/locality-record-type-vocabulary.test.ts` fails when
+  `locality_record_type` parts from `record_type_recommended`'s examples.
 
 **A locality's registration levels.** `registration_start[].level` is a closed list,
 and the agent writes it with a note in brackets (`national (GRO)`), as two levels

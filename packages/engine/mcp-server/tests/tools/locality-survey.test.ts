@@ -197,8 +197,9 @@ describe("runLocalitySurvey", () => {
     );
     expect(out.namingCustoms).toMatchObject({ found: true, url: `${WIKI}/Germany_Naming_Customs` });
     expect(out.namingCustoms.content).toContain("went by the second");
-    expect(out.guideHeadings).toContain("### Tax records");
-    expect(out.guideHeadings[0]).toBe("## Jurisdiction overview");
+    expect(out.guideHeadings).toEqual(["## Jurisdiction overview", "## Boundary changes", "## Research tips"]);
+    expect(out.recordTypes).toContain("vital_record");
+    expect(out.recordTypes).toHaveLength(12);
   });
 
   it("searches the wiki for the delegation's question and puts those sections first", async () => {

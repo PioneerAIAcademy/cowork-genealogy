@@ -77,6 +77,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -176,13 +177,13 @@ def test_survey_run_calls_both_collections_and_volume_search(before_state, after
     """VR4 (gating, issue #4602) — a run that produced a guide ran the survey:
     `locality_survey` (one call that makes every Step-3 call: collections, volumes,
     catalog, outside links, the wiki pages) was called. A guide is a localities entry
-    this run wrote, or a return carrying `## Available record types`.
+    this run wrote, or a return carrying `## Jurisdiction overview`.
 
     Skips a run that produced no guide (a hand-back, a question, a decline). The name
     is kept so the gate tags and run logs that cite it still resolve.
     """
     wrote = bool(_written_localities(before_state, after_state))
-    returned = bool(_RECORD_TYPES_HEADING.search(agent_return_text(agent_returns, "locality-guide")))
+    returned = bool(_RETURNED_GUIDE_HEADING.search(agent_return_text(agent_returns, "locality-guide")))
     if not (wrote or returned):
         pytest.skip("no guide produced this run")
     assert _survey_calls(tool_calls), (
@@ -269,24 +270,17 @@ def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, tes
 _GUIDE_HEADING_LINES = (
     "## Jurisdiction overview",
     "## Boundary changes",
-    "## Available record types",
-    "### Vital records",
-    "### Church records",
-    "### Census records",
-    "### Probate and court records",
-    "### Land records",
-    "### Military records",
-    "### Cemetery records",
-    "### Newspaper records",
-    "### Immigration/emigration records",
-    "### Tax records",
-    "### Other record types",
-    "## Repository guide",
-    "### Online repositories",
-    "### Physical repositories",
-    "## Records NOT online",
-    "## Known record losses",
     "## Research tips",
+)
+
+# The record types a localities entry owes one `record_types` row or more each: the
+# closed `locality_record_type` enum, read from the schema rather than copied.
+_LOCALITY_RECORD_TYPES = tuple(
+    json.loads(
+        (Path(__file__).resolve().parents[3] / "docs" / "specs" / "schemas" / "enums.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )["$defs"]["locality_record_type"]["enum"]
 )
 
 
@@ -299,7 +293,7 @@ def _heading(heading):
 
 
 _GUIDE_HEADINGS = {heading: _heading(heading) for heading in _GUIDE_HEADING_LINES}
-_RECORD_TYPES_HEADING = _GUIDE_HEADINGS["## Available record types"]
+_RETURNED_GUIDE_HEADING = _GUIDE_HEADINGS["## Jurisdiction overview"]
 _POINTER = re.compile(
     r"\bsee\s+(the\s+)?(full\s+guide|research\s+log)\b"
     r"|\bfull\s+guide\s+(text\s+)?(as\s+)?presented\b",
@@ -310,9 +304,9 @@ _IN_PROJECT_RETURN_LIMIT = 3000
 
 def test_persisted_guide_is_the_guide(before_state, after_state):
     """Presence-gated: every localities[] entry this run wrote holds the guide
-    itself in `guide_markdown` — a non-empty string carrying every `## ` section and
-    `### ` subsection of the template (`_GUIDE_HEADING_LINES`; issue #4602 item 3), and
-    no pointer to a guide kept somewhere else.
+    itself in `guide_markdown` — a non-empty string carrying every `## ` section of the
+    template (`_GUIDE_HEADING_LINES`; issue #4602 item 3), and no pointer to a guide kept
+    somewhere else — and a `record_types` row for every `locality_record_type` value.
 
     Why the stub guard exists: inside a project the persisted entry is now the
     only copy of the guide. The return carries the `loc_` id instead (see
@@ -346,6 +340,11 @@ def test_persisted_guide_is_the_guide(before_state, after_state):
             problems.append(
                 f"localities[{lid}].guide_markdown is missing the template heading(s) {missing}"
             )
+        rows = loc.get("record_types") if isinstance(loc.get("record_types"), list) else []
+        have = {r.get("type") for r in rows if isinstance(r, dict)}
+        no_row = [t for t in _LOCALITY_RECORD_TYPES if t not in have]
+        if no_row:
+            problems.append(f"localities[{lid}].record_types has no row for {no_row}")
         pointer = _POINTER.search(guide)
         if pointer:
             problems.append(
@@ -483,7 +482,7 @@ def test_in_project_return_follows_the_contract(
         "refusal must be fixed and retried, and only a no_project answer falls back "
         "to returning the guide"
     )
-    assert _RECORD_TYPES_HEADING.search(reply), (
+    assert _RETURNED_GUIDE_HEADING.search(reply), (
         "a localities write was refused, so the return must carry the guide in full: "
-        "no `## Available record types` heading in the return"
+        "no `## Jurisdiction overview` heading in the return"
     )

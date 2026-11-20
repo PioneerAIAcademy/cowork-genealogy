@@ -134,7 +134,8 @@ import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, readStagedResults, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 import { GUIDE_SECTION_MAX_CHARS, LOCALITY_GUIDE_OUTLINE, mergeGuideSection } from "../utils/locality-guide-sections.js";
-import { normalizeRegistrationStart } from "../utils/registration-level.js";
+import { normalizeRegistrationStart, normalizeRowLevels } from "../utils/registration-level.js";
+import { fillRecordTypeRows } from "../utils/locality-record-types.js";
 import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -11368,16 +11369,14 @@ function localityGuideStatus(
   return [...new Set(entryIds)].flatMap((entryId) => {
     const entry = localities.find((l: any) => l?.id === entryId);
     if (!entry) return [];
-    const missing = missingGuideHeadings(typeof entry.guide_markdown === "string" ? entry.guide_markdown : "");
-    return [
-      missing.length === 0
-        ? { entryId, missing, next: GUIDE_COMPLETE_NEXT }
-        : {
-            entryId,
-            missing,
-            next: `Send the guide ${GUIDE_SECTION_HOW} At most ${GUIDE_SECTION_MAX_CHARS} characters a call.`,
-          },
-    ];
+    const headings = missingGuideHeadings(typeof entry.guide_markdown === "string" ? entry.guide_markdown : "");
+    const rows = missingRecordTypes(entry.record_types);
+    const missing = [...headings, ...rows];
+    const next = [
+      ...(rows.length > 0 ? [RECORD_TYPE_ROWS_HOW] : []),
+      ...(headings.length > 0 ? [`Send the guide ${GUIDE_SECTION_HOW} At most ${GUIDE_SECTION_MAX_CHARS} characters a call.`] : []),
+    ].join(" ");
+    return [missing.length === 0 ? { entryId, missing, next: GUIDE_COMPLETE_NEXT } : { entryId, missing, next }];
   });
 }
 
@@ -12783,9 +12782,54 @@ const GUIDE_SECTION_OPS = new WeakSet<object>();
 /** How a guide is sent, for the refusals and the `guide.next` line. */
 const GUIDE_SECTION_HOW =
   "one section per research_append call, never several in `ops`: op 'update', the entry's id as " +
-  "entryId, and guideSection holding that section's '## ' heading line with its text under it. Each " +
-  "'### ' subsection of Available record types and of Repository guide is its own call, beginning " +
-  "with its '### ' line.";
+  "entryId, and guideSection holding that section's '## ' heading line with its text under it.";
+
+/** The record types a locality's `record_types` rows must cover, in enum order. */
+export const LOCALITY_RECORD_TYPES: readonly string[] = [...VALIDATOR_ENUMS.locality_record_type];
+
+/** The record types `rows` has no row for, as `record_types: <type>`. */
+export function missingRecordTypes(rows: unknown): string[] {
+  const have = new Set(
+    (Array.isArray(rows) ? rows : []).flatMap((r: any) => (r && typeof r === "object" && typeof r.type === "string" ? [r.type] : [])),
+  );
+  return LOCALITY_RECORD_TYPES.filter((t) => !have.has(t)).map((t) => `record_types: ${t}`);
+}
+
+const RECORD_TYPE_ROWS_HOW =
+  "Send the missing rows as one update: op 'update', the entry's id as entryId, fields: { record_types: " +
+  "[{ type, held_at, level, summary, source_url }] } — one row or more per type named; a type the survey " +
+  "says nothing about gets a summary saying so. The tool fills each row's collection_ids, years and online " +
+  "access; send access only for lost, microfilm or physical-only records. Rows you sent before are kept.";
+
+/**
+ * Merge each localities update's `fields.record_types` into the stored list, in place: the
+ * update's rows of a type replace every stored row of that type, and the stored rows of other
+ * types are kept. An earlier op of the batch counts as stored (spec §5.14).
+ */
+function expandRecordTypeRows(ops: ResearchAppendOp[], research: any): void {
+  const pending = new Map<string, unknown[]>();
+  const stored = (id: string) =>
+    (Array.isArray(research?.localities) ? research.localities : []).find((l: any) => l?.id === id);
+  for (const op of ops) {
+    if (!op || typeof op !== "object" || op.section !== "localities") continue;
+    if (op.op === "append") continue;
+    const fields = op.fields;
+    if (!fields || typeof fields !== "object" || Array.isArray(fields)) continue;
+    const sent = (fields as Record<string, unknown>).record_types;
+    if (!Array.isArray(sent) || typeof op.entryId !== "string") continue;
+    const before = pending.get(op.entryId) ?? stored(op.entryId)?.record_types;
+    const base = Array.isArray(before) ? before : [];
+    const sentTypes = new Set(sent.flatMap((r: any) => (r && typeof r === "object" && typeof r.type === "string" ? [r.type] : [])));
+    const merged = [...base.filter((r: any) => !(r && typeof r === "object" && sentTypes.has(r.type))), ...sent];
+    const order = (r: any) => {
+      const i = LOCALITY_RECORD_TYPES.indexOf(r?.type);
+      return i < 0 ? LOCALITY_RECORD_TYPES.length : i;
+    };
+    merged.sort((a, b) => order(a) - order(b));
+    (fields as Record<string, unknown>).record_types = merged;
+    pending.set(op.entryId, merged);
+  }
+}
 
 /** Read each localities op's `registration_start` levels into the closed list, in
  *  place (utils/registration-level.ts). */
@@ -12797,6 +12841,9 @@ function normalizeLocalityRegistration(ops: ResearchAppendOp[]): void {
       const rows = (holder as Record<string, unknown>).registration_start;
       const next = normalizeRegistrationStart(rows, VALIDATOR_ENUMS.registration_level);
       if (next !== rows) (holder as Record<string, unknown>).registration_start = next;
+      const typeRows = (holder as Record<string, unknown>).record_types;
+      const nextTypes = normalizeRowLevels(typeRows, [...VALIDATOR_ENUMS.registration_level]);
+      if (nextTypes !== typeRows) (holder as Record<string, unknown>).record_types = nextTypes;
     }
   }
 }
@@ -12880,11 +12927,36 @@ function expandGuideSections(
 }
 
 /** The `localities` fields only a `locality_survey` answer may write. */
-const SURVEY_FIELDS = ["pages_read", "volume_summary"] as const;
+const SURVEY_FIELDS = ["pages_read", "volume_summary", "catalog"] as const;
 
 const SURVEY_HOW =
   "call locality_survey with projectPath and pass its staged.resultsRef as `surveyRef`; " +
-  "the tool writes pages_read and volume_summary from it.";
+  "the tool writes pages_read, volume_summary and catalog from it.";
+
+/** A staged survey's catalog hits as `catalog` rows: one per hit of each level that answered. */
+export function catalogRowsFromSurvey(survey: any): Record<string, unknown>[] {
+  const levels = Array.isArray(survey?.catalog?.levels) ? survey.catalog.levels : [];
+  const rows: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+  for (const level of levels) {
+    if (!level || typeof level !== "object" || !Array.isArray(level.hits)) continue;
+    for (const hit of level.hits) {
+      if (!hit || typeof hit !== "object" || typeof hit.title !== "string") continue;
+      const key = typeof hit.id === "string" ? hit.id : `${level.place}|${hit.title}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const films = Array.isArray(hit.filmNotes) ? hit.filmNotes.length : 0;
+      rows.push({
+        id: typeof hit.id === "string" ? hit.id : null,
+        title: hit.title,
+        place: typeof level.place === "string" ? level.place : null,
+        repository_calls: Array.isArray(hit.repositoryCalls) ? hit.repositoryCalls.filter((c: unknown) => typeof c === "string") : [],
+        film_count: hit.hydrated === true ? (typeof hit.filmNotesTotal === "number" ? hit.filmNotesTotal : films) : null,
+      });
+    }
+  }
+  return rows;
+}
 
 /**
  * Place a `locality_survey` answer's `pagesRead` and `volumeSummary` into a `localities`
@@ -12935,6 +13007,8 @@ async function expandSurveyRefs(
     }
     const filled: Record<string, unknown> = { ...(body ?? {}), pages_read: survey.pagesRead };
     if (survey.volumeSummary && typeof survey.volumeSummary === "object") filled.volume_summary = survey.volumeSummary;
+    const catalog = catalogRowsFromSurvey(survey);
+    if (catalog.length > 0) filled.catalog = catalog;
     (op as any)[holderKey] = filled;
     delete op.surveyRef;
   }
@@ -13539,6 +13613,7 @@ export async function researchAppend(
     if (guideErrors.length > 0) return fail(boundErrors(guideErrors));
     const surveyErrors = await expandSurveyRefs(ops, input.projectPath, fmt);
     if (surveyErrors.length > 0) return fail(boundErrors(surveyErrors));
+    expandRecordTypeRows(ops, research);
     normalizeLocalityRegistration(ops);
 
     let retracted = new Set<string>();
@@ -13658,6 +13733,10 @@ export async function researchAppend(
         return firstOnly();
       }
     }
+
+    // §5.14: a record-type row's collections, years and online access, from the entry's own
+    // collections and volume counts, so the agent never copies them.
+    for (const loc of Array.isArray(research?.localities) ? research.localities : []) fillRecordTypeRows(loc);
 
     const originalRefusals = originalWithoutEvidenceRefusals(beforeResearch, research, ops, applied);
     if (originalRefusals.length > 0) {
@@ -14435,8 +14514,8 @@ const SURVEY_REF_SCHEMA = {
   type: "string",
   description:
     "localities append or update: the `staged.resultsRef` locality_survey returned. The tool writes " +
-    "`pages_read` and `volume_summary` from that survey; a localities append needs it, and neither " +
-    "field is sent by hand.",
+    "`pages_read`, `volume_summary` and `catalog` from that survey; a localities append needs it, and none " +
+    "of them is sent by hand.",
 };
 
 /** `guideSection` on the top-level call and on each batch op. */

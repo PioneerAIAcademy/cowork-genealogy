@@ -46,7 +46,7 @@
   ],
   "judge_context": [
     "Recognize Virginia’s role in the Revolutionary War and mention military service records, pension applications, bounty land warrants, and county court records. Highlight repositories like the Library of Virginia, National Archives, and county courthouses while avoiding statewide vital registration (it didn't exist yet).",
-    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

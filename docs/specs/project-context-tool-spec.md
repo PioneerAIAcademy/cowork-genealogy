@@ -130,6 +130,17 @@ can drop:
       recordCount?: number,
     }],
     quirks?: string[],
+    recordTypes?: [{                     // the entry's record_types rows, without
+      type: string,                      //   source_url (research_query has it), so a
+      years?: string,                    //   planner reading only this answer still sees
+      level?: string,                    //   each record type's years, holder and reach
+      heldAt?: string,
+      access?: string,
+      collectionIds?: string[],
+      summary?: string,
+    }],
+    repositories?: [{ name: string, holds?: string, access?: string, url?: string }],
+    losses?: [{ recordSet: string, years?: string }],
   }],
   awaitingUser?: [{                      // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry

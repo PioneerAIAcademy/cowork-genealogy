@@ -46,7 +46,7 @@
     "The agent must NOT state that Javorje was a filial of a mother parish, and must NOT name any mother parish.",
     "The agent must present Javorje's 1812 parish affiliation as unconfirmed, and send the user to where Slovenian parish registers are held (the diocesan or archdiocesan archives, per the Slovenia_Church_Records wiki page it should have fetched).",
     "Do not penalize the agent for failing to name 'from about 1785' for Javorje's parish registers — the Catalog holds none at any level, so no tool output carries that date.",
-    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

@@ -28,7 +28,7 @@
     "When mentioning emigration manifests or passenger lists, should note that these records list all passengers including infants and young children (ages 0-5) traveling with parents — the whole manifest should be examined for complete family groups, not just individual adult names",
     "Should warn about specific pitfalls: parish boundary changes, Catholic parish registers held by the National Library of Ireland (microfilm) rather than local courthouses, and that pre-Famine records often perished in the 1922 Four Courts fire for civil/estate documents",
     "Should NOT recommend American-style record classes (county courthouse vital records, statewide vital registration) — those don't apply to 1840s Ireland; using them as the answer would indicate jurisdiction-blindness",
-    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "mcp_fixtures": [
     "wiki-place-page-ireland",

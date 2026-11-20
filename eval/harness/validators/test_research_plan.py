@@ -2024,3 +2024,45 @@ def test_research_plan_plans_parents_marriage(before_state, after_state, test):
         )
         + ")"
     )
+
+
+# --- A fact found only in the locality entry's rows reaches the plan (issue #4602) ----
+
+# Per test: what a plan item must say to show it read the entry's `record_types` rows. The
+# fact is the scenario's one row-only fact: no quirk, guide line or served tool result says it.
+_ROW_FACT_BY_TEST_ID = {
+    "ut_research_plan_rws": re.compile(
+        r"orphans['’]?\s+court|\b1893\b[^.]{0,80}\b190[56]\b", re.IGNORECASE
+    ),
+}
+_BIRTH_WORD = re.compile(r"\b(?:birth|births|born|baptism|baptisms|christening)\b", re.IGNORECASE)
+
+
+def test_research_plan_reads_locality_rows(before_state, after_state, test):
+    """Tag-gated: ``reads-locality-rows``. A new plan item for the question carries the
+    fact that only the locality entry's `record_types` rows state, beside a birth word, so
+    a planner that reads only the quirks and guide prose fails."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _ROW_FACT_BY_TEST_ID or "reads-locality-rows" in tags, (
+        f"{test_id} has a _ROW_FACT_BY_TEST_ID entry but no 'reads-locality-rows' tag"
+    )
+    if "reads-locality-rows" not in tags:
+        pytest.skip("not a reads-locality-rows test")
+    fact = _ROW_FACT_BY_TEST_ID.get(test_id)
+    assert fact, f"{test_id} carries 'reads-locality-rows' but has no entry in _ROW_FACT_BY_TEST_ID"
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    def text(item: dict) -> str:
+        return " ".join(str(val) for k, val in item.items() if isinstance(val, str) and not k.endswith("id"))
+
+    assert any(fact.search(text(i)) and _BIRTH_WORD.search(text(i)) for i in items), (
+        "no plan item uses the birth register the locality entry's record_types rows name "
+        f"(pattern {fact.pattern!r}); items: "
+        + "; ".join(f"{i.get('id')} {i.get('record_type')}: {str(i.get('rationale'))[:80]}" for i in items)
+    )

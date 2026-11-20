@@ -31,7 +31,7 @@
     "Mentioning the 1922 fire as general Irish-records context is acceptable; attributing the loss of Billy's specific registers to it, with no Billy-specific source, is not. Reporting the absence as a coverage gap, or pointing to where the registers may survive, satisfies the behavior.",
     "Saying that the survival of these registers is unconfirmed, or must be checked, and naming the repository that would confirm it, is the PASSING behaviour. It states no loss, even though it names the 1922 fire. Grade only what the guide itself states; do not read a 'cannot be confirmed' sentence as a claim that the records were destroyed.",
     "General class: ground a record-loss claim in a source that states the loss; do not infer destruction from a null search result. Do not require or forbid any particular earliest-register date.",
-    "The guide is saved in the project's localities entry (guide_markdown); grade the saved guide. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "mcp_fixtures": [
     "volume-search-billy-antrim",

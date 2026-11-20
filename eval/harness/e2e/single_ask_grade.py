@@ -20,7 +20,8 @@ only when the fixture asks for it:
 - ``save`` — any one of the ``expected_save`` alternatives holds: a new
   ``sources`` entry, a new ``log`` entry whose ``tool`` (and ``outcome``, when
   given) is the expected value, a new ``localities`` entry whose guide carries
-  every heading of the locality-guide template (``GUIDE_HEADINGS``), or, with
+  every heading of the locality-guide template (``GUIDE_HEADINGS``) and a
+  ``record_types`` row for every type the validator requires, or, with
   ``absent``, no new entry in the section.
   New = id in the final ``research.json`` and absent from the starting one. With no
   research.json at the end, the empty-folder rule holds: an ``absent`` save passes
@@ -42,8 +43,10 @@ only when the fixture asks for it:
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from e2e.orchestrator import _is_agent_tool
@@ -57,24 +60,18 @@ SAVE_SECTIONS = ("log", "sources", "localities")
 GUIDE_HEADINGS = (
     "## Jurisdiction overview",
     "## Boundary changes",
-    "## Available record types",
-    "### Vital records",
-    "### Church records",
-    "### Census records",
-    "### Probate and court records",
-    "### Land records",
-    "### Military records",
-    "### Cemetery records",
-    "### Newspaper records",
-    "### Immigration/emigration records",
-    "### Tax records",
-    "### Other record types",
-    "## Repository guide",
-    "### Online repositories",
-    "### Physical repositories",
-    "## Records NOT online",
-    "## Known record losses",
     "## Research tips",
+)
+
+
+# The record types a localities entry owes a row each: the closed `locality_record_type`
+# enum, read from the schema as the validator reads it.
+LOCALITY_RECORD_TYPES = tuple(
+    json.loads(
+        (Path(__file__).resolve().parents[3] / "docs" / "specs" / "schemas" / "enums.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )["$defs"]["locality_record_type"]["enum"]
 )
 
 
@@ -233,12 +230,19 @@ def _save_check(
     if section == "localities":
         if not new:
             return (False, "missing new localities")
-        gaps = [missing_guide_headings(r.get("guide_markdown")) for r in new]
+        def gaps_of(r: dict[str, Any]) -> list[str]:
+            rows = r.get("record_types") if isinstance(r.get("record_types"), list) else []
+            have = {x.get("type") for x in rows if isinstance(x, dict)}
+            return missing_guide_headings(r.get("guide_markdown")) + [
+                f"record_types: {t}" for t in LOCALITY_RECORD_TYPES if t not in have
+            ]
+
+        gaps = [gaps_of(r) for r in new]
         best = min(gaps, key=len)
         return (
             not best,
             f"{len(new)} new localities, guide complete" if not best
-            else f"new localities guide lacks {len(best)} heading(s): {best[:4]}",
+            else f"new localities guide lacks {len(best)} heading(s) or row(s): {best[:4]}",
         )
     return (bool(new), f"{len(new)} new {section}" if new else f"missing new {section}")
 

@@ -2106,6 +2106,30 @@
             }
           }
         },
+        "record_types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/locality_record_type_row"
+          }
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/locality_repository"
+          }
+        },
+        "losses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/locality_loss"
+          }
+        },
+        "catalog": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/locality_catalog_entry"
+          }
+        },
         "source": {
           "type": "string"
         },
@@ -2114,6 +2138,153 @@
         },
         "updated": {
           "$ref": "enums.schema.json#/$defs/iso_date"
+        }
+      }
+    },
+    "locality_record_type_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "access",
+        "summary"
+      ],
+      "properties": {
+        "type": {
+          "$ref": "enums.schema.json#/$defs/locality_record_type"
+        },
+        "years": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "level": {
+          "oneOf": [
+            {
+              "$ref": "enums.schema.json#/$defs/registration_level"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "held_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "access": {
+          "$ref": "enums.schema.json#/$defs/locality_access"
+        },
+        "collection_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "locality_repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "holds": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "access": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "locality_loss": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_set",
+        "source_url"
+      ],
+      "properties": {
+        "record_set": {
+          "type": "string",
+          "minLength": 1
+        },
+        "years": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_url": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "locality_catalog_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repository_calls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "film_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
         }
       }
     },

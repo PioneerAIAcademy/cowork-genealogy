@@ -141,11 +141,12 @@ describe("the engine's guide outline is the template's headings, in order", () =
 
   it.each([
     ["a renamed section", (b: string) => b.replace("## Boundary changes", "## Border changes")],
-    ["a renamed subsection", (b: string) => b.replace("### Tax records", "### Taxation")],
-    ["a subsection added", (b: string) => b.replace("### Tax records", "### School records\n### Tax records")],
-    ["a section removed", (b: string) => b.replace("## Records NOT online", "Records NOT online")],
+    ["a renamed section", (b: string) => b.replace("## Boundary changes", "## Border changes")],
+    ["a subsection added", (b: string) => b.replace("## Boundary changes", "## Boundary changes\n### Parishes")],
+    ["a section added", (b: string) => b.replace("## Research tips", "## Repository guide\n\n## Research tips")],
+    ["a section removed", (b: string) => b.replace("## Boundary changes", "Boundary changes")],
     ["two sections swapped", (b: string) =>
-      b.replace("## Known record losses", "## TEMP").replace("## Research tips", "## Known record losses").replace("## TEMP", "## Research tips")],
+      b.replace("## Boundary changes", "## TEMP").replace("## Research tips", "## Boundary changes").replace("## TEMP", "## Research tips")],
   ])("a template with %s fails the check", (_label, change) => {
     const changed = change(block);
     expect(changed).not.toBe(block);

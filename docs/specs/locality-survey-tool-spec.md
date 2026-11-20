@@ -103,8 +103,10 @@ vital-records page 25,000, outside links 32,000, the rest 20,000).
   no one section takes more than 6,000; a section larger than the room left is cut at a line end and
   marked `[cut at offset N of <url>; wiki_read it with offset N to read on]`. Each page is one
   `content` string in page order, beside `url`, `found`, `totalChars` and the `omitted` headings.
-- `guideHeadings` lists every heading of the guide template, so the agent writes the guide under
-  them whatever the survey found.
+- `guideHeadings` lists the guide's three prose sections, so the agent writes the guide under
+  them whatever the survey found, and `recordTypes` lists the `locality_record_type` values the
+  entry owes one `record_types` row or more each (research-append-tool-spec §5.14). The staged
+  answer's `catalog.levels[]` becomes the entry's `catalog` rows when it is saved with `surveyRef`.
 - A final fit loop re-ranks into a smaller share, then drops the data parts' last rows.
 
 **The heading lists** were measured, not guessed. Over the 336 pages 151 saved e2e guides read

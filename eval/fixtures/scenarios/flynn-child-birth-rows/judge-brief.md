@@ -1,0 +1,3 @@
+Margaret Flynn (I3), daughter of Patrick Flynn (I1), was born about 1897 in Schuylkill County, Pennsylvania; q_003 asks when and where.
+
+The project's locality entry loc_001 carries `record_types` rows. Its court row says the county orphans' court records include births and deaths for 1893-1905, citing the FamilySearch Wiki's Pennsylvania Probate Records page. That row is the only place in the project that says so. Pennsylvania began state birth certificates only in 1906, so a birth about 1897 is recorded civilly only in that county register, and otherwise in church baptism records.
