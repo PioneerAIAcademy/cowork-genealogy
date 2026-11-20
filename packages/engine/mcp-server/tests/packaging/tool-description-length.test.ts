@@ -202,8 +202,9 @@ const DOCUMENTED_TOTALS: Array<[string, number]> = [
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured
   // independently (1230 tool-level + 4051 params), not copied from the failure
-  // message.
-  ["person_search", 5281],
+  // message. 5281 -> 5330: it gained the required `projectPath` (49 chars), which every tool
+  // outside the six project-free ones now carries (utils/project-gate.ts).
+  ["person_search", 5330],
 ];
 
 /**

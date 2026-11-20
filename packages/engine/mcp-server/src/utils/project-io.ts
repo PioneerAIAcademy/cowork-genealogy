@@ -49,31 +49,26 @@ export function withProjectLock<T>(projectPath: string, fn: () => Promise<T>): P
   return getProjectStore().withTransaction(projectPath, fn);
 }
 
-// The user is not in a research project. Not a failure — these are relayed to a
-// person unedited, so they are worded for a reader rather than for a log.
-//
-// Two variants because four of the twelve tools that return this are NOT
-// writers: `research_query` and `project_context` are reads, and
-// `person_warnings` / `merge_warnings` are previews. Telling someone who asked
-// "where are we?" in a non-project folder that their work was not saved is both
-// wrong and alarming.
+// There is no project. Every activity starts one (lead, 2026-11-19), so a call
+// with no project is refused, never answered as standalone work. The text names
+// both routes that start one. `server.ts`'s gate returns it before any tool runs;
+// the tool-level fallbacks below carry the same words, so a tool called directly
+// (a dev script, a unit test) refuses the same way.
 const NO_PROJECT_BASE = "This folder is not a research project — there is no research.json here.";
 
-/** The no-project routing rule, carried by project_context, project_list and
- *  person_read when there is no project. */
+/** The refusal, and the one place that says how to start a project. */
 export const START_PROJECT_RULE =
-  "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.";
+  "Every activity needs a project. For an activity with no person in it (a page read, a record " +
+  "set's names, a surname survey), call project_create with the researcher's request as " +
+  "objective and no personId. For research on a named person, start init-project with the " +
+  "FamilySearch person ID; with no ID, ask for it and create nothing.";
 
-/** project_context's own no-project answer: NO_PROJECT_MESSAGE_READ's "standalone"
- *  sentence is replaced by the routing rule. */
-export const NO_PROJECT_MESSAGE_CONTEXT =
-  `${NO_PROJECT_BASE} There is no project state to read. ${START_PROJECT_RULE}`;
+/** What a call with no project, or no projectPath, is told. */
+export const NO_PROJECT_REFUSAL = `No project: ${START_PROJECT_RULE} Then pass its projectPath.`;
 
-export const NO_PROJECT_MESSAGE_WRITE =
-  `${NO_PROJECT_BASE} Nothing was saved; the answer stands, only the record of it is missing.`;
-
-export const NO_PROJECT_MESSAGE_READ =
-  `${NO_PROJECT_BASE} There is no project state to read — anything you are working on is standalone.`;
+export const NO_PROJECT_MESSAGE_CONTEXT = `${NO_PROJECT_BASE} ${START_PROJECT_RULE}`;
+export const NO_PROJECT_MESSAGE_WRITE = `${NO_PROJECT_BASE} Nothing was saved. ${START_PROJECT_RULE}`;
+export const NO_PROJECT_MESSAGE_READ = `${NO_PROJECT_BASE} ${START_PROJECT_RULE}`;
 
 /** Which of the two sentences a tool's no-project answer carries. */
 export type NoProjectKind = "write" | "read";

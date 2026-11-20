@@ -8174,6 +8174,13 @@ export type ResearchAppendResult =
 
 /** Carries one or more user-facing messages: the single form echoes them
  *  verbatim; the batch form prefixes each with `ops[i]:`. */
+/** The refusal a `questions` append gets in a project with no person. */
+const NO_PERSON_QUESTIONS_REFUSAL =
+  "This project has no person, so it holds no research questions: a question is research on " +
+  "a person, and that starts a new project from a FamilySearch person ID. Ask the researcher " +
+  "for the ID, then start init-project with it. A log entry, a source and a locality still " +
+  "write here.";
+
 class ResearchAppendError extends Error {
   errors: string[];
   constructor(errors: string | string[]) {
@@ -9978,6 +9985,16 @@ function applyOne(
     // of the same transition — see questionResolvedInvariants. Omitting it here
     // would leave the gate reachable only through one of the two fields.
     const fields = op.fields ?? {};
+    // A project with no person refuses research questions (lead, 2026-11-19):
+    // research on a person starts a new project from a FamilySearch person ID.
+    // Only an append is refused, so an older project that already holds a question
+    // with no subject still validates and updates.
+    if (op.op === "append") {
+      const subjects = research?.project?.subject_person_ids;
+      if (!Array.isArray(subjects) || subjects.length === 0) {
+        invariantErrors.push(NO_PERSON_QUESTIONS_REFUSAL);
+      }
+    }
     const resolutionTouchedThisOp =
       op.op === "append" ||
       Object.prototype.hasOwnProperty.call(fields, "status") ||

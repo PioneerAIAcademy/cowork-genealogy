@@ -780,73 +780,32 @@ real weak-match signal, not an ARK artifact.
 
 ## 5. Write-boundary invariants
 
-### Not being in a project is an answer, not a failure
+### Not being in a project is a refusal that names the way in
 
-The lead ruling: it is fine for standalone work not to be persisted; it is not
-fine for the user to see an error merely because they are not in a project. A
-search that ran, returned results, and had nowhere to log them must say so in a
-sentence a skill can relay unedited.
+Reverses the earlier ruling that it is fine for standalone work not to be persisted
+(replaced by the lead's ruling of 2026-11-19: every activity starts a project). `server.ts` calls `projectGateRefusal` once, beside `rejectUnknownArgs`,
+and every tool except `project_create`, `project_list`, `project_context`, `login`,
+`logout` and `auth_status` returns `isError: true` with `NO_PROJECT_REFUSAL` when
+`projectPath` is absent or names a folder that holds no project. The text names both
+routes: `project_create` with the researcher's request as the objective and no
+`personId` for an activity with no person, or init-project with the FamilySearch
+person ID for research on a person. The gate does not create a project: a search
+tool never sees the researcher's message, and a folder holds one project.
 
-`classifyProjectPath` in `packages/engine/mcp-server/src/utils/project-io.ts`
-decides five states, and it is deliberately **independent of which file the
-current read wanted** — six of the twelve project-reading tools read
-`tree.gedcomx.json` first, so a file-derived verdict hands those six the wrong
-message in a folder that is simply not a project.
+`classifyProjectPath` still decides the states, independent of any filename. Only
+`project` (both files, or exactly one: a broken project, which stays loud in the
+tool) passes the gate; absent, a missing directory and a directory with neither file
+are refused. A connector store has no directories, so a fresh `/proj_` path with no
+`projects` row classifies as no project and is refused until `project_create` runs.
+The check of the argument comes first: a connector call that names no project holds a
+store that cannot classify. The two connector-only view tools are dispatched before
+the gate and resolve their project themselves.
 
-| State of `projectPath` | Verdict |
-|---|---|
-| absent or not a string | loud — `projectPath is required` |
-| not an existing directory | loud — `projectPath does not exist: <path>` |
-| a directory holding **neither** project file | `reason: "no_project"`, **no `isError`** |
-| a directory holding **exactly one** of the two | loud — a *broken* project |
-| a file present but unparseable | loud |
-
-A connector store has no directories: it reads the anchor path with no `projects`
-row as a directory holding neither file, so a fresh `/proj_` path answers
-`no_project`, and the first write claims the id.
-
-The half-a-project row runs in both directions, and it is the one that matters.
-A folder whose `research.json` was deleted still holds a real project, so a write
-against it must stay loud; softening it drops the write with a cheerful message.
-
-`reason` is the sole discriminator. `errors` is retained so every existing
-consumer keeps working, and `writerToolResult` reads `reason` to leave `isError`
-unset — the only `ok: false` exempt from that flag, because nothing was asked of
-a project that exists.
-
-**The sentence has two variants, because four of the twelve tools are not
-writers.** `research_query` and `project_context` are reads; `person_warnings`
-and `merge_warnings` are previews. Telling someone who asked "where are we?" in a
-non-project folder that their work was not saved is both wrong and alarming, so
-those four carry `NO_PROJECT_MESSAGE_READ` and the eight writers carry
-`NO_PROJECT_MESSAGE_WRITE`. Both share a base clause, which is what the
-single-phrasing packaging lint keys on.
-
-**An unreadable directory is not an absent project.** `classifyProjectPath`
-distinguishes a clean `ENOENT` from any other `access()` failure. A real project
-directory that has lost its execute bit still stats as a directory while every
-probe inside it throws `EACCES`; read as "absent" that becomes `no_project`, and
-a write against a genuine project is dropped with a cheerful message — the same
-silent loss the half-a-project row exists to prevent.
-
-**The harness must mirror this, and one of the three mirrors is inverted.**
-`is_error` is how the detectors know a call never landed, so a no-project write
-that kept its `isError` would be counted as a landed protected write and
-manufacture violations in paid grading. `did_not_land` in
-`eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
-use it to **skip** a call (`find_unguarded_protected_writes`, and
-`guardrail_shadow_report.py`'s person-evidence scan). The third —
-`find_relationship_writes_without_warnings_check` — retargeted (2026-10-02):
-it now checks for unresolved `unjustified_warnings` refusals from tree writers
-rather than checking whether `person_warnings` was called. **The polarity trap
-survived the retarget**: the success arm still withholds *credit* rather than
-skipping a call, so a success matched in the wrong place is a missed violation
-and therefore silent. It is matched by ORDER — the last refusal, then a
-successful writer call after it. Scanning the whole call list for "any success"
-credits a write that landed *before* the refusal, so a run that wrote one op,
-was refused on the next, and gave up reads as clean; that is how the retarget
-first shipped, and `test_warnings_unchecked_fires_when_the_success_predates_the_refusal`
-is what holds it.
+`tests/packaging/project-gate.test.ts` fails when a schema outside the six lacks
+`projectPath` in `required`, and drives the gate both ways. The harness mirrors it in
+`eval/harness/harness/mock_mcp.py` (`NO_PROJECT_REFUSAL`, `PROJECT_EXEMPT_TOOLS`).
+The tool-level `no_project` fallbacks (`noProjectResult`) remain for a tool called
+directly and carry the same words.
 
 ### Set-once project fields
 

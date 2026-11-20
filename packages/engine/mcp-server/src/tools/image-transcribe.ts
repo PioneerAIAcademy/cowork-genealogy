@@ -534,11 +534,9 @@ async function imageTranscribeToolInner(
  * `staged.resultsRef`, `digest` and `found`; the text comes back inline only
  * when staging failed. Every leg goes through `compactImageTranscribeAnswer`.
  *
- * With no project — no `projectPath`, or a folder holding neither project file —
- * a FamilySearch scan or memory is read with `projectPath` removed, so nothing
- * is saved or staged anywhere and the text comes back inline (issue #4136, lead
- * ruling 2026-11-02). The read counts under the in-memory no-project image cap
- * (spec §5.8). A `file` keeps its project-relative path, so it still needs one.
+ * Every read has a project (lead, 2026-11-19): `server.ts`'s gate refuses a call with
+ * none before this runs, so there is no unsaved read and no cap for one. A `file`
+ * is project-relative.
  *
  * person_read calls `imageTranscribeTool` directly and keeps the text; the
  * strip lives here so it cannot reach that leg.
@@ -547,13 +545,6 @@ export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
 ): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if (input?.file !== undefined) return compactOrPass(await imageTranscribeTool(input, principal));
-  const cls = input?.projectPath === undefined ? "missing_arg" : await classifyProjectPath(input.projectPath);
-  if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-  if (cls === "missing_arg" || cls === "no_project") {
-    const { projectPath: _dropped, ...unsaved } = input;
-    return compactOrPass(await imageTranscribeTool(unsaved, principal));
-  }
   return compactOrPass(await imageTranscribeTool(input, principal));
 }
 
@@ -574,9 +565,7 @@ export const imageTranscribeToolSchema = {
     "ref: staged.resultsRef }) only when you need it, and hand " +
     "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
     "comes back inline only when staging failed (`stagingError`). With no " +
-    "project (no projectPath, or a folder holding no research.json) the text " +
-    "comes back inline as `transcription` and nothing is saved; those reads " +
-    "count under a 20-images-per-film cap for this server session. Use this for large scans that " +
+    "project the text comes back inline only when staging failed. Use this for large scans that " +
     "image_read refuses (over its inline size cap): the image never enters the " +
     "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
     "(memoryArtifactUrl) — its direct artifact URL or its page URL " +

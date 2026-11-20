@@ -256,12 +256,17 @@ decrypted FamilySearch token, the project comes from the call's own
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
-Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. A project always
-starts from a FamilySearch person ID: `init-project` never searches by name, and with
-no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
-front door — its routing table sends a first message with no project to `init-project`
-or `tree-survey` (or, for the names in a record set with no person ID, to
-`search-images`), so nothing prefixes an opener onto the user's first message.
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. Every activity starts a
+project, including one with no person in it (lead, 2026-11-19, narrowing the 2026-10-15
+rule): `server.ts` refuses a call to any tool but `project_create`, `project_list`,
+`project_context`, `login`, `logout` and `auth_status` that names no project, and a
+person-less project comes from `project_create` with no `personId`, not through
+`init-project`. Research on a named person still needs a FamilySearch person ID:
+`init-project` never searches by name, and with no ID it creates nothing and asks for
+one; a project with no person refuses `research_append`'s `questions` append. `research`
+is the only front door — its routing table sends a first message with no project to
+`init-project` (a person), or to `project_create` and then `tree-survey` or
+`search-images` (no person), so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -371,8 +376,8 @@ which one it is** — the hook bound under both, which is the part that matters.
 
 A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sentences
 to each Cowork researcher message: a conditional one (no project → a research request goes
-to the research skill; a no-PID ask for the names in a record set goes to
-search-images) and one naming a source, collection, book or citation only from a
+to the research skill; a no-PID ask for the names in a record set starts a project with
+`project_create` and goes to search-images) and one naming a source, collection, book or citation only from a
 tool result, and that nothing here changes FamilySearch's Family Tree. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
 `continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
@@ -715,7 +720,8 @@ request's `Authorization: Bearer` (never `LOCAL`) — the worker path from the
 `X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), every
 other MCP request from a `connector_tokens` lookup against the caller's own
 `/proj_<16 hex>` path (E1), and a new tool's arm goes in
-`server.ts`, never in an entrypoint. A new tool also needs a row in
+`server.ts`, never in an entrypoint. A new tool lists `projectPath` in `required` unless it manages projects or
+sign-in (`src/utils/project-gate.ts`; `tests/packaging/project-gate.test.ts`). A new tool also needs a row in
 `dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
 neither calls nor lists as an exclusion.
 
