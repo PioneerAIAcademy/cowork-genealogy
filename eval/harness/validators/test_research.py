@@ -1915,3 +1915,68 @@ def test_names_works_only_from_tool_results(text_response, tool_calls, test):
         "Name a source, collection, book or citation only if a tool result returned it, "
         "or say it is unconfirmed."
     )
+
+
+# ── Issue #4348: relaying an every-mention survey hand-back ───────────────
+
+_SURVEY_RELAY_TAG = "every-mention-survey-relay"
+
+_FORBIDDEN_COMPLETENESS_PATTERNS = [
+    re.compile(r"\bevery\s+occurrence\b", re.IGNORECASE),
+    re.compile(r"\bevery\s+mention\b", re.IGNORECASE),
+    # Deliberately `survey`, never `search`: "the search is complete" (the three
+    # record_search calls finished) is ordinary workflow narration, not a claim
+    # about the surname's coverage -- only "survey" names the coverage claim.
+    re.compile(r"\bsurvey\b[^.]{0,40}\b(is|was)\b[^.]{0,20}\b(complete|exhaustive)\b", re.IGNORECASE),
+    re.compile(r"\b(complete(d)?|exhaustive)\b[^.]{0,40}\bsurvey\b", re.IGNORECASE),
+]
+
+_REQUIRED_CAVEAT_PATTERNS = [
+    re.compile(r"\b(godparent|witness)\b", re.IGNORECASE),
+    re.compile(r"\b(parish|parishes|W[oó]jtowa|Pagorzyna)\b", re.IGNORECASE),
+]
+
+_FORBIDDEN_READINESS_PATTERNS = [
+    re.compile(r"\bready\s+for\s+extraction\b", re.IGNORECASE),
+    re.compile(r"\bready\s+to\s+be\s+worked\s+through\b", re.IGNORECASE),
+    re.compile(r"\bready\s+to\s+be\s+linked\b", re.IGNORECASE),
+]
+
+
+def test_survey_handback_relay_has_no_completeness_claim(text_response, test):
+    """Issue #4348, research/SKILL.md relay rule. Relaying a search-records (or
+    search-images) hand-back that answers a survey of every occurrence/mention
+    of a surname must never call it complete or "every occurrence," must keep
+    the hand-back's own coverage caveats, and must not claim the hits are
+    ready for extraction, ready to be worked through, or ready to be linked
+    to tree persons as a set.
+
+    Tag-gated on `every-mention-survey-relay`. Checked on `text_response`
+    (every main-thread turn's text, joined) because the relay is the router's
+    own narration of a stubbed search-records return, not a tool call the hook
+    records -- there is nothing else deterministic to read it from.
+    """
+    if _SURVEY_RELAY_TAG not in (test.get("tags") or []):
+        pytest.skip("not a survey-handback-relay test")
+
+    body = text_response or ""
+    assert body, "the router produced no text to relay the survey hand-back"
+
+    completeness_hits = [p.pattern for p in _FORBIDDEN_COMPLETENESS_PATTERNS if p.search(body)]
+    assert not completeness_hits, (
+        "the reply calls the survey complete or claims every occurrence/mention "
+        f"was found; matched: {completeness_hits}"
+    )
+
+    readiness_hits = [p.pattern for p in _FORBIDDEN_READINESS_PATTERNS if p.search(body)]
+    assert not readiness_hits, (
+        "the reply claims the survey hits are ready for extraction, ready to be "
+        f"worked through, or ready to be linked as a set; matched: {readiness_hits}"
+    )
+
+    missing_caveats = [p.pattern for p in _REQUIRED_CAVEAT_PATTERNS if not p.search(body)]
+    assert not missing_caveats, (
+        "the reply dropped a coverage caveat from the search-records hand-back "
+        "(expected both the godparent/witness gap and the parish-separation gap); "
+        f"missing: {missing_caveats}"
+    )

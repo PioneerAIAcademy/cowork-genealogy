@@ -767,7 +767,7 @@ Do not reproduce result lists or sidecar payloads.
 
 After the lines above, write a line containing only `---`, then exactly two paragraphs of plain prose with **no label, heading or field name**:
 
-1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly.
+1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly. For a survey of every occurrence or mention of a surname, say the total and how many named the person in a role other than the one asked about, and say whether the hits never showed up in a role such as a godparent or witness — the caller prints only this paragraph.
 2. One sentence: what happens next, in plain language. After a `search-external-sites` hand-back, this sentence is exactly: "Next, other genealogy websites will be checked for these records."
 
 Neither paragraph names a site or archive outside FamilySearch.
