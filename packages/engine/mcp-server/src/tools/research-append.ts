@@ -23,6 +23,7 @@ import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
+import { objectiveTarget, objectiveTargetLeadError, ORDER_FIELDS } from "../utils/objective-target.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { removeUnanchoredPersons, unanchoredMintedPersonIds, type UnanchoredRemoval } from "../utils/unanchored-persons.js";
 import { isSettledConflict, PROOF_TIER_RANK, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -7697,6 +7698,45 @@ export function planItemSearchedSkipInvariants(
   ];
 }
 
+/** The objective's target record leads the first question's plan (issue #2030,
+ *  `objective-target.ts`). Judged once on the call's end state, so the order
+ *  items arrive in within a batch cannot matter, and only for a plan this call
+ *  appended or reordered: a status-only item update never touches it. A plan
+ *  already burying the target before this call is not refused for an unrelated
+ *  edit, so a project written before the rule is not stranded. */
+function objectiveTargetLeadRefusals(beforeResearch: any, research: any, ops: readonly any[]): string[] {
+  const target = objectiveTarget(research?.project?.objective);
+  if (!target) return [];
+  const firstQuestionId = Array.isArray(research?.questions) ? research.questions[0]?.id : undefined;
+  if (typeof firstQuestionId !== "string") return [];
+  const plansAfter: any[] = Array.isArray(research?.plans) ? research.plans : [];
+  const plansBefore: any[] = Array.isArray(beforeResearch?.plans) ? beforeResearch.plans : [];
+  const beforeIds = new Set(plansBefore.map((p) => p?.id));
+  const touched = new Set<string>();
+  for (const o of ops) {
+    if (o?.section === "plans") {
+      if (o.op === "update" && o.fields && "items" in o.fields && typeof o.entryId === "string") touched.add(o.entryId);
+    } else if (o?.section === "plan_items" && typeof o.planId === "string") {
+      const f = o.op === "append" ? null : (o.fields ?? {});
+      if (!f || ORDER_FIELDS.some((k) => k in f)) touched.add(o.planId);
+    }
+  }
+  if (ops.some((o) => o?.section === "plans" && o.op === "append")) {
+    for (const p of plansAfter) if (!beforeIds.has(p?.id)) touched.add(p.id);
+  }
+  const errors: string[] = [];
+  for (const id of touched) {
+    const plan = plansAfter.find((p) => p?.id === id);
+    if (!plan || plan.question_id !== firstQuestionId) continue;
+    const error = objectiveTargetLeadError(plan, target);
+    if (!error) continue;
+    const before = plansBefore.find((p) => p?.id === id);
+    if (before && objectiveTargetLeadError(before, target)) continue;
+    errors.push(error);
+  }
+  return errors;
+}
+
 /** A plan item names one place (`compoundJurisdictionError`). Checked on an
  *  append and on a change to `jurisdiction` only, so a compound item written
  *  before this rule does not strand an unrelated edit. */
@@ -13681,6 +13721,9 @@ export async function researchAppend(
     if (reweighRefusals.length > 0) {
       return fail(reweighRefusals.map((r) => fmt(r.opIndex, r.message)));
     }
+
+    const leadRefusals = objectiveTargetLeadRefusals(beforeResearch, research, ops);
+    if (leadRefusals.length > 0) return fail(leadRefusals);
 
     // #3032 Stage 1b: the claim rules, once per batch against the final in-batch
     // summaries, so a later op that revises a disproved claim or adds the Couple
