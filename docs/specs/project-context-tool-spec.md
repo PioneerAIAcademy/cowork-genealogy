@@ -131,6 +131,9 @@ can drop:
     }],
     quirks?: string[],
   }],
+  nationalCollections?: {                // country-wide rows, once per country (US, Canada, Mexico)
+    [country: string]: [{ id, title?, dateRange?, personCount?, recordCount? }],
+  },
   awaitingUser?: [{                      // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site
@@ -207,6 +210,20 @@ Projection rules:
 - **`localities`** — every `research.localities[]` entry, renamed to camelCase. `guide_markdown`
   and `pages_read` are left out; `research_query` serves the whole entry. A collection count
   that is not an integer is left out.
+- **`nationalCollections`** — the country-wide collections the localities hold, for a
+  locality whose country (its `place`, else its first `jurisdictions[].name` with one) is the
+  United States, Canada or Mexico. Their collections are scoped to the state or province, so
+  `research_append` stores the national rows beside the place's own (research-append spec
+  §5.12, "National collections"). A row is national when `isNationalCollectionTitle` holds
+  for its title. It moves out of its locality's `collections` into the country's list, which
+  holds each id once, sorted by title, in the `collections` row shape. Absent when no locality
+  holds one. It says nothing about the years no row covers: a locality cut to its own period,
+  a capped fill or a fill made while the catalog was unreadable stores a partial list, so
+  research-plan reads coverage from the rows and runs `collections_search` for the country
+  for any year it needs and no row covers. The rows are the core national list only (the
+  censuses and broad indexes); research-plan finds the rest with its own search. **Why:**
+  every US locality holds the same national rows, so one list per country keeps an answer
+  with several localities from repeating them.
 - **`projectStatus`** — `research.project.status`.
 - **`objective`** — `research.project.objective`, verbatim and untruncated. It is the
   only surface that returns the objective: `research_query` serves array sections only, so without it a

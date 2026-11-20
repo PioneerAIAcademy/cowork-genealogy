@@ -1,0 +1,274 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_036: a Lightfoot-surnamed search (the household's surname in 1900). Live response for givenName An* + surname Lightfoot + Fluvanna 1910: the top rows include the 1910 census entry 'Antone Lightfoot' (MPPN-TV7, widowed, b. 1837, household of Edward Lightfoot) and the 1923 death registration 'Ann Tone Lightfoot' (QVR7-5LJJ, b. 1833). Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "surname": "~Lightfoot"
+  },
+  "response": {
+    "query": {
+      "surname": "Lightfoot",
+      "givenName": "An*",
+      "residencePlace": "Fluvanna, Virginia, United States",
+      "residenceYearFrom": 1910,
+      "residenceYearTo": 1910
+    },
+    "totalMatches": 187,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "census": {
+      "schedules": [
+        {
+          "year": 1910,
+          "census": "United States",
+          "collectionId": "1727033",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        }
+      ],
+      "note": "From this tool's census table, not from the search results: what each census schedule recorded. Say nothing else about what a schedule collected."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MPPN-TV7",
+        "events": [
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Antone Lightfoot",
+        "sex": "Female",
+        "birthDate": "1837",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Edward Lightfoot",
+        "recordArk": "ark:/61903/1:2:9JKH-393",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVR7-5LJJ",
+        "events": [
+          {
+            "type": "DeathRegistration",
+            "date": "9 Nov 1923"
+          },
+          {
+            "type": "Race",
+            "value": "Black"
+          }
+        ],
+        "personName": "Ann Tone Lightfoot",
+        "sex": "Female",
+        "birthDate": "1833",
+        "deathDate": "29 October 1923",
+        "deathPlace": "Cunningham, Fluvanna, Virginia, United States",
+        "collectionId": "2377565",
+        "recordArk": "ark:/61903/1:2:Q247-BS3K",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:62QK-ZV67",
+        "personName": "Antone Lightfoot",
+        "sex": "Female",
+        "collectionId": "5000046",
+        "recordTitle": "Entry for Bertie Lightfoot",
+        "recordArk": "ark:/61903/1:2:H333-HYBW",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVYK-P4WB",
+        "personName": "Anette Lightfoot",
+        "sex": "Female",
+        "collectionId": "2388824",
+        "recordTitle": "Entry for Leona Louise Lightfoot",
+        "recordArk": "ark:/61903/1:2:Q2CH-4W1M",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6V7G-LHVS",
+        "personName": "Christie Ann Lightfoot",
+        "sex": "Female",
+        "collectionId": "4149585",
+        "recordTitle": "Entry for Geo M Lightfoot",
+        "recordArk": "ark:/61903/1:2:HSCB-HFDK",
+        "role": "Mother Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6VMJ-WQ6Q",
+        "personName": "Antonia Lightfoot",
+        "sex": "Female",
+        "collectionId": "4149585",
+        "recordTitle": "Entry for John J. Lightfoot",
+        "recordArk": "ark:/61903/1:2:HS41-142G",
+        "role": "Mother Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6PFY-8BPL",
+        "personName": "Ann Lightfoot",
+        "sex": "Female",
+        "collectionId": "5000046",
+        "recordTitle": "Entry for Julia Lightfoot",
+        "recordArk": "ark:/61903/1:2:HQHM-BTZQ",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68SN-LZQF",
+        "personName": "Antonia Lightfoot",
+        "collectionId": "4231103",
+        "recordTitle": "Entry for John J Lightfoot",
+        "recordArk": "ark:/61903/1:2:4B61-8G2C",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68S6-MP29",
+        "personName": "Ann Lightfoot",
+        "collectionId": "4231103",
+        "recordTitle": "Entry for John Moorman",
+        "recordArk": "ark:/61903/1:2:4B6Y-2LMN",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZKR-2T7Y",
+        "personName": "Ann Lightfoot",
+        "sex": "Female",
+        "collectionId": "4231103",
+        "recordTitle": "Entry for Julia Lightfoot",
+        "recordArk": "ark:/61903/1:2:4BCD-T18W",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68SW-BP7F",
+        "personName": "C Ann Lightfoot",
+        "collectionId": "4231103",
+        "recordTitle": "Entry for Jno M Lightfoot",
+        "recordArk": "ark:/61903/1:2:4B6P-DTP5",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VR58-VQX",
+        "personName": "Ann Lightfoot",
+        "sex": "Female",
+        "collectionId": "1708660",
+        "recordTitle": "Entry for Julia Lightfoot",
+        "recordArk": "ark:/61903/1:2:9MC2-C45Y",
+        "batchNumber": "C02079-6",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VR58-TWF",
+        "personName": "Antone Lightfoot",
+        "sex": "Female",
+        "collectionId": "1708660",
+        "recordTitle": "Entry for Bertie Lightfoot",
+        "recordArk": "ark:/61903/1:2:9MC2-CZ7K",
+        "batchNumber": "C02079-6",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z71-RCF1",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Kidds Store, Fluvanna, Virginia, United States of America"
+          }
+        ],
+        "personName": "Annette Carmen Cooper Lightfoot",
+        "birthDate": "1 December 1887",
+        "deathDate": "27 October 1973",
+        "collectionId": "2221801",
+        "recordArk": "ark:/61903/1:2:4BQ2-G7F1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVRW-YR5J",
+        "personName": "Antone Lightfoot or Lightford",
+        "sex": "Female",
+        "collectionId": "2377565",
+        "recordTitle": "Entry for Charlie Lightfoot or Lightford",
+        "recordArk": "ark:/61903/1:2:Q24W-WN8Z",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6K3N-3QGZ",
+        "personName": "Antonne Lightfoot",
+        "collectionId": "5000016",
+        "recordTitle": "Entry for Burta Lightfoot Unknown",
+        "recordArk": "ark:/61903/1:2:HSVK-BD5Z",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6K4K-ZNVV",
+        "personName": "Anna Lightfoot",
+        "collectionId": "5000016",
+        "recordTitle": "Entry for John Huston Lightfoot",
+        "recordArk": "ark:/61903/1:2:HSGV-WYY2",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:D68R-4K6Z",
+        "personName": "Annie Lightfoot",
+        "sex": "Female",
+        "birthDate": "1906",
+        "birthPlace": "Virginia, United States",
+        "deathDate": "4 June 1911",
+        "deathPlace": "Richmond, Henrico, Virginia, United States",
+        "collectionId": "3940896",
+        "recordArk": "ark:/61903/1:2:4JMB-G26Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZR6-67G5",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "personName": "Ann A Lightfoot",
+        "sex": "Female",
+        "birthDate": "4 March 1854",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "4231103",
+        "recordArk": "ark:/61903/1:2:4B8X-QN8Z",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6N8C-FDY9",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "personName": "Ann A Lightfoot",
+        "sex": "Female",
+        "birthDate": "4 March 1854",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "4149585",
+        "recordArk": "ark:/61903/1:2:HMKP-6ZZ7",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1708660": "Virginia, Births and Christenings, 1584-1917",
+      "1727033": "United States, Census, 1910",
+      "2221801": "Find a Grave Index",
+      "2377565": "Virginia, Death Certificates, 1912-1987",
+      "2388824": "Virginia, Birth Certificates, 1901-1914",
+      "3940896": "Virginia, Bureau of Vital Statistics, Death Records, 1853-1912",
+      "4149585": "Virginia, Vital Records, 1715-1912",
+      "4231103": "Virginia, Vital Records, 1853-1934",
+      "5000016": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+      "5000046": "Virginia, Bureau of Vital Statistics, Birth Records, 1853-1896"
+    }
+  }
+}

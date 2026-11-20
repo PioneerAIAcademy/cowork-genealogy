@@ -294,7 +294,8 @@ export interface RecordSearchResult {
   surnameNotOnSubject?: true;
   /** The candidate's surname; present with `surnameNotOnSubject`. */
   candidateSurname?: string;
-  /** Only set when attachment-checking ran and the batch call succeeded. */
+  /** Emitted only when true. Absent means not attached, unless
+   *  `ranked.attachmentsChecked` is false (status unknown). */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
   // ────────────────────────────────────────────────────────────────────────
