@@ -2788,7 +2788,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `id` | yes | the directory name (the loader refuses a mismatch) |
 | `message` | yes | sent verbatim |
 | `expected_owner` | yes | the agent or skill name that should answer, or a list of them where `null` means the main thread answered with no unit |
-| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
+| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, `{"section": "plans"}` (only with `is_plan_ask`; the loader refuses it otherwise), or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
 | `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
 | `required_tools` | no (`[]`) | bare tool names that must be called without error, on any thread. Required when any `expected_save` alternative is `absent`: otherwise an empty turn passes |
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
@@ -2849,7 +2849,7 @@ namespace; it is stripped, as it is from spawned names):
    no `research-plan` spawn, on any thread; and no new `questions` entry, nor,
    unless `is_plan_ask`, a new `plans` entry.
 3. **`save`** — any one `expected_save` alternative holds: a new `sources` entry,
-   a new `log` entry whose `tool` (and `outcome`, when given) is the expected
+   a new `plans` entry, a new `log` entry whose `tool` (and `outcome`, when given) is the expected
    value, or, with `absent`, no new entry in that section. "New" means its id is
    in the final `research.json` and not in `starting-research.json`; in an
    empty-folder fixture every row is new.

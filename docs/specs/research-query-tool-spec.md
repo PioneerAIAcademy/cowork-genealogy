@@ -11,9 +11,13 @@
 > **Updated 2026-10-14 (T2.3):** `personId`, `assertionId`, `sourceId` and
 > `recordId` also take a list of ids, and a list call returns `countById`; every
 > non-string filter value is now rejected (§3, "Plural ids, not plural sections").
+> **Updated 2026-11-17 (grouped assertions):** `assertions` items are grouped by
+> persona — the five keys a persona's facts repeat are hoisted onto one group,
+> and a `questionId` read drops the `[questionId]` echo. Lossless; counts still
+> count assertions (§2.2, "Assertions are grouped by persona").
 
 ```
-research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated, countById? }
+research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated, nextOffset?, countById? }
 ```
 
 ---
@@ -63,8 +67,8 @@ research_query({
   status?: string,
   targetId?: string,
   focus?: string,
-  // pagination (NOT a filter): skip the first `offset` matches, then return up
-  // to 50. Applies to every section; absent ⇒ 0. See §2.2.
+  // pagination (NOT a filter): where the page starts, 0 or a previous page's
+  // `nextOffset`. Applies to every section; absent ⇒ 0. See §2.2.
   offset?: number,
   // assertions only (NOT a filter): true also returns assertions a re-extraction
   // retired (non-null `superseded_by`, research-schema-spec.md §5.6). Absent ⇒
@@ -157,14 +161,16 @@ the principal personas of both records.
 {
   ok: true,
   section: string,
-  count: number,      // total matches, BEFORE the 50-item page cap and any offset
+  count: number,      // total matches, BEFORE paging and any offset
   items: any[],        // the section's native snake_case fields, verbatim but
-                        // for the two omissions below — a read projection, not
+                        // for the two omissions below, and grouped by persona
+                        // on `assertions` (below) — a read projection, not
                         // a persisted document, so no camelCase rename
                         // (contrast project_context, whose fixed shape IS a
                         // wire surface)
   truncated: boolean,  // true when matches remain beyond this page
                         // (count > offset + items.length)
+  nextOffset?: number, // present only when truncated: the next page's offset
   countById?: { [id: string]: number },
                         // list calls only — see below
   unregisteredDisagreements?: { personId, fact, assertionIds }[],
@@ -178,6 +184,80 @@ the principal personas of both records.
 }
 // on failure: { ok: false, errors: string[] }
 ```
+
+**Assertions are grouped by persona.** On `assertions`, `items` is a list of
+groups. A group is a maximal run of *consecutive* matching assertions, in the
+section's order, that share all five of `record_id`, `record_persona_id`,
+`record_role`, `source_id` and `log_entry_id` — a key absent from an assertion is
+a different value from `null`:
+
+```typescript
+{ record_id?, record_persona_id?, record_role?, source_id?, log_entry_id?,
+  facts: [ { id, ...every other field of one assertion } ] }
+```
+
+- The group carries only the hoisted keys its assertions carry; an absent key
+  stays absent, never written as `null`.
+- Exactly those five are hoisted. `informant` and `informant_proximity` stay on
+  each fact: over the 15,793 assertions in `eval/runlogs/e2e/*/*.final-research.json`
+  (2026-11-17), `informant` differs inside 1,160 of the 2,062 multi-fact groups
+  whose `record_persona_id` is a value. `record_document_id` never varied inside a
+  group but is on only 1,410 of those assertions, so it stays per fact too.
+- On a `questionId` read, a fact omits `extracted_for_question_ids` when it is
+  exactly `[questionId]`. Every hit of that read contains `questionId` (the filter
+  is `contains`), so the omission is lossless.
+- `count`, `offset`, `nextOffset`, `countById` and `MAX_ITEMS` count assertions,
+  never groups. A persona split across a page boundary repeats its keys at the top
+  of the next page.
+- The page budget is measured on the answer as emitted, groups and all
+  (**Pages**, below).
+- `flattenAssertionGroups` (exported from `research-query.ts`) is the inverse: it
+  returns the flat assertions, deep-equal to the stored ones, key order aside.
+  `replay_collapse.py`'s `_flatten_items` restates it for the replay harness.
+
+Measured with `make replay-sizes BASE=<pre-change> TOOLS=research_query
+SECTION=assertions` over the 713 recorded assertion reads that answered (of 715
+replayed, 2026-11-19, against the 40k-budget pager), the grouped answers are 20.1% smaller;
+a single-assertion read grows by the 14 characters of its one-fact wrapper.
+
+**Misreads (probe, 2026-11-17).** `eval/harness/scripts/probe_assertion_shape.py`
+replays the 24 largest recorded assertion reads (at most two per run) on the pre-change build (flat)
+and on this one (grouped), and asks each assertion reader's model, by assertion
+id, for `information_quality`, `record_basis`, `informant`,
+`informant_proximity` and `record_persona_id` on 192 sampled assertions: 960
+answers per shape per model. Misreads out of 960:
+
+| model (effort) | system prompt holds the tool description | flat | grouped |
+|---|---|---|---|
+| claude-sonnet-5 (medium) | no | 0 | 0 |
+| claude-sonnet-5-5 (medium) | no | 1 | 0 |
+| claude-haiku-5-5 (low) | no | 0 | 11 |
+| claude-sonnet-5 (medium) | yes | 1 | 3 |
+| claude-sonnet-5-5 (medium) | yes | 0 | 3 |
+| claude-haiku-5-5 (low) | yes | 0 | 1 |
+
+Without the description, Haiku read a group's `record_persona_id` as absent on
+every fact of one page (8 of its 11). With it — as every real reader has it — the
+grouped misreads are one adjacent persona id and a single pattern: the one fact
+in a group whose informant differs from the rest (a census residence attested by
+the enumerator among facts from a household member) read with the group's
+majority values. That is why the description says each fact holds its own fields.
+
+**Eval gate.** All eight `assertions` readers gate the shape, since
+`research_query` runs live from the compiled build in the unit harness: a new fail
+in any of them sends assertions back to flat. Scratch runs on this build, against
+each suite's committed rate (`make eval-health`): research-exhaustiveness 20,
+timeline 13, conflict-resolution 14, search-hints 11, search-full-text 18 — 69
+pass, 7 partial, no fail or abort — and person-evidence 36 — 29 pass, 7 partial,
+no fail. Committed runs, for the two agents whose paging line this shape
+reworded: proof-conclusion 26 (23 pass, 3 partial, no fail) and gps-mentor 2
+(2 pass).
+
+person-evidence's two `research_query` lines ("group the items by `record_id` +
+`record_role`", and paging "until you hold `count` items") were left as they
+are, though both read stale against groups. On `ut_person_evidence_027`
+(Haiku 5.5 low), main's text linked a_012 `confident` in 4 of 7 runs, and any
+edit to either line did so in 0 of 22, on the flat and grouped builds alike.
 
 **Two fields are left out of `items`.** An item of a plan that is not active
 (`superseded` or `completed`) carries no `rationale`, except a `skipped` item
@@ -208,17 +288,31 @@ unregistered (`ut_research_h22`). Scope: the question's own assertions
 (`extracted_for_question_ids`) under `questionId`, otherwise every assertion;
 narrowed to those naming `assertionId` (any of them, for a list); omitted under a `status` filter other
 than `unresolved`, since an unregistered disagreement has no other status. The
-field does not page — `offset` and the 50-item cap apply to `items` alone.
+field does not page — every page carries all of it — but, like `countById`, it
+is counted toward every page's size (below).
 
-Each call returns at most 50 items (`MAX_ITEMS` in `research-query.ts`). A
-caller that hits `truncated: true` either narrows the filter or **pages**: set
-`offset` to 50, then 100, and so on, until `truncated: false`. `offset` skips
-the first N matches of the *filtered* set — it is pagination, not a filter, so
-it is absent from the §2.1 table and applies to every section uniformly.
-`count` stays the true total throughout, so the next page's `offset` is simply
-`offset + items.length`. `offset` must be a non-negative whole number and is
-rejected (not coerced) otherwise — see §4. Omitting every filter returns the
-whole section, one 50-item page at a time.
+**Pages.** Each call returns one page of the *filtered* set: at most 50 items
+(`MAX_ITEMS` in `research-query.ts`), and fewer when the whole answer would pass
+`TOOL_RESULT_CHAR_BUDGET` (40,000 characters, `src/constants.ts`). The size
+measured is the answer as returned, `JSON.stringify` of the whole object
+`writerToolResult` sends — `countById`, `reviewReasons` and
+`unregisteredDisagreements` included, not `items` alone. A single item over the
+budget is returned alone, so a page always holds at least one. A caller that
+hits `truncated: true` either narrows the filter or **pages**: call again with
+`offset: nextOffset`, until `truncated: false`. `offset` is pagination, not a
+filter, so it is absent from the §2.1 table and applies to every section
+uniformly; `count` stays the true total throughout.
+
+Pages are cut greedily from 0: a page starting at `s` takes the most items, up
+to 50, whose answer fits. When every page fits at 50 items the boundaries are
+0, 50, 100 as before. An `offset` that is not a page start is **refused**,
+naming the start of the page at or below it and telling the caller that page
+may hold items it already has; an `offset` past the last match is the empty
+page `{ items: [], truncated: false }` only when every page but the last is a
+full 50, and refused naming the last page start otherwise (§3). `offset` must be
+a non-negative whole number and is rejected (not coerced) otherwise — see §4.
+On `assertions`, `items` are persona groups (§2.2), while `count`, `offset`,
+`nextOffset` and the 50-item cap count assertions, never groups.
 
 ### 2.4 `external_collections`
 
@@ -287,7 +381,8 @@ from the tree person's Birth fact:
   the ones `same_person` returns (`docs/specs/same-person-tool-spec.md`,
   "`settledConflicts`"). A review of existing links reads them here and never calls
   `same_person`, so this is the call that tells it the disagreement is settled.
-- Computed for the live links on the returned page only. Links whose sentences are
+- Computed for the live links on the returned page only, and counted toward that
+  page's size budget (§2.2) like every other field. Links whose sentences are
   identical share one row, so the links of one record person cost one row.
 - Absent when no link on the page has one. A project with no `resolved` or `moot`
   fact conflict skips the tree read. An unreadable tree yields none, and the links
@@ -390,7 +485,7 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 - **No filter on `localities`, deliberately.** None of the ten existing
   filter keys maps onto a locality field, so a filter would mean a new MCP
   tool parameter; and there is one entry per place-jurisdiction, so the whole
-  section fits inside a single 50-item page. Querying it returns everything,
+  section fits inside a single page, by item count and by size. Querying it returns everything,
   and any filter argument is rejected with the standard "(this section takes
   no filters)" error.
 
@@ -441,8 +536,8 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
   magnitude lower in the same runs. Out of scope until evidence says
   otherwise.
 - **50-item page cap + `offset` pagination — not a raised cap, a `fields`
-  projection, or a staged-to-disk fallback.** The page size stays 50
-  (`MAX_ITEMS`); `offset` reaches items 51+. This closes a silent-wrong-answer
+  projection, or a staged-to-disk fallback.** A page holds at most 50 items
+  (`MAX_ITEMS`); `offset` reaches the rest. This closes a silent-wrong-answer
   path: proof-conclusion's "collect every assertion" gate once read 50 of 57
   matches and could write a proof summary from the truncated set, with neither
   the skill, the validator, nor the judge able to tell. Three alternatives were
@@ -465,6 +560,49 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
   has landed: `research/SKILL.md` and `agents/proof-conclusion.md`
   both check `truncated` and page with `offset`. A tool-only fix would not have
   cleared the reported symptom on its own.
+
+- **A page also stops at `TOOL_RESULT_CHAR_BUDGET` — a lower bound, not a
+  `limit`.** `research_query` carried 123M of the 418M characters MCP answers
+  carried (10-15 to 11-08, 29%), log pages reached 40.4k, and `notes` has no
+  write-side cap, so a fuller 50-entry page passed the ~50k host cutoff, where
+  the agent got nothing. So a page is a greedy fill from 0 under the budget, at
+  most 50 items, measuring the whole serialized answer (extras included, since
+  `countById` and `reviewReasons` alone can tip it). This only ever *shrinks* a
+  page; it is not the caller-chosen `limit` or raised cap the bullet above
+  rejects, and 0/50/100 stay the boundaries whenever pages fit.
+  - **A non-page-start `offset` is refused, not served.** Once pages can be
+    short, a caller stepping by 50 would skip the items between a short page's
+    end and its next multiple of 50. The refusal comes from the same partition
+    that builds the page, names the start to use, and says that page may repeat
+    items so a caller counting toward `count` does not count twice. For the same
+    reason an `offset` past the end is refused when any page was short: there it
+    would read `truncated: false` over items never served.
+  - **Expected consequences.** Recorded runs that sent arbitrary offsets (about
+    19 of 165 recorded `research_query` calls with one) are refused today, and a
+    write between two page calls can re-cut the partition (an item resized, or a
+    whole-set extra changed), so the next `nextOffset` may be refused and the
+    caller re-reads from the start it names. Both are intended: either is better
+    than a silently skipped item.
+
+- **Assertions grouped by persona, consecutive runs only — not columnar, not
+  merged across the page (2026-11-17).** Assertions are the largest share of what
+  `research_query` returns, and within one persona the five hoisted keys repeat on
+  every fact. Measured over the 651 recorded assertion reads that answered (of
+  653 replayed) against the pre-change build (`make replay-sizes …
+  SECTION=assertions`):
+
+  | shape | smaller by |
+  |---|---|
+  | grouped, consecutive runs (shipped) | 20.1% |
+  | grouped, every same-persona assertion on the page merged | 20.3% |
+  | columnar, lossless (a group splits where the fact keys change) | 5.5% |
+  | columnar, an absent field written as `null` (whole-section estimate) | ~33% |
+
+  Merging across the page reorders assertions for 0.2 points, so a flattened
+  page would no longer be the stored order. Columnar saves little losslessly,
+  because assertions carry different optional fields; it nears its estimate only
+  by writing absent fields as `null`, which loses the absent/`null` difference
+  the grouped shape keeps.
 
 - **A cross-section filter on `log`, not a nested join (2026-10-06, T2.1).**
   `research-exhaustiveness` reads a question's log by walking it: one
@@ -564,9 +702,12 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 | `log` × `questionId`, `plans` missing or not an array | `{ ok: false, errors }` — `plans` is a required section, so its absence is a corrupt document, never a `count: 0` |
 | `log` × `questionId`, an entry with `plan_item_id: null` | never matches (the walk could not reach it either) |
 | `log` × `questionId`, a plan item on a non-`active` plan | included — `research-exhaustiveness` treats those as audit trail and filters itself |
-| No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
+| No filters supplied | the whole section, one page (page with `offset: nextOffset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |
-| More than 50 matches, no `offset` | `items` is the first 50; `count` is the true total; `truncated: true` |
+| More than 50 matches, or an answer past the budget, no `offset` | `items` is the first page; `count` is the true total; `truncated: true`; `nextOffset` is the next page's start |
+| One item whose answer alone passes the budget | returned alone on its page; `nextOffset` is the next index |
+| `offset` that is not a page start (e.g. 50 after a first page ending at 12) | `{ ok: false, errors }` naming the start of the page at or below it, and that the page may hold items the caller already has |
 | `offset` present and not a non-negative whole number — **including a string like `"50"`** | `{ ok: false, errors }`, rejected loudly, **not coerced**. `index.ts` passes tool arguments through without type-coercion, so a model that sends `offset: "50"` (as one did — hannah-earnest-children idx 79) reaches the tool as a string and `Number.isInteger` rejects it. This mirrors `person_search.offset`'s validation. The old behavior silently ignored the unknown key and returned the *first* page — a wrong answer wearing `ok: true`; the loud rejection is the fix, and the caller (once the skill half teaches it) sends a real number. |
-| `offset` past the last match | `{ ok: true, count: <total>, items: [], truncated: false }` — a legitimate empty page, not an error |
-| `offset` set, matches remain beyond the returned page | `items` is the (≤50) slice at `[offset, offset+50)`; `count` is the true total; `truncated: true` |
+| `offset` past the last match, every page but the last a full 50 | `{ ok: true, count: <total>, items: [], truncated: false }` — a legitimate empty page, not an error |
+| `offset` past the last match after a short page | `{ ok: false, errors }` naming the last page's start |
+| `offset` a page start, matches remain beyond the returned page | `items` is that page (≤50 items, within the budget); `count` is the true total; `truncated: true`; `nextOffset` set |

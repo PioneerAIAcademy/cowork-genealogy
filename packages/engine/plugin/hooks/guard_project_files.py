@@ -154,6 +154,7 @@ AGENT_ONLY_TOOLS = {
     ),
     "fulltext_search": ("search-full-text",),
     "get_name_variants": ("search-full-text",),
+    "image_index": ("search-images",),
     "image_search": ("search-images",),
     "materialize_facts": ("person-evidence",),
     "merge_tree_persons": ("proof-conclusion", "tree-edit"),
