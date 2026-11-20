@@ -59,15 +59,18 @@ export function factsDisagree(x: any, y: any): { year: boolean; place: boolean }
 const firstToken = (s: string): string => normalizeString(s).split(" ")[0] ?? "";
 
 /** Two given names the same, or related by the given-name tables
- *  (`lookupNameVariants`, `lookupNameFamily`). Compared on the first name. */
+ *  (`lookupNameVariants`, `lookupNameFamily`): one lists the other, or both
+ *  list three or more shared forms — Louis and Lewis share Lew, Lou and
+ *  Louie. Two are not enough: Margaret and Mary share Mamie and May, which
+ *  are nicknames of both. First name only. */
 export function givenNamesRelated(a: string, b: string): "same" | "variant" | "different" {
   const x = firstToken(a), y = firstToken(b);
   if (x === "" || y === "") return "different";
   if (x === y) return "same";
-  const related = (p: string, q: string): boolean =>
-    lookupNameVariants(p).some((v) => normalizeString(v) === q) ||
-    (lookupNameFamily(p)?.allForms ?? []).some((v) => normalizeString(v) === q);
-  return related(x, y) || related(y, x) ? "variant" : "different";
+  const forms = (p: string): Set<string> =>
+    new Set([p, ...lookupNameVariants(p), ...(lookupNameFamily(p)?.allForms ?? [])].map(normalizeString));
+  const fx = forms(x), fy = forms(y);
+  return fx.has(y) || fy.has(x) || [...fx].filter((v) => fy.has(v)).length >= 3 ? "variant" : "different";
 }
 
 /** Two surnames the same, or one a -datter/-dotter abbreviation of the other

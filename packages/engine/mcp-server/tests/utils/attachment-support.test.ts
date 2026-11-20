@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { leaveOneOut, nameRelation, supportOf } from "../../src/utils/attachment-support.js";
+import { givenNamesRelated, leaveOneOut, nameRelation, supportOf } from "../../src/utils/attachment-support.js";
 
 const R1 = "ark:/61903/1:1:AAAA-111";
 const R2 = "ark:/61903/1:1:BBBB-222";
@@ -117,5 +117,15 @@ describe("supportOf / leaveOneOut", () => {
     expect([...s.relationships.get("R1")!]).toEqual(["AAAA-111"]);
     expect(leaveOneOut(t as any, s, R1).relationships).toEqual([]);
     expect(leaveOneOut(t as any, s, R2).relationships).toEqual([rel]);
+  });
+});
+
+describe("givenNamesRelated", () => {
+  it("names sharing three or more table forms are variants; two shared nicknames are not enough", () => {
+    expect(givenNamesRelated("Louis", "Lewis")).toBe("variant");
+    expect(givenNamesRelated("Katharine", "Catherine")).toBe("variant");
+    expect(givenNamesRelated("Margaret", "Mary")).toBe("different");
+    expect(givenNamesRelated("John", "Jane")).toBe("different");
+    expect(givenNamesRelated("Robert", "Richard")).toBe("different");
   });
 });
