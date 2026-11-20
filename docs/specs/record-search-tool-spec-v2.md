@@ -528,6 +528,15 @@ through the survey, with the error telling it to narrow the query. The US
 places counted had 1 to 3 names (Shelby 1, Denver 2, Boston 3); with 3 the
 refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 
+### Rows at or below the matcher floor are slimmed (experiment)
+
+A ranked row whose unrounded `matchScore` is at or below
+`ranked.realNegativeFloor` (`FAMILYSEARCH_FLOORS.realNegative` when absent) keeps
+only `recordId`, `recordArk`, `personName`, `role`, `birthDate`, `birthPlace`,
+`events`, `relativeTerms`, `batchNumber`, `collectionId`, `matchRank`,
+`searchRank`, `matchScore` and `attachedTo*` when true. No row is dropped. A row
+whose `matchScore` is `null` is never slimmed. The staged sidecar is unchanged.
+
 ### The response is re-ordered; the staged sidecar is not
 
 When a search ranks, `results` comes back **annotated in place** — each row
@@ -535,7 +544,8 @@ carries `matchRank`, `searchRank`, `matchScore`, and where available
 `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
 birth years differ by more than two, `surnameNotOnSubject` with
 `candidateSurname` when the surname is none the project gives the subject, and
-the `attachedTo*` flags — and the
+the `attachedTo*` flags (only when true; `ranked.attachmentsChecked` is `false`
+when they could not be checked) — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
 `subjectTooThin: true` and its `subjectTooThinNote` when the subject lacks both a
 narrow date and a named relative — see `rank-search-matches-tool-spec.md` §

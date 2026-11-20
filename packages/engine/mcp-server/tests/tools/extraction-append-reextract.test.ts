@@ -22,7 +22,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { runExtractionAppend, type ExtractionBatchResult } from "../../src/tools/extraction-append.js";
 import { researchAppendFromCaller } from "../../src/tools/research-append.js";
-import { researchQuery } from "../../src/tools/research-query.js";
+import { researchQuery, flattenAssertionGroups } from "../../src/tools/research-query.js";
 import { validateParsed } from "../../src/validation/validator.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
@@ -140,8 +140,12 @@ describe("extraction_append: reextract", () => {
     const all = await researchQuery({ projectPath: dir, section: "assertions", includeSuperseded: true } as any);
     expect(plain.ok && all.ok).toBe(true);
     if (!plain.ok || !all.ok) return;
-    expect(plain.items.some((a: any) => old.includes(a.id))).toBe(false);
-    expect(old.every((id) => all.items.some((a: any) => a.id === id))).toBe(true);
+    // Assertions come back grouped; a group has no `id`, so read the facts.
+    const plainItems = flattenAssertionGroups(plain.items) as any[];
+    const allItems = flattenAssertionGroups(all.items) as any[];
+    expect(plainItems.length).toBeGreaterThan(0);
+    expect(plainItems.some((a: any) => old.includes(a.id))).toBe(false);
+    expect(old.every((id) => allItems.some((a: any) => a.id === id))).toBe(true);
     const bad = await researchQuery({ projectPath: dir, section: "assertions", includeSuperseded: "yes" } as any);
     expect(bad.ok).toBe(false);
   });

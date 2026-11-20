@@ -1,0 +1,169 @@
+{
+  "tool": "record_read",
+  "description": "Baptism of Anton Rychter, 7 Oct 1900: parents Franz Rychter and Anna Jicinsky. A different husband. Live capture 2026-11-16.",
+  "args": {
+    "recordId": "~6VGS-YWKM"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_297968954963",
+        "ark": "ark:/61903/1:1:6VGS-YWVP",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "5686f5ff-9d2f-46a4-ad95-0b4242ba906f",
+            "type": "BirthName",
+            "surname": "Rychter",
+            "given": "Anton"
+          }
+        ],
+        "facts": [
+          {
+            "id": "30b0d68d-aa30-4a64-b090-b57cbb512d91",
+            "type": "Birth",
+            "date": "29 Sep 1900",
+            "standard_date": "29 Sep 1900"
+          },
+          {
+            "id": "98342845-ce4f-40dd-8a84-924546ec0227",
+            "type": "Baptism",
+            "primary": true,
+            "date": "7 Oct 1900",
+            "standard_date": "7 Oct 1900",
+            "place": "Tschechien"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_297968954966",
+        "ark": "ark:/61903/1:1:6VGS-YWVT",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "e815ee0f-b880-4c44-905d-319698012512",
+            "type": "BirthName",
+            "given": "Franz",
+            "surname": "Rychter"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_297968954970",
+        "ark": "ark:/61903/1:1:6VGS-YWKM",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "1f7499d7-37c6-41b3-9e7f-ec668c998881",
+            "type": "BirthName",
+            "given": "Anna",
+            "surname": "Jičínský"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "cd08c771-74eb-4051-9bc3-1e624990b325",
+        "type": "ParentChild",
+        "parent": "p_297968954966",
+        "child": "p_297968954963"
+      },
+      {
+        "id": "77184399-882e-41bf-8844-86c47f8d33b5",
+        "type": "Couple",
+        "person1": "p_297968954966",
+        "person2": "p_297968954970"
+      },
+      {
+        "id": "789e85d6-933b-4c3f-9f25-f48c74dffd8b",
+        "type": "ParentChild",
+        "parent": "p_297968954970",
+        "child": "p_297968954963"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_176724340778",
+        "resource_type": "Record",
+        "title": "Entry for Anton Rychter, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-YWVP : Mon Feb 02 17:21:07 UTC 2026), Entry for Anton Rychter and Franz Rychter, 7 Oct 1900.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HSDV-7BKH",
+        "coverage": {
+          "date_range": "7 Oct 1900",
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1804263",
+        "resource_type": "Collection",
+        "title": "Czech Republic, Church Books, 1552-1981",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1804263",
+        "coverage": {
+          "place_rep_id": "132",
+          "date_range": "1552/1963",
+          "record_type": "Vital",
+          "standard_place": "Czechia"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:2:77TN-B9HM",
+        "coverage": {
+          "place_rep_id": "11901279",
+          "date_range": "Oct 19, 1895–Feb 5, 1902",
+          "record_type": "Baptism",
+          "standard_place": "Eichwald, Teplitz, Bohemia"
+        }
+      },
+      {
+        "id": "sd_p_297968954966",
+        "resource_type": "Person",
+        "title": "Franz Rychter, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-YWVT : Mon Feb 02 17:21:07 UTC 2026), Franz Rychter in entry for Anton Rychter, 7 Oct 1900.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VGS-YWVT"
+      },
+      {
+        "id": "sd_p_297968954963",
+        "resource_type": "Person",
+        "title": "Anton Rychter, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-YWVP : Mon Feb 02 17:21:07 UTC 2026), Anton Rychter, 7 Oct 1900.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VGS-YWVP"
+      },
+      {
+        "id": "sd_p_297968954970",
+        "resource_type": "Person",
+        "title": "Anna Jičínský, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-YWKM : Mon Feb 02 17:21:07 UTC 2026), Anna Jičínský in entry for Anton Rychter, 7 Oct 1900.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VGS-YWKM"
+      },
+      {
+        "id": "sd_auto_M9RS-HYS",
+        "resource_type": "auto",
+        "title": "Bohemia, Teplitz, Religious, from 1594 to 30 April 1928",
+        "coverage": {
+          "place_rep_id": "10705566",
+          "date_range": "+1594-01-01T00:00:00Z/+1928-04-30T23:59:59Z",
+          "standard_place": "Teplitz, Bohemia"
+        }
+      }
+    ]
+  }
+}

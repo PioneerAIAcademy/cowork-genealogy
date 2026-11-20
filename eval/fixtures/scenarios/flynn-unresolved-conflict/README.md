@@ -1,5 +1,7 @@
 # flynn-unresolved-conflict
 
+> **Parent rebuilt 2026-11-17.** This fork was taken from `flynn-exhaustive-ready` as it stood before that date (later censuses skipped, negative probate search, no Irish search); see the parent's README. This scenario's data is unchanged.
+
 Fork of `flynn-exhaustive-ready` with two changes. The birthplace conflict
 (c_001: Ireland vs. Pennsylvania) is set to `"status": "unresolved"` instead of
 `"resolved"`, and `blocks_question_ids` includes `"q_001"`. And
