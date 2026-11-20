@@ -39,12 +39,12 @@ const SEARCH_HELP_SHARE = 2_000;
 const CHURCH_RECORDS_SHARE = 3_000;
 /** Pages read first, each up to its own share, before the rest are ranked; within one, the
  *  sections whose headings name its topic go first, then its opening, then the rest. */
-const RESERVED_PAGES: ReadonlyArray<readonly [string, number, RegExp]> = [
-  ["question", QUESTION_SHARE, /./],
-  ["vitalRecords", VITAL_RECORDS_SHARE, /regist|birth|death|marriage|vital|civil|certificate|index/i],
-  ["churchRecords", CHURCH_RECORDS_SHARE, /church|parish|register|baptis|christen|denomination|record/i],
-  ["namingCustoms", NAMING_CUSTOMS_SHARE, /given name|naming|nickname|patronym|surname|name/i],
-  ["searchHelp", SEARCH_HELP_SHARE, /search|index|surname|tip|name/i],
+const RESERVED_PAGES: ReadonlyArray<readonly [string, number, readonly RegExp[]]> = [
+  ["question", QUESTION_SHARE, [/./]],
+  ["vitalRecords", VITAL_RECORDS_SHARE, [/regist|birth|death|marriage|vital|civil|certificate|index/i]],
+  ["churchRecords", CHURCH_RECORDS_SHARE, [/church|parish|register|baptis|christen|denomination|record/i]],
+  ["namingCustoms", NAMING_CUSTOMS_SHARE, [/given name|first name|call name|naming pattern|nickname/i, /patronym|surname|name/i]],
+  ["searchHelp", SEARCH_HELP_SHARE, [/search|index|surname|tip|name/i]],
 ];
 /** How long the survey waits for the place's type before it decides on the parent level. */
 const TYPE_LOOKUP_MS = 8_000;
@@ -360,7 +360,10 @@ function choosePageText(
     if (at < 0) continue;
     reserved.add(at);
     let room = Math.min(share, left);
-    const order = (x: Section) => (x.heading && topic.test(x.heading) ? 0 : x.heading === null ? 1 : 2);
+    const order = (x: Section) => {
+      const hit = x.heading ? topic.findIndex((t) => t.test(x.heading as string)) : -1;
+      return hit >= 0 ? hit : x.heading === null ? topic.length : topic.length + 1;
+    };
     for (const s of all.filter((x) => x.page === at && x.rank >= 0).sort((a, b) => order(a) - order(b) || a.order - b.order)) {
       const used = take(s, room);
       if (!used) break;
@@ -753,7 +756,12 @@ export async function runLocalitySurvey(
   if (deps.stage) {
     try {
       const ref = await deps.stage(full);
-      if (ref) inline.staged = { resultsRef: ref };
+      if (ref) {
+        inline.staged = { resultsRef: ref };
+        inline.next =
+          `Save the guide now: research_append({ section: "localities", op: "append", surveyRef: "${ref}", entry }), ` +
+          "then each heading of guideHeadings as its own guideSection update. The guide is never only your reply.";
+      }
     } catch (e) {
       inline.stagingError = message(e);
     }

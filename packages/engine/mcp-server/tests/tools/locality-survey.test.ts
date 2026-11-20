@@ -226,7 +226,7 @@ describe("runLocalitySurvey", () => {
   });
 
   it("keeps a naming page's Given Names section ahead of its long opening", async () => {
-    const content = `${"Link list line.\n".repeat(400)}## Surname Spelling\n${"s".repeat(2000)}\n## Given Names\nChildren baptised with two names went by the second.\n`;
+    const content = `${"Link list line.\n".repeat(400)}## Surnames\n${"s".repeat(2900)}\n## Given Names\nChildren baptised with two names went by the second.\n`;
     const out: any = await runLocalitySurvey(
       { standardPlace: "Württemberg, Germany" },
       deps({ page: async (url) => (url === `${WIKI}/Germany_Naming_Customs` ? page("Germany_Naming_Customs", content) : null) }),
@@ -439,6 +439,7 @@ describe("runLocalitySurvey", () => {
       { ...deps(), stage: async (answer) => ((staged = answer), "results/.staging/x.json") },
     );
     expect(out.staged).toEqual({ resultsRef: "results/.staging/x.json" });
+    expect(out.next).toContain('surveyRef: "results/.staging/x.json"');
     expect(staged.pagesRead).toHaveLength(4);
   });
 });
