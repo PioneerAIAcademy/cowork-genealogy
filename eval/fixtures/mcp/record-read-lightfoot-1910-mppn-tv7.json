@@ -1,0 +1,179 @@
+{
+  "tool": "record_read",
+  "description": "Issue #4580 Tyler/Lightfoot tests: 1910 census, Cunningham, Fluvanna: Antone Lightfoot, widowed, b. 1837, mother in the household of Edward Lightfoot (b. 1872), with Charles Lightfoot and Mary Dillard. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "recordId": "~MPPN-TV7"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_577985944",
+        "ark": "ark:/61903/1:1:MPPN-TVQ",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "given": "Edward",
+            "surname": "Lightfoot"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1872",
+            "standard_date": "1872",
+            "place": "Virginia"
+          }
+        ]
+      },
+      {
+        "id": "p_577985945",
+        "ark": "ark:/61903/1:1:MPPN-TV7",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "given": "Antone",
+            "surname": "Lightfoot"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Birth",
+            "date": "1837",
+            "standard_date": "1837",
+            "place": "Virginia"
+          },
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ]
+      },
+      {
+        "id": "p_577985946",
+        "ark": "ark:/61903/1:1:MPPN-TVW",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "given": "Charles",
+            "surname": "Lightfoot"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Birth",
+            "date": "1884",
+            "standard_date": "1884",
+            "place": "Virginia"
+          },
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ]
+      },
+      {
+        "id": "p_577985947",
+        "ark": "ark:/61903/1:1:MPPN-TV4",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "given": "Mary",
+            "surname": "Dillard"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Birth",
+            "date": "1892",
+            "standard_date": "1892",
+            "place": "Virginia"
+          },
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Cunningham, 86, Fluvanna, Virginia, United States",
+            "standard_place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "ParentChild",
+        "parent": "p_577985945",
+        "child": "p_577985944"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_577985945",
+        "child": "p_577985946"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_577985945",
+        "child": "p_577985947"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:33S7-9YBM-SM5B",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBM-SM5B",
+    "birthRanges": {
+      "p_577985944": "Bet 1871 and 1872",
+      "p_577985945": "Bet 1836 and 1837",
+      "p_577985946": "Bet 1883 and 1884",
+      "p_577985947": "Bet 1891 and 1892"
+    },
+    "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MPPN-TV7 : Wed Aug 13 17:51:37 UTC 2025), Antone Lightfoot in entry for Edward Lightfoot, 1910.",
+    "recordUrl": "https://www.familysearch.org/ark:/61903/1:2:9JKH-393"
+  }
+}

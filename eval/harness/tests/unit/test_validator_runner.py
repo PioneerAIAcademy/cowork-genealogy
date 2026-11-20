@@ -1838,6 +1838,53 @@ def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
     assert without_path.passed is False
 
 
+def test_hand_edit_detector_counts_record_search_only_when_it_wrote_the_nil_log():
+    """`record_search` writes only on a nil (#4527), and nil-ness is in the
+    RESPONSE, not the args — so a `projectPath` alone must not account for a
+    research.json change.
+
+    search-records and survey-surname pass `projectPath` on every search, so
+    keying on it would make this detector pass in any run of those suites,
+    including the zero-writer hand-edit it exists to catch.
+    """
+    wrote = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__record_search",
+                "args": {"surname": "Flynn", "projectPath": "/p"},
+                "response": {"totalMatches": 0, "results": [], "logId": "log_007"},
+            }
+        ],
+    )
+    assert wrote.passed is True, f"unexpected failure: {wrote.error}"
+
+    found_rows = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__record_search",
+                "args": {"surname": "Flynn", "projectPath": "/p"},
+                "response": {"totalMatches": 12, "results": [{"recordId": "ark:/x"}]},
+            }
+        ],
+    )
+    assert found_rows.passed is False, "a search that returned rows wrote nothing"
+
+    # A refusal means the entry was NOT written, so it legitimizes nothing.
+    refused = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__record_search",
+                "args": {"surname": "Flynn", "projectPath": "/p"},
+                "response": {"totalMatches": 0, "results": [], "nilLogRefused": ["pinned"]},
+            }
+        ],
+    )
+    assert refused.passed is False, "a refused nil-log write wrote nothing"
+
+
 def test_hand_edit_detector_fails_on_change_with_zero_writer_calls():
     """(b) research.json changed + ZERO writer-tool calls → fail, naming
     the file and pointing at the writer tools (the ut_012 incident: empty

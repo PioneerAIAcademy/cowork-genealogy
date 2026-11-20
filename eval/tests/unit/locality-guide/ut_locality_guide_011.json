@@ -37,6 +37,7 @@
     "wiki-search-massachusetts-naturalization",
     "volume-search-massachusetts",
     "wiki-place-page-any",
+    "wiki-read-massachusetts-naturalization-and-citizenship",
     "wiki-read-any",
     "external-links-search-any",
     "place-population-any",
@@ -49,6 +50,7 @@
   ],
   "judge_context": [
     "Recognize Boston was a major immigration port in the 1840s. Mention passenger lists, customs records, naturalization files, and church registers. Highlight repositories like the National Archives (Boston), the Massachusetts State Archives, and parish archives. Avoid Ellis Island records for the 1840s.",
-    "volume_search returns one digitized image group of Port of Boston passenger lists (1840-1850) with fulltextSearchable true but recordSearchablePercent only 3. The skill should distinguish that this volume is full-text/OCR searchable even though almost no records are individually name-indexed \u2014 different from a plain browse-only volume \u2014 and should explain what that distinction means for a researcher's search strategy."
+    "volume_search returns one digitized image group of Port of Boston passenger lists (1840-1850) with fulltextSearchable true but recordSearchablePercent only 3. The skill should distinguish that this volume is full-text/OCR searchable even though almost no records are individually name-indexed \u2014 different from a plain browse-only volume \u2014 and should explain what that distinction means for a researcher's search strategy.",
+    "The collections-search-massachusetts fixture returns personCount values 3456789, 1234567, 987654, 345678 and 567890. A guide that reports these counts is quoting the tool result, not inventing figures; do not dock it for them."
   ]
 }

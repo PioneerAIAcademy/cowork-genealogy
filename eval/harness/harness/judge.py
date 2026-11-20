@@ -28,14 +28,14 @@ from harness.rubric import Rubric
 HARNESS_DIR = Path(__file__).resolve().parents[1]
 JUDGE_PROMPT_PATH = HARNESS_DIR / "judge" / "prompt.md"
 
-DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
+DEFAULT_JUDGE_MODEL = "claude-sonnet-4-6"
 # Pin the judge's first sample to greedy decoding so one transcript grades the
 # same way run to run. Scope matters: only the *judge* is pinned. The skill run
 # under test still samples freely (claude-agent-sdk exposes no temperature), so
 # this removes grading jitter, not test-outcome jitter. Greedy decoding narrows
 # variance; it is not a determinism guarantee.
 #
-# Model-gated: Haiku 4.5 accepts sampling params. The e2e judge's Opus 4.8 does
+# Model-gated: Sonnet 4.6, the unit judge, accepts sampling params. The e2e judge's Opus 4.8 does
 # not — `temperature` is removed on the Opus 4.7/4.8 family and returns a 400,
 # so that judge cannot be pinned at all (see e2e/judge.py).
 JUDGE_TEMPERATURE = 0.0
@@ -50,14 +50,21 @@ LEGACY_SAMPLING_API_VERSION = "2023-06-01"
 # minutes. The SDK's own retries are off (`max_retries=0`), so `_call_judge`'s
 # loop, with its backoff, is the only one.
 JUDGE_TIMEOUT_SECONDS = 90.0
+# Sending the request and opening the connection get their own short limits.
+# The #4054 regrade's stalls were uploads, not generation: the server closed
+# the socket mid-request (25 bytes received, the ~70K prompt still in the send
+# queue), and the client sat out the full read limit before retrying. A 70K
+# body uploads in under a second from the same host, so 20 s of no progress
+# is a dead connection; generation keeps the 90 s read limit.
+JUDGE_TIMEOUT = anthropic.Timeout(JUDGE_TIMEOUT_SECONDS, connect=15.0, write=20.0)
 JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
     "claude-haiku-4-5-20251001": {"input": 1.0, "output": 5.0, "cached_input": 0.10},
-    # Sonnet 4.6 and Opus 4.7 are listed even though nothing selects them today:
-    # the judge model is a module constant with no CLI override, so these entries
-    # exist so that changing DEFAULT_JUDGE_MODEL cannot silently start reporting
-    # $0. An unpriced model falls back to _FALLBACK_PRICING and warns.
+    # Sonnet 4.6 is the unit judge (lead, 2026-11-06, #4330). Haiku 4.5 and
+    # Opus 4.7 stay listed so that changing DEFAULT_JUDGE_MODEL, a module
+    # constant with no CLI override, cannot silently start reporting $0. An
+    # unpriced model falls back to _FALLBACK_PRICING and warns.
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cached_input": 0.30},
     # Opus 4.7 — cost is much higher, so the table matters more, not less.
     "claude-opus-4-7": {"input": 15.0, "output": 75.0, "cached_input": 1.50},
@@ -231,6 +238,146 @@ def _summarize_response(
     return response
 
 
+# Excerpts around what the agent cited, appended to a tool string cut at
+# _RESPONSE_STRING_MAX (issue #4054). A FamilySearch Wiki page runs 20-34K
+# chars, so a URL the agent correctly took from char 6,118 read to the judge as
+# invented. Raising the cap instead was rejected: six timeline tests
+# (`build-patrick-timeline.json` and siblings) each list two ~33K wiki pages,
+# 68K between them, over _TOOL_CALLS_MAX_CHARS -- the size guard would drop
+# whole earlier calls, turning a truncated string into a missing one. Excerpts
+# cost nothing unless the agent cites text past the cut, and are bounded per
+# string however many needles match. Kept out of `_summarize_response`, which
+# the e2e run-log capture also uses.
+#
+# Each needle gets one excerpt, at its first hit, and none if that hit is in
+# the first _RESPONSE_STRING_MAX chars the judge already sees:
+# `www.familysearch.org` recurs every ~100 chars of a wiki page. Radius 150
+# with 16 slots shows nearly every cited URL past the cut, where 300 with 6
+# shows about half, for about the same chars. Recounted 2026-11-16 with these
+# helpers over the agent's reply in the v7h runs of locality-guide v5.json and
+# v5_2026-10-26_16-22-37.json, against the current Ireland church-records
+# fixture: 19 of 19 and 15 of 15, against 9 and 6. The counts move with which
+# text the needles are taken from; the comparison has held in every count.
+# Excerpts are left out of the size guard's drop budget (see
+# `_render_tool_calls_with_size_guard`): the motivating locality-guide runs sit
+# at 47-50K already, and counting excerpts dropped the very page they came from.
+_EXCERPT_RADIUS = 150
+_EXCERPTS_PER_STRING_MAX = 16
+
+_URL_RE = re.compile(r"https?://[^\s<>\"'()\[\]{}`|\\]+", re.IGNORECASE)
+# `file_changes_summary` is JSON-dumped content: a guide's line break arrives as
+# the two characters `\n`, which would glue `n-` onto a bullet-list URL and
+# hide a line-initial hostname behind the `n`.
+_JSON_ESCAPE_RE = re.compile(r"\\[nrt\"\\/]")
+_HOSTNAME_RE = re.compile(
+    r"(?<![\w@./-])(?:[a-z0-9-]+\.)+([a-z]{2,6})(?![\w-])(?!\.\w)", re.IGNORECASE
+)
+# A hostname ends in a two-letter country code or one of these. An open-ended
+# TLD match took `et.birth`, `fn.Josiah` and `project.status` from agent prose.
+_GENERIC_TLDS = frozenset({"com", "org", "net", "gov", "edu", "info", "mil", "int"})
+# Two-letter file extensions that are also country codes.
+_NOT_A_TLD = frozenset({"md", "py", "js", "ts", "sh", "gz"})
+
+
+def _citation_needles(*texts: str) -> tuple[str, ...]:
+    """The URLs and bare hostnames in what the agent wrote, lower-cased.
+
+    Each URL also yields its host without `www.`, so a citation that differs
+    from the page only in scheme or `www.` still finds it.
+    """
+    needles: set[str] = set()
+    for text in texts:
+        if not text:
+            continue
+        text = _JSON_ESCAPE_RE.sub(" ", text)
+        for m in _URL_RE.finditer(text):
+            url = m.group(0).rstrip(".,;:!?*_").rstrip("/").lower()
+            if len(url) > len("https://"):
+                needles.add(url)
+                host = url.split("://", 1)[1].split("/", 1)[0]
+                needles.add(host.removeprefix("www."))
+        for m in _HOSTNAME_RE.finditer(text):
+            tld = m.group(1).lower()
+            if (len(tld) == 2 and tld not in _NOT_A_TLD) or tld in _GENERIC_TLDS:
+                needles.add(m.group(0).lower())
+    return tuple(sorted(needles))
+
+
+def _excerpts_past_cut(text: str, needles: tuple[str, ...]) -> str:
+    """The excerpt block for one string longer than _RESPONSE_STRING_MAX, or "".
+
+    Each window is at most 2 * _EXCERPT_RADIUS + the needle: a hit inside an
+    earlier window is already shown and opens none of its own.
+    """
+    hits: list[tuple[int, int]] = []
+    for needle in needles:
+        # Searched case-insensitively in `text` itself, not in `text.lower()`,
+        # whose offsets drift wherever lowering changes a length ("İ").
+        m = re.search(re.escape(needle), text, re.IGNORECASE)
+        if m and m.end() > _RESPONSE_STRING_MAX:
+            hits.append(m.span())
+    windows: list[tuple[int, int, int]] = []
+    for hit_start, hit_end in sorted(hits):
+        if windows and hit_end <= windows[-1][2]:
+            continue
+        lo = max(0, hit_start - _EXCERPT_RADIUS)
+        hi = min(len(text), hit_end + _EXCERPT_RADIUS)
+        windows.append((hit_start, lo, hi))
+        if len(windows) == _EXCERPTS_PER_STRING_MAX:
+            break
+    return "".join(
+        f"\n[harness excerpt at char {pos} of {len(text)}] ...{text[lo:hi]}..."
+        for pos, lo, hi in windows
+    )
+
+
+def _carries_excerpt(response: Any, needles: tuple[str, ...]) -> bool:
+    """Whether rendering `response` would append at least one excerpt.
+
+    Not merely "mentions a needle": nearly every wiki page names
+    familysearch.org, which every guide cites, and protecting all of those
+    from the size guard dropped three more calls from v7h for no excerpt.
+    """
+    if not needles:
+        return False
+    if isinstance(response, dict):
+        return any(_carries_excerpt(v, needles) for v in response.values())
+    if isinstance(response, list):
+        return any(_carries_excerpt(v, needles) for v in response)
+    if isinstance(response, str) and len(response) > _RESPONSE_STRING_MAX:
+        return bool(_excerpts_past_cut(response, needles))
+    return False
+
+
+def _with_excerpts(original: Any, summarized: Any, needles: tuple[str, ...]) -> Any:
+    """`summarized` with excerpts appended to each string the cut hid a needle in.
+
+    Walks the raw response beside its summary. Lists map one to one because the
+    render passes `array_sample=None`; any other shape mismatch (the depth-cap
+    marker) is returned as is. Returns new values; never mutates either input.
+    """
+    if not needles:
+        return summarized
+    if isinstance(original, dict) and isinstance(summarized, dict):
+        return {
+            k: _with_excerpts(original.get(k), v, needles) if k in original else v
+            for k, v in summarized.items()
+        }
+    if (
+        isinstance(original, list)
+        and isinstance(summarized, list)
+        and len(original) == len(summarized)
+    ):
+        return [_with_excerpts(o, s, needles) for o, s in zip(original, summarized)]
+    if (
+        isinstance(original, str)
+        and isinstance(summarized, str)
+        and len(original) > _RESPONSE_STRING_MAX
+    ):
+        return summarized + _excerpts_past_cut(original, needles)
+    return summarized
+
+
 def render_prompt(
     *,
     rubric: Rubric,
@@ -307,7 +454,12 @@ def render_prompt_parts(
         else "(none)"
     )
     skills_text = ", ".join(skills_invoked) if skills_invoked else "(none)"
-    tool_calls_text = _render_tool_calls_with_size_guard(tool_calls)
+    # Needles come from everything the judge sees the agent wrote. A persisted
+    # deliverable's citations are in `file_changes_summary` only when the test
+    # sets `judge_reads_files`; otherwise it carries counts and adds none.
+    tool_calls_text = _render_tool_calls_with_size_guard(
+        tool_calls, _citation_needles(text_response, file_changes_summary)
+    )
     # FAILURES only, never the full validator list. A passing validator list is
     # a *conclusion*, and handing the judge a conclusion is the defect diagnosed
     # across issues #1007, #1330 and #1603 — the test tells the judge what to
@@ -391,9 +543,10 @@ _SLOT_RE = re.compile(r"\{([a-z_]+)\}")
 
 
 # Size guard for the tool_calls slot. Even with per-response summarization,
-# many calls × moderate sizes can blow past Haiku's context. The budget is
+# many calls × moderate sizes can blow past the judge's context. The budget is
 # spent on evidence: once the block exceeds _TOOL_CALLS_MAX_CHARS the harness
-# drops the oldest tool calls and prepends a "_dropped_for_size" marker so
+# drops the oldest tool calls (a call that carries a harness excerpt goes last;
+# see `_render_tool_calls_with_size_guard`) and prepends a "_dropped_for_size" marker so
 # reviewers can see truncation happened. That budget is measured with the args
 # of every live call (matched.kind == "live": the mock answered it from the
 # real implementation, which is how every writer runs) stood in by a short
@@ -405,7 +558,7 @@ _SLOT_RE = re.compile(r"\{([a-z_]+)\}")
 # _TOOL_CALLS_HARD_MAX_CHARS by cutting live args (first their strings to the
 # per-string cap, then the args whole to the marker), never by dropping more
 # evidence. ~50K chars ≈ ~12K tokens and the 100K ceiling ≈ ~25K, both well
-# under Haiku's window even with the rest of the prompt.
+# under the judge's window even with the rest of the prompt.
 _TOOL_CALLS_MAX_CHARS = 50_000
 _TOOL_CALLS_HARD_MAX_CHARS = 2 * _TOOL_CALLS_MAX_CHARS
 
@@ -477,6 +630,35 @@ _WRITER_ARGS_ALWAYS_KEPT = {
     "build_external_search_url": "search-external-sites grades its args",
 }
 
+# Ownership writers with NO refusal path: `_is_refused_writer` is False for
+# these whatever a call returns, so there is no draft to blank and no rendering
+# decision to make.
+#
+# Why they are not simply listed in one of the two sets above: both are READ by
+# `_is_refused_writer`, which `render_prompt_parts` reaches, so adding an inert
+# name to either moves `judge_render_hash` -- billing a regrade of every suite
+# whose latest log carries it (measured 2026-11-17: 30 suites, 595 tests, none
+# already stale) for an entry that cannot change one rendered byte. Nothing in
+# the render graph reads THIS set, and an unreferenced module binding is not
+# walked, which is what keeps it out of the fingerprint.
+#
+# So: do not reference this from rendering code, and do not delete it as unused
+# -- `test_writer_tools_classifies_every_ownership_writer` is its consumer.
+# An entry is a claim that the tool is absent from `_WRITER_TOOLS`, pinned by
+# `test_no_refusal_path_writers_are_inert`. Giving one a blanked draft later
+# means moving it up and paying the regrade then, which is the trip-wire.
+_WRITER_NO_REFUSAL_PATH = {
+    # `record_search` writes only its own nil-search log entry (#4527) and
+    # returns `ok: false` from nowhere -- a refused append surfaces as
+    # `nilLogRefused` on an otherwise ok answer. Its args are the question
+    # asked, and two rubrics grade them: `search-records/rubric.md` routes an
+    # anchorless query to "a Tool Arguments failure, not a strategy one", and
+    # `survey-surname/rubric.md` grades the place mapped onto `recordCountry`/
+    # `recordSubdivision`/`residencePlace` and the per-year
+    # `residenceYearFrom`/`residenceYearTo`.
+    "record_search": "no ok:false path; search rubrics grade its executed args",
+}
+
 # Says only what is always true. "it wrote nothing" would be FALSE for
 # `extraction_append`'s recordIds mode, which persists its research_log_append
 # batch BEFORE the per-record writes and returns ok: false when every record is
@@ -518,17 +700,26 @@ def _args_for_render(call: dict[str, Any], live_args: Callable[[Any], Any]) -> A
     return live_args(call["args"]) if _is_live_call(call) else call["args"]
 
 
-def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
+def _render_tool_calls_with_size_guard(
+    tool_calls: list[dict[str, Any]], needles: tuple[str, ...] = ()
+) -> str:
     """Render the tool_calls slot with a total-size cap.
 
     The drop budget is measured on a view in which each live call's args are
     replaced by `_live_args_omitted`: while that view exceeds
-    _TOOL_CALLS_MAX_CHARS, drop the oldest call, and prepend a marker that
+    _TOOL_CALLS_MAX_CHARS, drop the oldest call that carries no excerpt (the
+    oldest call once every remaining one carries one), and prepend a marker that
     records how many were dropped. The kept calls are then rendered with their
     real args. If that render exceeds _TOOL_CALLS_HARD_MAX_CHARS, live args
     are rendered with their strings cut to the per-string cap, and if it still
     does, as in the measured view. Worst case (single call still too large),
-    keep the most recent one and accept the overage.
+    keep one call and accept the overage: the newest that carries an excerpt
+    if any does, else the newest.
+
+    `needles` (from `_citation_needles`) adds excerpts to every cut string that
+    hides one. Like live args, excerpts are left out of the measured view, so
+    they never cost an earlier call its place; they are rendered in every pass
+    after it, and a final pass without them precedes the measured view.
     """
     if not tool_calls:
         return "(none)"
@@ -537,6 +728,7 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
         calls: list[dict[str, Any]],
         dropped: int,
         live_args: Callable[[Any], Any],
+        excerpt_needles: tuple[str, ...] = (),
     ) -> str:
         body = json.dumps(
             [
@@ -550,9 +742,11 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
                     # grounding rubric marks a correct citation of result 4+ as
                     # fabricated when the judge can only see results 1-3 (#1902).
                     # The prompt-size bound is the guard below, which drops
-                    # whole oldest calls with a stated marker.
-                    "response_summary": _summarize_response(
-                        c.get("response"), array_sample=None
+                    # whole calls, oldest uncited first, with a stated marker.
+                    "response_summary": _with_excerpts(
+                        c.get("response"),
+                        _summarize_response(c.get("response"), array_sample=None),
+                        excerpt_needles,
                     ),
                 }
                 for c in calls
@@ -561,24 +755,36 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
         )
         if dropped:
             return (
-                f"(_dropped_for_size: {dropped} earliest tool calls "
-                f"dropped to keep tool calls under {_TOOL_CALLS_MAX_CHARS} chars, "
-                f"not counting live calls' args or a refused writer's "
-                f"omitted args)\n"
+                f"(_dropped_for_size: {dropped} tool calls dropped, oldest "
+                f"first but keeping any that carries a harness excerpt, "
+                f"to keep tool calls under "
+                f"{_TOOL_CALLS_MAX_CHARS} chars, "
+                f"not counting live calls' args, a refused writer's "
+                f"omitted args, or harness excerpts)\n"
                 + body
             )
         return body
 
     calls = list(tool_calls)
+    cited = [_carries_excerpt(c.get("response"), needles) for c in calls]
     dropped = 0
     view = _render(calls, dropped, _live_args_omitted)
     while len(calls) > 1 and len(view) > _TOOL_CALLS_MAX_CHARS:
-        calls.pop(0)
+        # Oldest first, but a call that carries an excerpt goes last: in
+        # locality-guide v6 `k9d` the guard dropped the church-records page
+        # every excerpt came from, and the judge saw neither head nor excerpt.
+        victim = cited.index(False) if False in cited else 0
+        calls.pop(victim)
+        cited.pop(victim)
         dropped += 1
         view = _render(calls, dropped, _live_args_omitted)
 
-    for live_args in (_live_args_as_is, _live_args_string_capped):
-        rendered = _render(calls, dropped, live_args)
+    for live_args, excerpt_needles in (
+        (_live_args_as_is, needles),
+        (_live_args_string_capped, needles),
+        (_live_args_string_capped, ()),
+    ):
+        rendered = _render(calls, dropped, live_args, excerpt_needles)
         if len(rendered) <= _TOOL_CALLS_HARD_MAX_CHARS:
             return rendered
     return view
@@ -743,9 +949,12 @@ def _create_message_with_retry(
         sampling_kwargs["extra_body"] = {"temperature": temperature}
         sampling_kwargs["extra_headers"] = {"anthropic-version": LEGACY_SAMPLING_API_VERSION}
 
+    import sys
+
     delay = 2.0
     last_error: Exception | None = None
     for attempt in range(_attempts):
+        started = _time.monotonic()
         try:
             return client.messages.create(
                 model=model,
@@ -777,6 +986,16 @@ def _create_message_with_retry(
                 e, anthropic.APIConnectionError
             ):
                 raise JudgeError(f"judge API call failed: {e}") from e
+            # Retries were silent, so a suite that spent half an hour in them
+            # looked hung (issue #4054's regrade).
+            # The SDK's "Connection error." hides why; name the cause.
+            cause = e.__cause__ or e.__context__
+            print(
+                f"judge: attempt {attempt + 1}/{_attempts} failed after "
+                f"{_time.monotonic() - started:.0f}s: {type(e).__name__}: {e}"
+                + (f" (cause: {type(cause).__name__}: {cause})" if cause else ""),
+                file=sys.stderr,
+            )
             if attempt + 1 >= _attempts:
                 break
             _time.sleep(delay)
@@ -796,12 +1015,12 @@ def _make_client(auth: AuthConfig) -> anthropic.Anthropic:
     the operator never configured one and the judge can't run.
     """
     if auth.api_key:
-        return anthropic.Anthropic(api_key=auth.api_key, timeout=JUDGE_TIMEOUT_SECONDS, max_retries=0)
+        return anthropic.Anthropic(api_key=auth.api_key, timeout=JUDGE_TIMEOUT, max_retries=0)
     import os
     if os.environ.get("ANTHROPIC_API_KEY"):
         # Defensive — should be picked up by resolve_auth, but if the env
         # changed since the AuthConfig was built, use what's there.
-        return anthropic.Anthropic(timeout=JUDGE_TIMEOUT_SECONDS, max_retries=0)
+        return anthropic.Anthropic(timeout=JUDGE_TIMEOUT, max_retries=0)
     raise JudgeError(
         "The judge requires an Anthropic API key. Subscription auth "
         "alone is not enough for the judge layer. Set ANTHROPIC_API_KEY "

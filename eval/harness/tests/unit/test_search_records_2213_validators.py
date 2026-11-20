@@ -26,7 +26,6 @@ from test_search_records import (  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
-UNIT_TESTS = REPO_ROOT / "eval/tests/unit/search-records"
 
 
 def scenario_state(name):
@@ -40,8 +39,6 @@ def scenario_state(name):
     }
 
 
-def spec(filename):
-    return json.loads((UNIT_TESTS / filename).read_text(encoding="utf-8"))["test"]
 
 
 def rs(args, response=None):
@@ -50,7 +47,14 @@ def rs(args, response=None):
 
 # --- unproven-surname-search (ut_search_records_d33) ---------------------
 
-D33 = spec("unproven-married-surname-search.json")
+# ut_search_records_d33's test block, inlined: PR #4613 deleted its test file and
+# issue #4699 restores it.
+D33 = {
+    "id": "ut_search_records_d33",
+    "skill": "search-records",
+    "type": "positive",
+    "tags": ["search", "census", "married-name", "unproven-surname-search", "direct-arm"],
+}
 
 
 @pytest.fixture

@@ -68,27 +68,429 @@
         {
           "id": "1401638",
           "title": "United States Census, 1850",
-          "date_range": "1850"
+          "date_range": "1850",
+          "person_count": 20224571,
+          "record_count": 20224571
         },
         {
           "id": "1473181",
           "title": "United States Census, 1860",
-          "date_range": "1860"
+          "date_range": "1860",
+          "person_count": 27176265,
+          "record_count": 27176265
         },
         {
           "id": "1438024",
           "title": "United States Census, 1870",
-          "date_range": "1870"
+          "date_range": "1870",
+          "person_count": 42384137,
+          "record_count": 40350030
         },
         {
           "id": "1614804",
           "title": "Ohio, County Marriages, 1789-2016",
-          "date_range": "1789-2016"
+          "date_range": "1789-2016",
+          "person_count": 24742554,
+          "record_count": 5783466
         },
         {
           "id": "1992421",
           "title": "Ohio, Probate Records, 1789-1996",
-          "date_range": "1789-1996"
+          "date_range": "1789-1996",
+          "person_count": 760,
+          "record_count": 739
+        },
+        {
+          "id": "3315268",
+          "title": "Ohio, Athens County, Deceased Veteran Grave Registration Card File Index, 1819-1936",
+          "date_range": "1819-1936",
+          "person_count": 5591,
+          "record_count": 5588
+        },
+        {
+          "id": "1680845",
+          "title": "Ohio, Births and Christenings, 1821-1962",
+          "date_range": "1821-1962",
+          "person_count": 3975474,
+          "record_count": 1337425
+        },
+        {
+          "id": "3019664",
+          "title": "Ohio, Carroll County, Veteran Grave Registrations, 1812-1981",
+          "date_range": "1812-1981",
+          "person_count": 2367,
+          "record_count": 2367
+        },
+        {
+          "id": "2787827",
+          "title": "Ohio, Church Records, 1762-2008",
+          "date_range": "1762-2008",
+          "person_count": 158822,
+          "record_count": 76039
+        },
+        {
+          "id": "2373709",
+          "title": "Ohio, Church and Civil Births and Baptisms, 1765-1947",
+          "date_range": "1765-1947",
+          "person_count": 3238,
+          "record_count": 3025
+        },
+        {
+          "id": "2373723",
+          "title": "Ohio, Church and Civil Deaths, 1833-1991",
+          "date_range": "1833-1991",
+          "person_count": 80785,
+          "record_count": 43370
+        },
+        {
+          "id": "2480104",
+          "title": "Ohio, Clermont County Tax Records, 1816-1900",
+          "date_range": "1816-1900",
+          "person_count": 404957,
+          "record_count": 404957
+        },
+        {
+          "id": "5000792",
+          "title": "Ohio, Clermont County, Probate Records, 1790-1971",
+          "date_range": "1790-1971",
+          "person_count": 56298,
+          "record_count": 184274
+        },
+        {
+          "id": "1932106",
+          "title": "Ohio, County Births, 1841-2003",
+          "date_range": "1841-2003",
+          "person_count": 12112125,
+          "record_count": 4072188
+        },
+        {
+          "id": "2128172",
+          "title": "Ohio, County Death Records, 1840-2001",
+          "date_range": "1840-2001",
+          "person_count": 4006934,
+          "record_count": 2156440
+        },
+        {
+          "id": "1987615",
+          "title": "Ohio, County Naturalization Records, 1800-1977",
+          "date_range": "1800-1977",
+          "person_count": 1977980,
+          "record_count": 1898264
+        },
+        {
+          "id": "2106096",
+          "title": "Ohio, Crawford County Church Records, 1853-2007",
+          "date_range": "1853-2007",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1384728",
+          "title": "Ohio, Crawford County Obituaries, 1860-2004",
+          "date_range": "1860-2004",
+          "person_count": 1231434,
+          "record_count": 1231389
+        },
+        {
+          "id": "1837736",
+          "title": "Ohio, Cuyahoga County Probate Files, 1813-1932",
+          "date_range": "1813-1932",
+          "person_count": 13,
+          "record_count": 0
+        },
+        {
+          "id": "1908531",
+          "title": "Ohio, Cuyahoga County Records, 1880-1950",
+          "date_range": "1880-1950",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1949341",
+          "title": "Ohio, Death Index, 1908-1932, 1938-1944, and 1958-2007",
+          "date_range": "1908-2007",
+          "person_count": 15807584,
+          "record_count": 7601863
+        },
+        {
+          "id": "1681000",
+          "title": "Ohio, Deaths and Burials, 1854-1997",
+          "date_range": "1854-1997",
+          "person_count": 611394,
+          "record_count": 483832
+        },
+        {
+          "id": "1307272",
+          "title": "Ohio, Deaths, 1908-1953",
+          "date_range": "1908-1953",
+          "person_count": 11358299,
+          "record_count": 3537971
+        },
+        {
+          "id": "1494476",
+          "title": "Ohio, Diocese of Toledo, Catholic Parish Records, 1796-2004",
+          "date_range": "1796-2004",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2134457",
+          "title": "Ohio, Geauga County Records, 1860-1970",
+          "date_range": "1860-1970",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2155397",
+          "title": "Ohio, Grave Registrations of Soldiers, 1810-1958",
+          "date_range": "1810-1958",
+          "person_count": 312206,
+          "record_count": 311796
+        },
+        {
+          "id": "2141016",
+          "title": "Ohio, Hamilton County Records, 1791-1994",
+          "date_range": "1791-1994",
+          "person_count": 11,
+          "record_count": 0
+        },
+        {
+          "id": "1935519",
+          "title": "Ohio, Jefferson County Court Records, 1797-1947",
+          "date_range": "1797-1947",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2068324",
+          "title": "Ohio, Licking County, Hartford Township Records, 1881-1962",
+          "date_range": "1881-1962",
+          "person_count": 929,
+          "record_count": 929
+        },
+        {
+          "id": "2367319",
+          "title": "Ohio, Marriages, 1800-1942",
+          "date_range": "1800-1942",
+          "person_count": 5154,
+          "record_count": 2577
+        },
+        {
+          "id": "1681001",
+          "title": "Ohio, Marriages, 1800-1958",
+          "date_range": "1800-1958",
+          "person_count": 1436014,
+          "record_count": 634710
+        },
+        {
+          "id": "4203007",
+          "title": "Ohio, Military Discharge Records, 1834-2004",
+          "date_range": "1834-2004",
+          "person_count": 4772,
+          "record_count": 4772
+        },
+        {
+          "id": "1916172",
+          "title": "Ohio, Montgomery County, Probate Estate Files, 1850-1900",
+          "date_range": "1850-1900",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "5000084",
+          "title": "Ohio, Naturalization Records, 1848-1951",
+          "date_range": "1848-1951",
+          "person_count": 1034980,
+          "record_count": 766508
+        },
+        {
+          "id": "2110746",
+          "title": "Ohio, Northern District, Eastern Division, Naturalization Index, 1855-1967",
+          "date_range": "1855-1967",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2421787",
+          "title": "Ohio, Passenger and Crew Lists arriving at Ashtabula and Conneaut, 1952-1974",
+          "date_range": "1952-1974",
+          "person_count": 78796,
+          "record_count": 78796
+        },
+        {
+          "id": "1384960",
+          "title": "Ohio, Scioto County Records, 1885-1887",
+          "date_range": "1885-1887",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2139859",
+          "title": "Ohio, Soldier Home Records, 1888-1919",
+          "date_range": "1888-1919",
+          "person_count": 19486,
+          "record_count": 10103
+        },
+        {
+          "id": "2110749",
+          "title": "Ohio, Southern District Naturalization Index, 1852-1991",
+          "date_range": "1852-1991",
+          "person_count": 83981,
+          "record_count": 83982
+        },
+        {
+          "id": "1922540",
+          "title": "Ohio, Stark County Coroner's Records, 1890-2002",
+          "date_range": "1890-2002",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1878534",
+          "title": "Ohio, Stark County Court Records, 1809-1917",
+          "date_range": "1809-1917",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1928108",
+          "title": "Ohio, Stark County Probate Records, 1886-1921",
+          "date_range": "1886-1921",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "5000024",
+          "title": "Ohio, Stillbirths, 1918-1953",
+          "date_range": "1918-1953",
+          "person_count": 655171,
+          "record_count": 221928
+        },
+        {
+          "id": "1985540",
+          "title": "Ohio, Summit County, Coroner Inquests, Hospital and Cemetery Records, 1882-1949",
+          "date_range": "1882-1949",
+          "person_count": 22875,
+          "record_count": 11873
+        },
+        {
+          "id": "1879059",
+          "title": "Ohio, Summit County, Veteran Burial Cards, 1700-1941",
+          "date_range": "1700-1941",
+          "person_count": 7060,
+          "record_count": 5535
+        },
+        {
+          "id": "1473259",
+          "title": "Ohio, Tax Records, 1800-1887",
+          "date_range": "1800-1887",
+          "person_count": 5717574,
+          "record_count": 5717563
+        },
+        {
+          "id": "2065327",
+          "title": "Ohio, Trumbull County Records, 1795-2010",
+          "date_range": "1795-2010",
+          "person_count": 3,
+          "record_count": 0
+        },
+        {
+          "id": "2205726",
+          "title": "Ohio, Veterans Home Deaths and Burials, 1889-1930",
+          "date_range": "1889-1930",
+          "person_count": 3820,
+          "record_count": 3821
+        },
+        {
+          "id": "3937280",
+          "title": "Ohio, Voter Records, 1893-1960",
+          "date_range": "1893-1960",
+          "person_count": 1668152,
+          "record_count": 1668152
+        },
+        {
+          "id": "3039663",
+          "title": "Ohio, WWI Index and Return Cards, 1916-1920",
+          "date_range": "1916-1920",
+          "person_count": 109672,
+          "record_count": 101597
+        },
+        {
+          "id": "2363038",
+          "title": "Ohio, Washington County Court Records, 1810-1930",
+          "date_range": "1810-1930",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2358414",
+          "title": "Ohio, Washington County Newspaper Obituaries, 1884-2013",
+          "date_range": "1884-2013",
+          "person_count": 694435,
+          "record_count": 694396
+        },
+        {
+          "id": "3241363",
+          "title": "Ohio, Western Division Naturalization Records, 1906-1943",
+          "date_range": "1906-1943",
+          "person_count": 62365,
+          "record_count": 45332
+        },
+        {
+          "id": "3158863",
+          "title": "Ohio, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 115872,
+          "record_count": 1
+        },
+        {
+          "id": "3010045",
+          "title": "Ohio, World War I Statement of Service Cards, 1914-1919",
+          "date_range": "1914-1919",
+          "person_count": 34778,
+          "record_count": 34778
+        },
+        {
+          "id": "1420441",
+          "title": "United States Census (Mortality Schedule), 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 1356791,
+          "record_count": 1356791
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239069,
+          "record_count": 67418133
+        },
+        {
+          "id": "1803958",
+          "title": "United States, Census, 1830",
+          "date_range": "1830-1830",
+          "person_count": 1825827,
+          "record_count": 1824437
+        },
+        {
+          "id": "1786457",
+          "title": "United States, Census, 1840",
+          "date_range": "1840-1840",
+          "person_count": 2566652,
+          "record_count": 2566652
+        },
+        {
+          "id": "1417683",
+          "title": "United States, Census, 1880",
+          "date_range": "1880-1880",
+          "person_count": 50472677,
+          "record_count": 50472677
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885
         }
       ],
       "quirks": [
