@@ -8,7 +8,7 @@
   "timestamp": "2026-10-28_11-14-02",
   "harness_version": "0.1.0",
   "model": "claude-sonnet-4-6",
-  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "judge_prompt_hash": "ce5a32f52be690f6ef13643cb3211f0154aae15b6328800ebbe9d635849cb491",
   "snapshot": {
     "packages/engine/plugin/agents/survey-surname.md": "da9ca2f6653f5687a3e9726387cefbf1fa3f0e8922c29c5ffebf447dafc58f2d",
     "eval/tests/unit/survey-surname/negative-single-person-search.json": "ce367327e4ac49436b58e0defb82a672a912e7abefb92b24304fb65a7bf2bd58",
@@ -52,13 +52,13 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the requirement of this negative test: recognizing the request as out of scope and declining without performing the task. The response includes a clear explanation of why the request is inappropriate for this skill and provides the correct alternative (search-records)."
+            "rationale": "Claude fully addressed what was required: recognizing the request as a single-person search (not a surname survey) and declining appropriately. The response includes a clear explanation of why the request is out of scope and provides the correct alternative skill name. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke any tools (no place_search, record_search, or research_log_append), which is the required behavior for this negative test. N/A applies because zero tool calls were made."
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke any tools (no place_search, record_search, or research_log_append), which is the correct behavior for this negative test. N/A applies because zero tool calls were made."
           }
         ],
         "review_dimensions": [
@@ -72,13 +72,13 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the requirement of this negative test: recognizing the request as out of scope and declining without performing the task. The response includes a clear explanation of why the request is inappropriate for this skill and provides the correct alternative (search-records)."
+            "rationale": "Claude fully addressed what was required: recognizing the request as a single-person search (not a surname survey) and declining appropriately. The response includes a clear explanation of why the request is out of scope and provides the correct alternative skill name. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke any tools (no place_search, record_search, or research_log_append), which is the required behavior for this negative test. N/A applies because zero tool calls were made."
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke any tools (no place_search, record_search, or research_log_append), which is the correct behavior for this negative test. N/A applies because zero tool calls were made."
           }
         ]
       },
@@ -199,7 +199,8 @@
                 "subagent_type": "survey-surname",
                 "text": "That's a search for one person's record, so please use search-records."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -405,21 +406,21 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the requirement of this negative test: recognizing the request as out of scope and declining without performing the task. The response includes a clear explanation of why the request is inappropriate for this skill and provides the correct alternative (search-records)."
+                "rationale": "Claude fully addressed what was required: recognizing the request as a single-person search (not a surname survey) and declining appropriately. The response includes a clear explanation of why the request is out of scope and provides the correct alternative skill name. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. The skill correctly declined to invoke any tools (no place_search, record_search, or research_log_append), which is the required behavior for this negative test. N/A applies because zero tool calls were made."
+                "rationale": "No MCP tool calls were made. Claude correctly declined to invoke any tools (no place_search, record_search, or research_log_append), which is the correct behavior for this negative test. N/A applies because zero tool calls were made."
               }
             ],
-            "judge_cost_usd": 0.007932999999999999,
+            "judge_cost_usd": 0.008012,
             "duration_ms": 3875.679554999806,
             "error": null,
-            "input_tokens": 6338,
+            "input_tokens": 6392,
             "cached_input_tokens": 0,
-            "output_tokens": 319
+            "output_tokens": 324
           },
           "started_at": 1793186110.4214928,
           "ended_at": 1793186123.3019593
@@ -448,43 +449,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly resolved Virginia as a state, called record_search for 1850 only with proper parameters (recordType: census, residenceYearFrom/To: 1850), retrieved 5 total matches, and accurately represented all results in the logged table. The grouping of Edmund and Mary Dixon (shared ARK) into one household is correct, William and James Dixon are correctly shown as separate households, and Edmund Dixon from the slave schedule is correctly placed in a separate non-population section. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified 3 Dixon households in the 1850 Virginia population census (Edmund in Ohio, William in Rockingham, James in Augusta) and 1 entry on the slave schedule (Edmund Dixon). All data extracted from the tool responses matches the record stubs returned: birth years, counties, record ARKs, and household composition are accurate. The table correctly groups Edmund and Mary Dixon (both from recordArk ark:/61903/1:2:XJQV-HH1850-A) as a single household, and correctly separates the slave schedule entry into its own section. The hedge sentence about pre-1880 censuses lacking relationship columns is accurate and properly placed. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: place resolution via place_search, census year search (1850 only, within the 1850-1850 span), threshold compliance (5 matches under 600, all fetched on one page), household grouping by recordArk, separation of non-population schedules, logging of both the search (log_006) and the survey table (log_007), and proper table structure with all required columns. No required work was omitted."
+            "rationale": "The skill addressed all requirements: called place_search for Virginia, called record_search for 1850 only (the single year in the span), logged the search with research_log_append, grouped households by recordArk, separated non-population schedules, and produced a complete markdown table with all required columns (census year, county, head of household, other members, record ARK, ruled out). The response included both log IDs (log_006 and log_007) and provided clear next-step guidance. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. place_search received 'Virginia' with 'United States' context (matched predicate). record_search received surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To both 1850, count 100, and projectPath (all matched predicate). research_log_append calls were live-matched and correctly structured. No critical identifiers were wrong, no fixture_not_found errors occurred, and extra args (count, projectPath) were reasonable additions for a survey context."
+            "rationale": "All three tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Virginia' (matches ~Virginia). record_search received surname 'Dixon', residenceYearFrom 1850, residenceYearTo 1850 (all match expected). The call included reasonable additional args (recordType: 'census', recordCountry: 'United States', recordSubdivision: 'Virginia', count: 100, projectPath) that were appropriate for the task. research_log_append calls used correct structure and content. No critical identifiers were wrong, and no calls landed in fixture_not_found."
           },
           {
             "source": "rubric",
             "name": "Place resolution",
             "score": 3,
-            "rationale": "The agent called place_search with 'Virginia' and received the state-level result. It correctly mapped the result to recordSubdivision: 'Virginia' in the record_search call (not to residencePlace, which would be incorrect for a state-level survey). The place from the delegation was matched and used to scope the census search correctly."
+            "rationale": "The agent called place_search with 'Virginia' and received the state-level result (standardPlace: 'Virginia, United States', type: State). The agent correctly mapped this to record_search parameters: recordCountry set to 'United States' and recordSubdivision set to 'Virginia'. No county-level residencePlace was used, which is correct for a state-wide survey. The place resolution was accurate and properly scoped the census search."
           },
           {
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The agent called record_search once for 1850 (the only year in the 1850-1850 span), with residenceYearFrom and residenceYearTo both set to 1850, and recordType set to 'census'. No years outside the span were searched, and no year-range approach was used. Coverage is correct."
+            "rationale": "The delegation requested yearSpan 1850-1850 (single year). The agent called record_search exactly once with residenceYearFrom: 1850 and residenceYearTo: 1850, and included recordType: 'census'. This matches the required coverage for a single-year span. No additional years were searched, and the year-by-year approach was correctly applied."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": 3,
-            "rationale": "totalMatches was 5, well under the 600 threshold. The agent fetched all 5 results on one page (hasMore: false) without requesting county narrowing. This is the correct behavior for results under the threshold. The agent correctly noted in the log that results were 'under the 600 threshold'."
+            "rationale": "The record_search returned totalMatches: 5, which is well under the 600-per-year threshold. The agent correctly fetched all 5 results on a single page (hasMore: false, returned: 5) without requesting county narrowing. The agent noted in the log that results were 'under the 600 threshold', demonstrating awareness of the threshold. No additional pages were fetched, and the user was not asked to narrow by counties, which is the correct behavior when under threshold."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The logged survey_surname entry (log_007) contains a markdown table with correct structure: two sections (population schedule and slave schedule), columns for Census year, County, Head of household, Other members, Record ARK, and Ruled out. Edmund and Mary Dixon (shared ARK ark:/61903/1:2:XJQV-HH1850-A) are grouped into one household row with Edmund as head and Mary listed as 'Other members'. William and James Dixon each have separate rows with unique ARKs. The slave schedule entry is in its own sub-section labeled as 'non-population schedule, not counted as households'. The table ends with the required hedge sentence about pre-1880 censuses."
+            "rationale": "The logged survey_surname entry (log_007) contains a well-structured markdown table with correct sectioning. The table is divided into two sections: '1850 \u2014 United States Census, 1850 (population schedule)' and '1850 \u2014 United States Census (Slave Schedule), 1850 (non-population schedule, not counted as households)'. All required columns are present: Census year, County, Head of household, Other members, Record ARK, and Ruled out. Edmund and Mary Dixon are correctly grouped as one household row (sharing recordArk ark:/61903/1:2:XJQV-HH1850-A), while William and James Dixon are separate rows. The slave schedule entry is in its own sub-section. The table ends with the required hedge sentence about pre-1880 censuses. The table is logged as a research-log entry with tool: 'survey_surname', not returned as a file write."
           }
         ],
         "review_dimensions": [
@@ -492,43 +493,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly resolved Virginia as a state, called record_search for 1850 only with proper parameters (recordType: census, residenceYearFrom/To: 1850), retrieved 5 total matches, and accurately represented all results in the logged table. The grouping of Edmund and Mary Dixon (shared ARK) into one household is correct, William and James Dixon are correctly shown as separate households, and Edmund Dixon from the slave schedule is correctly placed in a separate non-population section. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified 3 Dixon households in the 1850 Virginia population census (Edmund in Ohio, William in Rockingham, James in Augusta) and 1 entry on the slave schedule (Edmund Dixon). All data extracted from the tool responses matches the record stubs returned: birth years, counties, record ARKs, and household composition are accurate. The table correctly groups Edmund and Mary Dixon (both from recordArk ark:/61903/1:2:XJQV-HH1850-A) as a single household, and correctly separates the slave schedule entry into its own section. The hedge sentence about pre-1880 censuses lacking relationship columns is accurate and properly placed. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: place resolution via place_search, census year search (1850 only, within the 1850-1850 span), threshold compliance (5 matches under 600, all fetched on one page), household grouping by recordArk, separation of non-population schedules, logging of both the search (log_006) and the survey table (log_007), and proper table structure with all required columns. No required work was omitted."
+            "rationale": "The skill addressed all requirements: called place_search for Virginia, called record_search for 1850 only (the single year in the span), logged the search with research_log_append, grouped households by recordArk, separated non-population schedules, and produced a complete markdown table with all required columns (census year, county, head of household, other members, record ARK, ruled out). The response included both log IDs (log_006 and log_007) and provided clear next-step guidance. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. place_search received 'Virginia' with 'United States' context (matched predicate). record_search received surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To both 1850, count 100, and projectPath (all matched predicate). research_log_append calls were live-matched and correctly structured. No critical identifiers were wrong, no fixture_not_found errors occurred, and extra args (count, projectPath) were reasonable additions for a survey context."
+            "rationale": "All three tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Virginia' (matches ~Virginia). record_search received surname 'Dixon', residenceYearFrom 1850, residenceYearTo 1850 (all match expected). The call included reasonable additional args (recordType: 'census', recordCountry: 'United States', recordSubdivision: 'Virginia', count: 100, projectPath) that were appropriate for the task. research_log_append calls used correct structure and content. No critical identifiers were wrong, and no calls landed in fixture_not_found."
           },
           {
             "source": "rubric",
             "name": "Place resolution",
             "score": 3,
-            "rationale": "The agent called place_search with 'Virginia' and received the state-level result. It correctly mapped the result to recordSubdivision: 'Virginia' in the record_search call (not to residencePlace, which would be incorrect for a state-level survey). The place from the delegation was matched and used to scope the census search correctly."
+            "rationale": "The agent called place_search with 'Virginia' and received the state-level result (standardPlace: 'Virginia, United States', type: State). The agent correctly mapped this to record_search parameters: recordCountry set to 'United States' and recordSubdivision set to 'Virginia'. No county-level residencePlace was used, which is correct for a state-wide survey. The place resolution was accurate and properly scoped the census search."
           },
           {
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The agent called record_search once for 1850 (the only year in the 1850-1850 span), with residenceYearFrom and residenceYearTo both set to 1850, and recordType set to 'census'. No years outside the span were searched, and no year-range approach was used. Coverage is correct."
+            "rationale": "The delegation requested yearSpan 1850-1850 (single year). The agent called record_search exactly once with residenceYearFrom: 1850 and residenceYearTo: 1850, and included recordType: 'census'. This matches the required coverage for a single-year span. No additional years were searched, and the year-by-year approach was correctly applied."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": 3,
-            "rationale": "totalMatches was 5, well under the 600 threshold. The agent fetched all 5 results on one page (hasMore: false) without requesting county narrowing. This is the correct behavior for results under the threshold. The agent correctly noted in the log that results were 'under the 600 threshold'."
+            "rationale": "The record_search returned totalMatches: 5, which is well under the 600-per-year threshold. The agent correctly fetched all 5 results on a single page (hasMore: false, returned: 5) without requesting county narrowing. The agent noted in the log that results were 'under the 600 threshold', demonstrating awareness of the threshold. No additional pages were fetched, and the user was not asked to narrow by counties, which is the correct behavior when under threshold."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The logged survey_surname entry (log_007) contains a markdown table with correct structure: two sections (population schedule and slave schedule), columns for Census year, County, Head of household, Other members, Record ARK, and Ruled out. Edmund and Mary Dixon (shared ARK ark:/61903/1:2:XJQV-HH1850-A) are grouped into one household row with Edmund as head and Mary listed as 'Other members'. William and James Dixon each have separate rows with unique ARKs. The slave schedule entry is in its own sub-section labeled as 'non-population schedule, not counted as households'. The table ends with the required hedge sentence about pre-1880 censuses."
+            "rationale": "The logged survey_surname entry (log_007) contains a well-structured markdown table with correct sectioning. The table is divided into two sections: '1850 \u2014 United States Census, 1850 (population schedule)' and '1850 \u2014 United States Census (Slave Schedule), 1850 (non-population schedule, not counted as households)'. All required columns are present: Census year, County, Head of household, Other members, Record ARK, and Ruled out. Edmund and Mary Dixon are correctly grouped as one household row (sharing recordArk ark:/61903/1:2:XJQV-HH1850-A), while William and James Dixon are separate rows. The slave schedule entry is in its own sub-section. The table ends with the required hedge sentence about pre-1880 censuses. The table is logged as a research-log entry with tool: 'survey_surname', not returned as a file write."
           }
         ]
       },
@@ -1161,51 +1162,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly resolved Virginia as a state, called record_search for 1850 only with proper parameters (recordType: census, residenceYearFrom/To: 1850), retrieved 5 total matches, and accurately represented all results in the logged table. The grouping of Edmund and Mary Dixon (shared ARK) into one household is correct, William and James Dixon are correctly shown as separate households, and Edmund Dixon from the slave schedule is correctly placed in a separate non-population section. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified 3 Dixon households in the 1850 Virginia population census (Edmund in Ohio, William in Rockingham, James in Augusta) and 1 entry on the slave schedule (Edmund Dixon). All data extracted from the tool responses matches the record stubs returned: birth years, counties, record ARKs, and household composition are accurate. The table correctly groups Edmund and Mary Dixon (both from recordArk ark:/61903/1:2:XJQV-HH1850-A) as a single household, and correctly separates the slave schedule entry into its own section. The hedge sentence about pre-1880 censuses lacking relationship columns is accurate and properly placed. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: place resolution via place_search, census year search (1850 only, within the 1850-1850 span), threshold compliance (5 matches under 600, all fetched on one page), household grouping by recordArk, separation of non-population schedules, logging of both the search (log_006) and the survey table (log_007), and proper table structure with all required columns. No required work was omitted."
+                "rationale": "The skill addressed all requirements: called place_search for Virginia, called record_search for 1850 only (the single year in the span), logged the search with research_log_append, grouped households by recordArk, separated non-population schedules, and produced a complete markdown table with all required columns (census year, county, head of household, other members, record ARK, ruled out). The response included both log IDs (log_006 and log_007) and provided clear next-step guidance. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. place_search received 'Virginia' with 'United States' context (matched predicate). record_search received surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To both 1850, count 100, and projectPath (all matched predicate). research_log_append calls were live-matched and correctly structured. No critical identifiers were wrong, no fixture_not_found errors occurred, and extra args (count, projectPath) were reasonable additions for a survey context."
+                "rationale": "All three tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Virginia' (matches ~Virginia). record_search received surname 'Dixon', residenceYearFrom 1850, residenceYearTo 1850 (all match expected). The call included reasonable additional args (recordType: 'census', recordCountry: 'United States', recordSubdivision: 'Virginia', count: 100, projectPath) that were appropriate for the task. research_log_append calls used correct structure and content. No critical identifiers were wrong, and no calls landed in fixture_not_found."
               },
               {
                 "source": "rubric",
                 "name": "Place resolution",
                 "score": 3,
-                "rationale": "The agent called place_search with 'Virginia' and received the state-level result. It correctly mapped the result to recordSubdivision: 'Virginia' in the record_search call (not to residencePlace, which would be incorrect for a state-level survey). The place from the delegation was matched and used to scope the census search correctly."
+                "rationale": "The agent called place_search with 'Virginia' and received the state-level result (standardPlace: 'Virginia, United States', type: State). The agent correctly mapped this to record_search parameters: recordCountry set to 'United States' and recordSubdivision set to 'Virginia'. No county-level residencePlace was used, which is correct for a state-wide survey. The place resolution was accurate and properly scoped the census search."
               },
               {
                 "source": "rubric",
                 "name": "Census coverage",
                 "score": 3,
-                "rationale": "The agent called record_search once for 1850 (the only year in the 1850-1850 span), with residenceYearFrom and residenceYearTo both set to 1850, and recordType set to 'census'. No years outside the span were searched, and no year-range approach was used. Coverage is correct."
+                "rationale": "The delegation requested yearSpan 1850-1850 (single year). The agent called record_search exactly once with residenceYearFrom: 1850 and residenceYearTo: 1850, and included recordType: 'census'. This matches the required coverage for a single-year span. No additional years were searched, and the year-by-year approach was correctly applied."
               },
               {
                 "source": "rubric",
                 "name": "Threshold compliance",
                 "score": 3,
-                "rationale": "totalMatches was 5, well under the 600 threshold. The agent fetched all 5 results on one page (hasMore: false) without requesting county narrowing. This is the correct behavior for results under the threshold. The agent correctly noted in the log that results were 'under the 600 threshold'."
+                "rationale": "The record_search returned totalMatches: 5, which is well under the 600-per-year threshold. The agent correctly fetched all 5 results on a single page (hasMore: false, returned: 5) without requesting county narrowing. The agent noted in the log that results were 'under the 600 threshold', demonstrating awareness of the threshold. No additional pages were fetched, and the user was not asked to narrow by counties, which is the correct behavior when under threshold."
               },
               {
                 "source": "rubric",
                 "name": "Table structure",
                 "score": 3,
-                "rationale": "The logged survey_surname entry (log_007) contains a markdown table with correct structure: two sections (population schedule and slave schedule), columns for Census year, County, Head of household, Other members, Record ARK, and Ruled out. Edmund and Mary Dixon (shared ARK ark:/61903/1:2:XJQV-HH1850-A) are grouped into one household row with Edmund as head and Mary listed as 'Other members'. William and James Dixon each have separate rows with unique ARKs. The slave schedule entry is in its own sub-section labeled as 'non-population schedule, not counted as households'. The table ends with the required hedge sentence about pre-1880 censuses."
+                "rationale": "The logged survey_surname entry (log_007) contains a well-structured markdown table with correct sectioning. The table is divided into two sections: '1850 \u2014 United States Census, 1850 (population schedule)' and '1850 \u2014 United States Census (Slave Schedule), 1850 (non-population schedule, not counted as households)'. All required columns are present: Census year, County, Head of household, Other members, Record ARK, and Ruled out. Edmund and Mary Dixon are correctly grouped as one household row (sharing recordArk ark:/61903/1:2:XJQV-HH1850-A), while William and James Dixon are separate rows. The slave schedule entry is in its own sub-section. The table ends with the required hedge sentence about pre-1880 censuses. The table is logged as a research-log entry with tool: 'survey_surname', not returned as a file write."
               }
             ],
-            "judge_cost_usd": 0.018172,
+            "judge_cost_usd": 0.019105999999999998,
             "duration_ms": 18552.39529100072,
             "error": null,
-            "input_tokens": 12927,
+            "input_tokens": 12981,
             "cached_input_tokens": 0,
-            "output_tokens": 1049
+            "output_tokens": 1225
           },
           "started_at": 1793186042.793259,
           "ended_at": 1793186093.7521057
@@ -1234,19 +1235,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified three Dixon households in Virginia's 1820 census (William in Rockingham, James in Augusta, Thomas in Fairfax) with accurate record ARKs and collection metadata. All facts are supported by the tool responses. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified three Dixon households in Virginia's 1820 census (William in Rockingham, James in Augusta, Thomas in Fairfax) with accurate record ARKs and county placements. The table accurately reflects the search results returned by record_search, with no fabricated data. The pre-1880 census caveat about lack of relationship data is correctly stated."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: searched the correct place (Virginia) and year span (1820-1820), logged both the search and the survey table, and produced the complete markdown table with all three households. No required elements were omitted."
+            "rationale": "The skill addressed all requirements: called place_search for Virginia, executed record_search for 1820 only, logged the search with research_log_append, and produced a complete table with all three households. The response includes the required summary and next-step guidance. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments: place_search used 'Virginia' (matches expected ~Virginia); record_search used correct surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and year 1820 for both residenceYearFrom and residenceYearTo. research_log_append calls were properly formed with correct query structure and notes."
+            "rationale": "All tool calls passed correct arguments. place_search received 'Virginia' (matches expected ~Virginia). record_search received correct surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and year parameters residenceYearFrom/To both 1820 (matching expected values). research_log_append calls were properly formed with correct query structure and notes."
           },
           {
             "source": "rubric",
@@ -1258,19 +1259,19 @@
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The agent called record_search exactly once for the 1820 census year, which is the only year in the requested span (1820-1820). The call used residenceYearFrom=1820, residenceYearTo=1820, and recordType='census' as required."
+            "rationale": "The agent called record_search exactly once for 1820 (the only year in the 1820-1820 span), with residenceYearFrom and residenceYearTo both set to 1820, and recordType set to 'census'. This matches the required year-by-year approach for the single-year span."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": null,
-            "rationale": "The totalMatches returned was 3, which is well under the 600-per-year threshold. This dimension applies only when at least one year exceeds 600 matches, so it is N/A for this test."
+            "rationale": "No year exceeded the 600 totalMatches threshold. The 1820 search returned totalMatches of 3, well under the threshold. This dimension applies only when at least one year exceeds 600, so it is N/A for this test."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The logged survey_surname entry contains a well-structured markdown table sectioned by census year (1820) and collection title ('United States Census, 1820'). It includes all required columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. The three households are properly grouped, and the entry ends with the required pre-1880 hedge sentence about relationship columns."
+            "rationale": "The logged survey_surname entry contains a well-structured markdown table sectioned by census year (1820) and collection title (United States Census, 1820). It includes all required columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. The three households are correctly listed with their respective counties and ARKs. The table ends with the required pre-1880 caveat sentence about lack of relationship data."
           }
         ],
         "review_dimensions": [
@@ -1278,19 +1279,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified three Dixon households in Virginia's 1820 census (William in Rockingham, James in Augusta, Thomas in Fairfax) with accurate record ARKs and collection metadata. All facts are supported by the tool responses. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified three Dixon households in Virginia's 1820 census (William in Rockingham, James in Augusta, Thomas in Fairfax) with accurate record ARKs and county placements. The table accurately reflects the search results returned by record_search, with no fabricated data. The pre-1880 census caveat about lack of relationship data is correctly stated."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: searched the correct place (Virginia) and year span (1820-1820), logged both the search and the survey table, and produced the complete markdown table with all three households. No required elements were omitted."
+            "rationale": "The skill addressed all requirements: called place_search for Virginia, executed record_search for 1820 only, logged the search with research_log_append, and produced a complete table with all three households. The response includes the required summary and next-step guidance. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments: place_search used 'Virginia' (matches expected ~Virginia); record_search used correct surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and year 1820 for both residenceYearFrom and residenceYearTo. research_log_append calls were properly formed with correct query structure and notes."
+            "rationale": "All tool calls passed correct arguments. place_search received 'Virginia' (matches expected ~Virginia). record_search received correct surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and year parameters residenceYearFrom/To both 1820 (matching expected values). research_log_append calls were properly formed with correct query structure and notes."
           },
           {
             "source": "rubric",
@@ -1302,19 +1303,19 @@
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The agent called record_search exactly once for the 1820 census year, which is the only year in the requested span (1820-1820). The call used residenceYearFrom=1820, residenceYearTo=1820, and recordType='census' as required."
+            "rationale": "The agent called record_search exactly once for 1820 (the only year in the 1820-1820 span), with residenceYearFrom and residenceYearTo both set to 1820, and recordType set to 'census'. This matches the required year-by-year approach for the single-year span."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": null,
-            "rationale": "The totalMatches returned was 3, which is well under the 600-per-year threshold. This dimension applies only when at least one year exceeds 600 matches, so it is N/A for this test."
+            "rationale": "No year exceeded the 600 totalMatches threshold. The 1820 search returned totalMatches of 3, well under the threshold. This dimension applies only when at least one year exceeds 600, so it is N/A for this test."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The logged survey_surname entry contains a well-structured markdown table sectioned by census year (1820) and collection title ('United States Census, 1820'). It includes all required columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. The three households are properly grouped, and the entry ends with the required pre-1880 hedge sentence about relationship columns."
+            "rationale": "The logged survey_surname entry contains a well-structured markdown table sectioned by census year (1820) and collection title (United States Census, 1820). It includes all required columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. The three households are correctly listed with their respective counties and ARKs. The table ends with the required pre-1880 caveat sentence about lack of relationship data."
           }
         ]
       },
@@ -1900,19 +1901,19 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified three Dixon households in Virginia's 1820 census (William in Rockingham, James in Augusta, Thomas in Fairfax) with accurate record ARKs and collection metadata. All facts are supported by the tool responses. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified three Dixon households in Virginia's 1820 census (William in Rockingham, James in Augusta, Thomas in Fairfax) with accurate record ARKs and county placements. The table accurately reflects the search results returned by record_search, with no fabricated data. The pre-1880 census caveat about lack of relationship data is correctly stated."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: searched the correct place (Virginia) and year span (1820-1820), logged both the search and the survey table, and produced the complete markdown table with all three households. No required elements were omitted."
+                "rationale": "The skill addressed all requirements: called place_search for Virginia, executed record_search for 1820 only, logged the search with research_log_append, and produced a complete table with all three households. The response includes the required summary and next-step guidance. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments: place_search used 'Virginia' (matches expected ~Virginia); record_search used correct surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and year 1820 for both residenceYearFrom and residenceYearTo. research_log_append calls were properly formed with correct query structure and notes."
+                "rationale": "All tool calls passed correct arguments. place_search received 'Virginia' (matches expected ~Virginia). record_search received correct surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and year parameters residenceYearFrom/To both 1820 (matching expected values). research_log_append calls were properly formed with correct query structure and notes."
               },
               {
                 "source": "rubric",
@@ -1924,27 +1925,27 @@
                 "source": "rubric",
                 "name": "Census coverage",
                 "score": 3,
-                "rationale": "The agent called record_search exactly once for the 1820 census year, which is the only year in the requested span (1820-1820). The call used residenceYearFrom=1820, residenceYearTo=1820, and recordType='census' as required."
+                "rationale": "The agent called record_search exactly once for 1820 (the only year in the 1820-1820 span), with residenceYearFrom and residenceYearTo both set to 1820, and recordType set to 'census'. This matches the required year-by-year approach for the single-year span."
               },
               {
                 "source": "rubric",
                 "name": "Threshold compliance",
                 "score": null,
-                "rationale": "The totalMatches returned was 3, which is well under the 600-per-year threshold. This dimension applies only when at least one year exceeds 600 matches, so it is N/A for this test."
+                "rationale": "No year exceeded the 600 totalMatches threshold. The 1820 search returned totalMatches of 3, well under the threshold. This dimension applies only when at least one year exceeds 600, so it is N/A for this test."
               },
               {
                 "source": "rubric",
                 "name": "Table structure",
                 "score": 3,
-                "rationale": "The logged survey_surname entry contains a well-structured markdown table sectioned by census year (1820) and collection title ('United States Census, 1820'). It includes all required columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. The three households are properly grouped, and the entry ends with the required pre-1880 hedge sentence about relationship columns."
+                "rationale": "The logged survey_surname entry contains a well-structured markdown table sectioned by census year (1820) and collection title (United States Census, 1820). It includes all required columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. The three households are correctly listed with their respective counties and ARKs. The table ends with the required pre-1880 caveat sentence about lack of relationship data."
               }
             ],
-            "judge_cost_usd": 0.0162192,
+            "judge_cost_usd": 0.0165632,
             "duration_ms": 22930.363219988067,
             "error": null,
-            "input_tokens": 11968,
+            "input_tokens": 12022,
             "cached_input_tokens": 4312,
-            "output_tokens": 764
+            "output_tokens": 822
           },
           "started_at": 1793186094.390485,
           "ended_at": 1793186138.7608144
@@ -1976,43 +1977,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly searched all three census years (1820, 1830, 1840) for Dixon households in Virginia, retrieved all available results (3, 3, and 102 respectively), and produced a well-structured markdown table with accurate household data. All 108 households are listed with correct ARKs, county names, and head-of-household names. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly searched for Dixon households across Virginia for 1820, 1830, and 1840. All tool calls used correct parameters (surname, recordType census, recordCountry United States, recordSubdivision Virginia, year-specific residenceYearFrom/To). The table accurately reflects the results: 3 households in 1820, 3 in 1830, and 102 in 1840 (all 102 rows present with distinct ARKs). The agent correctly paged through 1840 results (offset 100) to retrieve all 102 records. The markdown table structure is correct with proper columns and sections. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated data or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: called place_search for Virginia, executed record_search for each of the three census years in the span, paged through 1840 results to retrieve all 102 households, logged each search with research_log_append, and produced a comprehensive markdown table sectioned by year with all required columns (year, county, head of household, other members, record ARK, ruled out). The final survey_surname log entry was created with the complete table in notes."
+            "rationale": "The skill addressed all requirements from the delegation. It searched all three census years in the 1820-1840 span (1820, 1830, 1840). It retrieved all available results: 3 for 1820, 3 for 1830, and all 102 for 1840 by paging with offset 100. The table includes all required columns (year, county, head of household, other members, record ARK, ruled out). All 108 households are listed. The research log entry (log_010) was created with the complete table and proper metadata. The summary_for_user block was provided with the expected format."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. record_search calls used surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To matching each year (1820, 1830, 1840), count 100, and projectPath. The 1840 second page correctly used offset 100. research_log_append calls passed correct stagedResultsRef values from the record_search responses. The final survey_surname log entry used correct query structure with surname, place, and yearSpan."
+            "rationale": "All MCP tool calls passed correct arguments. The four record_search calls used: surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To matching the year (1820, 1830, 1840, 1840), count 100, and offset 100 for the second 1840 call. The research_log_append calls correctly passed stagedResultsRef from the staged results. The final survey_surname log entry correctly passed query {surname, place, yearSpan} with no stagedResultsRef. All critical identifiers and parameters match expected values."
           },
           {
             "source": "rubric",
             "name": "Place resolution",
             "score": 3,
-            "rationale": "The agent correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No hardcoded or mismatched place values were used."
+            "rationale": "The agent correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No place_search call is visible in the tool calls shown, but the delegation specified Virginia directly and the agent correctly applied it to all four record_search calls with the proper parameter mapping."
           },
           {
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The agent called record_search for all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used residenceYearFrom and residenceYearTo set to the same year, and recordType was set to 'census'. No years outside the span were searched, and no year-range queries were used."
+            "rationale": "The agent searched all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used recordType 'census' and set residenceYearFrom = residenceYearTo to the specific year. Four record_search calls were made: one each for 1820 and 1830 (both returned hasMore: false), and two for 1840 (first with offset 0, second with offset 100 to retrieve remaining results). This matches the expected pattern for the year span."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": 3,
-            "rationale": "The 1820 and 1830 years returned 3 matches each (under 600 threshold). The 1840 year returned 102 total matches (under 600 threshold). Since no year exceeded the 600-match threshold, the agent correctly fetched all results without asking for county narrowing. The agent paged through 1840 results (100 on page 1, 2 on page 2) to retrieve all 102 households, which is the correct behavior for years under the threshold."
+            "rationale": "All three years were under the 600 totalMatches threshold (1820: 3, 1830: 3, 1840: 102). The agent correctly fetched all results without asking for county narrowing. For 1820 and 1830, single pages were returned (hasMore: false). For 1840, the agent correctly paged with offset 100 to retrieve the remaining 2 results after the first 100, completing the full set of 102 households. No threshold was exceeded, so the agent's behavior of fetching all results was appropriate."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The markdown table in log_010's notes is well-structured with sections for each census year (1820, 1830, 1840), each with a collection title header. Columns are present for census year, county, head of household, other members, record ARK, and ruled out. All 108 households are listed with one row per household. The table ends with the required hedge sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' Pre-1850 censuses correctly show '\u2014' for other members since relationships are not recorded."
+            "rationale": "The markdown table in log_010's notes is well-structured with proper sections by census year (## 1820, ## 1830, ## 1840) and collection title (### United States Census, [year] (population)). Columns are correct: Census year, County, Head of household, Other members, Record ARK, Ruled out. All 108 households are listed with their data. Pre-1850 censuses correctly show '\u2014' for other members (no family relationships listed). The table ends with the required hedge sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' The table is logged as a single survey_surname entry with the full markdown in notes."
           }
         ],
         "review_dimensions": [
@@ -2020,43 +2021,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly searched all three census years (1820, 1830, 1840) for Dixon households in Virginia, retrieved all available results (3, 3, and 102 respectively), and produced a well-structured markdown table with accurate household data. All 108 households are listed with correct ARKs, county names, and head-of-household names. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly searched for Dixon households across Virginia for 1820, 1830, and 1840. All tool calls used correct parameters (surname, recordType census, recordCountry United States, recordSubdivision Virginia, year-specific residenceYearFrom/To). The table accurately reflects the results: 3 households in 1820, 3 in 1830, and 102 in 1840 (all 102 rows present with distinct ARKs). The agent correctly paged through 1840 results (offset 100) to retrieve all 102 records. The markdown table structure is correct with proper columns and sections. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated data or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: called place_search for Virginia, executed record_search for each of the three census years in the span, paged through 1840 results to retrieve all 102 households, logged each search with research_log_append, and produced a comprehensive markdown table sectioned by year with all required columns (year, county, head of household, other members, record ARK, ruled out). The final survey_surname log entry was created with the complete table in notes."
+            "rationale": "The skill addressed all requirements from the delegation. It searched all three census years in the 1820-1840 span (1820, 1830, 1840). It retrieved all available results: 3 for 1820, 3 for 1830, and all 102 for 1840 by paging with offset 100. The table includes all required columns (year, county, head of household, other members, record ARK, ruled out). All 108 households are listed. The research log entry (log_010) was created with the complete table and proper metadata. The summary_for_user block was provided with the expected format."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. record_search calls used surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To matching each year (1820, 1830, 1840), count 100, and projectPath. The 1840 second page correctly used offset 100. research_log_append calls passed correct stagedResultsRef values from the record_search responses. The final survey_surname log entry used correct query structure with surname, place, and yearSpan."
+            "rationale": "All MCP tool calls passed correct arguments. The four record_search calls used: surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To matching the year (1820, 1830, 1840, 1840), count 100, and offset 100 for the second 1840 call. The research_log_append calls correctly passed stagedResultsRef from the staged results. The final survey_surname log entry correctly passed query {surname, place, yearSpan} with no stagedResultsRef. All critical identifiers and parameters match expected values."
           },
           {
             "source": "rubric",
             "name": "Place resolution",
             "score": 3,
-            "rationale": "The agent correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No hardcoded or mismatched place values were used."
+            "rationale": "The agent correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No place_search call is visible in the tool calls shown, but the delegation specified Virginia directly and the agent correctly applied it to all four record_search calls with the proper parameter mapping."
           },
           {
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The agent called record_search for all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used residenceYearFrom and residenceYearTo set to the same year, and recordType was set to 'census'. No years outside the span were searched, and no year-range queries were used."
+            "rationale": "The agent searched all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used recordType 'census' and set residenceYearFrom = residenceYearTo to the specific year. Four record_search calls were made: one each for 1820 and 1830 (both returned hasMore: false), and two for 1840 (first with offset 0, second with offset 100 to retrieve remaining results). This matches the expected pattern for the year span."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": 3,
-            "rationale": "The 1820 and 1830 years returned 3 matches each (under 600 threshold). The 1840 year returned 102 total matches (under 600 threshold). Since no year exceeded the 600-match threshold, the agent correctly fetched all results without asking for county narrowing. The agent paged through 1840 results (100 on page 1, 2 on page 2) to retrieve all 102 households, which is the correct behavior for years under the threshold."
+            "rationale": "All three years were under the 600 totalMatches threshold (1820: 3, 1830: 3, 1840: 102). The agent correctly fetched all results without asking for county narrowing. For 1820 and 1830, single pages were returned (hasMore: false). For 1840, the agent correctly paged with offset 100 to retrieve the remaining 2 results after the first 100, completing the full set of 102 households. No threshold was exceeded, so the agent's behavior of fetching all results was appropriate."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The markdown table in log_010's notes is well-structured with sections for each census year (1820, 1830, 1840), each with a collection title header. Columns are present for census year, county, head of household, other members, record ARK, and ruled out. All 108 households are listed with one row per household. The table ends with the required hedge sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' Pre-1850 censuses correctly show '\u2014' for other members since relationships are not recorded."
+            "rationale": "The markdown table in log_010's notes is well-structured with proper sections by census year (## 1820, ## 1830, ## 1840) and collection title (### United States Census, [year] (population)). Columns are correct: Census year, County, Head of household, Other members, Record ARK, Ruled out. All 108 households are listed with their data. Pre-1850 censuses correctly show '\u2014' for other members (no family relationships listed). The table ends with the required hedge sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' The table is logged as a single survey_surname entry with the full markdown in notes."
           }
         ]
       },
@@ -4762,51 +4763,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly searched all three census years (1820, 1830, 1840) for Dixon households in Virginia, retrieved all available results (3, 3, and 102 respectively), and produced a well-structured markdown table with accurate household data. All 108 households are listed with correct ARKs, county names, and head-of-household names. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly searched for Dixon households across Virginia for 1820, 1830, and 1840. All tool calls used correct parameters (surname, recordType census, recordCountry United States, recordSubdivision Virginia, year-specific residenceYearFrom/To). The table accurately reflects the results: 3 households in 1820, 3 in 1830, and 102 in 1840 (all 102 rows present with distinct ARKs). The agent correctly paged through 1840 results (offset 100) to retrieve all 102 records. The markdown table structure is correct with proper columns and sections. The closing hedge sentence about pre-1880 censuses is present and accurate. No fabricated data or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: called place_search for Virginia, executed record_search for each of the three census years in the span, paged through 1840 results to retrieve all 102 households, logged each search with research_log_append, and produced a comprehensive markdown table sectioned by year with all required columns (year, county, head of household, other members, record ARK, ruled out). The final survey_surname log entry was created with the complete table in notes."
+                "rationale": "The skill addressed all requirements from the delegation. It searched all three census years in the 1820-1840 span (1820, 1830, 1840). It retrieved all available results: 3 for 1820, 3 for 1830, and all 102 for 1840 by paging with offset 100. The table includes all required columns (year, county, head of household, other members, record ARK, ruled out). All 108 households are listed. The research log entry (log_010) was created with the complete table and proper metadata. The summary_for_user block was provided with the expected format."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. record_search calls used surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To matching each year (1820, 1830, 1840), count 100, and projectPath. The 1840 second page correctly used offset 100. research_log_append calls passed correct stagedResultsRef values from the record_search responses. The final survey_surname log entry used correct query structure with surname, place, and yearSpan."
+                "rationale": "All MCP tool calls passed correct arguments. The four record_search calls used: surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', residenceYearFrom/To matching the year (1820, 1830, 1840, 1840), count 100, and offset 100 for the second 1840 call. The research_log_append calls correctly passed stagedResultsRef from the staged results. The final survey_surname log entry correctly passed query {surname, place, yearSpan} with no stagedResultsRef. All critical identifiers and parameters match expected values."
               },
               {
                 "source": "rubric",
                 "name": "Place resolution",
                 "score": 3,
-                "rationale": "The agent correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No hardcoded or mismatched place values were used."
+                "rationale": "The agent correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No place_search call is visible in the tool calls shown, but the delegation specified Virginia directly and the agent correctly applied it to all four record_search calls with the proper parameter mapping."
               },
               {
                 "source": "rubric",
                 "name": "Census coverage",
                 "score": 3,
-                "rationale": "The agent called record_search for all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used residenceYearFrom and residenceYearTo set to the same year, and recordType was set to 'census'. No years outside the span were searched, and no year-range queries were used."
+                "rationale": "The agent searched all three US federal census years within the 1820-1840 span: 1820, 1830, and 1840. Each call used recordType 'census' and set residenceYearFrom = residenceYearTo to the specific year. Four record_search calls were made: one each for 1820 and 1830 (both returned hasMore: false), and two for 1840 (first with offset 0, second with offset 100 to retrieve remaining results). This matches the expected pattern for the year span."
               },
               {
                 "source": "rubric",
                 "name": "Threshold compliance",
                 "score": 3,
-                "rationale": "The 1820 and 1830 years returned 3 matches each (under 600 threshold). The 1840 year returned 102 total matches (under 600 threshold). Since no year exceeded the 600-match threshold, the agent correctly fetched all results without asking for county narrowing. The agent paged through 1840 results (100 on page 1, 2 on page 2) to retrieve all 102 households, which is the correct behavior for years under the threshold."
+                "rationale": "All three years were under the 600 totalMatches threshold (1820: 3, 1830: 3, 1840: 102). The agent correctly fetched all results without asking for county narrowing. For 1820 and 1830, single pages were returned (hasMore: false). For 1840, the agent correctly paged with offset 100 to retrieve the remaining 2 results after the first 100, completing the full set of 102 households. No threshold was exceeded, so the agent's behavior of fetching all results was appropriate."
               },
               {
                 "source": "rubric",
                 "name": "Table structure",
                 "score": 3,
-                "rationale": "The markdown table in log_010's notes is well-structured with sections for each census year (1820, 1830, 1840), each with a collection title header. Columns are present for census year, county, head of household, other members, record ARK, and ruled out. All 108 households are listed with one row per household. The table ends with the required hedge sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' Pre-1850 censuses correctly show '\u2014' for other members since relationships are not recorded."
+                "rationale": "The markdown table in log_010's notes is well-structured with proper sections by census year (## 1820, ## 1830, ## 1840) and collection title (### United States Census, [year] (population)). Columns are correct: Census year, County, Head of household, Other members, Record ARK, Ruled out. All 108 households are listed with their data. Pre-1850 censuses correctly show '\u2014' for other members (no family relationships listed). The table ends with the required hedge sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' The table is logged as a single survey_surname entry with the full markdown in notes."
               }
             ],
-            "judge_cost_usd": 0.029147,
+            "judge_cost_usd": 0.0307902,
             "duration_ms": 462387.22131299437,
             "error": null,
-            "input_tokens": 23927,
-            "cached_input_tokens": 0,
-            "output_tokens": 1044
+            "input_tokens": 23999,
+            "cached_input_tokens": 4312,
+            "output_tokens": 1272
           },
           "started_at": 1793186042.7940326,
           "ended_at": 1793186564.8027182
@@ -4837,43 +4838,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly searched Virginia censuses for 1840 and 1850, properly handled the 600-match threshold by stopping pagination for 1850 (2,218 matches), logged all search results, and produced a well-formed markdown table with 102 Dixon households from 1840. The table includes correct columns (year, county, head, other members, ARK, ruled out) and correctly notes that 1850 exceeded the threshold and requires county selection. All tool calls used correct parameters and the persisted log entry (log_009) contains the complete table with the required closing sentence about pre-1880 censuses."
+            "rationale": "The skill correctly searched Virginia censuses for 1840 and 1850, properly handled the 600-match threshold by stopping pagination for 1850 (2,218 matches), logged all search results, and produced a well-formed markdown table with 102 Dixon households from 1840. The table includes correct columns (year, county, head, other members, ARK, ruled out) and correctly notes that 1850 exceeded the threshold and requires county selection. All tool calls used correct parameters (recordCountry, recordSubdivision, residenceYearFrom/To). The closing hedge sentence about pre-1880 censuses is present and accurate."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: searched both 1840 and 1850 within the requested span, fetched all 102 results from 1840 across two pages, properly stopped at the threshold for 1850, logged all search pages (log_006, log_007, log_008), created the summary table (log_009), and asked the user for county selection to proceed with 1850. The response includes the required summary_for_user block explaining next steps."
+            "rationale": "The skill addressed all required elements: searched both 1840 and 1850 within the requested span, fetched all 102 results from 1840 across two pages (page 1 with 100 results, page 2 with 2 results), properly stopped at the threshold for 1850 without additional paging, logged all search results and the final table, and asked the user for county selection to proceed with 1850. The table was logged as a single survey_surname entry with the complete markdown table in notes, and the response ended with a clear summary and next steps."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. The two record_search calls for 1840 used residenceYearFrom/To = 1840 with correct offset progression (0, then 100). The 1850 call used residenceYearFrom/To = 1850 and correctly stopped after the first page. All calls included surname 'Dixon', recordType 'census', recordCountry 'United States', and recordSubdivision 'Virginia'. The research_log_append calls correctly referenced staged results and used appropriate outcome values ('positive' for 1840, 'partial' for 1850 threshold). No fixture_not_found errors occurred."
+            "rationale": "All tool calls passed correct arguments. The record_search calls for 1840 and 1850 used surname='Dixon', recordType='census', recordCountry='United States', recordSubdivision='Virginia', with correct residenceYearFrom/To values (1840 and 1850 respectively). The second 1840 call correctly included offset=100 to fetch the remaining results. The research_log_append calls correctly referenced the staged results and included appropriate notes. No fixture_not_found errors occurred; all calls matched their expected predicates or were live calls."
           },
           {
             "source": "rubric",
             "name": "Place resolution",
             "score": 3,
-            "rationale": "The skill correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No place_search call is visible in the truncated tool calls (2 earliest dropped), but the correct parameters in all record_search calls confirm proper place resolution was performed."
+            "rationale": "The skill correctly resolved Virginia as the place and used it to scope census searches. The record_search calls properly set recordCountry='United States' and recordSubdivision='Virginia' on each call, matching the delegation's place parameter. No place_search call is visible in the tool calls provided (it may have been dropped for size), but the correct place parameters in record_search calls demonstrate proper resolution and application."
           },
           {
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The skill searched both US federal census years within the 1840-1850 span: 1840 (with two calls covering all 102 results via pagination) and 1850 (one call that returned 2,218 matches). Each call used residenceYearFrom = residenceYearTo for the target year and recordType 'census'. The year-by-year approach is correct; no year-range queries were used."
+            "rationale": "The skill correctly searched both US federal census years within the 1840-1850 span: 1840 and 1850. Each record_search call used residenceYearFrom and residenceYearTo set to the same year (1840 and 1850 respectively), and recordType='census' was specified. The skill made two calls for 1840 (pages 1 and 2) and one for 1850, covering the full requested span without searching years outside it."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": 3,
-            "rationale": "The skill correctly respected the 600-match threshold. For 1840 (102 matches, under threshold), it fetched all results across two pages. For 1850 (2,218 matches, over threshold), it stopped after the first page returned 2 results and did not make additional offset calls. The response explicitly told the user the count (2,218) and asked which Virginia counties to survey, exactly as required by the threshold rule."
+            "rationale": "The skill correctly respected the 600 per-year threshold. For 1840 (102 matches, under threshold), it fetched all results across two pages. For 1850 (2,218 matches, over threshold), it stopped after the first page (2 results examined) and did not make additional record_search calls with higher offsets. The skill reported the 2,218 count to the user and explicitly asked which Virginia counties to survey for 1850 before proceeding, exactly as required by the threshold rule."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The markdown table in log_009's notes is well-structured with correct columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. It is sectioned by census year (1840 and 1850 as separate sections). The 1840 section lists all 102 households with their heads and ARKs. The 1850 section correctly notes it is over threshold and not tabulated, without mixing in household rows. The table ends with the required sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.'"
+            "rationale": "The markdown table in log_009's notes is well-structured with correct columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. It is sectioned by census year (1840 and 1850 as separate sections). The 1840 section lists all 102 households with their heads and ARKs. The 1850 section correctly notes it is over threshold and not tabulated, with no household rows included. The table ends with the required hedge sentence about pre-1880 censuses lacking relationship columns."
           }
         ],
         "review_dimensions": [
@@ -4881,43 +4882,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly searched Virginia censuses for 1840 and 1850, properly handled the 600-match threshold by stopping pagination for 1850 (2,218 matches), logged all search results, and produced a well-formed markdown table with 102 Dixon households from 1840. The table includes correct columns (year, county, head, other members, ARK, ruled out) and correctly notes that 1850 exceeded the threshold and requires county selection. All tool calls used correct parameters and the persisted log entry (log_009) contains the complete table with the required closing sentence about pre-1880 censuses."
+            "rationale": "The skill correctly searched Virginia censuses for 1840 and 1850, properly handled the 600-match threshold by stopping pagination for 1850 (2,218 matches), logged all search results, and produced a well-formed markdown table with 102 Dixon households from 1840. The table includes correct columns (year, county, head, other members, ARK, ruled out) and correctly notes that 1850 exceeded the threshold and requires county selection. All tool calls used correct parameters (recordCountry, recordSubdivision, residenceYearFrom/To). The closing hedge sentence about pre-1880 censuses is present and accurate."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all requirements: searched both 1840 and 1850 within the requested span, fetched all 102 results from 1840 across two pages, properly stopped at the threshold for 1850, logged all search pages (log_006, log_007, log_008), created the summary table (log_009), and asked the user for county selection to proceed with 1850. The response includes the required summary_for_user block explaining next steps."
+            "rationale": "The skill addressed all required elements: searched both 1840 and 1850 within the requested span, fetched all 102 results from 1840 across two pages (page 1 with 100 results, page 2 with 2 results), properly stopped at the threshold for 1850 without additional paging, logged all search results and the final table, and asked the user for county selection to proceed with 1850. The table was logged as a single survey_surname entry with the complete markdown table in notes, and the response ended with a clear summary and next steps."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. The two record_search calls for 1840 used residenceYearFrom/To = 1840 with correct offset progression (0, then 100). The 1850 call used residenceYearFrom/To = 1850 and correctly stopped after the first page. All calls included surname 'Dixon', recordType 'census', recordCountry 'United States', and recordSubdivision 'Virginia'. The research_log_append calls correctly referenced staged results and used appropriate outcome values ('positive' for 1840, 'partial' for 1850 threshold). No fixture_not_found errors occurred."
+            "rationale": "All tool calls passed correct arguments. The record_search calls for 1840 and 1850 used surname='Dixon', recordType='census', recordCountry='United States', recordSubdivision='Virginia', with correct residenceYearFrom/To values (1840 and 1850 respectively). The second 1840 call correctly included offset=100 to fetch the remaining results. The research_log_append calls correctly referenced the staged results and included appropriate notes. No fixture_not_found errors occurred; all calls matched their expected predicates or were live calls."
           },
           {
             "source": "rubric",
             "name": "Place resolution",
             "score": 3,
-            "rationale": "The skill correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No place_search call is visible in the truncated tool calls (2 earliest dropped), but the correct parameters in all record_search calls confirm proper place resolution was performed."
+            "rationale": "The skill correctly resolved Virginia as the place and used it to scope census searches. The record_search calls properly set recordCountry='United States' and recordSubdivision='Virginia' on each call, matching the delegation's place parameter. No place_search call is visible in the tool calls provided (it may have been dropped for size), but the correct place parameters in record_search calls demonstrate proper resolution and application."
           },
           {
             "source": "rubric",
             "name": "Census coverage",
             "score": 3,
-            "rationale": "The skill searched both US federal census years within the 1840-1850 span: 1840 (with two calls covering all 102 results via pagination) and 1850 (one call that returned 2,218 matches). Each call used residenceYearFrom = residenceYearTo for the target year and recordType 'census'. The year-by-year approach is correct; no year-range queries were used."
+            "rationale": "The skill correctly searched both US federal census years within the 1840-1850 span: 1840 and 1850. Each record_search call used residenceYearFrom and residenceYearTo set to the same year (1840 and 1850 respectively), and recordType='census' was specified. The skill made two calls for 1840 (pages 1 and 2) and one for 1850, covering the full requested span without searching years outside it."
           },
           {
             "source": "rubric",
             "name": "Threshold compliance",
             "score": 3,
-            "rationale": "The skill correctly respected the 600-match threshold. For 1840 (102 matches, under threshold), it fetched all results across two pages. For 1850 (2,218 matches, over threshold), it stopped after the first page returned 2 results and did not make additional offset calls. The response explicitly told the user the count (2,218) and asked which Virginia counties to survey, exactly as required by the threshold rule."
+            "rationale": "The skill correctly respected the 600 per-year threshold. For 1840 (102 matches, under threshold), it fetched all results across two pages. For 1850 (2,218 matches, over threshold), it stopped after the first page (2 results examined) and did not make additional record_search calls with higher offsets. The skill reported the 2,218 count to the user and explicitly asked which Virginia counties to survey for 1850 before proceeding, exactly as required by the threshold rule."
           },
           {
             "source": "rubric",
             "name": "Table structure",
             "score": 3,
-            "rationale": "The markdown table in log_009's notes is well-structured with correct columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. It is sectioned by census year (1840 and 1850 as separate sections). The 1840 section lists all 102 households with their heads and ARKs. The 1850 section correctly notes it is over threshold and not tabulated, without mixing in household rows. The table ends with the required sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.'"
+            "rationale": "The markdown table in log_009's notes is well-structured with correct columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. It is sectioned by census year (1840 and 1850 as separate sections). The 1840 section lists all 102 households with their heads and ARKs. The 1850 section correctly notes it is over threshold and not tabulated, with no household rows included. The table ends with the required hedge sentence about pre-1880 censuses lacking relationship columns."
           }
         ]
       },
@@ -7446,51 +7447,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly searched Virginia censuses for 1840 and 1850, properly handled the 600-match threshold by stopping pagination for 1850 (2,218 matches), logged all search results, and produced a well-formed markdown table with 102 Dixon households from 1840. The table includes correct columns (year, county, head, other members, ARK, ruled out) and correctly notes that 1850 exceeded the threshold and requires county selection. All tool calls used correct parameters and the persisted log entry (log_009) contains the complete table with the required closing sentence about pre-1880 censuses."
+                "rationale": "The skill correctly searched Virginia censuses for 1840 and 1850, properly handled the 600-match threshold by stopping pagination for 1850 (2,218 matches), logged all search results, and produced a well-formed markdown table with 102 Dixon households from 1840. The table includes correct columns (year, county, head, other members, ARK, ruled out) and correctly notes that 1850 exceeded the threshold and requires county selection. All tool calls used correct parameters (recordCountry, recordSubdivision, residenceYearFrom/To). The closing hedge sentence about pre-1880 censuses is present and accurate."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: searched both 1840 and 1850 within the requested span, fetched all 102 results from 1840 across two pages, properly stopped at the threshold for 1850, logged all search pages (log_006, log_007, log_008), created the summary table (log_009), and asked the user for county selection to proceed with 1850. The response includes the required summary_for_user block explaining next steps."
+                "rationale": "The skill addressed all required elements: searched both 1840 and 1850 within the requested span, fetched all 102 results from 1840 across two pages (page 1 with 100 results, page 2 with 2 results), properly stopped at the threshold for 1850 without additional paging, logged all search results and the final table, and asked the user for county selection to proceed with 1850. The table was logged as a single survey_surname entry with the complete markdown table in notes, and the response ended with a clear summary and next steps."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. The two record_search calls for 1840 used residenceYearFrom/To = 1840 with correct offset progression (0, then 100). The 1850 call used residenceYearFrom/To = 1850 and correctly stopped after the first page. All calls included surname 'Dixon', recordType 'census', recordCountry 'United States', and recordSubdivision 'Virginia'. The research_log_append calls correctly referenced staged results and used appropriate outcome values ('positive' for 1840, 'partial' for 1850 threshold). No fixture_not_found errors occurred."
+                "rationale": "All tool calls passed correct arguments. The record_search calls for 1840 and 1850 used surname='Dixon', recordType='census', recordCountry='United States', recordSubdivision='Virginia', with correct residenceYearFrom/To values (1840 and 1850 respectively). The second 1840 call correctly included offset=100 to fetch the remaining results. The research_log_append calls correctly referenced the staged results and included appropriate notes. No fixture_not_found errors occurred; all calls matched their expected predicates or were live calls."
               },
               {
                 "source": "rubric",
                 "name": "Place resolution",
                 "score": 3,
-                "rationale": "The skill correctly resolved Virginia as the place and used it to scope all census searches. Each record_search call included recordCountry 'United States' and recordSubdivision 'Virginia', properly mapping the state-level place to the correct parameters. No place_search call is visible in the truncated tool calls (2 earliest dropped), but the correct parameters in all record_search calls confirm proper place resolution was performed."
+                "rationale": "The skill correctly resolved Virginia as the place and used it to scope census searches. The record_search calls properly set recordCountry='United States' and recordSubdivision='Virginia' on each call, matching the delegation's place parameter. No place_search call is visible in the tool calls provided (it may have been dropped for size), but the correct place parameters in record_search calls demonstrate proper resolution and application."
               },
               {
                 "source": "rubric",
                 "name": "Census coverage",
                 "score": 3,
-                "rationale": "The skill searched both US federal census years within the 1840-1850 span: 1840 (with two calls covering all 102 results via pagination) and 1850 (one call that returned 2,218 matches). Each call used residenceYearFrom = residenceYearTo for the target year and recordType 'census'. The year-by-year approach is correct; no year-range queries were used."
+                "rationale": "The skill correctly searched both US federal census years within the 1840-1850 span: 1840 and 1850. Each record_search call used residenceYearFrom and residenceYearTo set to the same year (1840 and 1850 respectively), and recordType='census' was specified. The skill made two calls for 1840 (pages 1 and 2) and one for 1850, covering the full requested span without searching years outside it."
               },
               {
                 "source": "rubric",
                 "name": "Threshold compliance",
                 "score": 3,
-                "rationale": "The skill correctly respected the 600-match threshold. For 1840 (102 matches, under threshold), it fetched all results across two pages. For 1850 (2,218 matches, over threshold), it stopped after the first page returned 2 results and did not make additional offset calls. The response explicitly told the user the count (2,218) and asked which Virginia counties to survey, exactly as required by the threshold rule."
+                "rationale": "The skill correctly respected the 600 per-year threshold. For 1840 (102 matches, under threshold), it fetched all results across two pages. For 1850 (2,218 matches, over threshold), it stopped after the first page (2 results examined) and did not make additional record_search calls with higher offsets. The skill reported the 2,218 count to the user and explicitly asked which Virginia counties to survey for 1850 before proceeding, exactly as required by the threshold rule."
               },
               {
                 "source": "rubric",
                 "name": "Table structure",
                 "score": 3,
-                "rationale": "The markdown table in log_009's notes is well-structured with correct columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. It is sectioned by census year (1840 and 1850 as separate sections). The 1840 section lists all 102 households with their heads and ARKs. The 1850 section correctly notes it is over threshold and not tabulated, without mixing in household rows. The table ends with the required sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.'"
+                "rationale": "The markdown table in log_009's notes is well-structured with correct columns: Census year, County, Head of household, Other members, Record ARK, and Ruled out. It is sectioned by census year (1840 and 1850 as separate sections). The 1840 section lists all 102 households with their heads and ARKs. The 1850 section correctly notes it is over threshold and not tabulated, with no household rows included. The table ends with the required hedge sentence about pre-1880 censuses lacking relationship columns."
               }
             ],
-            "judge_cost_usd": 0.0289132,
+            "judge_cost_usd": 0.029075200000000002,
             "duration_ms": 12926.067680004053,
             "error": null,
-            "input_tokens": 22902,
+            "input_tokens": 22974,
             "cached_input_tokens": 4312,
-            "output_tokens": 1116
+            "output_tokens": 1134
           },
           "started_at": 1793186042.7942352,
           "ended_at": 1793186110.4006388
@@ -7543,5 +7544,6 @@
     "live_modules": {
       "research_log_append": "4b57e59440d4d8d1308ccc23de4112663a53055ee17baebf88ea4559da551ca5"
     }
-  }
+  },
+  "judge_render_hash": "41057644ab5e5097b146a5bbc3c77ff20ead97815fbe4d3e85abd1e5d2c27339"
 }

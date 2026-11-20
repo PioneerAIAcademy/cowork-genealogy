@@ -1,0 +1,755 @@
+{
+  "persons": [
+    {
+      "id": "G13G-P68",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mary E",
+          "surname": "McAndrew"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1e5a83f1-28a4-4a51-90f6-e15b472b8e13",
+          "type": "Birth",
+          "date": "12 July 1848",
+          "standard_date": "12 Jul 1848",
+          "place": "New Brunswick, Canada",
+          "standard_place": "New Brunswick, Canada"
+        },
+        {
+          "id": "7d1b24f6-6ca9-4b1a-9f29-6ecf7ebc2630",
+          "type": "Death",
+          "date": "31 March 1925",
+          "standard_date": "31 Mar 1925",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "1f20ce0a-591d-4876-95cc-c237749b02e7",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Bangor, Penobscot, Maine, United States",
+          "standard_place": "Bangor, Penobscot, Maine, United States"
+        },
+        {
+          "id": "31065fa7-bdc2-4dea-be14-7927a79f9054",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "3b7199bb-f464-445b-9b6a-73bb5e480ede",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "ee9dd0ff-37f1-436a-86c2-fb94138e6bc2",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "77176e5b-99ec-43b9-9f7e-f48c9c8b2ec3",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "5062ea80-ee6f-48e0-8468-3094ef5496c1",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GQWY-3JF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "John",
+          "surname": "Mogan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6ea56525-2062-4639-8141-3a58f1ec9b7d",
+          "type": "Birth",
+          "date": "March 1840",
+          "standard_date": "Mar 1840",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "4b89fa4f-fa6c-42e9-8fd8-83e95e63ab17",
+          "type": "Immigration",
+          "date": "1845",
+          "standard_date": "1845"
+        },
+        {
+          "id": "40c880e3-3266-4989-8d38-99f2e2146866",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "e5e81b0c-5d06-43eb-8b91-20a5db34abe7",
+          "type": "Death",
+          "date": "3 May 1905",
+          "standard_date": "3 May 1905",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ]
+    },
+    {
+      "id": "LT8W-JPR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Anna Irene",
+          "surname": "Mogan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "43b44884-2d0d-4c5f-bb98-acee0b55d1cf",
+          "type": "Birth",
+          "date": "18 November 1884",
+          "standard_date": "18 Nov 1884",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "33a8ce38-5484-4448-bcde-8fdd0e296116",
+          "type": "Christening",
+          "date": "27 May 1885",
+          "standard_date": "27 May 1885",
+          "place": "Wayne, Michigan, United States",
+          "standard_place": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "203685b0-7199-4366-83a6-7b797177ea90",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "6e68a530-dc37-49d8-aee0-b9c83474474f",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Detroit Ward 10, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 10, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "85efd55c-8b73-4c2f-ada5-7c0b9c46dc3d",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Detroit (Districts 0501-0750), Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "413bd07c-f826-4203-b335-1d59963e8285",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 16, Detroit, Detroit City, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 16, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "4754a00f-78f2-40ec-b9f0-45976320b72a",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9XJ8-8FN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Bernard",
+          "surname": "McAndrews"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1aba4eed-906f-4901-8c30-a8fa9ad315ef",
+          "type": "Birth",
+          "date": "1816",
+          "standard_date": "1816",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "bbd20586-ccf7-487f-843a-04a29f9f79a5",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Bangor, Penobscot, Maine, United States",
+          "standard_place": "Bangor, Penobscot, Maine, United States"
+        },
+        {
+          "id": "2dd38fc7-cf70-436a-8b5b-e6367766abad",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "e2679f6b-b9f9-4464-a458-8235ec8c8a9d",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "12 October 1888",
+          "standard_date": "12 Oct 1888",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "ea4e9b7f-ea0a-410f-b4b1-460a2e185104",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "e648a8a9-885f-46bc-a211-8dd49148fc4b",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "027656e9-bfd2-4bfa-8f4d-ce65943e9ff6",
+          "type": "Ethnicity",
+          "value": "American"
+        },
+        {
+          "id": "11d3594a-f071-41a4-9923-fd71bb3b9db4",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "1e56de3b-cd98-44b0-bf5a-1927c240f41b",
+          "type": "Occupation",
+          "value": "Blacksmith"
+        }
+      ]
+    },
+    {
+      "id": "LWR7-RD8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Edward lawrence",
+          "surname": "Mogan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "edef8e8f-e43d-40ce-991d-6dfc2d7e4dab",
+          "type": "Birth",
+          "date": "31 Dec 1885",
+          "standard_date": "31 Dec 1885",
+          "place": "Detroit, Michigan",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "44b35ec0-41dd-413f-b1a2-b0b016a332ec",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "812c8c7b-51e0-4591-bbed-9a5e3d74d593",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Wayne, Michigan, United States",
+          "standard_place": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "0a182d4a-92ca-4d4b-baa5-dd53061294fe",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Dearborn, Wayne, Michigan, United States",
+          "standard_place": "Dearborn, Wayne, Michigan, United States"
+        },
+        {
+          "id": "2f0a8444-e494-48d4-be26-2cabdd84a3a3",
+          "type": "Death",
+          "date": "16 Nov 1934",
+          "standard_date": "16 Nov 1934",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "f4f20c83-6a98-4e73-80db-ba5288655295",
+          "type": "Burial",
+          "place": "Southfield, Oakland, Michigan, United States of America",
+          "standard_place": "Southfield, Oakland, Michigan, United States"
+        }
+      ]
+    },
+    {
+      "id": "9FQJ-CCD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Abby",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "c0ca0213-44e9-4401-ae3f-ee3ffa3897a8",
+          "type": "Birth",
+          "date": "1822",
+          "standard_date": "1822",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "d3a9103d-4377-44b3-ba95-027fb7eeab6a",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Bangor, Penobscot, Maine, United States",
+          "standard_place": "Bangor, Penobscot, Maine, United States"
+        },
+        {
+          "id": "79a3aa2d-5902-4769-b25d-0e3ef2ddbfd1",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "ac097a97-77da-4193-b3bb-39420a2e4724",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "19 August 1894",
+          "standard_date": "19 Aug 1894"
+        },
+        {
+          "id": "2955acd1-5012-4fa7-82ad-69c49a8de9f8",
+          "type": "Obituary",
+          "date": "20 August 1894",
+          "standard_date": "20 Aug 1894",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "7a6f8798-1e18-4128-a381-5ddc0d39214a",
+          "type": "Obituary",
+          "date": "21 August 1894",
+          "standard_date": "21 Aug 1894",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "13fc9a44-ce29-4853-8b10-dbf6e43c8942",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "96QY-KKR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Thomas Frank",
+          "surname": "Mogan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "19 October 1876",
+          "standard_date": "19 Oct 1876",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "4dec2e34-6847-4fb3-919b-21a2f9165f0c",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Detroit Ward 4, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 4, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "463e6cea-600f-46a9-bf4f-ef34e884ae2c",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "8a19028e-d572-496b-b5a5-04d4aac3db82",
+          "type": "Death",
+          "date": "2 May 1924",
+          "standard_date": "2 May 1924",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "92f88bcf-1533-4ae0-9aae-51c52af8ae96",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "5cdfa75b-a1c8-4299-bfbc-18cf0aa19396",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ]
+    },
+    {
+      "id": "9XPJ-TRP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "John Vincent",
+          "surname": "Mogan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "12May1879",
+          "standard_date": "12 May 1879",
+          "place": "Detroit, Wayne, Michigan",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "22 Sep 1950",
+          "standard_date": "22 Sep 1950",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ]
+    },
+    {
+      "id": "LZ18-RZM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Mary L.",
+          "surname": "Mogan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "aug 1888",
+          "standard_date": "Aug 1888",
+          "place": "Michigan, United States",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "3ebd5698-7770-4ef9-81c0-2e92e976eedd",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GQWY-3JF",
+      "person2": "G13G-P68"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "9XJ8-8FN",
+      "person2": "9FQJ-CCD"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9XJ8-8FN",
+      "child": "G13G-P68"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9FQJ-CCD",
+      "child": "G13G-P68"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GQWY-3JF",
+      "child": "96QY-KKR",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "G13G-P68",
+      "child": "96QY-KKR",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GQWY-3JF",
+      "child": "9XPJ-TRP"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "G13G-P68",
+      "child": "9XPJ-TRP"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GQWY-3JF",
+      "child": "LT8W-JPR"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "G13G-P68",
+      "child": "LT8W-JPR"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GQWY-3JF",
+      "child": "LWR7-RD8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "G13G-P68",
+      "child": "LWR7-RD8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "GQWY-3JF",
+      "child": "LZ18-RZM",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "G13G-P68",
+      "child": "LZ18-RZM",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "74NF-FRW",
+      "title": "Mary E Morgan, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFW1-YZR : Sat Jan 18 16:01:35 UTC 2025), Entry for Mary E Morgan and Bryan Mcandrew, 31 Mar 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFW1-YZR"
+    },
+    {
+      "id": "74NF-NHF",
+      "title": "Mary E. Morgan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZWQ-HTHW : Mon Jul 06 11:05:13 UTC 2026), Entry for Mary E. Morgan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZWQ-HTHW"
+    },
+    {
+      "id": "74NF-RDG",
+      "title": "Mary McAndrews, \"Canada, Ontario Roman Catholic Church Records, 1760-1923\"",
+      "citation": "\"Canada, Ontario Roman Catholic Church Records, 1760-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZJN-L3ND : Sun Mar 10 05:22:57 UTC 2024), Entry for Francis Gratting Walsh and Richard Walsh, 20 Aug 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZJN-L3N2"
+    },
+    {
+      "id": "74NF-Y8N",
+      "title": "Bryan McAndrew in the 1860 United States Federal Census",
+      "citation": "\"Bryan McAndrew in the 1860 United States Federal Census.\" Ancestry https://www.ancestry.com/discoveryui-content/view/45439464:7667?indiv=try&h&db. Accessed 5 Nov. 2024.",
+      "url": "https://www.ancestry.com/discoveryui-content/view/45439464:7667?indiv=try&h&db"
+    },
+    {
+      "id": "M7T4-9Z7",
+      "title": "Mary Morgan in entry for Thos F. Morgan, \"Michigan, Births and Christenings, 1775-1995\"",
+      "citation": "\"Michigan, Births and Christenings, 1775-1995\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F4BW-XR6 : 16 January 2020), Mary Morgan in entry for Thos F. Morgan, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4BW-XR6"
+    },
+    {
+      "id": "SN2V-2MG",
+      "title": "Mary E. McAndrews in entry for Frank Mogan, \"Ohio, Marriages, 1800-1958\"",
+      "citation": "\"Ohio, Marriages, 1800-1958\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XDZ3-97N : 25 March 2020), Mary E. McAndrews in entry for Frank Mogan, 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XDZ3-97N"
+    },
+    {
+      "id": "3TSW-C2B",
+      "title": "Mary, \"Michigan, Births, 1867-1902\"",
+      "citation": "\"Michigan, Births, 1867-1902\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQKW-MZR : Mon Jan 19 04:44:31 UTC 2026), Entry for Thos F Morgan and John Morgan, 19 October 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQKW-MZY"
+    },
+    {
+      "id": "3TSW-N8K",
+      "title": "Mary Morgan, \"Michigan, Births, 1867-1902\"",
+      "citation": "\"Michigan, Births, 1867-1902\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQCC-HL4 : Wed Jan 22 11:53:55 UTC 2025), Entry for John V. Morgan and John Morgan, 12 May 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQCC-HLC"
+    },
+    {
+      "id": "SN2V-Y14",
+      "title": "Mary E. McAndrews, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z845-P1T2 : Fri Mar 08 23:33:58 UTC 2024), Entry for Frank Mogan and Margaret Murray, 21 2 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X8Q7-YN4"
+    },
+    {
+      "id": "74NN-ND8",
+      "title": "Mary A McAndrews, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6VS-5ZH : Tue Jan 21 08:15:28 UTC 2025), Entry for Bernard McAndrews and Abba McAndrews, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6VS-5ZZ"
+    },
+    {
+      "id": "Q7V4-DV1",
+      "title": "Mary Mcandrews, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZBJ-TZQ : Sat Jan 18 11:44:23 UTC 2025), Entry for Francis G Walsh and Richard Walsh, 20 Aug 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZBJ-TZC"
+    },
+    {
+      "id": "74NF-N1K",
+      "title": "Mary E McAndrews Mogan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7N1D-9BT2 : Sun Jul 05 06:17:08 UTC 2026), Entry for Mary E McAndrews Mogan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7N1D-9BT2"
+    },
+    {
+      "id": "74NF-KJX",
+      "title": "Mary McAndrews, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHCY-CTG : Sun Oct 19 17:38:07 UTC 2025), Entry for James Dean and Martha Dean, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHCY-CT5"
+    },
+    {
+      "id": "M763-CLL",
+      "title": "Mary Morgan in entry for Anna Morgan, \"Michigan, Births and Christenings, 1775-1995\"",
+      "citation": "\"Michigan, Births and Christenings, 1775-1995\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FHM3-9QG : 16 January 2020), Mary Morgan in entry for Anna Morgan, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHM3-9QG"
+    },
+    {
+      "id": "3TSW-QN5",
+      "title": "Mary Morgan, \"Michigan, County Births, 1867-1917\"",
+      "citation": "\"Michigan, County Births, 1867-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPWJ-XX22 : Fri Mar 08 16:42:27 UTC 2024), Entry for Thos F Morgan and John Morgan, 19 October 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPWJ-XX2G"
+    },
+    {
+      "id": "3TSW-JV4",
+      "title": "Mary Mogan, \"Michigan, County Births, 1867-1917\"",
+      "citation": "\"Michigan, County Births, 1867-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGYQ-QXMZ : Sun Mar 10 19:29:58 UTC 2024), Entry for John V Mogan and John Mogan, 12 May 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGYQ-QXMD"
+    },
+    {
+      "id": "SN2V-Y3K",
+      "title": "Mary E Mc Andrews, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFWB-NNY : Thu Jul 11 02:59:14 UTC 2024), Entry for Frank Mogan and John Mogan, 02 May 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFWB-NN1"
+    },
+    {
+      "id": "3TS4-7TD",
+      "title": "Mary E. McAndrews, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z845-P1T2 : Fri Mar 08 23:33:58 UTC 2024), Entry for Frank Mogan and Margaret Murray, 21 2 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Z845-5MW2"
+    },
+    {
+      "id": "Q7JB-PFS",
+      "title": "<Unknown>, \"Michigan, Marriages, 1868-1925\"",
+      "citation": "\"Michigan, Marriages, 1868-1925\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3TS-P2G : Tue Oct 21 02:06:15 UTC 2025), Entry for <Unknown> and <Unknown>, 3 July 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3TS-P25"
+    },
+    {
+      "id": "M9C9-TH9",
+      "title": "Legacy NFS Source: Mary E. - Government record: birth-name: Mary E."
+    },
+    {
+      "id": "SN2V-BJG",
+      "title": "Mary Mcandrew, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KF71-4F2 : Sat Jul 06 16:59:48 UTC 2024), Entry for Ed Mogan and John Mogan, 16 Nov 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KF71-4FG"
+    },
+    {
+      "id": "3TS7-L58",
+      "title": "Mary Morgan, \"Michigan, County Births, 1867-1917\"",
+      "citation": "\"Michigan, County Births, 1867-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CS4N-DB6Z : Thu Mar 07 03:31:10 UTC 2024), Entry for Anna Morgan and John Morgan, 18 Nov 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CS4N-DB2M"
+    },
+    {
+      "id": "SN2V-52Q",
+      "title": "Mary E McAndrews, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFWP-FLZ : Mon Jan 13 11:21:14 UTC 2025), Entry for John Vincent Mogan and John Mogan, 22 Sep 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFWP-FLD"
+    },
+    {
+      "id": "SN22-ZFQ",
+      "title": "Mary E Magan, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M91M-LKB : Fri Oct 17 05:10:47 UTC 2025), Entry for John Magan and Mary E Magan, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M91M-LK1"
+    }
+  ]
+}

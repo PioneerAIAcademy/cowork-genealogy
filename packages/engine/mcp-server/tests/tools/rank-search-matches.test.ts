@@ -262,6 +262,54 @@ describe("rank_search_matches", () => {
     expect(facts).toEqual([]);
   });
 
+  // A household record's spouse and children can only count when the subject's
+  // family is sent with them: alone, the right 1865 household in
+  // thomas-hanrahan-marriage scored under the floor and its page read as a real
+  // negative.
+  it("sends FamilySearch's matcher the enriched subject with their family", async () => {
+    await writeTree({
+      persons: [
+        { id: "I1", gender: "Male", names: [{ preferred: true, given: "Thomas", surname: "Hanrahan" }], facts: [{ type: "Birth", date: "1840", place: "Ireland" }] },
+        { id: "I2", gender: "Female", names: [{ preferred: true, given: "Johanna", surname: "Ryan" }] },
+        { id: "I3", gender: "Female", names: [{ preferred: true, given: "Mary", surname: "Hanrahan" }] },
+        { id: "I9", names: [{ preferred: true, given: "Unrelated", surname: "Person" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "I1", person2: "I2" },
+        { id: "R2", type: "ParentChild", parent: "I1", child: "I3" },
+        { id: "R3", type: "ParentChild", parent: "I2", child: "I3" },
+      ],
+      sources: [],
+    });
+    await writeResearch({
+      person_evidence: [{ id: "pe_001", person_id: "I1", assertion_id: "a_001" }],
+      assertions: [{ id: "a_001", fact_type: "residence", structured_value: { year: "1880", place: "Saratoga, New York" } }],
+    });
+    scorePairMock.mockResolvedValue(scoreResult(0.2));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+    const [, , sent, sentId] = scorePairMock.mock.calls[0] as any[];
+    expect(sentId).toBe("I1");
+    expect(sent.persons.map((p: any) => p.id)).toEqual(["I1", "I2", "I3"]);
+    expect(sent.relationships.map((r: any) => r.id).sort()).toEqual(["R1", "R2", "R3"]);
+    // the subject sent is the enriched one, not the bare tree person
+    expect(sent.persons[0].facts).toContainEqual({ type: "Residence", date: "1880", place: "Saratoga, New York" });
+  });
+
+  it("sends a subject the tree relates to no one alone", async () => {
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID }, LOCAL);
+
+    const sent = scorePairMock.mock.calls[0][2] as any;
+    expect(sent.persons.map((p: any) => p.id)).toEqual([SUBJECT_ID]);
+    expect(sent.relationships ?? []).toEqual([]);
+  });
+
   it("withholds the ranking when the subject has no dated or placed fact", async () => {
     await writeTree(starvedTree);
     scorePairMock.mockResolvedValue(scoreResult(0.001));
@@ -967,6 +1015,28 @@ describe("rank_search_matches", () => {
         expect(m).not.toHaveProperty("attachedToSubject");
         expect(m).not.toHaveProperty("attachedToOther");
       }
+      expect(out.attachmentsChecked).toBe(false);
+    });
+
+    it("sets attachmentsChecked: false when the attachments call fails, and leaves it off on success", async () => {
+      await writeTree(treeOf({ id: SUBJECT_ID }));
+      const ok = await rankWithAttachments(SUBJECT_ID);
+      expect(ok).not.toHaveProperty("attachmentsChecked");
+
+      const ref = await stage([candidate({ recordId: ATTACHED, primaryId: "p1" })]);
+      scorePairMock.mockResolvedValue(scoreResult(0.8));
+      sourceAttachmentsMock.mockRejectedValue(new Error("FamilySearch source-attachments API error: 500"));
+      const failed = await rankSearchMatches(
+        { projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID, checkAttachments: true },
+        LOCAL,
+      );
+      expect(failed.attachmentsChecked).toBe(false);
+    });
+
+    it("carries the active matcher's realNegative floor on the result", async () => {
+      await writeTree(treeOf({ id: SUBJECT_ID }));
+      const out = await rankWithAttachments(SUBJECT_ID);
+      expect(out.realNegativeFloor).toBe(0.01);
     });
 
     describe("when the attachments read fails (self-hosted beta E3)", () => {

@@ -71,7 +71,7 @@ are deliberately excluded — they belong to the judge, per the guide.
     alternative. `outcome: "negative"`, `resultsExamined: 0`; `notes` state place,
     date range, record type, and "no digitized volume exists." **Do not invent a
     volume id or image range.**
-20. Empty `imageIds` array (a volume was opened): treat as nil; `outcome: "negative"`;
+20. `imageCount: 0` (a volume was opened): treat as nil; `outcome: "negative"`;
     `notes` additionally state the volume/image-group id and the image range examined.
 21. Omit `stagedResultsRef` — `image_search` writes no sidecar, so no `results/<id>.json`.
 22. A nil `notes` must record the scope that *was* available and why it is negative —
