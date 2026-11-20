@@ -484,6 +484,28 @@ def _fixture_is_nil(response: dict[str, Any]) -> bool:
     return True
 
 
+def _fixture_states_zero_total(response: dict[str, Any]) -> bool:
+    """`_fixture_is_nil`, but the fixture must SAY its total is zero.
+
+    `_fixture_is_nil` treats a missing total as 0, which is looser than
+    production, whose `totalMatches` always comes from upstream as a number.
+    Everywhere else that divergence is absorbed downstream — the compiled
+    `surnameVariantHints` re-checks `totalMatches === 0` itself, so a total-less
+    fixture simply gets no hint. The nil-log write has no such re-check and is
+    not inert: it appends a real `written_by: "record_search"` entry to
+    research.json and hands back a `logId`. A fixture authored with `results: []`
+    and no total would make the harness grade the agent against a log entry
+    production's own gate would never have written, so that write requires the
+    stated zero.
+    """
+    if not _fixture_is_nil(response):
+        return False
+    return any(
+        isinstance(response.get(key), (int, float))
+        for key in ("totalMatches", "totalResults")
+    )
+
+
 def _format_unlogged_refs(refs: list[str]) -> str:
     shown = ", ".join(refs[:UNLOGGED_REFS_SHOWN])
     rest = len(refs) - UNLOGGED_REFS_SHOWN
@@ -494,6 +516,15 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
     "recorded: log it with `research_log_append`, `outcome: \"negative\"` — which "
     "records what the search returned, not that the record is absent — the exact "
     "parameters used, and no `stagedResultsRef`."
+)
+
+#: Verbatim copy of PLAN_ITEM_WITHOUT_PROJECT_NOTE in
+#: `packages/engine/mcp-server/src/tools/research-log-append.ts`. `record_search`
+#: returns it when `planItemId` arrives with no `projectPath` — the one key it
+#: adds on a projectless call, so the mock must add it there too or the suite
+#: grades the agent on a response production does not send (the #3054 rule).
+PLAN_ITEM_WITHOUT_PROJECT_NOTE = (
+    "'planItemId' has no effect without projectPath — nothing was logged"
 )
 
 
@@ -517,6 +548,11 @@ _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 # `searchAdvice` from the call's own arguments and the answer's counts, so no
 # fixture carries a copy.
 _SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+# record_search writes a nil search's own log entry (issue #4527). The mock
+# performs that write through the SAME compiled code, as it already does for
+# staging — a Python restatement would grade the agent against a log entry
+# production never wrote.
+_RESEARCH_LOG_APPEND_JS = _MCP_BUILD / "tools" / "research-log-append.js"
 
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
@@ -692,6 +728,69 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
     except Exception as exc:  # noqa: BLE001 — advisory, never fails the call
         warnings.warn(f"mock record_search could not compute surnameVariantHints ({exc})", stacklevel=2)
         return None
+
+
+def _write_nil_log(args: dict[str, Any]) -> dict[str, Any]:
+    """Production's own `researchLogAppend` for a nil `record_search` (#4527).
+
+    Returns the keys record_search puts before `results` — `logId` and friends on
+    success, `nilLogRefused` when the log tool refused. Empty when the build
+    predates it or node fails, with a warning: a harness fault must not read as
+    the tool declining to log.
+
+    `store=True` (the default) because this WRITES: under `--store pg` the prelude
+    is what binds the Postgres-backed store the rest of the run uses.
+    """
+    if not _compiled_module_present(
+        _RESEARCH_LOG_APPEND_JS, "a nil record_search will leave no log entry"
+    ):
+        return {}
+    script = (
+        f"import {{ researchLogAppend }} from '{_node_module_url(_RESEARCH_LOG_APPEND_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await researchLogAppend(input);"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    payload = {
+        "projectPath": args.get("projectPath"),
+        "tool": "record_search",
+        # The call's OWN arguments, minus plumbing — the whole point of the
+        # change. `stripQueryPlumbing` drops projectPath/subjectId/planItemId/note.
+        "query": {
+            k: v
+            for k, v in args.items()
+            if k not in ("projectPath", "subjectId", "planItemId", "note")
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "planItemId": args.get("planItemId"),
+        # Trimmed, and whitespace-only is absent — what record-search.ts writes
+        # (`input.note.trim() !== "" ? input.note.trim() : null`). Passing it
+        # through raw made the harness and production write different `notes`
+        # for the same call, so a validator or judge read a value production
+        # never produces.
+        "notes": (args.get("note").strip() or None) if isinstance(args.get("note"), str) else None,
+        "writtenBy": "record_search",
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        logged = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock record_search could not write its nil log entry ({exc})", stacklevel=2)
+        return {}
+    if not logged.get("ok"):
+        return {"nilLogRefused": logged.get("errors") or []}
+    out: dict[str, Any] = {"logId": logged.get("logId")}
+    for key in ("planRationale", "escalationDue"):
+        if logged.get(key):
+            out[key] = logged[key]
+    warn = (logged.get("validation") or {}).get("warnings") or []
+    if warn:
+        out["validationWarnings"] = warn
+    return out
 
 
 def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -2171,7 +2270,7 @@ def create_mock_server(
                 and "error" not in response
                 and args.get("projectPath")
             ):
-                _notes: dict[str, str] = {}
+                _notes: dict[str, Any] = {}
                 if _unlogged_staged:
                     _notes["unloggedSearches"] = UNLOGGED_SEARCHES_NOTE.replace(
                         "{n}", str(len(_unlogged_staged))
@@ -2179,8 +2278,16 @@ def create_mock_server(
                         "{refs}",
                         _format_unlogged_refs([h.get("ref", "") for h in _unlogged_staged]),
                     )
-                if _fixture_is_nil(response):
+                # fulltext_search only. record_search writes a nil's log entry
+                # itself (issue #4527) and no longer asks the agent to, so the
+                # note would tell the model to make a call the engine removed.
+                if _name == "fulltext_search" and _fixture_is_nil(response):
                     _notes["nilSearchNeedsLog"] = NIL_SEARCH_NEEDS_LOG_NOTE
+                # ...and record_search performs that write here, through the same
+                # compiled code production runs, so the suite grades the agent on
+                # the entry production would actually have written.
+                if _name == "record_search" and _fixture_states_zero_total(response):
+                    _notes.update(_write_nil_log(args))
                 if _notes:
                     reordered = {}
                     for _key, _value in response.items():
@@ -2195,6 +2302,23 @@ def create_mock_server(
             if _name == "record_search" and isinstance(response, dict) and "error" not in response:
                 for _advice_key, _advice in _search_advice(dict(args), response):
                     response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
+
+            # Production answers a projectless `planItemId` with a note rather
+            # than dropping it (issue #4527), and that is the one branch the
+            # `projectPath` gate above cannot reach. Without it a projectless
+            # search in a suite is graded against a response production does not
+            # send — the same divergence #3054 fixed for `surnameVariantHints`.
+            if (
+                _name == "record_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and not str(args.get("projectPath") or "").strip()
+                and args.get("planItemId") is not None
+            ):
+                response = _place_before_results(
+                    {**response, "planItemIdIgnored": PLAN_ITEM_WITHOUT_PROJECT_NOTE},
+                    "planItemIdIgnored",
+                )
 
             # Production serializes surnameVariantHints immediately before
             # `results`, after the pre-`results` notes and the advice above —
