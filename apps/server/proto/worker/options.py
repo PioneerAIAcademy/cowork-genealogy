@@ -82,7 +82,7 @@ from app.agent.continue_policy import (
 from app.agent.main_thread import MainThread, load_main_thread
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
-from app.agent.real_agent import direct_project_file_write
+from app.agent.real_agent import MAX_BUFFER_BYTES, direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
 from proto.worker.writer_record import writer_record
@@ -109,9 +109,6 @@ GATEWAY_AGENT_MODELS = {
 }
 BEDROCK_ID_PREFIXES = ("us.", "global.")
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
-# The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
-# raised so one oversized JSON line cannot end a turn.
-MAX_BUFFER_BYTES = 8 * 1024 * 1024
 PRETOOL_TIMEOUT_S = 10.0
 MCP_CONFIG_NAME = "mcp.json"
 
@@ -881,7 +878,8 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style. "
         "With no project and no FamilySearch person ID, a request for the names and details "
-        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "recorded in a record set (a roll, register, muster list or volume), or to re-index "
+        "one page or compare it with its FamilySearch index, goes to the "
         "search-images agent with no projectPath, even when it names no images; relay "
         "everything after its final --- verbatim."
     )

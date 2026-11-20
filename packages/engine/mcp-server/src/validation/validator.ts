@@ -109,6 +109,7 @@ const CLOSED_ENUMS = {
     "home", "getting_started", "online_records", "research_tips",
   ]),
   locality_page_outcome: new Set(["unreachable"]),
+  collection_availability: new Set(["name-searchable", "browse-only"]),
   registration_event: new Set(["birth", "marriage", "death"]),
   registration_level: new Set(["town", "municipality", "parish", "district", "county", "state", "province", "national"]),
   locality_record_type: new Set([
@@ -806,7 +807,7 @@ export const RESEARCH_SHAPES = {
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
     "results_examined", "results_ref", "results_available", "notes",
-    "external_site", "staged_ref",
+    "external_site", "staged_ref", "written_by",
   ]),
   external_site_detail: new Set([
     "site", "url_generated", "capture_received", "capture_filename",
@@ -1330,6 +1331,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("staged_ref" in entry && typeof entry.staged_ref !== "string") {
       addError(report, lp, `staged_ref must be a string; got ${JSON.stringify(entry.staged_ref)}`);
+    }
+    if ("written_by" in entry && typeof entry.written_by !== "string") {
+      addError(report, lp, `written_by must be a string; got ${JSON.stringify(entry.written_by)}`);
     }
 
     const ext = entry.external_site;
@@ -2483,6 +2487,10 @@ function validateLocalities(
     const cols = Array.isArray(loc.collections) ? loc.collections : [];
     for (let j = 0; j < cols.length; j++) {
       checkCounts(cols[j], ["person_count", "record_count"], ["person_count", "record_count"], `${lp}/collections[${j}]`, report);
+      const col = cols[j];
+      if (col && typeof col === "object" && col.availability !== undefined && col.availability !== null) {
+        checkEnum(col.availability, "collection_availability", `${lp}/collections[${j}]`, report);
+      }
     }
     const regs = Array.isArray(loc.registration_start) ? loc.registration_start : [];
     for (let j = 0; j < regs.length; j++) {

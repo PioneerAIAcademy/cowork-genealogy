@@ -25,7 +25,7 @@ import type {
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionKind, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, LocalityRecordType, LocalityAccess, ResolutionKind,
+  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, LocalityRecordType, LocalityAccess, CollectionAvailability, ResolutionKind,
   SkipCategory, RegistrationEvent, RegistrationLevel, ClaimPolarity, FindingType, HitVerdict,
 } from './enums.generated.js'
 
@@ -148,6 +148,8 @@ export interface LogEntry {
   results_available?: number | null
   /** The results/.staging/ file this entry's sidecar was finalized from. */
   staged_ref?: string
+  /** The tool that wrote this entry itself, rather than an agent logging it by hand. */
+  written_by?: string
   notes?: string | null
   external_site: ExternalSiteDetail | null
 }
@@ -421,6 +423,7 @@ export interface LocalityCollection {
   date_range?: string | null
   person_count?: number | null
   record_count?: number | null
+  availability?: CollectionAvailability | null
 }
 
 export interface LocalityRegistrationStart {

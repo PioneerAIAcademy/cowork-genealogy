@@ -128,6 +128,7 @@ can drop:
       dateRange?: string,
       personCount?: number,
       recordCount?: number,
+      availability?: "browse-only",      // only on a browse-only row: the stored label, else from personCount
     }],
     quirks?: string[],
     recordTypes?: [{                     // the entry's record_types rows, without
@@ -142,6 +143,9 @@ can drop:
     repositories?: [{ name: string, holds?: string, access?: string, url?: string }],
     losses?: [{ recordSet: string, years?: string }],
   }],
+  nationalCollections?: {                // country-wide rows, once per country (US, Canada, Mexico)
+    [country: string]: [{ id, title?, dateRange?, personCount?, recordCount? }],
+  },
   awaitingUser?: [{                      // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site
@@ -217,7 +221,25 @@ Projection rules:
   source's id; `assertionCount` counts those assertions.
 - **`localities`** — every `research.localities[]` entry, renamed to camelCase. `guide_markdown`
   and `pages_read` are left out; `research_query` serves the whole entry. A collection count
-  that is not an integer is left out.
+  that is not an integer is left out. A collection carries `availability: "browse-only"` when
+  its stored label (research-append spec §5.12) is browse-only, or, on a row saved before the
+  label existed, when `collectionAvailability(person_count)` is (a count of 0). Any other row
+  carries none and is name-searchable, as on a `collections_search` row. **Why:** a label on
+  every row was 11-13% of the answer on the four planning fixtures.
+- **`nationalCollections`** — the country-wide collections the localities hold, for a
+  locality whose country (its `place`, else its first `jurisdictions[].name` with one) is the
+  United States, Canada or Mexico. Their collections are scoped to the state or province, so
+  `research_append` stores the national rows beside the place's own (research-append spec
+  §5.12, "National collections"). A row is national when `isNationalCollectionTitle` holds
+  for its title. It moves out of its locality's `collections` into the country's list, which
+  holds each id once, sorted by title, in the `collections` row shape. Absent when no locality
+  holds one. It says nothing about the years no row covers: a locality cut to its own period,
+  a capped fill or a fill made while the catalog was unreadable stores a partial list, so
+  research-plan reads coverage from the rows and runs `collections_search` for the country
+  for any year it needs and no row covers. The rows are the core national list only (the
+  censuses and broad indexes); research-plan finds the rest with its own search. **Why:**
+  every US locality holds the same national rows, so one list per country keeps an answer
+  with several localities from repeating them.
 - **`projectStatus`** — `research.project.status`.
 - **`objective`** — `research.project.objective`, verbatim and untruncated. It is the
   only surface that returns the objective: `research_query` serves array sections only, so without it a
@@ -266,7 +288,8 @@ question** outranks **an unsettled conflict that has weighed everything**, which
 outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
-outranks competing parent sets, which outrank **the researcher's choice**, which
+outranks competing parent sets, which outrank unlinked kin, which outranks
+**the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
 
@@ -449,6 +472,31 @@ question's assertions are linked to — who is the child of more than two birth-
 `related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
 fires on 5 e2e question-runs (the two spot-checked are real: one father with two
 different mothers; two same-named mothers).
+
+**Unlinked kin** also needs the tree, and adds no field: only
+`nextStep` carries it, as `hypothesis-tracking — unlinked kin: <person ids>`. It
+fires on an unresolved question that no `hypotheses` entry lists in
+`related_question_ids`, for each tree person linked by live `person_evidence` to
+one of its assertions who has no `ParentChild` or `Couple` path, of any length or
+direction, to a subject, and none of whose linked assertions shares a record
+(`record_id`, else `source_id`) with an assertion linked to a person who has one.
+It is silent until some `subject_person_ids` entry is a tree person, since every
+linked person would otherwise count, the subject included. The question, not
+the person, is what a hypothesis must relate to: hypotheses carry no person ids,
+and matching their `claim` text is fragile. A shared record rules a person out
+because a household member read from the subject's own record is not inferred kin.
+Measured 2026-11-19 (`npx tsx dev/measure-question-state-signals.ts`): 2 scenario
+questions (`unregistered-sibling-premise-scopes-searches`,
+`flynn-marriage-only-no-child-link`) and 8 e2e question-runs on unresolved
+questions, 7 of them in `nextStep` (one is masked by an open conflict). Of those 7,
+a spot-check found 2 real inferred kin, 1 doubtful and 4 not: the subject's own
+duplicate, a duplicated family, unrelated search hits. The 4 are all September 2026
+runs, and all 4 have a subject with no live link. They were accepted on purpose
+(lead, 2026-11-19), overriding the plan's "stop if most hits are not real" rule:
+they are rare, the 20 later runs of the same fixtures produce none, and a false
+route costs one hop that the hypothesis condition stops from repeating. Requiring a
+linked subject would have removed them, but it also silences
+`unregistered-sibling-premise-scopes-searches`, whose subject has no link.
 Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to

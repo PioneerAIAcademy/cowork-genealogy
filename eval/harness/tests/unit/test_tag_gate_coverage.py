@@ -40,6 +40,12 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
+    "candidate-not-excluded": (
+        "its only test, ut_search_records_035, was deferred in PR #4650: it "
+        "scored 2 of 5 before and after the prose edit because the agent still "
+        "searches with a birth range excluding the found candidate; issue #4580 "
+        "restores it once a tool rule enforces it"
+    ),
     "materialize": (
         "its only test, ut_person_evidence_027, was deleted by PR #4613 (red "
         "under the Sonnet 4.6 judge); issue #4681 restores it"
@@ -53,10 +59,6 @@ DORMANT: dict[str, str] = {
         "it fails 2 of 4 on main because the agent skips the localities read; "
         "issue #2475 restores it once a writer precondition can join search_stop "
         "to localities"
-    ),
-    "objective-target": (
-        "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
-        "the validator was kept and no test carries the tag yet"
     ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "

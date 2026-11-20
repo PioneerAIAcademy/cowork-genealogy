@@ -52,6 +52,7 @@
   ],
   "judge_context": [
     "Must mention coal mining industry context. Must highlight employment registers, union rolls, census, and church records. Must not suggest modern HR databases or statewide vital registration as the main source.",
-    "locality_survey's volumes part returns 23 total results (paginated, nextPageToken present) spanning all three named counties: a 95%-indexed mine worker employment card volume in Schuylkill, and browse-only mine accident reports (Luzerne) and colliery payroll ledgers (Lackawanna). The skill should reflect that digitized coverage varies by county and access level rather than treating the multi-county region as a single uniform source."
+    "volume_search returns 23 total results (paginated, nextPageToken present) spanning all three named counties: a 95%-indexed mine worker employment card volume in Schuylkill, and browse-only mine accident reports (Luzerne) and colliery payroll ledgers (Lackawanna). The skill should reflect that digitized coverage varies by county and access level rather than treating the multi-county region as a single uniform source.",
+    "No fixture in this test gives the counties Schuylkill County was formed from. A guide that reports its parent counties as unconfirmed meets Jurisdiction accuracy on that point; do not require Berks and Northampton, the rubric's example, which no tool result here supplies."
   ]
 }

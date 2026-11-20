@@ -546,7 +546,7 @@ def tool_input_keys(tool: str, nested: str | None = None) -> frozenset[str] | No
 # response-shape controls. Mirrors NOT_A_FILTER in
 # packages/engine/mcp-server/src/tools/research-log-append.ts; a claim about one
 # of these is not a claim about which records a search matched.
-NOT_A_FILTER: frozenset[str] = frozenset({"projectPath", "subjectId", "count", "offset", "includeFacets"})
+NOT_A_FILTER: frozenset[str] = frozenset({"projectPath", "subjectId", "count", "offset", "includeFacets", "planItemId", "note"})
 
 
 def filter_claim_findings(query: Any, sent: Any, vocabulary: frozenset[str]) -> tuple[list[str], list[str]]:

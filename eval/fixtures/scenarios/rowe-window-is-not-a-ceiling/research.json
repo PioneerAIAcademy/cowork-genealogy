@@ -66,17 +66,266 @@
         {
           "id": "1401638",
           "title": "United States Census, 1850",
-          "date_range": "1850"
+          "date_range": "1850",
+          "person_count": 20224571,
+          "record_count": 20224571,
+          "availability": "name-searchable"
         },
         {
           "id": "1473181",
           "title": "United States Census, 1860",
-          "date_range": "1860"
+          "date_range": "1860",
+          "person_count": 27176265,
+          "record_count": 27176265,
+          "availability": "name-searchable"
         },
         {
           "id": "1888129",
           "title": "United States Civil War and Later Pension Files, 1861-1934",
-          "date_range": "1861-1934"
+          "date_range": "1861-1934",
+          "person_count": 34138955,
+          "record_count": 34138955,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1674814",
+          "title": "Indiana, Births and Christenings, 1773-1933",
+          "date_range": "1773-1933",
+          "person_count": 652521,
+          "record_count": 230558,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000704",
+          "title": "Indiana, Carroll County, Museum Records, 1850-1963",
+          "date_range": "1850-1963",
+          "person_count": 81635,
+          "record_count": 52684,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2469543",
+          "title": "Indiana, Church Marriages, 1780-1993",
+          "date_range": "1780-1993",
+          "person_count": 1267,
+          "record_count": 288,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2790248",
+          "title": "Indiana, Church Records, 1743-1966",
+          "date_range": "1743-1966",
+          "person_count": 36998,
+          "record_count": 15369,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2300886",
+          "title": "Indiana, Daviess County, Washington Times Herald Obituaries, 1984-2012",
+          "date_range": "1984-2012",
+          "person_count": 311798,
+          "record_count": 311875,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1947977",
+          "title": "Indiana, Death Index, 1882-1920",
+          "date_range": "1882-1920",
+          "person_count": 793944,
+          "record_count": 793965,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3559081",
+          "title": "Indiana, Deaths and Burials, 1750-1993",
+          "date_range": "1750-1993",
+          "person_count": 344532,
+          "record_count": 145186,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000794",
+          "title": "Indiana, Fayette County, Probate Records, 1905-2022",
+          "date_range": "1905-2022",
+          "person_count": 55150,
+          "record_count": 62221,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000717",
+          "title": "Indiana, Franklin County, Marriage Records, 1853-1997",
+          "date_range": "1853-1997",
+          "person_count": 127613,
+          "record_count": 15138,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000716",
+          "title": "Indiana, Franklin County, Probate Records, 1811-1997",
+          "date_range": "1811-1997",
+          "person_count": 168925,
+          "record_count": 485569,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2438215",
+          "title": "Indiana, Gary and East Chicago Crew Lists, 1945-1956",
+          "date_range": "1945-1956",
+          "person_count": 15992,
+          "record_count": 15992,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000501",
+          "title": "Indiana, Harrison County, Colored Enumerations, 1806-1863",
+          "date_range": "1806-1863",
+          "person_count": 108,
+          "record_count": 108,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2844322",
+          "title": "Indiana, Harrison County, Index Cards to Corydon Democrat Newspaper Obituaries, 1861-2008",
+          "date_range": "1861-2008",
+          "person_count": 376352,
+          "record_count": 376350,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000560",
+          "title": "Indiana, Harrison County, Marriage Records, 1918-2001",
+          "date_range": "1918-2001",
+          "person_count": 86501,
+          "record_count": 16194,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1674830",
+          "title": "Indiana, Marriages, 1780-1992",
+          "date_range": "1780-1992",
+          "person_count": 3532047,
+          "record_count": 892895,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1410397",
+          "title": "Indiana, Marriages, 1811-2019",
+          "date_range": "1811-2019",
+          "person_count": 25662405,
+          "record_count": 5338151,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4112706",
+          "title": "Indiana, Military Discharges, ca.1864-ca.1985",
+          "date_range": "1864-1985",
+          "person_count": 6027,
+          "record_count": 6027,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000098",
+          "title": "Indiana, Mortality Schedules, 1860-1880",
+          "date_range": "1860-1880",
+          "person_count": 66128,
+          "record_count": 66124,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2137708",
+          "title": "Indiana, Naturalization Records and Indexes, 1848-1993",
+          "date_range": "1848-1993",
+          "person_count": 173344,
+          "record_count": 106817,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1548494",
+          "title": "Indiana, Ripley County, Osgood, Greendale Cemetery Records, 1861-2007",
+          "date_range": "1860-2008",
+          "person_count": 5266,
+          "record_count": 4458,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4113739",
+          "title": "Indiana, Voter Registers, 1850-1931",
+          "date_range": "1850-1931",
+          "person_count": 201181,
+          "record_count": 201181,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1420441",
+          "title": "United States Census (Mortality Schedule), 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 1356791,
+          "record_count": 1356791,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239069,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803958",
+          "title": "United States, Census, 1830",
+          "date_range": "1830-1830",
+          "person_count": 1825827,
+          "record_count": 1824437,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1786457",
+          "title": "United States, Census, 1840",
+          "date_range": "1840-1840",
+          "person_count": 2566652,
+          "record_count": 2566652,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1438024",
+          "title": "United States, Census, 1870",
+          "date_range": "1870-1870",
+          "person_count": 42384138,
+          "record_count": 40350030,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1417683",
+          "title": "United States, Census, 1880",
+          "date_range": "1880-1880",
+          "person_count": 50472677,
+          "record_count": 50472677,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1610551",
+          "title": "United States, Census, 1890",
+          "date_range": "1890-1890",
+          "person_count": 7393,
+          "record_count": 6285,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1325221",
+          "title": "United States, Census, 1900",
+          "date_range": "1900-1900",
+          "person_count": 76492831,
+          "record_count": 76492831,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
         }
       ],
       "quirks": [

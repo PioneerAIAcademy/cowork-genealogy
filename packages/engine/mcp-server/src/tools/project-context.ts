@@ -19,6 +19,8 @@ import {
 } from "./research-query.js";
 import { readProjectJson, NoProjectError, NO_PROJECT_MESSAGE_CONTEXT } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
+import { isNationalCollectionTitle, localityNationalCountry } from "../utils/collection-scope.js";
+import { collectionAvailability, type CollectionAvailability } from "../utils/collection-availability.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -98,6 +100,11 @@ export interface ProjectContextLocality {
     dateRange?: string;
     personCount?: number;
     recordCount?: number;
+    /** Present only when browse-only: the stored label, else
+     *  `collectionAvailability(personCount)`. A row without it is name-searchable,
+     *  as on a `collections_search` row; labelling every row was 11-13% of the
+     *  answer on the four planning fixtures. */
+    availability?: Extract<CollectionAvailability, "browse-only">;
   }[];
   quirks?: string[];
   /** The entry's `record_types` rows, without their source URLs (research_query has them). */
@@ -113,6 +120,8 @@ export interface ProjectContextLocality {
   repositories?: { name: string; holds?: string; access?: string; url?: string }[];
   losses?: { recordSet: string; years?: string }[];
 }
+
+export type ProjectContextCollection = NonNullable<ProjectContextLocality["collections"]>[number];
 
 /** An external-site URL handed to the user and not yet answered (spec §2.3). */
 export type ProjectContextAwaitingUser = Omit<AwaitingHandOff, "planItemId" | "performed"> & {
@@ -259,6 +268,10 @@ export type ProjectContextResult =
       persons?: ProjectContextPerson[];
       sources?: ProjectContextSource[];
       localities?: ProjectContextLocality[];
+      /** The localities' country-wide collections in the United States, Canada and
+       *  Mexico, once per country, by title; left out of each locality's own
+       *  `collections`. It covers what the localities stored, not every year. */
+      nationalCollections?: Record<string, ProjectContextCollection[]>;
       /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
       awaitingUser?: ProjectContextAwaitingUser[];
       /** Films whose browse cap is spent in this project; nothing resets it. */
@@ -415,22 +428,36 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // losses). guide_markdown, catalog and pages_read are left out; research_query serves
   // the whole entry.
   const localities: ProjectContextLocality[] = [];
+  const national = new Map<string, Map<string, ProjectContextCollection>>();
   for (const l of Array.isArray(research?.localities) ? research.localities : []) {
     if (!l || typeof l !== "object" || typeof l.id !== "string") continue;
     const jurisdictions = (Array.isArray(l.jurisdictions) ? l.jurisdictions : [])
       .filter((j: any) => j && typeof j === "object" && typeof j.name === "string")
       .map((j: any) => omitEmpty({ name: j.name, dateRange: typeof j.date_range === "string" ? j.date_range : null }));
-    const collections = (Array.isArray(l.collections) ? l.collections : [])
-      .filter((c: any) => c && typeof c === "object" && typeof c.id === "string")
-      .map((c: any) =>
-        omitEmpty({
-          id: c.id,
-          title: typeof c.title === "string" ? c.title : "",
-          dateRange: typeof c.date_range === "string" ? c.date_range : null,
-          personCount: Number.isInteger(c.person_count) ? c.person_count : null,
-          recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
-        }),
-      );
+    const country = localityNationalCountry(l);
+    const collections: ProjectContextCollection[] = [];
+    for (const c of Array.isArray(l.collections) ? l.collections : []) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") continue;
+      const row: ProjectContextCollection = omitEmpty({
+        id: c.id,
+        title: typeof c.title === "string" ? c.title : "",
+        dateRange: typeof c.date_range === "string" ? c.date_range : null,
+        personCount: Number.isInteger(c.person_count) ? c.person_count : null,
+        recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
+        ...((c.availability === "name-searchable" || c.availability === "browse-only"
+          ? c.availability
+          : collectionAvailability(c.person_count)) === "browse-only"
+          ? { availability: "browse-only" as const }
+          : {}),
+      });
+      if (country && typeof c.title === "string" && isNationalCollectionTitle(c.title, country)) {
+        const rows = national.get(country) ?? new Map<string, ProjectContextCollection>();
+        if (!rows.has(c.id)) rows.set(c.id, row);
+        national.set(country, rows);
+      } else {
+        collections.push(row);
+      }
+    }
     const quirks = (Array.isArray(l.quirks) ? l.quirks : []).filter(
       (q: any): q is string => typeof q === "string",
     );
@@ -469,6 +496,11 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         losses,
       }) as ProjectContextLocality,
     );
+  }
+
+  const nationalCollections: Record<string, ProjectContextCollection[]> = {};
+  for (const [country, rows] of national) {
+    nationalCollections[country] = [...rows.values()].sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
   }
 
   const projectStatus =
@@ -562,6 +594,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     persons,
     sources,
     localities,
+    ...(national.size > 0 ? { nationalCollections } : {}),
     awaitingUser,
     exhaustedImageGroups: exhausted,
     waitingPages: waiting,
@@ -655,10 +688,13 @@ export const projectContextSchema = {
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
-    "recordCount}], quirks, recordTypes [{type, years, level, heldAt, access, collectionIds, summary}], " +
-    "repositories [{name, holds, access, url}], losses [{recordSet, years}]}] — the " +
+    "recordCount, availability?}], quirks, recordTypes [{type, years, level, heldAt, access, collectionIds, summary}], " +
+    "repositories [{name, holds, access, url}], losses [{recordSet, years}]}] — availability \"browse-only\" marks a " +
+    "browse-only collection; a row without it is name-searchable; the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
-    "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
+    "to stage searches (guide_markdown prose is omitted here); and nationalCollections " +
+    "{country: [same rows]} — the localities' country-wide collections for the United States, " +
+    "Canada and Mexico, once per country and left out of each locality's collections; and questionStatuses " +
     "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
     "competingParentSets}] — per question, resolved ones included, its text (truncated) and how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +

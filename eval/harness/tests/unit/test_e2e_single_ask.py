@@ -393,6 +393,25 @@ def test_the_graders_heading_list_is_the_validators():
     assert GUIDE_HEADINGS == lines
 
 
+PLAN_SPEC = SingleAskSpec(
+    **{**SPEC.__dict__, "expected_owner": "research-plan", "expected_save": {"section": "plans"}, "is_plan_ask": True}
+)
+
+
+def test_plans_save_missing_fails_and_present_passes():
+    _, line = run([agent("research-plan")], final_research=final(), spec=PLAN_SPEC)
+    assert "failed=[save]" in line and "missing new plans" in line
+    g, _ = run([agent("research-plan")], final_research=final(plans=[{"id": "pl_001"}]), spec=PLAN_SPEC)
+    assert g.passed
+
+
+def test_plans_save_needs_a_plan_ask(tmp_path):
+    _, spec = load_single_ask_fixture(_write(tmp_path, expected_save={"section": "plans"}, is_plan_ask=True))
+    assert spec.expected_save == {"section": "plans"}
+    with pytest.raises(FixtureError, match="is_plan_ask"):
+        load_single_ask_fixture(_write(tmp_path, id="no-plan-ask", expected_save={"section": "plans"}))
+
+
 def test_missing_research_json_names_itself_in_the_save_detail():
     g, _ = run([agent("source-evaluation")], final_research=None)
     assert g.checks["save"] == (False, "no research.json")

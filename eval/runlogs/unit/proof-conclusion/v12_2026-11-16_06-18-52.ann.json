@@ -1,0 +1,390 @@
+{
+  "run_log": "v12_2026-11-16_06-18-52.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: date, place, parties, name variant, tier, and source characterization all accurate against fixture data."
+    },
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Verified: preconditions gate passed, ps_001 created with all required fields, tree encoded, q_001 resolved, narrative sections complete."
+    },
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: all tool calls used correct argument shapes; two validation errors recovered cleanly per policy with no extra retries."
+    },
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Tier (probable) explicitly justified; shortfall set to gap with named reachable record; explains why not proved and not lower."
+    },
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Self-contained: inline citations, identity reasoning, name variant explained, no unexplained JSON identifiers"
+    },
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions (a_001, a_002, a_003) cited in narrative; limitation (single derivative, no original examined) explicitly named."
+    },
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ummary vehicle correct for single-source, no-conflict, no-competing-candidates evidence shape"
+    },
+    {
+      "test_id": "ut_proof_conclusion_c3s",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Marriage fact added to existing rel-anders-unna with primary=true, correct date/place/source; encoding matches conclusion."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Verified: 1842 burial vs ~1845 birth chronology is sound; name variant, source citations, and no-tree-write all correct."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Verified: all six assertions cited, ps_001 complete, shortfall=none, exhaustive_search_summary present, q_001 resolved, no tree modifications."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: one recovery (claims field removed) clean per policy; all other calls correct on first attempt."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Disproved tier justified by affirmative chronological refutation; shortfall=none correct; adjacent tier boundary (posthumous birth) explicitly addressed."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Self-contained: Question, Conclusion, Evidence, Correlation, Limits sections all present; full inline citations; no unexplained identifiers."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All six assertions cited; posthumous-birth alternative addressed; omitted searches (baptism, Bridget's records) explained as irrelevant to this specific question."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Summary correct for clean chronological refutation with no competing candidates or indirect reasoning."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No tree write correct for disproved; tool's I2 sweep is not an agent action; complied with per-test constraint."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: probable tier sound for three indirect/secondary sources; conflict c_001 addressed; tree encoding correct; no fabricated claims."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Verified: preconditions gate passed, ps entry complete, tree encoded, q_001 left open (mother unidentified), unsearched records identified."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Verified: tree_edit add_relationship args correct (parent/child/type/subtype/sources); one schema recovery clean per policy."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Probable explicitly contrasted with proved and possible; shortfall=gap correct with named reachable records; exhaustive_search_summary properly states research not declared exhaustive."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Self-contained: inline citations, source classifications, conflict resolution, tier declaration, next steps; no unexplained identifiers."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All relevant assertions cited; c_001 addressed; indirect nature of census and secondary status of death cert informant acknowledged; mother's absence explicitly noted."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Argument correct for competing candidates, indirect evidence, resolved conflict, and secondary informant — Summary would be insufficient here."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d8h",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " ParentChild R1 created (not pre-existing) with correct subtype and multi-source refs at appropriate quality levels; no spurious fact added."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: gate failure correctly identified and reported; no tree encoding attempted; no fabricated claims."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: gate ran, blocking condition named, searches documented, unsearched sources listed, next step (person-evidence for Jesse) provided."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: one schema recovery (claims field removed) clean per policy; all other calls correct."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " not_proved justified by speculative pe_001 and unlinked Jesse; shortfall=gap correct; advancement path explicitly stated."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with LLM 2. \"Tree person I2\" and \"speculative confidence\" are unexplained in the narrative itself; a standalone reader cannot resolve them. Word count (238 vs 150-word statement budget) also noted. Core elements present but two unexplained references prevent full standalone credit."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: a_001, a_002, a_003 cited; namesake ns_001 addressed; blocking condition (unlinked Jesse) explicitly named."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Statement correct for single-record, single-gate-failure, no competing candidates."
+    },
+    {
+      "test_id": "ut_proof_conclusion_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No death fact encoded correct; skill correctly reported refusal and named next step without attempting an invalid write."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Verified: only the specified parenthetical changed; tier-justification paragraph and all other fields untouched; no fabrication."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: single requested wording change made, nothing more, nothing less."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: research_append args correct (section, op, entryId, edits array with exact strings); succeeded with no validation errors."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Review-mode test; tier (Probable) and shortfall (gap) unchanged and valid; wording fix correctly identified as not affecting conclusion strength."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Review-mode test; wording change improves precision without affecting standalone readability; existing narrative retains inline citations and full structure."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Review-mode test; all three sources still cited; no evidence gaps introduced or removed by the edit."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Review-mode test; Summary form unchanged and still appropriate for the evidence shape.\n\n"
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": " N/A per per-test context override; pre-existing R1 ParentChild encoding unchanged."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: probable tier sound for two indirect censuses plus secondary death cert; c_001 conflict addressed; tree encoding matches evidence."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: all seven assertions gathered, both persons' person_evidence retrieved, conflict and hypothesis incorporated, question left open (mother unidentified)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified: research_query scoped to q_001 per §1; tree_edit and research_append args correct; no fixture errors."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Probable explicitly contrasted with proved; shortfall=gap correct with named reachable records (1870/1880 censuses, probate, parish records)."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Self-contained: inline citations for all three sources, source quality described, conflict resolution explained, maternity gap acknowledged."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All seven assertions cited; c_001 addressed with reasoning; secondary informant weakness and absent mother both explicitly acknowledged."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Argument correct for indirect evidence, secondary informant, and need to weigh source quality against competing unknown father."
+    },
+    {
+      "test_id": "ut_proof_conclusion_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " ParentChild R1 created with correct sources; no new birth fact added (existing fact already matched conclusion) per §7.1."
+    }
+  ]
+}

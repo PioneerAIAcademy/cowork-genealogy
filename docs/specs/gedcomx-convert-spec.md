@@ -635,7 +635,8 @@ names another country (`countryConsistency`, the check `research_append`
 refuses a record on), or another US state, Puerto Rico or Canadian province
 (`divisionContradiction`): the `place`'s last part, after a trailing "United
 States", "Canada" or "British North America", names one by name or postal code
-("Quebec", "Utah Territory", "Canada East", "QC"), and the name's parts after
+("Quebec", "Utah Territory", "Canada East", "QC") or by an abbreviation the
+one-word list gives that state or province ("Miss", "Tenn"), and the name's parts after
 its own name name others and not that one; when they name none, its own name
 is read, so a state named for another ("Washington, United States" for
 "Washington, Washington, Pennsylvania") contradicts it. X7N1-CP7N's 1921 census, written

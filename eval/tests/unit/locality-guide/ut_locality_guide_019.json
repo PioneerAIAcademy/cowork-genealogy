@@ -46,8 +46,8 @@
   ],
   "judge_context": [
     "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s.",
-    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead.",
-    "Jurisdiction accuracy: the tools return no jurisdiction history for 1600-1650 (place_search_all and the wiki pages carry no colonial formation dates), and the guide may state only what a tool returned. A guide that says the survey did not confirm the colonial jurisdictions, or names Plymouth and Massachusetts Bay as context without dates, is not a fail on this dimension; inventing formation dates no tool returned is."
+    "The collections-search-massachusetts fixture returns personCount values 3456789, 1234567, 987654, 345678 and 567890. A guide that reports these counts is quoting the tool result, not inventing figures; do not dock it for them.",
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
   "judge_reads_files": true
 }

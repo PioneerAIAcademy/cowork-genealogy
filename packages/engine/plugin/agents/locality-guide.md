@@ -106,7 +106,7 @@ locality_survey({ standardPlace: "Schuylkill, Pennsylvania, United States", star
 
 It returns every survey part: `population`, `collections`, `volumes` (the place and its parent), `catalog`, `externalLinks`, `wikiPages` (home, getting_started, online_records, research_tips), `question` (the wiki's sections for it), `vitalRecords`, `churchRecords`, `namingCustoms`, `searchHelp`, `collectionNotices`, `pagesRead`, `volumeSummary`, `guideHeadings`, `recordTypes`, and with a project `staged.resultsRef`. A part that failed is `{ error }`: report it as a gap. Each wiki page carries the sections chosen for the guide and names the headings it `omitted`; `wiki_read` its `url` (with `offset` when a section says where it was cut) only when the guide needs one of them. With no `standardPlace` from Step 2, pass the place as delegated.
 
-`wiki_search`, and `wiki_read` of a `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census` or `_Naming_Customs` page, are for a fact the survey did not carry; run them together in one turn.
+`wiki_search` with `includeText: true`, and `wiki_read` of a `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census` or `_Naming_Customs` page, are for a fact the survey did not carry; run them together in one turn.
 
 **Each `collectionNotices` entry, and each page statement of how a collection was indexed or how names were spelled in that place's records, is a `quirks[]` entry for this locality, citing the page.**
 
@@ -186,11 +186,11 @@ The tool assigns the `loc_` id and stamps `created`, and writes `pages_read`,
 **The rows.**
 - `type`: `vital_record` (civil registration), `church`, `census`, `probate` (wills, administrations, guardianships), `court`, `land`, `military`, `cemetery`, `newspaper`, `immigration` (passenger lists and naturalizations, which an inland court also made), `tax`, `other` (school, institutional, directories). A type held in two places, or kept by two denominations, gets a row for each.
 - `level`: the jurisdiction level the records are held at, from a tool result, never a default; null when none says.
-- `summary`: one line from the tool results: what exists, its gaps, and what replaces a missing series. A church row names the denominations and the language when not English; a probate row says whether to look for wills (testate) or administrations (intestate); a land row names the office that granted the land, from the `{Jurisdiction}_Land_and_Property` page.
+- `summary`: one line from the tool results: what exists, its gaps, and what replaces a missing series. A church row names the denominations and the language when a tool result gives it; a probate row says whether to look for wills (testate) or administrations (intestate); a land row names the office that granted the land, from the `{Jurisdiction}_Land_and_Property` page. A start date only from a tool result, else "not confirmed by this survey".
 - `source_url`: the URL a tool result returned for the row's claims.
 - The tool fills `collection_ids` from the entry's collections. Send `years` only when a page states the span.
 - A type the survey says nothing about: a summary saying this survey did not confirm it, `source_url: null`.
-- `repositories`: one per repository, with `url` only as a tool result gave it; never two in one row unless a tool result says one runs the other. `holds` names what it holds that fills a gap a row states.
+- `repositories`: every repository a tool result names for this place or its state, `wiki_search`, `wiki_read` and `wikipedia_search` excerpts included, and no other; one per repository, with `url` only as a tool result gave it; never two in one row unless a tool result says one runs the other. `holds` names what it holds that fills a gap a row states. `access` is free, paid or subscription only where a tool result states it (link text, or the `cost` on a `research_query` `external_collections` row), FamilySearch being free; otherwise null. Never infer it from the repository's name.
 - `losses`: a record set destroyed, lost or missing only when a tool result says so for that record set; a loss stated for a whole class of records is a row's summary, never narrowed to these records. An empty search is a coverage gap, not a loss.
 
 Then send the guide to that `loc_` id, one section per `research_append` call, never
@@ -324,6 +324,9 @@ not apply says why in that line.
 - [If stable, state that boundaries were unchanged]
 
 ## Research tips
+- **Search order:** [start with the source the rows name that is indexed and
+  free, by its collection ID or image group number, and say why it goes first;
+  then the next source and why; then the browse-only or offline ones]
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
   inline per the rule "Cite the FamilySearch Wiki page, not just its title",
   i.e. the claim, then the returned page title linked to its returned URL. Take the
@@ -331,7 +334,6 @@ not apply says why in that line.
 - [Naming conventions or spelling patterns for this area — quote the cited
   source exactly; do not reverse or alter which relative a naming position names]
 - [Alternative sources when primary records are missing]
-- [Efficient research sequence for this jurisdiction]
 - [Relevant finding aids and research guides to consult]
 ```
 

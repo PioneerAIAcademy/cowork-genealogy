@@ -1,0 +1,84 @@
+{
+  "test": {
+    "id": "ut_research_p4s",
+    "skill": "research",
+    "name": "A bounded transcription reports a record's older place name without calling the tree's place wrong",
+    "type": "positive",
+    "description": "#4214. The router cannot look places up (place_search is agent-only), so a record that uses a town's old name looks to it like a disagreement with the tree. In the hosted session behind #4214 it told a tester, twice, that the tree's birth place was wrong when the record gave Paso de Sotos, Villa Hidalgo's name before 1922. Here the objective states the tree's birthplace, Villa Hidalgo, Jalisco, Mexico, and the named page gives Paso de Sotos. GRADING: `transcribes-in-place` makes test_bounded_transcription_is_delivered_in_place assert from the call records that the router handed off to nothing, called image_transcribe on the named image with a projectPath, and read the staged page with sidecar_read. The wording is the judge's: no verdict on the tree, and the record's place still reported. ENTRY: `/research`, as ut_research_020 explains; a bare message does not activate the skill.",
+    "tags": [
+      "transcribes-in-place",
+      "bounded-request"
+    ]
+  },
+  "input": {
+    "user_message": "/research Transcribe image 008123456_00412, María Ignacia Robledo's baptism, and tell me whether it agrees with her tree. Leave it at that.",
+    "scenario": "villa-hidalgo-birth-no-questions"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-jalisco-baptism-paso-de-sotos"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "FAIL (score Correctness 1) if the reply states any relation between Paso de Sotos and Villa Hidalgo that the record does not state, such as 'a village in the municipality of', 'a rancho within', 'part of' or 'near'. The only relation the reply may state without a source is that they are the same town.",
+    "This is a BOUNDED-REQUEST test. The reply must treat the message as one deliverable: it must NOT invoke question-selection or research-plan, and must not start deriving research questions from the objective.",
+    "The tree and the objective give María Ignacia Robledo's birthplace as Villa Hidalgo, Jalisco, Mexico; the page gives Paso de Sotos. Paso de Sotos is Villa Hidalgo's name before 1922, so the record and the tree agree. The reply FAILS only if it: calls the tree's birth place wrong, unsupported, an error or a conflation; says the places differ, are distinct or different communities, or that it is \"not Villa Hidalgo\"; recommends changing the tree's fact; or states how the two places relate without a source (for example \"a rancho within the municipality\"). Putting the two names side by side together with a statement that the reply cannot tell whether they are the same place is correct, and so is saying they are the same town.",
+    "The agent cannot look up places, so saying it cannot tell whether the two names are the same place is the correct stance, even though they are in fact the same town. That stance does not excuse a stated relation: a reply that says what kind of place Paso de Sotos is or where it lies (for example 'a village in the municipality of Villa Hidalgo') FAILS Correctness even when the same sentence also says it cannot tell.",
+    "The reply must still report that the record gives Paso de Sotos, in the record's own words. Saying the two names are the same town is not required; if the reply says so, that is correct.",
+    "Putting the record's place and the tree's place side by side (Paso de Sotos / Villa Hidalgo) is correct, and so is saying they are the same town. It FAILS if it calls the tree wrong, unsupported, an error or a conflation, or says the places differ or that the birthplace is 'not Villa Hidalgo'. Offering to send the difference to person-evidence is acceptable; actually handing off in this bounded request is not (the in-place validator fails any hand-off).",
+    "The router delivers a transcription ITSELF: it calls image_transcribe (which stages the page and returns `staged.resultsRef`, a digest and `viewerUrl`, not the text), reads the page with sidecar_read on that ref, shows it, and gives `viewerUrl` as a link. The calls are asserted deterministically by test_bounded_transcription_is_delivered_in_place, so do not grade them. Do NOT treat a transcription the router shows as fabricated: it came from the staged page."
+  ],
+  "judge_reads_files": true
+}

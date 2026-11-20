@@ -160,6 +160,8 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     for key in ("is_plan_ask", "ends_on_offer"):
         if not isinstance(raw.get(key, False), bool):
             raise FixtureError(f"{fixture_dir.name}: {key} must be true or false")
+    if any(alt.get("section") == "plans" and not alt.get("absent") for alt in alternatives) and not raw.get("is_plan_ask"):
+        raise FixtureError(f"{fixture_dir.name}: a plans expected_save needs is_plan_ask: true, or no_research_job fails it")
     setup = raw.get("setup_units") or []
     if not isinstance(setup, list) or not all(isinstance(u, str) for u in setup):
         raise FixtureError(f"{fixture_dir.name}: setup_units must be a list of unit names")

@@ -3241,6 +3241,24 @@ describe("Research closed shapes", () => {
         )
       ).toBe(true);
     });
+
+    it("rejects an out-of-set collections[].availability (collection_availability)", async () => {
+      const research = maximalResearch();
+      research.localities[0].collections = [
+        { id: "1999196", title: "Pennsylvania, Probate Records, 1683-1994", availability: "indexed" },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/collections[0]" &&
+            e.message.includes("'indexed' is not a valid collection_availability")
+        )
+      ).toBe(true);
+      research.localities[0].collections[0].availability = null;
+      expect((await validateParsed(research, maximalTree)).valid).toBe(true);
+    });
   });
 
   // The incident pair: validateParsed must reject citation_detail.location,

@@ -53,7 +53,7 @@ from e2e.orchestrator import _is_agent_tool
 from harness.skill_runner import load_step_boundary
 
 ROUTER_UNIT = "research"
-SAVE_SECTIONS = ("log", "sources", "localities")
+SAVE_SECTIONS = ("log", "sources", "localities", "plans")
 # Every heading of the locality-guide template: `_GUIDE_HEADING_LINES` in
 # eval/harness/validators/test_locality_guide.py, which test_e2e_single_ask.py pins
 # this copy to.

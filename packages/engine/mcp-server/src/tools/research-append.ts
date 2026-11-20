@@ -18,11 +18,13 @@
 // all three phases (sources/assertions/person_evidence, the status-transition
 // sections, the phase-3 sections, and the `project` singleton).
 
+import { collectionAvailability } from "../utils/collection-availability.js";
 import { assertionsCoveredBy, rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
+import { objectiveTarget, objectiveTargetLeadError, ORDER_FIELDS } from "../utils/objective-target.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { removeUnanchoredPersons, unanchoredMintedPersonIds, type UnanchoredRemoval } from "../utils/unanchored-persons.js";
 import { isSettledConflict, PROOF_TIER_RANK, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -80,6 +82,7 @@ import {
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
+  divisionContradiction,
   countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
@@ -136,7 +139,13 @@ import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.j
 import { GUIDE_SECTION_MAX_CHARS, LOCALITY_GUIDE_OUTLINE, mergeGuideSection } from "../utils/locality-guide-sections.js";
 import { normalizeRegistrationStart, normalizeRowLevels } from "../utils/registration-level.js";
 import { fillRecordTypeRows } from "../utils/locality-record-types.js";
-import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
+import {
+  isCoreNationalCollection,
+  localityNationalCountry,
+  nationalCollectionScope,
+  standardPlaceToCollectionsQuery,
+  yearSpan,
+} from "../utils/collection-scope.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -7691,6 +7700,45 @@ export function planItemSearchedSkipInvariants(
   ];
 }
 
+/** The objective's target record leads the first question's plan (issue #2030,
+ *  `objective-target.ts`). Judged once on the call's end state, so the order
+ *  items arrive in within a batch cannot matter, and only for a plan this call
+ *  appended or reordered: a status-only item update never touches it. A plan
+ *  already burying the target before this call is not refused for an unrelated
+ *  edit, so a project written before the rule is not stranded. */
+function objectiveTargetLeadRefusals(beforeResearch: any, research: any, ops: readonly any[]): string[] {
+  const target = objectiveTarget(research?.project?.objective);
+  if (!target) return [];
+  const firstQuestionId = Array.isArray(research?.questions) ? research.questions[0]?.id : undefined;
+  if (typeof firstQuestionId !== "string") return [];
+  const plansAfter: any[] = Array.isArray(research?.plans) ? research.plans : [];
+  const plansBefore: any[] = Array.isArray(beforeResearch?.plans) ? beforeResearch.plans : [];
+  const beforeIds = new Set(plansBefore.map((p) => p?.id));
+  const touched = new Set<string>();
+  for (const o of ops) {
+    if (o?.section === "plans") {
+      if (o.op === "update" && o.fields && "items" in o.fields && typeof o.entryId === "string") touched.add(o.entryId);
+    } else if (o?.section === "plan_items" && typeof o.planId === "string") {
+      const f = o.op === "append" ? null : (o.fields ?? {});
+      if (!f || ORDER_FIELDS.some((k) => k in f)) touched.add(o.planId);
+    }
+  }
+  if (ops.some((o) => o?.section === "plans" && o.op === "append")) {
+    for (const p of plansAfter) if (!beforeIds.has(p?.id)) touched.add(p.id);
+  }
+  const errors: string[] = [];
+  for (const id of touched) {
+    const plan = plansAfter.find((p) => p?.id === id);
+    if (!plan || plan.question_id !== firstQuestionId) continue;
+    const error = objectiveTargetLeadError(plan, target);
+    if (!error) continue;
+    const before = plansBefore.find((p) => p?.id === id);
+    if (before && objectiveTargetLeadError(before, target)) continue;
+    errors.push(error);
+  }
+  return errors;
+}
+
 /** A plan item names one place (`compoundJurisdictionError`). Checked on an
  *  append and on a change to `jurisdiction` only, so a compound item written
  *  before this rule does not strand an unrelated edit. */
@@ -11398,8 +11446,9 @@ function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record
  *  the lock, or `"unavailable"` when that read failed. */
 export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
 
-/** The most collections one locality's fill adds. The largest list in 18 surveyed
- *  places was New York's 65; a country-wide scope can run to several hundred. */
+/** The most collections one locality's fill leaves it holding, place and core
+ *  national rows together. The largest place list in 18 surveyed places was New
+ *  York's 65; a country-level place can run to about 140 (the United States). */
 export const LOCALITY_COLLECTIONS_FILL_MAX = 150;
 
 /** A `localities` append in these ops: the catalog is read for it even when it
@@ -11457,7 +11506,8 @@ function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
  * search, so a collection left out was hidden from the plan. The scope is the one
  * `collections_search` derives: the entry's `place`, else the first jurisdiction
  * name whose scope matches a title. A title that names another part of the scope
- * is not added (`titleNamesElsewhere`).
+ * is not added (`titleNamesElsewhere`). A scope that is the United States, Canada
+ * or Mexico itself is skipped: their country-wide rows are `fillNationalCollections`'s.
  */
 function fillLocalityCollections(
   ops: ResearchAppendOp[],
@@ -11476,7 +11526,7 @@ function fillLocalityCollections(
       if (typeof name !== "string" || name.trim() === "") continue;
       const scope = standardPlaceToCollectionsQuery(name);
       const needle = scope.toLowerCase();
-      if (needle === "") continue;
+      if (needle === "" || nationalCollectionScope(scope) === scope) continue;
       const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
       if (inScope.length === 0 && !SURVEY_WIKI_COLLECTIONS.get(op)?.length) continue;
       const own = ownPlaceTerms([...names, entry.for_place], scope);
@@ -11503,6 +11553,7 @@ function fillLocalityCollections(
         date_range: c.dateRange ?? null,
         person_count: c.personCount,
         record_count: c.recordCount,
+        availability: collectionAvailability(c.personCount, c.imageCount),
       }));
       if (missing.length === 0) return;
       entry.collections = [...sent, ...added];
@@ -11517,6 +11568,80 @@ function fillLocalityCollections(
       return;
     }
   });
+}
+
+/**
+ * Add to a `localities` append in the United States, Canada or Mexico the catalog's
+ * core national collections (`isCoreNationalCollection`) that overlap its `time_period`
+ * (spec §5.12, "National collections"). Their scope is the state or province, so
+ * `fillLocalityCollections` never reaches a federal census, and research-plan plans
+ * national collections from these rows (`project_context` `nationalCollections`).
+ * Runs after that fill, under the same cap. An undated row is kept, as
+ * `collections_search` keeps one; a `time_period` with no year cuts nothing.
+ */
+function fillNationalCollections(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined || catalog === "unavailable") return;
+  ops.forEach((op: any, i) => {
+    if (!op || typeof op !== "object" || op.section !== "localities" || op.op !== "append") return;
+    const entry = op.entry;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return;
+    if (entry.collections !== undefined && !Array.isArray(entry.collections)) return;
+    const country = localityNationalCountry(entry);
+    if (!country) return;
+    const places = [
+      entry.place,
+      entry.for_place,
+      ...(Array.isArray(entry.jurisdictions) ? entry.jurisdictions.map((j: any) => j?.name) : []),
+    ];
+    const window = yearSpan(entry.time_period);
+    const held: unknown[] = entry.collections ?? [];
+    const heldIds = new Set(held.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
+    const missing = [...catalog].filter(([id, c]) => {
+      if (heldIds.has(id) || typeof c.title !== "string" || !isCoreNationalCollection(c.title, country, places)) return false;
+      if (window === null) return true;
+      const span = yearSpan(c.dateRange);
+      return span === null || (span[0] <= window[1] && span[1] >= window[0]);
+    });
+    if (missing.length === 0) return;
+    const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - held.length);
+    const added = missing.slice(0, room).map(([id, c]) => ({
+      id,
+      title: c.title as string,
+      date_range: c.dateRange ?? null,
+      person_count: c.personCount,
+      record_count: c.recordCount,
+      availability: collectionAvailability(c.personCount, c.imageCount),
+    }));
+    entry.collections = [...held, ...added];
+    warnings.push(
+      fmt(
+        i,
+        `localities collections: added ${added.length === missing.length ? `the ${added.length}` : `${added.length} of the ${missing.length}`} ` +
+          `core national FamilySearch collections for "${country}"` +
+          (window === null ? "" : ` overlapping ${window[0]}-${window[1]}`) +
+          " from the catalog",
+      ),
+    );
+  });
+}
+
+/** One `localities` entry, as a caller's append leaves it: counts stamped, then the
+ *  place's and the country's collections filled from `catalog`. Mutates `entry`;
+ *  returns the warnings. For dev scripts that build fixtures the way production
+ *  stores them (`dev/fill-locality-fixtures.ts`). */
+export function fillLocalityEntryFromCatalog(entry: Record<string, unknown>, catalog: CollectionCatalog): string[] {
+  const ops = [{ section: "localities", op: "append", entry }] as unknown as ResearchAppendOp[];
+  const warnings: string[] = [];
+  const fmt = (_i: number, msg: string) => msg;
+  stampLocalityCollectionCounts(ops, catalog, warnings, fmt);
+  fillLocalityCollections(ops, catalog, warnings, fmt);
+  fillNationalCollections(ops, catalog, warnings, fmt);
+  return warnings;
 }
 
 /**
@@ -11539,6 +11664,7 @@ function stampLocalityCollectionCounts(
       for (const c of items) {
         c.person_count = null;
         c.record_count = null;
+        c.availability = null;
       }
       warnings.push(
         fmt(
@@ -11553,6 +11679,7 @@ function stampLocalityCollectionCounts(
       if (typeof c.id !== "string" || c.id === "") {
         c.person_count = null;
         c.record_count = null;
+        c.availability = null;
         warnings.push(
           fmt(i, "localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)"),
         );
@@ -11563,6 +11690,7 @@ function stampLocalityCollectionCounts(
       if (!counts) {
         c.person_count = null;
         c.record_count = null;
+        c.availability = null;
         warnings.push(
           fmt(
             i,
@@ -11586,6 +11714,7 @@ function stampLocalityCollectionCounts(
         }
         c[key] = value;
       }
+      c.availability = collectionAvailability(counts.personCount, counts.imageCount);
       if (changes.length > 0) {
         warnings.push(
           fmt(i, `localities collections '${id}': ${changes.join(", ")}, set from FamilySearch's catalog`),
@@ -12155,6 +12284,21 @@ async function prepareOps(
       );
       return;
     }
+    // ── Place lever (a), continued: state/province contradiction, one level
+    // down from the country check above. Only a value this lever itself
+    // looked up (sidecar copy or geocode) is dropped here — a caller-supplied
+    // standard_place is out of scope, as today. Checked, and returned on,
+    // before the `unverifiable` block below so a value this drops never also
+    // gets that block's "verify this" warning pushed for it first.
+    // Unlike the country check above, this one never refuses (no errors.push),
+    // even on a plain append with neither dropContradiction nor valueDerived
+    // set: a wrong state/province is a plausible lookup mistake, not grounds
+    // to fail the whole extraction over it.
+    if ((filled === "sidecar" || filled === "geocoded") && divisionContradiction(entry.place, sp)) {
+      delete entry.standard_place;
+      unresolved(`: the lookup's answer '${sp}' names a different state or province`);
+      return;
+    }
     if (verdict === "unverifiable" && filled === "geocoded") {
       const unconfirmed = valueDerived || isProse(entry.place) ? unconfirmedByText(entry.place, sp) : null;
       if (unconfirmed) {
@@ -12552,6 +12696,7 @@ async function prepareOps(
   if (errors.length === 0) {
     stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
     fillLocalityCollections(ops, options.collectionCatalog, warnings, fmt);
+    fillNationalCollections(ops, options.collectionCatalog, warnings, fmt);
   }
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
@@ -13780,6 +13925,9 @@ export async function researchAppend(
     if (reweighRefusals.length > 0) {
       return fail(reweighRefusals.map((r) => fmt(r.opIndex, r.message)));
     }
+
+    const leadRefusals = objectiveTargetLeadRefusals(beforeResearch, research, ops);
+    if (leadRefusals.length > 0) return fail(leadRefusals);
 
     // #3032 Stage 1b: the claim rules, once per batch against the final in-batch
     // summaries, so a later op that revises a disproved claim or adds the Couple
