@@ -728,6 +728,7 @@ FS_TOOLS = frozenset({
     "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
     "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
+    "source_screen",
     "tree_gaps", "volume_bisect", "volume_search",
 })
 
