@@ -545,266 +545,304 @@
           "title": "Pennsylvania, Berks County, Reading, Charles Evans Cemetery and Crematory Burial Records, 1887-1979",
           "date_range": "1887-1979",
           "person_count": 106375,
-          "record_count": 106375
+          "record_count": 106375,
+          "availability": "name-searchable"
         },
         {
           "id": "1681005",
           "title": "Pennsylvania, Births and Christenings, 1709-1950",
           "date_range": "1709-1950",
           "person_count": 7540172,
-          "record_count": 2512643
+          "record_count": 2512643,
+          "availability": "name-searchable"
         },
         {
           "id": "5000282",
           "title": "Pennsylvania, Cambria County, Naturalization Records, 1835-1978",
           "date_range": "1835-1978",
           "person_count": 108206,
-          "record_count": 35413
+          "record_count": 35413,
+          "availability": "name-searchable"
         },
         {
           "id": "1447492",
           "title": "Pennsylvania, Carbon County, Jim Thorpe, Cemetery Records, 1747-2007",
           "date_range": "1747-2007",
           "person_count": 19551,
-          "record_count": 17418
+          "record_count": 17418,
+          "availability": "name-searchable"
         },
         {
           "id": "3743478",
           "title": "Pennsylvania, Cemetery Records, ca. 1700-ca. 1950",
           "date_range": "1700-1950",
           "person_count": 1332070,
-          "record_count": 807578
+          "record_count": 807578,
+          "availability": "name-searchable"
         },
         {
           "id": "2466360",
           "title": "Pennsylvania, Church Marriages, 1682-1976",
           "date_range": "1682-1976",
           "person_count": 17743,
-          "record_count": 4873
+          "record_count": 4873,
+          "availability": "name-searchable"
         },
         {
           "id": "2466357",
           "title": "Pennsylvania, Civil Marriages, 1677-1950",
           "date_range": "1677-1950",
           "person_count": 2243341,
-          "record_count": 1011665
+          "record_count": 1011665,
+          "availability": "name-searchable"
         },
         {
           "id": "1589502",
           "title": "Pennsylvania, County Marriages, 1775-1991",
           "date_range": "1775-1991",
           "person_count": 14652817,
-          "record_count": 3652418
+          "record_count": 3652418,
+          "availability": "name-searchable"
         },
         {
           "id": "2427900",
           "title": "Pennsylvania, Crew Lists arriving at Erie, 1952-1957",
           "date_range": "1952-1957",
           "person_count": 41133,
-          "record_count": 41133
+          "record_count": 41133,
+          "availability": "name-searchable"
         },
         {
           "id": "3535178",
           "title": "Pennsylvania, Deaths and Burials, 1720-1999",
           "date_range": "1720-1999",
           "person_count": 2999571,
-          "record_count": 1132926
+          "record_count": 1132926,
+          "availability": "name-searchable"
         },
         {
           "id": "3743274",
           "title": "Pennsylvania, Delayed Birth Records, 1780-1977",
           "date_range": "1780-1977",
           "person_count": 721339,
-          "record_count": 178440
+          "record_count": 178440,
+          "availability": "name-searchable"
         },
         {
           "id": "1937344",
           "title": "Pennsylvania, Eastern District Court, Naturalization Records, 1795-1952",
           "date_range": "1795-1952",
           "person_count": 231645,
-          "record_count": 231641
+          "record_count": 231641,
+          "availability": "name-searchable"
         },
         {
           "id": "1913395",
           "title": "Pennsylvania, Eastern District Naturalization Records, 1795-1952",
           "date_range": "1795-1952",
           "person_count": 799525,
-          "record_count": 683997
+          "record_count": 683997,
+          "availability": "name-searchable"
         },
         {
           "id": "2207723",
           "title": "Pennsylvania, Grand Army of the Republic Membership Records, 1865-1936",
           "date_range": "1865-1936",
           "person_count": 14100,
-          "record_count": 14100
+          "record_count": 14100,
+          "availability": "name-searchable"
         },
         {
           "id": "3157976",
           "title": "Pennsylvania, Huntingdon County, Delayed Birth Records, 1800-1935",
           "date_range": "1800-1935",
           "person_count": 10658,
-          "record_count": 4921
+          "record_count": 4921,
+          "availability": "name-searchable"
         },
         {
           "id": "1908383",
           "title": "Pennsylvania, Landing Reports of Aliens, 1798-1828",
           "date_range": "1798-1828",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "1681011",
           "title": "Pennsylvania, Marriages, 1709-1940",
           "date_range": "1709-1940",
           "person_count": 1976589,
-          "record_count": 661399
+          "record_count": 661399,
+          "availability": "name-searchable"
         },
         {
           "id": "5000058",
           "title": "Pennsylvania, Middle District Court, Naturalization Records, 1901-1992",
           "date_range": "1901-1992",
           "person_count": 312284,
-          "record_count": 252627
+          "record_count": 252627,
+          "availability": "name-searchable"
         },
         {
           "id": "3512181",
           "title": "Pennsylvania, Mortality Schedules, 1850-1880",
           "date_range": "1850-1880",
           "person_count": 166364,
-          "record_count": 166361
+          "record_count": 166361,
+          "availability": "name-searchable"
         },
         {
           "id": "2287449",
           "title": "Pennsylvania, Obituaries, 1977-2010",
           "date_range": "1977-2012",
           "person_count": 864621,
-          "record_count": 931932
+          "record_count": 931932,
+          "availability": "name-searchable"
         },
         {
           "id": "2282148",
           "title": "Pennsylvania, Obituary and Marriage Collection, 1947-2010",
           "date_range": "1947-2010",
           "person_count": 2680,
-          "record_count": 669
+          "record_count": 669,
+          "availability": "name-searchable"
         },
         {
           "id": "1810412",
           "title": "Pennsylvania, Pittsburgh City Deaths, 1870-1905",
           "date_range": "1870-1905",
           "person_count": 419335,
-          "record_count": 164487
+          "record_count": 164487,
+          "availability": "name-searchable"
         },
         {
           "id": "1999196",
           "title": "Pennsylvania, Probate Records, 1683-1994",
           "date_range": "1683-1994",
           "person_count": 52,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "3048335",
           "title": "Pennsylvania, Register of Military Volunteers, 1861-1865",
           "date_range": "1861-1865",
           "person_count": 315711,
-          "record_count": 315711
+          "record_count": 315711,
+          "availability": "name-searchable"
         },
         {
           "id": "3021637",
           "title": "Pennsylvania, Schuylkill County, Schuylkill Haven, Funeral Home Obituary Cards, 1914-2007",
           "date_range": "1914-2007",
           "person_count": 10146,
-          "record_count": 10144
+          "record_count": 10144,
+          "availability": "name-searchable"
         },
         {
           "id": "3158041",
           "title": "Pennsylvania, Wayne County, Court of Common Pleas, Naturalization Records, 1799-1906",
           "date_range": "1799-1906",
           "person_count": 15846,
-          "record_count": 15837
+          "record_count": 15837,
+          "availability": "name-searchable"
         },
         {
           "id": "5000034",
           "title": "Pennsylvania, Western District, Naturalizations, 1820-1931",
           "date_range": "1820-1931",
           "person_count": 542253,
-          "record_count": 112856
+          "record_count": 112856,
+          "availability": "name-searchable"
         },
         {
           "id": "3158832",
           "title": "Pennsylvania, Wills and Deeds, ca. 1700s-2017",
           "date_range": "1776-2017",
           "person_count": 127342,
-          "record_count": 1
+          "record_count": 1,
+          "availability": "name-searchable"
         },
         {
           "id": "2603579",
           "title": "Pennsylvania, World War II Draft Registration Cards, 1940-1945",
           "date_range": "1940-1945",
           "person_count": 5276832,
-          "record_count": 2647627
+          "record_count": 2647627,
+          "availability": "name-searchable"
         },
         {
           "id": "1420441",
           "title": "United States Census (Mortality Schedule), 1850-1880",
           "date_range": "1850-1880",
           "person_count": 1356791,
-          "record_count": 1356791
+          "record_count": 1356791,
+          "availability": "name-searchable"
         },
         {
           "id": "3754697",
           "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
           "date_range": "1748-1991",
           "person_count": 233239069,
-          "record_count": 67418133
+          "record_count": 67418133,
+          "availability": "name-searchable"
         },
         {
           "id": "1401638",
           "title": "United States, Census, 1850",
           "date_range": "1850-1850",
           "person_count": 20224571,
-          "record_count": 20224571
+          "record_count": 20224571,
+          "availability": "name-searchable"
         },
         {
           "id": "1473181",
           "title": "United States, Census, 1860",
           "date_range": "1860-1860",
           "person_count": 27176265,
-          "record_count": 27176265
+          "record_count": 27176265,
+          "availability": "name-searchable"
         },
         {
           "id": "1438024",
           "title": "United States, Census, 1870",
           "date_range": "1870-1870",
-          "person_count": 42384137,
-          "record_count": 40350030
+          "person_count": 42384138,
+          "record_count": 40350030,
+          "availability": "name-searchable"
         },
         {
           "id": "1417683",
           "title": "United States, Census, 1880",
           "date_range": "1880-1880",
           "person_count": 50472677,
-          "record_count": 50472677
+          "record_count": 50472677,
+          "availability": "name-searchable"
         },
         {
           "id": "1610551",
           "title": "United States, Census, 1890",
           "date_range": "1890-1890",
           "person_count": 7393,
-          "record_count": 6285
+          "record_count": 6285,
+          "availability": "name-searchable"
         },
         {
           "id": "1325221",
           "title": "United States, Census, 1900",
           "date_range": "1900-1900",
           "person_count": 76492831,
-          "record_count": 76492831
+          "record_count": 76492831,
+          "availability": "name-searchable"
         },
         {
           "id": "1202535",
           "title": "United States, Social Security Death Index",
           "date_range": "1875-2014",
           "person_count": 93945885,
-          "record_count": 93945885
+          "record_count": 93945885,
+          "availability": "name-searchable"
         }
       ]
     }

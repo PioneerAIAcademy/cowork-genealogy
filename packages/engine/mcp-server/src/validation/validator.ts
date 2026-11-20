@@ -109,6 +109,7 @@ const CLOSED_ENUMS = {
     "home", "getting_started", "online_records", "research_tips",
   ]),
   locality_page_outcome: new Set(["unreachable"]),
+  collection_availability: new Set(["name-searchable", "browse-only"]),
   registration_event: new Set(["birth", "marriage", "death"]),
   registration_level: new Set(["town", "municipality", "parish", "district", "county", "state", "province", "national"]),
   hit_verdict: new Set(["match", "possible_match", "not_a_match"]),
@@ -2417,6 +2418,10 @@ function validateLocalities(
     const cols = Array.isArray(loc.collections) ? loc.collections : [];
     for (let j = 0; j < cols.length; j++) {
       checkCounts(cols[j], ["person_count", "record_count"], ["person_count", "record_count"], `${lp}/collections[${j}]`, report);
+      const col = cols[j];
+      if (col && typeof col === "object" && col.availability !== undefined && col.availability !== null) {
+        checkEnum(col.availability, "collection_availability", `${lp}/collections[${j}]`, report);
+      }
     }
     const regs = Array.isArray(loc.registration_start) ? loc.registration_start : [];
     for (let j = 0; j < regs.length; j++) {
