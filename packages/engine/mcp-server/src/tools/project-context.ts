@@ -10,6 +10,7 @@
 // Spec: docs/specs/project-context-tool-spec.md.
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
+import { attachedBirthPairsByQuestion } from "../utils/attached-births.js";
 import {
   RESEARCH_QUERY_SECTIONS,
   RESEARCH_QUERY_OPTIONAL_SECTIONS,
@@ -18,6 +19,7 @@ import {
 } from "./research-query.js";
 import { readProjectJson, NoProjectError, NO_PROJECT_MESSAGE_CONTEXT } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
+import { isNationalCollectionTitle, localityNationalCountry } from "../utils/collection-scope.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -32,11 +34,22 @@ import { connectorSignInUrl } from "../auth/config.js";
 import { connectorSession } from "../utils/session-check.js";
 import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
+import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
+import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
+import { readStartingTree } from "../utils/starting-tree.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
+/** The closed set of lists `include` may name. A list, not `includeX` booleans,
+ *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
+ *  "persons" and "sources" are returned regardless of `include` until #4422
+ *  stage 3 flips the default; "status" is returned only when named. */
+export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status"] as const;
+export type ProjectContextInclude = (typeof PROJECT_CONTEXT_INCLUDE)[number];
+
 export interface ProjectContextInput {
   projectPath: string;
+  include?: ProjectContextInclude[];
 }
 
 /** `row` without the keys whose value is null, "" or []: in this answer an
@@ -89,6 +102,8 @@ export interface ProjectContextLocality {
   }[];
   quirks?: string[];
 }
+
+export type ProjectContextCollection = NonNullable<ProjectContextLocality["collections"]>[number];
 
 /** An external-site URL handed to the user and not yet answered (spec §2.3). */
 export type ProjectContextAwaitingUser = Omit<AwaitingHandOff, "planItemId" | "performed"> & {
@@ -235,6 +250,10 @@ export type ProjectContextResult =
       persons?: ProjectContextPerson[];
       sources?: ProjectContextSource[];
       localities?: ProjectContextLocality[];
+      /** The localities' country-wide collections in the United States, Canada and
+       *  Mexico, once per country, by title; left out of each locality's own
+       *  `collections`. It covers what the localities stored, not every year. */
+      nationalCollections?: Record<string, ProjectContextCollection[]>;
       /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
       awaitingUser?: ProjectContextAwaitingUser[];
       /** Films whose browse cap is spent in this project; nothing resets it. */
@@ -245,6 +264,8 @@ export type ProjectContextResult =
        *  kind checks it is listed, so a newer body on an older engine keeps
        *  today's behaviour instead of having its write refused. */
       claimKinds: string[];
+      owedFindings?: OwedFinding[];
+      status?: StatusRow[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent also when
@@ -292,6 +313,24 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // Primary surface for "which build is this?" — 8 skills call project_context,
   // 0 call auth_status — so it rides on every return branch, no-project included.
   const buildId = readBuildInfo().version;
+
+  // `include` is a closed list; an unknown value is a clear error, not a silent
+  // no-op. Validated before the file reads — a malformed request is refused
+  // whatever the project state. "persons" and "sources" are returned by default
+  // until #4422 stage 3; only "status" is branched on below.
+  if (input.include !== undefined) {
+    const bad =
+      !Array.isArray(input.include) ||
+      !input.include.every((v) => (PROJECT_CONTEXT_INCLUDE as readonly string[]).includes(v));
+    if (bad) {
+      return {
+        ok: false,
+        errors: [`include must be an array of: ${PROJECT_CONTEXT_INCLUDE.join(", ")}.`],
+        buildId,
+      };
+    }
+  }
+
   let research: any;
   let tree: any;
   try {
@@ -370,22 +409,31 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // actionable bits (jurisdictions, collections, quirks). guide_markdown and
   // pages_read are left out; research_query serves the whole entry.
   const localities: ProjectContextLocality[] = [];
+  const national = new Map<string, Map<string, ProjectContextCollection>>();
   for (const l of Array.isArray(research?.localities) ? research.localities : []) {
     if (!l || typeof l !== "object" || typeof l.id !== "string") continue;
     const jurisdictions = (Array.isArray(l.jurisdictions) ? l.jurisdictions : [])
       .filter((j: any) => j && typeof j === "object" && typeof j.name === "string")
       .map((j: any) => omitEmpty({ name: j.name, dateRange: typeof j.date_range === "string" ? j.date_range : null }));
-    const collections = (Array.isArray(l.collections) ? l.collections : [])
-      .filter((c: any) => c && typeof c === "object" && typeof c.id === "string")
-      .map((c: any) =>
-        omitEmpty({
-          id: c.id,
-          title: typeof c.title === "string" ? c.title : "",
-          dateRange: typeof c.date_range === "string" ? c.date_range : null,
-          personCount: Number.isInteger(c.person_count) ? c.person_count : null,
-          recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
-        }),
-      );
+    const country = localityNationalCountry(l);
+    const collections: ProjectContextCollection[] = [];
+    for (const c of Array.isArray(l.collections) ? l.collections : []) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") continue;
+      const row: ProjectContextCollection = omitEmpty({
+        id: c.id,
+        title: typeof c.title === "string" ? c.title : "",
+        dateRange: typeof c.date_range === "string" ? c.date_range : null,
+        personCount: Number.isInteger(c.person_count) ? c.person_count : null,
+        recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
+      });
+      if (country && typeof c.title === "string" && isNationalCollectionTitle(c.title, country)) {
+        const rows = national.get(country) ?? new Map<string, ProjectContextCollection>();
+        if (!rows.has(c.id)) rows.set(c.id, row);
+        national.set(country, rows);
+      } else {
+        collections.push(row);
+      }
+    }
     const quirks = (Array.isArray(l.quirks) ? l.quirks : []).filter(
       (q: any): q is string => typeof q === "string",
     );
@@ -400,6 +448,11 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         quirks,
       }) as ProjectContextLocality,
     );
+  }
+
+  const nationalCollections: Record<string, ProjectContextCollection[]> = {};
+  for (const [country, rows] of national) {
+    nationalCollections[country] = [...rows.values()].sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
   }
 
   const projectStatus =
@@ -421,10 +474,21 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       questionText.set(q.id, truncateQuestion(typeof q.question === "string" ? q.question : ""));
     }
   }
-  const questionStatuses = questionStates(research, tree).map(
+  // #4444: the identity rung's pairs, by research_append's own pair test and
+  // place lookup, so the rung and the proof gate cannot disagree.
+  const attachedBirthPairs = await attachedBirthPairsByQuestion(research, tree);
+  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map(
     ({ id, ...rest }) =>
       omitEmpty({ id, question: questionText.get(id) ?? "", ...rest }, ["nextStep"]) as ProjectContextQuestionStatus,
   );
+
+  // Decision 33: what the project still owes. Before questionStatuses in the
+  // answer, so a reader scoping to that array by its key does not take these
+  // items' own `nextStep` for a question's.
+  const owed = owedFindings(research, tree);
+  const status = input.include?.includes("status")
+    ? conclusionStatus(research, tree, await readStartingTree(input.projectPath))
+    : undefined;
 
   const awaitingUser = awaitingUserHandOffs(research?.log).map((row) => omitEmpty(row) as ProjectContextAwaitingUser);
   const waiting = await waitingPages(input.projectPath, research);
@@ -476,10 +540,13 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       : []
     ).filter((x: unknown): x is string => typeof x === "string"),
     openQuestions,
+    owedFindings: owed,
     questionStatuses,
+    ...(status ? { status } : {}),
     persons,
     sources,
     localities,
+    ...(national.size > 0 ? { nationalCollections } : {}),
     awaitingUser,
     exhaustedImageGroups: exhausted,
     waitingPages: waiting,
@@ -560,7 +627,9 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. Returns projectStatus; " +
+    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
+    "larger lists you read; persons and sources are returned whether or not you pass it, and status only when named. " +
+    "Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
@@ -573,7 +642,9 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
     "recordCount}], quirks}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
-    "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
+    "to stage searches (guide_markdown prose is omitted here); and nationalCollections " +
+    "{country: [same rows]} — the localities' country-wide collections for the United States, " +
+    "Canada and Mexico, once per country and left out of each locality's collections; and questionStatuses " +
     "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
     "competingParentSets}] — per question, resolved ones included, its text (truncated) and how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
@@ -610,6 +681,11 @@ export const projectContextSchema = {
     "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
     "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +
     "claimKinds lists the proof_summaries claim kinds this engine accepts. " +
+    "owedFindings [{kind, ref, personIds, nextStep, blocksCompletion}] lists what the project still owes, in " +
+    "order: extract (a positive search with nothing extracted), conclude (a question with tied assertions and no " +
+    "proof summary), hypothesis (a supported hypothesis with no summary), encode (a likely claim no tree object " +
+    "carries), then the advisory raise, claims and frame. With include: [\"status\"], status lists every tree fact " +
+    "and relationship with its status read from claims. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
@@ -626,6 +702,15 @@ export const projectContextSchema = {
       projectPath: {
         type: "string",
         description: "Absolute path to the project directory holding research.json and tree.gedcomx.json.",
+      },
+      include: {
+        type: "array",
+        items: { type: "string", enum: [...PROJECT_CONTEXT_INCLUDE] },
+        description:
+          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status". ' +
+          '"persons" and "sources" are returned whether or not you pass include. "status": every tree fact and ' +
+          "relationship with its status read from proof-summary claims (well established, likely, tentative, " +
+          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named.",
       },
     },
     required: ["projectPath"],

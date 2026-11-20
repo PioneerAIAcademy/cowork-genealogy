@@ -1,0 +1,869 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search for \"Württemberg, Germany\", 1780-1830, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~rttemberg"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Württemberg, Germany",
+      "startYear": 1780,
+      "endYear": 1830
+    },
+    "totalForPlace": 279,
+    "returned": 200,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/3141/",
+        "linkText": "Württemberg, Germany Emigration Index, 1808-1890",
+        "startYear": 1808,
+        "endYear": 1890
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61023",
+        "linkText": "Württemberg, Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1985",
+        "startYear": 1500,
+        "endYear": 1985
+      },
+      {
+        "url": "http://adressbuecher.genealogy.net/",
+        "linkText": "Historic Address Books"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Hauptseite",
+        "linkText": "GenWiki - das Genealogie-Wiki"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Katholische_Kirche_in_Deutschland",
+        "linkText": "Katholische Kirche in Deutschland"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Portal:W%C3%BCrttemberg",
+        "linkText": "Portal:Württemberg"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/W%C3%BCrttemberg",
+        "linkText": "Württemberg – GenWiki"
+      },
+      {
+        "url": "http://www.auswanderer-bw.de/auswanderer/index.php?sprache=de&suche=1",
+        "linkText": "Auswanderung aus Südwestdeutschland, 1751-1920",
+        "startYear": 1751,
+        "endYear": 1920
+      },
+      {
+        "url": "http://www.ekd.de/english/",
+        "linkText": "Evangelical Church in Germany"
+      },
+      {
+        "url": "http://www.ggsmn.org/cpage.php?pt=35",
+        "linkText": "Germanic Genealogy Society - Saxony"
+      },
+      {
+        "url": "http://www.hot-map.com/deutschlandkarte",
+        "linkText": "Interactive German Map"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/glufamilytables/",
+        "linkText": "Württemberg, Germany, Family Tables, 1550-1985",
+        "startYear": 1550,
+        "endYear": 1985
+      },
+      {
+        "url": "https://www.genealogycenter.info/persi/",
+        "linkText": "PERiodical Source Index (PERSI)"
+      },
+      {
+        "url": "https://www.kgl-bw.de/",
+        "linkText": "KgL – Kommission für geschichtliche Landeskunde in Baden-Württemberg"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10749/germany-emigrants-from-southwestern-germany-1736-1963?utm_source=organic_blog&utm_medium=blog&utm_campaign=supersearch&tr_funnel=supersearch&tr_country=US&tr_creative=oct19historicalrecords&utm_content=oct19historicalrecords",
+        "linkText": "Germany, Emigrants from Southwestern Germany, 1736-1963",
+        "startYear": 1736,
+        "endYear": 1963
+      },
+      {
+        "url": "https://www.wubonline.de/",
+        "linkText": "Württembergisches Urkundenbuch Online"
+      },
+      {
+        "url": "https://www2.landesarchiv-bw.de/ofs21/bild_explorer/index.php?bestand=18750",
+        "linkText": "Catholic Church Book Duplicates"
+      },
+      {
+        "url": "https://www2.landesarchiv-bw.de/ofs21/olf/struktur.php?bestand=10028&klassi=&anzeigeKlassi=002",
+        "linkText": "Badische Standesbücher, Landesarchiv Baden-Württemberg"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1030",
+        "linkText": "Public Member Trees"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1649",
+        "linkText": "Germany & Austria, Directories of Military and Marine Officers, 1500-1939",
+        "startYear": 1500,
+        "endYear": 1939
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2184",
+        "linkText": "Germany and Austria, Military and Marine Unit Histories, 1760-1933",
+        "startYear": 1760,
+        "endYear": 1933
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2199",
+        "linkText": "Germany, Military and Marine Weekly Publications, 1816-1942",
+        "startYear": 1816,
+        "endYear": 1942
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2958",
+        "linkText": "Berlin, Germany, Deaths, 1874-1985",
+        "startYear": 1582,
+        "endYear": 1958
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/34415",
+        "linkText": "Prussia Municipality Gazetteer, 1905"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/4121/",
+        "linkText": "Brandenburg, Prussia Emigration Records"
+      },
+      {
+        "url": "https://search.ancestry.com/search/db.aspx?dbid=60778",
+        "linkText": "indexed collection of mostly German address books"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61023/",
+        "linkText": "Württemberg, Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1985"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61037/",
+        "linkText": "U.S. German Immigrants, 1712-1933",
+        "startYear": 1712,
+        "endYear": 1933
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61114/",
+        "linkText": "Kingdom of Prussia Selected Lutheran Records, 1661-1944"
+      },
+      {
+        "url": "https://search.ancestry.com/search/db.aspx?dbid=61229&geo_a=r&o_iid=41022&o_lid=41022&o_sch=Web+Property",
+        "linkText": "Germany Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "startYear": 1500,
+        "endYear": 1971
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61250/",
+        "linkText": "Germany Lutheran Baptisms, Marriages, and Burials, 1567-1945",
+        "startYear": 1567,
+        "endYear": 1945
+      },
+      {
+        "url": "https://search.ancestry.com/search/db.aspx?dbid=61456",
+        "linkText": "Germany, Lutheran Baptisms, Marriages, and Burials, 1518-1921",
+        "startYear": 1518,
+        "endYear": 1921
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61532/",
+        "linkText": "Halle(Saale), Germany, Military Recruitment Lists, 1828-1888",
+        "startYear": 1828,
+        "endYear": 1888
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61533/",
+        "linkText": "Halle(Saale), Germany, Burial and Cemetery Registers, 1720-1934",
+        "startYear": 1720,
+        "endYear": 1934
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61534/",
+        "linkText": "Halle, Germany, Thadden Regiment, Muster Roll, 1752 and 1792",
+        "startYear": 1752,
+        "endYear": 1792
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62195/",
+        "linkText": "USC Shoah Foundation, Holocaust – Jewish Survivor Interviews"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9866",
+        "linkText": "Germany Select Births and Baptisms, 1558-1898",
+        "startYear": 1558,
+        "endYear": 1898
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9868/",
+        "linkText": "Records from 1582-1958",
+        "startYear": 1582,
+        "endYear": 1958
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9870",
+        "linkText": "Germany Select Marriages, 1558-1929",
+        "startYear": 1558,
+        "endYear": 1929
+      },
+      {
+        "url": "http://adressbuecher.genealogy.net/",
+        "linkText": "Database of Historic Addresses"
+      },
+      {
+        "url": "http://adressbuecher.genealogy.net/addressbooks/all",
+        "linkText": "Historic Addressbooks"
+      },
+      {
+        "url": "http://ahnenforscher.pl/?page_id=42",
+        "linkText": "Links to online records for Wroclaw/Breslau Standesamt 1"
+      },
+      {
+        "url": "http://ahnenforschung.net/",
+        "linkText": "Ahnenforschung, Familienforschung, Genealogie"
+      },
+      {
+        "url": "http://ahsgr.org/",
+        "linkText": "American Historical Society of Germans from Russia"
+      },
+      {
+        "url": "http://aidaonline.niedersachsen.de/",
+        "linkText": "Arcinsys Navigator"
+      },
+      {
+        "url": "http://archeion.net/atom/index.php/ksiega-urodzen-wroclaw-iii-1891-t-06;isad",
+        "linkText": "Breslau Standesamt III"
+      },
+      {
+        "url": "http://auswanderer-thueringen.de/genealogy/",
+        "linkText": "Thüringer Auswanderer-Datenbank"
+      },
+      {
+        "url": "http://baseportal.de/baseportal/Donicht/batchnummern/batchnummern",
+        "linkText": "Batchnumber index for IGI"
+      },
+      {
+        "url": "http://brigittegastelancestry.com/occupat.htm",
+        "linkText": "Old German Professions, Occupations and Illnesses"
+      },
+      {
+        "url": "http://christoph.stoepel.net/geogen/v3/Default.aspx?lang=de_DE",
+        "linkText": "Software by Christoph Stoepel"
+      },
+      {
+        "url": "http://compgen.de/",
+        "linkText": "Verein für Computergenealogie e.V. (CompGen)"
+      },
+      {
+        "url": "http://data.matricula-online.eu/de/deutschland/magdeburg/",
+        "linkText": "Bestände | Matricula Online"
+      },
+      {
+        "url": "http://dict.leo.org/ende/index_en.html#/search=&searchLoc=0&resultOrder=basic&multiwordShowSingle=on",
+        "linkText": "Leo Searchable German-English Dictionary"
+      },
+      {
+        "url": "http://dwb.bbaw.de/",
+        "linkText": "Grimm's Dictionary of the German Language"
+      },
+      {
+        "url": "http://familienanzeigen.genealogy.net/",
+        "linkText": "FAMILIENANZEIGEN (family notices)"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Europe/Germany.pdf",
+        "linkText": "Germany Research Outline"
+      },
+      {
+        "url": "http://gachgs.com/",
+        "linkText": "The German-Acadian Coast Historical Society"
+      },
+      {
+        "url": "http://gedbas.genealogy.net/",
+        "linkText": "GEDBAS Compiled Genealogies"
+      },
+      {
+        "url": "http://gedbas.genealogy.net/?lang=en",
+        "linkText": "GEDBAS - New Search"
+      },
+      {
+        "url": "http://gov.genealogy.net/search/index",
+        "linkText": "The Historic Gazetteer"
+      },
+      {
+        "url": "http://grabsteine.genealogy.net/",
+        "linkText": "Grabsteine"
+      },
+      {
+        "url": "http://grabsteine.genealogy.net/landlist.php?lang=de",
+        "linkText": "Grabsteine: nach Bundesländern"
+      },
+      {
+        "url": "http://grhs.org/",
+        "linkText": "Germans from Russia Heritage Society"
+      },
+      {
+        "url": "http://home.bawue.de/~hanacek/info/darchive.htm",
+        "linkText": "Archives in Germany - Hanacek"
+      },
+      {
+        "url": "http://home.bawue.de/~hanacek/info/earchive.htm",
+        "linkText": "Archives in Germany by Andreas Hanacek"
+      },
+      {
+        "url": "http://home.foni.net/~adelsforschung/",
+        "linkText": "Institut Deutsche Adelsforschung (IDA)"
+      },
+      {
+        "url": "http://immigrantgensoc.org/",
+        "linkText": "Immigrant Genealogical Society"
+      },
+      {
+        "url": "http://immigrants.byu.edu/search/simple",
+        "linkText": "Immigrant Ancestors Project Update"
+      },
+      {
+        "url": "http://lagis.online.uni-marburg.de/en/subjects/xsearch/sn/links?sache=Ortssippenbuch",
+        "linkText": "Ortsippenbücher at University of Marburg"
+      },
+      {
+        "url": "http://meta.genealogy.net/",
+        "linkText": "genealogy.net Metasuche"
+      },
+      {
+        "url": "http://pbc.gda.pl/dlibra/docmetadata?id=7346&from=pubstats",
+        "linkText": "Deutsch-fremdsprachiges Ortschaftsverzeichnis, 1919"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Breslau#Standesamturkunden",
+        "linkText": "Links to online records for Wroclaw/Breslau Standesamt 1"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Familiendatenbank_Juden_im_Deutschen_Reich#Quellen",
+        "linkText": "Family Database Jews in the German Reich"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Hauptseite",
+        "linkText": "GenWiki - das Genealogie-Wiki"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Kategorie:Gemeinde-_oder_Ortsverzeichnis_in_der_DigiBib",
+        "linkText": "Digital Library - Geographie, Kartographie, Topographie"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Kategorie:Ortschronik_zu_Bayern",
+        "linkText": "Ortschronik zu Bayern"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Portal:DigiBib",
+        "linkText": "Digital Library on genealogy.net"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Verlustlisten_Erster_Weltkrieg/Projekt",
+        "linkText": "Verlustlisten Erster Weltkrieg"
+      },
+      {
+        "url": "http://wiki-de.genealogy.net/Waldeckische_Ortssippenb%C3%BCcher",
+        "linkText": "Waldeckische local kinship books"
+      },
+      {
+        "url": "http://wiki.genealogy.net/wiki/Ortssuche_FAQ",
+        "linkText": "Ortssuche FAQ"
+      },
+      {
+        "url": "http://woerterbuchnetz.de/",
+        "linkText": "Wörterbuchnetz"
+      },
+      {
+        "url": "http://www.adelsrecht.de/",
+        "linkText": "Deutschen Adelsrechtsausschusses"
+      },
+      {
+        "url": "http://www.ahnen-und-wappen.de/",
+        "linkText": "Familienwappen und Wappenforschung"
+      },
+      {
+        "url": "http://www.ahnenforscherstammtisch.de/",
+        "linkText": "Ahnenforscherstammtisch Unna und Umgebung"
+      },
+      {
+        "url": "http://www.ahnenforschung-hessen.de/zentralstelle/osb_reihe_a.htm",
+        "linkText": "Central Office for Personal and Family History - Institute of Genealogy"
+      },
+      {
+        "url": "http://www.almanachdegotha.org/id133.html",
+        "linkText": "German Empire - House of Hohenzollern"
+      },
+      {
+        "url": "http://www.almanachdegotha.org/id212.html",
+        "linkText": "Nobility of the World--Germany"
+      },
+      {
+        "url": "http://www.angrada.com/public/",
+        "linkText": "Andar Bahar: Master the Game & Win Big"
+      },
+      {
+        "url": "http://www.antiquusmorbus.com/German/GermanL.htm",
+        "linkText": "My Blog"
+      },
+      {
+        "url": "http://www.archive.nrw.de/",
+        "linkText": "Archives in Nordrhein-Westfalen"
+      },
+      {
+        "url": "http://www.atsnotes.com/other/gerpol.html",
+        "linkText": "Index of German-Polish and Polish-German Localities"
+      },
+      {
+        "url": "http://www.bayerische-landesbibliothek-online.de/orbis-latinus",
+        "linkText": "1972 four-volume combined set version"
+      },
+      {
+        "url": "http://www.berufsgenealogie.net/",
+        "linkText": "German Association of Professional Genealogists"
+      },
+      {
+        "url": "http://www.catholic-hierarchy.org/country/dde.html",
+        "linkText": "Dioceses in Germany"
+      },
+      {
+        "url": "http://www.columbia.edu/acis/ets/Graesse/contents.html",
+        "linkText": "Graesse, Orbis Latinus"
+      },
+      {
+        "url": "http://www.compgen.de",
+        "linkText": "Genealogisches Ortsverzeichnis (GOV)"
+      },
+      {
+        "url": "http://www.cyndislist.com/germany.htm",
+        "linkText": "Cyndi's List in Germany"
+      },
+      {
+        "url": "http://www.deutsche-biographie.de/index.html",
+        "linkText": "Deutsche Biographie"
+      },
+      {
+        "url": "http://www.ekd.de/english/",
+        "linkText": "Evangelical Church in Germany"
+      },
+      {
+        "url": "http://www.ekd.de/kirche/gliedkirchen/karte.html",
+        "linkText": "Lutheran Parishes Contact Information"
+      },
+      {
+        "url": "http://www.ekd.de/kirche/kirchen.html",
+        "linkText": "Branches of the EKD (Evangelical Church in Deutschland)"
+      },
+      {
+        "url": "http://www.ermland-fotos.de/index.html",
+        "linkText": "Ermland Grave Sites"
+      },
+      {
+        "url": "http://www.expedia.com",
+        "linkText": "Expedia"
+      },
+      {
+        "url": "http://www.familienanzeigen.org/totenzettel.php?PID=551",
+        "linkText": "Projekt Familienanzeigen aus Tageszeitungen"
+      },
+      {
+        "url": "http://www.friedhof-hamburg.de",
+        "linkText": "Hamburger Friedhöfe"
+      },
+      {
+        "url": "http://www.genealogienetz.de/reg/MEC/ratzeburg/deutsch/krankheiten/krankheit.html",
+        "linkText": "list of old German causes of death"
+      },
+      {
+        "url": "http://www.genealogienetz.de/reg/THU/thu-arch.html",
+        "linkText": "Regionalseiten offline"
+      },
+      {
+        "url": "http://www.genealogy.net/",
+        "linkText": "Introduction to Genealogy.net"
+      },
+      {
+        "url": "http://www.germancorner.com/fonts/index.html",
+        "linkText": "German-type fonts to download"
+      },
+      {
+        "url": "http://www.germanroots.com/",
+        "linkText": "German Genealogy Information & Resources"
+      },
+      {
+        "url": "http://www.germanroots.com/ei.html",
+        "linkText": "German Roots Emigration Website List"
+      },
+      {
+        "url": "http://www.germanroots.com/germandata.html",
+        "linkText": "Online German Genealogy Records & Databases"
+      },
+      {
+        "url": "http://www.gf-franken.de/",
+        "linkText": "Society for Genealogy in Franken"
+      },
+      {
+        "url": "http://www.ggsmn.org/",
+        "linkText": "The Germanic Genealogy Society"
+      },
+      {
+        "url": "http://www.h-net.org/~german/research/archives.html",
+        "linkText": "H-German"
+      },
+      {
+        "url": "http://www.heraldica.org/topics/royalty/HGBraunschweig.htm",
+        "linkText": "Succession Laws in the House of Braunschweig"
+      },
+      {
+        "url": "http://www.heritagequestonline.com",
+        "linkText": "HeritageQuest Online Login"
+      },
+      {
+        "url": "http://www.hot-map.com/deutschlandkarte",
+        "linkText": "Interactive German Map"
+      },
+      {
+        "url": "http://www.ieg-maps.uni-mainz.de/",
+        "linkText": "Historical maps of Germany"
+      },
+      {
+        "url": "http://www.interment.net/ger/index.htm",
+        "linkText": "Links on the Interment.net website"
+      },
+      {
+        "url": "http://www.jewishgen.org/communities/LocTown.asp",
+        "linkText": "JewishGen Gazetteer"
+      },
+      {
+        "url": "http://www.jewishgen.org/databases/#Germany",
+        "linkText": "JewishGen Databases"
+      },
+      {
+        "url": "http://www.kartenmeister.com/preview/databaseuwe.asp",
+        "linkText": "Database Search Utility"
+      },
+      {
+        "url": "http://www.kirchenbuch-virtuell.de/",
+        "linkText": "Traumgeburtstag - Alles rund um den Geburtstag"
+      },
+      {
+        "url": "http://www.kirchenbuchportal.de/inhalt.htm",
+        "linkText": "Kirchenbuchportal Germany Church Book Portal"
+      },
+      {
+        "url": "http://www.magsgen.com",
+        "linkText": "Mid-Atlantic Germanic Society Records"
+      },
+      {
+        "url": "http://www.many-roads.com/2012/02/01/prussian-mennonite-research-materials/",
+        "linkText": "Prussian Mennonite Research Materials"
+      },
+      {
+        "url": "http://www.many-roads.com/2012/07/01/former-eastern-german-place-names/",
+        "linkText": "Finding Former Eastern German Place Names"
+      },
+      {
+        "url": "http://www.many-roads.com/2014/11/28/might-your-family-be-descended-from-prussian-mennonites/",
+        "linkText": "Might your family be descended from Prussian Mennonites?"
+      },
+      {
+        "url": "http://www.many-roads.com/2015/02/16/researching-lost-eastern-german-provinces/",
+        "linkText": "Researching “Lost” Eastern German Provinces"
+      },
+      {
+        "url": "http://www.many-roads.com/category/histories/mennonites/",
+        "linkText": "West Prussian Mennonite Church Records & Land Records"
+      },
+      {
+        "url": "http://www.many-roads.com/vertreibungs-karten/",
+        "linkText": "Vertreibungs Karten (Expulsion Maps)"
+      },
+      {
+        "url": "http://www.martiusstaden.org.br/conteudo/detalhe/48/acervo",
+        "linkText": "Brazilian Families of German Origin"
+      },
+      {
+        "url": "http://www.monasterium.net/",
+        "linkText": "Monasterium.net | ICARUS"
+      },
+      {
+        "url": "http://www.multimap.com",
+        "linkText": "Bing"
+      },
+      {
+        "url": "http://www.museum-digital.de/san/index.php?t=objekt&amp;oges=1519%20&nbsp",
+        "linkText": "museum-digital"
+      },
+      {
+        "url": "http://www.myheritage.com/research/category-5000/family-trees?s=218489221",
+        "linkText": "Family Tree and Genealogy Records"
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-10019/germans-immigrating-to-the-united-states?s=218489221",
+        "linkText": "Germans Immigrating to the US, 1700s-1900s"
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-30037/germany-births-baptisms-1558-1898?s=218489221",
+        "linkText": "Family Tree and Genealogy, 1558-1898",
+        "startYear": 1558,
+        "endYear": 1898
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-30038/germany-marriages-1558-1929?s=2184892211558-1929",
+        "linkText": "Family Tree and Genealogy, 1558-1929",
+        "startYear": 1558,
+        "endYear": 1929
+      },
+      {
+        "url": "http://www.myheritage.com/research/collection-30055/germany-deaths-burials-1582-1958?s=218489221",
+        "linkText": "Family Tree and Genealogy, 1582-1958",
+        "startYear": 1582,
+        "endYear": 1958
+      },
+      {
+        "url": "http://www.nabkal.de/kalrech2.html",
+        "linkText": "Kalenderrechner 2"
+      },
+      {
+        "url": "http://www.ndb.badw-muenchen.de/eb_www.htm",
+        "linkText": "NDB, NEW GERMAN BIOGRAPHY, Historical and biographical information resources"
+      },
+      {
+        "url": "http://www.odessa3.org/",
+        "linkText": "Odessa Digital Library"
+      },
+      {
+        "url": "http://www.ogsa.us/",
+        "linkText": "Ostfriesen Genealogical Society of America"
+      },
+      {
+        "url": "http://www.ogsgs.org/",
+        "linkText": "Orangeburgh Swiss-German Genealogical Society"
+      },
+      {
+        "url": "http://www.online-ofb.de/juden_nw/",
+        "linkText": "Family database of Jews in the Northern part of the German Empire"
+      },
+      {
+        "url": "http://www.onlinenewspapers.com/germany.htm",
+        "linkText": "German Newspapers from Germany"
+      },
+      {
+        "url": "http://www.ortssippenbuch.net/",
+        "linkText": "Local clan books in Ostfriesland"
+      },
+      {
+        "url": "http://www.palam.org/",
+        "linkText": "Palatines to America Society"
+      },
+      {
+        "url": "http://www.passagierlisten.de/",
+        "linkText": "Emigrationen aus Bremen - Ueber Bremen in die Welt"
+      },
+      {
+        "url": "http://www.posselt-landkarten.de/",
+        "linkText": "Maps of the German Empire"
+      },
+      {
+        "url": "http://www.retrobibliothek.de/retrobib/index.html",
+        "linkText": "Willkommen bei der retro-Bibliothek"
+      },
+      {
+        "url": "http://www.searchforancestors.com/passengerlists/",
+        "linkText": "Palatine German Ship Passenger Lists to PA"
+      },
+      {
+        "url": "http://www.sggee.org/",
+        "linkText": "Society for German Genealogy in Eastern Europe"
+      },
+      {
+        "url": "http://www.stevemorse.org/",
+        "linkText": "One-Step Webpages by Stephen P. Morse"
+      },
+      {
+        "url": "http://www.thomas-erbe.de/ahnen/buch/001.htm",
+        "linkText": "Emigration lists of the former Duchy of Braunschweig"
+      },
+      {
+        "url": "http://www.volksbund.de/graebersuche.html",
+        "linkText": "German Military Grave Registration"
+      },
+      {
+        "url": "http://www.webexhibits.org/calendars/calendar.html",
+        "linkText": "Information on many calendar systems around the world"
+      },
+      {
+        "url": "http://www.westpreussen.de",
+        "linkText": "Westpruessen List of Towns"
+      },
+      {
+        "url": "http://www.worldgenweb.org/deuwgw/index.htm",
+        "linkText": "Germany GenWeb Project"
+      },
+      {
+        "url": "http://www.worldroots.com/",
+        "linkText": "Nobility Worldwide Records"
+      },
+      {
+        "url": "https://arcinsys.hessen.de/arcinsys/einfachsuchen.action?pageName=einfachesuche&methodName=einfach&rechercheBean.defaultfield=&rechercheBean.defaultfield_widget=https%3A%2F%2Farcinsys.hessen.de%2Farcinsys%2Feinfachsuchen.action%3FpageName%3Deinfachesuche%26metho&rechercheBean.von=&rechercheBean.bis=&rechercheBean.einfacheSucheRadioName=alle",
+        "linkText": "Auswanderer-Nachweise Hessen State Archives"
+      },
+      {
+        "url": "https://billiongraves.com/search#country=Germany&state=0&county=0&search_text=&action=search_cemetery",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://data.matricula-online.eu/en/",
+        "linkText": "Matricula Online"
+      },
+      {
+        "url": "https://gov.genealogy.net/search/index/Ortsdatenbank/Linkliste",
+        "linkText": "German-speaking Location Databases"
+      },
+      {
+        "url": "https://hf-gen.de/amerikanetz/",
+        "linkText": "Network Westphalian America emigration since the 19th century"
+      },
+      {
+        "url": "https://immigrantships.net/bremenproj/bremenproject.html",
+        "linkText": "Transcribed Ships Manifests Departing from Germany"
+      },
+      {
+        "url": "https://mki.wisc.edu/library-archive/external-links/general-german-american-resources/",
+        "linkText": "German genealogy resources at the Max-Kade Institute"
+      },
+      {
+        "url": "https://script.byu.edu/",
+        "linkText": "BYU Tutorial on Old Handwriting"
+      },
+      {
+        "url": "https://slcl.libguides.com/German_Genealogy",
+        "linkText": "St. Louis County Library German Genealogy Collection"
+      },
+      {
+        "url": "https://theworldremembers.org/search-the-names",
+        "linkText": "Search the Names (WWI)"
+      },
+      {
+        "url": "https://web.archive.org/web/20080217231007/http://www.progenealogists.com/germany/articles/gnews.htm",
+        "linkText": "Newspapers and intelligencers in Germany"
+      },
+      {
+        "url": "https://web.archive.org/web/20160301141631/http://www.ortelius.de/kalender/form_de2.php",
+        "linkText": "Calendar converter"
+      },
+      {
+        "url": "https://web.archive.org/web/20200627205310/http://home.foni.net/~adelsforschung1/bibliographie.htm",
+        "linkText": "Bibliographie zum deutschen Adel"
+      },
+      {
+        "url": "https://wiki-de.genealogy.net/Hauptseite",
+        "linkText": "GenWiki - das Genealogie-Wiki"
+      },
+      {
+        "url": "https://wiki.genealogy.net/Hauptseite",
+        "linkText": "GenWiki - das Genealogie-Wiki"
+      },
+      {
+        "url": "https://wiki.genealogy.net/Verlustlisten_Erster_Weltkrieg",
+        "linkText": "Verlustlisten Erster Weltkrieg"
+      },
+      {
+        "url": "https://www.americanancestors.org/search/databasesearch/1601/germany-deaths-and-burials-1582-1958",
+        "linkText": "Database Search, 1558-1929",
+        "startYear": 1558,
+        "endYear": 1958
+      },
+      {
+        "url": "https://www.americanancestors.org/search/databasesearch/1603/germany-births-and-baptisms-1558-1898",
+        "linkText": "Database Search, 1558-1898",
+        "startYear": 1558,
+        "endYear": 1898
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/catalog/?keyword=civil&location=3253_1652381",
+        "linkText": "Card Catalog"
+      },
+      {
+        "url": "https://www.archion.de/",
+        "linkText": "Archion Online Church Records"
+      },
+      {
+        "url": "https://www.archion.de/de/browse/#https://www.archion.de/de/browse/&path=48049",
+        "linkText": "Archives of the Lutheran Church"
+      },
+      {
+        "url": "https://www.archivportal-d.de/?",
+        "linkText": "Archivportal-D"
+      },
+      {
+        "url": "https://www.arcinsys.niedersachsen.de/arcinsys/einfachesuche.action",
+        "linkText": "Niedersachsen Archives Search Page"
+      },
+      {
+        "url": "https://www.catholicdirectory.com/germany",
+        "linkText": "Catholic Church Listing by City"
+      },
+      {
+        "url": "https://www.cia.gov/library/publications/the-world-factbook/index.html",
+        "linkText": "The World Factbook with regional maps, flags, guides to countries and current news"
+      },
+      {
+        "url": "https://www.compgen.de/recherchieren",
+        "linkText": "Recherchieren • Verein für Computergenealogie e.V. (CompGen)"
+      },
+      {
+        "url": "https://www.demogr.mpg.de/papers/working/wp-2009-023.pdf",
+        "linkText": "German Census-Taking Before 1871"
+      },
+      {
+        "url": "https://www.deutsche-auswanderer-datenbank.de/index.php?id=540&L=1",
+        "linkText": "Deutsche Auswanderer-Datenbank"
+      },
+      {
+        "url": "https://www.facebook.com/groups/CentralEuropeGenealogyResearchCommunity/files/",
+        "linkText": "Central Europe Genealogy Research Community"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+banns+and+marriages&sid=103&country=germany",
+        "linkText": "British Armed Forces and Overseas Banns and Marriages"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+births+and+baptisms&sid=103&country=germany",
+        "linkText": "British Armed Forces and Overseas Births and Baptisms"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+deaths+and+burials&sid=103&country=germany",
+        "linkText": "British Armed Forces and Overseas Deaths and Burials"
+      },
+      {
+        "url": "https://www.genealogycenter.info/persi/",
+        "linkText": "PERiodical Source Index (PERSI"
+      },
+      {
+        "url": "https://www.genteam.at/en/",
+        "linkText": "Startseite English"
+      },
+      {
+        "url": "https://www.germangenealogygroup.com/",
+        "linkText": "The German Genealogy Group (GGG)"
+      },
+      {
+        "url": "https://www.germanroots.com/emigration.html",
+        "linkText": "German Emigration Records, Lists and Indexes"
+      },
+      {
+        "url": "https://www.germanroots.com/wuerttemberg.html",
+        "linkText": "Württemberg Emigration Index, 1808-1890",
+        "startYear": 1808,
+        "endYear": 1890
+      },
+      {
+        "url": "https://www.ggarchives.com/OceanTravel/Passengers/FrenchLine/index.html",
+        "linkText": "CGT French Line Passenger Lists, 1887-1954"
+      }
+    ],
+    "inlineCapped": true
+  }
+}

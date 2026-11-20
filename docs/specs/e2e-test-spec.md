@@ -721,21 +721,26 @@ rules in `research/SKILL.md` branch on it; find them with
   state, one step per turn, rather than handed straight to the step that owns a
   single deliverable.
 - **No researcher present.** On an autonomous run the router hands `userPresent: no`
-  to two agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
   run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
   otherwise `yes`". `@plugin:person-evidence` gets
   it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
   run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". The rules are there so an e2e run never waits on an
+  and in an autonomous run". `@plugin:question-selection` gets it only in an autonomous
+  run, so an objective holding several facts gets a question for the first one instead
+  of an ask nobody answers. The rules are there so an e2e run never waits on an
   external-site capture nobody will upload. The research unit suite checks that the router sends
   the field to search-external-sites on the opening turn of an autonomous run
-  (`ut_research_ue1`, tag `delegates-user-present-no-external`). A spawn later in a
+  (`ut_research_ue1`, tag `delegates-user-present-no-external`), and to question-selection
+  on the opening turn of an autonomous run with an objective and no questions
+  (`ut_research_uq1`, tag `delegates-qs-user-present-no`). A spawn later in a
   run is checked by nothing, and an agent reads a missing field as `yes`:
   `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
   search-external-sites without it, and that plan item stayed `in_progress` waiting
   for a capture.
 
-Those three agents read the `userPresent` field, not the string. The e2e
+Of those three, search-external-sites and question-selection read the `userPresent`
+field, not the string; person-evidence receives it but does not read it. The e2e
 orchestrator writes no delegation, so it cannot pass `userPresent: no` itself: the
 flag is how an e2e run gets it. That is why the flag stays as e2e's opening (lead,
 2026-11-10); decision 22 of the step-mode spec records that ruling, which rescinded
@@ -2783,7 +2788,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `id` | yes | the directory name (the loader refuses a mismatch) |
 | `message` | yes | sent verbatim |
 | `expected_owner` | yes | the agent or skill name that should answer, or a list of them where `null` means the main thread answered with no unit |
-| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
+| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, `{"section": "plans"}` (only with `is_plan_ask`; the loader refuses it otherwise), or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
 | `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
 | `required_tools` | no (`[]`) | bare tool names that must be called without error, on any thread. Required when any `expected_save` alternative is `absent`: otherwise an empty turn passes |
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
@@ -2844,7 +2849,7 @@ namespace; it is stripped, as it is from spawned names):
    no `research-plan` spawn, on any thread; and no new `questions` entry, nor,
    unless `is_plan_ask`, a new `plans` entry.
 3. **`save`** — any one `expected_save` alternative holds: a new `sources` entry,
-   a new `log` entry whose `tool` (and `outcome`, when given) is the expected
+   a new `plans` entry, a new `log` entry whose `tool` (and `outcome`, when given) is the expected
    value, or, with `absent`, no new entry in that section. "New" means its id is
    in the final `research.json` and not in `starting-research.json`; in an
    empty-folder fixture every row is new.

@@ -244,8 +244,8 @@ also showed the agent *project-wide absences* — the `wilkins-marriage` verdict
 `must_address` turned on "both `conflicts[]` and `hypotheses[]` are empty
 project-wide." A question-scoped recipe list would not surface that. The agent body
 therefore requires **unfiltered** `conflicts` and `hypotheses` count checks, and
-requires checking `count` against `research_query`'s 50-item cap. Do not remove those
-two habits when editing the recipes.
+requires checking `truncated` on every `research_query` answer and paging with
+`offset: nextOffset`. Do not remove those two habits when editing the recipes.
 
 **Measured after the change (`bagley-father-1884`, 2026-07-31).** Same fixture,
 before → after:
@@ -987,7 +987,7 @@ specific, not as a box-checking ritual.
 | Tool | When to use |
 |------|-------------|
 | `project_context` | The opening call of every invocation — project status, open questions, tree persons with their one-hop family, sources with their record ids, locality knowledge. Replaces the orientation the agent used to get by scanning `research.json`. |
-| `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `count` against the 50-item cap before calling a set complete. |
+| `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `truncated` (page with `offset: nextOffset`) before calling a set complete. |
 | `sidecar_read` | A prior verdict body only — `ref` is the `evaluations[]` entry's `file_path` as stored; page with `offset: nextOffset` while `truncated`. It serves `evaluations/`, `uploads/`, a staged transcription and one full-text hit under `results/`, and refuses every other path (`invalid_ref`), so it is not a route back to `research.json`, the tree, a record or search sidecar, or images. Spec: `docs/specs/sidecar-read-tool-spec.md`. An entry already located by id is a `research_query` on its section, paged with `offset` and matched on `id` by the agent. |
 | `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
 | `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |

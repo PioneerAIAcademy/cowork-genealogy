@@ -1,0 +1,129 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of María Guadalupe Hernández Ramírez, born about 1895 in Guadalajara, Jalisco, Mexico",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-15",
+    "updated": "2026-11-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of María Guadalupe Hernández Ramírez (b. about 1895, Guadalajara, Jalisco, Mexico)?",
+      "rationale": "Primary research objective. No records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-15",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Mexico",
+      "for_place": "Guadalajara, Jalisco, Mexico",
+      "time_period": "1880-1920",
+      "jurisdictions": [
+        {
+          "name": "Guadalajara, Jalisco, Mexico",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1918187",
+          "title": "Mexico, Jalisco, Civil Registration, 1857-2000",
+          "date_range": "1857-2000",
+          "person_count": 28607949,
+          "record_count": 7329914
+        },
+        {
+          "id": "1874591",
+          "title": "Mexico, Jalisco, Catholic Church Records, 1590-2022",
+          "date_range": "1590-2022",
+          "person_count": 79657525,
+          "record_count": 9749114
+        },
+        {
+          "id": "1473011",
+          "title": "Mexico, Baptisms, 1560-1950",
+          "date_range": "1559-1950",
+          "person_count": 95295193,
+          "record_count": 29519223
+        },
+        {
+          "id": "1473013",
+          "title": "Mexico, Deaths, 1680-1940",
+          "date_range": "1680-1940",
+          "person_count": 623486,
+          "record_count": 257827
+        },
+        {
+          "id": "1473012",
+          "title": "Mexico, Marriages, 1570-1950",
+          "date_range": "1569-1950",
+          "person_count": 4654,
+          "record_count": 5262735
+        }
+      ],
+      "quirks": [
+        "Although Mexicans use two surnames, most indexed records carry only the first (paternal) surname — search with the paternal surname alone; when the person is not found, search through the parents (a parent search with each parent's first surname, leaving out the child's name). (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org)",
+        "The typical Spanish name has four parts: two given names, the father's surname and the mother's surname. (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Mexico_Naming_Customs)"
+      ],
+      "guide_markdown": "## Guadalajara, Jalisco, Mexico - 1880-1920\n\nAlthough Mexicans use two surnames, most indexed records carry only the first (paternal) surname — search with the paternal surname alone; when the person is not found, search through the parents (a parent search with each parent's first surname, leaving out the child's name). (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-11-15"
+    }
+  ]
+}

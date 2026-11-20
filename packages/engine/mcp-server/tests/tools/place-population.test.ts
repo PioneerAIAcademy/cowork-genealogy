@@ -154,4 +154,20 @@ describe("populationTool", () => {
       /Population API error: 404/
     );
   });
+
+  it("throws a not-found error when Pop Stats answers 200 with { error, place_id } (issue #4516)", async () => {
+    mockFetch.mockResolvedValueOnce(okJson({ error: "Place not found", place_id: "1927892" }));
+
+    const err = await populationTool({ standardPlace: "Lincolnshire, England, United Kingdom" }, LOCAL).catch(
+      (e: Error) => e
+    );
+    expect((err as Error).message).toBe('No population data found for "Lincolnshire, England, United Kingdom".');
+  });
+
+  it("still returns a body that carries a place, even with an error field", async () => {
+    const withPlace = { ...SAMPLE, error: "partial" };
+    mockFetch.mockResolvedValueOnce(okJson(withPlace));
+
+    expect(await populationTool({ standardPlace: "Nigeria" }, LOCAL)).toEqual(withPlace);
+  });
 });

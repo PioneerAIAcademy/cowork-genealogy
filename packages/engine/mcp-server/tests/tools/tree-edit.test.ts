@@ -3422,6 +3422,166 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect(await readTree()).toEqual(treeBefore);
   });
 
+  // Decision 26: a father whose edge reads set aside from claims is not a rival.
+  const setAsideResearch = () => ({ ...minimalResearch, ...{
+  proof_summaries: [
+    {
+      id: "ps_001",
+      question_id: "q_001",
+      tier: "probable",
+      claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+        { claim: "not Thomas", proof_tier: "possible", polarity: "denied", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+      ],
+    },
+  ],
+} });
+
+  it("adding the concluded father beside a father that reads set aside needs no justification", async () => {
+    await writeProject(parentage(), setAsideResearch());
+    const r = await addParent("I3");
+    expect(r.ok).toBe(true);
+    const edges = (await readTree()).relationships.map((e: any) => e.parent);
+    expect(edges).toEqual(expect.arrayContaining(["I2", "I3"]));
+  });
+
+  it("a winner's edge beside a set-aside import lands; with no summary the same write is refused and routed", async () => {
+    await writeProject(parentage());
+    const refused = await addParent("I3");
+    expect((refused as any).reason).toBe("unjustified_warnings");
+    expect((refused as any).warnings[0].warningId).toMatch(/^competingParentage\|I1\|Male\|/);
+
+    await writeProject(parentage(), setAsideResearch());
+    expect((await addParent("I3")).ok).toBe(true);
+  });
+
+  it("still refuses a third father who has no claim, beside the winner and the set-aside import", async () => {
+    const t = parentage();
+    t.persons.push({ id: "I5", gender: "Male", names: [{ id: "N5", given: "James", surname: "Flynn", preferred: true }], facts: [] } as any);
+    t.relationships.push({ id: "R2", type: "ParentChild", parent: "I3", child: "I1", sources: [{ ref: "S1" }] } as any);
+    await writeProject(t, setAsideResearch());
+    const r = await addParent("I5");
+    expect((r as any).reason).toBe("unjustified_warnings");
+  });
+
+  // Decision 10: a pair a proof summary rules out cannot be added or corroborated.
+  const ruledOutResearch = (parent = "I3") => ({
+    ...minimalResearch,
+    proof_summaries: [{
+      id: "ps_009", question_id: "q_001", tier: "disproved",
+      claims: [{ claim: "not John", proof_tier: "disproved", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent, child: "I1" } }],
+    }],
+  });
+
+  it("add_relationship refuses a pair a disproved claim covers, naming the summary", async () => {
+    await writeProject(parentage(), ruledOutResearch());
+    const before = await readTree();
+    const r = await addParent("I3");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/proof summary ps_009 rules this pair out \(claim 'not John', disproved\)/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("the corroborate path refuses it too", async () => {
+    await writeProject(parentage(), ruledOutResearch("I2"));
+    const r = await addParent("I2");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/rules this pair out/);
+  });
+
+  it("a disproof of the biological father leaves a Step edge on the same pair free", async () => {
+    const research = ruledOutResearch("I3");
+    (research.proof_summaries[0].claims[0].relationship as any).subtype = "Biological";
+    await writeProject(parentage(), research);
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_relationship",
+      relationship: { type: "ParentChild", subtype: "Step", parent: "I3", child: "I1", sources: [{ ref: "S1" }] },
+    } as any);
+    expect((r as any).errors?.join(" ") ?? "").not.toMatch(/rules this pair out/);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
+  it("a disproved claim on another pair does not refuse", async () => {
+    await writeProject(parentage(), ruledOutResearch("I3"));
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "S1" }] },
+    } as any);
+    expect((r as any).errors?.join(" ") ?? "").not.toMatch(/rules this pair out/);
+  });
+
+  // The proposed edge can be free while the edge it would corroborate is not:
+  // an untyped edge matches any subtype.
+  const typedRuledOut = (parent: string, subtype: string) => {
+    const research = ruledOutResearch(parent);
+    (research.proof_summaries[0].claims[0].relationship as any).subtype = subtype;
+    return research;
+  };
+  const addStep = (parent: string, subtype?: string) =>
+    treeEdit({
+      projectPath: dir, operation: "add_relationship",
+      relationship: { type: "ParentChild", ...(subtype ? { subtype } : {}), parent, child: "I1", sources: [{ ref: "S1" }] },
+    } as any);
+
+  it("refuses a Step add that would corroborate the ruled-out untyped edge", async () => {
+    await writeProject(parentage(), typedRuledOut("I2", "Biological"));
+    const before = await readTree();
+    const r = await addStep("I2", "Step");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/would corroborate relationship 'R1', which proof summary ps_009 rules out/);
+    expect((r as any).errors.join(" ")).toMatch(/have proof-conclusion revise the claim/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("refuses an untyped add that would corroborate a ruled-out Step edge", async () => {
+    const t = parentage();
+    (t.relationships[0] as any).subtype = "Step";
+    await writeProject(t, typedRuledOut("I2", "Step"));
+    const before = await readTree();
+    const r = await addStep("I2");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/would corroborate relationship 'R1'/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("still corroborates a Step edge under a Biological disproof", async () => {
+    const t = parentage();
+    (t.relationships[0] as any).subtype = "Step";
+    await writeProject(t, typedRuledOut("I2", "Biological"));
+    const r = await addStep("I2", "Step");
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
+  it("the add refusal names proof-conclusion as the one that revises the claim", async () => {
+    await writeProject(parentage(), ruledOutResearch());
+    const r = await addParent("I3");
+    expect((r as any).errors.join(" ")).toMatch(/Have proof-conclusion revise that claim first/);
+  });
+
+  it("update_relationship refuses a retype onto the ruled-out subtype", async () => {
+    const t = parentage();
+    (t.relationships[0] as any).subtype = "Step";
+    await writeProject(t, typedRuledOut("I2", "Biological"));
+    const before = await readTree();
+    const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Biological" } as any);
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/proof summary ps_009 rules out 'Biological' for this pair \(claim 'not John', disproved\)/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("update_relationship lets a retype away from the ruled-out subtype through", async () => {
+    await writeProject(parentage(), typedRuledOut("I2", "Biological"));
+    const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    expect((await readTree()).relationships[0].subtype).toBe("Step");
+  });
+
+  it("update_relationship is free with no claims on file", async () => {
+    await writeProject(parentage());
+    const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
   it("lets a ParentChild edge to a parent of the other sex through", async () => {
     await writeProject(parentage());
 

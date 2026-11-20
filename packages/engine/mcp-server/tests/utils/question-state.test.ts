@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { questionStatus, questionStates } from "../../src/utils/question-state.js";
 import { ATTACHMENT_LINK_RATIONALE, countsForProofGate, isAttachmentLink } from "../../src/utils/tree-person.js";
 import { unlinkedProofInvariants } from "../../src/tools/research-append.js";
@@ -873,6 +875,121 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
 });
 
 /**
+ * Issue #4659: linked persons nothing ties to a subject — inferred kinship —
+ * route to hypothesis-tracking. Scenario fixtures are read from disk so the
+ * cases the issue names are the committed documents, not hand copies.
+ */
+describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => {
+  const SCENARIOS = join(resolve(__dirname, "../../../../.."), "eval/fixtures/scenarios");
+  const load = (scenario: string): { research: any; tree: any } => ({
+    research: JSON.parse(readFileSync(join(SCENARIOS, scenario, "research.json"), "utf-8")),
+    tree: JSON.parse(readFileSync(join(SCENARIOS, scenario, "tree.gedcomx.json"), "utf-8")),
+  });
+  const SIBLINGS = "unregistered-sibling-premise-scopes-searches";
+  const KIN = /^hypothesis-tracking — unlinked kin/;
+  const step = (research: any, tree: any, qid = Q): string | null =>
+    questionStatus(research, research.questions.find((q: any) => q.id === qid), tree).nextStep;
+
+  it("fires on the sibling-premise scenario with I2 and I3", () => {
+    const { research, tree } = load(SIBLINGS);
+    expect(step(research, tree)).toBe("hypothesis-tracking — unlinked kin: I2, I3");
+  });
+
+  it("fires on the marriage-only scenario, whose parents have no child link", () => {
+    const { research, tree } = load("flynn-marriage-only-no-child-link");
+    expect(step(research, tree)).toBe("hypothesis-tracking — unlinked kin: I2, I3");
+  });
+
+  it("is silent when the tree records the relationship (the subject's recorded parent)", () => {
+    const { research, tree } = load("flynn-household-skeleton");
+    expect(step(research, tree)).not.toMatch(KIN);
+  });
+
+  it("is silent when rival hypotheses relate to the question", () => {
+    const { research, tree } = load("flynn-parentage-open");
+    expect(step(research, tree)).not.toMatch(KIN);
+  });
+
+  it("is silent before a subject is set", () => {
+    const { research, tree } = load("england-census-timeline");
+    expect(research.project.subject_person_ids ?? null).toBeNull();
+    expect(step(research, tree)).not.toMatch(KIN);
+    const s = load(SIBLINGS);
+    s.research.project.subject_person_ids = ["I99"];
+    expect(step(s.research, s.tree)).not.toMatch(KIN);
+  });
+
+  it("a hypothesis related to this question silences it; one related to another does not", () => {
+    const s = load(SIBLINGS);
+    s.research.hypotheses = [{ id: "h_001", related_question_ids: ["q_999"] }];
+    expect(step(s.research, s.tree)).toMatch(KIN);
+    s.research.hypotheses = [{ id: "h_001", related_question_ids: [Q] }];
+    expect(step(s.research, s.tree)).not.toMatch(KIN);
+  });
+
+  it("a person sharing a record with the subject is not inferred kin", () => {
+    const s = load(SIBLINGS);
+    const i2Record = s.research.assertions.find((a: any) => a.id === "a_001").record_id;
+    s.research.assertions.push({ ...s.research.assertions[0], id: "a_900", record_id: i2Record });
+    s.research.person_evidence.push({ id: "pe_900", assertion_id: "a_900", person_id: "I1" });
+    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I3");
+  });
+
+  it("with no record_id, a shared source_id is the shared record, and a different one is not", () => {
+    const s = load(SIBLINGS);
+    for (const a of s.research.assertions) delete a.record_id;
+    s.research.assertions.push({ ...s.research.assertions[0], id: "a_900", source_id: "src_900" });
+    s.research.person_evidence.push({ id: "pe_900", assertion_id: "a_900", person_id: "I1" });
+    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I2, I3");
+    s.research.assertions.find((a: any) => a.id === "a_900").source_id = "src_001";
+    expect(step(s.research, s.tree)).not.toMatch(KIN);
+  });
+
+  it("a relationship path of any length or direction ties a person to the subject", () => {
+    const paths: any[][] = [
+      [{ type: "Couple", person1: "I2", person2: "I1" }],
+      [{ type: "ParentChild", parent: "I1", child: "I2" }],
+      [
+        { type: "ParentChild", parent: "I2", child: "I4" },
+        { type: "ParentChild", parent: "I4", child: "I1" },
+      ],
+    ];
+    for (const relationships of paths) {
+      const s = load(SIBLINGS);
+      s.tree.persons.push({ id: "I4" });
+      s.tree.relationships = relationships;
+      expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I3");
+    }
+  });
+
+  it("a superseded link, or a person absent from the tree, is not a candidate", () => {
+    const s = load(SIBLINGS);
+    for (const pe of s.research.person_evidence) if (pe.person_id === "I3") pe.superseded_by = "pe_999";
+    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I2");
+    const t = load(SIBLINGS);
+    t.tree.persons = t.tree.persons.filter((p: any) => p.id !== "I3");
+    expect(step(t.research, t.tree)).toBe("hypothesis-tracking — unlinked kin: I2");
+  });
+
+  it("is silent with no tree and on a resolved question", () => {
+    const { research, tree } = load(SIBLINGS);
+    expect(step(research, null)).not.toMatch(KIN);
+    research.questions[0].status = "resolved";
+    expect(step(research, tree)).not.toMatch(KIN);
+  });
+
+  it("competing parent sets and open conflicts outrank it", () => {
+    const s = load(SIBLINGS);
+    s.tree.relationships = ["I5", "I6", "I7"].map((parent) => ({ type: "ParentChild", parent, child: "I1" }));
+    s.research.person_evidence.push({ id: "pe_900", assertion_id: "a_001", person_id: "I1" });
+    expect(step(s.research, s.tree)).toMatch(/^hypothesis-tracking — competing parent sets: I1/);
+    const c = load(SIBLINGS);
+    c.research.conflicts = [{ id: "c_001", status: "unresolved", competing_assertion_ids: ["a_001", "a_005"] }];
+    expect(step(c.research, c.tree)).toMatch(/^conflict-resolution/);
+  });
+});
+
+/**
  * Section B's "not exhaustive" choice.
  *
  * The search stopped on RESOURCES rather than on a finding, so neither
@@ -1309,5 +1426,57 @@ describe("questionStatus — the dispatch arm skips an item waiting on an upload
       }],
     });
     expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+});
+
+describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
+  const tree = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John" }] },
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Pedro" }] },
+    ],
+    relationships: [],
+  };
+  const father = {
+    claim: "father", proof_tier: "probable", supporting_assertion_ids: ["a_1"],
+    relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+  };
+  const concluded = (claims: any[]) =>
+    doc({
+      questions: [question({ status: "resolved" })],
+      assertions: [{ id: "a_1", record_id: "r", extracted_for_question_ids: [Q] }],
+      proof_summaries: [{ id: "ps_001", question_id: Q, tier: "probable", claims }],
+    });
+
+  it("an unencoded claim reports the encode step", () => {
+    const s = questionStatus(concluded([father]), question({ status: "resolved" }), tree);
+    expect(s.nextStep).toBe("proof-conclusion — encode father from ps_001");
+  });
+
+  it("an encoded claim reports nothing, and with no tree the arm is skipped", () => {
+    const encoded = { ...tree, relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }] };
+    expect(questionStatus(concluded([father]), question({ status: "resolved" }), encoded).nextStep).toBeNull();
+    expect(questionStatus(concluded([father]), question({ status: "resolved" })).nextStep).toBeNull();
+  });
+
+  it("a supported hypothesis with no summary routes to proof-conclusion", () => {
+    const d = doc({
+      assertions: [{ id: "a_1", record_id: "r", extracted_for_question_ids: [Q] }],
+      hypotheses: [{ id: "h_001", status: "supported", related_question_ids: [Q] }],
+      person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
+    });
+    expect(questionStatus(d, question(), tree).nextStep).toBe(
+      "proof-conclusion — hypothesis h_001 is supported and no related question has a proof summary",
+    );
+  });
+
+  it("a supported hypothesis does not jump ahead of a planned search", () => {
+    const d = doc({
+      plans: [{ id: "pl_001", question_id: Q, status: "active", items: [{ id: "pli_001", status: "planned", sequence: 1, repository: "FamilySearch", record_type: "census" }] }],
+      assertions: [{ id: "a_1", record_id: "r", extracted_for_question_ids: [Q] }],
+      hypotheses: [{ id: "h_001", status: "supported", related_question_ids: [Q] }],
+      person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
+    });
+    expect(questionStatus(d, question(), tree).nextStep ?? "").not.toMatch(/^proof-conclusion — hypothesis/);
   });
 });

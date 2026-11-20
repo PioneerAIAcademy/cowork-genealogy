@@ -1,0 +1,182 @@
+{
+  "tool": "record_read",
+  "description": "record_read for a source attached to Orpha (Brooks) Wheaton (LZPF-WMT). Michigan Deaths 1867-1897: Silas W. Wheaton d. 1896, naming parents William and Orpha Wheaton. Captured live 2026-11-17 for issue #4584 (feedback #4507/#4508: Orpha (Brooks) Wheaton, LZPF-WMT), re-captured on main rather than copied from the 2381ff72c bundle. Verbatim.",
+  "args": {
+    "recordId": "~N3KL-628"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_11752869309",
+        "ark": "ark:/61903/1:1:N3KL-62C",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "933cbd8d-3276-4861-b6b8-54cf53f890c1",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "Silas W."
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "Laborer"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "id": "e0bb3fb1-52c8-417b-908a-c1434d2b1b75",
+            "type": "Death",
+            "primary": true,
+            "date": "11 Nov 1896",
+            "standard_date": "11 Nov 1896",
+            "place": "Reed City, Osceola, Michigan"
+          },
+          {
+            "id": "a1c04bee-2d5e-4f2e-8623-0f096469c21d",
+            "type": "Birth",
+            "date": "1817",
+            "standard_date": "1817",
+            "place": "New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11752869310",
+        "ark": "ark:/61903/1:1:N3KL-62Z",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "aa0abc68-e3d0-4d43-81cf-75d34ffd8e7d",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "William"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11752869311",
+        "ark": "ark:/61903/1:1:N3KL-628",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "6b51da3b-ac88-48a9-952e-a8060d721e2e",
+            "type": "BirthName",
+            "surname": "Wheaton",
+            "given": "Orpha"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "4aceeb7e-1d92-4447-9803-748ab885bf06",
+        "type": "ParentChild",
+        "parent": "p_11752869311",
+        "child": "p_11752869309"
+      },
+      {
+        "id": "8301bb04-cb65-481c-a0cb-98375b803c86",
+        "type": "Couple",
+        "person1": "p_11752869310",
+        "person2": "p_11752869311"
+      },
+      {
+        "id": "c0318b2c-4851-41bf-a007-4cec568d2890",
+        "type": "ParentChild",
+        "parent": "p_11752869310",
+        "child": "p_11752869309"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_93368043",
+        "resource_type": "Record",
+        "title": "Entry for Silas W. Wheaton, \"Michigan, Deaths, 1867-1897\"",
+        "citation": "\"Michigan, Deaths, 1867-1897\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3KL-62C : Sun Jan 19 17:14:54 UTC 2025), Entry for Silas W. Wheaton and William Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:M3RH-SH3",
+        "coverage": {
+          "record_type": "Death"
+        }
+      },
+      {
+        "id": "sd_c_1452402",
+        "resource_type": "Collection",
+        "title": "Michigan, Deaths, 1867-1897",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1452402",
+        "coverage": {
+          "place_rep_id": "332",
+          "date_range": "1867/1897",
+          "record_type": "Death",
+          "standard_place": "Michigan, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYLZ-FKR",
+        "coverage": {
+          "place_rep_id": "332",
+          "date_range": "1896",
+          "record_type": "Death",
+          "standard_place": "Michigan, United States"
+        }
+      },
+      {
+        "id": "sd_p_11752869311",
+        "resource_type": "Person",
+        "title": "Orpha Wheaton, \"Michigan, Deaths, 1867-1897\"",
+        "citation": "\"Michigan, Deaths, 1867-1897\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3KL-628 : Sun Jan 19 17:14:54 UTC 2025), Orpha Wheaton in entry for Silas W. Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:N3KL-628"
+      },
+      {
+        "id": "sd_p_11752869310",
+        "resource_type": "Person",
+        "title": "William Wheaton, \"Michigan, Deaths, 1867-1897\"",
+        "citation": "\"Michigan, Deaths, 1867-1897\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3KL-62Z : Sun Jan 19 17:14:54 UTC 2025), William Wheaton in entry for Silas W. Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:N3KL-62Z"
+      },
+      {
+        "id": "sd_p_11752869309",
+        "resource_type": "Person",
+        "title": "Silas W. Wheaton, \"Michigan, Deaths, 1867-1897\"",
+        "citation": "\"Michigan, Deaths, 1867-1897\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3KL-62C : Sun Jan 19 17:14:54 UTC 2025), Silas W. Wheaton, 11 Nov 1896.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:N3KL-62C"
+      },
+      {
+        "id": "sd_auto_M9J1-SN9",
+        "resource_type": "auto",
+        "title": "United States, Michigan, Deaths, from 0123 to 9167",
+        "coverage": {
+          "place_rep_id": "332",
+          "date_range": "+0123-01-01T00:00:00Z/+9167-12-31T23:59:59Z",
+          "standard_place": "Michigan, United States"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HT-DYLZ-FKR",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYLZ-FKR",
+    "birthRanges": {
+      "p_11752869309": "Bet 1816 and 1817"
+    }
+  }
+}

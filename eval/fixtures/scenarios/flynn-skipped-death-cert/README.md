@@ -1,5 +1,9 @@
 # flynn-skipped-death-cert
 
+> **Updated 2026-11-17, with the parent.** This fork already held the will and the later censuses. It now also carries the parent's Irish baptism index search (`pli_010`, `log_009`) and naturalization search (`pli_009`, `log_010`), the question no longer says Pennsylvania, and `ps_001.shortfall` is `ceiling`. Reason: on the unchanged fork the agent declined 2 runs in 10 of `ut_research_exhaustiveness_012`, once on the unsearched Irish registers, the hole two genealogists named in the parent. The one skipped item is now the death certificate, which is what 012 tests.
+
+> **Death-era records searched, 2026-11-17.** `pli_011`/`log_011` (the Weekly Miners' Journal, 1897-1899: a death notice of 18 March 1898 naming no parents) and `pli_012`/`log_012` (the St. John the Baptist burial register: buried 15 March 1898, no parents) are added as fallbacks for the destroyed death certificate. Reason: with the certificate gone, the agent declined 3 runs in 10 of `ut_research_exhaustiveness_012` on the obituary and burial register nobody had looked for, and that is a fair objection (Promise Igbojionu, 2026-11-17, following the lead's ruling of the same day that a death-era record matters for parentage). The Weekly Miners' Journal ran 1873-1909 (Library of Congress catalogue). The notice and the burial entry are invented.
+
 Fork of `flynn-exhaustive-ready` with four plan-item changes:
 
 - **pli_005** (death certificate): `completed` -> `skipped` -- records

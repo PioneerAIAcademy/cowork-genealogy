@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 57 tools. A caller on the remote connector also gets the two
+The MCP server exposes 58 tools. A caller on the remote connector also gets the two
 under [Connector only](#connector-only).
 
 ### FamilySearch records and places
@@ -33,9 +33,10 @@ under [Connector only](#connector-only).
 | `catalog_search` | Searches the FamilySearch **Catalog** — microfilm, books, manuscripts and finding aids — and hydrates its top hits with holdings detail: where the originals are held, and an `imageGroupNumber` for `image_search`/`fulltext_search` where one was filmed. Also opens one entry by its id or a pasted Catalog link (`catalogId`). A different index from `collections_search` | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns every persona on the record as compacted simplified GEDCOMX (`citation` and `recordUrl` in place of sources, no name/fact/relationship ids, large households capped with stubs and `personsOmitted`); with `projectPath` the full record is staged (`staged.resultsRef`) so `research_log_append` retains it as a sidecar and `extraction_append` reads it | OAuth |
+| `image_index` | Lists the records FamilySearch has indexed on one page image (its `3:1:` ARK or viewer URL), reading each record for the persona arks and names on it; capped per call with `nextOffset`, and marked unordered (`ordered: false`) because the list's order is not verified as the page's line order | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
-| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. With `item` / `itemImage` on a bare film number, resolves a "DGS 004528134, Item 5, Image 10" citation to its image ID. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
+| `image_search` | Counts the images in one image group (digitized volume) given its image group number and returns their ids as ranges — feeds `image_transcribe` / `image_read`. With `item` / `itemImage` on a bare film number, resolves a "DGS 004528134, Item 5, Image 10" citation to its image ID. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
 | `same_person` | Asks FamilySearch whether two people are the same — a 0–1 score. Takes either two GedcomX documents, or project references (`projectPath`, `assertionId`, `treePersonId`) and assembles both sides itself, recording the score it computed | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
@@ -53,7 +54,7 @@ under [Connector only](#connector-only).
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
+| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server; returns references (page, section, URL) by default, section text with `includeText` | None |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
 | `wiki_place_page` | A FamilySearch Research Wiki page for a place — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`. `home` resolves the place's own page at any level the wiki has one (country, state or province, county, parish, independent city); the other three exist only for a country or a state/province | None |
 
@@ -132,10 +133,10 @@ ask for a login when a search fails on authentication.
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`
 tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
-sidecar APIs (Pop Stats and `wiki-query-api`) that have no public
-deployment yet: the compiled-in defaults point at one developer's machine.
-`wikiApiUrl` and `popStatsUrl` in `~/.familysearch-mcp/config.json` override
-them (CLAUDE.md, "External service dependencies").
+sidecar APIs (Pop Stats and `wiki-query-api`); the compiled-in defaults point at
+a developer's host, publicly reachable through Tailscale Funnel, so every install
+reaches it. `wikiApiUrl` and `popStatsUrl` in `~/.familysearch-mcp/config.json`
+override them (CLAUDE.md, "External service dependencies").
 
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an
@@ -215,7 +216,7 @@ don't load it explicitly.
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. Records a same-named person a hit rules out as a namesake, and logs every search for the audit trail. | "Full-text search for Flynn in Schuylkill County deeds" |
 | **evaluate-search-results** | Judges one full-text search hit against a tree person: Match, Possible Match or Not a Match, and whether the hit holds a birth, marriage, death or relationship the person does not have yet. `/research` spawns one per hit, in parallel, when you ask it to evaluate a search's hits, relays each verdict, and offers to extract the Matches. The agent only labels: it writes one verdict per hit to the project and extracts nothing. | "Evaluate hits 1, 4 and 7 of log_012" / "Evaluate all the hits of that search" |
-| **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, reads each page as text, and records a same-named person a page rules out as a namesake. With no project, it finds the volume (also through the catalog), reads the pages the ask needs, and returns an abstract with every fact cited to its image, logging nothing; asked for a named title, it returns the title's catalog item and DGS numbers. | "Browse the images" / "page through the film" / "read and abstract these rolls" / "which DGS numbers hold <title>?" |
+| **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, reads each page as text, and records a same-named person a page rules out as a namesake. With no project, it finds the volume (also through the catalog), reads the pages the ask needs, and returns an abstract with every fact cited to its image, logging nothing; asked for a named title, it returns the title's catalog item and DGS numbers. Asked to re-index one page, it lists FamilySearch's index of that page (`image_index`), reads the page once, and sets the two readings side by side, line by line, marking where they differ without calling either one wrong. | "Browse the images" / "page through the film" / "read and abstract these rolls" / "which DGS numbers hold <title>?" / "re-index this image against FamilySearch's index" |
 | **search-external-sites** | Builds pre-filled search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, the Archion and Matricula church-book sites, and the rest of `build_external_search_url`'s site list; hands each over with exactly what to look for, and triages the capture you bring back — the results pasted in, or the saved page uploaded. When the project has an upload page, the hand-off gives its link, and an upload is read through the tools: its text, or a transcription of the scan; if transcription is refused, it asks you to paste the results instead. Logs every search, nil results included. | "Search Ancestry for Thomas Flynn" |
 | **search-hints** | Reviews the FamilySearch hints (pending record matches) on one tree person. It decides accept, reject or not enough information for each hint, discloses FamilySearch's own confidence, reads the record image before deciding against a hint, and logs each accept and reject, so an accepted hint flows on to extraction like any search result. If you disagree with a decision, say so and it logs your verdict over its own. On an identity, parentage, birth, death or marriage question research-plan plans a hints review as the first item, run through this agent. | "Are these hints valid?" / "Accept hint 1, reject hint 2" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to extraction (`extraction_append`, or the `record-structurer` agent for a source that is not a FamilySearch record). | "Fix citations" / "Cite this source" |

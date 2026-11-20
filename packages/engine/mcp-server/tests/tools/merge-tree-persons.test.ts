@@ -114,6 +114,21 @@ describe("merge_tree_persons", () => {
     expect(research.project.subject_person_ids).toEqual(["I1"]);
   });
 
+  it("a merge sets no primary (Decision 34): a lone Birth stays unmarked and primarySet is empty", async () => {
+    const tree = baseTree();
+    (tree.persons[0] as any).facts = [{ id: "F1", type: "Birth", date: "1850", standard_date: "1850", sources: [{ ref: "S1" }] }];
+    (tree.persons[1] as any).facts = [{ id: "F2", type: "Birth", date: "10 Jan 1850", standard_date: "10 Jan 1850", sources: [{ ref: "S1" }] }];
+    (tree as any).sources = [{ id: "S1", title: "A source" }];
+    await writeProject(tree, baseResearch());
+    const result = await mergeTreePersons({ projectPath: dir, merges: [["I1", "I2"]] });
+    expect(result.ok, JSON.stringify((result as any).errors)).toBe(true);
+    if (!result.ok) return;
+    expect(result.pairs[0].primarySet).toEqual([]);
+    const births = (await readJson("tree.gedcomx.json")).persons[0].facts.filter((f: any) => f.type === "Birth");
+    expect(births.length).toBeGreaterThan(0);
+    expect(births.every((f: any) => f.primary === undefined)).toBe(true);
+  });
+
   it("merges an initial-form name into the survivor's fuller name", async () => {
     await writeProject(baseTree(), baseResearch());
     const result = await mergeTreePersons({ projectPath: dir, merges: [["I1", "I2"]] });
@@ -221,6 +236,100 @@ describe("merge_tree_persons", () => {
 // person with a namesake row (part 1), and what it carries onto that person
 // from a record none of whose links to the pair passes the cap (part 3). Every
 // refusal writes nothing.
+
+describe("merge_tree_persons: the claim warnings (Decision 13)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "merge-claim-warnings-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const P = (id: string, given: string) => ({ id, gender: "Male", names: [{ id: `N${id}`, given, surname: "Flynn" }] });
+  const pc = (claim: string, proof_tier: string, parent: string, child: string, extra: object = {}) => ({
+    claim, proof_tier, supporting_assertion_ids: [], relationship: { type: "ParentChild", parent, child }, ...extra,
+  });
+  const birth = (claim: string, subject: string, date: string) => ({
+    claim, proof_tier: "probable", supporting_assertion_ids: [], fact: { subject, fact_type: "Birth", date },
+  });
+  const ps = (id: string, claims: object[]) => ({ id, question_id: `q_${id}`, tier: "probable", claims });
+  async function writeProject(tree: any, summaries: any[], extra: object = {}) {
+    await writeFile(join(dir, "research.json"), JSON.stringify({ ...baseResearch(), proof_summaries: summaries, ...extra }, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ sources: [], ...tree }, null, 2));
+  }
+  const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
+  /** Refused first, naming `issue`; then justified, it lands and the justifications persist. */
+  async function refusedThenJustified(merges: Array<[string, string]>, issue: string | RegExp) {
+    const refused: any = await mergeTreePersons({ projectPath: dir, merges });
+    expect(refused.ok).toBe(false);
+    expect(refused.reason).toBe("unjustified_warnings");
+    const ids = refused.warnings.map((w: any) => w.warningId);
+    expect(refused.warnings.map((w: any) => w.issueType).join(" ")).toMatch(issue);
+    const ok: any = await mergeTreePersons({
+      projectPath: dir, merges, warningJustifications: ids.map((warningId: string) => ({ warningId, justification: "checked" })),
+    });
+    expect(ok.ok, JSON.stringify(ok.errors)).toBe(true);
+    const persisted = (await readJson("research.json")).warning_justifications.map((j: any) => j.warning_id);
+    expect(persisted).toEqual(expect.arrayContaining(ids));
+  }
+
+  it("a merge that re-creates a ruled-out pair needs a justification", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I3", "John"), P("I4", "Johnny")], relationships: [{ id: "R1", type: "ParentChild", parent: "I4", child: "I1" }] },
+      [ps("ps_001", [pc("not John", "disproved", "I3", "I1")])],
+    );
+    await refusedThenJustified([["I3", "I4"]], /mergeRuledOut/);
+  });
+
+  it("a merge that leaves one summary affirming and denying an edge needs a justification", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I2", "Thomas"), P("I3", "Tom")], relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }] },
+      [ps("ps_001", [pc("father", "probable", "I2", "I1")]), ps("ps_002", [pc("not Tom", "probable", "I3", "I1", { polarity: "denied" })])],
+    );
+    await refusedThenJustified([["I2", "I3"]], /claims-polarity/);
+  });
+
+  it("a merge leaving a second likely parent needs a justification", async () => {
+    // Each duplicate child carries a probable father claim from a different summary,
+    // and only one father edge is in the tree, so competing parentage does not refuse first.
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I2", "Thomas"), P("I3", "John"), P("I5", "Pat")], relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }] },
+      [ps("ps_001", [pc("father", "probable", "I2", "I1")]), ps("ps_002", [pc("father", "probable", "I3", "I5")])],
+    );
+    await refusedThenJustified([["I1", "I5"]], /claims-one-per-slot/);
+  });
+
+  it("a merge leaving two incompatible likely vitals needs a justification", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+      [ps("ps_001", [birth("born 1850", "I1", "1850")]), ps("ps_002", [birth("born 1860", "I5", "1860")])],
+    );
+    await refusedThenJustified([["I1", "I5"]], /claims-one-per-slot/);
+  });
+
+  it("a merge onto a person a record persona was denied to be leaves a proved claim short of confident identity, and needs a justification", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+      [{
+        id: "ps_001", question_id: "q_1", tier: "proved", claims: [
+          { claim: "birth", proof_tier: "proved", supporting_assertion_ids: ["a_001"], fact: { subject: "I1", fact_type: "Birth", date: "1850" } },
+          { claim: "not Pat", proof_tier: "probable", polarity: "denied", supporting_assertion_ids: ["a_001"], identity: { record_id: "rec1", party: "principal", person: "I5" } },
+        ],
+      }],
+      {
+        assertions: [{ id: "a_001", record_id: "rec1", source_id: "src_001", record_role: "principal", fact_type: "birth", value: "1850", date: "1850", record_basis: "stated" }],
+        person_evidence: [{ id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence: "confident", superseded_by: null }],
+      },
+    );
+    await refusedThenJustified([["I1", "I5"]], /claims-proved-identity/);
+  });
+
+  it("a merge with no claims raises no claim warning", async () => {
+    await writeProject({ persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] }, []);
+    const r: any = await mergeTreePersons({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+  });
+});
 
 describe("merge_tree_persons: pair and namesake checks", () => {
   let dir: string;
@@ -1215,8 +1324,15 @@ describe("merge_tree_persons: pair and namesake checks", () => {
       rejection("rj_001", "a_011", T), rejection("rj_002", "a_011", "I7")));
   });
 
-  it("MR5 merges when the rejection names a different assertion", async () => {
-    await merged([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+  it("MR5 refuses when the rejection names a sibling assertion of the link's record entry (#4652)", async () => {
+    const text = await refusedText([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+    expect(text).toContain(`person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, ${T})`);
+  });
+
+  it("MR5b merges when the rejection names another party of the record", async () => {
+    const p = withRejections(moved(), rejection("rj_001", "a_013", T));
+    (p.research as any).assertions.push(assertion("a_013", 1, "spouse", "birth", "", { date: "1875" }));
+    await merged([[T, "I7"]], p);
   });
 
   it("MR6 does not blame the merge for a link and rejection that already stood together", async () => {

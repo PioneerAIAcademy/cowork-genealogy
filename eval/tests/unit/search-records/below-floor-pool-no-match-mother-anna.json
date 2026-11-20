@@ -1,0 +1,48 @@
+{
+  "test": {
+    "id": "ut_search_records_below_floor_none",
+    "skill": "search-records",
+    "name": "Pool entirely below the floor: the only row naming a mother Anna is not her son",
+    "type": "positive",
+    "description": "Executing a surname search for a son of Anna Macek and Vaclav Jicinsky (plan item pli_001), the whole 50-row pool scores at or below 0.01 and the ranker reports a real negative. One row, Jozef Jicinsky, names a mother Anna and a burial in 1880, which reads like a lead. Reading the record shows only the mother indexed; the page image says he was the illegitimate son of Anna and names no father, so he is not a son of this married couple. The right answer is that no row in the pool is her son. The test guards against the skill treating a slimmed below-floor row as a find.",
+    "tags": [
+      "search",
+      "church-books",
+      "below-floor",
+      "namesake",
+      "evidence-language",
+      "gps-reasoning",
+      "rank-search-matches",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Search for a son of Anna Macek (subjectId PW3W-LJN), who married Vaclav Jicinsky in 1871, born between 1871 and 1890 near Rohovladova Bela, Pardubice, per plan item pli_001. Rank the results against Anna. Tell me whether any record is a son of this couple.\n\nprojectPath: <workspace>\nsubjectId: PW3W-LJN",
+    "scenario": "macek-jicinsky-son"
+  },
+  "mcp_fixtures": [
+    "record-search-jicinsky-son-below-floor",
+    "rank-search-matches-jicinsky-son-below-floor",
+    "record-read-jicinsky-jozef-burial-1880",
+    "record-read-jicinsky-karel-baptism-1899",
+    "record-read-jicinsky-anton-rychter-baptism-1900",
+    "record-read-jicinsky-franz-rychter-baptism-1891",
+    "image-transcribe-jicinsky-jozef-burial-1880",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "GROUND TRUTH (confirmed by the senior genealogist, who read the page image): no row in this pool is a son of Anna Macek and Vaclav Jicinsky. Every row scores at or below 0.01 and the ranker's diagnostic calls it a real negative. The one row that names a mother Anna, Jozef Jicinsky (6VLB-XJW9, buried 29 June 1880), reads on the page 'nemanzelsky syn Anny': the illegitimate son of an Anna, no father named. Anna Macek was a married woman from 1871, so he is not recorded as her child. The three baptisms with an 'Anna Jicinsky' as mother (6VLT-5W49, 6VGS-YWKM, 6VGS-5GPR) name other husbands (Josef Vavrina, Franz Rychter).",
+    "CORE (Correctness): score 1 if the skill states or implies that Jozef Jicinsky, or any other row, IS a son of Anna Macek and Vaclav Jicinsky, or recommends writing him into the tree as their child. Score 3 if the skill reports that no row is shown to be their son. Naming Jozef as a lead worth checking, while saying the index does not show his father, is acceptable and scores 3 provided it does not claim him.",
+    "A skill that reads Jozef's record and/or page image and reports the illegitimacy and the missing father is doing the strongest work and should not be penalised for the extra reads. A skill that stops at 'no row is above the floor, nothing found' without examining the one lead is complete but less thorough: do not score it below 2 on Completeness for that alone.",
+    "The three baptisms are traps: an Anna Jicinsky as mother is not evidence of this Anna. A skill that accepts any of them as her child, or that links them without comparing the husband, scores 1 on Correctness.",
+    "Rows scoring at or below the matcher floor (0.01) reach the skill SLIMMED: only name, role, birth date and place, events, relativeTerms, collection id, ranks and score. A field missing from such a row is not evidence that the record lacks it, and `record_read` returns the full record. Do not penalise the skill for reading a below-floor row in full; do penalise it for treating the slimmed row as the whole record.",
+    "Do NOT require extraction, attachment or a tree edit. Reporting the finding and logging the search is a complete answer. The ranker's note says not to hand-triage the stubs; reading a few rows in full to test one lead is not a defect.",
+    "Tool Arguments: the record_search call should carry the subject id PW3W-LJN and projectPath so the result is ranked, and a surname for the husband's family (Jicinsky or a variant)."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
+  }
+}

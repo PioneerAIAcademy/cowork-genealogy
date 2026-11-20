@@ -73,6 +73,7 @@ import { recordReadTool } from "./record-read.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 import { researchLogAppend, type ResearchLogAppendOp } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
+import { describeFetchError, isFetchTimeout } from "../utils/http.js";
 import { sourceIdsForRecordIds, activePlanItems, canonicalFactKey } from "./research-append.js";
 import { findAnchor, collectSourceRefs, ATTACHMENT_LINK_RATIONALE } from "../utils/tree-person.js";
 import { isRejectedPair } from "../utils/rejected-links.js";
@@ -188,6 +189,18 @@ export interface ExtractionAppendDeps {
 }
 
 const DEFAULT_DEPS: ExtractionAppendDeps = { readRecord: recordReadTool };
+
+/** A read that failed for a moment rather than for good, which calling again may
+ *  read: Node's fetch rejects every transport failure with "fetch failed", a
+ *  timeout is `fetchWithTimeout`'s own, and a 5xx that outlasted `record_read`'s
+ *  retries is its "FamilySearch recapi error: 5xx". A refusal, a rate limit, a
+ *  rejected token, a missing record or a staging fault is not retried here; its
+ *  own message says what, if anything, lets a later call read it. */
+function isTransientReadError(e: unknown): boolean {
+  if (isFetchTimeout(e)) return true;
+  if (e instanceof TypeError && e.message === "fetch failed") return true;
+  return e instanceof Error && /^FamilySearch recapi error: 5\d\d$/.test(e.message);
+}
 
 /** One expected-but-absent person, found by a search that returned no record. */
 export interface AbsenceInput {
@@ -584,6 +597,8 @@ async function noteRetired(projectPath: string, outcomes: (RecordOutcome & { ret
 interface RecordIdsOptions {
   /** Bare record id -> the tree S the import already made for it. */
   sourceDescriptionIdByBare?: ReadonlyMap<string, string>;
+  /** Filled with the record ids whose read failed for a moment both times. */
+  retryableReads?: Set<string>;
 }
 
 /** The sections a link write reaches: `personId` mode's attachment links only,
@@ -696,11 +711,12 @@ async function personIdMode(
 
   const importedS = new Map(sourceIdByBare);
   for (const b of relationshipOnly) importedS.set(b, [...viaRelationship.get(b)!.sourceIds][0]);
+  const retryableReads = new Set<string>();
   const extraction = await recordIdsMode(
     { projectPath: input.projectPath, recordIds: [...importedS.keys()].map((b) => `ark:/61903/1:1:${b}`) },
     deps,
     principal,
-    { sourceDescriptionIdByBare: importedS },
+    { sourceDescriptionIdByBare: importedS, retryableReads },
   );
 
   // Link, against the project as it now stands.
@@ -846,7 +862,7 @@ async function personIdMode(
         continue;
       }
       for (const a of ofPersona) {
-        if (isRejectedPair(a.id, to, after.rejected_links)) {
+        if (isRejectedPair(a.id, to, after.rejected_links, after.assertions)) {
           rejectedSkipped++;
           continue;
         }
@@ -900,6 +916,27 @@ async function personIdMode(
   if (unselected > 0) parts.push(`${plural(unselected, "relationship party", "relationship parties")} whose persona in the record could not be chosen`);
   if (rejectedSkipped > 0) parts.push(`${plural(rejectedSkipped, "rejected pair", "rejected pairs")} not re-linked`);
   if (refused > 0) parts.push(`${plural(refused, "link", "links")} refused`);
+  // A record that could not be read is neither extracted nor linked, and the
+  // person's other links say nothing of it: name it, and, when the failure was
+  // a passing one, the way to retry it.
+  const unread = extraction.records.filter((o) => o.status === "read_failed").map((o) => o.recordId);
+  const passing = unread.filter((id) => retryableReads.has(id));
+  const lasting = unread.filter((id) => !retryableReads.has(id));
+  const them = (n: number) => (n === 1 ? "it is" : "them is");
+  if (passing.length > 0) {
+    parts.push(
+      `${plural(passing.length, "record", "records")} could not be read (${passing.join(", ")}), so nothing from ` +
+        `${them(passing.length)} extracted or linked: call extraction_append again with ` +
+        `personId '${person.id}' to retry ${passing.length === 1 ? "it" : "them"}; what this call wrote is not written twice`,
+    );
+  }
+  if (lasting.length > 0) {
+    parts.push(
+      `${plural(lasting.length, "record", "records")} could not be read (${lasting.join(", ")}), so nothing from ` +
+        `${them(lasting.length)} extracted or linked; ${lasting.length === 1 ? "its summary says" : "their summaries say"} ` +
+        `why, and what, if anything, to do before calling again`,
+    );
+  }
   return {
     ...extraction,
     ok: extraction.ok,
@@ -1022,7 +1059,9 @@ async function recordIdsMode(
     }
   }
 
-  // 3. Reads, in parallel. An error or an unstaged read is reported and skipped.
+  // 3. Reads, in parallel. An error or an unstaged read is reported and skipped;
+  //    a network failure `record_read`'s own retries outlasted is marked so the
+  //    summary can say calling again may read it.
   const toRead = outcomes.filter((o) => o.status === "extracted" && !o.logId);
   await mapWithConcurrency(toRead, READ_CONCURRENCY, async (o) => {
     try {
@@ -1035,7 +1074,8 @@ async function recordIdsMode(
       }
     } catch (e) {
       o.status = "read_failed";
-      o.summary = `${o.recordId}: could not be read: ${e instanceof Error ? e.message : String(e)}.`;
+      o.summary = `${o.recordId}: could not be read: ${describeFetchError(e)}.`;
+      if (isTransientReadError(e)) opts.retryableReads?.add(o.recordId);
     }
   });
 

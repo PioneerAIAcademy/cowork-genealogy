@@ -85,13 +85,18 @@ suite's snapshot carries only the frontmatter of the agents it does not run
 extension gives. `ut_research_hnp` and `ut_research_hsp` instead serve it from
 `project-list-hosted-flynn`, the answer a hosted server gives a signed-in user
 with one project. They are the hosted pairs of `ut_research_tsi` and
-`ut_research_011`. `uses-new-project-path` and `uses-listed-project` gate the
-validators that read which `projectPath` the router took from that answer. The
-mock serves every project tool from the test's one workspace, so each test's
-scenario is the project its route should open. In these two tests it behaves as
-a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the listing does
-not name is refused, and `project_context` at a listed project carries its
-`projectUrl`.
+`ut_research_011`. `ut_research_hts` serves it from `project-list-hosted-empty`,
+a signed-in user with no projects; it is the hosted pair of `ut_research_tsv`,
+the folder test of the no-project, no-objective route to tree-survey.
+`uses-new-project-path` and `uses-listed-project` gate the validators that read
+which `projectPath` the router took from that answer, and
+`no-wrong-project-path` gates the one that checks `project_context` was called
+at `newProjectPath` or not at all, and nowhere else. The mock serves every project tool from
+the test's one workspace, so each test's scenario is the project its route
+should open. In `ut_research_hnp`, `ut_research_hsp` and `ut_research_hts` it
+behaves as a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the
+listing does not name is refused, and `project_context` at a listed project
+carries its `projectUrl`.
 
 ## Reads project state first (issue #3766)
 
@@ -118,7 +123,7 @@ that keeps the judge off the routing decision.
 
 | Test | Row | Scenario |
 |---|---|---|
-| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_pe7` (deleted in #4537; issue #4659 restores it) | Assertions not yet linked to persons | `flynn-household-skeleton` |
 | `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
 | `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
 | `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
@@ -132,10 +137,12 @@ spells `@plugin:search-images`, and `_paired_names()` picks it up.
 `project_context`'s advisory `nextStep`, which then said `search-records` for any
 planned item whatever its repository. The step now names `search-external-sites`
 for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
-advisory is still wrong on two of these states and the router passed both 3 of 3
-regardless: for `pe7` it says `research-exhaustiveness`, because a no-link leaves
-no record to tell a rejected assertion from an unlinked one, and for `si3` it says
-`search-records`, because browse-only is stated only in the plan item's rationale.
+advisory is still wrong on two of these states: for `pe7` it says
+`research-exhaustiveness`, because a no-link leaves no record to tell a rejected
+assertion from an unlinked one, and for `si3` it says `search-records`, because
+browse-only is stated only in the plan item's rationale. The router passed both 3
+of 3 regardless until 2026-11-18, when `pe7` began following the advisory (2 of 3
+on `main`).
 
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
@@ -167,6 +174,12 @@ autonomous run it would wait for a researcher who is not there.
 `delegates-user-present-no-external` asserts `userPresent: no` in the spawn,
 which the judge cannot see. SKILL.md states the rule at each routing row and
 dispatch list that reaches the agent, not only in the spawn-fields contract.
+
+`ut_research_uq1` clones `ut_research_023` on `empty-project-two-fact-objective`.
+question-selection reads a missing `userPresent` as a researcher being there, so
+on an autonomous run it would ask which fact of the objective to research first.
+`delegates-qs-user-present-no` asserts `userPresent: no` in the question-selection
+spawn.
 
 ## What is NOT covered (and why)
 
@@ -259,6 +272,17 @@ fails here: it stops for the researcher's verdict
 and writes no offer. **They put init-project's full body in this
 suite's snapshot**, so an init-project body edit now owes a research run.
 
+`ut_research_b4p` (`bounded-plan-first-message-stops-after-setup.json`) is the
+one bounded deliverable that does not run in the setup turn: a research plan with a
+FamilySearch ID and no project runs init-project alone and ends on "Continue with
+`setting up the project`?", so the researcher confirms the question before anything
+is planned (lead, 2026-11-10; feedback #4237 drifted at question-selection). It is
+deterministic through the `bounded-plan-after-init` tag and
+`test_bounded_plan_first_message_stops_after_init_project`, which reads the
+hand-off list, that the project exists with no question or plan, and that the offer
+names that step. Unlike `b4i`, the reply may keep init-project's next-step sentence,
+because on a plan ask the next step is the first research question.
+
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius
 Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request
@@ -276,6 +300,8 @@ which also asserts that nothing is handed off: a research-plan spawn (both
 deliverables in one turn) and the job path (locality-guide first) both fail it.
 The `delivers:<skill>` tag and its validator are gone: under step mode a compound
 ask hands off at most one deliverable, so there is nothing for them to count.
+
+`ut_research_p4s` (`bounded-record-old-place-name.json`, #4214) is a bounded transcription that also asks whether the record agrees with the tree: the page gives Paso de Sotos, the tree Villa Hidalgo (the same town), and the reply must give the names side by side, say it cannot tell whether they are one place, and give no verdict on the tree; `transcribes-in-place` asserts the calls and that nothing is handed off.
 
 **This one needed a fixture to exist at all, and that is the general rule.** Neither
 `person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock

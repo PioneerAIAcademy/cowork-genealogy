@@ -29,6 +29,14 @@ import { rejectedTokenMessage } from "../auth/config.js";
 const RECAPI_BASE =
   "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
 
+/** A read's retries: the request's own three in about a second lost three of the
+ *  five records attached to a subject in a thomas-hanrahan-marriage e2e run
+ *  (2026-11-16) to a network blip. Backoff from 400 ms sleeps 6 to 9 s in all
+ *  (jitter included), so every attempt fits `fetchWithRetry`'s 10 s budget; a
+ *  first attempt that times out spends the budget, so a read never retries past
+ *  its own timeout. */
+export const RECORD_READ_RETRY = { attempts: 5, baseMs: 400 } as const;
+
 // ─── MCP schema ───────────────────────────────────────────────────────────
 
 export const recordReadSchema = {
@@ -157,13 +165,19 @@ export async function recordReadTool(
 
   const url = `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`;
 
-  const res = await fsFetch(principal, url, {
-    headers: {
-      Accept: "application/json",
-      "Accept-Language": "en",
-      "User-Agent": BROWSER_USER_AGENT,
+  const res = await fsFetch(
+    principal,
+    url,
+    {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "en",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
     },
-  });
+    undefined,
+    RECORD_READ_RETRY,
+  );
 
   if (res.status === 401) {
     throw new Error(await rejectedTokenMessage(principal));

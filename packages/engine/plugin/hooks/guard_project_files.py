@@ -154,6 +154,7 @@ AGENT_ONLY_TOOLS = {
     ),
     "fulltext_search": ("search-full-text",),
     "get_name_variants": ("search-full-text",),
+    "image_index": ("search-images",),
     "image_search": ("search-images",),
     "materialize_facts": ("person-evidence",),
     "merge_tree_persons": ("proof-conclusion", "tree-edit"),
@@ -311,6 +312,20 @@ OWNED_SECTIONS = {
     # merge_tree_persons re-keys `person_id` by tool identity and never
     # reaches this hook.
     "hit_verdicts": "evaluate-search-results",
+    # sources, 2026-11-16 (issue #2475, row from issue #1874). Closes the main
+    # thread composing a source to stand in for a failed extraction (alpha
+    # feedback issue #2214). `citation` is the only agent whose research_append
+    # writes the section; it is not the section's owner -- the ownership row
+    # keeps `owner: null`, because `extraction_append` writes it by tool identity
+    # and never reaches this hook. `init-project` is unaffected: its lane leaves
+    # the section out and `project_create` writes its sources. Measured over the
+    # e2e corpus: main-thread `sources` ops 360 in 2026-06/07, 1 in 2026-09, 0 in
+    # the 36 run logs captured since 2026-10-17. Accepted false deny: a
+    # main-thread correction of `repository`, `access_date`, `url` or
+    # `url_archived` has no route, since citation is told never to change them.
+    # deny_reason gives an unlaned caller SOURCES_REASON, never OWNER_REASON,
+    # which would send a new record to `citation`, an agent that cannot create one.
+    "sources": "citation",
 }
 
 # Agents that may also write a section OWNED_SECTIONS routes. The owner stays the
@@ -536,6 +551,14 @@ OWNER_REASON = (
     "section depends on. Delegate the write: invoke `@plugin:{agent}` and let it "
     "make the research_append call. Everything else in research_append is "
     "unaffected; only this section is routed."
+)
+
+SOURCES_REASON = (
+    "Writing research.json's `sources` from here is disabled. A new record goes "
+    "through `extraction_append` (invoke `@plugin:record-structurer` for a "
+    "non-FamilySearch source), which writes the source with its assertions and "
+    "classifications. Refining an existing source's citation is "
+    "`@plugin:citation`'s: invoke it. Do not compose a source yourself."
 )
 
 DECLARATION_REASON = (
@@ -994,7 +1017,17 @@ def deny_reason(denied: tuple) -> str:
     # Branch on `rule`, never on the shape of `section` — a "declaration"
     # return carries a dotted `section.field`, which is a key in neither
     # OWNED_SECTIONS nor AGENT_WRITABLE_SECTIONS.
-    if rule == "routed":
+    if rule == "routed" and section == "sources":
+        # A laned agent holds no extraction_append and cannot invoke another
+        # agent, so it gets its lane. Every other caller (the main thread, a
+        # subagent with a null agent_type, a general-purpose stand-in) has no
+        # lane to index -- AGENT_WRITABLE_SECTIONS[caller] would raise.
+        if caller in AGENT_WRITABLE_SECTIONS:
+            allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
+            reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+        else:
+            reason = SOURCES_REASON
+    elif rule == "routed":
         reason = OWNER_REASON.format(section=section, agent=OWNED_SECTIONS[section])
     elif rule == "owned_append":
         # A subagent cannot invoke another agent, so it is told to hand off.

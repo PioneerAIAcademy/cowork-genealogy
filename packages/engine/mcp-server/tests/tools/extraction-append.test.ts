@@ -362,6 +362,7 @@ describe("extraction_append: only the three call shapes", () => {
         assertion_id: "a_001",
         person_id: "I1",
         confidence: "probable",
+        match_score: 0.9,
         rationale: "name + age match",
         superseded_by: null,
       },
@@ -1434,6 +1435,58 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(r.summary).toMatch(/separate request/);
   });
 
+  // A thomas-hanrahan-marriage e2e run on 2026-11-16 (log not kept): three of the
+  // five records attached to the subject and his relationships failed with "fetch
+  // failed", the call answered ok, and its summary did not name them. record_read
+  // now retries a blip itself; one that outlasts it is named, with the way back.
+  describe("a read that fails", () => {
+    const blip = () => Object.assign(new TypeError("fetch failed"), { cause: Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }) });
+    const failing = (error: () => Error, reads: string[]) => ({
+      readRecord: async (i: any) => {
+        reads.push(i.recordId);
+        throw error();
+      },
+    });
+    const read = async (error: () => Error) => {
+      await writeTree([person("I1", { person: ["S1"] })], [S1]);
+      const reads: string[] = [];
+      const r = await run("I1", failing(error, reads) as any);
+      expect(reads).toHaveLength(1);
+      expect(r.summary).toMatch(/1 record could not be read \(.*MZGS-1B7.*\)/);
+      return r;
+    };
+
+    it("on the network, names the record, its cause and how to retry it", async () => {
+      const r = await read(blip);
+      expect(r.records.find((o: any) => o.status === "read_failed")!.summary).toContain("ECONNRESET");
+      expect(r.summary).toContain("call extraction_append again with personId 'I1'");
+    });
+
+    it("with a 5xx past record_read's retries, says how to retry it", async () => {
+      const r = await read(() => new Error("FamilySearch recapi error: 503"));
+      expect(r.summary).toContain("call extraction_append again with personId 'I1'");
+    });
+
+    it("otherwise, points to the record's own summary for what to do", async () => {
+      const r = await read(() => new Error("FamilySearch API error: 404 Not Found"));
+      expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain("404");
+      expect(r.summary).not.toContain("call extraction_append again");
+      expect(r.summary).toContain("its summary says why, and what, if anything, to do before calling again");
+    });
+
+    // record_read's own 429 says to wait and try again, and its 401 to log in:
+    // the person-mode summary must not tell the agent the record is lost.
+    it.each([
+      ["a rate limit", "FamilySearch rate limit reached and did not clear within the retry budget. Wait a minute and try again."],
+      ["a rejected token", "Your FamilySearch session has expired. Call the login tool to authenticate."],
+    ])("on %s, neither advises an immediate retry nor says calling again cannot read it", async (_, message) => {
+      const r = await read(() => new Error(message));
+      expect(r.records.find((o: any) => o.status === "read_failed")?.summary).toContain(message);
+      expect(r.summary).not.toContain("call extraction_append again");
+      expect(r.summary).not.toMatch(/will not change/);
+    });
+  });
+
   it("after a re-extraction, links only the live reading and refuses nothing (#3678)", async () => {
     await writeTree([person("I1", { person: ["S1"] })], [S1]);
     const rdr = reader([CENSUS()]);
@@ -1806,7 +1859,7 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect((await research()).person_evidence).toHaveLength(1);
   });
 
-  it("never re-links a rejected pair, and still links the persona's other assertions", async () => {
+  it("never re-links a rejected pair, nor the rest of its persona's record entry", async () => {
     await writeTree([person("I1", { person: ["S1"] })], [S1]);
     await runExtractionAppend({ projectPath: dir, recordIds: ["ark:/61903/1:1:MZGS-1B7"] } as any, reader([CENSUS()]) as any, LOCAL);
     const r0 = await research();
@@ -1814,9 +1867,9 @@ describe("extraction_append: personId extracts and links a person's attachments"
     r0.rejected_links = [{ id: "rj_001", assertion_id: johns[0].id, person_id: "I1", created: "2026-01-01" }];
     await writeProjectFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
     const r = await run("I1");
-    expect(r.rejectedSkipped).toBe(1);
-    expect(r.linked).toBe(johns.length - 1);
-    expect((await research()).person_evidence.some((pe: any) => pe.assertion_id === johns[0].id)).toBe(false);
+    expect(r.rejectedSkipped).toBe(johns.length);
+    expect(r.linked).toBe(0);
+    expect((await research()).person_evidence.some((pe: any) => johns.some((j: any) => j.id === pe.assertion_id))).toBe(false);
   });
 
   it("treats a record re-found through another persona's ARK as one record: tied, not re-extracted", async () => {
@@ -1882,6 +1935,31 @@ describe("research_append: the attachment-link score exemption is code-only", ()
   it("accepts it only on the internal flag", async () => {
     const r = await researchAppend(
       { projectPath: dir, ops: [await annaLink()] } as any,
+      { allowedSections: new Set(["person_evidence"]), toolName: "extraction_append", attachmentLink: true },
+    );
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  // #4549's null-vs-recorded refusal must not reach the attachment-link
+  // exemption: the internal flag skips the whole gate, so a null attachment
+  // link is accepted even when same_person happened to score the same pair.
+  it("accepts the unscored attachment link on the internal flag, even beside a recorded score", async () => {
+    const pe = await annaLink();
+    const a = (await research()).assertions.find((x: any) => x.id === pe.entry.assertion_id);
+    await recordMatchScore(dir, {
+      record_id: a.record_id,
+      record_persona_id: a.record_persona_id ?? null,
+      record_role: a.record_role ?? "principal",
+      tree_person_id: "I1",
+      score: 0.9,
+      scorer: "familysearch",
+      model: null,
+      assertion_id: a.id,
+      record_source: "record_read",
+      computed: "2026-10-26T00:00:00Z",
+    });
+    const r = await researchAppend(
+      { projectPath: dir, ops: [pe] } as any,
       { allowedSections: new Set(["person_evidence"]), toolName: "extraction_append", attachmentLink: true },
     );
     expect(r.ok, JSON.stringify(r)).toBe(true);
@@ -2126,7 +2204,13 @@ describe("research_append: the attachment-link score exemption is code-only", ()
     const resend = await raise(freshId, { superseded_by: rjId });
     expect(errorsOf(resend)?.join(" ") ?? "").not.toMatch(/names no person_evidence entry/);
     expect(resend.ok, JSON.stringify(resend)).toBe(true);
-    const other = (await research()).person_evidence.find((e: any) => e.assertion_id !== pe.assertion_id && !e.superseded_by);
+    // The rejection covers John's whole record entry (#4652), so the link that is
+    // "another pair" is another party's: Anna's.
+    const annaOp = await annaLink();
+    const doc = await research();
+    doc.person_evidence.push({ id: "pe_901", ...annaOp.entry, created: "2026-11-18" });
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(doc));
+    const other = (await research()).person_evidence.find((e: any) => e.id === "pe_901");
     const wrong = await raise(other.id, { superseded_by: rjId });
     expect(wrong.ok).toBe(false);
   });

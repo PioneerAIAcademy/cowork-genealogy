@@ -285,7 +285,7 @@ and on how often that relative is indexed in the records you are searching:
 
 For wildcard rules and fuzzy matching behavior, read the “Name search mechanics” reference at the end of this file. Place expansion, date granularity and event-family semantics are in `record_search`'s own parameter descriptions — read them there, not from memory.
 
-**Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check the “Collection-specific indexing quirks” reference at the end of this file for an entry on it and apply its guidance exactly.** Required, not optional — it documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) the general name-variant strategy will not surface. If an entry says two fields must be varied together (e.g. a given name and a surname abbreviation), vary them together in the same call before concluding a plan item is exhausted.
+**Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Luxembourg, Church and Civil Registration"), check the “Collection-specific indexing quirks” reference at the end of this file for an entry on it and apply its guidance exactly.** Required, not optional — it documents indexing behaviors the general name-variant strategy will not surface.
 
 **Name variant strategy:** If the name as spelled in the tree returns few results, try:
 - Phonetic variants (Flynn → Flyn, Flinn)
@@ -294,6 +294,8 @@ For wildcard rules and fuzzy matching behavior, read the “Name search mechanic
 - Initials (J. Smith)
 - Maiden names for married women
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
+
+Varying a name’s spelling is a separate step from changing which fields you search: a search that adds, drops or moves fields while keeping the same spelling has not tried a spelling variant.
 
 **Secondary names need variants too — the given name, not just the surname.** The
 variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`
@@ -306,7 +308,7 @@ calling a secondary-name search a genuine negative, work this order:
    secondary surname, then both together in the same call.
 2. **A query-shape change is not a name variant.** Switching which party holds
    `spouseGivenName`, dropping the surname filter, dropping the place filter —
-   while re-typing the same spelling — will not surface a transcription-variant
+   while re-typing the same spelling — will not surface a spelling-variant
    record. Confirm you can point to at least one search where a **letter in the
    secondary given name itself** changed.
 3. **Then drop the secondary filter rather than switching repositories.** Run at
@@ -325,7 +327,15 @@ FamilySearch wildcard — use `*` or `?`. Prefer explicit spelling variants firs
 because a wildcard widens in ways you cannot see; reach for one when the variants
 are exhausted (the “Search strategy levers” reference at the end of this file, steps 8 and 9).
 
-**Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). Send no `surname` at all — never one you derived from a parent's given name (Hans → "Hansen"); `recordCountry` supplies the anchor. A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
+**Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). When the delegation gives the subject a surname, search with it first; never build one from a parent's given name (Hans → "Hansen"). If that finds nobody, try the surnameVariantHints forms, then search with no surname, keeping the given name, place, years and the parents' given names. If the subject is still not among the results, the next search varies the spelling of the given name, keeping the same anchors, before you change dates, change or drop the collection, or change the parents' names. A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
+
+**A survey of every occurrence or mention of a surname in a record set is not a search for one person's own record — the `isPrincipal` parameter's "pick by intent, do not default to omitting" guidance does not apply to it.** Recognize this from phrasing like "every occurrence/mention of," "identify each instance of," or a request for an index/abstract of every record carrying a surname, rather than one person's vital record. For this case, call `record_search` **exactly three times**, in this order, before moving to Step 9 — none is optional and none substitutes for another:
+
+1. The plain search with no `isPrincipal` key — the headline, unfiltered total.
+2. The same search again with `isPrincipal: true`.
+3. The same search again with `isPrincipal: false`. Subtracting call 2's total from call 1's does not replace it.
+
+Carry all three `totalMatches` into Step 9. Call `record_search` exactly three times for this survey and then stop, even when the delegation's own wording asks for "each occurrence" or "an abstract of every record" — do not page (`offset`), narrow by place, or narrow by any other field to retrieve more rows than these three calls return. Report the sample you have, say how many of the total you have abstracts for, and leave further retrieval as a next step the researcher can ask for. Before you write Step 9, check: does this turn's tool-call history actually contain a `record_search` call with `isPrincipal: false`? If it does not, make that call now. Keep the unfiltered call on the normal broad-to-narrow, fuzzy-first strategy above — a survey gains nothing from forcing `surnameExact`, and the request may depend on fuzzy matching to catch the misspellings and declensions an exact match would drop.
 
 ### 3. Execute the search
 
@@ -396,8 +406,11 @@ unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
 the ranker missed), `matchScore` (0–1),
-`candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
-carries counts and diagnostics only. The bulk GedcomX stays host-side.
+`candidateFactCount`, and `attachedToSubject` / `attachedToOther` (present only
+when `true`). `ranked` carries counts and diagnostics only.
+A row at or below `ranked.realNegativeFloor` lists only identity fields; a
+missing field there is not evidence the record lacks it — `record_read` gives the
+full record. The bulk GedcomX stays host-side.
 
 Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
 highest. A row the ranker could not score keeps its search position, has no
@@ -558,7 +571,9 @@ candidates; you still confirm the top ones:
   it as `needs-review` and confirm by other means.
 - **Attachment status** is already on each match: attached-to-subject → note and
   deprioritize *when the goal is discovering new evidence*; attached-to-other →
-  potentially relevant; unattached → prioritize (new evidence). **When the goal is
+  potentially relevant; unattached (flag absent or false) → prioritize (new
+  evidence), unless `ranked.attachmentsChecked` is `false`: then attachment status
+  is unknown and is no reason to prioritize. **When the goal is
   instead confirming a specific fact already suspected** (e.g. "did this marriage
   happen, and when"), an attached-to-subject candidate is exactly the target, not
   noise — read it via `record_read` even at a moderate `matchScore`.
@@ -611,7 +626,7 @@ Never write a bare sentence there — a prose `query` carrying an ARK is rejecte
 
 **A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` whenever `positive` is wrong: `negative` when the ranker says the pool holds no match (Step 4), `partial` for a collection mismatch, `error`. Send `resultsExamined` only when you triaged fewer rows than came back.
 
-**A zero-result search** (the search returned zero results, not merely a null `staged`): pass `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
+**A zero-result search** (the search returned zero results, not merely a null `staged`): pass `projectPath`, `tool`, `planItemId`, `query` (the parameters you sent, as sent; leave out a filter you did not send instead of writing it as 'none'), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
 
 **Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry, do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
 
@@ -641,7 +656,7 @@ Narrate from the tool's summary ("logged as log_006; retained 3 results"); do no
 **Do this now, in the same turn as Step 5 — before Step 7 or presenting anything.** A logged search with no matching plan-item status update is an incomplete step, not a deferred one: if you executed a search against a plan item, this call happens before you do anything else with the results.
 
 Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `entryId`, and `fields: { status: "..." }`:
-- `in_progress`: Search executed — work continues downstream in extraction. Use whenever records were found to pass on, OR the search was exhausted with nil results and re-planning may be needed. **A nil result that escalates to external sites (Step 7) stays `in_progress` until the external capture is reviewed — never `skipped` or `completed`, which would falsely claim the paywalled search already happened.**
+- `in_progress`: Search executed — work continues downstream in extraction. Use whenever records were found to pass on, OR the search was exhausted with nil results and re-planning may be needed. **A nil result that escalates to external sites (Step 7) stays `in_progress` until the external capture is reviewed — never `skipped` or `completed`, which would falsely claim the paywalled search already happened.** Before you hand back a search where the subject was not found, check that you have run at least one given-name spelling variant, unless Step 5's collection-mismatch case applies. If you haven't, run it now instead of handing back.
 - `skipped`: The search was determined to be unnecessary **and never run**. Only for a search you chose not to execute — never for one you ran, including one that returned nil.
 
 **Do not** set status to `completed` from this agent — that is set once extraction has created the assertions.
@@ -667,6 +682,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`. When its response carries `planRationale`, search next what that rationale names and you have not searched, then carry on with the levers below.
+   If the subject is not among the results, that search is a nil for the subject, whether it returned nothing or a pool of other people. This is for choosing the next search; log the search as Step 5 says, keeping stagedResultsRef when it returned rows. A plan rationale that says 'if nil' covers this case too. The next search varies the spelling of the given name, using the spelling the plan rationale names if it names one, before you add a place, change dates, change or drop the collection, or change the surname. For a patronymic surname, follow Step 2's order instead. Changing the surname's spelling or abbreviation (for example a patronymic written -dr. or -dtr.) is changing the surname; it is not a given-name variant. Run the spelling variants yourself; don't hand back with an untried variant listed as a next step.
 2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
@@ -674,14 +690,16 @@ For each person of the subject's name you concluded is not the subject (Step 4),
    old "no wildcards" rule was measured and withdrawn. Order matters: explicit variants
    first (they are checkable and you can say which letter changed), then a wildcard to
    catch the shape you could not guess.
-   **If a boundary may have changed and a search nils, use the successor jurisdiction the plan gives you.** A record can be filed under the jurisdiction in force at the event *or* the place's present-day one. A plan item may carry a fallback jurisdiction in its `rationale` — use it. If the plan offers none and the nil persists, **hand back to `research-plan`**: deciding what jurisdiction to search (and consulting `locality-guide`) is its job, not this agent's. Do not look up place history or hardcode per-country rules here. See the “Search strategy levers” reference at the end of this file.
+   **Loosen the unstable filter first.** When the subject's surname or age was unstable (born enslaved, or a widow who may have remarried or reverted to her birth name), loosen the surname and birth year first and keep the place tight. Before reporting a nil for a woman, drop `surname` and anchor on the place plus a household member (`otherGivenName`/`otherSurname`, with `recordCountry`); then drop the birth range.
+   **Never exclude a candidate this invocation has already found** — not with a search filter, and not on a birth year alone. A record in hand that gives her a birth year outside your range means the range widens to include it, and the disagreement is reported as needs-review, never as "not the subject".
+   **If a boundary may have changed and a search nils, use the successor jurisdiction the plan gives you.** A record can be filed under the jurisdiction in force at the event *or* the place's present-day one. A plan item may carry a fallback jurisdiction in its `rationale` — use it. If the plan offers none and the nil persists, **hand back to `research-plan`**: deciding what jurisdiction to search (and consulting `locality-guide`) is its job, not this agent's. Before you hand back a search where the subject was not found, check that you have run at least one given-name spelling variant, unless Step 5's collection-mismatch case applies. If you haven't, run it now instead of handing back. Do not look up place history or hardcode per-country rules here. See the “Search strategy levers” reference at the end of this file.
 3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations. **That figure is a floor for a well-covered collection, not a ceiling.** A high-coverage collection (a well-indexed census, a large civil-registration index) earns more persistence than a thin one — the mirror of item 5's low-coverage pivot below. Reaching 5 variations on a collection you know covers the place and period well is a reason to try the levers you have not yet tried, not a reason to stop, when the likelier explanation is still an untried spelling or lever rather than genuine absence.
 4. **Assess whether absence is meaningful.** After exhausting variants and levers, explicitly evaluate three conditions:
    (a) the record type existed in this jurisdiction at this time,
    (b) the collection is reasonably complete for the period,
    (c) the subject should have appeared based on known facts.
    State each condition clearly. **Condition (b) is answered from the collection, not from impression** — read its description for what it actually contains (a title like "U.S. Marriage Records" may cover only some states and years), whether it is index-only or carries images, its time and geographic bounds, who indexed it (volunteer, professional, or OCR/HTR, each with its own error profile), and any gaps it declares. A collection you have not read cannot support a claim that absence is meaningful. If all three hold, note in the log and suggest recording it with `extraction_append({ absences })`. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
-5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies.
+5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies. Report a nil as "not found under <the filters, named>" — never as a death, emigration or absence, and never as a date range for one.
    **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. `outcome` is still **`negative`** — that field records what the search returned, not what it means. The *interpretation* goes in `notes` and in the plan-item status: say the collection is browse-only / near-zero indexed and the record is very likely present as un-indexed page text, and keep the plan item **`in_progress`**. **Never let the narrative claim absence** — "no estate record exists" is the error, not the `negative` enum. Then report that a full-text search of that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`), and possibly image browsing, is the next step. **Do not run or delegate that search yourself** — the caller owns that decision. Absence may only be called after full-text/browse has also come up empty. (Example: a pre-1911 Kentucky death has no statewide certificate; it is established from the county estate administration — bond and settlement — which `record_search` on a ~1%-indexed probate collection will never surface.)
    **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed — do not attribute this to service issues.
    **Prior log entries finding the record do NOT override current nil results.** A nil with different parameters documents that those query shapes fail — log each nil honestly as that evidence.
@@ -702,6 +720,8 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 ### 9. Present results
 
 **Accuracy rule — do not overclaim persistence.** This agent writes only `log[]` entries, plan-item `status` and `namesakes` rows — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
+
+**Reporting a survey (every occurrence/mention of a surname), never just a filtered count.** Report all three `totalMatches` from the unfiltered / `isPrincipal: true` / `isPrincipal: false` calls above, and say plainly that the headline count is the unfiltered one — do not report only the `isPrincipal: true` figure and call it the total, and do not narrow to it without saying you did. Give the `role` of each hit you actually list. Name, as not searchable in this collection's index, any role none of the returned hits carries (for example: if every hit's `role` comes back `Principal`, `Father`, `Mother`, `Spouse`, or `Other` and none reads as a godparent or witness, say godparents and witnesses do not turn up in this collection's index) — state this as what this collection's hits show, never as a general claim about FamilySearch indexes.
 
 - Summarize what was searched and what was found
 - Show the log entries created
@@ -761,101 +781,16 @@ The caller prints everything after that `---` verbatim and nothing above it. No 
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
-### US Federal Censuses (1790–1940)
-
-- Indexed by community volunteers; mostly accurate but cursive
-  handwriting causes common transcription errors: S/L, F/T, n/u,
-  U/V confusions; double-S misread as F or "long s"
-- **Compensation:** Use surname wildcards (`surname=Sm?th`);
-  search by neighbors; for unindexed enumeration districts, switch
-  to image browsing
-- **A wildcard at the start or middle of a surname can be as useful as one at
-  the end.** A family surnamed Bipes was indexed across records as Bipes,
-  Bippes, Biepes, Bieps, Bifes, Bipers, Bippers, and Piper — no single
-  trailing wildcard catches all of these. When a surname keeps resisting
-  every explicit variant, try a leading or middle wildcard (`surname=?ip*s`
-  or `surname=B*p*s`) alongside the usual trailing one.
-- Collection-specific forms expose extra fields (Residence Year
-  locked to census year, Race, Marital Status, 1935 Residence for
-  1940 census)
-
-### England parish registers (IGI Community Indexed)
-
-- Pre-1837 parish records extracted decades ago — static "Legacy"
-  collections with no updates or corrections since 2010 publication
-- **Compensation: the IGI batch number.** It enumerates a parish exhaustively
-  and is the canonical way to work one. How to obtain one, what it rejects, how
-  it pages and what a nil under it means are all on `record_search`'s
-  `batchNumber` parameter — read them there.
-- **Reading a nil here:** these are static extractions, so a nil under a correct
-  batch is a statement about the extraction, not about the parish.
-- Cross-check with FreeREG and FindMyPast via `search-external-sites`.
-
-### Mexico Civil Registration
-
-- Post-2020 indexes often produced by Computer-Aided Indexing (CAI)
-  with higher OCR-style error rates, especially with accented
-  characters and joined cursive
-- **Compensation:** Use wildcards generously (`fatherSurname=
-  L*pez`); search dual surnames separately; search by parents'
-  names instead of the principal
-
-### Mexico Catholic Church Records
-
-- Sometimes indexed without parents' names due to partial indexing
-  templates
-- **Compensation:** Drop the principal's name and search by
-  `fatherGivenName/Surname` + `motherGivenName/Surname`
-
-### Ellis Island Passenger Lists
-
-- Wildcards work here like anywhere else. (The long-standing claim that they
-  were disabled in these collections was refuted by measurement and is not
-  carried struck through — see the “Name search mechanics” reference's Constraints.)
-- **Still useful:** multiple specific spellings, ship name + arrival year
-  via other parameters, and the external Stephen Morse one-step tools —
-  passenger-list indexing is rough regardless of whether wildcards work.
-
-### United States SSDI (Social Security Death Index)
-
-- Names may be indexed first-name-last-name without middle initial;
-  some entries have only "Mrs." prefix
-- **Compensation:** Search by SSN if known; use exact birth and
-  death dates
-
-### German Lutheran/Catholic Registers
-
-- Given-name standardization incomplete: "Johann Friedrich" vs.
-  "Friedrich Johann" may not match each other
-- Umlauts (ä/ö/ü) may be indexed as ae/oe/ue or stripped
-- **Compensation:** Use wildcards; try both name orderings; try
-  both "Mueller" and "Müller" (diacritic stripping should handle
-  this, but indexed text may store the "ue" spelling)
-
 ### Norway Church Books / "Norway, Marriages, 1660-1926" (collection `1468080`)
 
-- Patronymic given names for women are transcribed with unstable
-  vowels — the same underlying name has been observed indexed as
-  **Unna**, **Urna**, and **Udna** across different records in the
-  same collection family (confirmed from two separate live test runs
-  against the real API: the target bride's own marriage entry indexed
-  her as "Urna Halsteinsdr"; an 1801 census entry for the same woman
-  indexed her as "Udna Halstensdatter"). This is a genuine transcription
-  artifact of 18th/19th-century Gothic-script Norwegian handwriting, not
-  a data-entry rule — it recurs across unrelated records for the same
-  person.
+- Name spellings were set by the recorder, so the same person's given name
+  is spelled differently from record to record. The same woman, **Unna** in the tree, is indexed
+  "Urna Halsteinsdr" on her own marriage entry and "Udna Halstensdatter" in
+  the 1801 census.
 - Both runs that hit this collection changed *which party was
   principal* and *dropped surname/place filters*, but neither run
   varied the *spelling of the given name itself* — so a real, findable
   record was missed twice in a row.
-- The patronymic **surname** is independently abbreviated in the same
-  index: the target bride's marriage entry indexes her surname as
-  **Halsteinsdr**, not the full **Halsteinsdatter** — confirmed from a
-  third live run where the given name WAS correctly varied to "Urna"
-  but the surname was left at the full "Halsteinsdatter" (or varied
-  separately, in a different search, back with the given name at
-  "Unna"/"Inna") — the two variants were never tried *together in the
-  same call*, and the record was missed a third time as a result.
 - **Compensation — do this explicitly, not just structural query
   changes:** for any Norwegian patronymic given name, run the exact
   name AND at least these vowel-substituted spellings before widening
@@ -863,19 +798,13 @@ Quirks affect how queries should be constructed for that collection.
   Anna), and try the single-letter-doubled/undoubled form (Unna → Una).
   Treat "I varied the query structure" and "I varied the name spelling"
   as two separate, both-required steps — doing one is not a substitute
-  for the other. **When both the given name and the surname of a
-  Norwegian patronymic are uncertain, vary them TOGETHER in the same
-  search** — e.g. `givenName: "Urna"` + `surname: "Halsteinsdr"` in one
-  call — not just one part at a time across separate searches. Also try
-  the abbreviated patronymic ending directly: `-datter` → `-dr` (e.g.
-  Halsteinsdatter → Halsteinsdr), the mirror of the vowel-substitution
-  rule above for given names.
+  for the other.
 
 ### Luxembourg, Church and Civil Registration (5000012)
 
-- Civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
+- Some civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
 - A query with `surname` drops every birth entry with no indexed surname: the record is in the collection, but `surname` hides it.
-- **To find a child's own birth:** immediately execute a call with `givenName: <child>` **and** `fatherSurname: <father>` (or `fatherGivenName`, `motherSurname`, `motherGivenName` — at least one parent anchor is required alongside `givenName`), no `surname`, anchored on `collectionId: 5000012` or `recordCountry: Luxembourg`. Example: `{ givenName: "Theresia", fatherSurname: "Reding", collectionId: "5000012", recordCountry: "Luxembourg" }`. Do not return with a recommendation to re-run — execute the re-anchored call now, in the same invocation.
+- **When a surname search does not return the child's own birth:** immediately execute a call with `givenName: <child>` **and** `fatherSurname: <father>` (or `fatherGivenName`, `motherSurname`, `motherGivenName` — at least one parent anchor is required alongside `givenName`), no `surname`, anchored on `collectionId: 5000012` or `recordCountry: Luxembourg`. Example: `{ givenName: "Theresia", fatherSurname: "Reding", collectionId: "5000012", recordCountry: "Luxembourg" }`. Do not return with a recommendation to re-run — execute the re-anchored call now, in the same invocation.
 - **`givenName` alone is not sufficient** — it returns too many unrelated births; the parent-name anchor is what narrows it to the right family.
 - **A nil under `surname` in this collection says nothing about whether the birth is indexed** — drop `surname` and re-anchor on the parents' names before concluding absence.
 - Marriages and deaths are indexed with a surname; the name-only pattern applies to birth acts only.
@@ -895,6 +824,13 @@ described on the tool itself — read them there.
 |---|---|---|
 | `*` | Zero or more characters | Allowed at start, middle, or end (`*bou` is valid — measured). |
 | `?` | Exactly one character | May appear at any position (e.g., `surname=Sm?th`). |
+
+**A wildcard at the start or middle of a surname can be as useful as one at
+the end.** A family surnamed Bipes was indexed across records as Bipes,
+Bippes, Biepes, Bieps, Bifes, Bipers, Bippers, and Piper — no single
+trailing wildcard catches all of these. When a surname keeps resisting
+every explicit variant, try a leading or middle wildcard (`surname=?ip*s`
+or `surname=B*p*s`) alongside the usual trailing one.
 
 **Constraints.** Four long-standing ones did not survive measurement and have
 been deleted rather than carried struck through: a three-letter minimum per

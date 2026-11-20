@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_records_034",
+    "skill": "search-records",
+    "name": "Every-occurrence survey of a surname is not narrowed to isPrincipal, and reports the role split",
+    "type": "positive",
+    "description": "Issue #4348, built from the alpha-feedback bundle. The user asks for every occurrence of 'Czelusniak', including misspellings and feminine declensions, on a specific digitized Polish parish register (DGS 004118433). The original incident narrowed this to isPrincipal: true (totalMatches 185 of the real 424) and reported 185 as the total, silently dropping the Mathias Opiekum x Marianna Czelusniak marriage (ark:/61903/1:1:6V91-SLZ6), a non-principal hit. The fix: run the plain search plus isPrincipal: true and isPrincipal: false, report all three totalMatches (424/185/239), give the role of each listed hit, and keep the Opiekum marriage rather than narrowing it away.",
+    "tags": [
+      "search",
+      "every-mention-survey",
+      "isPrincipal",
+      "role-reporting",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Identify each occurrence of the surname Czelusniak, including detectable misspellings and feminine declensions such as Czelusniakowna and Czelusiazonka, as found in the Catholic parish register transcripts of baptisms, marriages, and deaths for Wójtowa, Pagorzyna, and Lipinki parishes digitized in DGS folder 4118433. For each occurrence, provide an index or abstract of the baptism, marriage, or death record containing this surname.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "record-search-czelusniak-004118433-principal-true",
+    "record-search-czelusniak-004118433-principal-false",
+    "record-search-czelusniak-004118433",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "This is a SURVEY request — every occurrence of a surname across a record set — not a search for one person's own vital record. The correct call pattern is the plain search (no isPrincipal) plus isPrincipal: true plus isPrincipal: false, reporting all three totalMatches: 424 (unfiltered), 185 (isPrincipal: true), 239 (isPrincipal: false).",
+    "The defect this test exists to catch: narrowing to isPrincipal: true alone and reporting 185 as THE total, the way the original incident did. That silently drops 239 hits, including the Mathias Opiekum x Marianna Czelusniak marriage (ark:/61903/1:1:6V91-SLZ6, 15 May 1843) returned only by the isPrincipal: false fixture. Score Tool Arguments and Search strategy down hard if isPrincipal: true is sent but isPrincipal: false never is, or if the reply's headline count is 185 rather than 424.",
+    "The reply should give the role (Principal/Father/Mother/Spouse/Other) of each hit it actually lists, and should name any role none of the returned hits carry (this collection's results never carry a role reading as godparent or witness) as not searchable in this index — stated as what THIS collection's hits show, not as a general claim about FamilySearch indexes.",
+    "Do not penalize the skill for not setting surnameExact — a survey should stay on the default fuzzy-first strategy so it does not drop the misspellings/declensions the delegation explicitly asked about.",
+    "This agent only writes log[] entries, plan-item status and namesakes — do not expect or require an extraction_append call; this is a survey result, not a request to extract assertions. Do not penalize its absence, and do not penalize the skill for saying explicitly that nothing is extracted yet.",
+    "IMPORTANT — How file writes work: research_log_append writes the log entry and the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files and never appear in the file-change diff; their absence from it is not evidence of anything."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 15
+  }
+}
