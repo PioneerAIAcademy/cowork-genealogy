@@ -68,6 +68,13 @@ export const OK_FALSE_IS_FAILURE = [
   "census_children_gap",
   "timeline_build",
   "build_external_search_url",
+  // Issue #4527: a search that finds NOTHING writes its own research-log entry
+  // through research_log_append's write path, so record_search is a document
+  // writer. It has no `ok: false` path of its own today — a refused log write
+  // keeps the search result and reports `nilLogRefused` — so routing it through
+  // `writerToolResult` changes nothing now and surfaces a failure correctly if
+  // it ever gains one. A search WITH results still stages and is agent-logged.
+  "record_search",
   "research_query",
   "project_context",
   "tree_query",

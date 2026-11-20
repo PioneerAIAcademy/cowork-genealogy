@@ -303,6 +303,13 @@
       "default": false,
       "description": "Opt-in. When true, the harness includes the actual content of the entries this run wrote to research.json / tree.gedcomx.json (truncated) in what the LLM judge sees, instead of only change counts. Use for skills whose graded deliverable is written to a file rather than echoed in the chat reply (e.g. proof-conclusion's narrative_markdown). Defaults to false, which preserves the legacy counts-only judge input for every other test/skill, so enabling it for one skill does not affect any other. See unit-test-spec.md Section 5.9."
     },
+    "na_dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1},
+      "description": "Opt-in. Rubric dimension names (each must be a `## ` heading in the suite's rubric.md) that are N/A for this test. After the judge returns, the harness coerces every non-null score on these dimensions to null and keeps the judge's original score and rationale in a `coerced_review_dimension_to_na` warning. For a review or audit test whose rubric dimensions grade linking work the test does not ask for. Base dimensions are refused, an unknown name makes the test not_runnable, and a negative test may not carry it. A test that uses it must carry a tag-gated validator that checks what those dimensions held. See unit-test-spec.md Section 5.14."
+    },
     "execution": {
       "type": "object",
       "additionalProperties": false,

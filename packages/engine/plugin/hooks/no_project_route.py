@@ -12,7 +12,9 @@ Cowork, which is unmeasured.
 
 It carries a second sentence, unconditional: name a source, collection, book or citation
 only if a tool result returned it (issue #4011, widened by the lead from issue #4125). The
-hosted planes append the same text; both harnesses add it from here.
+hosted planes append the same text; both harnesses add it from here. Issue #4676 added to it
+that nothing here changes FamilySearch's Family Tree, so a change that belongs there gets
+FamilySearch.org steps, not an offer.
 
 **Cowork only.** Both hosted planes set `GENEALOGY_HOSTED_PLANE` in the SDK env, and the
 hook is silent there: the hosted fix ruled for them is text only (a truthful `project_note`
@@ -58,7 +60,11 @@ SOURCES_NOTE = (
     "Name a source, collection, book or citation only if a tool result in this session "
     "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
     "collections_search, which locality-guide and research-plan run. This rule is about "
-    "what you name, not about which agent a question goes to."
+    "what you name, not about which agent a question goes to. "
+    "Nothing here can change FamilySearch's Family Tree: tree_edit, tree_correct and the "
+    "merge tools change the project's own tree only. When a change belongs on FamilySearch, "
+    "such as a merge or a wrong parent link, give the researcher the steps to make it on "
+    "FamilySearch.org, and never offer to make it yourself."
 )
 
 
