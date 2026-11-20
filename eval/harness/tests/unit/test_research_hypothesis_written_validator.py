@@ -40,6 +40,9 @@ OVERCLAIMS = [
     "The sibling premise is now a registered hypothesis.",
     "The inference is now on record as a hypothesis.",
     "Registered: the Nora and Lois sibling link as h_001.",
+    "With those hypotheses on record, the next step is pli_002.",
+    "With the sibling hypotheses now on record, the 1910 search can go ahead.",
+    "Hypothesis h_001 now on record, so the search proceeds.",
 ]
 
 ACCURATE = [
@@ -64,6 +67,8 @@ ACCURATE = [
     "no sibling hypothesis has been registered",
     "the 1920 census search is complete; it is now recorded in the log",
     "that is now recorded as log_001",
+    "With no hypotheses on record yet, the sibling link is handed off first.",
+    "Once the hypotheses are on record, the 1910 search can go ahead.",
 ]
 
 
