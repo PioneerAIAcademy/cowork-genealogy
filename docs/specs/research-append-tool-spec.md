@@ -2189,7 +2189,7 @@ and skipped when an earlier check has refused the batch.
 
 **Why.** research-plan plans from these counts without calling `collections_search`
 when every collection in a covering locality carries a `person_count`, and decides
-a name search vs an image browse on `person_count > 0`. In alpha feedback bundle
+a name search vs an image browse on each collection's `availability`. In alpha feedback bundle
 `feedback-2026-11-05T18-50-09-991Z.zip` one locality stored `person_count: 0` on all 13 of its collections, and the second plan
 sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 and
 380,262) to full-text search as browse-only. The agent cannot know a better count
@@ -2199,8 +2199,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   no id (absent, null, empty, or neither a string nor a number) cannot be checked: both counts become
   `null`, with the warning
   > `localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)`
-- **Found.** The id is in the catalog: both counts become the catalog's. A warning names each
-  value that changed:
+- **Found.** The id is in the catalog: both counts become the catalog's, and
+  `availability` becomes `collectionAvailability(personCount, imageCount)`:
+  `browse-only` with no indexed person or fewer than one per thousand page images,
+  else `name-searchable` (collections-search spec, "Why `availability`"). The label is
+  set without a warning. A warning names each count that changed:
   > `localities collections '<id>': <count> <old> -> <new>[, <count> <old> -> <new>], set from FamilySearch's catalog`
 
   `<count>` is `person_count` or `record_count`; only a count that changed is named,
@@ -2208,11 +2211,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   An absent `record_count` is filled without being named: `collections_search`
   returns no record count, so locality-guide leaves it out and this stamp is
   where it comes from. A supplied `record_count` that differs is still named.
-- **Not found.** Both counts become `null`, which sends research-plan back to
+- **Not found.** Both counts and `availability` become `null`, which sends research-plan back to
   `collections_search`:
   > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
 - **The catalog cannot be read** (no FamilySearch session, a network failure, a
-  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count in each such op becomes `null`, with one warning per op. The
+  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count and `availability` in each such op becomes `null`, with one warning per op. The
   underlying error, including the auth error's "Call the login tool", is not passed on:
   > `localities collections: FamilySearch's collection catalog could not be read, so every person_count and record_count in this entry was set to null (unknown)`
 - **A spent FamilySearch request budget** (the process-wide limit or the per-user
@@ -2221,7 +2224,7 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   geocode.
 - **The whole list.** After the stamp, a `localities` append gains every catalog
   collection for its place that it did not send (`fillLocalityCollections`), as
-  `{ id, title, date_range, person_count, record_count }`, after the rows it sent.
+  `{ id, title, date_range, person_count, record_count, availability }`, after the rows it sent.
   The place's collections are the ones `collections_search` lists: titles holding
   the scope `standardPlaceToCollectionsQuery` derives from the entry's `place`,
   else from the first `jurisdictions[].name` whose scope matches a title. At most
@@ -2265,8 +2268,13 @@ than the catalog, so a refusal would cost a turn and end in the same state.
     `United States, Kentucky, Agricultural Schedules, 1850-1880`, `United States Virgin
     Islands, Census Records, 1841-1911`, `Canada, Ontario, Births, 1869-1912` and `New
     Mexico, Deaths, 1889-1945` are not.
-  - **Core** (`isCoreNationalCollection`): the population and mortality censuses (a
-    region before `Census` allowed, as in `Canada, Prairie Provinces, Census, 1916`); in
+  - **Core** (`isCoreNationalCollection`): the population and mortality censuses. A
+    regional census (`Canada, Upper Canada, Census, 1842`) is core only for a locality
+    whose place, `for_place` or a jurisdiction name names a province the region covers
+    (`CENSUS_REGION_PROVINCES`: Lower Canada is Quebec, Upper Canada is Ontario, the
+    Prairie and Northwest Provinces are Manitoba, Saskatchewan and Alberta); a region not
+    listed is core nowhere. Those censuses reach no locality any other way: an Ontario
+    locality's place fill matches `Canada, Ontario`, which `Upper Canada` is not. In
     the United States the Social Security Death Index, the NUMIDENT files, the World War I
     and World War II draft registrations and the city directories; in Canada and Mexico
     the country-wide baptism, marriage and death indexes. About 160 of the United

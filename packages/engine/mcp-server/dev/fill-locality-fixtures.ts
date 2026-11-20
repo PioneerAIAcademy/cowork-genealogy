@@ -5,7 +5,8 @@
  * from FamilySearch's live catalog. Only entries in those three countries are
  * touched unless `--all` is given; ids, order and every other field are kept. A collection the catalog
  * does not hold is a fixture's own synthetic one, served by its mock fixtures, so
- * it keeps the counts the fixture gave it rather than the null the stamp sets.
+ * it keeps the counts the fixture gave it rather than the null the stamp sets,
+ * and the availability those counts give.
  *
  * Needs a FamilySearch login (`~/.familysearch-mcp/tokens.json`).
  *
@@ -17,6 +18,7 @@ import { fillLocalityEntryFromCatalog } from "../src/tools/research-append.js";
 import { collectionCatalogLoader } from "../src/tools/collections-search.js";
 import { localityNationalCountry } from "../src/utils/collection-scope.js";
 import { LOCAL } from "../src/auth/principal.js";
+import { collectionAvailability } from "../src/utils/collection-availability.js";
 
 const all = process.argv.includes("--all");
 const files = process.argv.slice(2).filter((a) => a !== "--all");
@@ -42,6 +44,7 @@ for (const file of files) {
         if (k in own) c[k] = own[k];
         else delete c[k];
       }
+      c.availability = collectionAvailability(c.person_count);
       warnings.push(`kept the fixture's own counts for synthetic collection '${c.id}'`);
     }
     touched++;
