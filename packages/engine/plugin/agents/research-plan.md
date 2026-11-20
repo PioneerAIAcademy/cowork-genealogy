@@ -352,7 +352,7 @@ you are planning, has a `personCount` on every collection in
 `collections[]` (`for_place`, `time_period` and `person_count` in `research_query` rows),
 plan from those collections and make no `collections_search` call for the
 place, its state, or (outside the United States, Canada and Mexico) its
-country; the `United States` call below still applies.
+country.
 
 ```
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })   // only when no localities entry with a personCount covers it
@@ -387,9 +387,14 @@ rationale; the 0 in `browse-only (personCount 0)` is the only number.
 
 Cite a collection or volume id, a postal or email address, or any other
 identifying number in a rationale only if a tool returned it this session or
-it is in `research.json`. To plan a national collection
-(e.g. a US federal census), first run
-`collections_search({ standardPlace: "United States" })`.
+it is in `research.json`. Plan the censuses and broad national indexes
+(e.g. a US federal census, the SSDI) from `project_context`'s
+`nationalCollections[<country>]`. For a national collection that depends on
+who the person was (military service, immigration, naturalization,
+Freedmen's Bureau, Native American, land), a year no row there covers, or a
+country with no entry, run `collections_search({ standardPlace:
+"<country>", startYear, endYear })` for those years when an item will name
+one.
 
 **Before writing the plan, know:**
 - Which record types exist for this place and period

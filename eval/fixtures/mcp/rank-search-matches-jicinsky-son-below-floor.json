@@ -1,0 +1,1123 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Live ranking of the Jicinsky pool against Anna Macek (PW3W-LJN). Every one of the 50 rows scores at or below 0.01 (best 0.00049), which is the signature of a pool with no match. The attachment check is carried as `false` stubs to match the standalone tool, and the mock slims the rows.",
+  "args": {
+    "subjectId": "~PW3W-LJN"
+  },
+  "response": {
+    "subjectId": "PW3W-LJN",
+    "scoredCount": 50,
+    "returnedCount": 50,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "subjectResolvable": false,
+    "diagnostic": "Subject 'PW3W-LJN' is scoreable (1 dated/placed fact(s)), but no candidate in this pool scored above 0.01. Treat that as a real negative for this query - page deeper (offset) or narrow the query; do not hand-triage the stubs.",
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 40,
+        "recordId": "ark:/61903/1:1:6VLT-5W49",
+        "primaryId": "p_297964013611",
+        "personName": "Anna Jičinský",
+        "sex": "Female",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-64T7",
+        "matchScore": 0.00048715383,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Mother",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 49,
+        "recordId": "ark:/61903/1:1:6VGS-YWKM",
+        "primaryId": "p_297968954970",
+        "personName": "Anna Jičínský",
+        "sex": "Female",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDV-7BKH",
+        "matchScore": 0.00048715383,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Mother",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 3,
+        "searchRank": 38,
+        "recordId": "ark:/61903/1:1:6VGS-5GPR",
+        "primaryId": "p_297968888515",
+        "personName": "Anna Jičinsky",
+        "sex": "Female",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDV-3Q1V",
+        "matchScore": 0.00041029122,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Mother",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 4,
+        "searchRank": 41,
+        "recordId": "ark:/61903/1:1:6VGS-TT35",
+        "primaryId": "p_297968945514",
+        "personName": "Barbara Jičinsky",
+        "sex": "Female",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDV-9GY6",
+        "matchScore": 1.8070077e-05,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Mother",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 5,
+        "searchRank": 28,
+        "recordId": "ark:/61903/1:1:6VLY-L6RR",
+        "primaryId": "p_297964749475",
+        "personName": "Marie Jičínský",
+        "sex": "Female",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-RBQS",
+        "matchScore": 1.3007066e-05,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Mother",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 6,
+        "searchRank": 45,
+        "recordId": "ark:/61903/1:1:6VLJ-6QVW",
+        "primaryId": "p_297956425146",
+        "personName": "Maria Jičinský",
+        "sex": "Female",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSD8-8C4K",
+        "matchScore": 1.3007066e-05,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Mother",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 7,
+        "searchRank": 46,
+        "recordId": "ark:/61903/1:1:6VGS-5WM4",
+        "primaryId": "p_297968873407",
+        "personName": "Barbara Jičinský",
+        "sex": "Female",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDV-QWTM",
+        "matchScore": 1.3007066e-05,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Mother",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 8,
+        "searchRank": 12,
+        "recordId": "ark:/61903/1:1:6PJ8-JM31",
+        "primaryId": "p_301499469119",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-K942",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 9,
+        "searchRank": 13,
+        "recordId": "ark:/61903/1:1:6PJ8-2LNQ",
+        "primaryId": "p_301499569384",
+        "personName": "František Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-8SX1",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 10,
+        "searchRank": 14,
+        "recordId": "ark:/61903/1:1:6VLR-W1DZ",
+        "primaryId": "p_297962738470",
+        "personName": "Václav Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDX-Y8XS",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 11,
+        "searchRank": 15,
+        "recordId": "ark:/61903/1:1:6PJ8-LQQV",
+        "primaryId": "p_301499580738",
+        "personName": "František Jičinsky",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-JJY2",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 12,
+        "searchRank": 16,
+        "recordId": "ark:/61903/1:1:6PJ8-N16T",
+        "primaryId": "p_301499468516",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-K9SJ",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 13,
+        "searchRank": 17,
+        "recordId": "ark:/61903/1:1:6PJ8-LQXB",
+        "primaryId": "p_301499581048",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-K51X",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 14,
+        "searchRank": 19,
+        "recordId": "ark:/61903/1:1:6PJ8-LDV3",
+        "primaryId": "p_301499588343",
+        "personName": "František Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-NRZ5",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 15,
+        "searchRank": 21,
+        "recordId": "ark:/61903/1:1:657L-9S15",
+        "primaryId": "p_301944539694",
+        "personName": "František Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQVQ-MY2S",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 16,
+        "searchRank": 22,
+        "recordId": "ark:/61903/1:1:657L-S4QT",
+        "primaryId": "p_301944570446",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQV3-1RRV",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 17,
+        "searchRank": 23,
+        "recordId": "ark:/61903/1:1:657L-SX2K",
+        "primaryId": "p_301944577219",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQVQ-9FP6",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 18,
+        "searchRank": 25,
+        "recordId": "ark:/61903/1:1:657L-37N8",
+        "primaryId": "p_301944595991",
+        "personName": "František Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQV3-TTF9",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 19,
+        "searchRank": 35,
+        "recordId": "ark:/61903/1:1:6VLT-6CK5",
+        "primaryId": "p_297963719694",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-ZT4Y",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 20,
+        "searchRank": 36,
+        "recordId": "ark:/61903/1:1:6PJD-SMSL",
+        "primaryId": "p_301499874081",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-YYWZ",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 21,
+        "searchRank": 48,
+        "recordId": "ark:/61903/1:1:6VLT-F3ZY",
+        "primaryId": "p_297963768027",
+        "personName": "Vincenc Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-6ZG1",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 22,
+        "searchRank": 50,
+        "recordId": "ark:/61903/1:1:6VLT-F3ZC",
+        "primaryId": "p_297963768009",
+        "personName": "Josef Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-6ZGP",
+        "matchScore": 7.503509e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 23,
+        "searchRank": 3,
+        "recordId": "ark:/61903/1:1:6VLT-KT1N",
+        "primaryId": "p_297963897286",
+        "personName": "František Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-6TD1",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 24,
+        "searchRank": 4,
+        "recordId": "ark:/61903/1:1:6VLT-N6JB",
+        "primaryId": "p_297963804238",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-6FM9",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 25,
+        "searchRank": 5,
+        "recordId": "ark:/61903/1:1:6VLT-K6ZF",
+        "primaryId": "p_297963885015",
+        "personName": "František Jicinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-8SCX",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 26,
+        "searchRank": 6,
+        "recordId": "ark:/61903/1:1:6VLT-L9GG",
+        "primaryId": "p_297963928582",
+        "personName": "Rudolf Jíčínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-X4GD",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 27,
+        "searchRank": 7,
+        "recordId": "ark:/61903/1:1:6VLY-FTTW",
+        "primaryId": "p_297964599186",
+        "personName": "Bernard Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-F959",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 28,
+        "searchRank": 8,
+        "recordId": "ark:/61903/1:1:6VLT-VTSW",
+        "primaryId": "p_297963869466",
+        "personName": "Karel Jicínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-6RBP",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 29,
+        "searchRank": 9,
+        "recordId": "ark:/61903/1:1:6VLT-VTD3",
+        "primaryId": "p_297963869763",
+        "personName": "Rudolf Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-6T3V",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 30,
+        "searchRank": 10,
+        "recordId": "ark:/61903/1:1:6VLT-KRFD",
+        "primaryId": "p_297963895962",
+        "personName": "Antonín Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-X64J",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 31,
+        "searchRank": 11,
+        "recordId": "ark:/61903/1:1:6VLT-KN6P",
+        "primaryId": "p_297963887813",
+        "personName": "Rudolf Jíčínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-X4CY",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 32,
+        "searchRank": 18,
+        "recordId": "ark:/61903/1:1:6PJ8-JMWS",
+        "primaryId": "p_301499469182",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQHG-K9H8",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 33,
+        "searchRank": 20,
+        "recordId": "ark:/61903/1:1:6VLB-NRBP",
+        "primaryId": "p_297965435363",
+        "personName": "Karla Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDN-7X29",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 34,
+        "searchRank": 24,
+        "recordId": "ark:/61903/1:1:657L-37T6",
+        "primaryId": "p_301944596293",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HQVQ-M7ZR",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 35,
+        "searchRank": 26,
+        "recordId": "ark:/61903/1:1:6VGS-RT9X",
+        "primaryId": "p_297968918444",
+        "personName": "Josef Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDJ-TD18",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 36,
+        "searchRank": 27,
+        "recordId": "ark:/61903/1:1:6VLT-6P8G",
+        "primaryId": "p_297963732052",
+        "personName": "Josef Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-DBTZ",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 37,
+        "searchRank": 29,
+        "recordId": "ark:/61903/1:1:6VGQ-J8R7",
+        "primaryId": "p_297970309655",
+        "personName": "Josef Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDV-5D1R",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 38,
+        "searchRank": 30,
+        "recordId": "ark:/61903/1:1:6VLT-K46J",
+        "primaryId": "p_297963879707",
+        "personName": "Josef Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-X6DC",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 39,
+        "searchRank": 31,
+        "recordId": "ark:/61903/1:1:6VLT-KX1L",
+        "primaryId": "p_297963886491",
+        "personName": "Josef Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-XW98",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 40,
+        "searchRank": 32,
+        "recordId": "ark:/61903/1:1:6VLT-K4LK",
+        "primaryId": "p_297963879949",
+        "personName": "Josef Jíčínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-D5CB",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 41,
+        "searchRank": 33,
+        "recordId": "ark:/61903/1:1:6VLT-X76B",
+        "primaryId": "p_297963742918",
+        "personName": "Josef Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-8CN5",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 42,
+        "searchRank": 34,
+        "recordId": "ark:/61903/1:1:6VLT-F9SQ",
+        "primaryId": "p_297963765964",
+        "personName": "Josef Jicínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-CWPN",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 43,
+        "searchRank": 37,
+        "recordId": "ark:/61903/1:1:6VLT-XKYQ",
+        "primaryId": "p_297963755914",
+        "personName": "Josef Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-DC8R",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 44,
+        "searchRank": 39,
+        "recordId": "ark:/61903/1:1:6VL5-NX6S",
+        "primaryId": "p_297962184992",
+        "personName": "Václav Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDX-L1MN",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 45,
+        "searchRank": 42,
+        "recordId": "ark:/61903/1:1:6VLT-XR94",
+        "primaryId": "p_297963760537",
+        "personName": "František Jičinský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-8C7L",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 46,
+        "searchRank": 43,
+        "recordId": "ark:/61903/1:1:6VLT-2JBN",
+        "primaryId": "p_297963916156",
+        "personName": "Josef Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-D57R",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 47,
+        "searchRank": 44,
+        "recordId": "ark:/61903/1:1:6VLT-X5GP",
+        "primaryId": "p_297963760283",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-Z29N",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 48,
+        "searchRank": 47,
+        "recordId": "ark:/61903/1:1:6VLT-X5G7",
+        "primaryId": "p_297963760265",
+        "personName": "František Jičínský",
+        "sex": "Male",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDF-Z29Z",
+        "matchScore": 6.1946514e-07,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        },
+        "role": "Father",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 49,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:6VGW-4MY2",
+        "primaryId": "p_297971649830",
+        "personName": "Vinzenz Jičinsky",
+        "sex": "Male",
+        "birthDate": "1875",
+        "deathDate": "25 May 1913",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDK-6SH2",
+        "matchScore": 7.17372e-08,
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        },
+        "role": "Principal",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 50,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:6VLB-XJW9",
+        "primaryId": "p_297965373481",
+        "personName": "Jozef Jičínský",
+        "sex": "Male",
+        "birthDate": "1880",
+        "deathDate": "27 June 1880",
+        "collectionTitle": "Czech Republic, Church Books, 1552-1981",
+        "recordArk": "ark:/61903/1:2:HSDN-46DX",
+        "matchScore": 6.006032e-08,
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Anny Jičínskè"
+          }
+        },
+        "role": "Principal",
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}
