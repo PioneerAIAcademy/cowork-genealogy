@@ -44,7 +44,7 @@ import {
   UNLOGGED_SEARCHES_NOTE,
   stripQueryPlumbing,
 } from "../utils/results-staging.js";
-import { researchLogAppend } from "./research-log-append.js";
+import { researchLogAppend, PLAN_ITEM_WITHOUT_PROJECT_NOTE } from "./research-log-append.js";
 import {
   compactStagedRecordSearch,
   annotateResultsWithRanking,
@@ -1685,6 +1685,26 @@ export async function recordSearchTool(
       // hand batched with the retry the message names.
       answer = withKeyBeforeResults(answer, "nilLogRefused", logged.errors);
     }
+  }
+
+  // `planItemId` reaches a log entry and nothing else, so with no project to
+  // write to it is dropped — and the search answers normally, which is what
+  // makes the drop silent. `build_external_search_url` already names this
+  // mistake; this is that same note, from the same constant, since both tools
+  // write through `researchLogAppend` and the agent's error is identical.
+  //
+  // Not an `else` on the block above: that one is `isNilSearch`, which is false
+  // for a search WITH results. Excluded from it, though, so a nil whose write
+  // was attempted and refused reports the refusal alone rather than this too.
+  if (
+    !isNilSearch &&
+    (input.projectPath === undefined ||
+      input.projectPath === null ||
+      (typeof input.projectPath === "string" && input.projectPath.trim() === "")) &&
+    input.planItemId !== undefined &&
+    input.planItemId !== null
+  ) {
+    answer = withKeyBeforeResults(answer, "planItemIdIgnored", PLAN_ITEM_WITHOUT_PROJECT_NOTE);
   }
 
   return answer;

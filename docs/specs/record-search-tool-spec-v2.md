@@ -652,6 +652,7 @@ Strict surname + birth-place match:
 | `planRationale` / `escalationDue` | string \| undefined | Returned alongside `logId` when the log write produces them, so everything the agent needs at the moment of a nil arrives in one response. **Serialized before `results`.** |
 | `validationWarnings` | string[] \| undefined | The log write's own warnings. **Serialized before `results`.** |
 | `nilLogRefused` | string[] \| undefined | Returned **instead of** `logId` when the log tool refused the write. The SEARCH still succeeded — this is not a failure. **Serialized before `results`.** |
+| `planItemIdIgnored` | string \| undefined | Present **only** when `planItemId` was supplied with no `projectPath`. There is no project to write to, so nothing was logged and the plan item reached no entry. The same note `build_external_search_url` gives for the same mistake, from the one constant both tools import. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] | Always present. FamilySearch's own search order (under a place expansion, the merged order), or best first with score fields when ranking ran — one row list, never two; see "The response is re-ordered; the staged sidecar is not". |
 | `collections` | object \| undefined | `collectionId` → collection title for every collection in `results`, hoisted off the rows by the compaction every answer gets (see the `gedcomx` row of `RecordSearchResult`). Absent when no row carries a title. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
@@ -787,6 +788,15 @@ can still change and still be what the schema checks and the file holds.
 is the pinned-nil rule, and the agent then logs that nil by hand batched with the
 retry the message names. A `no_project` refusal is relayed as a note.
 
+**`planItemId` with no `projectPath` is answered, not dropped.** There is no
+project to write to, so no entry is written and the plan item reaches none —
+and because the search itself answers normally, nothing would otherwise say so.
+The response carries `planItemIdIgnored`, the same note
+`build_external_search_url` gives for the same mistake; both tools write through
+`research_log_append`, so the one constant serves both. It is not returned
+alongside `nilLogRefused`: there a write WAS attempted, and the refusal is the
+thing to report.
+
 **Re-logging is absorbed, a repeat search is not.** `research_log_append` returns
 the existing entry with `alreadyLogged: true`, writing nothing, when an agent
 re-logs a nil this tool already wrote — matched on the plan item and full query
@@ -802,7 +812,8 @@ a second entry lands.
 
 `rankingSkipped` is emitted **before `results`** in the response object, and so
 are `unloggedSearches`, `placeExpansion` and the nil log write's own keys —
-`logId`, `planRationale`, `escalationDue`, `validationWarnings`, `nilLogRefused`.
+`logId`, `planRationale`, `escalationDue`, `validationWarnings`, `nilLogRefused`,
+`planItemIdIgnored`.
 `results`
 is by far the largest field, so anything serialized after it is the first thing any
 size bound drops. The motivating evidence: across the 46 `record_search` calls in

@@ -244,6 +244,21 @@ export const PLAN_RATIONALE_NOTE =
   "the other retries: this note does not end the search.";
 
 /**
+ * The note a tool returns when `planItemId` arrives with no `projectPath`.
+ * There is no project to write to, so nothing is logged and the plan item
+ * reaches no entry — a silent drop otherwise, since both tools answer normally.
+ *
+ * One wording for one mistake: `build_external_search_url` and `record_search`
+ * both make their write through this module, so the note they give for failing
+ * to reach it is the same string, not two that drift (issue #4527).
+ *
+ * Mirrored byte-for-byte in `eval/harness/harness/mock_mcp.py` — grep
+ * PLAN_ITEM_WITHOUT_PROJECT_NOTE to find both copies when editing either.
+ */
+export const PLAN_ITEM_WITHOUT_PROJECT_NOTE =
+  "'planItemId' has no effect without projectPath — nothing was logged";
+
+/**
  * The `planRationale` note for the plan items whose first nil this call logged,
  * one line per item, or null. Reads only research.json (ADR-0011). Silent for a
  * plan item that already had a nil, has found something, or has no rationale.

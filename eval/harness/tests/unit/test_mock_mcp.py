@@ -21,6 +21,7 @@ from harness.mock_mcp import (
     UNLOGGED_REFS_SHOWN,
     NIL_SEARCH_NEEDS_LOG_NOTE,
     OK_FALSE_IS_FAILURE_LIVE,
+    PLAN_ITEM_WITHOUT_PROJECT_NOTE,
     RANKING_SKIPPED_NOTE,
     UNLOGGED_SEARCHES_NOTE,
     _fixture_is_nil,
@@ -515,6 +516,28 @@ def test_unlogged_search_notes_have_not_drifted_from_the_typescript_source():
         # The TS source escapes the inner quotes of `outcome: "negative"`; Python's
         # own literal does not, so unescape before comparing.
         assert ts_note.replace('\\"', '"') == expected
+
+
+def test_plan_item_without_project_note_has_not_drifted_from_the_typescript_source():
+    """The projectless-`planItemId` note must stay byte-identical to production's.
+
+    Same silent failure mode as the notes above, and one rung worse to spot: this
+    note fires only on a call with no `projectPath`, so a stale copy would differ
+    from production on exactly the calls nobody looks at twice. It lives in
+    `research-log-append.ts` rather than the staging util because the two tools
+    that emit it (`record_search`, `build_external_search_url`) both write
+    through that module.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/tools/research-log-append.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(
+        r"const PLAN_ITEM_WITHOUT_PROJECT_NOTE =(.*?);\n", src, re.DOTALL
+    )
+    assert decl, "PLAN_ITEM_WITHOUT_PROJECT_NOTE is gone from research-log-append.ts"
+    ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+    assert ts_note, "parsed an empty note — the declaration shape changed"
+    assert ts_note.replace('\\"', '"') == PLAN_ITEM_WITHOUT_PROJECT_NOTE
 
 
 def test_fixture_with_matches_but_no_mapped_results_is_not_nil():
@@ -2928,6 +2951,44 @@ def test_a_total_less_nil_fixture_writes_no_log_entry(tmp_path):
     assert len(_log_after({"results": [], "totalMatches": 0})) == 1
     # No total stated → production's gate cannot be known to hold → no write.
     assert _log_after({"results": []}) == []
+
+
+def test_a_projectless_plan_item_gets_production_s_note(tmp_path):
+    """The one key production adds on a call with no `projectPath` (issue #4527).
+
+    Every other enrichment sits behind the mock's `projectPath` gate, so this
+    branch is reached only when that gate is false — and a suite running a
+    projectless search would otherwise grade the agent on a response production
+    does not send. Both directions, because a note that fired unconditionally
+    would satisfy the positive half alone.
+    """
+    import json as _json
+
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "rs-projectless.json").write_text(
+        _json.dumps({
+            "tool": "record_search",
+            "description": "a search made with no project",
+            "args": {"surname": "Flynn"},
+            "response": {"results": [], "totalMatches": 0},
+        }),
+        encoding="utf-8",
+    )
+    _server, _calls, tools_by_name = create_mock_server(["rs-projectless"], fixtures)
+
+    def _body(args):
+        return _extract_response_dict(_invoke(tools_by_name, "record_search", args))
+
+    with_plan_item = _body({"surname": "Flynn", "planItemId": "pli_001"})
+    assert with_plan_item["planItemIdIgnored"] == PLAN_ITEM_WITHOUT_PROJECT_NOTE
+    # Production puts it before `results`, where a size bound cannot drop it.
+    keys = list(with_plan_item)
+    assert keys.index("planItemIdIgnored") < keys.index("results")
+
+    # No plan item, and an explicitly ad-hoc one, are not mistakes.
+    assert "planItemIdIgnored" not in _body({"surname": "Flynn"})
+    assert "planItemIdIgnored" not in _body({"surname": "Flynn", "planItemId": None})
 
 
 def test_a_nil_fulltext_search_still_asks_the_agent_to_log_it(tmp_path):

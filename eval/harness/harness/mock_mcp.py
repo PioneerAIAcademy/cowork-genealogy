@@ -518,6 +518,15 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
     "parameters used, and no `stagedResultsRef`."
 )
 
+#: Verbatim copy of PLAN_ITEM_WITHOUT_PROJECT_NOTE in
+#: `packages/engine/mcp-server/src/tools/research-log-append.ts`. `record_search`
+#: returns it when `planItemId` arrives with no `projectPath` — the one key it
+#: adds on a projectless call, so the mock must add it there too or the suite
+#: grades the agent on a response production does not send (the #3054 rule).
+PLAN_ITEM_WITHOUT_PROJECT_NOTE = (
+    "'planItemId' has no effect without projectPath — nothing was logged"
+)
+
 
 # `surnameVariantHints` (issue #3054): the abbreviated forms of a -datter/-dotter
 # patronymic, which the real record_search adds to a search that did not find
@@ -2265,6 +2274,23 @@ def create_mock_server(
             if _name == "record_search" and isinstance(response, dict) and "error" not in response:
                 for _advice_key, _advice in _search_advice(dict(args), response):
                     response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
+
+            # Production answers a projectless `planItemId` with a note rather
+            # than dropping it (issue #4527), and that is the one branch the
+            # `projectPath` gate above cannot reach. Without it a projectless
+            # search in a suite is graded against a response production does not
+            # send — the same divergence #3054 fixed for `surnameVariantHints`.
+            if (
+                _name == "record_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and not str(args.get("projectPath") or "").strip()
+                and args.get("planItemId") is not None
+            ):
+                response = _place_before_results(
+                    {**response, "planItemIdIgnored": PLAN_ITEM_WITHOUT_PROJECT_NOTE},
+                    "planItemIdIgnored",
+                )
 
             # Production serializes surnameVariantHints immediately before
             # `results`, after the pre-`results` notes and the advice above —

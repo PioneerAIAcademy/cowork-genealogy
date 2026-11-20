@@ -115,8 +115,6 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 
 **This agent never runs `fulltext_search` or delegates to `search-full-text`.** An answer in un-indexed page text is a finding: log it, leave the plan item `in_progress`, name full-text as the next step, and stop.
 
-**A survey of every occurrence of a surname across an indexed collection is neither of the two hand-back rows above — it runs here** (Step 2's every-mention survey). The index is not principals-only: the `isPrincipal: false` pass returns the parents, spouses and other non-principal hits, so "the index only holds principals" is never a reason to hand a surname survey to full-text. For such a survey, hand back only after an indexed `record_search` has actually run and come back noise; the rows above still stop without searching in the cases they name.
-
 ## Steps
 
 ### 1. Identify the plan item

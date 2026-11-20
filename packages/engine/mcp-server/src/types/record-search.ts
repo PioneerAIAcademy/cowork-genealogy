@@ -460,6 +460,11 @@ export interface RecordSearchToolResponse {
   // §8.5's pinned-nil rule. The SEARCH still succeeded: log it by hand, batched
   // with the retry the message names.
   nilLogRefused?: string[];
+  // Set when `planItemId` arrived with no `projectPath`: nothing was logged, so
+  // the plan item reached no entry. The same note `build_external_search_url`
+  // gives for the same mistake, from the one constant both tools import.
+  // Serialized BEFORE `results` like the rest of the nil-log keys.
+  planItemIdIgnored?: string;
   placeExpansion?: PlaceExpansion;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
