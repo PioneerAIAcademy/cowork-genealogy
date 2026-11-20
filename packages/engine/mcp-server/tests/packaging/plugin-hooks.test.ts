@@ -1713,6 +1713,13 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     );
   });
 
+  it("routes a no-project, no-PID re-index of one page to search-images (#4141)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Reindex the names from this image and compare them with the index." }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /or to re-index\s+one page or compare it with its FamilySearch index, goes to the\s+search-images agent/,
+    );
+  });
+
   it("stays silent on a subagent hand-back", () => {
     expect(runNoProjectRoute(JSON.stringify({ prompt: '<agent-message from="a1">done</agent-message>' }))).toEqual({});
   });

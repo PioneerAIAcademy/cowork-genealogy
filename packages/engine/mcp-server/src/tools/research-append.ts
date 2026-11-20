@@ -81,6 +81,7 @@ import {
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
+  divisionContradiction,
   countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
@@ -136,7 +137,13 @@ import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarRead
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 import { GUIDE_SECTION_MAX_CHARS, mergeGuideSection } from "../utils/locality-guide-sections.js";
 import { normalizeRegistrationStart } from "../utils/registration-level.js";
-import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
+import {
+  isCoreNationalCollection,
+  localityNationalCountry,
+  nationalCollectionScope,
+  standardPlaceToCollectionsQuery,
+  yearSpan,
+} from "../utils/collection-scope.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -11425,8 +11432,9 @@ function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record
  *  the lock, or `"unavailable"` when that read failed. */
 export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
 
-/** The most collections one locality's fill adds. The largest list in 18 surveyed
- *  places was New York's 65; a country-wide scope can run to several hundred. */
+/** The most collections one locality's fill leaves it holding, place and core
+ *  national rows together. The largest place list in 18 surveyed places was New
+ *  York's 65; a country-level place can run to about 140 (the United States). */
 export const LOCALITY_COLLECTIONS_FILL_MAX = 150;
 
 /** A `localities` append in these ops: the catalog is read for it even when it
@@ -11484,7 +11492,8 @@ function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
  * search, so a collection left out was hidden from the plan. The scope is the one
  * `collections_search` derives: the entry's `place`, else the first jurisdiction
  * name whose scope matches a title. A title that names another part of the scope
- * is not added (`titleNamesElsewhere`).
+ * is not added (`titleNamesElsewhere`). A scope that is the United States, Canada
+ * or Mexico itself is skipped: their country-wide rows are `fillNationalCollections`'s.
  */
 function fillLocalityCollections(
   ops: ResearchAppendOp[],
@@ -11503,7 +11512,7 @@ function fillLocalityCollections(
       if (typeof name !== "string" || name.trim() === "") continue;
       const scope = standardPlaceToCollectionsQuery(name);
       const needle = scope.toLowerCase();
-      if (needle === "") continue;
+      if (needle === "" || nationalCollectionScope(scope) === scope) continue;
       const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
       if (inScope.length === 0) continue;
       const own = ownPlaceTerms([...names, entry.for_place], scope);
@@ -11532,6 +11541,74 @@ function fillLocalityCollections(
       return;
     }
   });
+}
+
+/**
+ * Add to a `localities` append in the United States, Canada or Mexico the catalog's
+ * core national collections (`isCoreNationalCollection`) that overlap its `time_period`
+ * (spec §5.12, "National collections"). Their scope is the state or province, so
+ * `fillLocalityCollections` never reaches a federal census, and research-plan plans
+ * national collections from these rows (`project_context` `nationalCollections`).
+ * Runs after that fill, under the same cap. An undated row is kept, as
+ * `collections_search` keeps one; a `time_period` with no year cuts nothing.
+ */
+function fillNationalCollections(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined || catalog === "unavailable") return;
+  ops.forEach((op: any, i) => {
+    if (!op || typeof op !== "object" || op.section !== "localities" || op.op !== "append") return;
+    const entry = op.entry;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return;
+    if (entry.collections !== undefined && !Array.isArray(entry.collections)) return;
+    const country = localityNationalCountry(entry);
+    if (!country) return;
+    const window = yearSpan(entry.time_period);
+    const held: unknown[] = entry.collections ?? [];
+    const heldIds = new Set(held.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
+    const missing = [...catalog].filter(([id, c]) => {
+      if (heldIds.has(id) || typeof c.title !== "string" || !isCoreNationalCollection(c.title, country)) return false;
+      if (window === null) return true;
+      const span = yearSpan(c.dateRange);
+      return span === null || (span[0] <= window[1] && span[1] >= window[0]);
+    });
+    if (missing.length === 0) return;
+    const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - held.length);
+    const added = missing.slice(0, room).map(([id, c]) => ({
+      id,
+      title: c.title as string,
+      date_range: c.dateRange ?? null,
+      person_count: c.personCount,
+      record_count: c.recordCount,
+    }));
+    entry.collections = [...held, ...added];
+    warnings.push(
+      fmt(
+        i,
+        `localities collections: added ${added.length === missing.length ? `the ${added.length}` : `${added.length} of the ${missing.length}`} ` +
+          `core national FamilySearch collections for "${country}"` +
+          (window === null ? "" : ` overlapping ${window[0]}-${window[1]}`) +
+          " from the catalog",
+      ),
+    );
+  });
+}
+
+/** One `localities` entry, as a caller's append leaves it: counts stamped, then the
+ *  place's and the country's collections filled from `catalog`. Mutates `entry`;
+ *  returns the warnings. For dev scripts that build fixtures the way production
+ *  stores them (`dev/fill-locality-fixtures.ts`). */
+export function fillLocalityEntryFromCatalog(entry: Record<string, unknown>, catalog: CollectionCatalog): string[] {
+  const ops = [{ section: "localities", op: "append", entry }] as unknown as ResearchAppendOp[];
+  const warnings: string[] = [];
+  const fmt = (_i: number, msg: string) => msg;
+  stampLocalityCollectionCounts(ops, catalog, warnings, fmt);
+  fillLocalityCollections(ops, catalog, warnings, fmt);
+  fillNationalCollections(ops, catalog, warnings, fmt);
+  return warnings;
 }
 
 /**
@@ -12170,6 +12247,21 @@ async function prepareOps(
       );
       return;
     }
+    // ── Place lever (a), continued: state/province contradiction, one level
+    // down from the country check above. Only a value this lever itself
+    // looked up (sidecar copy or geocode) is dropped here — a caller-supplied
+    // standard_place is out of scope, as today. Checked, and returned on,
+    // before the `unverifiable` block below so a value this drops never also
+    // gets that block's "verify this" warning pushed for it first.
+    // Unlike the country check above, this one never refuses (no errors.push),
+    // even on a plain append with neither dropContradiction nor valueDerived
+    // set: a wrong state/province is a plausible lookup mistake, not grounds
+    // to fail the whole extraction over it.
+    if ((filled === "sidecar" || filled === "geocoded") && divisionContradiction(entry.place, sp)) {
+      delete entry.standard_place;
+      unresolved(`: the lookup's answer '${sp}' names a different state or province`);
+      return;
+    }
     if (verdict === "unverifiable" && filled === "geocoded") {
       const unconfirmed = valueDerived || isProse(entry.place) ? unconfirmedByText(entry.place, sp) : null;
       if (unconfirmed) {
@@ -12567,6 +12659,7 @@ async function prepareOps(
   if (errors.length === 0) {
     stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
     fillLocalityCollections(ops, options.collectionCatalog, warnings, fmt);
+    fillNationalCollections(ops, options.collectionCatalog, warnings, fmt);
   }
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 

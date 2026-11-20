@@ -1,0 +1,177 @@
+{
+  "tool": "record_read",
+  "description": "Issue #4580 Tyler/Lightfoot tests: 1870 census, Cunningham, Fluvanna: Antoine Tyler, female, b. 1833, head; Margaret (1855), Joseph (1863), Julia E (1866), Malinda (1869) Tyler. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "recordId": "~MFLB-F5N"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_382280236",
+        "ark": "ark:/61903/1:1:MFLB-F5N",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "given": "Antoine",
+            "surname": "Tyler"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1833",
+            "standard_date": "1833",
+            "place": "Virginia"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ]
+      },
+      {
+        "id": "p_382280237",
+        "ark": "ark:/61903/1:1:MFLB-F5J",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "given": "Margaret",
+            "surname": "Tyler"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1855",
+            "standard_date": "1855",
+            "place": "Virginia"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ]
+      },
+      {
+        "id": "p_382280238",
+        "ark": "ark:/61903/1:1:MFLB-F5V",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "given": "Joseph",
+            "surname": "Tyler"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1863",
+            "standard_date": "1863",
+            "place": "Virginia"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ]
+      },
+      {
+        "id": "p_382280239",
+        "ark": "ark:/61903/1:1:MFLB-F5K",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "given": "Julia E",
+            "surname": "Tyler"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1866",
+            "standard_date": "1866",
+            "place": "Virginia"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ]
+      },
+      {
+        "id": "p_382280240",
+        "ark": "ark:/61903/1:1:MFLB-F52",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "given": "Malinda",
+            "surname": "Tyler"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1869",
+            "standard_date": "1869",
+            "place": "Virginia"
+          },
+          {
+            "type": "Census",
+            "primary": true,
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ]
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HT-6749-J7T",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6749-J7T",
+    "birthRanges": {
+      "p_382280236": "Bet 1832 and 1833",
+      "p_382280237": "Bet 1854 and 1855",
+      "p_382280238": "Bet 1862 and 1863",
+      "p_382280239": "Bet 1865 and 1866",
+      "p_382280240": "Bet 1868 and 1869"
+    },
+    "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFLB-F5N : Wed Jan 22 06:21:04 UTC 2025), Antoine Tyler, 1870.",
+    "recordUrl": "https://www.familysearch.org/ark:/61903/1:2:MCQS-QCC"
+  }
+}
