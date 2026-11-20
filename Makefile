@@ -1193,7 +1193,7 @@ source-screen-plant: $(ENGINE_DEPS) ## Build the planted-error fixture copies: m
 	@test -n "$(OUT)" || { echo "ERROR: set OUT (outside the repo)" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts plant --spec dev/source-screen-fixtures.json --out "$(abspath $(OUT))"
 
-source-screen-screen: $(ENGINE_DEPS) ## Build each copy's project and run source_screen over it: make source-screen-screen SNAPSHOT=<dir> [WITHOUT="a d"] [IMAGE_READ=1]
+source-screen-screen: $(ENGINE_DEPS) ## Build each copy's project and run source_screen over it: make source-screen-screen SNAPSHOT=<dir> [WITHOUT="a h"] [IMAGE_READ=1]
 	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts screen --snapshot "$(abspath $(SNAPSHOT))" $(foreach c,$(WITHOUT),--without $(c)) $(if $(filter 1 true yes on,$(IMAGE_READ)),--image-read)
 
