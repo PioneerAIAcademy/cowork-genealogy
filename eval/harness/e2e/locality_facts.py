@@ -4,6 +4,8 @@
     uv run python -m e2e.locality_facts fixtures <facts.json> <out-dir> <key> [<key> ...]
     uv run python -m e2e.locality_facts check <facts.json> <research.json> [<research.json> ...]
     uv run python -m e2e.locality_facts compare <facts.json> <baseline-runs-dir> <new-runs-dir>
+    uv run python -m e2e.locality_facts calls <facts.json> <runs-dir> <calls.json>
+    uv run python -m e2e.locality_facts bars <facts.json> <runs-dir> [--calls <calls.json> --captures <dir>]
 
 `mine` reads the committed e2e corpus (`eval/runlogs/e2e/*/run-*.final-research.json`): for each
 saved locality guide, the facts a plan item's rationale in the same run shares with that locality
@@ -24,6 +26,15 @@ e2e fixture's own starting project and one message asking for that place's guide
 reports, per place, how many of the mined facts the new localities entry carries anywhere in it.
 Prose and rows are both searched, so the check works before and after a guide moves into rows.
 Exact matching on purpose: no judge, no paraphrase credit, repeatable after every change.
+
+`bars` scores a set of runs against the old guides, years apart (they are mostly collection start
+and end dates, the noisiest kind): of the non-year facts, the share in the saved entry or in the
+stored curated-link rows the planner can query (`final_external_collections`; bar >= 80%). With
+`--captures`, it also splits each miss by where it was lost, from `locality_survey` re-run live
+with each run's own arguments (`calls` lists them; `packages/engine/mcp-server/dev/
+try-locality-survey-capture.ts` re-runs them): of the non-year facts the agent saw, the share in
+the entry (bar >= 90%), and the share fetched but cut from what the agent saw and kept nowhere
+(bar <= 5%).
 """
 
 from __future__ import annotations
@@ -220,6 +231,86 @@ def check(facts_doc: dict[str, Any], research_paths: list[Path]) -> list[dict[st
 
 
 KINDS = ("collection", "url", "year", "name")
+BARS = {"in_entry": 0.80, "seen_kept": 0.90, "truly_cut": 0.05}
+
+
+def _found(kind: str, value: str, hay: str) -> bool:
+    if kind in ("collection", "year"):
+        return bool(re.search(rf"(?<!\d){re.escape(value)}(?!\d)", hay))
+    return _norm(value) in _norm(hay)
+
+
+def survey_calls(facts_doc: dict[str, Any], runs_dir: Path) -> list[dict[str, Any]]:
+    """Every successful `locality_survey` call of every run, with the run it came from."""
+    out = []
+    for key, entry in facts_doc.items():
+        for f in sorted((runs_dir / entry["fixture"]).glob("run-*.json")):
+            if not re.fullmatch(r"run-[\d_-]+\.json", f.name):
+                continue
+            doc = json.loads(f.read_text(encoding="utf-8"))
+            for c in doc.get("tool_calls") or []:
+                if str(c.get("tool", "")).endswith("locality_survey") and not c.get("is_error"):
+                    out.append({"key": key, "run": f.name, "args": c.get("args") or {}})
+    return out
+
+
+def bars(facts_doc: dict[str, Any], runs_dir: Path, calls: list[dict[str, Any]] | None, captures: Path | None) -> bool:
+    seen: dict[tuple[str, str], dict[str, str]] = {}
+    if calls is not None and captures is not None:
+        for n, call in enumerate(calls):
+            p = captures / f"{n}.json"
+            if not p.exists():
+                continue
+            cap = json.loads(p.read_text(encoding="utf-8"))
+            s = seen.setdefault((call["key"], call["run"]), {"inline": "", "full": "", "links": ""})
+            s["inline"] += json.dumps(cap.get("inline"), ensure_ascii=False)
+            s["full"] += json.dumps(cap.get("full"), ensure_ascii=False)
+            s["links"] += json.dumps(((cap.get("full") or {}).get("externalLinks") or {}).get("results") or [], ensure_ascii=False)
+    tally = {k: {"all": 0, "in": 0, "seen": 0, "seen_in": 0, "cut": 0} for k in KINDS}
+    runs = 0
+    for key, entry in facts_doc.items():
+        for f in sorted((runs_dir / entry["fixture"]).glob("run-*.json")):
+            if not re.fullmatch(r"run-[\d_-]+\.json", f.name):
+                continue
+            doc = json.loads(f.read_text(encoding="utf-8"))
+            locs = [l for l in (doc.get("final_research") or {}).get("localities") or [] if isinstance(l, dict)]
+            entry_text = "\n".join(locality_text(l) for l in locs)
+            stored = json.dumps(doc.get("final_external_collections") or {}, ensure_ascii=False)
+            s = seen.get((key, f.name))
+            if s is not None:
+                stored += s["links"]
+            runs += 1
+            for fact in entry["facts"]:
+                kind, value = fact.split(":", 1)
+                t = tally[kind]
+                t["all"] += 1
+                available = _found(kind, value, entry_text) or _found(kind, value, stored)
+                t["in"] += available
+                if s is None:
+                    continue
+                if _found(kind, value, s["inline"]):
+                    t["seen"] += 1
+                    t["seen_in"] += _found(kind, value, entry_text)
+                elif _found(kind, value, s["full"]) and not available:
+                    t["cut"] += 1
+    non_year = [k for k in KINDS if k != "year"]
+    agg = {m: sum(tally[k][m] for k in non_year) for m in ("all", "in", "seen", "seen_in", "cut")}
+    print(f"{runs} runs")
+    print("kind        in entry or stored   seen -> in entry    cut, kept nowhere")
+    for k in KINDS:
+        t = tally[k]
+        pct = lambda a, b: f"{100 * a / b:5.1f}%" if b else "    -"
+        print(f"  {k:10} {t['in']:4}/{t['all']:<4} {pct(t['in'], t['all'])}   {t['seen_in']:4}/{t['seen']:<4} {pct(t['seen_in'], t['seen'])}   {pct(t['cut'], t['all'])}")
+    ok = True
+    checks = [("in_entry", agg["in"], agg["all"], ">=")]
+    if seen:
+        checks += [("seen_kept", agg["seen_in"], agg["seen"], ">="), ("truly_cut", agg["cut"], agg["all"], "<=")]
+    for name, a, b, op in checks:
+        share = a / b if b else 0.0
+        good = share >= BARS[name] if op == ">=" else share <= BARS[name]
+        ok &= good
+        print(f"bar {name:10} (years apart) {100 * share:5.1f}% {op} {100 * BARS[name]:.0f}%  {'ok' if good else 'MISSED'}")
+    return ok
 
 
 def _per_place(facts_doc: dict[str, Any], runs_dir: Path) -> dict[str, dict[str, float]]:
@@ -282,6 +373,15 @@ def main(argv: list[str] | None = None) -> int:
     cm.add_argument("facts", type=Path)
     cm.add_argument("baseline", type=Path)
     cm.add_argument("new", type=Path)
+    cl = sub.add_parser("calls")
+    cl.add_argument("facts", type=Path)
+    cl.add_argument("runs", type=Path)
+    cl.add_argument("out", type=Path)
+    br = sub.add_parser("bars")
+    br.add_argument("facts", type=Path)
+    br.add_argument("runs", type=Path)
+    br.add_argument("--calls", type=Path)
+    br.add_argument("--captures", type=Path)
     c = sub.add_parser("check")
     c.add_argument("facts", type=Path)
     c.add_argument("research", type=Path, nargs="+")
@@ -298,6 +398,14 @@ def main(argv: list[str] | None = None) -> int:
                 kinds[f.split(":")[0]] = kinds.get(f.split(":")[0], 0) + 1
             print(f"  {len(e['facts']):3} {kinds}  {key} | {e['time_period']}")
         return 0
+    if args.cmd == "calls":
+        out = survey_calls(json.loads(args.facts.read_text(encoding="utf-8")), args.runs)
+        args.out.write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"{len(out)} locality_survey calls")
+        return 0
+    if args.cmd == "bars":
+        calls = json.loads(args.calls.read_text(encoding="utf-8")) if args.calls else None
+        return 0 if bars(json.loads(args.facts.read_text(encoding="utf-8")), args.runs, calls, args.captures) else 1
     if args.cmd == "compare":
         return 0 if compare(json.loads(args.facts.read_text(encoding="utf-8")), args.baseline, args.new) else 1
     if args.cmd == "fixtures":

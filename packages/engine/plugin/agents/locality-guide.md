@@ -190,7 +190,7 @@ The tool assigns the `loc_` id and stamps `created`, and writes `pages_read`,
 - `source_url`: the URL a tool result returned for the row's claims.
 - The tool fills `collection_ids` from the entry's collections. Send `years` only when a page states the span.
 - A type the survey says nothing about: a summary saying this survey did not confirm it, `source_url: null`.
-- `repositories`: one per repository, with `url` only as a tool result gave it; never two in one row unless a tool result says one runs the other. `holds` names what it holds that fills a gap a row states.
+- `repositories`: one per repository, with `url` only as a tool result gave it; never two in one row unless a tool result says one runs the other. `holds` names what it holds that fills a gap a row states. Each national or state archive and civil registration office a tool result names gets its row, with the URL it gave.
 - `losses`: a record set destroyed, lost or missing only when a tool result says so for that record set; a loss stated for a whole class of records is a row's summary, never narrowed to these records. An empty search is a coverage gap, not a loss.
 
 Then send the guide to that `loc_` id, one section per `research_append` call, never
