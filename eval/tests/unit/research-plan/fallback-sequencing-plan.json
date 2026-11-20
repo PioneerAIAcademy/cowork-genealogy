@@ -4,7 +4,7 @@
     "skill": "research-plan",
     "name": "Plan gives a church or probate item a persisted contingency",
     "type": "positive",
-    "description": "The skill proposes a new plan for q_001 after prior census searches are exhausted. Church records are a logical next source, but Catholic parish records in Schuylkill County (Diocese, from 1875 Archdiocese, of Philadelphia until 1961) may not be digitized — so the plan must give a church or probate item a persisted contingency, a fallback_for item or one stated in its own rationale, saying why the primary may fail. Tests the Sequencing logic rubric dimension: fallback chains must appear in the plan when a primary source is likely to be unavailable.",
+    "description": "The skill proposes a new plan for q_001 after prior census searches are exhausted. Church records are a logical next source, but Catholic parish records in Schuylkill County (Diocese, from 1875 Archdiocese, of Philadelphia until 1961) may not be digitized — so the plan must give a church or probate item a persisted contingency, saying why the primary may fail: another FamilySearch search may sit in the item's own rationale, but a browse, archive or other repository needs its own fallback_for item. Tests the Sequencing logic rubric dimension: fallback chains must appear in the plan when a primary source is likely to be unavailable.",
     "tags": [
       "planning",
       "fallback-chain",
@@ -45,9 +45,9 @@
     "person-read-empty-any"
   ],
   "judge_context": [
-    "The plan must give at least one church or probate item whose source may be unavailable, missing or unindexed a contingency: either a second item linked to it by `fallback_for`, or that item's own persisted rationale naming the alternative source to try if the primary finds nothing (e.g. 'if the index misses, browse the Archdiocese of Philadelphia registers'). Both are acceptable (lead ruling 2026-11-20, issue #4726). Which repository the contingency names (a diocesan or parish archive, a county courthouse, a neighbouring parish, another indexed collection) is the planner's judgment and is not graded. A contingency that appears only in the reply, in neither a persisted rationale nor a `fallback_for`, does not count: that is what Sequencing logic turns on for this test.",
+    "The plan must give at least one church or probate item whose source may be unavailable, missing or unindexed a persisted contingency (lead ruling 2026-11-20, issue #4726). When the alternative is another FamilySearch search (another indexed collection, a variant name, a neighbouring parish's index), the item's own persisted rationale may carry it ('if the index misses, search Pennsylvania, Wills and Deeds'): search-records follows a contingency its rationale names. When the alternative is an image browse, an archive, a courthouse or another repository, it must be its own item linked by `fallback_for`, because only that item is routed to the agent that can run it; the same alternative left in prose counts as no contingency. Which source the contingency names is the planner's judgment and is not graded. A contingency that appears only in the reply, in neither a persisted rationale nor a `fallback_for`, does not count: that is what Sequencing logic turns on for this test.",
     "Free/indexed sources should precede paid/unindexed sources in sequence numbers. Probate on FamilySearch (free, partially indexed) should come before Ancestry (paid) fallback.",
-    "The rationale carrying the contingency (the fallback item's, or the primary item's own) must explain WHY the primary might fail — e.g., 'Catholic parish registers may not yet be digitized; the parishes and the Archdiocese of Philadelphia archives hold the originals.'"
+    "The rationale carrying the contingency (the fallback item's, or the primary item's own) must explain WHY the primary might fail — e.g., 'the name index covers few probate files; the county dockets are browse-only images'."
   ],
   "judge_reads_files": true,
   "execution": {
