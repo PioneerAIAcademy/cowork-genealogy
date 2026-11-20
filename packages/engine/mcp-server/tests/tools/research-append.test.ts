@@ -506,6 +506,28 @@ describe("research_append (Phase 1)", () => {
       expect(r.unresolvedPlaces).toEqual(["West Bromwich, England"]);
     });
 
+    it("(4b) a state/province contradiction on update clears the fact's standard_place and warns, without failing", async () => {
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+      vi.mocked(resolveStandardPlace).mockImplementationOnce(async () => "Forest, Wisconsin, United States");
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "Forest, Miss, United States" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Forest, Miss, United States");
+      expect(f.standard_place).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place/);
+      expect(r.resolvedPlaces).toBeUndefined();
+      expect(r.unresolvedPlaces).toEqual(["Forest, Miss, United States"]);
+    });
+
     it("(5) `place: null` clears the fact's place rather than writing a null", async () => {
       // The tree schema types these `string` with no null branch, so assigning
       // null would make the fact invalid. `Object.hasOwn`, not truthiness, is
@@ -1744,12 +1766,12 @@ describe("research_append (Phase 1)", () => {
       expect(p).not.toHaveProperty("standard_place");
     });
 
-    // Round-1 plan-critique on PLAN.md: when the country check alone cannot
-    // judge the pair ("Tenn" names no country, so `countryConsistency` is
-    // "unverifiable" before the state check ever runs), the state-contradiction
-    // drop must fire BEFORE the unverifiable branch's "verify this" warning is
-    // pushed — otherwise the response would carry a stale warning describing a
-    // standard_place that the very next check deletes.
+    // When the country check alone cannot judge the pair ("Tenn" names no
+    // country, so `countryConsistency` is "unverifiable" before the state
+    // check ever runs), the state-contradiction drop must fire BEFORE the
+    // unverifiable branch's "verify this" warning is pushed — otherwise the
+    // response would carry a stale warning describing a standard_place that
+    // the very next check deletes.
     it("on an append whose lookup is geocoded to a different state, where the country check alone cannot judge it, drops without ever warning to verify the dropped value", async () => {
       await writeProject();
       vi.mocked(resolveStandardPlace).mockImplementationOnce(async () => "Nashville, Davidson, Wisconsin, United States");

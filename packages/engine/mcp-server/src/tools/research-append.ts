@@ -12137,6 +12137,10 @@ async function prepareOps(
     // standard_place is out of scope, as today. Checked, and returned on,
     // before the `unverifiable` block below so a value this drops never also
     // gets that block's "verify this" warning pushed for it first.
+    // Unlike the country check above, this one never refuses (no errors.push),
+    // even on a plain append with neither dropContradiction nor valueDerived
+    // set: a wrong state/province is a plausible lookup mistake, not grounds
+    // to fail the whole extraction over it.
     if ((filled === "sidecar" || filled === "geocoded") && divisionContradiction(entry.place, sp)) {
       delete entry.standard_place;
       unresolved(`: the lookup's answer '${sp}' names a different state or province`);
