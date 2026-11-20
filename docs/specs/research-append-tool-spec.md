@@ -739,8 +739,9 @@ new place without setting `standard_place`. On that update the existing assertio
 the base, no sidecar value is copied (geocoding only; its sidecar record still gives
 the record's country, below), a resolved value is written into the
 update's `standard_place`, and when nothing resolves, or the resolved value
-contradicts the place's country, the old `standard_place` is cleared (set to `null`)
-with a warning rather than kept for the new place.
+contradicts the place's country or its state or province (Lever A), the old
+`standard_place` is cleared (set to `null`) with a warning rather than kept for
+the new place.
 
 A place-of-event variant's place lifted from `value` before the levers run
 (§3.7) is a **value-derived** place. It is resolved, echoed and warned about
@@ -942,6 +943,19 @@ stays an opt-out, as on an append. The levers:
   country it recognizes, and those are where the corpus's mis-resolutions
   actually land. A contradiction still fires when the garbage sits *behind* a
   genuine polity ("Moravia, …, South Hwanghae, North Korea").
+
+  **One level down: a state/province contradiction (`divisionContradiction`).**
+  A value this lever itself filled — sidecar-copied or geocoded, never a
+  caller-supplied `standard_place`, which is out of scope here — is also
+  **dropped**, with a warning and never a refusal, when the place text's last
+  part names a US state, Puerto Rico or Canadian province (by full name, postal
+  code, or an abbreviation the lead's one-word list gives that division — "Miss"
+  is Mississippi) other than the one the standard place's jurisdictions name:
+  "Forest, Miss, United States" drops "Forest, Wisconsin, United States". The
+  check runs whether or not the country guard above could judge the pair, and
+  before it pushes its own "verify this" warning for a geocoded, country-unverifiable
+  answer, so a value the division check is about to drop is never also echoed
+  with a warning describing it as kept.
 
 A `localities` entry's `for_place` is checked against the place standard by a
 separate rule, which refuses rather than geocodes: §5.8.
