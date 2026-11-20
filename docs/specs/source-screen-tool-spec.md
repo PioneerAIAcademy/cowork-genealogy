@@ -214,9 +214,10 @@ plants, 3 index edits, 10 must-not-flag edits), snapshot 2026-11-20, scored by
 The baseline's wrong-person catches all rest on its by-construction
 multi-attached signal; this tool's do not. Two of the three index edits are in
 index-only collections (a death index and the SSDI), which have no page image,
-so check e cannot settle them. Of the image reads that ran, 42 found the tree's
-value, 78 did not; 36 were cut by the time budget, 34 were images FamilySearch
-restricts for the account, and 27 records had no image.
+so check e cannot settle them. Of the 217 flagged attachments, 166 named no
+disputed vital fact and were not read; of the reads attempted, 1 found the tree's
+value on the page (the planted baptism), 14 did not, 22 were cut by the time
+budget, 4 failed, 1 gave no answer, and 9 records had no image.
 
 **Every check earns its place** — each scored with and without, no image read,
 on an earlier build of the same planted set:
