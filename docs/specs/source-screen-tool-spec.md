@@ -215,6 +215,17 @@ on an earlier build of the same planted set:
 | d (name variants) | 11 | 5 | **dropped**: it softened one sr_jr_swap plant and spared no false alarm |
 | g (every person the record touches) | 10 | 4 | **dropped**: it added a false alarm and caught nothing more |
 
+**Uncurated sample (item 6).** 30 persons drawn at random (seed 20261120) from
+the e2e fixtures' `source_pid`s, snapshot 2026-11-20, no image read: 313
+attachments — 131 fine, 38 weak, 7 contradicts, 97 misattributed, 40 not scored;
+21 of the 30 persons have at least one misattributed. a raised 81 of the 97, b
+22, c 21, h 17. Read by hand, a random 8 of the 97 split: records whose facts put
+an event after the person's death (plausibly wrong), and maiden- or married-name
+records (Elizabeth Geach against Elizabeth Slack, Mary Crowther against Mary
+Prizer) that the matcher scores low and are likely right. So on real profiles the
+screen over-flags name changes; telling which flags are right is the
+genealogist review the truth set carries.
+
 c and h are kept pending the truth set, which also has to re-test the d and g
 drops: the planted set carries two fixtures per must-not-flag type. The
 100-person truth set was not available for this run.
