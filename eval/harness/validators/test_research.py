@@ -2180,3 +2180,19 @@ def test_names_works_only_from_tool_results(text_response, tool_calls, test):
         "Name a source, collection, book or citation only if a tool result returned it, "
         "or say it is unconfirmed."
     )
+
+
+def test_no_inline_transcription_of_a_reindex(tool_calls, test):
+    """Tag-gated (``no-inline-transcribe``, #4141). A re-index of one page, or a
+    comparison of a page with its FamilySearch index, is search-images' job: the
+    router hands it over and never reads the page itself. The first-hand-off
+    check alone passes a router that transcribed and compared inline and then
+    spawned. search-images is stubbed in these tests, so every image_transcribe
+    call in the log is the main thread's."""
+    if "no-inline-transcribe" not in test.get("tags", []):
+        pytest.skip("not a no-inline-transcribe test")
+    inline = [c for c in (tool_calls or []) if bare_tool_name(c.get("tool", "")) == "image_transcribe"]
+    assert not inline, (
+        f"the router transcribed the page itself ({len(inline)} image_transcribe call(s)); "
+        "a re-index goes to search-images with the message verbatim"
+    )
