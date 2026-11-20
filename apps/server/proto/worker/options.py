@@ -82,7 +82,7 @@ from app.agent.continue_policy import (
 from app.agent.main_thread import MainThread, load_main_thread
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
-from app.agent.real_agent import direct_project_file_write
+from app.agent.real_agent import MAX_BUFFER_BYTES, direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
 from proto.worker.writer_record import writer_record
@@ -109,9 +109,6 @@ GATEWAY_AGENT_MODELS = {
 }
 BEDROCK_ID_PREFIXES = ("us.", "global.")
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
-# The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
-# raised so one oversized JSON line cannot end a turn.
-MAX_BUFFER_BYTES = 8 * 1024 * 1024
 PRETOOL_TIMEOUT_S = 10.0
 MCP_CONFIG_NAME = "mcp.json"
 
