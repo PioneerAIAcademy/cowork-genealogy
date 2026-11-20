@@ -70,7 +70,7 @@ tools:
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
-**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A `collections_search` answer with `truncated: true` is not a coverage gap. Never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it.
+**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A `collections_search` answer with `truncated: true` is not a coverage gap. Never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it. The same holds for absence: say a record class, registration system or survival did not exist only when a tool result says so; otherwise say this survey did not confirm it.
 
 **A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
 
@@ -131,7 +131,7 @@ On `No wiki page found`, or a page that returns only generic content, record and
 
 ```
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
-wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
+wiki_search({ query: "Schuylkill County Pennsylvania genealogy records", includeText: true })
 wiki_place_page({ standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
@@ -407,7 +407,7 @@ the registration-level rule under Important rules rather than a default. The hol
 is what tells the researcher where to route the search.
 
 ### Vital records (civil registration)
-- **Start date:** [when civil registration began]
+- **Start date:** [when and at what level civil registration began, from a tool result; otherwise "not confirmed by this survey"]
 - **What exists:** [births, marriages, deaths — with date ranges]
 - **Where held:** [repository and access method]
 - **Gaps:** [any missing years or known losses]
@@ -419,7 +419,7 @@ is what tells the researcher where to route the search.
 - **Where held:** [parish, diocese, FamilySearch microfilm, etc.]
 - **Gaps:** [each denomination or span of years with no surviving or online
   registers] → [the returned index or repository that bears on it, by name]
-- **Language:** [language of records if not English]
+- **Language:** [language of records if not English, from a tool result; otherwise omit this line]
 
 ### Census records
 - **Federal/national census:** [years available, known gaps]
@@ -483,8 +483,7 @@ is what tells the researcher where to route the search.
 | Repository | Collections for this place | Gap it fills | Access |
 |---|---|---|---|
 | FamilySearch | [list with person counts] | [gap] | Free |
-| Ancestry | [list] | [gap] | Subscription |
-| [Others] | [list] | [gap] | [Access type] |
+| [Repository] | [list] | [gap] | [Access] |
 
 [List a repository or online index only with a URL a tool result returned —
 never one from memory. One row per repository, with the URL a tool result
@@ -492,7 +491,11 @@ gave for that repository; never join two repositories in one row or name
 ("X / Y", "X (Y)") unless a tool result says one runs the other. **Gap it fills** names a gap this guide states — a
 denomination, a span of years, a "Records NOT online" entry, a known loss —
 never "subscription", "additional records" or "more coverage". The same
-index goes on that gap's **Gaps** line above.]
+index goes on that gap's **Gaps** line above. FamilySearch is free. For any
+other repository, **Access** is free, paid or subscription only where a tool result states it (link text, or the `cost` on a
+`research_query` `external_collections` row); otherwise the cell is only: not
+stated. Never infer access from the repository's name, and never explain this
+rule in the guide.]
 
 **Coverage of this survey:** [state how much of the digitized material the
 volumes above represent. When `volume_search` returned a `nextPageToken`, or
@@ -504,10 +507,13 @@ line only when the returned page was the complete result set.]
 ### Physical repositories
 | Repository | Holdings | Access method |
 |---|---|---|
-| [County courthouse] | [what they hold] | In-person / mail |
-| [State archives] | [what they hold] | In-person / online request |
-| [Local historical society] | [what they hold] | [hours/contact] |
-| [Church archives] | [what they hold] | [contact method] |
+| [Repository] | [what they hold] | [access method] |
+
+[List every repository a tool result names for this place or its state,
+including those named in a `wiki_search`, `wiki_read` or `wikipedia_search`
+excerpt, with the holdings and access it gives. Name no other. When no tool
+result names one, write that this survey named no physical repository,
+instead of the table.]
 
 ## Records NOT online
 
@@ -525,6 +531,9 @@ result settles the fate, say so and name the repository a tool result says holds
 the records. Note any substitute sources that partially compensate.]
 
 ## Research tips
+- **Search order:** [start with the source named above that is indexed and
+  free, by its collection ID or image group number, and say why it goes first;
+  then the next source and why; then the browse-only or offline ones]
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
   inline per the rule "Cite the FamilySearch Wiki page, not just its title",
   i.e. the claim, then the returned page title linked to its returned URL. Take the
@@ -532,7 +541,6 @@ the records. Note any substitute sources that partially compensate.]
 - [Naming conventions or spelling patterns for this area — quote the cited
   source exactly; do not reverse or alter which relative a naming position names]
 - [Alternative sources when primary records are missing]
-- [Efficient research sequence for this jurisdiction]
 - [Relevant finding aids and research guides to consult]
 ```
 
