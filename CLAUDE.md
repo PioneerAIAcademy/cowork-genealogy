@@ -373,7 +373,7 @@ A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sen
 to each Cowork researcher message: a conditional one (no project → a research request goes
 to the research skill; a no-PID ask for the names in a record set goes to
 search-images) and one naming a source, collection, book or citation only from a
-tool result. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
+tool result, and that nothing here changes FamilySearch's Family Tree. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
 `continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
 The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
