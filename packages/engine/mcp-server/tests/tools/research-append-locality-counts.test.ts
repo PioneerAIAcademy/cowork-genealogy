@@ -317,6 +317,40 @@ describe("research_append stamps locality collection counts from the catalog", (
     ]);
   });
 
+  it("adds the catalog collections the place's wiki pages link, keeping one under the scope that names another part of it out", async () => {
+    clearCollectionsCache();
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...CATALOG,
+          results: 4,
+          entries: [
+            ...CATALOG.entries,
+            catalogEntry("1932399", "United States, Civil War Soldiers Index, 1861-1865", 600, 6300000),
+            catalogEntry("1919999", "Illinois, Peoria, Birth Records, 1878-1994", 100, 2000),
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    const page = (links: string[]) => links.map((id) => `* [x](https://www.familysearch.org/search/collection/${id}) at FamilySearch`).join("\n");
+    const surveyRef = await stageSurvey(dir, {
+      place: ILLINOIS,
+      pagesRead: [],
+      volumeSummary: null,
+      wikiPages: { online_records: { url: "u", found: true, content: page(["1932399", "1919999", "5555555"]) } },
+    });
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "localities", op: "append", surveyRef, entry: locality([], ILLINOIS) } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+    expect(r.ok).toBe(true);
+    const ids = (await storedCollections()).map((c: any) => c.id);
+    expect(ids).toContain("1932399");
+    expect(ids).not.toContain("5555555");
+    expect(ids).not.toContain("1919999");
+  });
+
   it("an append with no collections key is filled the same way", async () => {
     const entry: Record<string, unknown> = locality([], ILLINOIS);
     delete entry.collections;

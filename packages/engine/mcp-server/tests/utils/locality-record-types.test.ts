@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveRowFields, fillRecordTypeRows, recordTypeOfTitle } from "../../src/utils/locality-record-types.js";
+import { collectionIdsByType, fillRecordTypeRows, recordTypeOfTitle } from "../../src/utils/locality-record-types.js";
 
 const entry = (extra: Record<string, unknown> = {}) => ({
   collections: [
@@ -9,16 +9,6 @@ const entry = (extra: Record<string, unknown> = {}) => ({
     { id: "4", title: "United States Census, 1880", date_range: "1880", person_count: 50000000 },
     { id: "5", title: "Pennsylvania, County Marriages, 1885-1950", date_range: "1885-1950", person_count: 1200 },
   ],
-  volume_summary: {
-    total_volumes: 20,
-    complete: true,
-    by_record_type: [
-      { group: "Probate", volumes: 6, browse_only: 4, fulltext_only: 2 },
-      { group: "Land", volumes: 3, browse_only: 0, fulltext_only: 3 },
-      { group: "Military", volumes: 2, browse_only: null, fulltext_only: null },
-    ],
-    untyped: { volumes: 0, browse_only: 0, fulltext_only: 0 },
-  },
   ...extra,
 });
 
@@ -42,26 +32,20 @@ describe("recordTypeOfTitle", () => {
 });
 
 describe("fillRecordTypeRows", () => {
-  it("fills collections, years and access from the entry's collections and volume counts", () => {
+  it("gives each type's first row its collections' ids, and fills neither years nor an online access", () => {
     const e = entry({
       record_types: [
         { type: "vital_record", summary: "x" },
         { type: "church", summary: "x" },
-        { type: "probate", summary: "x" },
-        { type: "land", summary: "x" },
-        { type: "military", summary: "x" },
         { type: "tax", summary: "x" },
       ],
     });
     fillRecordTypeRows(e);
-    const byType = Object.fromEntries(e.record_types.map((r: any) => [r.type, r]));
-    expect(byType.vital_record).toMatchObject({ collection_ids: ["1", "5"], years: "1885-1968", access: "indexed" });
-    expect(byType.church).toMatchObject({ collection_ids: ["2"], years: "1830-1920", access: "browse" });
-    expect(byType.probate).toMatchObject({ collection_ids: ["3"], years: "1683-1994", access: "fulltext" });
-    expect(byType.land).toMatchObject({ access: "fulltext" });
-    expect(byType.land.collection_ids).toBeUndefined();
-    expect(byType.military.access).toBe("unknown");
-    expect(byType.tax).toEqual({ type: "tax", summary: "x", access: "unknown" });
+    expect(e.record_types).toEqual([
+      { type: "vital_record", summary: "x", collection_ids: ["1", "5"], access: "unknown" },
+      { type: "church", summary: "x", collection_ids: ["2"], access: "unknown" },
+      { type: "tax", summary: "x", access: "unknown" },
+    ]);
   });
 
   it("never overwrites what the agent sent, and fills only the first row of a type", () => {
@@ -70,20 +54,18 @@ describe("fillRecordTypeRows", () => {
         { type: "vital_record", years: "1906-", access: "physical", collection_ids: ["9"], summary: "x" },
         { type: "church", summary: "Catholic" },
         { type: "church", summary: "Lutheran", access: "lost" },
-        { type: "census", access: "unknown", summary: "x" },
       ],
     });
     fillRecordTypeRows(e);
     expect(e.record_types[0]).toEqual({ type: "vital_record", years: "1906-", access: "physical", collection_ids: ["9"], summary: "x" });
-    expect(e.record_types[1]).toMatchObject({ collection_ids: ["2"], access: "browse" });
+    expect(e.record_types[1]).toEqual({ type: "church", summary: "Catholic", collection_ids: ["2"], access: "unknown" });
     expect(e.record_types[2]).toEqual({ type: "church", summary: "Lutheran", access: "lost" });
-    expect(e.record_types[3]).toMatchObject({ access: "indexed", collection_ids: ["4"] });
   });
 
   it("leaves an entry with no rows alone", () => {
     const e = entry();
     expect(fillRecordTypeRows(e)).toBe(0);
     expect(e).not.toHaveProperty("record_types");
-    expect(deriveRowFields({}).size).toBe(0);
+    expect(collectionIdsByType({}).size).toBe(0);
   });
 });

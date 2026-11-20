@@ -337,8 +337,10 @@ it, you do not invoke `locality-guide`.** The orchestrator runs
 `locality-guide` first, so the `localities` section should already hold an
 entry for the target place (`jurisdictions`, `quirks`, `record_types`,
 `repositories`, `losses`, `catalog`, `guide_markdown`). **Read it** with `research_query`.
-Each `record_types` row gives a record type's years, where it is held and how it is
-reached (`access`); an entry with no `record_types` carries these in `guide_markdown`. If it is **missing** for a place you
+Each `record_types` row gives a record type's holder, level and summary, and its
+`collection_ids`: judge whether the subject's event and year are indexed from each listed
+collection's own `dateRange` and `personCount`, never from the type as a whole. An entry with no
+`record_types` carries these in `guide_markdown`. If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the

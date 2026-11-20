@@ -122,7 +122,7 @@ A catalog hit's `repositoryCalls` says where FamilySearch's copy can be seen ("O
 
 ### 4. Classify access levels
 
-The tool fills each `record_types` row's online `access` (`indexed`, `fulltext`, `browse`) from the entry's collections and volume counts. Send `access` only when a tool result says one of:
+Leave a `record_types` row's `access` out (readers take each collection's own years and indexed count) unless a tool result says one of:
 - On film, not online → `microfilm`
 - Only at a repository it names → `physical`
 - Destroyed or lost → `lost`
@@ -188,7 +188,7 @@ The tool assigns the `loc_` id and stamps `created`, and writes `pages_read`,
 - `level`: the jurisdiction level the records are held at, from a tool result, never a default; null when none says.
 - `summary`: one line from the tool results: what exists, its gaps, and what replaces a missing series. A church row names the denominations and the language when not English; a probate row says whether to look for wills (testate) or administrations (intestate); a land row names the office that granted the land, from the `{Jurisdiction}_Land_and_Property` page.
 - `source_url`: the URL a tool result returned for the row's claims.
-- The tool fills `collection_ids`, `years` and the online `access` from the entry's collections; send `years` only when a page states the span.
+- The tool fills `collection_ids` from the entry's collections. Send `years` only when a page states the span.
 - A type the survey says nothing about: a summary saying this survey did not confirm it, `source_url: null`.
 - `repositories`: one per repository, with `url` only as a tool result gave it; never two in one row unless a tool result says one runs the other. `holds` names what it holds that fills a gap a row states.
 - `losses`: a record set destroyed, lost or missing only when a tool result says so for that record set; a loss stated for a whole class of records is a row's summary, never narrowed to these records. An empty search is a coverage gap, not a loss.

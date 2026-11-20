@@ -19538,7 +19538,7 @@ describe("research_append: a localities guide is saved one section per call (#45
     expect(guideOf(r)![0].missing).not.toContain("record_types: tax");
   });
 
-  it("fills a row's collections, years and online access from the entry's collections", async () => {
+  it("fills a row's collection_ids from the entry's collections, and nothing else", async () => {
     await writeProject();
     const r = await append({
       collections: [{ id: "4237104", title: "Portugal, Madeira, Catholic Church Records, 1539-1911", date_range: "1539-1911" }],
@@ -19546,8 +19546,10 @@ describe("research_append: a localities guide is saved one section per call (#45
     });
     expect(r.ok).toBe(true);
     const [row] = (await readResearch()).localities[0].record_types;
-    expect(row).toMatchObject({ type: "church", collection_ids: ["4237104"], years: "1539-1911", held_at: "Arquivo Regional da Madeira" });
-    expect(typeof row.access).toBe("string");
+    expect(row).toEqual({
+      type: "church", collection_ids: ["4237104"], held_at: "Arquivo Regional da Madeira",
+      summary: "Parish registers from 1539.", access: "unknown",
+    });
   });
 
   it("in a batch, each update's rows merge onto the rows the op before left", async () => {

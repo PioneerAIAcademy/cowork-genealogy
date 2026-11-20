@@ -2435,6 +2435,14 @@ saved.
   any id; `{ id or null, title, place: the level searched, repository_calls, film_count:
   filmNotesTotal else the number of filmNotes, null when the hit's detail was not read }`;
   left out when no level returned a hit). An update may carry `surveyRef` to refresh all three.
+  **Collections the wiki links.** The append's survey also names the FamilySearch collections its
+  wiki pages link (`wikiLinkedCollectionIds`: every `familysearch.org/search/collection/<id>` in the
+  full text of the staged pages; an online-records page lists a state's or country's collections
+  this way, 33 for England and 48 for New York, and the survey shows the agent only a share of it).
+  The §5.12 whole-list fill adds each one FamilySearch's catalog holds, with its catalog title and
+  counts, beside the catalog's own collections for the place; one whose title begins with the scope
+  and names another part of it (`New York, Yonkers, …` for Saratoga County) is left out, and an id
+  the catalog lacks is never added.
   Refused: an append with no `surveyRef`; `pages_read`, `volume_summary` or `catalog` in an append's `entry`
   or an update's `fields`; a `surveyRef` that is not a string, does not exist, or is not a
   survey answer; a `surveyRef` on another section. The wiring is `expandSurveyRefs`. A survey
@@ -2445,17 +2453,16 @@ saved.
   row of that type, rows of other types are kept, and the list is ordered by the enum. In a
   batch, each op merges onto the list the op before left. So an update carrying only the
   rows `missing` named keeps the others. An append's `record_types` is stored as sent.
-  After the ops apply and before validation, every localities entry's rows are filled from the
-  entry's own `collections` and `volume_summary` (`fillRecordTypeRows`,
+  After the ops apply and before validation, every localities entry's rows get their
+  `collection_ids` from the entry's own `collections` (`fillRecordTypeRows`,
   `utils/locality-record-types.ts`): a collection goes to the first type its title names
-  (`recordTypeOfTitle`, an ordered word list; a title naming none goes to no row); the first row
-  of a type gets those collections' ids as `collection_ids` and their year span as `years` when it
-  sent neither, and an online `access` when it sent none or `unknown` — `indexed` when one of them
-  has `person_count > 0`, else from the type's `volume_summary` group (`indexed` when volumes are
-  neither browse-only nor full-text-only, else `fulltext`, else `browse`; court has no group, its
-  counts include probate), else `browse` when every one has `person_count: 0`. A row left with no
-  `access` gets `unknown`. A field the agent sent is never changed, so the agent sends `access`
-  only for `microfilm`, `physical` or `lost`.
+  (`recordTypeOfTitle`, an ordered word list; a title naming none goes to no row), and the first
+  row of a type gets those ids when it sent none. A row with no `access` gets `unknown`. Nothing
+  else is filled: one type spans several events and centuries, so a years span or an online access
+  word computed across its collections misstates the years a reader asks about (death
+  certificates from 1906 would make an 1897 birth read as indexed). A reader takes each listed
+  collection's own `date_range` and `person_count`. A field the agent sent is never changed; the
+  agent sends `access` only for `microfilm`, `physical` or `lost`.
   A row's `level` is read into the closed list the way `registration_start`'s is (below),
   except that a row is never split and gains no key (`normalizeRowLevels`): the narrowest
   level the text names, in enum order, becomes `level`; text naming none sets `level: null`;

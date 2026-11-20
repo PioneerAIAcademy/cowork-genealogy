@@ -11478,11 +11478,23 @@ function fillLocalityCollections(
       const needle = scope.toLowerCase();
       if (needle === "") continue;
       const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
-      if (inScope.length === 0) continue;
+      if (inScope.length === 0 && !SURVEY_WIKI_COLLECTIONS.get(op)?.length) continue;
       const own = ownPlaceTerms([...names, entry.for_place], scope);
       const sent: unknown[] = entry.collections ?? [];
       const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
-      const missing = inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own));
+      const linkedIds = new Set(SURVEY_WIKI_COLLECTIONS.get(op) ?? []);
+      const linked = [...catalog].filter(
+        ([id, c]) => linkedIds.has(id) && typeof c.title === "string" && !inScope.some(([other]) => other === id),
+      );
+      // A collection the place's own wiki page links is the page's choice: it is left out only
+      // when its title sits under this scope and names another part of it (`New York, Yonkers, …`).
+      const underScope = (title: string) => title.toLowerCase().startsWith(`${needle},`);
+      const missing = [
+        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own)),
+        ...linked.filter(
+          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, scope, own)),
+        ),
+      ];
       const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, scope, own)).length;
       const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
       const added = missing.slice(0, room).map(([id, c]) => ({
@@ -12798,8 +12810,8 @@ export function missingRecordTypes(rows: unknown): string[] {
 const RECORD_TYPE_ROWS_HOW =
   "Send the missing rows as one update: op 'update', the entry's id as entryId, fields: { record_types: " +
   "[{ type, held_at, level, summary, source_url }] } — one row or more per type named; a type the survey " +
-  "says nothing about gets a summary saying so. The tool fills each row's collection_ids, years and online " +
-  "access; send access only for lost, microfilm or physical-only records. Rows you sent before are kept.";
+  "says nothing about gets a summary saying so. The tool fills each row's collection_ids; send access " +
+  "only for lost, microfilm or physical-only records. Rows you sent before are kept.";
 
 /**
  * Merge each localities update's `fields.record_types` into the stored list, in place: the
@@ -12926,6 +12938,27 @@ function expandGuideSections(
   return errors;
 }
 
+/** The FamilySearch collection ids a staged survey's wiki pages link to, in page order: the
+ *  online-records page lists a place's collections as links, and the survey shows the agent
+ *  only a share of it (spec §5.14, "Collections the wiki links"). */
+export function wikiLinkedCollectionIds(survey: any): string[] {
+  const texts: string[] = [];
+  const pages = survey?.wikiPages && typeof survey.wikiPages === "object" ? Object.values(survey.wikiPages) : [];
+  for (const page of [...pages, ...["vitalRecords", "churchRecords", "question"].map((k) => survey?.[k])]) {
+    if (page && typeof page === "object" && typeof (page as any).content === "string") texts.push((page as any).content);
+  }
+  const ids: string[] = [];
+  for (const text of texts) {
+    for (const m of text.matchAll(/familysearch\.org\/(?:[a-z]{2}\/)?search\/collection\/(\d+)/g)) {
+      if (!ids.includes(m[1])) ids.push(m[1]);
+    }
+  }
+  return ids;
+}
+
+/** A localities append's wiki-linked collection ids, from its survey, for the collections fill. */
+const SURVEY_WIKI_COLLECTIONS = new WeakMap<object, string[]>();
+
 /** The `localities` fields only a `locality_survey` answer may write. */
 const SURVEY_FIELDS = ["pages_read", "volume_summary", "catalog"] as const;
 
@@ -13009,6 +13042,8 @@ async function expandSurveyRefs(
     if (survey.volumeSummary && typeof survey.volumeSummary === "object") filled.volume_summary = survey.volumeSummary;
     const catalog = catalogRowsFromSurvey(survey);
     if (catalog.length > 0) filled.catalog = catalog;
+    const linked = wikiLinkedCollectionIds(survey);
+    if (linked.length > 0) SURVEY_WIKI_COLLECTIONS.set(op, linked);
     (op as any)[holderKey] = filled;
     delete op.surveyRef;
   }
@@ -13734,8 +13769,7 @@ export async function researchAppend(
       }
     }
 
-    // §5.14: a record-type row's collections, years and online access, from the entry's own
-    // collections and volume counts, so the agent never copies them.
+    // §5.14: which of the entry's collections each record-type row covers.
     for (const loc of Array.isArray(research?.localities) ? research.localities : []) fillRecordTypeRows(loc);
 
     const originalRefusals = originalWithoutEvidenceRefusals(beforeResearch, research, ops, applied);
