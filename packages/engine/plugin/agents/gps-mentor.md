@@ -104,9 +104,8 @@ deliberately:**
    *(Note the two shapes: `count: 0` means the section is present and empty —
    that is your finding. `{ ok: false }` means the key is missing entirely,
    which is a schema problem to surface instead.)*
-2. **Watch for truncation.** `research_query` returns a page and reports
-   `count` as the true total. If `truncated` is true, you are seeing part of the
-   set — call again with `offset: nextOffset` until you hold `count` items, and
+2. **Watch for truncation.** `count` is the true total. While `truncated` is
+   true you are seeing part of the set — page with `offset: nextOffset`, and
    never describe a partial set as complete.
 
 Two lookups no projection carries. A verdict body under `evaluations/`:

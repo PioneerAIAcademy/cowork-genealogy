@@ -346,6 +346,9 @@ class PluralStub:
         for key, value in args.items():
             if key in ("projectPath", "section", "offset"):
                 continue
+            if (section, key) == ("assertions", "questionId"):
+                items = [e for e in items if value in (e.get("extracted_for_question_ids") or [])]
+                continue
             field_ = FIELDS[(section, key)]
             values = value if isinstance(value, list) else [value]
             if isinstance(value, list):
@@ -362,12 +365,18 @@ class PluralStub:
         if not is_list and self.mode == "singular-content-differs" and items:
             items = items[:-1] + [dict(items[-1], rationale="changed")]
         offset = args.get("offset", 0)
-        size = 1 if self.mode == "tiny-pages" else 50
+        size = 1 if self.mode in ("tiny-pages", "grouped-tiny") else 50
         page = items[offset:offset + size]
         if is_list and self.mode == "repeat-page1":
             page = items[:size]
+        truncated = offset + len(page) < len(items) or (is_list and self.mode == "repeat-page1")
+        next_offset = offset + len(page)
+        if section == "assertions" and self.mode.startswith("grouped"):
+            page = _group_like_the_tool(page, args.get("questionId"))
         body = {"ok": True, "section": section, "count": len(items), "items": page,
-                "truncated": offset + len(page) < len(items) or (is_list and self.mode == "repeat-page1")}
+                "truncated": truncated}
+        if truncated and not (is_list and self.mode == "repeat-page1"):
+            body["nextOffset"] = next_offset
         if is_list and self.mode == "duplicate":
             body["items"] = page + page[:1]
         if is_list and self.mode != "no-count-by-id":
@@ -378,6 +387,42 @@ class PluralStub:
                 counts.pop(next(iter(counts)))
             body["countById"] = counts
         return [{"type": "text", "text": json.dumps(body)}], False
+
+
+def _group_like_the_tool(page, question):
+    """research_query's #4412 assertions shape, restated for the stub."""
+    out, prev = [], None
+    for a in page:
+        head = {k: a[k] for k in rc.ASSERTION_HEAD_KEYS if k in a}
+        fact = {k: v for k, v in a.items() if k not in rc.ASSERTION_HEAD_KEYS}
+        if question is not None and fact.get("extracted_for_question_ids") == [question]:
+            del fact["extracted_for_question_ids"]
+        if out and prev == head:
+            out[-1]["facts"].append(fact)
+        else:
+            out.append({**head, "facts": [fact]})
+        prev = head
+    return out
+
+
+#: Personas that exercise the grouped shape: a persona with two facts, one with
+#: no record_persona_id, one with it null, one with no log_entry_id.
+G_STATE = {
+    "assertions": [
+        {"id": "a_1", "record_id": "R1", "record_persona_id": "p1", "record_role": "principal",
+         "source_id": "src_1", "log_entry_id": "log_1", "informant": "Mary", "extracted_for_question_ids": ["q_1"]},
+        {"id": "a_2", "record_id": "R1", "record_persona_id": "p1", "record_role": "principal",
+         "source_id": "src_1", "log_entry_id": "log_1", "informant": "John", "extracted_for_question_ids": ["q_1"]},
+        {"id": "a_3", "record_id": "R1", "record_role": "child", "source_id": "src_1", "log_entry_id": "log_1",
+         "extracted_for_question_ids": ["q_1", "q_2"]},
+        {"id": "a_4", "record_id": "R1", "record_persona_id": None, "record_role": "child", "source_id": "src_1",
+         "log_entry_id": "log_1", "extracted_for_question_ids": ["q_1"]},
+        {"id": "a_5", "record_id": "R2", "record_persona_id": "p2", "record_role": "principal", "source_id": "src_2",
+         "extracted_for_question_ids": ["q_1"]},
+        {"id": "a_6", "record_id": "R2", "record_persona_id": "p2", "record_role": "principal", "source_id": "src_2",
+         "extracted_for_question_ids": ["q_2"]},
+    ],
+}
 
 
 def _pgroups(calls, state=P_STATE, run="fx/run-1"):
@@ -694,3 +739,60 @@ def test_the_real_engine_collapses_plural_walks(capsys):
     assert re.search(r"unfaithful: (?:.*, )?source-id-unstamped [1-9]\d*", out), out
     assert "ledger-missing-writes" not in out, out
     assert re.search(r"calls removed: +\d+", out) and re.search(r"turns removed: +-?\d+", out), out
+
+
+# --- #4412: research_query returns assertions grouped by persona --------------------
+
+
+def _assertion_group(**fixed):
+    counts = {"R1": 4, "R2": 2} if not fixed else {"R1": 4, "R2": 1}
+    groups, _ = _pgroups([_q("assertions", "recordId", r, n, **fixed) for r, n in counts.items()], state=G_STATE)
+    assert len(groups) == 1
+    return groups[0]
+
+
+def test_a_grouped_candidate_collapses_against_a_flat_base(tmp_path):
+    """The real `make replay-collapse` until this merges: base flat, candidate grouped."""
+    out = _prun(tmp_path, _assertion_group(), mode="grouped", base_mode="ok")
+    assert out.status == "collapsed", out.reason
+
+
+def test_a_persona_split_across_one_fact_pages_still_collapses(tmp_path):
+    out = _prun(tmp_path, _assertion_group(), mode="grouped-tiny", base_mode="grouped-tiny")
+    assert out.status == "collapsed", out.reason
+
+
+def test_a_fixed_question_id_restores_the_dropped_echo(tmp_path):
+    out = _prun(tmp_path, _assertion_group(questionId="q_1"), mode="grouped", base_mode="ok")
+    assert out.status == "collapsed", out.reason
+
+
+def test_flatten_keeps_absent_and_null_apart_and_restores_the_echo():
+    groups = _group_like_the_tool(G_STATE["assertions"], "q_1")
+    assert [len(g["facts"]) for g in groups] == [2, 1, 1, 2]
+    flat = rc._flatten_items("assertions", groups, {"questionId": "q_1"})
+    assert flat == G_STATE["assertions"]
+    assert "record_persona_id" not in flat[2] and flat[3]["record_persona_id"] is None
+    assert "log_entry_id" not in flat[4]
+
+
+def test_flatten_leaves_a_flat_answer_and_other_sections_alone():
+    flat = G_STATE["assertions"]
+    assert rc._flatten_items("assertions", flat, {"questionId": "q_9"}) == flat
+    groupish = [{"id": "pe_1", "facts": [{"x": 1}]}]
+    assert rc._flatten_items("person_evidence", groupish, {}) == groupish
+
+
+def test_flatten_without_a_question_id_adds_no_echo():
+    groups = _group_like_the_tool(G_STATE["assertions"][:1], None)
+    assert rc._flatten_items("assertions", groups, {}) == G_STATE["assertions"][:1]
+
+
+def test_the_hoisted_keys_match_the_engines():
+    """`_flatten_items` restates research_query's HOISTED_KEYS; a key the engine
+    hoists and this list lacks would vanish from every flattened assertion."""
+    src = (Path(__file__).resolve().parents[4] / "packages/engine/mcp-server/src/tools/research-query.ts"
+           ).read_text(encoding="utf-8")
+    m = re.search(r"const HOISTED_KEYS = \[([^\]]*)\] as const", src)
+    assert m, "HOISTED_KEYS not found in research-query.ts"
+    assert tuple(re.findall(r'"([a-z_]+)"', m.group(1))) == rc.ASSERTION_HEAD_KEYS

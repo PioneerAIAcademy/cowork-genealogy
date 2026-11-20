@@ -151,6 +151,13 @@ export interface RecordSearchInput {
   // Ranking is best-effort and never fails the search: on any ranking error the
   // results come back unranked with `rankingError` set.
   subjectId?: string;
+  // Written into the nil log entry this tool appends itself when a search finds
+  // nothing (issue #4527). Neither is a search filter: both are stripped from
+  // the logged query by `stripQueryPlumbing` and from the §8.5 retry suggestion
+  // by `RETRY_DROPPED_KEYS`, so a logged query names only filters the search
+  // actually sent.
+  planItemId?: string | null;
+  note?: string;
   surname?: string;
   givenName?: string;
   surnameAlt?: string;
@@ -440,11 +447,25 @@ export interface RecordSearchToolResponse {
   // and withheld from the staged payload: it is an instruction to the model, not a
   // record of what the search returned.
   unloggedSearches?: string;
-  // Set on a `projectPath`-carrying search whose upstream `totalMatches` is 0 —
-  // NOT merely an empty `results`, which is the post-`mapEntry` set and can be
-  // emptied by a page that fails mapping while matches exist. A nil search stages
-  // no file, so `unloggedSearches` structurally cannot see it.
-  nilSearchNeedsLog?: string;
+  // Issue #4527: on a `projectPath`-carrying search whose upstream
+  // `totalMatches` is 0, record_search writes the research-log entry itself and
+  // returns its id. (`fulltext_search` keeps `nilSearchNeedsLog`.) Nil-ness is
+  // the upstream total, NOT merely an empty `results`, which is the
+  // post-`mapEntry` set and can be emptied by a page that fails mapping while
+  // matches exist. All four are serialized BEFORE `results`.
+  logId?: string;
+  planRationale?: string;
+  escalationDue?: string;
+  validationWarnings?: string[];
+  // Set instead of `logId` when the log tool refused the write — in practice
+  // §8.5's pinned-nil rule. The SEARCH still succeeded: log it by hand, batched
+  // with the retry the message names.
+  nilLogRefused?: string[];
+  // Set when `planItemId` arrived with no `projectPath`: nothing was logged, so
+  // the plan item reached no entry. The same note `build_external_search_url`
+  // gives for the same mistake, from the one constant both tools import.
+  // Serialized BEFORE `results` like the rest of the nil-log keys.
+  planItemIdIgnored?: string;
   placeExpansion?: PlaceExpansion;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when

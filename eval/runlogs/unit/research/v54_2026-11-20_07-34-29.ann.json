@@ -1,0 +1,318 @@
+{
+  "run_log": "v54_2026-11-20_07-34-29.json",
+  "annotator": "florencemashipei4@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_uc1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_uc1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_uc1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ue1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ue1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ue1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tlb",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tlb",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it mentioned Ancestry and other repositories as suggested sources without tool evidence, introducing unsupported research claims."
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it named Ancestry, MyHeritage, and Newspapers.com as research sources without tool evidence, introducing unsupported claims."
+    },
+    {
+      "test_id": "ut_research_tlb",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "he extraction_append call used the FamilySearch ID LZBK-7QN instead of the expected internal person ID I1. Although the call succeeded and extracted two records, the argument mismatch warrants a partial score."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "it produced a detailed planning response with additional recommended steps. It should have simply stated that planning was complete for the resolved question."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response failed to decline the planning task and instead generated unsupported next steps despite the project's search_stop already being set. It also incorrectly suggested further exhaustiveness review for a question already resolved at the proved tier."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it provided unnecessary historical background and record-type suggestions and offered to retry the locality guide search despite the request being out of scope for all skills. A brief decline would have been more appropriate."
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The initial research_query call used an unsupported ids parameter and was rejected. Although Claude corrected the arguments and the retry succeeded, the initial tool-call error warrants a partial score under the judge's assessment."
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The initial research_query call used the incorrect sourceIds parameter instead of sourceId and was rejected. Although Claude corrected the parameter and both subsequent calls succeeded, the initial argument error warrants a partial score under the judge's assessmen"
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The response accurately reports the census evidence, explains the 13-year birth-year difference, and correctly refers the user's uncertainty to person-evidence without prematurely deciding whether the records belong to Patrick Flynn. It preserves the distinction between doubt and rejection."
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly treats the relationships as unproven but implies the hypotheses were registered when the hand-off was denied and nothing was written"
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "fails to acknowledge the stub's denial. The false registration claim is addressed under Correctness."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly identifies the contradiction and requests the record for extraction, but does not give a concrete plan to research James and Elizabeth Eastham in Pulaski County as a new lead."
+    }
+  ]
+}
