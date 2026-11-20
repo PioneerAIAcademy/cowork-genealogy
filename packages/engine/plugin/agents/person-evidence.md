@@ -32,6 +32,7 @@ tools:
   - mcp__genealogy__research_query
   - mcp__genealogy__tree_edit
   - mcp__genealogy__same_person
+  - mcp__genealogy__source_screen
   - mcp__genealogy__record_read
   - mcp__genealogy__materialize_facts
   - mcp__genealogy__person_warnings
@@ -43,6 +44,7 @@ tools:
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__remote-devices__Genealogy_Research__tree_edit
   - mcp__remote-devices__Genealogy_Research__same_person
+  - mcp__remote-devices__Genealogy_Research__source_screen
   - mcp__remote-devices__Genealogy_Research__record_read
   - mcp__remote-devices__Genealogy_Research__materialize_facts
   - mcp__remote-devices__Genealogy_Research__person_warnings
@@ -54,6 +56,7 @@ tools:
   - mcp__Genealogy_Research__research_query
   - mcp__Genealogy_Research__tree_edit
   - mcp__Genealogy_Research__same_person
+  - mcp__Genealogy_Research__source_screen
   - mcp__Genealogy_Research__record_read
   - mcp__Genealogy_Research__materialize_facts
   - mcp__Genealogy_Research__person_warnings
@@ -314,10 +317,11 @@ assertions from the same persona should be linked together.
 **An attachment link counts as unlinked for an assertion the delegation
 names.** A live link that is `speculative`, has a null `match_score` and the
 rationale "Linked because FamilySearch has this record attached to this
-person; not verified." is an attachment link: code wrote it, and nobody
-checked it. An assertion the delegation names whose only live link is one is
-unlinked. Score it with `same_person` and decide it like any unlinked
-assertion (Step 3, the no-link rule included). When the decision is
+person; not verified." is an attachment link. An assertion the delegation names whose only live link
+is one is unlinked. If `source_screen({ projectPath, personId })` calls its
+record `misattributed`, there is no link. Otherwise score it with `same_person`
+and decide it like any unlinked assertion (Step 3, the no-link rule included);
+after `indexing_error` the link is `possible` at most. When the decision is
 a link, append it (Step 4), then set the attachment link's `superseded_by` to
 the new `pe_` id (Step 6). When it is no link, leave the attachment link as it
 is and say so in your return. An attachment-linked assertion the delegation
