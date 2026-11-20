@@ -2174,7 +2174,7 @@ and skipped when an earlier check has refused the batch.
 
 **Why.** research-plan plans from these counts without calling `collections_search`
 when every collection in a covering locality carries a `person_count`, and decides
-a name search vs an image browse on `person_count > 0`. In alpha feedback bundle
+a name search vs an image browse on each collection's `availability`. In alpha feedback bundle
 `feedback-2026-11-05T18-50-09-991Z.zip` one locality stored `person_count: 0` on all 13 of its collections, and the second plan
 sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 and
 380,262) to full-text search as browse-only. The agent cannot know a better count

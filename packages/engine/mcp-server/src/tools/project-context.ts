@@ -100,8 +100,11 @@ export interface ProjectContextLocality {
     dateRange?: string;
     personCount?: number;
     recordCount?: number;
-    /** The stored label, else `collectionAvailability(personCount)`. */
-    availability?: CollectionAvailability;
+    /** Present only when browse-only: the stored label, else
+     *  `collectionAvailability(personCount)`. A row without it is name-searchable,
+     *  as on a `collections_search` row; labelling every row was 11-13% of the
+     *  answer on the four planning fixtures. */
+    availability?: Extract<CollectionAvailability, "browse-only">;
   }[];
   quirks?: string[];
 }
@@ -428,10 +431,11 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         dateRange: typeof c.date_range === "string" ? c.date_range : null,
         personCount: Number.isInteger(c.person_count) ? c.person_count : null,
         recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
-        availability:
-          c.availability === "name-searchable" || c.availability === "browse-only"
-            ? c.availability
-            : collectionAvailability(c.person_count),
+        ...((c.availability === "name-searchable" || c.availability === "browse-only"
+          ? c.availability
+          : collectionAvailability(c.person_count)) === "browse-only"
+          ? { availability: "browse-only" as const }
+          : {}),
       });
       if (country && typeof c.title === "string" && isNationalCollectionTitle(c.title, country)) {
         const rows = national.get(country) ?? new Map<string, ProjectContextCollection>();
@@ -647,7 +651,7 @@ export const projectContextSchema = {
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
-    "recordCount, availability}], quirks}] — availability is \"name-searchable\" or \"browse-only\"; the " +
+    "recordCount, availability?}], quirks}] — availability \"browse-only\" marks a browse-only collection; a row without it is name-searchable; the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and nationalCollections " +
     "{country: [same rows]} — the localities' country-wide collections for the United States, " +

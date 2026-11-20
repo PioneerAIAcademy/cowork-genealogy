@@ -8,7 +8,7 @@
  * 27 of FamilySearch's 3,519 collections have a handful of indexed persons over
  * millions of page images (Pennsylvania, Probate Records: 52 persons, 3.2 million
  * images; New York, Probate Records: 59 in 14 million). A name search there finds
- * nothing and reads as a real nil. The next collection up holds about 400 per
+ * nothing and reads as a real nil. The next collection up holds about 1,700 per
  * million (catalog, 2026-11-20).
  */
 export type CollectionAvailability = "name-searchable" | "browse-only";

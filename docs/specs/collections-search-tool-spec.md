@@ -119,7 +119,7 @@ handful of indexed persons over millions of page images (Pennsylvania, Probate
 Records: 52 persons, 3.2 million images; New York, Probate Records: 59 in 14
 million; catalog, 2026-11-20). A `personCount > 0` rule called them
 name-searchable, and a name search there finds nothing and reads as a real nil.
-The next collection up holds about 400 persons per million images. It is written
+The next collection up holds about 1,700 persons per million images (Switzerland, Vaud, Terrier Records). It is written
 only on browse-only rows because a label on every row took Italy's answer from
 35,692 to 39,934 characters and cut 24 of its 257 rows at the budget; marking the
 browse-only ones costs 928.
