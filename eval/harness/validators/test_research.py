@@ -1922,14 +1922,21 @@ def test_names_works_only_from_tool_results(text_response, tool_calls, test):
 _SURVEY_RELAY_TAG = "every-mention-survey-relay"
 
 _FORBIDDEN_COMPLETENESS_PATTERNS = [
-    re.compile(r"\bevery\s+occurrence\b", re.IGNORECASE),
-    re.compile(r"\bevery\s+mention\b", re.IGNORECASE),
+    re.compile(r"\bevery\s+(?:\w+\s+)?(?:occurrence|mention|instance)s?\b", re.IGNORECASE),
+    re.compile(r"\ball\s+(?:the\s+)?(?:\w+\s+)?(?:occurrences|mentions|instances)\b", re.IGNORECASE),
+    re.compile(r"\bcomplete\s+(?:index|list|record|survey|set)\b", re.IGNORECASE),
     # Deliberately `survey`, never `search`: "the search is complete" (the three
     # record_search calls finished) is ordinary workflow narration, not a claim
     # about the surname's coverage -- only "survey" names the coverage claim.
     re.compile(r"\bsurvey\b[^.]{0,40}\b(is|was)\b[^.]{0,20}\b(complete|exhaustive)\b", re.IGNORECASE),
     re.compile(r"\b(complete(d)?|exhaustive)\b[^.]{0,40}\bsurvey\b", re.IGNORECASE),
 ]
+
+_FORBIDDEN_LOCALITY_PATTERN = re.compile(
+    r"\b(?:W[oó]jtowa|Pagorzyna)\b[^.]{0,60}\bno\s+(?:\w+\s+){0,2}"
+    r"(?:entries|records|occurrences|mentions|hits)\b",
+    re.IGNORECASE,
+)
 
 _REQUIRED_CAVEAT_PATTERNS = [
     re.compile(r"\b(godparents?|witness(?:es)?)\b", re.IGNORECASE),
@@ -1939,11 +1946,11 @@ _REQUIRED_CAVEAT_PATTERNS = [
     # caveat sentence itself is dropped -- exactly the production incident
     # issue #4348 is about ("Wojtowa and Pagorzyna: no entries appear...").
     re.compile(
-        r"(?:doesn'?t|does\s+not|can'?t|cannot)\s+(?:be\s+)?"
+        r"(?:doesn'?t|does\s+not|don'?t|do\s+not|can'?t|cannot)\s+(?:be\s+)?"
         r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture)"
         r"[^.]{0,80}\b(?:parish|parishes|W[oó]jtowa|Pagorzyna)\b"
         r"|\b(?:parish|parishes|W[oó]jtowa|Pagorzyna)\b[^.]{0,80}"
-        r"(?:doesn'?t|does\s+not|can'?t|cannot)\s+(?:be\s+|mean\s+)?"
+        r"(?:doesn'?t|does\s+not|don'?t|do\s+not|can'?t|cannot)\s+(?:be\s+|mean\s+)?"
         r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture|mean)",
         re.IGNORECASE,
     ),
@@ -1979,6 +1986,10 @@ def test_survey_handback_relay_has_no_completeness_claim(text_response, test):
     assert not completeness_hits, (
         "the reply calls the survey complete or claims every occurrence/mention "
         f"was found; matched: {completeness_hits}"
+    )
+
+    assert not _FORBIDDEN_LOCALITY_PATTERN.search(body), (
+        "the reply makes a negative finding about a parish the index cannot separate"
     )
 
     readiness_hits = [p.pattern for p in _FORBIDDEN_READINESS_PATTERNS if p.search(body)]
