@@ -48,6 +48,7 @@ import { imageTranscribeMcpTool } from "../../src/tools/image-transcribe.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
+import { sourceScreenTool } from "../../src/tools/source-screen.js";
 import { censusChildrenGapTool } from "../../src/tools/census-children-gap.js";
 import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
 import { validateResearchSchema } from "../../src/tools/validate-research-schema.js";
@@ -60,7 +61,7 @@ import {
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
  *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "tree_query", "person_warnings", "merge_warnings", "census_children_gap", "sidecar_read", "image_transcribe", "validate_research_schema"]);
+const READERS = new Set(["research_query", "project_context", "tree_query", "person_warnings", "merge_warnings", "census_children_gap", "sidecar_read", "image_transcribe", "validate_research_schema", "source_screen"]);
 
 /** Tools that signal the two loud path states by THROWING rather than
  *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
@@ -186,6 +187,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "person_warnings",
     call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
+  },
+  {
+    tool: "source_screen",
+    call: (projectPath) => sourceScreenTool({ projectPath, personId: "I1" } as any, LOCAL),
   },
   {
     tool: "census_children_gap",

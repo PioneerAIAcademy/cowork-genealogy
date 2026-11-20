@@ -37,6 +37,9 @@ export function findDocumentImageArk(value: string): string | undefined {
   return new RegExp(DOCUMENT_IMAGE_ARK_CORE).exec(value)?.[0];
 }
 
+/** A `1:1:` record persona ARK inside a tree source url, captured bare. */
+export const RECORD_TOKEN = /1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)/i;
+
 /**
  * Normalize any form of a FamilySearch ARK to the canonical `ark:/61903/...`
  * form: a resolver URL, an already-bare ARK, or a type-prefixed id like

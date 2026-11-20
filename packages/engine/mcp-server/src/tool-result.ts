@@ -32,8 +32,9 @@ export type McpToolResult = {
  * Tools whose `{ ok: false }` means **the call could not do what was asked**.
  *
  * The rule is that, not "the tool writes" — which is why the constant is named
- * for the rule. Five non-writers qualify (`convert_calendar`,
- * `census_children_gap`, `research_query`, `project_context`, `sidecar_read`): each returns
+ * for the rule. Six non-writers qualify (`convert_calendar`,
+ * `census_children_gap`, `research_query`, `project_context`, `sidecar_read`,
+ * `source_screen`): each returns
  * `errors[]` and no payload, and each one's own spec calls the case a failure.
  * `build_external_search_url` qualifies on the same grounds and also writes —
  * its in-flight log entry, when given a `projectPath`.
@@ -81,6 +82,7 @@ export const OK_FALSE_IS_FAILURE = [
   "external_links_search",
   "project_create",
   "sidecar_read",
+  "source_screen",
 ] as const;
 
 /**
@@ -100,6 +102,7 @@ export const NOT_A_DOCUMENT_WRITER = [
   "tree_query",
   "sidecar_read",
   "external_links_search",
+  "source_screen",
 ] as const satisfies readonly (typeof OK_FALSE_IS_FAILURE)[number][];
 
 /**
