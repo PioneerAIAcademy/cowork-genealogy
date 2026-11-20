@@ -1,0 +1,69 @@
+{
+  "project": {
+    "id": "rp_macek_jicinsky_son",
+    "objective": "Find a son of Anna Macek (b. 1851) and Vaclav Jicinsky of Rohovladova Bela, Pardubice, Czechia, after their 1871 marriage",
+    "subject_person_ids": [
+      "PW3W-LJN"
+    ],
+    "status": "active",
+    "created": "2026-11-16",
+    "updated": "2026-11-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Anna Macek and Vaclav Jicinsky have a son born between 1871 and 1890?",
+      "rationale": "The tree records no children for Anna. A son would be named in a baptism naming both parents.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-16",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church book",
+          "jurisdiction": "Rohovladova Bela, Pardubice, Czechia",
+          "date_range": "1871-1890",
+          "repository": "FamilySearch",
+          "rationale": "A son born after the 1871 marriage of Anna and Vaclav Jicinsky would be baptized in the parish records; search under the husband's surname.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

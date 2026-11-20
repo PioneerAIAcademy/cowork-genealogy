@@ -42,6 +42,8 @@ CLEAN = (
         CLEAN,
         CLEAN + " Naming patterns are not evidence of parentage and were not considered.",
         CLEAN + "\nNaming customs were excluded from this analysis.",
+        CLEAN + " I did not use them as support, and I did not use the given-name pattern.",
+        CLEAN + " Naming patterns lend no support and were not considered.",
     ],
 )
 def test_accepts_a_narrative_that_leaves_naming_out_or_only_excludes_it(narrative):
@@ -58,6 +60,8 @@ def test_accepts_a_narrative_that_leaves_naming_out_or_only_excludes_it(narrativ
         "Bridget Flynn would be the maternal grandmother of Patrick's daughter.",
         "The research notes invoke a naming\nconvention to argue for Thomas and Bridget.",
         "The naming tradition points to Patrick's own mother.",
+        "The naming pattern is not decisive but lends support.",
+        "Naming patterns do not support Thomas as the father, though they fit.",
     ],
 )
 def test_rejects_a_narrative_that_describes_the_custom(sentence):

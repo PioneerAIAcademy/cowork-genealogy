@@ -301,6 +301,8 @@ deliverables in one turn) and the job path (locality-guide first) both fail it.
 The `delivers:<skill>` tag and its validator are gone: under step mode a compound
 ask hands off at most one deliverable, so there is nothing for them to count.
 
+`ut_research_p4s` (`bounded-record-old-place-name.json`, #4214) is a bounded transcription that also asks whether the record agrees with the tree: the page gives Paso de Sotos, the tree Villa Hidalgo (the same town), and the reply must give the names side by side, say it cannot tell whether they are one place, and give no verdict on the tree; `transcribes-in-place` asserts the calls and that nothing is handed off.
+
 **This one needed a fixture to exist at all, and that is the general rule.** Neither
 `person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock
 registers a tool outside that set *only* for a test that declares a fixture for it
