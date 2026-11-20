@@ -254,6 +254,25 @@ retirement/merge oracle exists for a record persona: `person_read` and
 be told apart from a never-assigned one with the tools available. The tree-person
 result above is therefore not generalised to record personas.
 
+**What the two tree-person tools do with it.** `person_record_matches` and
+`person_person_matches` do not report a `not-found` link as "no such person",
+because the table above shows live people carry it. They make **one** status-only
+`GET /platform/tree/persons/<pid>` (`redirect: "manual"`; not `person_read`, which
+fetches memories and relatives) and map the status:
+
+| tree-persons status | answer |
+|---|---|
+| `200`, `204` (living), `403` (restricted) | the person exists: zero matches, `resultCount: 0`, with `note` set |
+| `301` (merged) | throws, naming the survivor from `Location` so the caller can retry with it |
+| `404`, `410` | throws "FamilySearch has no tree person at `<ark>` …" |
+| `401` | throws the sign-in message |
+| `429`, `5xx`, timeout, network error | throws "Could not confirm whether `<pid>` exists …": never "no such person", never zero matches |
+
+The check shares the match request's timeout and retry budget (`window`), so
+`tree_gaps`' deadline still holds, and a spent budget is re-thrown as it is
+there. The record-persona tools (`record_person_matches`,
+`record_record_matches`) keep the throw: that side has no existence check.
+
 Reproduce with `dev/probe-match-not-found.ts`.
 
 ### What we deliberately don't expose
@@ -309,8 +328,14 @@ Same shape for all four tools:
     published?: string;                                       // ISO timestamp
     summary?: SimplifiedSummary;                              // only when includeSummary=true
   }>;
+  note?: string;        // only on a tree-person answer with zero matches because FamilySearch holds
+                        // no match data for a person who exists; absent on every other result
 }
 ```
+
+`note` reads: "FamilySearch has no match data for this person, so there are no
+record hints to review. The person exists; this is not an error." Zero matches
+with a `note` is a true answer, not an unread one.
 
 The status URI form returned by the API
 (`http://familysearch.org/v1/Accepted`) is mapped back to bare lowercase
@@ -389,7 +414,7 @@ Mapped output:
 | Upstream 401                             | Re-throws as "FamilySearch match API rejected the request: 401 Unauthorized. Call the login tool to authenticate." In hosted mode, the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, via `rejectedTokenMessage`, since `login` cannot open a sign-in page there. |
 | Upstream 400 (bad ARK)                   | Re-throws as "FamilySearch rejected the id `<value>` as a malformed ARK."                     |
 | Upstream non-2xx                         | Re-throws as "FamilySearch match API error: `<status> <statusText>`."                         |
-| Upstream 200 carrying a `not-found` link | Throws. Record persona: "FamilySearch has no record persona at `<ark>` …". Tree person: "The FamilySearch match service has no match data for `<ark>` …", which says it is not proof the person is absent and sends the agent to `person_read` — see "Unresolvable ids" |
+| Upstream 200 carrying a `not-found` link | Record persona: throws "FamilySearch has no record persona at `<ark>` …". Tree person: checks the tree-persons endpoint first — see "Unresolvable ids": a person who exists returns zero matches with `note`; `301` throws naming the survivor; `404`/`410` throw "FamilySearch has no tree person at `<ark>` …"; `401` throws the sign-in message; any other status or a network error throws "Could not confirm whether `<pid>` exists …" |
 | Network error                            | Re-throws as "Could not reach FamilySearch match API: `<cause>`." (`<cause>` from `describeFetchError`, `src/utils/http.ts`)                           |
 | Response not JSON / missing entries      | Throws "FamilySearch match API returned an unexpected response body."                          |
 

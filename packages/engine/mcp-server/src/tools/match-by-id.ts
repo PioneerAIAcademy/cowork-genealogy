@@ -15,6 +15,12 @@ import type {
 } from "../types/match-by-id.js";
 import { isHostedMode, rejectedTokenMessage } from "../auth/config.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
+import {
+  TREE_PERSONS_BASE,
+  TREE_PERSON_ACCEPT,
+  classifyTreePersonStatus,
+  extractPersonId,
+} from "../utils/tree-person-status.js";
 
 const API_URL =
   "https://sg30p0.familysearch.org/search/match/resolutions/match/matches";
@@ -123,25 +129,22 @@ async function matchById(
   // record that does not exist", and the two lead to opposite research
   // decisions. Same failure shape as a wiki outage recorded as "no page for
   // this place" (issue #2130).
+  //
+  // For a TREE person that is not enough to say the person is absent: a real
+  // profile the matcher holds no entry for gets the same link (KHZQ-SJY, which
+  // `person_read` returns normally). Nothing in the match response tells the
+  // two apart (spec, "Unresolvable ids"), so a tree-person tool asks the
+  // tree-persons endpoint. A record persona keeps the throw: that side has no
+  // such check.
   if (body.links?.["not-found"]) {
-    // For a tree person the link is ambiguous: a mistyped id gets it, and so
-    // does a real profile the match service holds no match data for (issue
-    // #4691: KHZQ-SJY, a sparse profile `person_read` returned normally). The
-    // message must not claim the person does not exist.
+    if (cfg.expectedPrefix === "4:1:") {
+      return resolveTreePersonNotFound(queryArk, body, principal, window);
+    }
     throw new Error(
-      cfg.expectedPrefix === "4:1:"
-        ? `The FamilySearch match service has no match data for ${queryArk}. ` +
-            `This does NOT mean the person is missing from the tree, and it is ` +
-            `NOT "no matches found": the service answers this way for a ` +
-            `mistyped id and also for a real profile it has never computed ` +
-            `matches for. Call person_read with the same id: if it returns the ` +
-            `person, the id is right and the match service has nothing on them ` +
-            `(report the matches as unavailable, not as zero); if person_read ` +
-            `also fails, re-check the id.`
-        : `FamilySearch has no ${humanId(cfg)} at ${queryArk}. The id is well-formed ` +
-            `but names nothing, so this is NOT "no matches found" — re-check the id ` +
-            `you passed. For a record persona use the recordId/ARK from the search ` +
-            `result or record_read, never the results sidecar's internal p_… persona id.`,
+      `FamilySearch has no ${humanId(cfg)} at ${queryArk}. The id is well-formed ` +
+        `but names nothing, so this is NOT "no matches found" — re-check the id ` +
+        `you passed. For a record persona use the recordId/ARK from the search ` +
+        `result or record_read, never the results sidecar's internal p_… persona id.`,
     );
   }
 
@@ -157,6 +160,86 @@ async function matchById(
     updated: body.updated ?? "",
     matches,
   };
+}
+
+const NO_MATCH_DATA_NOTE =
+  "FamilySearch has no match data for this person, so there are no record " +
+  "hints to review. The person exists; this is not an error.";
+
+// One GET on the tree-persons endpoint, status code only, to learn whether a
+// person the match service could not resolve exists. NOT `person_read`: that
+// fetches memories and fans out to relatives. The same `window` as the match
+// request bounds it, so `tree_gaps`' deadline still holds.
+async function resolveTreePersonNotFound(
+  queryArk: string,
+  body: MatchApiResponse,
+  principal: Principal,
+  window?: ReadWindow,
+): Promise<MatchByIdResult> {
+  const pid = queryArk.slice(queryArk.lastIndexOf(":") + 1);
+  let response: Response;
+  try {
+    response = await fsFetch(
+      principal,
+      `${TREE_PERSONS_BASE}/${encodeURIComponent(pid)}`,
+      {
+        headers: {
+          Accept: TREE_PERSON_ACCEPT,
+          "Accept-Language": "en",
+          "User-Agent": BROWSER_USER_AGENT,
+        },
+        redirect: "manual",
+      },
+      window?.timeoutMs,
+      window ? { budgetMs: window.budgetMs } : undefined,
+    );
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
+    throw new Error(
+      `Could not confirm whether ${pid} exists in the FamilySearch Family Tree: ` +
+        `${describeFetchError(err)}. Their matches are unknown, not zero.`,
+    );
+  }
+
+  const outcome = classifyTreePersonStatus(response);
+  switch (outcome) {
+    case "found":
+    case "living":
+    case "restricted":
+      return {
+        queryArk,
+        resultCount: 0,
+        returned: 0,
+        title: body.title ?? `Matches for ${queryArk}`,
+        updated: body.updated ?? "",
+        matches: [],
+        note: NO_MATCH_DATA_NOTE,
+      };
+    case "merged": {
+      const survivor = extractPersonId(response.headers.get("location") ?? "");
+      throw new Error(
+        survivor
+          ? `FamilySearch has merged ${pid} into ${survivor}. Retry with ${survivor}.`
+          : `FamilySearch has merged ${pid} into another person and did not say ` +
+              `which. Read the person with person_read to find the survivor.`,
+      );
+    }
+    case "not_found":
+    case "deleted":
+      throw new Error(
+        `FamilySearch has no tree person at ${queryArk}. The id is well-formed ` +
+          `but names nothing, so this is NOT "no matches found" — re-check the id ` +
+          `you passed.`,
+      );
+    case "unauthorized":
+      throw new Error(await rejectedTokenMessage(principal));
+    default:
+      throw new Error(
+        `Could not confirm whether ${pid} exists in the FamilySearch Family Tree ` +
+          `(${outcome}, status ${response.status}). Their matches are unknown, ` +
+          `not zero. Try again shortly.`,
+      );
+  }
 }
 
 // What the caller PASSES, which is `expectedPrefix` — not `collection`, which is

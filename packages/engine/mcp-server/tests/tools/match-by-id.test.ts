@@ -190,45 +190,150 @@ describe("Input validation", () => {
   });
 
   it.each([
-    ["record_person_matches", recordPersonMatches, "record persona", true],
-    ["person_record_matches", personRecordMatches, "tree person", false],
-    ["person_person_matches", personPersonMatches, "tree person", false],
-    ["record_record_matches", recordRecordMatches, "record persona", true],
+    ["record_person_matches", recordPersonMatches],
+    ["record_record_matches", recordRecordMatches],
   ] as const)(
-    "%s names the id the CALLER passed, not the side being searched",
-    async (_tool, fn, human, expectsPersonaAdvice) => {
-      // The noun follows `expectedPrefix`, not `collection`. Keying it on
-      // `collection` is right for the two cross-collection tools and inverted
-      // for the two same-collection ones, so a test covering only
-      // `record_person_matches` cannot see the difference. Telling
-      // `person_person_matches` its tree PID is not a "record persona" sends
-      // the agent to fetch a record ARK, which the same tool then refuses.
-      mockJson({
-        entries: [],
-        results: 0,
-        title: "t",
-        updated: "1970-01-01T00:00:00.001Z",
-        links: { "not-found": { href: "x" } },
-      });
+    "%s keeps the throw, and names the record persona, with no second fetch",
+    async (_tool, fn) => {
+      mockJson(NOT_FOUND_BODY);
       const err = await fn({ id: "ZZZZ-ZZZZ" }, LOCAL).then(
         () => null,
         (e: Error) => e,
       );
-      expect(err?.message).toContain(
-        human === "tree person" ? "no match data for" : `has no ${human} at`,
-      );
-      if (human === "tree person") {
-        // #4691: a real sparse profile gets this answer too, so the text must
-        // not claim the person is absent, and must send the agent to person_read.
-        expect(err?.message).toContain("does NOT mean the person is missing");
-        expect(err?.message).toContain("person_read");
-      }
-      // The `p_…` warning is about the results sidecar's record personas, so
-      // it must not be handed to a caller who passed a tree PID.
-      expect(/p_… persona id/.test(err?.message ?? "")).toBe(expectsPersonaAdvice);
+      expect(err?.message).toContain("has no record persona at");
+      // The `p_…` warning is about the results sidecar's record personas.
+      expect(/p_… persona id/.test(err?.message ?? "")).toBe(true);
+      // The record-persona side has no existence check.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     },
   );
+});
 
+// Issue #4691: a real tree person the matcher holds no entry for carries the
+// same `not-found` link as a mistyped id, so the two tree-person tools ask the
+// tree-persons endpoint before reporting the person absent. Every case mocks
+// BOTH fetches: the match answer first, then the status-only existence GET.
+const NOT_FOUND_BODY = {
+  entries: [],
+  results: 0,
+  title: "Matches for ark:/61903/4:1:KHZQ-SJY",
+  updated: "1970-01-01T00:00:00.001Z",
+  links: { "not-found": { href: "x" } },
+};
+
+function mockTreeStatus(status: number, headers: Record<string, string> = {}): void {
+  mockFetch.mockResolvedValueOnce({
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: "",
+    text: () => Promise.resolve(""),
+    json: () => Promise.resolve({}),
+    headers: new Headers(headers),
+  });
+}
+
+describe.each([
+  ["person_record_matches", personRecordMatches],
+  ["person_person_matches", personPersonMatches],
+] as const)("%s: a not-found link on a tree person", (_tool, fn) => {
+  it.each([
+    [200, "found"],
+    [204, "living"],
+    [403, "restricted"],
+  ])("a person the tree answers %i for exists: zero matches with a note", async (status) => {
+    mockJson(NOT_FOUND_BODY);
+    mockTreeStatus(status);
+    const r = await fn({ id: "KHZQ-SJY" }, LOCAL);
+    expect(r.resultCount).toBe(0);
+    expect(r.returned).toBe(0);
+    expect(r.matches).toEqual([]);
+    expect(r.queryArk).toBe("ark:/61903/4:1:KHZQ-SJY");
+    expect(r.note).toMatch(/no match data for this person/);
+    expect(r.note).toMatch(/not an error/);
+    const [url, init] = mockFetch.mock.calls[1];
+    expect(String(url)).toBe("https://api.familysearch.org/platform/tree/persons/KHZQ-SJY");
+    expect(init.redirect).toBe("manual");
+  });
+
+  it("names the survivor when the person was merged (301)", async () => {
+    mockJson(NOT_FOUND_BODY);
+    mockTreeStatus(301, {
+      location: "https://api.familysearch.org/platform/tree/persons/KW66-5VV",
+    });
+    await expect(fn({ id: "KD96-TV5" }, LOCAL)).rejects.toThrow(
+      /merged KD96-TV5 into KW66-5VV\. Retry with KW66-5VV/,
+    );
+  });
+
+  it("says the survivor is unknown when the tree answers 301 with no Location", async () => {
+    mockJson(NOT_FOUND_BODY);
+    mockTreeStatus(301);
+    await expect(fn({ id: "KD96-TV5" }, LOCAL)).rejects.toThrow(/merged KD96-TV5 into another person/);
+  });
+
+  it.each([404, 410])("keeps today's no-such-person error on %i", async (status) => {
+    mockJson(NOT_FOUND_BODY);
+    mockTreeStatus(status);
+    const err = await fn({ id: "ZZZZ-ZZZ" }, LOCAL).then(
+      () => null,
+      (e: Error) => e,
+    );
+    expect(err?.message).toContain("FamilySearch has no tree person at ark:/61903/4:1:ZZZZ-ZZZ");
+    expect(err?.message).toContain('NOT "no matches found"');
+    // The `p_…` warning belongs to record personas only.
+    expect(/p_… persona id/.test(err?.message ?? "")).toBe(false);
+  });
+
+  it("gives the sign-in message on 401", async () => {
+    mockJson(NOT_FOUND_BODY);
+    mockTreeStatus(401);
+    await expect(fn({ id: "KHZQ-SJY" }, LOCAL)).rejects.toThrow(/login|sign/i);
+  });
+
+  it("never reports no-such-person or zero matches when the check is unavailable (503)", async () => {
+    mockJson(NOT_FOUND_BODY);
+    // A 503 is retried; a one-millisecond budget lets the first answer stand.
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: "",
+      text: () => Promise.resolve(""),
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
+    const err = await fn({ id: "KHZQ-SJY" }, LOCAL, { timeoutMs: 1000, budgetMs: 1 } as never).then(
+      () => null,
+      (e: Error) => e,
+    );
+    expect(err?.message).toMatch(/Could not confirm whether KHZQ-SJY exists/);
+    expect(err?.message).toMatch(/unknown, not zero/);
+    expect(err?.message).not.toMatch(/has no tree person/);
+  });
+
+  it("does not make a second fetch when the match answer carries no not-found link", async () => {
+    mockJson(EMPTY_BODY);
+    const r = await fn({ id: "KHZQ-SJY" }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(r.note).toBeUndefined();
+  });
+});
+
+describe("person_record_matches: the existence check shares the read window", () => {
+  it("gives the second request the same timeout and retry budget", async () => {
+    mockJson(NOT_FOUND_BODY);
+    mockTreeStatus(200);
+    vi.mocked(fsFetch).mockClear();
+    await personRecordMatches({ id: "KHZQ-SJY" }, LOCAL, { timeoutMs: 4321, budgetMs: 8765 });
+    const calls = vi.mocked(fsFetch).mock.calls;
+    expect(calls).toHaveLength(2);
+    for (const call of calls) {
+      expect(call[3]).toBe(4321);
+      expect(call[4]).toEqual({ budgetMs: 8765 });
+    }
+  });
+});
+
+describe("match-by-id (continued)", () => {
   it("does NOT throw on a genuine zero — same empty body, no not-found link", async () => {
     // The other direction, and the one that decides whether this gate is
     // usable: a persona that really has no matches must still return 0, not an
