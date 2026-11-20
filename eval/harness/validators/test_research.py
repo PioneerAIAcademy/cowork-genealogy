@@ -1947,11 +1947,13 @@ _REQUIRED_CAVEAT_PATTERNS = [
     # issue #4348 is about ("Wojtowa and Pagorzyna: no entries appear...").
     re.compile(
         r"(?:doesn'?t|does\s+not|don'?t|do\s+not|can'?t|cannot)\s+(?:be\s+)?"
-        r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture)"
+        r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture"
+        r"|break\s+(?:\w+\s+){0,3}down|state(?:d)?\s+separately)"
         r"[^.]{0,80}\b(?:parish|parishes|W[oó]jtowa|Pagorzyna)\b"
         r"|\b(?:parish|parishes|W[oó]jtowa|Pagorzyna)\b[^.]{0,80}"
         r"(?:doesn'?t|does\s+not|don'?t|do\s+not|can'?t|cannot)\s+(?:be\s+|mean\s+)?"
-        r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture|mean)",
+        r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture|mean"
+        r"|break\s+(?:\w+\s+){0,3}down|state(?:d)?\s+separately)",
         re.IGNORECASE,
     ),
 ]
