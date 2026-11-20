@@ -1932,8 +1932,21 @@ _FORBIDDEN_COMPLETENESS_PATTERNS = [
 ]
 
 _REQUIRED_CAVEAT_PATTERNS = [
-    re.compile(r"\b(godparent|witness)\b", re.IGNORECASE),
-    re.compile(r"\b(parish|parishes|W[oó]jtowa|Pagorzyna)\b", re.IGNORECASE),
+    re.compile(r"\b(godparents?|witness(?:es)?)\b", re.IGNORECASE),
+    # Anchored on the caveat's CONTENT (the index can't separate the parishes),
+    # not just the place names: any correct relay names the parishes it searched
+    # in its setup sentence, so a bare place-name match passes even when the
+    # caveat sentence itself is dropped -- exactly the production incident
+    # issue #4348 is about ("Wojtowa and Pagorzyna: no entries appear...").
+    re.compile(
+        r"(?:doesn'?t|does\s+not|can'?t|cannot)\s+(?:be\s+)?"
+        r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture)"
+        r"[^.]{0,80}\b(?:parish|parishes|W[oó]jtowa|Pagorzyna)\b"
+        r"|\b(?:parish|parishes|W[oó]jtowa|Pagorzyna)\b[^.]{0,80}"
+        r"(?:doesn'?t|does\s+not|can'?t|cannot)\s+(?:be\s+|mean\s+)?"
+        r"(?:say|tell|separate|distinguish|identify|determine|confirm|capture|mean)",
+        re.IGNORECASE,
+    ),
 ]
 
 _FORBIDDEN_READINESS_PATTERNS = [
