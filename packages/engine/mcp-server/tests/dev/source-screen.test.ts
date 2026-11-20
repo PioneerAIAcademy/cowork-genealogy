@@ -51,6 +51,7 @@ import {
   type Tools,
 } from "../../dev/source-screen.js";
 import { selectSubjectPersona } from "../../src/utils/record-persona-select.js";
+import { elapseBackoff } from "../helpers/elapse-backoff.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Json = any;
@@ -245,9 +246,10 @@ describe("error classes", () => {
 
   const res = (status: number, body: unknown = {}, headers: Record<string, string> = {}) =>
     new Response(typeof body === "string" ? body : JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
-  const messageOf = async (p: Promise<unknown>) => {
+  // record_read's retries back off for about 7.5 s on a passing failure.
+  const messageOf = async (act: () => Promise<unknown>) => {
     try {
-      await p;
+      await elapseBackoff(act);
     } catch (e) {
       return (e as Error).message;
     }
@@ -275,7 +277,7 @@ describe("error classes", () => {
       fetchMock.mockReset();
       vi.mocked(loadTokens).mockResolvedValue({ access_token: "t", refresh_token: "r", expires_at: Date.now() + 3_600_000 } as never);
       arrange();
-      const msg = await messageOf(act()).catch((e) => `NO THROW in ${name}: ${e.message}`);
+      const msg = await messageOf(act).catch((e) => `NO THROW in ${name}: ${e.message}`);
       got[name] = `${classifyError(msg)} <- ${msg}`;
       want[name] = expected;
     }
@@ -299,7 +301,7 @@ describe("error classes", () => {
     ];
     const got: Record<string, string> = {};
     for (const [name, act] of calls) {
-      const msg = await messageOf(act());
+      const msg = await messageOf(act);
       got[name] = `${classifyError(msg)} <- ${msg}`;
     }
     expect(Object.values(got).map((v) => v.split(" <- ")[0]), JSON.stringify(got, null, 2)).toEqual(Array(6).fill("stop"));
