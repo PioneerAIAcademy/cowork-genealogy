@@ -11,10 +11,14 @@ import {
   getPlaceRepIds,
   getPlaceWikipediaUrl,
   getPlaceCandidateNames,
+  getPlaceListing,
   extractPrimaryId,
   type SearchPlaceResult,
   type GetPlaceResult,
+  type PlaceListing,
+  type PlaceName,
 } from "../utils/place-api.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import {
   deriveContextName,
   foldPlaceName,
@@ -96,18 +100,40 @@ export function simplifyPlaceResult(r: PlaceResult): SimplifiedPlaceResult {
     ...(r.longitude !== undefined ? { longitude: r.longitude } : {}),
     familysearchUrl: r.familysearchUrl,
     ...(r.wikipediaUrl !== undefined ? { wikipediaUrl: r.wikipediaUrl } : {}),
+    ...(r.matchedName !== undefined ? { matchedName: r.matchedName } : {}),
   };
 }
 
 /**
- * What the internal placeSearch returns. `matchType` is present only when the
+ * What the internal placeSearch returns. `matchType` is "fuzzy" when the
  * results came from the fuzzy "sounds like" fallback because the exact query
- * did not match the place itself; on an exact hit the field is absent. Top-level rather than
+ * did not match the place itself, and "exact" otherwise. Top-level rather than
  * per-result because every result in one outcome comes from one query.
+ * `listings` holds the Primary-ID listings fetched to match names, so
+ * place_search_all does not fetch them again; a failed fetch leaves no entry.
  */
 export interface PlaceSearchOutcome {
   results: PlaceResult[];
-  matchType?: "fuzzy";
+  matchType: "exact" | "fuzzy";
+  listings: Map<string, PlaceListing>;
+}
+
+/** The leaf the queries are built from: the first comma segment of the
+ *  sanitized name. */
+function queryLeaf(placeName: string): string {
+  return sanitizeForNameQuery(placeName).split(",")[0].trim();
+}
+
+/** The place's name the query leaf matched, when it is not `ownName` (both
+ *  folded): Arsdorf's "Ueschdref" for a "Ueschdref" query. */
+function matchedNameFor(
+  leafKey: string,
+  names: readonly PlaceName[],
+  ownName: string,
+): { name: string; lang: string } | undefined {
+  if (!leafKey || foldPlaceName(ownName) === leafKey) return undefined;
+  const hit = names.find((n) => foldPlaceName(n.name) === leafKey);
+  return hit ? { name: hit.name, lang: hit.lang } : undefined;
 }
 
 // A fuzzy result set is unbounded — live, a bare "Brixtol" returns 319
@@ -120,7 +146,7 @@ const MAX_FUZZY_ENTRIES = 10;
 // (placeName, contextName) pair. Lives for the life of the MCP server process;
 // no TTL. There is no cross-session host storage (see CLAUDE.md), so this only
 // memoizes within a single running server. Stores the whole outcome, so a
-// cache hit returns `matchType: "fuzzy"` again rather than dropping it.
+// cache hit returns the same `matchType` and matched names.
 const placeSearchCache = new Map<string, PlaceSearchOutcome>();
 
 function placeSearchCacheKey(placeName: string, contextName?: string): string {
@@ -179,8 +205,9 @@ async function buildPlaceResult(
  * Steps: search (with a fuzzy fallback on zero exact hits, or when the exact
  * query matched only a qualifier) -> filter by
  * context (keep unfiltered if nothing matches) -> fetch a description per
- * surviving rep ID -> enrich with Wikipedia -> build the outcome. Outcomes
- * are cached by (placeName, contextName), match type included.
+ * surviving rep ID -> enrich with Wikipedia -> on an exact outcome, name the
+ * place's name the query matched -> build the outcome. Outcomes are cached by
+ * (placeName, contextName), match type included.
  */
 export async function placeSearch(
   placeName: string,
@@ -194,7 +221,7 @@ export async function placeSearch(
   if (cached) return cached;
 
   let entries = await searchPlace(placeName);
-  let matchType: "fuzzy" | undefined;
+  let matchType: "exact" | "fuzzy" = "exact";
 
   // A misspelled or missing place has no exact match and the agent has no
   // other automated way to identify it. Retry once with the Places API's fuzzy
@@ -210,7 +237,7 @@ export async function placeSearch(
   //    ("Hospital, Cincinnati, Ohio") keeps its exact answer. Measured by
   //    dev/probe-place-fuzzy-trigger.ts (#4315).
   const sanitized = sanitizeForNameQuery(placeName);
-  const leaf = sanitized.split(",")[0].trim();
+  const leaf = queryLeaf(placeName);
   const fuzzyAllowed = !!leaf && !leaf.includes(" ");
   // One segment list for the trigger and the in-context check, so both read
   // the same qualifier (segment 1, as step 2's derived context does).
@@ -263,10 +290,36 @@ export async function placeSearch(
     buildPlaceResult(e.placeRepId, e)
   );
 
-  const outcome: PlaceSearchOutcome = {
-    results,
-    ...(matchType ? { matchType } : {}),
-  };
+  // An exact hit under another name ("Ueschdref" -> Arsdorf) reads as a guess
+  // unless the response says which name matched. The search response does not:
+  // only the Place_resource listing's bare entry carries every name with its
+  // language. Fetched only for a result not named after the leaf, so "Paris"
+  // costs nothing. Enrichment: a failed fetch leaves the result unnamed.
+  const listings = new Map<string, PlaceListing>();
+  if (matchType === "exact") {
+    const leafKey = foldPlaceName(leaf);
+    const pids = Array.from(
+      new Set(
+        results
+          .filter((r) => r.placeId && foldPlaceName(r.name) !== leafKey)
+          .map((r) => r.placeId as string)
+      )
+    );
+    await mapWithConcurrency(pids, 8, async (pid) => {
+      try {
+        listings.set(pid, await getPlaceListing(pid));
+      } catch (err) {
+        if (isFsBudgetExhausted(err)) throw err;
+      }
+    });
+    for (const r of results) {
+      const names = r.placeId ? listings.get(r.placeId)?.names : undefined;
+      const matched = names && matchedNameFor(leafKey, names, r.name);
+      if (matched) r.matchedName = matched;
+    }
+  }
+
+  const outcome: PlaceSearchOutcome = { results, matchType, listings };
   placeSearchCache.set(key, outcome);
   return outcome;
 }
@@ -289,10 +342,9 @@ export async function placeSearchTool(
   const on =
     "on a fact that cites no record and has no standard_place supplied, " +
     (input.contextName ? `whose other places include '${input.contextName}'` : "with no other places");
-  // Spread rather than assign: an exact hit carries no `matchType` key at all.
   return {
     results: results.map(simplifyPlaceResult),
-    ...(matchType ? { matchType } : {}),
+    matchType,
     verdict:
       answer.standardPlace !== null
         ? {
@@ -313,9 +365,11 @@ export async function placeSearchTool(
  * place_search_all: every jurisdiction a place has belonged to over time.
  *
  * Runs the internal placeSearch, then for each distinct Primary place ID
- * expands to all of its representations (Place_resource), de-duplicates the rep
- * IDs across places, fetches a description + Wikipedia for each, and returns the
- * simplified, ID-free results.
+ * expands to all of its representations (Place_resource, reusing a listing the
+ * base search already fetched), de-duplicates the rep IDs across places,
+ * fetches a description + Wikipedia for each, and returns the simplified,
+ * ID-free results. On an exact outcome each result names the place's name the
+ * query matched, from the listing in hand.
  */
 export async function placeSearchAllTool(
   input: PlaceSearchAllToolInput
@@ -326,21 +380,35 @@ export async function placeSearchAllTool(
     new Set(base.results.map((r) => r.placeId).filter((p): p is string => !!p))
   );
 
-  const repIdSets = await mapWithConcurrency(pids, 8, (pid) => getPlaceRepIds(pid));
-  const repIds = Array.from(new Set(repIdSets.flat()));
+  const listings = await mapWithConcurrency(pids, 8, async (pid) =>
+    base.listings.get(pid) ?? (await getPlaceListing(pid))
+  );
+  const pidOfRep = new Map<string, number>();
+  listings.forEach((listing, i) => {
+    for (const rep of listing.reps) {
+      if (!pidOfRep.has(rep.placeRepId)) pidOfRep.set(rep.placeRepId, i);
+    }
+  });
+  const leafKey = foldPlaceName(queryLeaf(input.placeName));
 
-  const built = await mapWithConcurrency(repIds, 8, async (repId) => {
+  const built = await mapWithConcurrency(Array.from(pidOfRep), 8, async ([repId, i]) => {
     const placeData = await getPlaceById(repId);
     if (!placeData) return null;
     const wikipediaUrl = await getPlaceWikipediaUrl(repId);
-    return simplifyPlaceResult(toPlaceResult(placeData, wikipediaUrl));
+    const result = toPlaceResult(placeData, wikipediaUrl);
+    const matched =
+      base.matchType === "exact"
+        ? matchedNameFor(leafKey, listings[i].names, placeData.name)
+        : undefined;
+    if (matched) result.matchedName = matched;
+    return simplifyPlaceResult(result);
   });
 
   // Unflagged fuzzy results from the sibling tool are the failure the flag
   // exists to prevent — carry the base search's match type unchanged.
   return {
     results: built.filter((r): r is SimplifiedPlaceResult => r !== null),
-    ...(base.matchType ? { matchType: base.matchType } : {}),
+    matchType: base.matchType,
   };
 }
 
@@ -357,9 +425,13 @@ export const placeSearchToolSchema = {
     "Paris in Idaho, while contextName 'France' returns Paris in France. " +
     "Each result includes the standardized place name (standardPlace), place type, date range," +
     "coordinates, a FamilySearch link, and (when available) a Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the place you named had no ' +
-    "exact match and these are sounds-alike corrections. Confirm one " +
-    "before using it. " +
+    'matchType is "exact" when the exact-name query produced these results, or ' +
+    '"fuzzy" when the place you named had no exact match and these are ' +
+    "sounds-alike corrections; confirm a fuzzy one before using it. A result " +
+    "with matchedName matched your text through that other name of the place " +
+    "(e.g. its name in another language): an exact match, not a guess. If no " +
+    "result's standardPlace starts with the name you sent and none carries a " +
+    "matchedName, the search matched another part of your text, not the place. " +
     "Use place_search_all instead when you need every historical jurisdiction a " +
     "place has belonged to over time.",
   inputSchema: {
@@ -396,9 +468,13 @@ export const placeSearchAllToolSchema = {
     "changed across the time period you're researching. Each result includes the " +
     "standardized place name (standardPlace), place type, date range, coordinates, a " +
     "FamilySearch link, and (when available) a Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the place you named had no ' +
-    "exact match and these are sounds-alike corrections. Confirm one " +
-    "before using it.",
+    'matchType is "exact" when the exact-name query produced these results, or ' +
+    '"fuzzy" when the place you named had no exact match and these are ' +
+    "sounds-alike corrections; confirm a fuzzy one before using it. A result " +
+    "with matchedName matched your text through that other name of the place " +
+    "(e.g. its name in another language): an exact match, not a guess. If no " +
+    "result's standardPlace starts with the name you sent and none carries a " +
+    "matchedName, the search matched another part of your text, not the place.",
   inputSchema: {
     type: "object",
     properties: {
