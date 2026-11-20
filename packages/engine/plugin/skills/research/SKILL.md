@@ -333,9 +333,9 @@ message.
    The record and each person it names are new leads: spawn
    `@plugin:research-plan` with `projectPath` and the question id to plan a
    search for each, or ask the researcher for the record's identifier, before
-   `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. Before you ask the
-   researcher anything, call `research_query({ projectPath, section: "hypotheses" })`
-   and check the reported facts against each active hypothesis; name in the
+   `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. Before you hand off or
+   ask the researcher anything, call `research_query({ projectPath, section: "hypotheses" })`
+   and check the reported facts against each hypothesis not ruled out; name in the
    reply any hypothesis they would make impossible if they describe the same
    person, even when the turn ends by asking for the record's identifier — do
    not present the record's facts as support for that hypothesis or any theory
