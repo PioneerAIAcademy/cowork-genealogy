@@ -2276,3 +2276,34 @@ def test_supersedes_named_attachment_links(before_state, after_state, test):
         "named assertions' attachment links must be superseded by a scored link, "
         "and every other attachment link left alone:\n  - " + "\n  - ".join(problems)
     )
+
+
+# --- A record source_screen calls misattributed is linked at speculative at most ---
+
+def test_screen_misattributed_caps_link(before_state, after_state, test):
+    """Tag-gated (``screen-misattributed-cap``, issue #3504 item 7).
+
+    Every new `pe_` written for an assertion the delegation names (those
+    carrying a question id) is `speculative`: the scenario's source_screen
+    fixture calls their record misattributed, which caps the link there.
+    """
+    if "screen-misattributed-cap" not in (test.get("tags") or []):
+        pytest.skip("not a screen-misattributed-cap test")
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    named = {
+        a["id"] for a in before.get("assertions", [])
+        if isinstance(a, dict) and a.get("extracted_for_question_ids")
+    }
+    assert named, "scenario drift: expected question-tied assertions before the run"
+    old_ids = {pe.get("id") for pe in before.get("person_evidence", []) if isinstance(pe, dict)}
+    over = [
+        f"{pe.get('id')} ({pe.get('assertion_id')}) is {pe.get('confidence')!r}"
+        for pe in after.get("person_evidence", [])
+        if isinstance(pe, dict) and pe.get("id") not in old_ids
+        and pe.get("assertion_id") in named and pe.get("confidence") != "speculative"
+    ]
+    assert not over, (
+        "a link to a record source_screen calls misattributed is speculative at most:\n  - "
+        + "\n  - ".join(over)
+    )

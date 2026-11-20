@@ -318,10 +318,10 @@ assertions from the same persona should be linked together.
 names.** A live link that is `speculative`, has a null `match_score` and the
 rationale "Linked because FamilySearch has this record attached to this
 person; not verified." is an attachment link. An assertion the delegation names whose only live link
-is one is unlinked. If `source_screen({ projectPath, personId })` calls its
-record `misattributed`, there is no link. Otherwise score it with `same_person`
-and decide it like any unlinked assertion (Step 3, the no-link rule included);
-after `indexing_error` the link is `possible` at most. When the decision is
+is one is unlinked. Score it with `same_person` and decide it like any unlinked
+assertion (Step 3, the no-link rule included). If `source_screen({ projectPath,
+personId })` calls its record `misattributed`, the link is `speculative` at most;
+after `indexing_error` it is `possible` at most. When the decision is
 a link, append it (Step 4), then set the attachment link's `superseded_by` to
 the new `pe_` id (Step 6). When it is no link, leave the attachment link as it
 is and say so in your return. An attachment-linked assertion the delegation
