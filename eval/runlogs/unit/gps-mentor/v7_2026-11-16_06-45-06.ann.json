@@ -1,0 +1,118 @@
+{
+  "run_log": "v7_2026-11-16_06-45-06.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: agent refused correctly on project_context showing proof_summaries: 0. No fabricated content."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: refusal persisted via evaluation_append with all required fields. Task complete."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: project_context and evaluation_append both called with correct args; no fixture_not_found."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Focus discipline and refusal",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: refusal issued on missing proof summary precondition; narrative names gap and next step; no silent degradation."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity and citation discipline",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": " N/A: refusal produces no findings. Correct to skip."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool work: reading the state the verdict rests on",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Confirmed: project_context read returned proof_summaries: 0, sufficient to support the refusal. No unnecessary reads."
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "rubric",
+      "dimension_name": "Mentor voice and actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Confirmed: one-line plain-language refusal names the gap (no finished prose) and the next step (run proof-conclusion)."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: findings traced to ps_001 prose; scope sentence correct; craft verdict correctly advisory."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Confirmed: prior verdict read, supersession handled, three findings plus nit, all persisted in one evaluation_append call."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: all six calls correct; sidecar_read resolved from research_query file_path; no fixture_not_found."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Focus discipline and refusal",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: scope sentence present; no evidentiary critique; craft exemption from skip applied correctly."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity and citation discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: all findings at consider_addressing/non_blocking_notes; citations use \"Craft — <axis>\" labels; no must_address or fabricated standard numbers."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool work: reading the state the verdict rests on",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: sidecar_read fetched actual prior entry body before supersession decision; live entry (superseded_by: null) correctly selected."
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "rubric",
+      "dimension_name": "Mentor voice and actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: colleague voice throughout; findings name specific gaps with concrete next steps; assumed audience stated; no schema vocabulary in prose."
+    }
+  ]
+}

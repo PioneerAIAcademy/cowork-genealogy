@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-import { searchPlace } from "../../src/utils/place-api.js";
+import { searchPlace, getPlaceListing, getPlaceReps } from "../../src/utils/place-api.js";
 import {
   configureFsBudget,
   __resetFsBudgetForTests,
@@ -214,5 +214,65 @@ describe("the FamilySearch budget covers place-api, which never calls fsFetch", 
   it("is unaffected when the budget is off", async () => {
     for (let i = 0; i < 10; i++) await searchPlace("West Bromwich");
     expect(mockFetch).toHaveBeenCalledTimes(10);
+  });
+});
+
+describe("getPlaceListing", () => {
+  // Arsdorf (Primary 10355380), live 2026-11-11: only the bare entry lists the
+  // Luxembourgish name; the reps list "Arsdorf" alone.
+  const arsdorf = {
+    places: [
+      {
+        id: "10355380",
+        names: [
+          { lang: "fr", value: "Arsdorf" },
+          { lang: "lb", value: "Ueschdref" },
+          null,
+          { value: "No language" },
+        ],
+      },
+      {
+        id: "11970028",
+        place: { resourceId: "10355380" },
+        display: { name: "Arsdorf", fullName: "Arsdorf, Rambrouch, Redange, Luxembourg", type: "Village" },
+        names: [{ lang: "fr", value: "Arsdorf" }],
+      },
+      {
+        id: "11970025",
+        place: { resourceId: "10355380" },
+        display: { name: "Arsdorf", fullName: "Arsdorf, Arsdorf, Redange, Luxembourg", type: "Village" },
+        names: [{ lang: "fr", value: "Arsdorf" }],
+      },
+    ],
+  };
+  const ok = () => ({ ok: true, status: 200, json: async () => arsdorf });
+
+  it("returns the bare entry's names with their languages, and the reps", async () => {
+    mockFetch.mockResolvedValue(ok());
+
+    const listing = await getPlaceListing("10355380");
+
+    expect(listing.names).toEqual([
+      { lang: "fr", name: "Arsdorf" },
+      { lang: "lb", name: "Ueschdref" },
+    ]);
+    expect(listing.reps.map((r) => r.placeRepId)).toEqual(["11970028", "11970025"]);
+  });
+
+  it("leaves getPlaceReps returning the reps alone", async () => {
+    mockFetch.mockResolvedValue(ok());
+
+    const reps = await getPlaceReps("10355380");
+
+    expect(reps).toEqual([
+      { placeRepId: "11970028", fullName: "Arsdorf, Rambrouch, Redange, Luxembourg", names: ["Arsdorf"] },
+      { placeRepId: "11970025", fullName: "Arsdorf, Arsdorf, Redange, Luxembourg", names: ["Arsdorf"] },
+    ]);
+  });
+
+  it("returns an empty listing on a 404", async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 404, statusText: "Not Found" });
+
+    expect(await getPlaceListing("1")).toEqual({ reps: [], names: [] });
   });
 });

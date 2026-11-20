@@ -308,6 +308,85 @@ export function competingParentSets(
     .map(([personId, s]) => ({ personId, parentIds: [...s].sort() }));
 }
 
+/** Tree persons linked to this question's assertions whom nothing ties to a
+ *  subject: no `ParentChild`/`Couple` path of any length or direction, and no
+ *  record shared with a person who has one. Kinship like that was inferred, not
+ *  read off a record, and needs a hypothesis before anything relies on it.
+ *
+ *  Empty when the question already has any related hypothesis: hypotheses carry
+ *  no person ids, so "one names this person" cannot be computed, and matching
+ *  `claim` text is fragile. Empty with no tree, or when no subject is a tree
+ *  person — every linked person would otherwise count, the subject included.
+ *
+ *  A shared record is `record_id`, or `source_id` for an assertion with none:
+ *  a household member read from the subject's own record is not inferred kin. */
+export function unlinkedKin(
+  research: any,
+  tree: any,
+  questionId: string,
+  questionAssertionIds: ReadonlySet<string>,
+): string[] {
+  if (!tree) return [];
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id).filter((id): id is string => typeof id === "string"));
+  const subjects = arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+  if (subjects.length === 0) return [];
+  if (arr(research?.hypotheses).some((h) => arr(h?.related_question_ids).includes(questionId))) return [];
+
+  const links = arr(research?.person_evidence).filter(
+    (pe) => pe?.superseded_by == null && typeof pe?.person_id === "string",
+  );
+  const candidates = new Set<string>(
+    links
+      .filter((pe) => questionAssertionIds.has(pe?.assertion_id) && persons.has(pe.person_id))
+      .map((pe) => pe.person_id),
+  );
+  if (candidates.size === 0) return [];
+
+  const neighbours = new Map<string, string[]>();
+  const connect = (a: unknown, b: unknown): void => {
+    if (typeof a !== "string" || typeof b !== "string") return;
+    for (const [from, to] of [[a, b], [b, a]]) {
+      const list = neighbours.get(from);
+      if (list) list.push(to);
+      else neighbours.set(from, [to]);
+    }
+  };
+  for (const r of arr(tree?.relationships)) {
+    if (r?.type === "ParentChild") connect(r?.parent, r?.child);
+    else if (r?.type === "Couple") connect(r?.person1, r?.person2);
+  }
+  const pathed = new Set<string>(subjects);
+  const queue = [...subjects];
+  for (let i = 0; i < queue.length; i++) {
+    for (const next of neighbours.get(queue[i]) ?? []) {
+      if (!pathed.has(next)) {
+        pathed.add(next);
+        queue.push(next);
+      }
+    }
+  }
+
+  const live = new Map(arr(research?.assertions).filter(isLiveAssertion).map((a) => [a?.id, a]));
+  const recordKey = (a: any): unknown =>
+    typeof a?.record_id === "string" && a.record_id !== "" ? a.record_id : a?.source_id;
+  const keysByPerson = new Map<string, unknown[]>();
+  for (const pe of links) {
+    const key = live.has(pe?.assertion_id) ? recordKey(live.get(pe.assertion_id)) : null;
+    if (key == null) continue;
+    const list = keysByPerson.get(pe.person_id);
+    if (list) list.push(key);
+    else keysByPerson.set(pe.person_id, [key]);
+  }
+  const keysOf = (personId: string): unknown[] => keysByPerson.get(personId) ?? [];
+  const anchored = new Set([...pathed].flatMap(keysOf));
+
+  return [...candidates]
+    .filter((id) => !pathed.has(id) && !keysOf(id).some((k) => anchored.has(k)))
+    .sort();
+}
+
 /** Does `conflict` compete over any assertion in `assertionIds`?
  *
  *  The arm both consumers share. A conflict names the assertions that compete;
@@ -804,6 +883,7 @@ export function questionStatus(
   // user asks for one — so `critiqued` never gates what comes next.
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
+  const kin = resolved ? [] : unlinkedKin(research, tree, qid, assertionIds);
   if (attachedBirthPairs.length > 0) {
     // #4444. First, because research_append refuses every proof summary of this
     // question (any tier but disproved, resolved or not) until a conflict has
@@ -862,6 +942,8 @@ export function questionStatus(
     nextStep =
       "hypothesis-tracking — competing parent sets: " +
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
+  } else if (kin.length > 0) {
+    nextStep = `hypothesis-tracking — unlinked kin: ${kin.join(", ")}`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is
