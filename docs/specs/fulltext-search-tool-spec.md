@@ -489,7 +489,7 @@ query shape.
 | `src/utils/fulltext-searchable.ts` | Create — the group searchability lookup, shared with `volume_search` |
 | `src/utils/results-staging.ts` | Modify — `NOT_FULLTEXT_SEARCHABLE_NOTE`, beside the tool's other model-facing notes |
 | `src/utils/staged-compaction.ts` | Modify — `compactStagedFulltextSearch`, the Answer compaction steps |
-| `src/utils/fulltext-advice.ts` | Create — `fulltextAdvice`, the two search-advice notes, shared with the eval mock |
+| `src/utils/fulltext-advice.ts` | Create — `fulltextAdvice`, the three search-advice notes, shared with the eval mock |
 
 ## Testing
 
