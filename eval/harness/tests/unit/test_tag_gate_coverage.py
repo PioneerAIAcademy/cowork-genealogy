@@ -40,6 +40,12 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
+    "candidate-not-excluded": (
+        "its only test, ut_search_records_035, was deferred in PR #4650: it "
+        "scored 2 of 5 before and after the prose edit because the agent still "
+        "searches with a birth range excluding the found candidate; issue #4580 "
+        "restores it once a tool rule enforces it"
+    ),
     "materialize": (
         "its only test, ut_person_evidence_027, was deleted by PR #4613 (red "
         "under the Sonnet 4.6 judge); issue #4681 restores it"

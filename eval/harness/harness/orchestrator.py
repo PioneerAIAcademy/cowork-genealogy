@@ -1907,7 +1907,17 @@ _MOCK_ENRICHED_KEYS = (
     # the measurement that decides whether the note becomes a deny reads the
     # run log.
     "unloggedSearches",
+    # `nilSearchNeedsLog` is now fulltext_search's alone: record_search writes a
+    # nil's log entry itself (issue #4527) and returns these instead. Without
+    # them every search-records nil would lose its response from the committed
+    # run log — `rankingSkipped` only lands when the call sent no `subjectId`,
+    # and search-records makes `subjectId` mandatory — taking with it the only
+    # evidence the paid suite run exists to produce.
     "nilSearchNeedsLog",
+    "logId",
+    "nilLogRefused",
+    "planRationale",
+    "escalationDue",
     # Computed by the mock from the call's own arguments (#3054). A nil
     # record_search with no projectPath carries none of the keys above, so
     # without this its hint would be stripped from the run log the

@@ -276,7 +276,8 @@ question** outranks **an unsettled conflict that has weighed everything**, which
 outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
-outranks competing parent sets, which outrank **the researcher's choice**, which
+outranks competing parent sets, which outrank unlinked kin, which outranks
+**the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
 
@@ -459,6 +460,31 @@ question's assertions are linked to — who is the child of more than two birth-
 `related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
 fires on 5 e2e question-runs (the two spot-checked are real: one father with two
 different mothers; two same-named mothers).
+
+**Unlinked kin** also needs the tree, and adds no field: only
+`nextStep` carries it, as `hypothesis-tracking — unlinked kin: <person ids>`. It
+fires on an unresolved question that no `hypotheses` entry lists in
+`related_question_ids`, for each tree person linked by live `person_evidence` to
+one of its assertions who has no `ParentChild` or `Couple` path, of any length or
+direction, to a subject, and none of whose linked assertions shares a record
+(`record_id`, else `source_id`) with an assertion linked to a person who has one.
+It is silent until some `subject_person_ids` entry is a tree person, since every
+linked person would otherwise count, the subject included. The question, not
+the person, is what a hypothesis must relate to: hypotheses carry no person ids,
+and matching their `claim` text is fragile. A shared record rules a person out
+because a household member read from the subject's own record is not inferred kin.
+Measured 2026-11-19 (`npx tsx dev/measure-question-state-signals.ts`): 2 scenario
+questions (`unregistered-sibling-premise-scopes-searches`,
+`flynn-marriage-only-no-child-link`) and 8 e2e question-runs on unresolved
+questions, 7 of them in `nextStep` (one is masked by an open conflict). Of those 7,
+a spot-check found 2 real inferred kin, 1 doubtful and 4 not: the subject's own
+duplicate, a duplicated family, unrelated search hits. The 4 are all September 2026
+runs, and all 4 have a subject with no live link. They were accepted on purpose
+(lead, 2026-11-19), overriding the plan's "stop if most hits are not real" rule:
+they are rare, the 20 later runs of the same fixtures produce none, and a false
+route costs one hop that the hypothesis condition stops from repeating. Requiring a
+linked subject would have removed them, but it also silences
+`unregistered-sibling-premise-scopes-searches`, whose subject has no link.
 Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to

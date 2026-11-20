@@ -148,6 +148,8 @@ export interface LogEntry {
   results_available?: number | null
   /** The results/.staging/ file this entry's sidecar was finalized from. */
   staged_ref?: string
+  /** The tool that wrote this entry itself, rather than an agent logging it by hand. */
+  written_by?: string
   notes?: string | null
   external_site: ExternalSiteDetail | null
 }

@@ -678,6 +678,7 @@ Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_rea
 | `results_ref` | string or null | no | Relative path to the sidecar file holding this search's raw results (e.g. `results/log_005.json`). Null for nil searches and for entries whose payload could not be faithfully retained. See 5.4.1 |
 | `results_available` | number or null | no | Total hits reported upstream by the tool (e.g. `fulltext_search` `totalResults`). Distinct from `results_examined`; null when the tool reports no total |
 | `staged_ref` | string | no | The `results/.staging/` file the entry's sidecar was finalized from, written by `research_log_append`. Lets a re-sent, already-logged staged ref be answered with this entry from `research.json` alone, with no sidecar read. Absent on entries written before it existed, whose re-log keeps the refusal |
+| `written_by` | string | no | The tool that wrote this entry itself rather than an agent logging it by hand — `"record_search"` on a nil search's entry. Lets `research_log_append` tell a tool-written nil from an agent's hand-logged repeat of the same query, so the repeat is logged as the fresh search it is. Absent on every hand-logged entry |
 | `notes` | string or null | no | Free text observations, including the one-line human summary of what the search returned |
 | `external_site` | object or null | yes | External site details when `tool` is `external_site`, otherwise null. See below |
 

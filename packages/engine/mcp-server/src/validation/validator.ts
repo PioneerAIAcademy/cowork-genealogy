@@ -802,7 +802,7 @@ export const RESEARCH_SHAPES = {
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
     "results_examined", "results_ref", "results_available", "notes",
-    "external_site", "staged_ref",
+    "external_site", "staged_ref", "written_by",
   ]),
   external_site_detail: new Set([
     "site", "url_generated", "capture_received", "capture_filename",
@@ -1319,6 +1319,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("staged_ref" in entry && typeof entry.staged_ref !== "string") {
       addError(report, lp, `staged_ref must be a string; got ${JSON.stringify(entry.staged_ref)}`);
+    }
+    if ("written_by" in entry && typeof entry.written_by !== "string") {
+      addError(report, lp, `written_by must be a string; got ${JSON.stringify(entry.written_by)}`);
     }
 
     const ext = entry.external_site;
