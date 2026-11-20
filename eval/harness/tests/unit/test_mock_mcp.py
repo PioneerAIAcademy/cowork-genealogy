@@ -644,6 +644,28 @@ def test_fulltext_over_500_results_carries_the_too_many_note(tmp_path):
     assert "nameFieldRetry" not in body
 
 
+@pytest.mark.requires_engine_build
+def test_fulltext_accented_query_carries_the_word_list_note(tmp_path):
+    """One hit, so neither total-keyed note applies: the spelling alone reaches
+    the compiled function. The same search in plain ASCII carries no note."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": '+"José María García"'})
+    )
+    assert body["totalResults"] == 1
+    assert body["wordListRead"].startswith("This query has a letter English does not use")
+    keys = list(body)
+    assert keys.index("wordListRead") < keys.index("results")
+
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial-by-name"], FIXTURES_DIR, workspace=tmp_path
+    )
+    plain = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"name": "Jose Garcia"}))
+    assert "wordListRead" not in plain
+
+
 def test_no_log_note_without_a_project_path(tmp_path):
     """Neither note fires when the caller passed no projectPath — nothing is owed."""
     server, call_log, tools_by_name = create_mock_server(

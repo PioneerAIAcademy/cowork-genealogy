@@ -113,9 +113,12 @@ export interface FulltextSearchResponse {
   notFulltextSearchable?: string;
   // Set on a keywords search with no filters whose total is 0, and on a
   // first-page keywords search whose total is above 500 (`fulltextAdvice`).
-  // Serialized before `results` and withheld from the staged payload.
+  // `wordListRead` is set on a first-page search whose `keywords` or `name`
+  // carries a letter outside ASCII. All are serialized before `results` and
+  // withheld from the staged payload.
   nameFieldRetry?: string;
   tooManyResults?: string;
+  wordListRead?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.

@@ -347,7 +347,7 @@ export async function fulltextSearchTool(
   // and best-effort: a staging failure never fails a successful search.
   if (input.projectPath !== undefined) {
     try {
-      // Both notes are withheld from what gets staged, as record_search withholds
+      // The notes are withheld from what gets staged, as record_search withholds
       // `rankingSkipped`: the sidecar records what the search RETURNED, and these
       // are instructions to the model. Destructuring a copy leaves `out` — and so
       // its key order — untouched.
@@ -356,6 +356,7 @@ export async function fulltextSearchTool(
         nilSearchNeedsLog: _nilNote,
         nameFieldRetry: _nameNote,
         tooManyResults: _manyNote,
+        wordListRead: _wordListNote,
         ...persistable
       } = out;
       out.staged = await stageSearchResults({

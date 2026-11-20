@@ -695,7 +695,7 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
 
 
 #: `FULLTEXT_ADVICE_KEYS` in `utils/fulltext-advice.ts`, in serialization order.
-FULLTEXT_ADVICE_KEYS: tuple[str, ...] = ("nameFieldRetry", "tooManyResults")
+FULLTEXT_ADVICE_KEYS: tuple[str, ...] = ("nameFieldRetry", "tooManyResults", "wordListRead")
 
 
 def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -2201,11 +2201,15 @@ def create_mock_server(
                     response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
 
             # `fulltext_search`'s advice, from the same compiled function the tool
-            # runs. Gated here on the two totals it can fire on, so most calls
-            # spawn no node process.
+            # runs. Gated here on the totals and the spelling it can fire on, so
+            # most calls spawn no node process.
             if _name == "fulltext_search" and isinstance(response, dict) and "error" not in response:
                 _total = response.get("totalResults", 0)
-                if isinstance(_total, (int, float)) and (_total == 0 or _total > 500):
+                _spelled = any(
+                    isinstance(args.get(_k), str) and not args[_k].isascii()
+                    for _k in ("keywords", "name")
+                )
+                if _spelled or (isinstance(_total, (int, float)) and (_total == 0 or _total > 500)):
                     _ft_advice = _call_compiled_pure(
                         "utils/fulltext-advice.js",
                         "fulltextAdvice",

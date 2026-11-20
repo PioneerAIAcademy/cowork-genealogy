@@ -21,7 +21,7 @@ vi.mock("../../src/utils/results-staging.js", async (importOriginal) => {
 });
 
 import { fulltextSearchTool } from "../../src/tools/fulltext-search.js";
-import { NAME_FIELD_RETRY_NOTE, TOO_MANY_RESULTS_NOTE } from "../../src/utils/fulltext-advice.js";
+import { NAME_FIELD_RETRY_NOTE, TOO_MANY_RESULTS_NOTE, WORD_LIST_READ_NOTE } from "../../src/utils/fulltext-advice.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import {
   stageSearchResults,
@@ -942,6 +942,29 @@ describe("fulltextSearchTool request headers", () => {
     expect(staged.tooManyResults).toBeUndefined();
     expect(staged.nameFieldRetry).toBeUndefined();
     expect(staged.totalResults).toBe(847);
+  });
+
+  it("44. an accented query carries wordListRead before results, and not in the staged payload", async () => {
+    mockedUnlogged.mockResolvedValue([]);
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
+    );
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/abc125.json",
+      returnedCount: 1,
+    });
+
+    const result = await fulltextSearchTool({
+      keywords: '+"José María García"',
+      projectPath: "/tmp/project",
+    }, LOCAL);
+
+    expect(result.wordListRead).toBe(WORD_LIST_READ_NOTE);
+    const keys = Object.keys(result);
+    expect(keys.indexOf("wordListRead")).toBeLessThan(keys.indexOf("results"));
+    const staged = mockedStage.mock.calls.at(-1)![0].response as Record<string, unknown>;
+    expect(staged.wordListRead).toBeUndefined();
+    expect(staged.totalResults).toBe(1);
   });
 
   it("37. sends Bearer auth, JSON Accept, and the browser User-Agent", async () => {

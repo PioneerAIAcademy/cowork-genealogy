@@ -3,6 +3,7 @@ import {
   FULLTEXT_ADVICE_KEYS,
   NAME_FIELD_RETRY_NOTE,
   TOO_MANY_RESULTS_NOTE,
+  WORD_LIST_READ_NOTE,
   fulltextAdvice,
 } from "../../src/utils/fulltext-advice.js";
 
@@ -74,7 +75,42 @@ describe("fulltextAdvice: tooManyResults", () => {
   });
 });
 
+describe("fulltextAdvice: wordListRead", () => {
+  it.each([
+    ["an accented keywords term", { keywords: '+"José María García"' }, 1],
+    ["an accented name", { name: "Peña" }, 3],
+    ["a German sharp s", { keywords: "+Strauß" }, 0],
+    ["a non-Latin script", { keywords: "+Иванов" }, 12],
+    ["a filtered search", { keywords: "+García", place: "Cuba", yearFrom: 1830, yearTo: 1839 }, 1],
+    ["a total that is not a number", { keywords: "+García" }, undefined],
+  ])("fires on %s", (_name, input, total) => {
+    expect(fulltextAdvice(input, total).wordListRead).toBe(WORD_LIST_READ_NOTE);
+  });
+
+  it("fires beside the nil note", () => {
+    expect(fulltextAdvice({ keywords: "+García" }, 0)).toEqual({
+      nameFieldRetry: NAME_FIELD_RETRY_NOTE,
+      wordListRead: WORD_LIST_READ_NOTE,
+    });
+  });
+
+  it.each([
+    ["plain ASCII", { keywords: "+Garcia", name: "Jose Maria" }],
+    ["a curly quote or a dash, which are not letters", { keywords: "+Flynn \u2019\u2014\u201c" }],
+    ["an accent only in a filter", { keywords: "+Garcia", place: "Bogotá" }],
+    ["an nlQuery search", { keywords: "+García", nlQuery: "KWCJ-RN4" }],
+    ["a later page", { keywords: "+García", offset: 20 }],
+    ["a name that is not a string", { keywords: "+Garcia", name: 7 }],
+  ])("is silent on %s", (_name, input) => {
+    expect(fulltextAdvice(input, 1).wordListRead).toBeUndefined();
+  });
+});
+
 it("lists every key the function can return", () => {
-  const all = { ...fulltextAdvice({ keywords: "+Flynn" }, 0), ...fulltextAdvice({ keywords: "+Flynn" }, 847) };
+  const all = {
+    ...fulltextAdvice({ keywords: "+Flynn" }, 0),
+    ...fulltextAdvice({ keywords: "+Flynn" }, 847),
+    ...fulltextAdvice({ keywords: "+García" }, 1),
+  };
   expect(Object.keys(all).sort()).toEqual([...FULLTEXT_ADVICE_KEYS].sort());
 });
