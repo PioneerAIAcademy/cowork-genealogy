@@ -410,10 +410,15 @@ export async function sourceScreenTool(
         }
       }
     }
+    // A disagreement with an attachment the rules already call misattributed is
+    // that attachment's finding, not the other's: only the misattributed side
+    // names it, so a wrong record does not mark every right one `contradicts`.
+    const misattributed = new Set(scored.filter((r) => r.mis.length > 0).map((r) => r.sourceId));
     for (const row of scored) {
       const h = row.out.signals.h;
       if (!h) continue;
-      row.out.contradicts = [...new Set(h.contradicts.map((c) => c.sourceId))];
+      const named = row.mis.length > 0 ? h.contradicts : h.contradicts.filter((c) => !misattributed.has(c.sourceId));
+      if (named.length > 0) row.out.contradicts = [...new Set(named.map((c) => c.sourceId))];
     }
   }
 
@@ -468,7 +473,9 @@ export async function sourceScreenTool(
     else if (row.soft.length > 0) verdict = "weak";
     else verdict = "fine";
     const reasons = [...row.mis, ...row.soft];
-    for (const c of row.out.signals.h?.contradicts ?? []) reasons.push(`h: ${c.fact} disagrees with ${c.sourceId}.`);
+    for (const c of row.out.signals.h?.contradicts ?? []) {
+      if (row.out.contradicts?.includes(c.sourceId)) reasons.push(`h: ${c.fact} disagrees with ${c.sourceId}.`);
+    }
     if (e && "found" in e) {
       reasons.push(
         e.found === "FOUND"

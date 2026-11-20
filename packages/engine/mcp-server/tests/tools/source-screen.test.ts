@@ -185,6 +185,23 @@ describe("source_screen", () => {
     expect(row(r, "S1").signals.h!.contradicts.map((c) => c.fact).sort()).toEqual(["birth place", "birth year"]);
   });
 
+  it("contradicts: a disagreement with a misattributed attachment is that attachment's finding only", async () => {
+    await writeTree([JOHN(["S1", "S2"])], [S1, S2]);
+    await build("I1", [CENSUS(), deathOf("DDDD-111", "John", "Boyer", { date: "1860", place: "Jackson Co., Ohio" })]);
+    const transcribe = vi.fn(async () => { throw new Error("no OCR"); });
+    const r = await sourceScreenTool({ projectPath: dir, personId: "I1" }, LOCAL, {
+      matchPairs: matcher({ "I1|p_DDDD-111": 0.2 }),
+      imageTranscribe: transcribe as any,
+    }) as SourceScreenResult;
+    expect(row(r, "S2")).toMatchObject({ verdict: "misattributed", contradicts: ["S1"] });
+    expect(row(r, "S1").verdict).toBe("fine");
+    expect(row(r, "S1").contradicts).toBeUndefined();
+    expect(row(r, "S1").reasons).toEqual([]);
+    expect(row(r, "S1").signals.h!.contradicts.map((c) => c.sourceId)).toEqual(["S2", "S2"]);
+    expect(transcribe.mock.calls.map((c: any[]) => c[0].ark)).not.toContain(undefined);
+    expect(transcribe).toHaveBeenCalledTimes(row(r, "S2").signals.e ? 1 : 0);
+  });
+
   it("indexing_error: a flagged attachment whose page shows the tree's value; OCR only for flagged attachments", async () => {
     await writeTree([JOHN(["S1", "S2"])], [S1, S2]);
     await build("I1", [CENSUS(), DEATH_OK()]);

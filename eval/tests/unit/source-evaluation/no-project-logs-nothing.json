@@ -25,7 +25,8 @@
     "record-read-hole-1885-state-census",
     "source-attachments-hole-1885",
     "person-read-hole-wx7-otter-tail",
-    "person-quality-hole-detail"
+    "person-quality-hole-detail",
+    "source-screen-no-project"
   ],
   "judge_context": [
     "The working folder holds no project. The agent should audit the sources and return the report; it must not create a project or suggest starting one to hold this audit. A research_log_append call answered reason: \"no_project\" is correct and must not be deducted, and (no file changes) is the correct outcome.",

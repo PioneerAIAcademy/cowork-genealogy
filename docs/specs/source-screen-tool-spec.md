@@ -134,7 +134,7 @@ review.
   guard for spelling variants, nicknames and patronymics.
 - **e. Image read, flagged attachments only.** Decided (Richard, 2026-10-27):
   OCR runs only on attachments the rules already flagged — check a, b or c
-  marked it misattributed, or h found a contradiction — truth sets included.
+  marked it misattributed, or h named a contradiction — truth sets included.
   `imageTranscribeTool` reads the research source's `image_ark` **without a
   `projectPath`**, so nothing is staged or saved, with `lookingFor` the tree's
   value of the disputed field (the person's name, plus the tree's birth or death
@@ -148,7 +148,12 @@ review.
   attachment.
 - **h. Contradictions.** Two attachments on the person whose birth or death
   year or place disagree (the same comparators; a census birth as its window)
-  each get `contradicts`, naming the other.
+  each get `contradicts`, naming the other — except that a disagreement with an
+  attachment a, b, c or g already marks misattributed is that attachment's
+  finding alone: it names the other, and the other is not `contradicts` for it
+  and is not image-read for it. `signals.h` still records every disagreement.
+  Without this, one wrong record marks every right record that disagrees with it
+  `contradicts`, a false alarm on each.
 
 ## Verdict
 
