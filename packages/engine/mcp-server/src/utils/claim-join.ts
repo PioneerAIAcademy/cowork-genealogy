@@ -4,7 +4,8 @@
 //
 // - Relationships: same type and endpoints; a Couple's pair is unordered. A
 //   claim covers a tree edge whatever its subtype (Decision 32: an untyped claim
-//   covers its pair); two claims are one object only when their subtypes agree,
+//   covers its pair), except a disproof naming a subtype, which rules out only
+//   that subtype (`disproofCoversEdge`); two claims are one object only when their subtypes agree,
 //   untyped and Biological agreeing, so a Step claim and a denial of the
 //   (biological) father do not collide.
 // - Facts: same subject and type; dates by exact equality after `stdDate`
@@ -225,15 +226,28 @@ export function setAsideRival(
 /** The first live `disproved` claim covering this edge, if any (Decision 10): a
  *  pair a proof summary rules out. */
 export function disprovedClaimCovering(research: any, edge: any): { summaryId: string; label: string } | null {
+  return disprovedClaimsCovering(research, edge)[0] ?? null;
+}
+
+/** Every disproved claim that rules `edge` out, in summary then claim order. */
+export function disprovedClaimsCovering(research: any, edge: any): Array<{ summaryId: string; label: string }> {
+  const out: Array<{ summaryId: string; label: string }> = [];
   for (const s of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
     for (const [i, c] of (Array.isArray(s?.claims) ? s.claims : []).entries()) {
-      // A disproof naming a subtype rules out only that subtype (Decision 32):
-      // "not the biological father" leaves a Step edge free.
-      const typed = typeof c?.relationship?.subtype === "string" && c.relationship.subtype.trim() !== "";
-      if (c?.proof_tier === "disproved" && claimCoversEdge(c, edge) && (!typed || sameSubtype(c.relationship, edge))) {
-        return { summaryId: String(s.id), label: typeof c.claim === "string" ? c.claim : `claims[${i}]` };
+      if (c?.proof_tier === "disproved" && disproofCoversEdge(c, edge)) {
+        out.push({ summaryId: String(s.id), label: typeof c.claim === "string" ? c.claim : `claims[${i}]` });
       }
     }
   }
-  return null;
+  return out;
+}
+
+/** Whether a relationship claim, read as a disproof, rules `edge` out. A
+ *  disproof naming a subtype rules out only that subtype (Decision 32): "not
+ *  the biological father" leaves a Step edge free. Untyped and Biological read
+ *  as one; an untyped disproof covers the whole pair. */
+export function disproofCoversEdge(claim: any, edge: any): boolean {
+  if (!claimCoversEdge(claim, edge)) return false;
+  const typed = typeof claim?.relationship?.subtype === "string" && claim.relationship.subtype.trim() !== "";
+  return !typed || sameSubtype(claim.relationship, edge);
 }

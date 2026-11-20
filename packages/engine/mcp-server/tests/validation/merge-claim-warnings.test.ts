@@ -67,6 +67,54 @@ describe("mergeClaimWarnings", () => {
     }
   });
 
+  it("a rule-12 shortfall naming two persons is not re-raised when the merge reorders them", () => {
+    // Rule 12 lists the weak persons sorted, so I3, I5 becomes I1, I3 after I5
+    // collapses into I1, but stays I3, I9 when it collapses into I9.
+    const research = {
+      assertions: [{ id: "a_001", record_id: "rec1", source_id: "src_001", record_role: "principal", fact_type: "marriage", value: "1850", date: "1850", record_basis: "stated" }],
+      proof_summaries: [{
+        id: "ps_1", question_id: "q_1", tier: "proved", claims: [
+          { claim: "married", proof_tier: "proved", supporting_assertion_ids: ["a_001"], fact: { subject: { person1: "I3", person2: "I5" }, fact_type: "Marriage", date: "1850" } },
+        ],
+      }],
+    };
+    for (const survivor of ["I1", "I9"]) {
+      const before = { persons: [P(survivor), P("I3"), P("I5")], relationships: [] };
+      const after = { persons: [P(survivor), P("I3")], relationships: [] };
+      expect(run(research, before, after, [[survivor, "I5"]]), survivor).toEqual([]);
+    }
+  });
+
+  it("a pair already ruled out stays unraised when the dedup retypes the kept edge", () => {
+    // Untyped disproof on the collapsed person's untyped edge; the survivor's own
+    // edge is Step, and the dedup keeps it. Same merge with the survivor's edge
+    // untyped raised nothing before either.
+    const research = { proof_summaries: [ps("ps_1", [{ claim: "not I7", proof_tier: "disproved", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I7", child: "I1" } }])] };
+    for (const subtype of ["Step", undefined]) {
+      const before = { persons: [P("I1"), P("I7"), P("I8")], relationships: [
+        { id: "R1", type: "ParentChild", parent: "I7", child: "I1" },
+        { id: "R2", type: "ParentChild", ...(subtype ? { subtype } : {}), parent: "I8", child: "I1" },
+      ] };
+      const after = { persons: [P("I1"), P("I7")], relationships: [{ id: "R1", type: "ParentChild", ...(subtype ? { subtype } : {}), parent: "I7", child: "I1" }] };
+      expect(run(research, before, after, [["I7", "I8"]]), String(subtype)).toEqual([]);
+    }
+  });
+
+  it("a pair ruled out by two summaries stays unraised when the merge changes which comes first", () => {
+    // ps_1 rules out the biological father, ps_2 the whole pair. Before the merge
+    // the Step edge is covered by ps_2 alone; after the dedup keeps it untyped,
+    // ps_1 comes first. ps_2 ruled the pair out throughout.
+    const dis = (id: string, subtype?: string) =>
+      ps(id, [{ claim: `not I7 ${id}`, proof_tier: "disproved", supporting_assertion_ids: [], relationship: { type: "ParentChild", ...(subtype ? { subtype } : {}), parent: "I7", child: "I1" } }]);
+    const research = { proof_summaries: [dis("ps_1", "Biological"), dis("ps_2")] };
+    const before = { persons: [P("I1"), P("I7"), P("I8")], relationships: [
+      { id: "R1", type: "ParentChild", subtype: "Step", parent: "I7", child: "I1" },
+      { id: "R2", type: "ParentChild", parent: "I8", child: "I1" },
+    ] };
+    const after = { persons: [P("I1"), P("I7")], relationships: [{ id: "R1", type: "ParentChild", parent: "I7", child: "I1" }] };
+    expect(run(research, before, after, [["I7", "I8"]])).toEqual([]);
+  });
+
   it("a claim label naming the collapsed id does not re-raise an old finding", () => {
     const research = { proof_summaries: [ps("ps_1", [birth("born I5 1850", "I5", "1850"), birth("born I5 1860", "I5", "1860")])] };
     expect(run(research, twoPersons, onePerson, [["I1", "I5"]])).toEqual([]);
