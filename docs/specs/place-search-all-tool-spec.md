@@ -43,19 +43,26 @@ Identical to `place_search`.
    **including the fuzzy fallback** — see the sibling spec's step 1).
 2. **Collect Primary IDs** — gather the distinct `placeId` (Primary) values from
    the base results.
-3. **Expand** — for each Primary ID, `GET /platform/places/{pid}` (Place_resource)
-   to list **all** of its representation (rep) IDs. Union the rep IDs across all
-   Primary IDs into a distinct set.
+3. **Expand** — for each Primary ID, take its Place_resource listing (`GET
+   /platform/places/{pid}`) to list **all** of its representation (rep) IDs,
+   reusing the listing the base search already fetched for that Primary ID
+   while naming matches (the sibling spec's step 5) rather than fetching it
+   again. Union the rep IDs across all Primary IDs into a distinct set.
 4. **Describe each rep** — for each distinct rep ID,
    `GET /platform/places/description/{repId}` (Place_Description_resource).
 5. **Enrich + simplify** — for each, read the FamilySearch `WIKIPEDIA_LINK`
    attribute for `wikipediaUrl` (see the place_search spec's
    [Wikipedia link source](./place-search-tool-spec.md#wikipedia-link-source)),
    then project to `SimplifiedPlaceResult`. Rep IDs whose description lookup
-   404s are dropped.
-6. Return `{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`, carrying
-   the base search's `matchType` unchanged — unflagged fuzzy results from this
-   tool are exactly the failure the flag exists to prevent.
+   404s are dropped. On an exact base outcome, each result carries
+   `matchedName` by the sibling spec's step 5 rule, read from its Primary ID's
+   listing names: the query leaf equals one of the place's names (folded) that
+   is not the representation's own. Every listing is in hand, so this costs no
+   request, and it reaches representations whose base result was named after
+   the leaf.
+6. Return `{ results: SimplifiedPlaceResult[], matchType: "exact" | "fuzzy" }`,
+   carrying the base search's `matchType` unchanged — unflagged fuzzy results
+   from this tool are exactly the failure the flag exists to prevent.
 
 The result set is broader than `place_search`: it includes the temporal/parent
 variants of each matched place, not just the place itself.
@@ -64,10 +71,11 @@ variants of each matched place, not just the place itself.
 
 ## Output
 
-`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`, same shape as
-`place_search` (see the sibling spec) — including `wikipediaUrl` and the
-top-level `matchType`, present only when the base search's results came from
-the fuzzy fallback (absent on an exact hit). The internal FamilySearch
+`{ results: SimplifiedPlaceResult[], matchType: "exact" | "fuzzy" }`, same shape as
+`place_search` (see the sibling spec) — including `wikipediaUrl`, `matchedName`
+and the top-level `matchType`, `"fuzzy"` when the base search's results came
+from the fuzzy fallback and `"exact"` otherwise, which means only that the
+exact-name query produced them (see the sibling spec's Output). The internal FamilySearch
 identifiers, relevance score, and short `name` are not exposed.
 
 ```json
@@ -91,7 +99,8 @@ identifiers, relevance score, and short `name` are not exposed.
       "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=4982995",
       "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill,_Philadelphia"
     }
-  ]
+  ],
+  "matchType": "exact"
 }
 ```
 
@@ -112,9 +121,13 @@ identifiers, relevance score, and short `name` are not exposed.
     "result includes the standardized place name (standardPlace), place type, " +
     "date range, coordinates, a FamilySearch link, and (when available) a " +
     "Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the place you named had no ' +
-    "exact match and these are sounds-alike corrections. Confirm one " +
-    "before using it.",
+    'matchType is "exact" when the exact-name query produced these results, or ' +
+    '"fuzzy" when the place you named had no exact match and these are ' +
+    "sounds-alike corrections; confirm a fuzzy one before using it. A result " +
+    "with matchedName matched your text through that other name of the place " +
+    "(e.g. its name in another language): an exact match, not a guess. If no " +
+    "result's standardPlace starts with the name you sent and none carries a " +
+    "matchedName, the search matched another part of your text, not the place.",
   inputSchema: {
     type: "object",
     properties: {
@@ -151,9 +164,11 @@ Accept: application/json
 
 Returns `places[]`: a bare place entry (`id === pid`, no `display`) followed by
 representation entries, each with `place.resourceId === pid`. Collect each
-representation's `id` (the rep IDs). Implemented as `getPlaceRepIds(pid)` in
-`place-search.ts` (no auth; parallels the token-bound `placeIdToRepIds` in
-`image-search.ts`).
+representation's `id` (the rep IDs). The bare entry's `names[]` lists every name
+of the place as `{ lang, value }`, which the matched name is read from.
+Implemented as `getPlaceListing(pid)` in `utils/place-api.ts`, returning the
+representations and the bare entry's names with `lang` (no auth; parallels the
+token-bound `placeIdToRepIds` in `image-search.ts`).
 
 ---
 
@@ -161,9 +176,10 @@ representation's `id` (the rep IDs). Implemented as `getPlaceRepIds(pid)` in
 
 | Condition | Behavior |
 |-----------|----------|
-| Base search returns no matches (exact and, when eligible, fuzzy — see the sibling spec) | Return `{ results: [] }` |
+| Base search returns no matches (exact and, when eligible, fuzzy — see the sibling spec) | Return `{ results: [], matchType: "exact" }` |
 | `GET /places/{pid}` 404s | Treat as no rep IDs for that pid (skip it) |
-| `GET /places/{pid}` other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
+| `GET /places/{pid}` fails while the base search names matches | No `matchedName` for that place; the listing is not reused, so step 3 fetches it again |
+| `GET /places/{pid}` other non-OK status in step 3 | Throw `"FamilySearch API error: {status} {statusText}"` |
 | A rep-ID description lookup 404s | Drop that rep ID from the results |
 | Wikipedia API fails | Omit Wikipedia fields (graceful degradation) |
 
