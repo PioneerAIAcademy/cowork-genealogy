@@ -359,3 +359,28 @@ def test_holding_the_reading_in_doubt_to_the_researcher_passes(reply, calls):
 def test_the_reply_name_check_skips_the_transcription_tests():
     with pytest.raises(pytest.skip.Exception):
         check_reply_names(T1900, "Anthony Tyler", [])
+
+
+# scratch_2026-11-20_07-54-02, ut_research_iv1 run 4: sending the researcher to check
+# the name as written is no claim about it.
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1900 + " To verify the given name as written on the page, please check the image directly.",
+        GOOD_1900 + " Look at line 23 to see the name as written on the image.",
+    ],
+)
+def test_sending_the_researcher_to_check_the_name_as_written_passes(reply):
+    check_reply(T1900, reply)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1900 + " I checked: Anthony is the name as written on the page.",
+        GOOD_1900 + " Checking the image, Anthony is the name as written on the image.",
+    ],
+)
+def test_a_check_verb_in_another_clause_does_not_excuse_the_claim(reply):
+    with pytest.raises(AssertionError, match="verdict"):
+        check_reply(T1900, reply)

@@ -1201,6 +1201,10 @@ _GAP_NEGATION = re.compile(r"\b(?:not|never|no)\b|n't\b", re.IGNORECASE)
 _NEGATION_WORD = re.compile(r"^(?:not|never|no|cannot|can't|won't|don't|isn't|wasn't)$", re.IGNORECASE)
 
 
+# "as written on the page" sent to be checked ("to verify the given name as written on the
+# page, check the image") asks the researcher to look; it claims nothing.
+_TO_CHECK = re.compile(r"\b(?:verify|check|confirm|see|look|compare)\w*\b", re.IGNORECASE)
+
 # "confirmed" is a verdict only about a reading: "the upload is confirmed" is not one.
 _ABOUT_A_READING = re.compile(r"\b(?:read\w*|names?|line|transcri\w*|index\w*|spell\w*|given)\b", re.IGNORECASE)
 
@@ -1271,6 +1275,8 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
     verdicts = sorted(
         {m.group(0) for m in _VERDICT.finditer(reply)
          if not _negated_just_before(reply, m.start())
+         and not (m.group(0).lower().startswith("as")
+                  and _TO_CHECK.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1]))
          and (m.group(0).lower() != "confirmed"
               or (not _NEGATED_CLAUSE.search(_AFFIRMING.sub(" ", _CLAUSE_BREAK.split(reply[:m.start()])[-1]))
                   and _ABOUT_A_READING.search(_clause_around(reply, m.start(), m.end()))))}
