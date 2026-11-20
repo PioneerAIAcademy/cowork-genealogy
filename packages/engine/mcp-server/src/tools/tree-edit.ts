@@ -37,6 +37,8 @@ import {
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { primaryTarget, unclaimedPrimarySet } from "../utils/primary-claim.js";
+import { disprovedClaimCovering } from "../utils/claim-join.js";
+import type { SyntheticWarning } from "../validation/merge-claim-warnings.js";
 import { applyRuleMode, ruleMode, treeConcern } from "../validation/rule-modes.js";
 import {
   introducedWarnings,
@@ -829,6 +831,17 @@ async function applyOperation(
         );
       }
 
+      // A pair a proof summary rules out (#3032 Stage 1b, Decision 10): neither a
+      // new edge nor a corroboration may assert it while that claim stands.
+      const ruledOut = disprovedClaimCovering(research, rel);
+      if (ruledOut) {
+        throw new TreeEditError(
+          `add_relationship: proof summary ${ruledOut.summaryId} rules this pair out (claim '${ruledOut.label}', ` +
+            "disproved). Have proof-conclusion revise that claim first if the new evidence overturns it; the edge " +
+            "cannot stand beside it.",
+        );
+      }
+
       // An edge that already says this corroborates rather than duplicates
       // (plan Decision 37). The new sources — and any inline Couple facts —
       // land on the existing edge and its id comes back, so a retried call and
@@ -836,6 +849,16 @@ async function applyOperation(
       // would make the caller re-route the same evidence by hand through
       // `add_fact`, dropping the edge's own sources on the way.
       const matched = (tree.relationships ?? []).find((e) => relationshipMatches(e, rel));
+      // An untyped edge matches any subtype, so the edge a corroboration lands
+      // on can be one a disproof covers even when the proposed edge is not.
+      const matchedRuledOut = matched ? disprovedClaimCovering(research, matched) : null;
+      if (matched && matchedRuledOut) {
+        throw new TreeEditError(
+          `add_relationship: this would corroborate relationship '${matched.id}', which proof summary ` +
+            `${matchedRuledOut.summaryId} rules out (claim '${matchedRuledOut.label}', disproved). Remove that edge ` +
+            "with tree_correct, or have proof-conclusion revise the claim first; nothing is added to a ruled-out edge.",
+        );
+      }
       if (matched) {
         if (rel.sources?.length) {
           matched.sources = dedupSourceRefs([...(matched.sources ?? []), ...rel.sources]);
@@ -990,6 +1013,18 @@ async function applyOperation(
             "which already joins this pair — remove one of them instead",
         );
       }
+      // A retype that newly brings the edge under a disproof asserts the ruled-out
+      // pair; one already under it, or moving away from it, does not.
+      const retypeRuledOut = disprovedClaimCovering(research, rel)
+        ? null
+        : disprovedClaimCovering(research, { ...rel, subtype: input.subtype });
+      if (retypeRuledOut) {
+        throw new TreeEditError(
+          `update_relationship: proof summary ${retypeRuledOut.summaryId} rules out '${input.subtype}' for this pair ` +
+            `(claim '${retypeRuledOut.label}', disproved). Have proof-conclusion revise that claim first if the new ` +
+            "evidence overturns it.",
+        );
+      }
       rel.subtype = input.subtype;
       break;
     }
@@ -1104,13 +1139,16 @@ export async function checkWarningGate(
   toolName: string,
   collapseMap?: Map<string, string>,
   proposedAssertionIds?: Map<string, string>,
+  /** Warnings the caller computed itself (merge_tree_persons' claim warnings,
+   *  Decision 13), justified like the rest. */
+  synthetic: ReadonlyArray<SyntheticWarning> = [],
 ): Promise<WarningGateRefusal | WarningGatePass | null> {
   const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
   // Competing biological parentage is gated on its own finding, not on whether
   // tooManyFathers2/tooManyMothers2 is new: that warning can already stand on
   // the child, and a parent's gender change does not touch the child at all.
   const found = findCompetingParentage(beforeTree, afterTree, research, proposedAssertionIds, collapseMap);
-  if (touchedIds.length === 0 && found.length === 0) return null;
+  if (touchedIds.length === 0 && found.length === 0 && synthetic.length === 0) return null;
   const parentage = found.map((c) => c.entry);
 
   const result = introducedWarnings(
@@ -1146,8 +1184,14 @@ export async function checkWarningGate(
     facts: undefined,
     relatedPersonId: undefined,
   }));
-  const allIntroduced = result.allIntroduced.filter(keep);
-  const others = result.unjustified.filter(keep);
+  const justified = new Set(
+    (warningJustifications ?? [])
+      .filter((j) => typeof j?.justification === "string" && j.justification.trim() !== "")
+      .map((j) => j.warningId),
+  );
+  const syntheticAsWarnings = synthetic.map((w) => ({ ...w, facts: undefined, relatedPersonId: undefined }));
+  const allIntroduced = [...result.allIntroduced.filter(keep), ...syntheticAsWarnings];
+  const others = [...result.unjustified.filter(keep), ...syntheticAsWarnings.filter((w) => !justified.has(w.warningId))];
   // Competing parentage refuses whatever is justified: it is routed, not justified.
   const unjustified = [...parentageWarnings, ...others];
 
