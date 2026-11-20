@@ -1,6 +1,6 @@
 {
-  "run_log": "v4_2026-10-12_10-08-44.json",
-  "annotator": "solomonbaidoo54@gmail.com",
+  "run_log": "v7_2026-11-19_22-20-42.json",
+  "annotator": "raphaeldaveal@gmail.com",
   "corrections": [
     {
       "test_id": "ut_gps_mentor_k4p",
@@ -38,8 +38,8 @@
       "test_id": "ut_gps_mentor_k4p",
       "dimension_source": "rubric",
       "dimension_name": "Severity and citation discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
