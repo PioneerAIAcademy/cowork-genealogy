@@ -108,6 +108,7 @@ can drop:
     parentIds?: string[],                // I ids that are this person's ParentChild parent
     childIds?: string[],                 // I ids that are this person's ParentChild child
     diedByYear?: number,                 // year certainly dead by, from dated Death/Burial facts
+    unsupportedGivenName?: { given: string, searchAs: string }, // a given name no linked record gives
   }],
   sources?: [{
     id: string,                          // src_*
@@ -203,6 +204,28 @@ Projection rules:
   it. They exist so person-evidence can name
   a known spouse or child missing from a household record: no other tool
   it holds reads the tree's edges.
+  `unsupportedGivenName` is the preferred name's `given` when the person has at
+  least one linked live `name` assertion (through `person_evidence`) and no word of
+  them carries any word of the given name, compared case-blind with accents folded.
+  A word carries another when either is a prefix of the other (an initial, "Herm"
+  for Hermann, "Georg" for George) or a contraction of it with the same first and
+  last letters and the rest in order ("Saml", "Wm"); when they differ by one letter
+  from four letters up, or two from seven ("Christian" for Kristian); or when the
+  bundled given-name table puts them in one family ("Jno", "Polly", "Bill"). The
+  nickname table is not used, since it relates Anthony and Anton: "Ann", "Anton",
+  "Antone" and "Antoine" do not carry "Anthony". A machine reading of a page (an
+  assertion with `disputes_assertion_id` not logged as `user_provided`) counts as
+  linked evidence but never carries the name; a researcher's own reading does.
+  Measured 2026-11-20 over the 252 committed e2e end states: 18 people flagged in
+  15 runs, against 80 in 64 under a first-word exact match.
+  A person with no linked name assertion is not judged, so a tree read from
+  FamilySearch before any evidence is linked carries none. `searchAs` is the
+  given name's first letter and `*`: one handwritten name read several ways agrees
+  on little more (Anthony, Armtogne, Ann Tone and Atonne for one woman), and
+  FamilySearch's search accepts a one-letter wildcard (measured live 2026-11-18:
+  Tyler, born 1853 in Virginia, gives 7,326 matches under `A*` and 63,855 with no
+  given name). It exists so the router keeps a reading in doubt out of a search
+  brief's `names` and searches the given name as that wildcard.
 - **`sources`** — every `research.sources[]` entry, in array order.
   `recordIds` are the distinct `record_id` values (verbatim, first-seen
   order) across `research.assertions[]` entries whose `source_id` is this

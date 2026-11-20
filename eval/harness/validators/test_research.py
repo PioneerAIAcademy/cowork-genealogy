@@ -1122,11 +1122,31 @@ def test_bounded_transcription_is_delivered_in_place(
         for c in transcribes
     } - {None}
     assert refs, "no image_transcribe call staged its page (no staged.resultsRef came back)"
+    # sidecar_read corrects a near-copy of a staged ref (`locateStagedRef`), so a
+    # read under a mistyped ref still served the staged page when it answered with
+    # that page's length.
+    staged_chars = {
+        ((c.get("response") or {}).get("digest") or {}).get("chars") for c in transcribes
+    } - {None}
+
+    def _reads_staged_page(call: dict) -> bool:
+        args = call.get("args") or {}
+        if args.get("ref") in refs or set(args.get("refs") or []) & refs:
+            return True
+        response = call.get("response") or {}
+        ref = str(args.get("ref") or "")
+        near_copy = any(
+            len(ref) == len(r) and sum(a != b for a, b in zip(ref, r)) <= 2 for r in refs
+        )
+        return (
+            near_copy
+            and response.get("ok") is True
+            and response.get("totalChars") in staged_chars
+        )
+
     read = [
         c for c in (tool_calls or [])
-        if bare_tool_name(c.get("tool", "")) == "sidecar_read"
-        and ((c.get("args") or {}).get("ref") in refs
-             or set((c.get("args") or {}).get("refs") or []) & refs)
+        if bare_tool_name(c.get("tool", "")) == "sidecar_read" and _reads_staged_page(c)
     ]
     assert read, (
         f"the staged page was never read: no sidecar_read on {sorted(refs)}, so "
@@ -1138,6 +1158,251 @@ def test_bounded_transcription_is_delivered_in_place(
     ]
     assert not delegations, (
         f"a bounded transcription hands off to nothing; got {delegations}"
+    )
+
+
+_READING_TAG = "index-vs-reading"
+_INDEX_READING_PREFIX = "index-reading:"
+_MACHINE_READING_PREFIX = "machine-reading:"
+_ON_LINE_PREFIX = "on-line:"
+_AS_WRITTEN_PREFIX = "as-written:"
+_AGREED_PREFIX_PREFIX = "agreed-prefix:"
+_SURNAME_PREFIX = "surname:"
+# `index-reading:blank` is an index entry with no given name at all.
+_BLANK_INDEX = re.compile(
+    r"\b(no|blank|without|empty|missing|omits?|left\s+out)\b[^.\n]{0,60}\bgiven[\s-]?name"
+    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\b(blank|empty|missing|not\s+indexed|left\s+(it\s+)?blank|absent)",
+    re.IGNORECASE,
+)
+# A single machine reading overruling the index, or a repeat pass counted as agreement.
+_VERDICT = re.compile(
+    r"\bis\s+clear\b|\bimage\s+(is|was)\s+clear\b"
+    r"|\bindex\s+(is|was)\s+(wrong|an\s+error|a\s+misread)"
+    r"|\bbadly\s+misread|\bpoor\s+attempt"
+    r"|\bboth\b[^.\n]*\bagree"
+    r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)(?<!not\sa\s)(?<!not\san\s)\bconfirmed\b"
+    r"|\bmore\s+(?:plausible|likely|accurate)\s+reading\b"
+    r"|(?<!transcription of the )(?<!transcript of the )(?<!reading of the )(?<!OCR of the )"
+    r"\b(?:image|scan)\s+reads\b"
+    r"|\bas\s+written\s+on\s+(?:the\s+)?(?:page|image|scan)\b"
+    r"|\bindex(?:er)?\s+(?:got\s+it\s+wrong|(?:is|was)\s+(?:incorrect|mistaken))"
+    r"|\benumerator\s+wrote\s*:?\s*[\"'“‘]"
+    r"|\b(?:correct|true|actual)\s+(?:given\s+)?name\s+(?:is|was)\s+[\"'“‘]?\w"
+    r"|\bboth\b[^.\n]*\bmatch(?:es|ed)?\b",
+    re.IGNORECASE,
+)
+# The index called a misread, with nothing denying it between the two words.
+_INDEX_MISREAD = re.compile(
+    r"\bindex(?:er|ing)?\b(?P<gap>(?:\s+[\w'-]+){0,5}?)\s+misread", re.IGNORECASE
+)
+# "no doubt", "without question" affirm what follows; they never deny it.
+_AFFIRMING = re.compile(r"\b(?:no|without|beyond)\s+(?:a\s+)?(?:doubt|question)\b", re.IGNORECASE)
+_GAP_NEGATION = re.compile(r"\b(?:not|never|no)\b|n't\b", re.IGNORECASE)
+_NEGATION_WORD = re.compile(r"^(?:not|never|no|cannot|can't|won't|don't|isn't|wasn't)$", re.IGNORECASE)
+
+
+# "as written on the page" sent to be checked ("to verify the given name as written on the
+# page, check the image") asks the researcher to look; it claims nothing.
+_TO_CHECK = re.compile(r"\b(?:verify|check|confirm|see|look|compare)\w*\b", re.IGNORECASE)
+
+# "confirmed" is a verdict only about a reading: "the upload is confirmed" is not one.
+_ABOUT_A_READING = re.compile(r"\b(?:read\w*|names?|line|transcri\w*|index\w*|spell\w*|given)\b", re.IGNORECASE)
+
+
+def _clause_around(text: str, start: int, end: int) -> str:
+    left = _CLAUSE_BREAK.split(text[:start])[-1]
+    right = _CLAUSE_BREAK.split(text[end:])[0]
+    return left + text[start:end] + right
+
+
+def _negated_just_before(text: str, start: int, words: int = 4) -> bool:
+    """A negation among the last few words before `start`, in the same clause:
+    "I can't say the index is wrong" denies the verdict. Adjacent only, so a
+    negation earlier in a long clause cannot excuse a verdict after it."""
+    clause = _AFFIRMING.sub(" ", _CLAUSE_BREAK.split(text[:start])[-1])
+    return any(_NEGATION_WORD.match(w.strip("\"'*_")) for w in clause.split()[-words:])
+# A record's name folded into another record's.
+_FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORECASE)
+# A fold named only to deny it ("neither can be called a variant of the other") is not one.
+_NEGATED_CLAUSE = re.compile(r"\b(?:not|neither|nor|never|no|none|cannot)\b|n't\b", re.IGNORECASE)
+_CLAUSE_BREAK = re.compile(r"[.!?;:\n—,]")
+_SEARCH_CALLEES = ("search-records", "search-images", "search-full-text")
+# `_field_values` stops a value at `*`, which is the wildcard this check looks for.
+_GIVEN_FIELD = re.compile(
+    r"(?<![A-Za-z])(?:given(?:[\s_-]?names?)?|first[\s_-]?name)[`*\"']*\s*[:=][\s`*\"']*"
+    r"(?P<v>[A-Za-z][\w*?-]*)",
+    re.IGNORECASE,
+)
+
+
+def _one_tag_value(test: dict, prefix: str) -> str | None:
+    values = _data_tag_values(test, prefix)
+    assert len(values) <= 1, f"an {_READING_TAG} test names at most one {prefix} tag; got {values}"
+    return values[0] if values else None
+
+
+def test_index_and_machine_reading_shown_side_by_side(test, text_response):
+    """Tag-gated (``index-vs-reading``), issue #4578. When a record's index and a
+    single machine reading of its page disagree, the reply shows both, names the
+    line on the image, and calls neither the answer: no "the image is clear", no
+    "the index misread it", and no second pass of the same page counted as
+    agreement. Requiring the machine reading too is what stops a reply that hides
+    it from passing. With an ``as-written:`` tag, the reply also reports that
+    record's name as written, never as a rendering or variant of another record's.
+
+    Proven both ways in ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _READING_TAG not in test.get("tags", []):
+        pytest.skip(f"not an {_READING_TAG} test")
+    reply = _MD_LINK.sub(r"\1", text_response or "").replace("*", "").replace("_", " ")
+    index = _one_tag_value(test, _INDEX_READING_PREFIX)
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    line = _one_tag_value(test, _ON_LINE_PREFIX)
+    assert index and machine and line, (
+        f"an {_READING_TAG} test names {_INDEX_READING_PREFIX}, {_MACHINE_READING_PREFIX} "
+        f"and {_ON_LINE_PREFIX} tags; got {test.get('tags')}"
+    )
+    problems = []
+    if index == "blank":
+        if not _BLANK_INDEX.search(reply):
+            problems.append("it never says the index gives no given name")
+    elif not re.search(rf"\b{re.escape(index)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never shows the index reading {index!r}")
+    if not re.search(rf"\b{re.escape(machine)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never shows the machine reading {machine!r}")
+    if not re.search(rf"\bline\s*(no\.?|number|#)?\s*{re.escape(line)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never points to line {line} on the image")
+    verdicts = sorted(
+        {m.group(0) for m in _VERDICT.finditer(reply)
+         if not _negated_just_before(reply, m.start())
+         and not (m.group(0).lower().startswith("as")
+                  and _TO_CHECK.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1]))
+         and (m.group(0).lower() != "confirmed"
+              or (not _NEGATED_CLAUSE.search(_AFFIRMING.sub(" ", _CLAUSE_BREAK.split(reply[:m.start()])[-1]))
+                  and _ABOUT_A_READING.search(_clause_around(reply, m.start(), m.end()))))}
+        | {m.group(0) for m in _INDEX_MISREAD.finditer(reply)
+           if not _GAP_NEGATION.search(m.group("gap"))
+           and not _negated_just_before(reply, m.start())}
+    )
+    if verdicts:
+        problems.append(f"it gives a verdict one machine reading cannot support: {verdicts}")
+    written = _one_tag_value(test, _AS_WRITTEN_PREFIX)
+    if written:
+        if not re.search(r"\s+".join(map(re.escape, written.split())), reply, re.IGNORECASE):
+            problems.append(f"it never reports the name as written, {written!r}")
+        folded = sorted({
+            m.group(0) for m in _FOLDED.finditer(reply)
+            if not _NEGATED_CLAUSE.search(_AFFIRMING.sub(" ", _CLAUSE_BREAK.split(reply[:m.start()])[-1]))
+        })
+        if folded:
+            problems.append(f"it folds a record's name into another's: {folded}")
+    assert not problems, (
+        "a single machine reading must be shown beside the index reading, never "
+        "over it: " + "; ".join(problems)
+    )
+
+
+_BRIEF_TAG = "brief-no-disputed-reading"
+# A sentence that holds the reading as one in doubt, not as her name.
+_IN_DOUBT = re.compile(
+    r"\b(?:disput\w*|in\s+doubt|unconfirmed|uncertain|proposed\s+reading"
+    r"|machine\s+(?:reading|transcription)"
+    r"|no\s+(?:linked\s+)?name\s+assertion|not\s+(?:confirmed|supported))\b",
+    re.IGNORECASE,
+)
+
+
+def _sentence_around(text: str, start: int, end: int) -> str:
+    left = max(text.rfind(c, 0, start) for c in ".!?\n")
+    rights = [i for i in (text.find(c, end) for c in ".!?\n") if i != -1]
+    return text[left + 1: min(rights) if rights else len(text)]
+
+
+def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_calls):
+    """Tag-gated (``brief-no-disputed-reading``), issue #4578. A name only a machine
+    reading gives is not the subject's name: no search spawn (search-records,
+    search-images, search-full-text) writes it as a given name, beside the surname or
+    in a given-name field, and a given name a brief does search on is the wildcard on
+    the prefix every reading agrees on (``agreed-prefix:``). The disputed reading may
+    still appear in a brief as a reading in doubt. The test asks for a search, so a
+    run that briefs none fails rather than passing with nothing checked.
+
+    Spawn prompts are read from the hook records, because the judge cannot see them
+    (``_spawn_prompts``). Proven both ways in
+    ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _BRIEF_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BRIEF_TAG} test")
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    surname = _one_tag_value(test, _SURNAME_PREFIX)
+    prefix = _one_tag_value(test, _AGREED_PREFIX_PREFIX)
+    assert machine and surname and prefix, (
+        f"an {_READING_TAG} test names {_MACHINE_READING_PREFIX}, {_SURNAME_PREFIX} and "
+        f"{_AGREED_PREFIX_PREFIX} tags; got {test.get('tags')}"
+    )
+    m, s = re.escape(machine), re.escape(surname)
+    as_name = re.compile(rf"\b{m}\s+{s}\b|\b{s},?\s+{m}\b", re.IGNORECASE)
+    briefs = [(c, p) for c in _SEARCH_CALLEES for p in _spawn_prompts(builtin_tool_calls, c)]
+    assert briefs, (
+        f"the test asks for a search, but no {', '.join(_SEARCH_CALLEES)} spawn was "
+        "briefed, so there is no brief to check"
+    )
+    problems = []
+    for callee, prompt in briefs:
+        if any(
+            not _IN_DOUBT.search(_sentence_around(prompt, hit.start(), hit.end()))
+            for hit in as_name.finditer(prompt)
+        ):
+            problems.append(f"{callee} was briefed with {machine!r} as the subject's name")
+        for g in _GIVEN_FIELD.finditer(prompt):
+            if g.group("v").lower() == machine.lower() and not _IN_DOUBT.search(
+                _sentence_around(prompt, g.start(), g.end())
+            ):
+                problems.append(
+                    f"{callee} was briefed to search the given name {machine!r}, not {prefix!r}"
+                )
+    wildcard = re.compile(rf"(?<![A-Za-z]){re.escape(prefix)}", re.IGNORECASE)
+    if not any(wildcard.search(prompt) for _, prompt in briefs):
+        problems.append(f"no brief searches the given name as {prefix!r}, so the name was dropped")
+    assert not problems, (
+        "a name only a machine reading gives is a reading in doubt, not the subject's "
+        "name: " + "; ".join(problems)
+    )
+
+
+def test_reply_never_names_the_subject_by_the_disputed_reading(test, text_response, builtin_tool_calls):
+    """Tag-gated (``brief-no-disputed-reading``), issue #4578. What the researcher
+    sees, the reply and each search spawn's ``description`` (the task's label),
+    names the subject by the machine reading only as a reading in doubt: the rule
+    ``test_search_brief_never_carries_the_disputed_reading`` applies to the prompt.
+    Feedback #4510: "Why are you searching for 'Anthony'?"
+
+    Proven both ways in ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _BRIEF_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BRIEF_TAG} test")
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    surname = _one_tag_value(test, _SURNAME_PREFIX)
+    assert machine and surname, (
+        f"a {_BRIEF_TAG} test names {_MACHINE_READING_PREFIX} and {_SURNAME_PREFIX} tags; "
+        f"got {test.get('tags')}"
+    )
+    m, s = re.escape(machine), re.escape(surname)
+    as_name = re.compile(rf"\b{m}\s+{s}\b|\b{s},?\s+{m}\b", re.IGNORECASE)
+    texts = [("the reply", (text_response or "").replace("*", ""))] + [
+        (
+            f"the {(c.get('args') or {}).get('subagent_type')} task label",
+            str((c.get("args") or {}).get("description") or ""),
+        )
+        for c in builtin_tool_calls or []
+        if (c.get("args") or {}).get("subagent_type") in _SEARCH_CALLEES
+    ]
+    named = sorted({
+        where for where, text in texts for hit in as_name.finditer(text)
+        if not _IN_DOUBT.search(_sentence_around(text, hit.start(), hit.end()))
+    })
+    assert not named, (
+        f"{', '.join(named)} names the subject {machine!r}, a reading in doubt, as her name"
     )
 
 

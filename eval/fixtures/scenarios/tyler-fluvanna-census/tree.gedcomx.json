@@ -1,0 +1,125 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:PJHQ-7RG",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Anthony",
+          "surname": "Tyler",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N2",
+          "given": "",
+          "surname": "Tyler",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "MaritalStatus",
+          "value": "Widowed",
+          "assertion_id": "a_004",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Race",
+          "value": "Black",
+          "assertion_id": "a_005",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Census",
+          "date": "1900",
+          "place": "Cunningham District (south part) Scottsville town, ED 73, Fluvanna, Virginia, United States",
+          "standard_place": "Cunningham District, Fluvanna, Virginia, United States",
+          "assertion_id": "a_006",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "Apr 1853",
+          "place": "Virginia",
+          "standard_place": "Virginia, United States",
+          "assertion_id": "a_007",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from stub stub, PJHQ-7RG)",
+      "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 11 November 2026), read from the page of stub stub (PJHQ-7RG).",
+      "url": "https://www.familysearch.org/tree"
+    },
+    {
+      "id": "S2",
+      "title": "stub stub",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for stub stub (PID PJHQ-7RG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PJHQ-7RG"
+    },
+    {
+      "id": "S3",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/9NMM-9M9K"
+    },
+    {
+      "id": "S4",
+      "title": "Household of Tyler, \"United States, Census, 1900\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1B2W-X3N"
+    },
+    {
+      "id": "S5",
+      "title": "Entry for Ann Tone Lightfoot, \"Virginia, Death Certificates, 1912-1987\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q247-BS3K"
+    }
+  ]
+}
