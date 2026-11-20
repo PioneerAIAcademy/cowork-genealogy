@@ -103,17 +103,6 @@ export function nameRelation(
   return parts.includes("variant") ? "variant" : "same";
 }
 
-/** The best relation between any of a person's tree names and a record name. */
-export function bestNameRelation(names: readonly SimplifiedName[] | undefined, rec: { given?: string; surname?: string }): NameRelation {
-  const order: NameRelation[] = ["same", "variant", "different", "unknown"];
-  let best: NameRelation = "unknown";
-  for (const n of names ?? []) {
-    const r = nameRelation(n, rec);
-    if (order.indexOf(r) < order.indexOf(best)) best = r;
-  }
-  return best;
-}
-
 /** A name assertion's given name and surname: its structured value, else the
  *  last word of its value as the surname. */
 export function assertionName(a: any): { given?: string; surname?: string } {

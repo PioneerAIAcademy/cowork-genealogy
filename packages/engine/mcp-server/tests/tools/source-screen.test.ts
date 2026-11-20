@@ -18,7 +18,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { runExtractionAppend } from "../../src/tools/extraction-append.js";
-import { sourceScreenTool, type SourceScreenOptions } from "../../src/tools/source-screen.js";
+import { sourceScreenTool, type SourceScreenOptions, flaggedForImage } from "../../src/tools/source-screen.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { arkToBareId } from "../../src/utils/ark.js";
 import { LOCAL } from "../../src/auth/principal.js";
@@ -232,29 +232,9 @@ describe("source_screen", () => {
     await build("I1", [CENSUS()]);
     const all = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }) });
     expect(row(all, "S1").verdict).toBe("misattributed");
-    const without = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }), checks: ["b", "c", "d", "e", "g", "h"] });
+    const without = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.1 }), checks: ["b", "c", "e", "h"] });
     expect(row(without, "S1").verdict).toBe("fine");
     expect(row(without, "S1").signals).not.toHaveProperty("a");
-  });
-
-  it("d: a low score on a name variant is weak, not misattributed", async () => {
-    await writeTree([person("I1", "Johann", "Boyer", "Male", ["S1"], [{ type: "Birth", date: "1845", place: "Pennsylvania" }])], [S1]);
-    await build("I1", [CENSUS()]);
-    const r = await screen({ matchPairs: matcher({ "I1|p_260900945": 0.3 }) });
-    expect(row(r, "S1").signals.d).toEqual({ relation: "variant", recordName: "John Boyer" });
-    expect(row(r, "S1").verdict).toBe("weak");
-  });
-
-  it("g: a record failing for another tree person it is linked to is flagged", async () => {
-    const S3 = { id: "S3", title: "census", url: url("MZGS-1BW") };
-    await writeTree(
-      [JOHN(["S1"]), person("I2", "Anna", "Boyer", "Female", ["S3"], [{ type: "Birth", date: "1849", place: "Pennsylvania" }])],
-      [S1, S3],
-    );
-    await build("I1", [CENSUS()]);
-    const r = await screen({ matchPairs: matcher({ "I2|p_260900946": 0.1 }) });
-    expect(row(r, "S1").verdict).toBe("misattributed");
-    expect(row(r, "S1").signals.g!.failing).toEqual([{ personId: "I2", personaId: "p_260900946", score: 0.1 }]);
   });
 
   it("c: a record that calls the tree's mother the subject's wife is misattributed", async () => {
@@ -443,5 +423,17 @@ describe("source_screen", () => {
       expect(row(r, "S1").signals.e).toEqual({ not_run: "error: No OpenRouter API key is configured." });
       expect(row(r, "S1").verdict).toBe("misattributed");
     });
+  });
+});
+
+describe("flaggedForImage", () => {
+  it("an implausible b warning alone flags the image read; a grey-band score alone does not", () => {
+    expect(flaggedForImage([], ["b: born when the mother was 8"])).toBe(true);
+    expect(flaggedForImage(["b: died before born"], [])).toBe(true);
+    expect(flaggedForImage(["a: leave-one-out score 0.10 is below 0.5."], [])).toBe(true);
+    expect(flaggedForImage(["c: party I2 scores 0.10"], [])).toBe(true);
+    expect(flaggedForImage([], [], ["S2"])).toBe(true);
+    expect(flaggedForImage([], ["a: leave-one-out score 0.60 is in the grey band."])).toBe(false);
+    expect(flaggedForImage([], [], [])).toBe(false);
   });
 });

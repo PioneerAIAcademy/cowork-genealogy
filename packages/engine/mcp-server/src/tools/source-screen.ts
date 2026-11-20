@@ -22,7 +22,6 @@ import { RECORD_TOKEN, arkToBareId } from "../utils/ark.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import {
   type AttachmentSupport,
-  bestNameRelation,
   factsDisagree,
   leaveOneOut,
   personaLinks,
@@ -53,7 +52,14 @@ export const WEAK_BELOW = 0.8;
  *  aborts an MCP call at 60 s). */
 export const OCR_DEADLINE_MS = 45_000;
 
-export const ALL_CHECKS: readonly SourceScreenCheck[] = ["a", "b", "c", "d", "e", "g", "h"];
+/** Whether an attachment gets the page-image read (check e): a or c called it
+ *  misattributed, b raised any warning (an implausible one included — a wrong
+ *  year in the index is what b sees first), or h names a contradiction. */
+export function flaggedForImage(mis: readonly string[], soft: readonly string[], contradicts?: readonly string[]): boolean {
+  return [...mis, ...soft].some((m) => m.startsWith("b:")) || mis.some((m) => /^[ac]:/.test(m)) || (contradicts?.length ?? 0) > 0;
+}
+
+export const ALL_CHECKS: readonly SourceScreenCheck[] = ["a", "b", "c", "e", "h"];
 
 export interface SourceScreenOptions {
   /** The checks to run; all by default. Not on the MCP schema: the dev
@@ -268,7 +274,7 @@ export async function sourceScreenTool(
   }
   const scored = rows.filter((r) => r.out.verdict !== "not_scored");
 
-  // ── a, c, g: one matcher call for every pair ──
+  // ── a, c: one matcher call for every pair ──
   const supports = new Map<string, AttachmentSupport>();
   const supportFor = (id: string) => {
     if (!supports.has(id)) supports.set(id, supportOf(tree, research, id));
@@ -291,24 +297,11 @@ export async function sourceScreenTool(
     pairIndex.set(key, pairs.length - 1);
     return pairs.length - 1;
   };
-  const plan = new Map<Row, { a?: number; parties: Array<[{ personId: string; personaId: string }, number | undefined]>; others: Array<[{ personId: string; personaId: string }, number | undefined]> }>();
+  const plan = new Map<Row, { a?: number; parties: Array<[{ personId: string; personaId: string }, number | undefined]> }>();
   for (const row of scored) {
-    const p: { a?: number; parties: any[]; others: any[] } = { parties: [], others: [] };
+    const p: { a?: number; parties: any[] } = { parties: [] };
     if (on.has("a")) p.a = pairFor(row, pid, row.personaId!);
     if (on.has("c")) for (const party of row.parties ?? []) p.parties.push([party, pairFor(row, party.personId, party.personaId)]);
-    if (on.has("g")) {
-      const seen = new Set<string>([pid, ...(row.parties ?? []).map((x) => x.personId)]);
-      for (const persona of arr(row.record?.persons)) {
-        if (typeof persona?.id !== "string") continue;
-        for (const b of row.recordBares!) {
-          for (const tp of linkedTo(b, persona.id)) {
-            if (seen.has(tp)) continue;
-            seen.add(tp);
-            p.others.push([{ personId: tp, personaId: persona.id }, pairFor(row, tp, persona.id)]);
-          }
-        }
-      }
-    }
     plan.set(row, p);
   }
   let scores: PairScore[] = [];
@@ -331,19 +324,13 @@ export async function sourceScreenTool(
     const p = plan.get(row)!;
     const persona = arr(row.record?.persons).find((x: any) => x?.id === row.personaId);
     const recName = preferredName(persona?.names) ?? {};
-    if (on.has("d")) {
-      sig.d = { relation: bestNameRelation(person.names, recName), recordName: fullName(recName) };
-      if (sig.d.relation === "different") row.soft.push(`d: the record names "${sig.d.recordName}", which no tree name of ${pid} matches or varies.`);
-    }
     if (on.has("a")) {
       const s = scoreAt(p.a);
       if (s === null) sig.a = { not_run: whyNot(p.a) };
       else {
         const band = s < MISATTRIBUTED_BELOW ? "below" : s < WEAK_BELOW ? "grey" : "clear";
         sig.a = { score: s, band };
-        if (band === "below" && sig.d?.relation === "variant") {
-          row.soft.push(`a: leave-one-out score ${s.toFixed(2)} is low, but the names are variants of each other.`);
-        } else if (band === "below") row.mis.push(`a: leave-one-out score ${s.toFixed(2)} is below ${MISATTRIBUTED_BELOW}.`);
+        if (band === "below") row.mis.push(`a: leave-one-out score ${s.toFixed(2)} is below ${MISATTRIBUTED_BELOW}.`);
         else if (band === "grey") row.soft.push(`a: leave-one-out score ${s.toFixed(2)} is in the grey band.`);
       }
     }
@@ -374,12 +361,6 @@ export async function sourceScreenTool(
         if (x.score !== null && x.score < MISATTRIBUTED_BELOW) row.mis.push(`c: party ${x.personId} scores ${x.score.toFixed(2)} against persona ${x.personaId}.`);
       }
       for (const d of disagreements) row.mis.push(`c: ${d}`);
-    }
-    if (on.has("g")) {
-      const checked: PartyScore[] = p.others.map(([x, i]) => ({ ...x, score: scoreAt(i) }));
-      const failing = checked.filter((x) => x.score !== null && x.score < MISATTRIBUTED_BELOW);
-      sig.g = { checked, failing };
-      for (const x of failing) row.mis.push(`g: ${x.personId}, also linked to this record, scores ${x.score!.toFixed(2)} against persona ${x.personaId}.`);
     }
   }
 
@@ -423,7 +404,7 @@ export async function sourceScreenTool(
   }
 
   // ── e: the page image, for flagged attachments only ──
-  const flagged = scored.filter((r) => r.mis.some((m) => /^[abc]:/.test(m)) || (r.out.contradicts?.length ?? 0) > 0);
+  const flagged = scored.filter((r) => flaggedForImage(r.mis, r.soft, r.out.contradicts));
   if (on.has("e")) {
     const sourcesById = new Map<string, any>(arr(research?.sources).map((s) => [s?.id, s]));
     await Promise.all(

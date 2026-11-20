@@ -27,7 +27,7 @@ for `source-evaluation`'s `screen-verdicts-reported` test (issue #3504).
   four sources, the extracted assertions, and the person-mode links to
   `KD96-TV2`.
 - **`source_screen` on this project** is `source-screen-hole-screened`: the real
-  tool's answer with checks a, b, c, d, g, h (no image read), and a stub matcher
+  tool's answer with checks a, b, c, h (no image read), and a stub matcher
   because FamilySearch's matcher answers 400 for these synthetic records. S3 is
   `misattributed` and names S1 and S2, whose birth years disagree with its
   1852; S1 and S4 are `fine`; S2 is `weak` (death 1954 against the tree's 1945).

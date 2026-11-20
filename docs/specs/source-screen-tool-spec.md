@@ -27,7 +27,7 @@ returns one row per attachment. A mode would give one tool two return shapes.
 | `personId` | string | yes | A tree person id, or a FamilySearch id a tree person's `ark` links to (resolved as `person_warnings` resolves it, by `findAnchor`). |
 
 `checks` is **not** on the MCP schema. `sourceScreenTool(input, principal,
-{ checks })` takes a subset of `a b c d e g h` so the measurement script can
+{ checks })` takes a subset of `a b c e h` so the measurement script can
 score each check's absence. Tests also inject `matchPairs`, `imageTranscribe`,
 `now` and `deadlineMs`.
 
@@ -96,7 +96,10 @@ with it:
   `unregisteredDisagreements` uses, exported from `question-state.ts`, not
   copied.
 - **Names:** given name and surname each the same or related after the
-  variant fold (check d's tables).
+  variant fold: given names by `lookupNameVariants` / `lookupNameFamily` (the
+  same, one listing the other, or three or more shared forms — Louis and Lewis
+  share Lew, Lou and Louie, while Margaret and Mary share only Mamie and May),
+  surnames by `patronymicVariants`.
 - **Relationships:** a relationship assertion of the relationship's type whose
   persona and related persona link to the two parties.
 
@@ -126,15 +129,11 @@ review.
   only from a stated relationship: a census with no relationship column states
   none, so its positional `head_of_household` label and a "Household of" title
   give no role (KW8N-2TB, 2026-11-01).
-- **d. Name variants.** The record name against each tree name. Given names are
-  related by `lookupNameVariants` / `lookupNameFamily`, surnames by
-  `patronymicVariants`, the tables `record_search`'s variant hints use. A name
-  no tree name matches or varies is a soft signal. A check-a score below the
-  threshold on a name the tables relate is softened to weak: the must-not-flag
-  guard for spelling variants, nicknames and patronymics.
 - **e. Image read, flagged attachments only.** Decided (Richard, 2026-10-27):
-  OCR runs only on attachments the rules already flagged — check a, b or c
-  marked it misattributed, or h named a contradiction — truth sets included.
+  OCR runs only on attachments the rules already flagged — a or c marked it
+  misattributed, b raised any warning (an implausible one included: a wrong year
+  in the index is what b sees first), or h named a contradiction — truth sets
+  included (`flaggedForImage`).
   `imageTranscribeTool` reads the research source's `image_ark` **without a
   `projectPath`**, so nothing is staged or saved, with `lookingFor` the tree's
   value of the disputed field (the person's name, plus the tree's birth or death
@@ -142,14 +141,10 @@ review.
   the index differs — is `indexing_error`; `NOT FOUND` leaves the verdict on the
   rules. No key, no image, a refused transcription slot, an error, or no answer
   is `e: { not_run }` and the verdict stands on the rules.
-- **g. Every person the record touches.** Each other tree person holding a live
-  link to any persona of the record, whatever its rationale, is scored as in a
-  against their own leave-one-out tree. One below the threshold flags the
-  attachment.
 - **h. Contradictions.** Two attachments on the person whose birth or death
   year or place disagree (the same comparators; a census birth as its window)
   each get `contradicts`, naming the other — except that a disagreement with an
-  attachment a, b, c or g already marks misattributed is that attachment's
+  attachment a, b or c already marks misattributed is that attachment's
   finding alone: it names the other, and the other is not `contradicts` for it
   and is not image-read for it. `signals.h` still records every disagreement.
   Without this, one wrong record marks every right record that disagrees with it
@@ -161,8 +156,8 @@ In order, first match wins:
 
 1. `not_scored` — a reason from the table above.
 2. `indexing_error` — e found the tree's value on the page.
-3. `misattributed` — a below `MISATTRIBUTED_BELOW` (not softened by d), b
-   impossible, c party below the threshold or a contradicted relationship, or g.
+3. `misattributed` — a below `MISATTRIBUTED_BELOW`, b impossible, or c: a party
+   below the threshold or a contradicted relationship.
 4. `contradicts` — h alone.
 5. `weak` — a in the grey band (`MISATTRIBUTED_BELOW` ≤ score < `WEAK_BELOW`),
    or any soft signal.
@@ -172,16 +167,61 @@ In order, first match wins:
 
 ### Thresholds
 
-`MISATTRIBUTED_BELOW = 0.5` starts at the baseline's `DEFAULT_THRESHOLD` and
-`WEAK_BELOW = 0.8` is provisional. Both are to be set from the planted-fixture
-run (`dev/source-screen.ts score` with this tool's findings beside the baseline
-and judge files), and the measured recall per planted type and false-alarm rate,
-with fixture counts, are recorded here when that run is made. Until then they
-are unmeasured.
+`MISATTRIBUTED_BELOW = 0.5` (the baseline's `DEFAULT_THRESHOLD`) is kept: on the
+planted set below, every wrong-person plant but one scores under 0.05, and the
+one that does not (0.69) is caught by b. Lowering it would not raise recall, and
+the host profiles' own attachments do not separate from the plants by score —
+29 of 172 score under 0.05, and the whole-tree score of the same record is as
+low in 24 of those, so the matcher, not leave-one-out, puts them there. Whether
+those are wrong attachments or matcher misses only the truth set can say.
+`WEAK_BELOW = 0.8` is unmeasured.
+
+## Measurement
+
+Planted fixtures (`dev/source-screen-fixtures.json`, 23 copies: 11 wrong-person
+plants, 3 index edits, 10 must-not-flag edits), snapshot 2026-11-20, scored by
+`dev/source-screen.ts score`:
+
+| planted type | n | baseline | source_screen, no image read | source_screen |
+|---|---|---|---|---|
+| easy_wrong_person (recall) | 3 | 3 | 3 | 3 |
+| hard_wrong_person (recall) | 3 | 2 | 3 | 3 |
+| sr_jr_swap (recall) | 3 | 3 | 3 | 3 |
+| relative_clash (recall) | 2 | 2 | 2 | 2 |
+| indexing_error (recall) | 3 | 0 | 0 | 1 |
+| spelling_variant (false alarms) | 2 | 2 | 2 | 2 |
+| nickname (false alarms) | 2 | 2 | 1 | 1 |
+| maiden_married (false alarms) | 2 | 2 | 1 | 1 |
+| census_age_drift (false alarms) | 2 | 2 | 0 | 0 |
+| patronymic (false alarms) | 2 | 2 | 0 | 0 |
+
+The baseline's wrong-person catches all rest on its by-construction
+multi-attached signal; this tool's do not. Two of the three index edits are in
+index-only collections (a death index and the SSDI), which have no page image,
+so check e cannot settle them. Of the image reads that ran, 42 found the tree's
+value, 78 did not; 36 were cut by the time budget, 34 were images FamilySearch
+restricts for the account, and 27 records had no image.
+
+**Every check earns its place** — each scored with and without, no image read,
+on an earlier build of the same planted set:
+
+| without | wrong-person caught (of 11) | false alarms (of 10) | result |
+|---|---|---|---|
+| (none) | 10 | 5 | — |
+| a | 4 | 3 | kept |
+| b | 9 | 5 | kept |
+| c | 10 | 5 | unmeasured: no relationship-level plant |
+| h | 10 | 5 | unmeasured: no contradiction plant |
+| d (name variants) | 11 | 5 | **dropped**: it softened one sr_jr_swap plant and spared no false alarm |
+| g (every person the record touches) | 10 | 4 | **dropped**: it added a false alarm and caught nothing more |
+
+c and h are kept pending the truth set, which also has to re-test the d and g
+drops: the planted set carries two fixtures per must-not-flag type. The
+100-person truth set was not available for this run.
 
 ## Time budget
 
-Cowork aborts every MCP call at 60 s. All matcher pairs (a, c, g) go in **one**
+Cowork aborts every MCP call at 60 s. All matcher pairs (a, c) go in **one**
 `matchPairs` call. The image reads run concurrently under one deadline,
 `OCR_DEADLINE_MS = 45_000` measured from the call's entry; each gets
 `{ ocrTimeoutMs: deadline − now }`, so an overrun is aborted rather than left

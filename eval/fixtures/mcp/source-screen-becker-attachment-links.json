@@ -1,6 +1,6 @@
 {
   "tool": "source_screen",
-  "description": "Real source_screen answer for John Becker (I1) on becker-attachment-links-question, captured 2026-11-20 with checks a,b,c,d,g,h (no OCR): the 1900 census weak at a 0.79 leave-one-out score, the 1910 census fine, one unindexed attachment not scored.",
+  "description": "Real source_screen answer for John Becker (I1) on becker-attachment-links-question, captured 2026-11-20 with checks a,b,c,h (no OCR): the 1900 census weak at a 0.79 leave-one-out score, the 1910 census fine, one unindexed attachment not scored.",
   "args": {
     "personId": "I1"
   },
@@ -17,10 +17,6 @@
           "a: leave-one-out score 0.79 is in the grey band."
         ],
         "signals": {
-          "d": {
-            "relation": "same",
-            "recordName": "John Becker"
-          },
           "a": {
             "score": 0.788498,
             "band": "grey"
@@ -32,10 +28,6 @@
           "c": {
             "parties": [],
             "disagreements": []
-          },
-          "g": {
-            "checked": [],
-            "failing": []
           }
         },
         "personaId": "p_1"
@@ -47,10 +39,6 @@
         "verdict": "fine",
         "reasons": [],
         "signals": {
-          "d": {
-            "relation": "same",
-            "recordName": "John Becker"
-          },
           "a": {
             "score": 0.86390287,
             "band": "clear"
@@ -62,10 +50,6 @@
           "c": {
             "parties": [],
             "disagreements": []
-          },
-          "g": {
-            "checked": [],
-            "failing": []
           }
         },
         "personaId": "p_1"
