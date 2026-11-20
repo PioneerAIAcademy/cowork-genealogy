@@ -5,6 +5,12 @@ import {
   simplifySourceDescription,
 } from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import {
+  TREE_PERSONS_BASE,
+  TREE_PERSON_ACCEPT,
+  classifyTreePersonStatus,
+  extractPersonId,
+} from "../utils/tree-person-status.js";
 import { START_PROJECT_RULE } from "../utils/project-io.js";
 import {
   fetchMemories,
@@ -55,8 +61,8 @@ import type {
 } from "../types/person-read.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 
-const API_BASE = "https://api.familysearch.org/platform/tree/persons";
-const ACCEPT_HEADER = "application/x-fs-v1+json";
+const API_BASE = TREE_PERSONS_BASE;
+const ACCEPT_HEADER = TREE_PERSON_ACCEPT;
 const MAX_REDIRECTS = 1;
 const PARENT_CHILD_URI = "http://gedcomx.org/ParentChild";
 
@@ -892,13 +898,15 @@ async function fetchAndConvert(
     redirect: "manual",
   });
 
+  const outcome = classifyTreePersonStatus(res);
+
   // 204: living person, no body — return a stub.
-  if (res.status === 204) {
+  if (outcome === "living") {
     return { result: livingPersonStub(pid), resolvedId: pid };
   }
 
   // 301: merged. Follow the Location header to the new ID (capped).
-  if (res.status === 301) {
+  if (outcome === "merged") {
     if (redirectsFollowed >= MAX_REDIRECTS) {
       throw new Error(
         `FamilySearch tree API error: redirect loop while resolving ${pid}.`,
@@ -914,26 +922,26 @@ async function fetchAndConvert(
     return fetchAndConvert(principal, newId, redirectsFollowed + 1, deadline);
   }
 
-  if (res.status === 401) {
+  if (outcome === "unauthorized") {
     throw new Error(await rejectedTokenMessage(principal));
   }
-  if (res.status === 403) {
+  if (outcome === "restricted") {
     throw new Error(`Person ${pid} is restricted and cannot be viewed.`);
   }
-  if (res.status === 404) {
+  if (outcome === "not_found") {
     throw new Error(`Person ${pid} not found in the FamilySearch Family Tree.`);
   }
-  if (res.status === 410) {
+  if (outcome === "deleted") {
     throw new Error(
       `Person ${pid} has been deleted from the FamilySearch Family Tree.`,
     );
   }
-  if (res.status === 429) {
+  if (outcome === "rate_limited") {
     throw new Error(
       "FamilySearch rate limit reached. Wait a moment and try again.",
     );
   }
-  if (!res.ok) {
+  if (outcome === "error") {
     throw new Error(`FamilySearch tree API error: ${res.status}`);
   }
 
@@ -1308,11 +1316,6 @@ function buildUrl(
   if (sourceDescriptions) params.push("sourceDescriptions=true");
   const qs = params.length > 0 ? `?${params.join("&")}` : "";
   return `${API_BASE}/${encodeURIComponent(pid)}${qs}`;
-}
-
-function extractPersonId(locationHeader: string): string | null {
-  const match = locationHeader.match(/\/persons\/([^/?#]+)/);
-  return match ? match[1] : null;
 }
 
 function livingPersonStub(pid: string): PersonReadResult {

@@ -81,6 +81,7 @@ import {
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
+  divisionContradiction,
   countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
@@ -12216,6 +12217,21 @@ async function prepareOps(
             "correct standard_place, or set standard_place: null if no standard form exists.",
         ),
       );
+      return;
+    }
+    // ── Place lever (a), continued: state/province contradiction, one level
+    // down from the country check above. Only a value this lever itself
+    // looked up (sidecar copy or geocode) is dropped here — a caller-supplied
+    // standard_place is out of scope, as today. Checked, and returned on,
+    // before the `unverifiable` block below so a value this drops never also
+    // gets that block's "verify this" warning pushed for it first.
+    // Unlike the country check above, this one never refuses (no errors.push),
+    // even on a plain append with neither dropContradiction nor valueDerived
+    // set: a wrong state/province is a plausible lookup mistake, not grounds
+    // to fail the whole extraction over it.
+    if ((filled === "sidecar" || filled === "geocoded") && divisionContradiction(entry.place, sp)) {
+      delete entry.standard_place;
+      unresolved(`: the lookup's answer '${sp}' names a different state or province`);
       return;
     }
     if (verdict === "unverifiable" && filled === "geocoded") {
