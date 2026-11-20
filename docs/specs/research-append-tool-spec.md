@@ -739,8 +739,9 @@ new place without setting `standard_place`. On that update the existing assertio
 the base, no sidecar value is copied (geocoding only; its sidecar record still gives
 the record's country, below), a resolved value is written into the
 update's `standard_place`, and when nothing resolves, or the resolved value
-contradicts the place's country, the old `standard_place` is cleared (set to `null`)
-with a warning rather than kept for the new place.
+contradicts the place's country or its state or province (Lever A), the old
+`standard_place` is cleared (set to `null`) with a warning rather than kept for
+the new place.
 
 A place-of-event variant's place lifted from `value` before the levers run
 (§3.7) is a **value-derived** place. It is resolved, echoed and warned about

@@ -291,6 +291,11 @@ describe("divisionContradiction — a US state, Puerto Rico or Canadian province
     // The one-word list leaves "Ind" out (ambiguous: Indiana or India) —
     // leave it out here too, per the issue.
     ["an abbreviation the list leaves out as ambiguous", "Bombay, Ind", "Mumbai, Maharashtra, India"],
+    // Ind/Ala/Mich are left off the list too (per the issue), so even against
+    // a standard place in a real, different US state, nothing is read to contradict.
+    ["Ind, which the list leaves out, against a US state", "Bombay, Ind", "Bombay, Franklin, New York, United States"],
+    ["Ala, which the list leaves out, against a US state", "Florence, Ala", "Florence, Williamson, Texas, United States"],
+    ["Mich, which the list leaves out, against a US state", "Detroit, Mich", "Detroit, Red River, Texas, United States"],
   ])("does not refuse %s", (_label, place, standard) => {
     expect(divisionContradiction(place, standard)).toBe(false);
   });

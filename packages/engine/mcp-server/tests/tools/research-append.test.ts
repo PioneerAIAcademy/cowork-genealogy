@@ -12030,6 +12030,63 @@ describe("research_append (composite persist + enforcement)", () => {
     );
   });
 
+  it("drops a sidecar-copied standard_place that names another state than the text's abbreviation (#4689)", async () => {
+    await writeProject(sidecarResearch());
+    const record = sidecarRecord();
+    record.gedcomx.persons[0].facts![0] = {
+      id: "F1",
+      type: "Residence",
+      place: "Forest, Miss, United States",
+      standard_place: "Forest, Wisconsin, United States",
+    };
+    await writeSidecar([record]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_id: "ark:/61903/1:1:ABCD-123",
+            log_entry_id: "log_001",
+            fact_type: "residence",
+            value: "Forest, Miss, United States",
+            place: "Forest, Miss, United States",
+          },
+        },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings).toContain(
+      "could not resolve standard_place for 'Forest, Miss, United States' (left unset): the lookup's answer " +
+        "'Forest, Wisconsin, United States' names a different state or province",
+    );
+    expect(r.unresolvedPlaces).toEqual(["Forest, Miss, United States"]);
+    expect(r.resolvedPlaces).toBeUndefined();
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    expect((await readResearch()).assertions.at(-1)).not.toHaveProperty("standard_place");
+  });
+
+  it("keeps a caller-supplied standard_place that names another state: only a looked-up value is dropped (#4689)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        place: "Forest, Miss, United States",
+        standard_place: "Forest, Wisconsin, United States",
+      },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/different state or province/);
+    expect((await readResearch()).assertions.at(-1).standard_place).toBe("Forest, Wisconsin, United States");
+  });
+
   it("copies no other person's standard_place: in a census household only the head's own fact was named (SGZQ-Y3L's shape)", async () => {
     await writeProject(sidecarResearch());
     const place = "Saint Peter, Carmarthenshire, Wales";
