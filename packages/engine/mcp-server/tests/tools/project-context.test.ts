@@ -380,6 +380,13 @@ describe("project_context", () => {
               quirks: ["Indexed only at county level."],
               pages_read: [{ section: "home", url: "u1", found: true }],
             },
+            {
+              id: "loc_002",
+              place: "Wayne, Michigan, United States",
+              time_period: "1870-1930",
+              collections: [{ id: "1325221", title: "United States, Census, 1900", date_range: "1900-1900", person_count: 5, record_count: 9 }],
+              pages_read: [{ section: "home", url: "u1", found: true }],
+            },
           ],
           log: [
             {
@@ -427,7 +434,7 @@ describe("project_context", () => {
       expect(keys(r)).toEqual(
         [
           "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "narrationGuidance", "subscriptions",
-          "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "awaitingUser",
+          "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "nationalCollections", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
           "unregisteredDisagreementCount", "uploads",
         ].sort(),
@@ -450,6 +457,7 @@ describe("project_context", () => {
       expect(keys(r.localities?.[0])).toEqual(["collections", "forPlace", "id", "jurisdictions", "place", "quirks", "timePeriod"]);
       expect(keys(r.localities?.[0].jurisdictions?.[0])).toEqual(["dateRange", "name"]);
       expect(keys(r.localities?.[0].collections?.[0])).toEqual(["dateRange", "id", "personCount", "recordCount", "title"]);
+      expect(keys(r.nationalCollections?.["United States"]?.[0])).toEqual(["dateRange", "id", "personCount", "recordCount", "title"]);
       expect(keys(r.awaitingUser?.[0])).toEqual(["logId", "performed", "planItemId", "site", "urlGenerated"]);
       expect(r.exhaustedImageGroups).toEqual([{ imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_001"] }]);
       expect(keys(r.uploads?.[0])).toEqual(["hasText", "name", "uploaded"]);
@@ -795,6 +803,74 @@ describe("project_context", () => {
       },
     ]);
     expect(JSON.stringify(r.localities)).not.toContain("long prose");
+  });
+
+  describe("nationalCollections: country-wide rows once per country (spec)", () => {
+    const census = (year: number) => ({
+      id: `us${year}`,
+      title: `United States, Census, ${year}`,
+      date_range: `${year}-${year}`,
+      person_count: 1,
+      record_count: 1,
+    });
+    const loc = (id: string, place: string, time_period: string, collections: unknown[]) => ({
+      id,
+      place,
+      time_period,
+      collections,
+      pages_read: [{ section: "home", url: "u1", found: true }],
+    });
+    const run = async (localities: unknown[]) => {
+      await writeProject(
+        { project: { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" }, localities },
+        { persons: [], relationships: [], sources: [] },
+      );
+      const r = await projectContext({ projectPath: dir }, LOCAL);
+      if (!r.ok) throw new Error(r.errors.join("; "));
+      return r;
+    };
+    const michigan = { id: "m1", title: "Michigan, Death Records, 1867-1952", date_range: "1867-1952", person_count: 1, record_count: 1 };
+
+    it("lists a row two localities share once, by title, and in neither locality", async () => {
+      const r = await run([
+        loc("loc_001", "Wayne, Michigan, United States", "1870-1930", [michigan, census(1900), census(1880)]),
+        loc("loc_002", "Cook, Illinois, United States", "1900-1950", [census(1940), census(1900)]),
+      ]);
+      expect(r.nationalCollections).toEqual({
+        "United States": [
+          { id: "us1880", title: "United States, Census, 1880", dateRange: "1880-1880", personCount: 1, recordCount: 1 },
+          { id: "us1900", title: "United States, Census, 1900", dateRange: "1900-1900", personCount: 1, recordCount: 1 },
+          { id: "us1940", title: "United States, Census, 1940", dateRange: "1940-1940", personCount: 1, recordCount: 1 },
+        ],
+      });
+      expect(r.localities?.[0].collections?.map((c) => c.id)).toEqual(["m1"]);
+      expect(r.localities?.[1].collections).toBeUndefined();
+    });
+
+    it("claims nothing for the years between two localities: only the rows they hold", async () => {
+      const r = await run([
+        loc("loc_001", "Wayne, Michigan, United States", "1850-1870", [census(1850), census(1860), census(1870)]),
+        loc("loc_002", "Wayne, Michigan, United States", "1910-1930", [census(1910), census(1920), census(1930)]),
+      ]);
+      expect(r.nationalCollections?.["United States"]?.map((c) => c.id)).toEqual(["us1850", "us1860", "us1870", "us1910", "us1920", "us1930"]);
+    });
+
+    it("keeps a state-level title in its locality", async () => {
+      const r = await run([
+        loc("loc_001", "Halifax, Nova Scotia, Canada", "1836-1910", [
+          { id: "ca1901", title: "Canada, Census, 1901" },
+          { id: "cans", title: "Canada, Nova Scotia, Deaths, 1890-1955" },
+        ]),
+      ]);
+      expect(r.nationalCollections).toEqual({ Canada: [{ id: "ca1901", title: "Canada, Census, 1901" }] });
+      expect(r.localities?.[0].collections?.map((c) => c.id)).toEqual(["cans"]);
+    });
+
+    it("leaves a place outside the three countries alone, and gives no key", async () => {
+      const r = await run([loc("loc_001", "Madeira, Portugal", "1830-1910", [{ id: "pt", title: "Portugal, Civil Records, 1437-2023" }])]);
+      expect(r.nationalCollections).toBeUndefined();
+      expect(r.localities?.[0].collections?.map((c) => c.id)).toEqual(["pt"]);
+    });
   });
 
   it("truncates a long question to 140 chars ending in an ellipsis; leaves a 140-char one alone", async () => {

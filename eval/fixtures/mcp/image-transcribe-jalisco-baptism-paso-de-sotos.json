@@ -1,0 +1,17 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe response for image 008123456_00412 — an invented 1885 baptism entry from the parish book of Paso de Sotos, Jalisco, for María Ignacia Robledo. Written for ut_research_p4s (#4214): the page gives the birthplace by the town's name before 1922, Paso de Sotos, while the scenario's tree gives Villa Hidalgo, Jalisco, Mexico, the same town. Names, parish staff and image number are invented. The response keeps the full page: with a projectPath the mock stages it and returns `staged` + `digest` with no inline `transcription`, as production does, so the router has to `sidecar_read` the staged ref to show it. The page is longer than the 300-character `digest.excerpt` (`DIGEST_EXCERPT_CHARS`). `viewerUrl` is what imageViewerUrl builds for this imageId (zero-indexed `i=`).",
+  "args": {
+    "imageId": "008123456_00412"
+  },
+  "response": {
+    "transcription": "Libro de Bautismos, Parroquia de Paso de Sotos, Jalisco, 1885, foja 58.\nAl margen: N.° 214. María Ignacia. Paso de Sotos.\nEn la Parroquia de Paso de Sotos, a los catorce días del mes de marzo de mil ochocientos ochenta y cinco, yo el Presbítero Anselmo Figueroa, Cura de esta feligresía, bauticé solemnemente a una niña que nació en este pueblo de Paso de Sotos el día ocho del presente, a quien puse por nombre María Ignacia, hija legítima de Juan Robledo y de María Petra Castañeda. Abuelos paternos: Toribio Robledo y Luisa Gómez. Abuelos maternos: Felipe Castañeda y Rafaela Ruiz. Padrinos: Cenobio Lara y Dolores Medina, a quienes advertí su obligación y parentesco espiritual. Y para constancia lo firmé.\nAnselmo Figueroa.",
+    "viewerUrl": "https://www.familysearch.org/search/film/008123456?i=411",
+    "metadata": {
+      "imageId": "008123456_00412",
+      "contentType": "image/jpeg",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1488305
+    }
+  }
+}

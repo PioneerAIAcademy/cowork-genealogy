@@ -199,7 +199,7 @@ person ID, go to `@plugin:search-images` with the message copied verbatim and no
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
-and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. A transcription you deliver yourself: call
+and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. Whenever the reply quotes a record, from a transcription or a `record_read`, give what the record says in its own words, including a place name the tree does not use; never call the tree wrong, unsupported, an error or a conflation, and never write that the record's place differs from, or is not, the tree's place. A difference the researcher wants examined goes to `@plugin:person-evidence`; do not say it will resolve the names. When the record's place name is not the tree's, give the difference as one of names only (the record names X; the tree has Y), say plainly that you cannot tell from here whether the two name the same place, and never say the places or birth places differ, diverge or are not the tree's, or how they relate, including what kind of place either one is or where it lies. A transcription you deliver yourself: call
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
 `projectPath` when a project exists, however new or empty — and read the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`; write the reply as its
@@ -270,14 +270,13 @@ message.
    `research.json` grows all run — dozens of sources, 100+ assertions by
    late run — so a whole-section query costs more context every
    time you route, and routing happens constantly. `research_query` answers
-   the routing question host-side and returns only the ids, statuses and
-   counts. For tree facts (birth, death, marriage) call `tree_query` with
+   the routing question host-side and returns only the matching entries. For tree facts (birth, death, marriage) call `tree_query` with
    `personIds` and `factTypes`.
 
-   **`research_query` returns at most 50 `items` per call; `count` is the true
-   total.** When `truncated` is true you are routing on part of the set — page
-   with `offset` (50, then 100) before concluding a section is empty, complete,
-   or that some step has produced nothing.
+   **`research_query` returns a page of `items` per call; `count` is the true
+   total.** When `truncated` is true you are routing on part of the set — call
+   again with `offset: nextOffset` before concluding a section is empty,
+   complete, or that some step has produced nothing.
 
    **Query what the routing decision needs and no more.** Each call is a turn.
    Pull the one section that answers the question in front of you rather than

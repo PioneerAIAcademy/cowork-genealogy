@@ -1,0 +1,69 @@
+{
+  "project": {
+    "id": "rp_lucas_children_marriages",
+    "objective": "Identify the children of Antonio Fernandes Lucas (b. 1838, Santo Antonio, Funchal) and Maria Joana through their marriage records",
+    "subject_person_ids": [
+      "GK89-82B"
+    ],
+    "status": "active",
+    "created": "2026-11-16",
+    "updated": "2026-11-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did the children of Antonio Fernandes Lucas and Maria Joana marry, and where?",
+      "rationale": "The tree has two children, Antonio (b. 1896) and Julia (b. 1899). Their marriages name both parents.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-16",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "Funchal, Madeira, Portugal",
+          "date_range": "1885-1930",
+          "repository": "FamilySearch",
+          "rationale": "Marriage records name the groom's and bride's parents, so the marriages of Antonio's children would name him and Maria Joana.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
