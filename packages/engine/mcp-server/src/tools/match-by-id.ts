@@ -59,6 +59,7 @@ async function matchById(
   principal: Principal,
   window?: ReadWindow,
 ): Promise<MatchByIdResult> {
+  const started = Date.now();
   const queryArk = normalizeId(input.id, cfg);
   const { minConfidence, status, includeSummary, count } = validateOptions(input);
 
@@ -138,7 +139,7 @@ async function matchById(
   // such check.
   if (body.links?.["not-found"]) {
     if (cfg.expectedPrefix === "4:1:") {
-      return resolveTreePersonNotFound(queryArk, body, principal, window);
+      return resolveTreePersonNotFound(queryArk, body, principal, window, started);
     }
     throw new Error(
       `FamilySearch has no ${humanId(cfg)} at ${queryArk}. The id is well-formed ` +
@@ -168,15 +169,27 @@ const NO_MATCH_DATA_NOTE =
 
 // One GET on the tree-persons endpoint, status code only, to learn whether a
 // person the match service could not resolve exists. NOT `person_read`: that
-// fetches memories and fans out to relatives. The same `window` as the match
-// request bounds it, so `tree_gaps`' deadline still holds.
+// fetches memories and fans out to relatives. It gets what the match request
+// left of `window`, not a second copy of it, so `tree_gaps`' deadline still
+// holds; with nothing left it does not fetch.
 async function resolveTreePersonNotFound(
   queryArk: string,
   body: MatchApiResponse,
   principal: Principal,
-  window?: ReadWindow,
+  window: ReadWindow | undefined,
+  started: number,
 ): Promise<MatchByIdResult> {
   const pid = queryArk.slice(queryArk.lastIndexOf(":") + 1);
+  const spent = Date.now() - started;
+  const left = window
+    ? { timeoutMs: window.timeoutMs - spent, budgetMs: window.budgetMs - spent }
+    : undefined;
+  if (left && (left.timeoutMs <= 0 || left.budgetMs <= 0)) {
+    throw new Error(
+      `Could not confirm whether ${pid} exists in the FamilySearch Family Tree: ` +
+        `the time allowed for this read ran out. Their matches are unknown, not zero.`,
+    );
+  }
   let response: Response;
   try {
     response = await fsFetch(
@@ -190,8 +203,8 @@ async function resolveTreePersonNotFound(
         },
         redirect: "manual",
       },
-      window?.timeoutMs,
-      window ? { budgetMs: window.budgetMs } : undefined,
+      left?.timeoutMs,
+      left ? { budgetMs: left.budgetMs } : undefined,
     );
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;

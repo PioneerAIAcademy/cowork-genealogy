@@ -318,18 +318,66 @@ describe.each([
   });
 });
 
-describe("person_record_matches: the existence check shares the read window", () => {
-  it("gives the second request the same timeout and retry budget", async () => {
+describe("person_record_matches: the existence check spends what the match request left of the window", () => {
+  it("gives the second request no more time than the first had", async () => {
     mockJson(NOT_FOUND_BODY);
     mockTreeStatus(200);
     vi.mocked(fsFetch).mockClear();
     await personRecordMatches({ id: "KHZQ-SJY" }, LOCAL, { timeoutMs: 4321, budgetMs: 8765 });
     const calls = vi.mocked(fsFetch).mock.calls;
     expect(calls).toHaveLength(2);
-    for (const call of calls) {
-      expect(call[3]).toBe(4321);
-      expect(call[4]).toEqual({ budgetMs: 8765 });
-    }
+    expect(calls[0][3]).toBe(4321);
+    expect(calls[0][4]).toEqual({ budgetMs: 8765 });
+    expect(calls[1][3]).toBeGreaterThan(0);
+    expect(calls[1][3]).toBeLessThanOrEqual(4321);
+    expect((calls[1][4] as { budgetMs: number }).budgetMs).toBeGreaterThan(0);
+    expect((calls[1][4] as { budgetMs: number }).budgetMs).toBeLessThanOrEqual(8765);
+  });
+
+  it("subtracts the time the match request took", async () => {
+    let clock = 1_000_000;
+    vi.spyOn(Date, "now").mockImplementation(() => clock);
+    mockFetch.mockImplementationOnce(async () => {
+      clock += 1500; // the match request takes 1.5 s
+      return {
+        ok: true,
+        status: 200,
+        statusText: "",
+        text: () => Promise.resolve(JSON.stringify(NOT_FOUND_BODY)),
+        json: () => Promise.resolve(NOT_FOUND_BODY),
+        headers: new Headers({ "content-type": "application/json" }),
+      };
+    });
+    mockTreeStatus(200);
+    vi.mocked(fsFetch).mockClear();
+    await personRecordMatches({ id: "KHZQ-SJY" }, LOCAL, { timeoutMs: 4000, budgetMs: 6000 });
+    const calls = vi.mocked(fsFetch).mock.calls;
+    expect(calls[1][3]).toBe(2500);
+    expect(calls[1][4]).toEqual({ budgetMs: 4500 });
+  });
+
+  it("makes no second fetch, and says the matches are unknown, when the match request used the whole window", async () => {
+    let clock = 1_000_000;
+    vi.spyOn(Date, "now").mockImplementation(() => clock);
+    mockFetch.mockImplementationOnce(async () => {
+      clock += 10_000;
+      return {
+        ok: true,
+        status: 200,
+        statusText: "",
+        text: () => Promise.resolve(JSON.stringify(NOT_FOUND_BODY)),
+        json: () => Promise.resolve(NOT_FOUND_BODY),
+        headers: new Headers({ "content-type": "application/json" }),
+      };
+    });
+    const err = await personRecordMatches({ id: "KHZQ-SJY" }, LOCAL, { timeoutMs: 4000, budgetMs: 4000 }).then(
+      () => null,
+      (e: Error) => e,
+    );
+    expect(err?.message).toMatch(/Could not confirm whether KHZQ-SJY exists/);
+    expect(err?.message).toMatch(/unknown, not zero/);
+    expect(err?.message).not.toMatch(/has no tree person/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 

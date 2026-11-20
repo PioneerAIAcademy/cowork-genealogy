@@ -140,8 +140,9 @@ LLM-facing tool. We default to **20** and clamp to `[1, 50]`.
 
 ### Unresolvable ids
 
-**A well-formed id the service cannot resolve is reported as an error, not as
-zero matches.** Upstream answers `200` in both cases and the two bodies are
+**For a record persona, a well-formed id the service cannot resolve is reported
+as an error, not as zero matches. For a tree person the tool first asks the
+tree-persons endpoint (see "What the two tree-person tools do with it").** Upstream answers `200` in both cases and the two bodies are
 otherwise identical — same `title`, `entries: []`, `results: 0`. The only
 explicit discriminator is a `not-found` entry in `links` (an epoch `updated` of
 `1970-01-01T00:00:00.001Z` is a second tell; the link is the one the tool keys
@@ -268,9 +269,10 @@ fetches memories and relatives) and map the status:
 | `401` | throws the sign-in message |
 | `429`, `5xx`, timeout, network error | throws "Could not confirm whether `<pid>` exists …": never "no such person", never zero matches |
 
-The check shares the match request's timeout and retry budget (`window`), so
-`tree_gaps`' deadline still holds, and a spent budget is re-thrown as it is
-there. The record-persona tools (`record_person_matches`,
+The check gets what the match request left of its timeout and retry budget
+(`window`), not a second copy of it, so `tree_gaps`' deadline still holds; with
+nothing left it makes no request and throws "Could not confirm …". A spent budget
+is re-thrown as it is there. The record-persona tools (`record_person_matches`,
 `record_record_matches`) keep the throw: that side has no existence check.
 
 Reproduce with `dev/probe-match-not-found.ts`.
