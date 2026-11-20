@@ -10,7 +10,12 @@ import {
   RESEARCH_QUERY_EXCLUDED,
   RESEARCH_QUERY_OPTIONAL_SECTIONS,
   SECTION_FILTERS,
+  flattenAssertionGroups,
 } from "../../src/tools/research-query.js";
+
+/** An `assertions` answer as flat assertions (the tool returns them grouped). */
+const flat = (r: { items: unknown[] }, questionId?: string): any[] =>
+  flattenAssertionGroups(r.items, questionId) as any[];
 
 describe("research_query", () => {
   let dir: string;
@@ -45,7 +50,7 @@ describe("research_query", () => {
     if (!result.ok) return;
     expect(result.section).toBe("assertions");
     expect(result.count).toBe(1);
-    expect(result.items.map((i) => i.id)).toEqual(["a_001"]);
+    expect(flat(result).map((i) => i.id)).toEqual(["a_001"]);
     expect(result.truncated).toBe(false);
   });
 
@@ -74,7 +79,7 @@ describe("research_query", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.count).toBe(1);
-    expect(result.items.map((i) => i.id)).toEqual(["a_002"]);
+    expect(flat(result).map((i) => i.id)).toEqual(["a_002"]);
   });
 
   it("every SECTION_FILTERS field names a real property on that section's schema", async () => {
@@ -145,7 +150,7 @@ describe("research_query", () => {
     });
     expect(own.ok).toBe(true);
     if (!own.ok) return;
-    expect(own.items.map((i) => i.id)).toEqual(["a_001"]);
+    expect(flat(own).map((i) => i.id)).toEqual(["a_001"]);
   });
 
   it("filters assertions by questionId — a CONTAINS match on extracted_for_question_ids", async () => {
@@ -160,7 +165,7 @@ describe("research_query", () => {
     const result = await researchQuery({ projectPath: dir, section: "assertions", questionId: "q_002" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.items.map((i) => i.id)).toEqual(["a_001"]);
+    expect(flat(result).map((i) => i.id)).toEqual(["a_001"]);
   });
 
   it("filters person_evidence by personId", async () => {
@@ -282,7 +287,7 @@ describe("research_query", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.count).toBe(60);
-    expect(result.items).toHaveLength(50);
+    expect(flat(result)).toHaveLength(50);
     expect(result.truncated).toBe(true);
   });
 
@@ -455,8 +460,8 @@ describe("research_query", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.count).toBe(57); // count stays the true total, unaffected by offset
-    expect(result.items).toHaveLength(7); // items 51..57
-    expect(result.items.map((i) => i.id)).toEqual([
+    expect(flat(result)).toHaveLength(7); // items 51..57
+    expect(flat(result).map((i) => i.id)).toEqual([
       "a_50", "a_51", "a_52", "a_53", "a_54", "a_55", "a_56",
     ]);
     expect(result.truncated).toBe(false); // nothing beyond this page
@@ -469,7 +474,7 @@ describe("research_query", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.count).toBe(120);
-    expect(result.items).toHaveLength(50); // items 51..100
+    expect(flat(result)).toHaveLength(50); // items 51..100
     expect(result.truncated).toBe(true); // 101..120 still remain
   });
 
@@ -480,7 +485,7 @@ describe("research_query", () => {
     const result = await researchQuery({ projectPath: dir, section: "assertions", offset: 50 });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.items).toHaveLength(50);
+    expect(flat(result)).toHaveLength(50);
     expect(result.truncated).toBe(false);
   });
 
@@ -491,7 +496,7 @@ describe("research_query", () => {
     const without = await researchQuery({ projectPath: dir, section: "assertions" });
     expect(withZero).toEqual(without);
     if (!withZero.ok) return;
-    expect(withZero.items).toHaveLength(50);
+    expect(flat(withZero)).toHaveLength(50);
     expect(withZero.truncated).toBe(true);
   });
 
@@ -503,7 +508,7 @@ describe("research_query", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.count).toBe(3); // the true total is still reported
-    expect(result.items).toEqual([]);
+    expect(flat(result)).toEqual([]);
     expect(result.truncated).toBe(false);
   });
 
@@ -523,7 +528,7 @@ describe("research_query", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.count).toBe(55); // only the REC1 matches
-    expect(result.items.map((i) => i.id)).toEqual(["a_50", "a_51", "a_52", "a_53", "a_54"]);
+    expect(flat(result).map((i) => i.id)).toEqual(["a_50", "a_51", "a_52", "a_53", "a_54"]);
     expect(result.truncated).toBe(false);
   });
 
@@ -1035,7 +1040,7 @@ describe("research_query — plural ids", () => {
 
   it("a list ANDs with a fixed filter, and countById counts under it", async () => {
     const plural = await ok({ section: "assertions", recordId: ["R1", "R2"], recordRole: "principal" });
-    expect(plural.items.map((i) => i.id)).toEqual(["a_1", "a_2"]);
+    expect(flat(plural).map((i) => i.id)).toEqual(["a_1", "a_2"]);
     expect(plural.countById).toEqual({ R1: 1, R2: 1 });
   });
 
@@ -1848,5 +1853,208 @@ describe("research_query — person_evidence names settled birth disputes", () =
     await project(research("resolved", "a_002"), TREE);
     const result = await researchQuery({ projectPath: dir, section: "assertions", recordId: CERT });
     expect(result).not.toHaveProperty("settledConflicts");
+  });
+});
+
+describe("research_query — assertions grouped by persona (#4412)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-grouped-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeResearch(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+  }
+
+  const HOISTED = ["record_id", "record_persona_id", "record_role", "source_id", "log_entry_id"];
+  const head = { record_id: "REC1", record_persona_id: "p_1", record_role: "principal", source_id: "src_1", log_entry_id: "log_1" };
+  // Stored order is the answer's order. a_1..a_3 share a persona whose informant
+  // varies; a_4/a_5 have no record_persona_id at all and a_6 has it null (two
+  // different groups); a_7 has no log_entry_id; a_8 is a_1's persona again but
+  // not adjacent, so it opens a second group rather than being merged back.
+  const fixture = [
+    { id: "a_1", ...head, fact_type: "birth", informant: "Mary", informant_proximity: "self", extracted_for_question_ids: ["q_1"] },
+    { id: "a_2", ...head, fact_type: "name", informant: "John", informant_proximity: "neighbor", extracted_for_question_ids: ["q_1"] },
+    { id: "a_3", ...head, fact_type: "residence", informant: "Mary", extracted_for_question_ids: ["q_1", "q_2"] },
+    { id: "a_4", record_id: "REC1", record_role: "child", source_id: "src_1", log_entry_id: "log_1", fact_type: "birth", extracted_for_question_ids: ["q_1"] },
+    { id: "a_5", record_id: "REC1", record_role: "child", source_id: "src_1", log_entry_id: "log_1", fact_type: "name", extracted_for_question_ids: ["q_1"] },
+    { id: "a_6", record_id: "REC1", record_persona_id: null, record_role: "child", source_id: "src_1", log_entry_id: "log_1", fact_type: "name", extracted_for_question_ids: ["q_1"] },
+    { id: "a_7", record_id: "REC2", record_persona_id: "p_2", record_role: "principal", source_id: "src_2", fact_type: "death", extracted_for_question_ids: ["q_1"] },
+    { id: "a_8", ...head, fact_type: "death", informant: "Mary", extracted_for_question_ids: ["q_1"] },
+    { id: "a_9", record_id: "REC3", record_persona_id: "p_3", record_role: "principal", source_id: "src_3", log_entry_id: "log_2", fact_type: "birth", extracted_for_question_ids: ["q_2"] },
+  ];
+
+  async function read(args: Record<string, unknown>) {
+    const r = await researchQuery({ projectPath: dir, section: "assertions", ...args } as any);
+    if (!r.ok) throw new Error(`expected ok, got ${JSON.stringify(r)}`);
+    return r;
+  }
+
+  it("flattens back to exactly the stored assertions, in order", async () => {
+    await writeResearch({ assertions: fixture });
+    const r = await read({});
+    expect(r.items.map((g: any) => g.facts.map((f: any) => f.id))).toEqual([
+      ["a_1", "a_2", "a_3"], ["a_4", "a_5"], ["a_6"], ["a_7"], ["a_8"], ["a_9"],
+    ]);
+    expect(flat(r)).toEqual(fixture);
+    expect(r.count).toBe(fixture.length);
+  });
+
+  it("hoists exactly the five persona keys, and keeps an absent key absent", async () => {
+    await writeResearch({ assertions: fixture });
+    const groups = (await read({})).items as any[];
+    expect(Object.keys(groups[0]).sort()).toEqual([...HOISTED, "facts"].sort());
+    // informant varies inside the persona, so it stays on each fact.
+    expect(groups[0].facts.map((f: any) => f.informant)).toEqual(["Mary", "John", "Mary"]);
+    for (const f of groups[0].facts) for (const k of HOISTED) expect(Object.hasOwn(f, k)).toBe(false);
+    // Absent and null are different personas, and neither is invented.
+    expect(Object.hasOwn(groups[1], "record_persona_id")).toBe(false);
+    expect(groups[2].record_persona_id).toBeNull();
+    expect(Object.hasOwn(groups[3], "log_entry_id")).toBe(false);
+    const back = flat({ items: groups });
+    expect(Object.hasOwn(back[3], "record_persona_id")).toBe(false);
+    expect(Object.hasOwn(back[6], "log_entry_id")).toBe(false);
+  });
+
+  it("drops the questionId echo only when it is exactly [questionId], and flatten restores it", async () => {
+    await writeResearch({ assertions: fixture });
+    const r = await read({ questionId: "q_1" });
+    const facts = (r.items as any[]).flatMap((g) => g.facts);
+    const byId = Object.fromEntries(facts.map((f: any) => [f.id, f]));
+    expect(Object.hasOwn(byId.a_1, "extracted_for_question_ids")).toBe(false);
+    expect(byId.a_3.extracted_for_question_ids).toEqual(["q_1", "q_2"]);
+    expect(flat(r, "q_1")).toEqual(fixture.filter((a) => a.extracted_for_question_ids.includes("q_1")));
+    // Without a questionId filter nothing is dropped.
+    const byRecord = (await read({ recordId: "REC1" })).items as any[];
+    expect(byRecord[0].facts[0].extracted_for_question_ids).toEqual(["q_1"]);
+  });
+
+  it("counts assertions, not groups: count, countById and a page's facts agree with the flat set", async () => {
+    await writeResearch({ assertions: fixture });
+    const r = await read({ recordId: ["REC1", "REC2"] });
+    expect(r.items.length).toBe(5);
+    expect(r.count).toBe(8);
+    expect(flat(r).length).toBe(8);
+    expect(r.countById).toEqual({ REC1: 7, REC2: 1 });
+  });
+
+  it("other sections are untouched, key order included", async () => {
+    const sources = [{ id: "src_1", title: "T", record_id: "REC1", source_id: "x" }];
+    await writeResearch({ assertions: fixture, sources });
+    const r = await researchQuery({ projectPath: dir, section: "sources" });
+    if (!r.ok) throw new Error("expected ok");
+    expect(JSON.stringify(r.items)).toBe(JSON.stringify(sources));
+  });
+
+  describe("the 40k budget is measured on the grouped answer", () => {
+    // 150 assertions in personas of 7, ~1.4k chars each flat (~29 per 40k
+    // page) and ~1k grouped (~40 per page): the budget, not MAX_ITEMS, ends
+    // every page in both shapes, and grouping fits more per page.
+    const big = Array.from({ length: 150 }, (_, i) => ({
+      id: `a_${String(i).padStart(3, "0")}`,
+      record_id: `ark:/61903/1:1:${"R".repeat(200)}${Math.floor(i / 7)}`,
+      record_persona_id: `ark:/61903/1:1:${"P".repeat(200)}${Math.floor(i / 7)}`,
+      record_role: "principal",
+      source_id: `src_${Math.floor(i / 7)}`,
+      log_entry_id: `log_${Math.floor(i / 7)}`,
+      fact_type: "residence",
+      value: "v".repeat(900),
+    }));
+
+    async function pages() {
+      const out: any[] = [];
+      let offset: number | undefined = 0;
+      while (offset !== undefined) {
+        const r = await read(offset ? { offset } : {});
+        out.push(r);
+        offset = r.nextOffset;
+        if (out.length > 200) throw new Error("paging did not end");
+      }
+      return out;
+    }
+
+    it("every page fits, is maximal, and paging visits each assertion once", async () => {
+      await writeResearch({ assertions: big });
+      const all = await pages();
+      expect(all.length).toBeGreaterThan(1);
+      const seen: string[] = [];
+      let budgetEnded = 0;
+      for (const [n, p] of all.entries()) {
+        // The budget covers the whole answer, not only its items (#4411).
+        expect(JSON.stringify(p).length).toBeLessThanOrEqual(40_000);
+        const facts = flat(p);
+        seen.push(...facts.map((a) => a.id));
+        expect(p.count).toBe(150);
+        if (n < all.length - 1) {
+          expect(p.nextOffset).toBe(seen.length);
+          // Maximal: the same answer with the next assertion joined to it does not fit.
+          const next = big[seen.length];
+          const fact = Object.fromEntries(Object.entries(next).filter(([k]) => !HOISTED.includes(k)));
+          const groups = structuredClone(p.items) as any[];
+          const tail = groups.at(-1);
+          if (HOISTED.every((k) => tail[k] === (next as any)[k])) tail.facts.push(fact);
+          else groups.push({ ...Object.fromEntries(HOISTED.map((k) => [k, (next as any)[k]])), facts: [fact] });
+          const grown = { ...p, items: groups, nextOffset: seen.length + 1 };
+          if (facts.length < 50) {
+            expect(JSON.stringify(grown).length).toBeGreaterThan(40_000);
+            budgetEnded += 1;
+          }
+        }
+      }
+      expect(seen).toEqual(big.map((a) => a.id));
+      expect(budgetEnded).toBe(all.length - 1);
+    });
+
+    it("fits more assertions than a flat-measured budget would", async () => {
+      await writeResearch({ assertions: big });
+      const first = await read({});
+      let flatSize = 0;
+      let flatFit = 0;
+      for (const a of big) {
+        const len = JSON.stringify(a).length;
+        if (flatFit > 0 && flatSize + len > 40_000) break;
+        flatSize += len;
+        flatFit += 1;
+      }
+      expect(flatFit).toBeLessThan(50);
+      expect(flat(first).length).toBeGreaterThan(flatFit);
+    });
+
+    it("a persona split across pages repeats its head on the next page", async () => {
+      await writeResearch({ assertions: big });
+      const all = await pages();
+      const split = all.findIndex((p, n) => {
+        const nextPage = all[n + 1];
+        if (!nextPage) return false;
+        const lastHere = (p.items as any[]).at(-1);
+        return lastHere.record_id === (nextPage.items as any[])[0].record_id;
+      });
+      expect(split).toBeGreaterThanOrEqual(0);
+      const firstThere = (all[split + 1].items as any[])[0];
+      for (const k of HOISTED) expect(Object.hasOwn(firstThere, k)).toBe(true);
+    });
+
+    it("refuses an offset that is not a grouped page boundary", async () => {
+      await writeResearch({ assertions: big });
+      const first = await read({});
+      const r = await researchQuery({ projectPath: dir, section: "assertions", offset: (first.nextOffset ?? 2) - 1 });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/starts at offset 0: call again with offset: 0/);
+    });
+  });
+});
+
+describe("flattenAssertionGroups", () => {
+  it("passes a flat answer through unchanged", () => {
+    const items = [{ id: "a_1", record_id: "R" }, { id: "a_2" }];
+    expect(flattenAssertionGroups(items)).toEqual(items);
+  });
+
+  it("passes non-object entries through", () => {
+    expect(flattenAssertionGroups([null, "x", { facts: "not a list" }])).toEqual([null, "x", { facts: "not a list" }]);
   });
 });
