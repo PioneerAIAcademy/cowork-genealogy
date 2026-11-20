@@ -1,0 +1,78 @@
+{
+  "run_log": "v20_2026-11-20_08-15-55.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_csc`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All factual claims are grounded in the tool responses and tree data. Patrick Flynn b. ~1845 Ireland (F1, S1), Thomas Flynn b. ~1818 Ireland as father (R1), death 1908-03-12 Schuylkill County (F2, S3), 1850 household dwelling 84 (log_001/002) — all correctly stated. The birthplace discrepancy (question text says PA, tree says Ireland) is correctly flagged rather than silently resolved. The Ancestry 1870 census collection URL (https://www.ancestry.com/search/collections/7163/) matches the stored external_collections entry returned by the tool. The Diocese of Philadelphia / Archdiocese from 1875 / Diocese of Allentown 1961 detail matches loc_001 quirks. No fabricated material detected.\n\nJunior: (Pass - No fabricated material detected.)"
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_csc`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill created pl_002 for q_001 (which had no plan), included 9 plan items covering census (1870 FamilySearch, 1870 Ancestry, 1880), vital records (death certificate, Patrick's marriage, parents' marriage), probate (Thomas Flynn), church/FAN (Catholic parish), and military records. The Ancestry 1870 census item (pli_005) was explicitly requested by the delegation and was included with the correct collection_url. The locality guide (loc_001) was read and its quirks incorporated. All required elements for a parentage plan are present.\n\nJunior: (Pass. All required elements for a parentage plan are present.)"
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_csc`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls used correct arguments. project_context, research_query (plans, questions, localities, log, external_collections), tree_query, place_search, and research_append were all called with appropriate projectPath and section/parameter values. The place_search call used placeName='Schuylkill' with contextName='Pennsylvania', matching the expected_args predicate (~Schuylkill). The first research_append was rejected by validation (items missing, wrong planId), and Claude immediately corrected it with a clean retry that succeeded — single clean recovery earns full credit. No fixture_not_found errors occurred.\n\nJunior: (Pass. No fixture_not_found errors occurred.)"
+    },
+    {
+      "test_id": "ut_research_plan_csc",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_csc`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Each record type is well-matched to the parentage question: census (1870, 1880) to locate Patrick with family members; vital_record for death certificate (likeliest to name parents), Patrick's marriage (may give parents/birthplace), and parents' marriage (confirms couple as unit); probate for Thomas Flynn's will naming heirs; church for sibling baptisms and FAN evidence testing mother's surname; military for pension files naming widow/mother. Each item's rationale explains specifically what information that record type provides toward identifying Patrick's parents.\n\nJunior: (Pass. Each record type is well-matched to the parentage question. Each item's rationale identifying Patricks parents.)"
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_d02`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All factual claims in the plan are supported by the tool responses and the before-state. The skill correctly identifies that pl_001 is for q_002 (completed), that q_001 has no plan, that Patrick was age 5 in Thomas Flynn's household in 1850 Schuylkill County, that the 1850 census does not record relationships, that Pennsylvania death registration began in 1906 (so a 1908 certificate exists), and that Thomas is linked as father via R1. The rationales cite loc_001 facts accurately: county formation in 1811, probate from Register of Wills from 1811, Catholic parishes under Diocese of Philadelphia until Allentown in 1961, and browse-only anthracite-region films. No fabricated material detected. The plan is written as add-new (pl_002, active) which is correct since q_001 had no prior plan.\n\nJunior: (Pass. All factual claims in the plan are supported by the tool responses and the before-state.)"
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_d02`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: it read the locality entry (loc_001) and reflected its distinctive facts in persisted rationales; it created a first plan (pl_002) for q_001 with 9 items covering census (post-1850 including 1880), vital records (death certificate re-read, Thomas's marriage, Patrick's marriage), cemetery, probate, FAN/other, church, and newspaper; it correctly left pl_001 untouched; it confirmed no prior plan existed for q_001 via research_query. The 1880 census is explicitly included in pli_004 (date_range 1860-1880) with rationale explaining the relationship column. Nothing required by the input state was omitted.\n\nJunior: (Pass. Nothing required by the input state was omitted.)"
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_d02`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls used correct arguments. The place_search call used placeName='Schuylkill County' with contextName='Pennsylvania', matching the expected_args predicate (~Schuylkill). The project_context, research_query (multiple sections), tree_query, and research_append calls all used the correct projectPath and appropriate section/op parameters. No fixture_not_found errors occurred — all calls matched 'live' or 'predicate'. The research_append correctly batched the plan header and all 9 plan items in a single call.\n\nJunior: (Pass. All tool calls used correct arguments.)"
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_d02`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every plan item targets a record type appropriate to the parentage question: census (1860-1880) to track Patrick into adulthood and find the 1880 relationship column; vital_record for the death certificate (parent names), Thomas's marriage (identify the mother), and Patrick's own marriage (parent names); cemetery for burial entries that may name native parish; probate for Thomas's estate naming heirs; other/FAN for siblings and naturalization; church for sacramental co-occurrence; newspaper for obituary. Each rationale explains specifically what parentage evidence the record type would yield, not generic statements.\n\nJunior: (Pass. Every plan item is aligned to the parentage objective and uses an appropriate record type. The census items (1860–1880) are intended to track Patrick into adulthood and leverage the 1880 relationship column; vital records target parent identification through death and marriage documents; probate focuses on heir relationships; church, cemetery, newspaper, FAN, and naturalization records each contribute specific avenues for identifying parents, relatives, or origin. The rationales consistently explain the expected parentage evidence from each record type rather than relying on generic research justifications.)"
+    },
+    {
+      "test_id": "ut_research_plan_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_d02`** — `rubric` / `Objective scope containment`\nLLM: 3 → Junior: 3\n\n> Every item is tied to evidence about Patrick Flynn's parentage. The FAN item (pli_010) explicitly states that siblings' records 'naming the same parents speak directly to Patrick's parentage' and Thomas's naturalization 'may name his origin and arrival date' — both linked to the parentage question. The Thomas Flynn marriage item (pli_007) states it 'would confirm the couple as a unit, give her name' and notes 'It does not alone prove Patrick is their child; that needs the 1880-type household or Patrick's own record naming them.' No item pursues a relative's facts for their own sake.\n\nJunior: (Pass. Every plan item remains focused on answering the parentage question rather than researching relatives for their own sake. The FAN item (pli_010) explicitly ties siblings' records to identifying the same parents and uses Thomas Flynn's naturalization as potential evidence for the family's origin and migration, both directly relevant to Patrick's parentage. Likewise, the Thomas Flynn marriage item (pli_007) appropriately limits its evidentiary value, noting that it identifies the parental couple but does not by itself prove Patrick's relationship to them. The rationales consistently connect each search target back to proving or disproving Patrick Flynn's parentage, demonstrating proper question focus throughout.)"
+    }
+  ]
+}
