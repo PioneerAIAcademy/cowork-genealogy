@@ -745,6 +745,8 @@ in-process call.
   assertion of every source whose `image_ark` names the page read, joined on
   `pageKey` (`src/utils/waiting-pages.ts`), the same key `waitingPages` uses. So a `cc=`
   query on either side still matches, and an `i=` or `groupId=` ARK matches nothing. A
+  reading of the page, a machine's or the researcher's (an assertion with
+  `disputes_assertion_id`, research-append §11.9), is not the index and is left out. A
   given name the index left blank is simply absent from `name`. Joined for an `ark` (or
   its `imageArk` alias) only: an `imageId` and a `file` name no `image_ark`.
 - `readingNote` (`READING_NOTE`): the transcription is one machine reading, not a sight

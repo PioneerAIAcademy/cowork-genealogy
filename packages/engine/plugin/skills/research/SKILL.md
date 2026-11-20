@@ -205,7 +205,7 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
 `sidecar_read({ projectPath, ref: staged.resultsRef })`; write the reply as its
 `readingNote` says, with its `indexReadings` beside the page text; with none, the index the
 researcher names, or the held record's names from `research_query({ section: "assertions",
-recordId })`. A name with no given name is an index reading too. Only when `project_context` returns `reason: "no_project"`: one named image, called
+recordId })` without any carrying `disputes_assertion_id`, which is a reading, not the index. A name with no given name is an index reading too. Only when `project_context` returns `reason: "no_project"`: one named image, called
 without `projectPath`, its `transcription` shown inline; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project

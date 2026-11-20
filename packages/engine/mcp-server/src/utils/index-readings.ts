@@ -25,10 +25,16 @@ export const READING_NOTE =
   "name, never call a disagreeing spelling consistent, and never drop a reading on a premise " +
   "the project's own files contradict.";
 
-/** The held records' indexed names for the page an ARK names. */
+/** The held records' indexed names for the page an ARK names. A reading of the
+ *  page (an assertion with `disputes_assertion_id`) is not the index: it is left out. */
 export function indexReadingsForPage(research: any, ark: string): IndexReading[] {
   const key = pageKey(ark);
   if (key === null) return [];
+  const readings = new Set<string>(
+    (Array.isArray(research?.assertions) ? research.assertions : [])
+      .filter((a: any) => typeof a?.id === "string" && typeof a?.disputes_assertion_id === "string")
+      .map((a: any) => a.id as string),
+  );
   const sources = (Array.isArray(research?.sources) ? research.sources : []).filter(
     (s: any) =>
       typeof s?.id === "string" &&
@@ -38,7 +44,7 @@ export function indexReadingsForPage(research: any, ark: string): IndexReading[]
   );
   return sources.flatMap((s: any) =>
     sourceIndex(research, s.id)
-      .filter((e) => e.factType === "name")
+      .filter((e) => e.factType === "name" && !readings.has(e.assertionId))
       .map((e) => ({ sourceId: s.id as string, recordId: e.recordId, role: e.role, name: e.value })),
   );
 }

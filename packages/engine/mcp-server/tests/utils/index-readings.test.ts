@@ -29,6 +29,19 @@ describe("indexReadingsForPage (#4578)", () => {
     ]);
   });
 
+  it("leaves out a reading of the page, a machine's or the researcher's: neither is the index", () => {
+    const read = {
+      ...RESEARCH,
+      log: [{ id: "log_009", tool: "user_provided" }],
+      assertions: [
+        ...RESEARCH.assertions,
+        { id: "a_007", source_id: "src_001", record_id: "r1", record_role: "head_of_household", fact_type: "name", value: "Anthony Tyler [?]", disputes_assertion_id: "a_001" },
+        { id: "a_008", source_id: "src_001", record_id: "r1", record_role: "head_of_household", fact_type: "name", value: "Antone Tyler", disputes_assertion_id: "a_001", log_entry_id: "log_009" },
+      ],
+    };
+    expect(indexReadingsForPage(read, ARK).map((r) => r.name)).toEqual(["Tyler", "Dora Lightfoot"]);
+  });
+
   it("matches the page through a cc= query on either side", () => {
     expect(indexReadingsForPage(RESEARCH, `${ARK}?cc=1325221`)).toHaveLength(2);
     const stored = { ...RESEARCH, sources: [{ id: "src_001", image_ark: `${ARK}?cc=1325221` }] };

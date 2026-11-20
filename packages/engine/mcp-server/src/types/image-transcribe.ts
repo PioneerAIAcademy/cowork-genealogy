@@ -96,8 +96,9 @@ export interface ImageTranscribeToolResponse {
     memoryArtifactUrl?: string;
   };
   /** In a project, the indexed names of every held record whose source's
-   *  `image_ark` is the page read (`attachIndexReadings`, issue #4578). Absent
-   *  when no held source names that page, and for a `file`. */
+   *  `image_ark` is the page read (`attachIndexReadings`, issue #4578); a reading
+   *  of the page (`disputes_assertion_id`) is left out. Absent when no held source
+   *  names that page, and for a `file`. */
   indexReadings?: IndexReading[];
   /** In a project, always: the transcription is one machine reading, to be
    *  shown beside the index, never over it (issue #4578). */

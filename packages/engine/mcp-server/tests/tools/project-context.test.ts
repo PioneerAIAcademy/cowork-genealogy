@@ -184,6 +184,74 @@ describe("project_context", () => {
     expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null, I6: null });
   });
 
+  it("lets a record's own spelling of the given name carry it, and still flags Anthony (#4578)", async () => {
+    // [tree given, linked name value, flagged?]
+    const rows: [string, string, boolean][] = [
+      ["Geronimo", "Jerónimo Beisaga", false], // one letter and an accent from eight
+      ["Carmen", "Cármen Alfaro", false], // an accent
+      ["Kristian Fredrik", "Christian Frederik Birkeland", false], // two letters from seven
+      ["Honor Elizabeth", "Elizabeth Prizer", false], // a middle name
+      ["George", "Georg Smith", false], // the record's shorter form
+      ["John", "Jno Smith", false], // the given-name table
+      ["Mary", "Polly Smith", false],
+      ["William", "Bill Smith", false],
+      ["Mary", "Maria 'Mary' Smith", false], // a quoted word
+      ["Saml", "Samuel Tarrant", false], // the tree's contraction
+      ["Christina", "Christena Clark", false], // one letter
+      ["Anthony", "Anton Tyler", true],
+      ["Anthony", "Antone Tyler", true],
+      ["Anthony", "Antoine Tyler", true],
+      ["Anthony", "Antonia Tyler", true],
+      ["Anthony", "Atonne Tyler", true],
+      ["Anthony", "Anntogne Tyler", true],
+      ["Anthony", "Armtogne Tyler", true],
+      ["Anthony", "Ann Tone Lightfoot", true],
+      ["Anthony", "Tyler", true],
+    ];
+    const assertions: any[] = rows.map(([, value], i) => ({
+      id: `a_${100 + i}`, source_id: "src_001", record_id: `r${i}`, fact_type: "name", value,
+    }));
+    const person_evidence: any[] = rows.map((_, i) => ({
+      id: `pe_${100 + i}`, person_id: `P${i}`, assertion_id: `a_${100 + i}`, confidence: "probable",
+    }));
+    // A machine reading of the page, linked: evidence, never support. A researcher's reading supports.
+    assertions.push(
+      { id: "a_200", source_id: "src_001", record_id: "r0", fact_type: "name", value: "Tyler" },
+      { id: "a_201", source_id: "src_001", record_id: "r0", fact_type: "name", value: "Anthony Tyler [?]", disputes_assertion_id: "a_200", log_entry_id: "log_001" },
+      { id: "a_202", source_id: "src_001", record_id: "r0", fact_type: "name", value: "Anthony Tyler", disputes_assertion_id: "a_200", log_entry_id: "log_002" },
+    );
+    person_evidence.push(
+      { id: "pe_200", person_id: "M1", assertion_id: "a_201", confidence: "probable" },
+      { id: "pe_201", person_id: "M2", assertion_id: "a_202", confidence: "probable" },
+    );
+    const persons = [
+      ...rows.map(([given], i) => ({ id: `P${i}`, gender: "Female", names: [{ id: `N${i}`, given, surname: "X", preferred: true }] })),
+      { id: "M1", gender: "Female", names: [{ id: "NM1", given: "Anthony", surname: "Tyler", preferred: true }] },
+      { id: "M2", gender: "Female", names: [{ id: "NM2", given: "Anthony", surname: "Tyler", preferred: true }] },
+    ];
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        log: [
+          { id: "log_001", tool: "image_transcribe" },
+          { id: "log_002", tool: "user_provided" },
+        ],
+        assertions,
+        person_evidence,
+      },
+      { persons, relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const flagged = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.unsupportedGivenName !== undefined]));
+    expect(flagged).toEqual({
+      ...Object.fromEntries(rows.map(([, , f], i) => [`P${i}`, f])),
+      M1: true, // only a machine reading of the page
+      M2: false, // the researcher's own reading
+    });
+  });
+
   it("flags a given name none of the person's linked records gives, searched by its first letter (#4578)", async () => {
     const person = (id: string, given: string, surname = "Tyler") => ({
       id, gender: "Female", names: [{ id: `N${id}`, given, surname, preferred: true }],

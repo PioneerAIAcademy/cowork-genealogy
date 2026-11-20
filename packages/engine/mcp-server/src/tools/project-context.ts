@@ -23,6 +23,9 @@ import { isNationalCollectionTitle, localityNationalCountry } from "../utils/col
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
+import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
+import { lookupNameFamily } from "../utils/name-variants.js";
+import { isMachinePageReading, logEntriesById } from "../utils/page-disputes.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
@@ -83,10 +86,11 @@ export interface ProjectContextPerson {
 
 /**
  * The person's preferred given name, when the person has linked live `name`
- * assertions and none of them carries its first word. A person with no linked
- * name assertion is not judged: nothing is there to support or contradict it.
- * `searchAs` is its first letter and `*`: the readings of one handwritten name
- * agree on little more (Anthony, Armtogne, Ann Tone and Atonne for one woman).
+ * assertions and none of their words carries any word of it (`carriesGiven`). A
+ * person with no linked name assertion is not judged: nothing is there to
+ * support or contradict it. `searchAs` is its first letter and `*`: the readings
+ * of one handwritten name agree on little more (Anthony, Armtogne, Ann Tone and
+ * Atonne for one woman).
  */
 export function unsupportedGivenName(
   person: any,
@@ -96,34 +100,55 @@ export function unsupportedGivenName(
   const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
   const raw = preferredName(names)?.given;
   const given = typeof raw === "string" ? raw.trim() : "";
-  const word = nameWords(given)[0];
-  if (word === undefined) return undefined;
-  const carried = linkedNameValues.some((v) => nameWords(v).some((w) => carriesGiven(w, word)));
-  return carried ? undefined : { given, searchAs: `${word[0].toUpperCase()}*` };
+  const words = nameWords(given);
+  const first = normalizeString(given).match(/\p{L}/u)?.[0];
+  if (words.length === 0 || first === undefined) return undefined;
+  const linked = linkedNameValues.flatMap(nameWords);
+  const carried = words.some((g) => linked.some((w) => carriesGiven(w, g)));
+  return carried ? undefined : { given, searchAs: `${first.toUpperCase()}*` };
 }
 
-/** "Saml", "Wm", "Herm" or an initial carries the name it shortens: a prefix of
- *  it, or its first and last letters with the rest in order. */
+/** A linked word carries a given word when either is a prefix or a contraction
+ *  of the other ("Herm", "Saml", "Wm", an initial), when they differ by a letter
+ *  (two from seven letters: Christian, Kristian), or when the bundled given-name
+ *  table puts them in one family (Jno, Polly, Bill). The nickname table is not
+ *  used: it relates Anthony and Anton. */
 function carriesGiven(w: string, given: string): boolean {
-  if (given.startsWith(w)) return true;
-  if (w[0] !== given[0] || w.at(-1) !== given.at(-1)) return false;
-  let i = 0;
-  for (const c of given) if (c === w[i]) i++;
-  return i === w.length;
+  if (given.startsWith(w) || w.startsWith(given)) return true;
+  if (contracts(w, given) || contracts(given, w)) return true;
+  const shorter = Math.min(w.length, given.length);
+  const allowed = shorter >= 7 ? 2 : shorter >= 4 ? 1 : 0;
+  if (allowed > 0 && levenshteinDistance(w, given) <= allowed) return true;
+  return (lookupNameFamily(given)?.allForms ?? []).some((f) => normalizeString(f).replace(/\.$/, "") === w);
 }
 
-/** A name's words, lower-cased, split the same way on both sides of a comparison. */
+/** `short` keeps `long`'s first and last letters and the rest in order ("Saml", "Wm"). */
+function contracts(short: string, long: string): boolean {
+  if (short[0] !== long[0] || short.at(-1) !== long.at(-1)) return false;
+  let i = 0;
+  for (const c of long) if (c === short[i]) i++;
+  return i === short.length;
+}
+
+/** A name's words, lower-cased with accents folded, split the same way on both
+ *  sides of a comparison; a quoted word ("Maria 'Mary'") keeps its letters. */
 function nameWords(value: string): string[] {
-  return value.toLowerCase().split(/[^\p{L}'-]+/u).filter((w) => /^\p{L}/u.test(w));
+  return normalizeString(value)
+    .split(/[^\p{L}'-]+/u)
+    .map((w) => w.replace(/^['-]+|['-]+$/g, ""))
+    .filter((w) => /^\p{L}/u.test(w));
 }
 
 /** Each person's live linked `name` assertion values: live rows of person_evidence
- *  (no `superseded_by`) pointing at live assertions. */
+ *  (no `superseded_by`) pointing at live assertions. A machine reading of a page
+ *  (`isMachinePageReading`) is linked evidence but never support, so it counts
+ *  with an empty value. */
 function linkedNameValuesByPerson(research: any): Map<string, string[]> {
+  const logById = logEntriesById(research);
   const nameById = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
     if (isLiveAssertion(a) && a.fact_type === "name" && typeof a.id === "string") {
-      nameById.set(a.id, String(a.value ?? ""));
+      nameById.set(a.id, isMachinePageReading(a, logById) ? "" : String(a.value ?? ""));
     }
   }
   const out = new Map<string, string[]>();
