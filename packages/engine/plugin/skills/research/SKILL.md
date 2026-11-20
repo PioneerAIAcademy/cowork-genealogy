@@ -193,18 +193,18 @@ only when the user's message itself states a mother's 1900 or 1910 US census
 children-born and children-living counts — "are any missing?" with no counts is
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
-to `@plugin:tree-edit`. The names and details in a record set, or a named title's catalog item or DGS numbers, with no project and no FamilySearch
+to `@plugin:tree-edit`. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
 `projectPath`, even when the message names no images; relay everything after
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
-and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. A transcription you deliver yourself: call
+and `timeline_build({ projectPath, personId })`, the same `personId` in both, and relay its `summary`. Whenever the reply quotes a record, from a transcription or a `record_read`, give what the record says in its own words, including a place name the tree does not use; never call the tree wrong, unsupported, an error or a conflation, and never write that the record's place differs from, or is not, the tree's place. A difference the researcher wants examined goes to `@plugin:person-evidence`; do not say it will resolve the names. When the record's place name is not the tree's, give the difference as one of names only (the record names X; the tree has Y), say plainly that you cannot tell from here whether the two name the same place, and never say the places or birth places differ, diverge or are not the tree's, or how they relate, including what kind of place either one is or where it lies. A transcription you deliver yourself: call
 `image_transcribe({ projectPath, imageId | ark | file })` — always with
 `projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
 link. Only when `project_context` returns `reason: "no_project"`: one named image, called
-without `projectPath`, its `transcription` shown inline; finding or reading more
+without `projectPath`, its `transcription` shown inline, unless the ask re-indexes it or compares it with its index; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
 already holds, as `researcherReadings`, each `{ sourceId, assertionId, words }`, the user's words exactly. An image
@@ -268,14 +268,13 @@ message.
    `research.json` grows all run — dozens of sources, 100+ assertions by
    late run — so a whole-section query costs more context every
    time you route, and routing happens constantly. `research_query` answers
-   the routing question host-side and returns only the ids, statuses and
-   counts. For tree facts (birth, death, marriage) call `tree_query` with
+   the routing question host-side and returns only the matching entries. For tree facts (birth, death, marriage) call `tree_query` with
    `personIds` and `factTypes`.
 
-   **`research_query` returns at most 50 `items` per call; `count` is the true
-   total.** When `truncated` is true you are routing on part of the set — page
-   with `offset` (50, then 100) before concluding a section is empty, complete,
-   or that some step has produced nothing.
+   **`research_query` returns a page of `items` per call; `count` is the true
+   total.** When `truncated` is true you are routing on part of the set — call
+   again with `offset: nextOffset` before concluding a section is empty,
+   complete, or that some step has produced nothing.
 
    **Query what the routing decision needs and no more.** Each call is a turn.
    Pull the one section that answers the question in front of you rather than
@@ -352,7 +351,7 @@ message.
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
-   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
+   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, or to re-index one page or compare it with its FamilySearch index, rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
    | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). For each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`. Then `@plugin:question-selection` (with `userPresent: no` on an `--autonomous` run). Report each `timeline_build` `summary`, then the question. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |

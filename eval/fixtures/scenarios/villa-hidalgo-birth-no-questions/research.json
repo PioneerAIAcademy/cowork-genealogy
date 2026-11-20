@@ -1,0 +1,23 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of María Ignacia Robledo, born 8 March 1885 in Villa Hidalgo, Jalisco, Mexico",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-19",
+    "updated": "2026-11-19"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

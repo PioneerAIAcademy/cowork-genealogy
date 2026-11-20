@@ -1,0 +1,146 @@
+{
+  "tool": "record_read",
+  "description": "Burial entry for Jozef Jicinsky, 29 June 1880: only the mother Anny Jicinske is indexed, no father. Live capture 2026-11-16. imageArk added as record_read returns it.",
+  "args": {
+    "recordId": "~6VLB-XJW9"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_297965373481",
+        "ark": "ark:/61903/1:1:6VLB-XJW9",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "204370f9-e62c-4099-a870-134672f4c2d9",
+            "type": "BirthName",
+            "surname": "Jičínský",
+            "given": "Jozef"
+          }
+        ],
+        "facts": [
+          {
+            "id": "a3974fd5-bb5a-4e95-8bca-ef3e917ea041",
+            "type": "Death",
+            "date": "27. června 1880",
+            "standard_date": "27 Jun 1880"
+          },
+          {
+            "id": "9858005c-e3e9-494d-880c-a70206c83493",
+            "type": "Burial",
+            "primary": true,
+            "date": "29. června 1880",
+            "standard_date": "29 Jun 1880",
+            "place": "Czechia"
+          },
+          {
+            "id": "363f4853-ce3c-4ffc-9ef6-5bfdb157084d",
+            "type": "Birth",
+            "date": "1880",
+            "standard_date": "1880"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_297965373482",
+        "ark": "ark:/61903/1:1:6VLB-XJWS",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "6a44ed66-96e5-41b5-88ae-feb4709e7f13",
+            "type": "BirthName",
+            "surname": "Jičínskè",
+            "given": "Anny"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "39a3a780-e960-4041-84f2-d63d8dcd4d03",
+        "type": "ParentChild",
+        "parent": "p_297965373482",
+        "child": "p_297965373481"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_176722761074",
+        "resource_type": "Record",
+        "title": "Entry for Jozef Jičínský, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VLB-XJW9 : Mon Sep 28 07:07:13 UTC 2026), Entry for Jozef Jičínský and Anny Jičínskè, 29. června 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HSDN-46DX",
+        "coverage": {
+          "place_rep_id": "132",
+          "date_range": "29. června 1880",
+          "record_type": "Vital",
+          "standard_place": "Czechia"
+        }
+      },
+      {
+        "id": "sd_c_1804263",
+        "resource_type": "Collection",
+        "title": "Czech Republic, Church Books, 1552-1981",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1804263",
+        "coverage": {
+          "place_rep_id": "132",
+          "date_range": "1552/1963",
+          "record_type": "Vital",
+          "standard_place": "Czechia"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BG-Z3PS-H",
+        "coverage": {
+          "place_rep_id": "11914741",
+          "date_range": "1873-1900",
+          "record_type": "ChurchBook",
+          "standard_place": "Hrochowteinitz, Chrudim, Bohemia"
+        }
+      },
+      {
+        "id": "sd_p_297965373481",
+        "resource_type": "Person",
+        "title": "Jozef Jičínský, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VLB-XJW9 : Mon Sep 28 07:07:13 UTC 2026), Jozef Jičínský, 29. června 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VLB-XJW9"
+      },
+      {
+        "id": "sd_p_297965373482",
+        "resource_type": "Person",
+        "title": "Anny Jičínskè, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VLB-XJWS : Mon Sep 28 07:07:13 UTC 2026), Anny Jičínskè in entry for Jozef Jičínský, 29. června 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VLB-XJWS"
+      },
+      {
+        "id": "sd_auto_M9RS-DY3",
+        "resource_type": "auto",
+        "title": "Bohemia, Chrudim, Religious, from 1624 to 1935",
+        "coverage": {
+          "place_rep_id": "10705490",
+          "date_range": "+1624-01-01T00:00:00Z/+1935-12-31T23:59:59Z",
+          "standard_place": "Chrudim, Bohemia"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_132"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3Q9M-C9BG-Z3PS-H"
+  }
+}

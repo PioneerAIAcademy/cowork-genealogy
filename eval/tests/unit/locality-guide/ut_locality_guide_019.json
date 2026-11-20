@@ -46,6 +46,7 @@
     "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s."
+    "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s.",
+    "The collections-search-massachusetts fixture returns personCount values 3456789, 1234567, 987654, 345678 and 567890. A guide that reports these counts is quoting the tool result, not inventing figures; do not dock it for them."
   ]
 }

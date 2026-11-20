@@ -2223,8 +2223,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   The place's collections are the ones `collections_search` lists: titles holding
   the scope `standardPlaceToCollectionsQuery` derives from the entry's `place`,
   else from the first `jurisdictions[].name` whose scope matches a title. At most
-  `LOCALITY_COLLECTIONS_FILL_MAX` (150) rows in all; the largest list in 18
-  surveyed places was 65. One warning says what was added:
+  `LOCALITY_COLLECTIONS_FILL_MAX` (150) rows in all, core national rows below included;
+  the largest place list in 18 surveyed places was 65. A scope that is the United
+  States, Canada or Mexico itself (an entry whose place is the bare country) is skipped:
+  its title list is the whole national list, and the country's rows come from the next
+  step. One warning says what was added:
   > `localities collections: added the <n> other FamilySearch collections for "<scope>" from the catalog, after the <m> sent[; <k> that name another part of "<scope>" were left out]`
 
   **A title that names another part of the scope is not added**
@@ -2246,6 +2249,46 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   **Why:** locality-guide copied about a third of what `collections_search`
   returned (109 of 331 rows over 17 real places), and research-plan plans from this
   list without its own search, so a collection left out was hidden from the plan.
+- **National collections.** After the whole list, a `localities` append whose country
+  (its `place`, else its first `jurisdictions[].name` with one) is the United States,
+  Canada or Mexico gains the catalog's **core** national collections it does not hold
+  (`fillNationalCollections`), in the same row shape, under the same cap. Those
+  countries' collections are scoped to the state or province, so the whole list never
+  reaches a federal census.
+  - **National** (`isNationalCollectionTitle`, `collection-scope.ts`): the title starts
+    with the country followed by a comma or a space, and the next part names none of
+    the country's states, provinces or territories. `United States, Census, 1900`,
+    `United States Census (Mortality Schedule), 1850-1880`, `United States, Freedmen's
+    Bureau Marriages, 1859-1873` and `Mexico, National Census, 1930` are national;
+    `United States, Kentucky, Agricultural Schedules, 1850-1880`, `United States Virgin
+    Islands, Census Records, 1841-1911`, `Canada, Ontario, Births, 1869-1912` and `New
+    Mexico, Deaths, 1889-1945` are not.
+  - **Core** (`isCoreNationalCollection`): the population and mortality censuses (a
+    region before `Census` allowed, as in `Canada, Prairie Provinces, Census, 1916`); in
+    the United States the Social Security Death Index, the NUMIDENT files, the World War I
+    and World War II draft registrations and the city directories; in Canada and Mexico
+    the country-wide baptism, marriage and death indexes. About 160 of the United
+    States' 176 catalog collections are national, and most of them (military service
+    and pensions about 65, immigration and naturalization about 20, Freedmen's Bureau
+    and slavery about 17, Native American, land, occupational) answer a question only
+    for a particular kind of person, so research-plan finds them with its own
+    `collections_search` when the question calls for them (catalog, 2026-11-19).
+  - Only a row whose `date_range` overlaps the entry's `time_period` is added: the
+    window runs from its earliest to its latest four-digit year, and a `time_period`
+    with no year cuts nothing. An undated row is kept, as `collections_search` keeps one.
+
+  One warning says what was added:
+  > `localities collections: added the <n> core national FamilySearch collections for "<country>"[ overlapping <start>-<end>] from the catalog`
+
+  and, when the cap holds it back, `added <n> of the <m> core national …`. Nothing is
+  added, and nothing is said, on an update, when the catalog cannot be read, or for a
+  place in another country. `project_context` returns these rows once per country
+  (`nationalCollections`, project-context spec). **Why:** research-plan ran its own
+  `collections_search({ standardPlace: "United States" })` for the federal census, an
+  instruction a cheaper model drops; in twelve planning runs on four real projects
+  (2026-11-16) three made it, and Detroit's census items depended on it. The whole
+  national list for a Pennsylvania locality of 1845-1908 was 110 rows and took
+  `project_context` from 3,400 to 25,000 characters; the core list is 9.
 - **When the catalog is read.** Once per call, in `researchAppendFromCaller`, before
   the project lock, and only when the call appends a `localities` entry or carries a
   `localities` collection. A cold
