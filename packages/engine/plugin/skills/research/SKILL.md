@@ -339,7 +339,10 @@ message.
    reply any hypothesis they would make impossible if they describe the same
    person, even when the turn ends by asking for the record's identifier — do
    not present the record's facts as support for that hypothesis or any theory
-   built on it. The same holds for
+   built on it; when the record would make a hypothesis impossible if it is the
+   same person (for example, a death dated before an event the hypothesis relies
+   on), say so and name the hypothesis; do not write that no hypothesis is made
+   impossible. The same holds for
    a relationship you or an earlier log note inferred from shared surname,
    place or era with no record linking the people: it is a hypothesis, not a
    fact. Log notes that say people "look like", "appear to be", "likely are",
