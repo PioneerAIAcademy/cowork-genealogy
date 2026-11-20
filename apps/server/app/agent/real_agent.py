@@ -832,7 +832,8 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         "researcher_profile.narration_guidance from research.json as your "
         "narration style. "
         "With no project and no FamilySearch person ID, a request for the names and details "
-        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "recorded in a record set (a roll, register, muster list or volume), or to re-index "
+        "one page or compare it with its FamilySearch index, goes to the "
         "search-images agent with no projectPath, even when it names no images; relay "
         "everything after its final --- verbatim."
     )
