@@ -195,7 +195,7 @@ describe("#4226 a link means the record entry", () => {
 
   // ── MUST-FIRE 2: a gate refuses a derived row ──────────────────────────────
 
-  it("MUST FIRE: a derived row the rejected-links gate refuses is skipped and reported, not raised", async () => {
+  it("MUST FIRE: a rejection naming a sibling assertion of the entry refuses the trigger link too (#4652)", async () => {
     await write(project({
       assertions: [assertion("a_001"), assertion("a_002", { fact_type: "residence", value: "X" })],
       rejected_links: [{
@@ -204,13 +204,11 @@ describe("#4226 a link means the record entry", () => {
       }],
     }));
     await attest("a_001");
+    // The rejection covers the whole record entry, so a_001 is as rejected as a_002.
     const r = await link("a_001");
-    // The caller's own link still lands: they did not write the refused row.
-    expect(r.ok).toBe(true);
-    const rows = await links();
-    expect(rows).toHaveLength(1);
-    expect(rows[0].assertion_id).toBe("a_001");
-    expect("skippedDerivedLinks" in r ? r.skippedDerivedLinks : undefined).toBeDefined();
+    expect(r.ok).toBe(false);
+    expect("errors" in r ? r.errors.join("\n") : "").toMatch(/rejected as not a match/);
+    expect(await links()).toHaveLength(0);
   });
 
   // ── MUST NOT FIRE ──────────────────────────────────────────────────────────
@@ -524,16 +522,15 @@ describe("#4226 a link means the record entry", () => {
     expect(rows.some((x) => x.person_id === "I2" && x.superseded_by == null)).toBe(false);
   });
 
-  it("MUST NOT FIRE: rejecting one derived pairing leaves the original link live", async () => {
+  it("rejecting a non-trigger assertion of the entry retires the whole entry (#4652)", async () => {
     await expandedOnI2();
     const r = await researchAppend({ projectPath: dir, ops: [rejectOf("a_002", "I2")] });
     expect(r.ok).toBe(true);
     const rows = await links();
-    expect(rows.find((x) => x.id === "pe_002").superseded_by).toMatch(/^rj_/);
-    // The trigger and the sibling it derived are untouched: the researcher ruled
-    // out one fact's pairing, not the identification.
-    expect(rows.find((x) => x.id === "pe_001").superseded_by).toBe(null);
-    expect(rows.find((x) => x.id === "pe_003").superseded_by).toBe(null);
+    // The researcher said the record is not I2, not that one fact's pairing is wrong.
+    for (const id of ["pe_001", "pe_002", "pe_003"]) {
+      expect(rows.find((x) => x.id === id).superseded_by).toMatch(/^rj_/);
+    }
   });
 
   /** The expanded entry, with each assertion's fact already materialized on I2. */
@@ -557,12 +554,12 @@ describe("#4226 a link means the record entry", () => {
     expect(await i2Facts()).toEqual([]);
   });
 
-  it("MUST NOT FIRE: rejecting one derived pairing removes only that fact", async () => {
+  it("rejecting a non-trigger assertion removes every fact of the entry (#4652)", async () => {
     await expandedOnI2();
     await i2HoldsTheFacts();
     const r = await researchAppend({ projectPath: dir, ops: [rejectOf("a_002", "I2")] });
     expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
-    expect(await i2Facts()).toEqual(["a_001", "a_003"]);
+    expect(await i2Facts()).toEqual([]);
   });
 
   // ── Step 6 of person-evidence.md: correcting a link the agent got wrong ───

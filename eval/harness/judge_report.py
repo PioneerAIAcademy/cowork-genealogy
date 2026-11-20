@@ -1,6 +1,6 @@
 """Non-discrimination scan for the *unit* eval judge — the free calibration pass.
 
-The unit judge grades every unit run (`claude-haiku-4-5`, temperature pinned to 0)
+The unit judge grades every unit run (`claude-sonnet-4-6`, temperature pinned to 0)
 and nothing measures it. `make e2e-calibrate` measures a *different* judge, on a
 different model and cadence. `/audit-rubric` defines the right checks but runs one
 skill at a time, by LLM judgment, only when someone remembers to invoke it — which

@@ -18,7 +18,7 @@
 // all three phases (sources/assertions/person_evidence, the status-transition
 // sections, the phase-3 sections, and the `project` singleton).
 
-import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
+import { assertionsCoveredBy, rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
@@ -135,7 +135,13 @@ import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarRead
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 import { GUIDE_SECTION_MAX_CHARS, mergeGuideSection } from "../utils/locality-guide-sections.js";
 import { normalizeRegistrationStart } from "../utils/registration-level.js";
-import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
+import {
+  isCoreNationalCollection,
+  localityNationalCountry,
+  nationalCollectionScope,
+  standardPlaceToCollectionsQuery,
+  yearSpan,
+} from "../utils/collection-scope.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -1448,7 +1454,7 @@ function rejectedLinkInvariants(
   const rejected = Array.isArray(research?.rejected_links)
     ? (research.rejected_links as RejectedLink[])
     : [];
-  const hit = rejectionFor(assertionId, personId, rejected);
+  const hit = rejectionFor(assertionId, personId, rejected, research?.assertions);
   if (!hit) return [];
   const because = typeof hit.reason === "string" && hit.reason.trim()
     ? ` The researcher's reason: ${hit.reason}`
@@ -1495,7 +1501,7 @@ function supersedeTargetInvariants(
   const target = ((research?.person_evidence ?? []) as any[]).find((pe: any) => pe?.id === set);
   if (!target) {
     const rejection = ((research?.rejected_links ?? []) as any[]).find((rj: any) => rj?.id === set);
-    if (rejection && rejection.assertion_id === entry.assertion_id && rejection.person_id === entry.person_id) {
+    if (rejection && rejectionFor(entry.assertion_id, entry.person_id, [rejection], research?.assertions)) {
       return [];
     }
     return [
@@ -5566,7 +5572,9 @@ function mergeRejectedPairRefusals(
   // matches the post-merge one.
   const alreadyRejected = new Set(
     live(before.research)
-      .filter((e) => rejectionFor(e.assertion_id, e.person_id, rejections(before.research)))
+      .filter((e) =>
+        rejectionFor(e.assertion_id, e.person_id, rejections(before.research), before.research?.assertions),
+      )
       .map((e) => e.id),
   );
   const priorPersonOf = new Map<string, string>(live(before.research).map((e) => [e.id, e.person_id]));
@@ -5580,7 +5588,7 @@ function mergeRejectedPairRefusals(
   );
   const lines: string[] = [];
   for (const e of live(after.research)) {
-    const hit = rejectionFor(e.assertion_id, e.person_id, rejections(after.research));
+    const hit = rejectionFor(e.assertion_id, e.person_id, rejections(after.research), after.research?.assertions);
     if (!hit || !(movedLinks.has(e.id) || movedRejections.has(hit.id))) continue;
     if (alreadyRejected.has(e.id)) continue;
     lines.push(
@@ -8684,6 +8692,9 @@ function retireRejectedLinks(
     if (a.section !== "rejected_links" || a.op !== "append" || a.noop) continue;
     const rj = rejections.find((r) => r && r.id === a.entryId);
     if (!rj || typeof rj.assertion_id !== "string" || typeof rj.person_id !== "string") continue;
+    // A rejection covers the whole record entry, not one assertion
+    // (`assertionsCoveredBy`: the party `recordPartyKeyer` keys, else the exact one).
+    const covered = assertionsCoveredBy(rj, assertions);
     const live = links.filter(
       // A link claims its whole record entry, so retiring it must retire the rows
       // derived from it too (#4355 review). The derived rationale names the
@@ -8692,16 +8703,17 @@ function retireRejectedLinks(
         pe &&
         !pe.superseded_by &&
         pe.person_id === rj.person_id &&
-        (pe.assertion_id === rj.assertion_id ||
+        (covered.has(pe.assertion_id) ||
           (isDerivedEntryLink(pe) &&
-            pe.rationale.startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${rj.assertion_id}:`))),
+            [...covered].some((id) => pe.rationale.startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${id}:`)))),
     );
     if (live.length === 0) continue;
     for (const pe of live) pe.superseded_by = rj.id;
 
-    const assertion = assertions.find((x) => x && x.id === rj.assertion_id);
-    const source = sources.find((s) => s && s.id === assertion?.source_id);
-    const ownRef = source?.gedcomx_source_description_id;
+    const ownRefOf = (assertionId: unknown): unknown => {
+      const assertion = assertions.find((x) => x && x.id === assertionId);
+      return sources.find((s) => s && s.id === assertion?.source_id)?.gedcomx_source_description_id;
+    };
     const person = (tree?.persons ?? []).find((p) => p && p.id === rj.person_id);
     const removed: string[] = [];
     const kept: string[] = [];
@@ -8710,6 +8722,7 @@ function retireRejectedLinks(
     if (person && Array.isArray(person.facts)) {
       person.facts = person.facts.filter((f) => {
         if (!f || !retiredAssertions.has(f.assertion_id)) return true;
+        const ownRef = ownRefOf(f.assertion_id);
         const otherEvidence = (f.sources ?? []).some((s) => typeof s?.ref === "string" && s.ref !== ownRef);
         if (otherEvidence) {
           kept.push(f.id ?? f.type ?? "(fact)");
@@ -8722,8 +8735,9 @@ function retireRejectedLinks(
     if (removed.length > 0) mutated = true;
 
     const retired = live.map((pe) => pe.id).join(", ");
+    const retiredIds = [...retiredAssertions].filter((x) => typeof x === "string").join(", ");
     warnings.push(
-      `${rj.id} retired ${retired} (superseded_by '${rj.id}')` +
+      `${rj.id} retired ${retired} (superseded_by '${rj.id}'; assertions ${retiredIds})` +
         (removed.length > 0 ? ` and removed ${removed.join(", ")} from ${rj.person_id}` : "") +
         `. ${rj.person_id} may still carry names or relationships from ${rj.assertion_id}'s record; ` +
         "check them with person_read and correct with tree_correct.",
@@ -11377,8 +11391,9 @@ function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record
  *  the lock, or `"unavailable"` when that read failed. */
 export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
 
-/** The most collections one locality's fill adds. The largest list in 18 surveyed
- *  places was New York's 65; a country-wide scope can run to several hundred. */
+/** The most collections one locality's fill leaves it holding, place and core
+ *  national rows together. The largest place list in 18 surveyed places was New
+ *  York's 65; a country-level place can run to about 140 (the United States). */
 export const LOCALITY_COLLECTIONS_FILL_MAX = 150;
 
 /** A `localities` append in these ops: the catalog is read for it even when it
@@ -11436,7 +11451,8 @@ function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
  * search, so a collection left out was hidden from the plan. The scope is the one
  * `collections_search` derives: the entry's `place`, else the first jurisdiction
  * name whose scope matches a title. A title that names another part of the scope
- * is not added (`titleNamesElsewhere`).
+ * is not added (`titleNamesElsewhere`). A scope that is the United States, Canada
+ * or Mexico itself is skipped: their country-wide rows are `fillNationalCollections`'s.
  */
 function fillLocalityCollections(
   ops: ResearchAppendOp[],
@@ -11455,7 +11471,7 @@ function fillLocalityCollections(
       if (typeof name !== "string" || name.trim() === "") continue;
       const scope = standardPlaceToCollectionsQuery(name);
       const needle = scope.toLowerCase();
-      if (needle === "") continue;
+      if (needle === "" || nationalCollectionScope(scope) === scope) continue;
       const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
       if (inScope.length === 0) continue;
       const own = ownPlaceTerms([...names, entry.for_place], scope);
@@ -11484,6 +11500,74 @@ function fillLocalityCollections(
       return;
     }
   });
+}
+
+/**
+ * Add to a `localities` append in the United States, Canada or Mexico the catalog's
+ * core national collections (`isCoreNationalCollection`) that overlap its `time_period`
+ * (spec §5.12, "National collections"). Their scope is the state or province, so
+ * `fillLocalityCollections` never reaches a federal census, and research-plan plans
+ * national collections from these rows (`project_context` `nationalCollections`).
+ * Runs after that fill, under the same cap. An undated row is kept, as
+ * `collections_search` keeps one; a `time_period` with no year cuts nothing.
+ */
+function fillNationalCollections(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined || catalog === "unavailable") return;
+  ops.forEach((op: any, i) => {
+    if (!op || typeof op !== "object" || op.section !== "localities" || op.op !== "append") return;
+    const entry = op.entry;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return;
+    if (entry.collections !== undefined && !Array.isArray(entry.collections)) return;
+    const country = localityNationalCountry(entry);
+    if (!country) return;
+    const window = yearSpan(entry.time_period);
+    const held: unknown[] = entry.collections ?? [];
+    const heldIds = new Set(held.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
+    const missing = [...catalog].filter(([id, c]) => {
+      if (heldIds.has(id) || typeof c.title !== "string" || !isCoreNationalCollection(c.title, country)) return false;
+      if (window === null) return true;
+      const span = yearSpan(c.dateRange);
+      return span === null || (span[0] <= window[1] && span[1] >= window[0]);
+    });
+    if (missing.length === 0) return;
+    const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - held.length);
+    const added = missing.slice(0, room).map(([id, c]) => ({
+      id,
+      title: c.title as string,
+      date_range: c.dateRange ?? null,
+      person_count: c.personCount,
+      record_count: c.recordCount,
+    }));
+    entry.collections = [...held, ...added];
+    warnings.push(
+      fmt(
+        i,
+        `localities collections: added ${added.length === missing.length ? `the ${added.length}` : `${added.length} of the ${missing.length}`} ` +
+          `core national FamilySearch collections for "${country}"` +
+          (window === null ? "" : ` overlapping ${window[0]}-${window[1]}`) +
+          " from the catalog",
+      ),
+    );
+  });
+}
+
+/** One `localities` entry, as a caller's append leaves it: counts stamped, then the
+ *  place's and the country's collections filled from `catalog`. Mutates `entry`;
+ *  returns the warnings. For dev scripts that build fixtures the way production
+ *  stores them (`dev/fill-locality-fixtures.ts`). */
+export function fillLocalityEntryFromCatalog(entry: Record<string, unknown>, catalog: CollectionCatalog): string[] {
+  const ops = [{ section: "localities", op: "append", entry }] as unknown as ResearchAppendOp[];
+  const warnings: string[] = [];
+  const fmt = (_i: number, msg: string) => msg;
+  stampLocalityCollectionCounts(ops, catalog, warnings, fmt);
+  fillLocalityCollections(ops, catalog, warnings, fmt);
+  fillNationalCollections(ops, catalog, warnings, fmt);
+  return warnings;
 }
 
 /**
@@ -12519,6 +12603,7 @@ async function prepareOps(
   if (errors.length === 0) {
     stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
     fillLocalityCollections(ops, options.collectionCatalog, warnings, fmt);
+    fillNationalCollections(ops, options.collectionCatalog, warnings, fmt);
   }
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
