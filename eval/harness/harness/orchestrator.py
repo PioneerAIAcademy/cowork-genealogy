@@ -1908,6 +1908,11 @@ _MOCK_ENRICHED_KEYS = (
     # run log.
     "unloggedSearches",
     "nilSearchNeedsLog",
+    # `fulltext_search`'s advice, computed by the mock from the call's own
+    # arguments. A run log without them cannot tell a note the agent ignored
+    # from one that never reached it.
+    "nameFieldRetry",
+    "tooManyResults",
     # Computed by the mock from the call's own arguments (#3054). A nil
     # record_search with no projectPath carries none of the keys above, so
     # without this its hint would be stripped from the run log the

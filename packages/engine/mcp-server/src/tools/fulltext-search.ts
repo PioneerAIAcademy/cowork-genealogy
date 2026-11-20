@@ -21,6 +21,7 @@ import {
   NOT_FULLTEXT_SEARCHABLE_NOTE,
 } from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
+import { fulltextAdvice } from "../utils/fulltext-advice.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 
@@ -334,6 +335,7 @@ export async function fulltextSearchTool(
       : {}),
     // Precedes `results` with the other notes, for the same size-bound reason.
     ...(notSearchableNote ? { notFulltextSearchable: notSearchableNote } : {}),
+    ...fulltextAdvice({ ...input }, data.results ?? 0),
     results,
   };
 
@@ -352,6 +354,8 @@ export async function fulltextSearchTool(
       const {
         unloggedSearches: _backlog,
         nilSearchNeedsLog: _nilNote,
+        nameFieldRetry: _nameNote,
+        tooManyResults: _manyNote,
         ...persistable
       } = out;
       out.staged = await stageSearchResults({
