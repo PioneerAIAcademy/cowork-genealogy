@@ -18,7 +18,11 @@ export const READING_NOTE =
   "this page; a given name the index left blank is absent from them. Where they and the " +
   "transcription differ, show both side by side, say they differ, name the line, and give " +
   "`viewerUrl` to check it. Call neither reading the answer or the likelier one, never call the " +
-  "index wrong or a misread, and never state a correction. A second transcription of the same page, " +
+  "index wrong or a misread, and never state a correction. A reading the researcher gives of the " +
+  "page ranks with the index: show it beside the transcription the same way, and never correct it " +
+  "from the transcription. A line the transcription leaves blank where the index has a person is a " +
+  "difference between the two readings, never evidence that the person is absent. " +
+  "A second transcription of the same page, " +
   "or one made after declining to read it, confirms nothing; only a different record or a " +
   "different person's reading does. Report each other record's name as that record writes " +
   "it: it challenges this reading, so never call it a rendering, variant or split of another " +

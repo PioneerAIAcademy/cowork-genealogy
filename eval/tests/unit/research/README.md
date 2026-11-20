@@ -270,12 +270,18 @@ The `image_transcribe` mocks for iv1 and iv2 return what the OCR actually read
 mock holding the right answer reproduces nothing, and every check passes against it.
 The correct values appear only in each test's `description` and `judge_context`.
 
-Two deterministic validators, driven by the tests' data tags:
+Three deterministic validators, driven by the tests' data tags:
 - **`index-vs-reading`** (iv1, iv2, with `transcribes-in-place`):
   `test_index_and_machine_reading_shown_side_by_side` requires both readings and the
   line number in the reply, and forbids a verdict ("is clear", "index was wrong",
-  "both … agree", "confirmed"). With `as-written:` it also requires that record's
+  "both … agree", "confirmed", "the indexer got it wrong", "the enumerator wrote '…'",
+  "her correct name is …", "both passes match"); "no doubt" before a verdict affirms it,
+  so it is not read as a denial. With `as-written:` it also requires that record's
   name as written, never as a "rendering", "variant" or "split" of another.
+- **`brief-no-disputed-reading`** (iv3), on what the researcher sees:
+  `test_reply_never_names_the_subject_by_the_disputed_reading` applies the brief's name
+  test to what the researcher sees: the reply and each search spawn's `description`
+  ("Why are you searching for 'Anthony'?", feedback #4510).
 - **`brief-no-disputed-reading`** (iv3): `test_search_brief_never_carries_the_disputed_reading`
   reads the spawn prompts. No search brief may name the subject by the machine
   reading, a given name it does search on must be the `agreed-prefix:` wildcard

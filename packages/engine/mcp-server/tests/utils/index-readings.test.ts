@@ -90,7 +90,10 @@ describe("attachIndexReadings (#4578)", () => {
       /side by side/, /name the line/, /never call the index wrong or a misread/,
       /second transcription of the same page/, /never call it a rendering, variant or split/,
       /never state a correction/, /after declining to read it/, /only a different record/,
-      /never call a disagreeing spelling consistent/, /never drop a reading on a premise/]) {
+      /never call a disagreeing spelling consistent/, /never drop a reading on a premise/,
+      /reading the researcher gives of the page ranks with the index/,
+      /never correct it from the transcription/,
+      /leaves blank where the index has a person/, /never evidence that the person is absent/]) {
       expect(READING_NOTE).toMatch(rule);
     }
   });

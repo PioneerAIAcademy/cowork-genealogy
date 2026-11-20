@@ -487,7 +487,8 @@ message.
    **When the subject's `project_context` person carries `unsupportedGivenName`:** `names`
    carries the surname with its `searchAs` as the given name, and the brief gives its `given`
    only as plain text, a reading in doubt beside the index reading. Never leave the given name
-   out, and never send `given` as the name.
+   out, and never send `given` as the name. The spawn's `description` and your reply name the
+   subject by the surname alone, never by `given`.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and

@@ -1184,13 +1184,19 @@ _VERDICT = re.compile(
     r"|\bmore\s+(?:plausible|likely|accurate)\s+reading\b"
     r"|(?<!transcription of the )(?<!transcript of the )(?<!reading of the )(?<!OCR of the )"
     r"\b(?:image|scan)\s+reads\b"
-    r"|\bas\s+written\s+on\s+(?:the\s+)?(?:page|image|scan)\b",
+    r"|\bas\s+written\s+on\s+(?:the\s+)?(?:page|image|scan)\b"
+    r"|\bindex(?:er)?\s+(?:got\s+it\s+wrong|(?:is|was)\s+(?:incorrect|mistaken))"
+    r"|\benumerator\s+wrote\s*:?\s*[\"'“‘]"
+    r"|\b(?:correct|true|actual)\s+(?:given\s+)?name\s+(?:is|was)\s+[\"'“‘]?\w"
+    r"|\bboth\b[^.\n]*\bmatch(?:es|ed)?\b",
     re.IGNORECASE,
 )
 # The index called a misread, with nothing denying it between the two words.
 _INDEX_MISREAD = re.compile(
     r"\bindex(?:er|ing)?\b(?P<gap>(?:\s+[\w'-]+){0,5}?)\s+misread", re.IGNORECASE
 )
+# "no doubt", "without question" affirm what follows; they never deny it.
+_AFFIRMING = re.compile(r"\b(?:no|without|beyond)\s+(?:a\s+)?(?:doubt|question)\b", re.IGNORECASE)
 _GAP_NEGATION = re.compile(r"\b(?:not|never|no)\b|n't\b", re.IGNORECASE)
 _NEGATION_WORD = re.compile(r"^(?:not|never|no|cannot|can't|won't|don't|isn't|wasn't)$", re.IGNORECASE)
 
@@ -1209,7 +1215,7 @@ def _negated_just_before(text: str, start: int, words: int = 4) -> bool:
     """A negation among the last few words before `start`, in the same clause:
     "I can't say the index is wrong" denies the verdict. Adjacent only, so a
     negation earlier in a long clause cannot excuse a verdict after it."""
-    clause = _CLAUSE_BREAK.split(text[:start])[-1]
+    clause = _AFFIRMING.sub(" ", _CLAUSE_BREAK.split(text[:start])[-1])
     return any(_NEGATION_WORD.match(w.strip("\"'*_")) for w in clause.split()[-words:])
 # A record's name folded into another record's.
 _FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORECASE)
@@ -1266,7 +1272,7 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
         {m.group(0) for m in _VERDICT.finditer(reply)
          if not _negated_just_before(reply, m.start())
          and (m.group(0).lower() != "confirmed"
-              or (not _NEGATED_CLAUSE.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1])
+              or (not _NEGATED_CLAUSE.search(_AFFIRMING.sub(" ", _CLAUSE_BREAK.split(reply[:m.start()])[-1]))
                   and _ABOUT_A_READING.search(_clause_around(reply, m.start(), m.end()))))}
         | {m.group(0) for m in _INDEX_MISREAD.finditer(reply)
            if not _GAP_NEGATION.search(m.group("gap"))
@@ -1280,7 +1286,7 @@ def test_index_and_machine_reading_shown_side_by_side(test, text_response):
             problems.append(f"it never reports the name as written, {written!r}")
         folded = sorted({
             m.group(0) for m in _FOLDED.finditer(reply)
-            if not _NEGATED_CLAUSE.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1])
+            if not _NEGATED_CLAUSE.search(_AFFIRMING.sub(" ", _CLAUSE_BREAK.split(reply[:m.start()])[-1]))
         })
         if folded:
             problems.append(f"it folds a record's name into another's: {folded}")
@@ -1355,6 +1361,42 @@ def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_call
     assert not problems, (
         "a name only a machine reading gives is a reading in doubt, not the subject's "
         "name: " + "; ".join(problems)
+    )
+
+
+def test_reply_never_names_the_subject_by_the_disputed_reading(test, text_response, builtin_tool_calls):
+    """Tag-gated (``brief-no-disputed-reading``), issue #4578. What the researcher
+    sees, the reply and each search spawn's ``description`` (the task's label),
+    names the subject by the machine reading only as a reading in doubt: the rule
+    ``test_search_brief_never_carries_the_disputed_reading`` applies to the prompt.
+    Feedback #4510: "Why are you searching for 'Anthony'?"
+
+    Proven both ways in ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _BRIEF_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BRIEF_TAG} test")
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    surname = _one_tag_value(test, _SURNAME_PREFIX)
+    assert machine and surname, (
+        f"a {_BRIEF_TAG} test names {_MACHINE_READING_PREFIX} and {_SURNAME_PREFIX} tags; "
+        f"got {test.get('tags')}"
+    )
+    m, s = re.escape(machine), re.escape(surname)
+    as_name = re.compile(rf"\b{m}\s+{s}\b|\b{s},?\s+{m}\b", re.IGNORECASE)
+    texts = [("the reply", (text_response or "").replace("*", ""))] + [
+        (
+            f"the {(c.get('args') or {}).get('subagent_type')} task label",
+            str((c.get("args") or {}).get("description") or ""),
+        )
+        for c in builtin_tool_calls or []
+        if (c.get("args") or {}).get("subagent_type") in _SEARCH_CALLEES
+    ]
+    named = sorted({
+        where for where, text in texts for hit in as_name.finditer(text)
+        if not _IN_DOUBT.search(_sentence_around(text, hit.start(), hit.end()))
+    })
+    assert not named, (
+        f"{', '.join(named)} names the subject {machine!r}, a reading in doubt, as her name"
     )
 
 

@@ -19,6 +19,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_research import (  # noqa: E402
     test_index_and_machine_reading_shown_side_by_side as check_reply,
     test_search_brief_never_carries_the_disputed_reading as check_brief,
+    test_reply_never_names_the_subject_by_the_disputed_reading as check_reply_names,
 )
 
 T1900 = {
@@ -263,3 +264,98 @@ def test_a_brief_naming_the_subject_by_the_reading_fails(calls):
 def test_the_brief_check_skips_the_transcription_tests():
     with pytest.raises(pytest.skip.Exception):
         check_brief(T1900, [])
+
+
+# PR #4711 review, item 5: "no doubt" affirms the verdict after it; it is no denial.
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1900 + " There is no doubt the image is clear.",
+        GOOD_1900 + " I have no doubt the index misread it.",
+        GOOD_1900 + " Without question the index is wrong.",
+    ],
+)
+def test_an_affirming_no_doubt_does_not_deny_the_verdict(reply):
+    with pytest.raises(AssertionError, match="verdict"):
+        check_reply(T1900, reply)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1900 + " No doubt you will want to check line 23 yourself.",
+        GOOD_1900 + " I can't say the index got it wrong.",
+    ],
+)
+def test_no_doubt_about_something_else_still_passes(reply):
+    check_reply(T1900, reply)
+
+
+# PR #4711 review, item 6: verdict shapes the decided list did not name.
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1900 + " The indexer got it wrong.",
+        GOOD_1900 + " The index was mistaken.",
+        GOOD_1900 + " The enumerator wrote 'Tyler Anthony'.",  # the #4519 bundle's own phrase
+        GOOD_1900 + " Her correct given name is Anthony.",
+        GOOD_1900 + " Both passes match on Anthony.",
+    ],
+)
+def test_more_verdict_shapes_fail(reply):
+    with pytest.raises(AssertionError, match="verdict"):
+        check_reply(T1900, reply)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        GOOD_1900 + " What the enumerator wrote is for you to check on the image.",
+        GOOD_1900 + " The two passes do not both match the index.",
+        GOOD_1900 + " I can't tell whether the index is incorrect.",
+        GOOD_1900 + " Neither reading can say what her correct name is.",
+        GOOD_1900 + " The index is not mistaken just because a machine read it differently.",
+    ],
+)
+def test_their_legitimate_neighbours_pass(reply):
+    check_reply(T1900, reply)
+
+
+# PR #4711 review, item 4: the reply and the search task's label, not only the prompt.
+def _labelled(callee: str, description: str) -> dict:
+    return {"tool": "Agent", "args": {"subagent_type": callee, "prompt": "Given name: A*", "description": description}}
+
+
+@pytest.mark.parametrize(
+    "reply,calls",
+    [
+        # v54_2026-11-19_15-46-00, ut_research_iv3
+        ("Searching for Anthony Tyler (born April 1853, Virginia) in the 1910 census now.",
+         [_labelled("search-records", "Search 1910 census for Tyler")]),
+        ("Searching the 1910 census for her now.",
+         [_labelled("search-records", "Search 1910 census for Anthony Tyler")]),
+        ("Searching the 1910 census for **Tyler, Anthony** now.", []),
+    ],
+)
+def test_naming_her_by_the_reading_to_the_researcher_fails(reply, calls):
+    with pytest.raises(AssertionError, match="reading in doubt"):
+        check_reply_names(BRIEF, reply, calls)
+
+
+@pytest.mark.parametrize(
+    "reply,calls",
+    [
+        ("Searching the 1910 census for Tyler, born about 1853 in Virginia, with the given name as A*.",
+         [_labelled("search-records", "Search 1910 census for Tyler (A*)")]),
+        ("The tree calls her Anthony Tyler, but that is one machine reading, in doubt; searching as A*.",
+         [_labelled("search-records", "Search 1910 census for Tyler")]),
+        ("Searching now.", [_labelled("person-evidence", "Link Anthony Tyler")]),
+    ],
+)
+def test_holding_the_reading_in_doubt_to_the_researcher_passes(reply, calls):
+    check_reply_names(BRIEF, reply, calls)
+
+
+def test_the_reply_name_check_skips_the_transcription_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_reply_names(T1900, "Anthony Tyler", [])

@@ -673,6 +673,9 @@ Text only, no image block:
   metadata?: {               // present only when a Memories page URL was resolved
     memoryArtifactUrl: string
   }
+  readingNote?: string       // in a project, always: READING_NOTE (see "Index readings")
+  indexReadings?: { sourceId: string; recordId: string; role: string; name: string }[]
+                             // in a project, for an `ark` read whose page a held source's image_ark names
 }
 ```
 
@@ -753,7 +756,11 @@ in-process call.
   of the page, and its text is never "the name as written". Where it and the index
   differ, show both side by side, say they differ, name the line, and give `viewerUrl`.
   Call neither reading the answer or the likelier one, never call the index wrong or a
-  misread, and never state a correction. A second transcription of the same page, or one
+  misread, and never state a correction. A reading the researcher gives of the page ranks
+  with the index: it is shown beside the transcription the same way and never corrected
+  from it. A line the transcription leaves blank where the index
+  has a person is a difference between the readings, never evidence the person is absent.
+  A second transcription of the same page, or one
   made after declining to read it, confirms nothing; only a different record or a
   different person's reading does. Report each other record's name as that record writes
   it: it challenges the reading, so never call it a rendering, variant or split of another
