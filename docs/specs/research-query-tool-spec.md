@@ -175,6 +175,7 @@ the principal personas of both records.
                         // list calls only — see below
   unregisteredDisagreements?: { personId, fact, assertionIds }[],
                         // `conflicts` only — see below
+  note?: string,       // `hypotheses` only, serialized before `items` — see below
 }
 // on failure: { ok: false, errors: string[] }
 ```
@@ -284,6 +285,24 @@ narrowed to those naming `assertionId` (any of them, for a list); omitted under 
 than `unresolved`, since an unregistered disagreement has no other status. The
 field does not page — every page carries all of it — but, like `countById`, it
 is counted toward every page's size (below).
+
+**`hypotheses` also returns `note`** when any item on the page is not ruled out
+(`status` other than `ruled_out`, and `ruled_out` not `true`). It is the fixed
+text `HYPOTHESES_NOTE` in `research-query.ts`:
+
+> A claim's dated events include those in its description of who a person is
+> and those in the records it rests on. To weigh a newly reported record,
+> compare each date it gives with every one of those events attributed to the
+> same person.
+
+It says what to compare and decides nothing: by ruling, no tool judges whether a
+record contradicts a hypothesis, and the text names no conclusion. It
+exists because a router that read `ut_research_gm4`'s h_002 restated the claim
+by its conclusion (the sibling relationship) and its 1850 and 1860 censuses, then
+compared a reported 1861 death with those alone. It missed the 1870 marriage
+that the claim names in its description of the man and rests on (4 of 23 runs).
+Every agent that reads `hypotheses` sees it, not only the router. It is counted
+toward the page's size like the other extras.
 
 **Pages.** Each call returns one page of the *filtered* set: at most 50 items
 (`MAX_ITEMS` in `research-query.ts`), and fewer when the whole answer would pass

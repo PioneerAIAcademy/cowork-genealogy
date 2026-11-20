@@ -11,6 +11,7 @@ import {
   RESEARCH_QUERY_OPTIONAL_SECTIONS,
   SECTION_FILTERS,
   flattenAssertionGroups,
+  HYPOTHESES_NOTE,
 } from "../../src/tools/research-query.js";
 
 /** An `assertions` answer as flat assertions (the tool returns them grouped). */
@@ -678,6 +679,67 @@ describe("research_query — conflicts reports unregistered disagreements", () =
     await writeFile(join(dir, "research.json"), JSON.stringify(research()), "utf-8");
     const result = await researchQuery({ projectPath: dir, section: "assertions" });
     expect(result.ok && "unregisteredDisagreements" in result).toBe(false);
+  });
+});
+
+// --- #4121: what to compare a reported record with --------------------------
+
+describe("research_query — hypotheses carry the note on dated events (#4121)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-hyp-note-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const h = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    claim: `${id} claim`,
+    status: "active",
+    supporting_assertion_ids: [],
+    contradicting_assertion_ids: [],
+    ...extra,
+  });
+
+  async function query(hypotheses: any[], extra: Record<string, unknown> = {}, section = "hypotheses") {
+    await writeFile(join(dir, "research.json"), JSON.stringify({ hypotheses, conflicts: [] }), "utf-8");
+    const result = await researchQuery({ projectPath: dir, section, ...extra } as any);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("unreachable");
+    return result;
+  }
+
+  it("carries the note, before items, when a hypothesis is active", async () => {
+    const result = await query([h("h_001")]);
+    expect(result.note).toBe(HYPOTHESES_NOTE);
+    const keys = Object.keys(result);
+    expect(keys.indexOf("note")).toBeLessThan(keys.indexOf("items"));
+  });
+
+  it("carries it for a supported hypothesis, and for a page mixing ruled-out ones", async () => {
+    expect((await query([h("h_001", { status: "supported" })])).note).toBe(HYPOTHESES_NOTE);
+    expect((await query([h("h_001", { status: "ruled_out" }), h("h_002")])).note).toBe(HYPOTHESES_NOTE);
+  });
+
+  it("leaves it out when every hypothesis on the page is ruled out, by status or by flag", async () => {
+    const result = await query([h("h_001", { status: "ruled_out" }), h("h_002", { ruled_out: true })]);
+    expect("note" in result).toBe(false);
+  });
+
+  it("leaves it out when a filter returns only ruled-out hypotheses", async () => {
+    const result = await query([h("h_001", { status: "ruled_out" }), h("h_002")], { status: "ruled_out" });
+    expect(result.items.map((i: any) => i.id)).toEqual(["h_001"]);
+    expect("note" in result).toBe(false);
+  });
+
+  it("leaves it out of an empty answer and of every other section", async () => {
+    expect("note" in (await query([]))).toBe(false);
+    expect("note" in (await query([h("h_001")], {}, "conflicts"))).toBe(false);
+  });
+
+  it("says what to compare, never what to conclude", () => {
+    expect(HYPOTHESES_NOTE).not.toMatch(/impossible|contradict|support|rule/i);
   });
 });
 

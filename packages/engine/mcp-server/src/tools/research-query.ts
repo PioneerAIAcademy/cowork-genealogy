@@ -168,6 +168,9 @@ export type ResearchQueryResult =
        *  `count: 0` as "no conflicts present" skipped conflict-resolution while
        *  these sat unregistered (ut_research_h22). */
       unregisteredDisagreements?: UnregisteredDisagreement[];
+      /** `hypotheses` only: `HYPOTHESES_NOTE`, present when an item on this page
+       *  is not ruled out. Serialized before `items`. */
+      note?: string;
       /** Why a `person_evidence` link sits where it does in `items`, keyed by link id.
        *  Present only for that section, only for the links on this page, and only
        *  for links carrying a reason — the ordering is by consequence, and a rank
@@ -186,6 +189,18 @@ export type ResearchQueryResult =
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
   | { ok: false; errors: string[]; reason?: "no_project" };
+
+/** Added to a `hypotheses` page that holds a hypothesis not ruled out. It says
+ *  what to compare and decides nothing (#4121): a reply that kept only a claim's
+ *  conclusion compared a reported 1861 death with the claim's 1850 and 1860
+ *  censuses and missed the 1870 marriage named in its description of the man. */
+export const HYPOTHESES_NOTE =
+  "A claim's dated events include those in its description of who a person is and those in the records it rests on. " +
+  "To weigh a newly reported record, compare each date it gives with every one of those events attributed to the same person.";
+
+function isNotRuledOut(h: any): boolean {
+  return h?.status !== "ruled_out" && h?.ruled_out !== true;
+}
 
 export interface SettledConflictRow {
   /** The `pe_` ids on this page the sentences apply to. */
@@ -1002,11 +1017,13 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
 
     const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
     return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
+      const slice = ordered.slice(start, end);
       const page: OkPage = {
         ok: true as const,
         section,
         count: ordered.length,
-        items: projectItems(section, ordered.slice(start, end), questionId),
+        ...(section === "hypotheses" && slice.some(isNotRuledOut) ? { note: HYPOTHESES_NOTE } : {}),
+        items: projectItems(section, slice, questionId),
         truncated: end < ordered.length,
       };
       if (page.truncated) page.nextOffset = end;
