@@ -300,8 +300,7 @@ record contradicts a hypothesis, and the text names no conclusion. It
 exists because a router that read `ut_research_gm4`'s h_002 restated the claim
 by its conclusion (the sibling relationship) and its 1850 and 1860 censuses, then
 compared a reported 1861 death with those alone. It missed the 1870 marriage
-that the claim names in its description of the man and rests on, as in the
-committed research run `v54_2026-11-20_12-27-22`.
+that the claim names in its description of the man and rests on (4 of 23 runs).
 Every agent that reads `hypotheses` sees it, not only the router. It is counted
 toward the page's size like the other extras.
 
@@ -309,8 +308,8 @@ toward the page's size like the other extras.
 (`MAX_ITEMS` in `research-query.ts`), and fewer when the whole answer would pass
 `TOOL_RESULT_CHAR_BUDGET` (40,000 characters, `src/constants.ts`). The size
 measured is the answer as returned, `JSON.stringify` of the whole object
-`writerToolResult` sends — `countById`, `reviewReasons`,
-`unregisteredDisagreements`, `settledConflicts` and `note` included, not `items` alone. A single item over the
+`writerToolResult` sends — `countById`, `reviewReasons` and
+`unregisteredDisagreements` included, not `items` alone. A single item over the
 budget is returned alone, so a page always holds at least one. A caller that
 hits `truncated: true` either narrows the filter or **pages**: call again with
 `offset: nextOffset`, until `truncated: false`. `offset` is pagination, not a
