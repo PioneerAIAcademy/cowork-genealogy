@@ -904,7 +904,7 @@ can be off.
 0 results     → drop place; try Keywords field; try wildcards
 1–50 results  → review all
 50–500        → add Year/RecordType filter
->500          → add second required term (+associate, +occupation)
+>500          → add probable words without + (occupation, associate, place word)
 ```
 
 **Still 0 after above:**
@@ -1097,8 +1097,8 @@ personal names.
 
 ### Iterative refinement
 
-- **Too many (>1000):** add `+` to require terms; add Place filter;
-  add Year Range; add third keyword
+- **Too many (>1000):** add probable words without `+`; add Place filter;
+  add Year Range
 - **Too few or zero:** drop quotes; add wildcards; try Keywords
   instead of Name field (or vice versa); try abbreviations; remove
   year filter (collection year ≠ document year)
