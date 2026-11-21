@@ -259,8 +259,9 @@ does. Implementation plans for unbuilt work are in `docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. Every activity starts a
 project, including one with no person in it (lead, 2026-11-19, narrowing the 2026-10-15
 rule): `server.ts` refuses a call to any tool but `project_create`, `project_list`,
-`project_context`, `login`, `logout`, `auth_status` and `tree_gaps` (the tree survey, which
-writes nothing and runs with no project in folder mode) that names no project, and a
+`project_context`, `login`, `logout`, `auth_status`, `tree_gaps` (the tree survey, which writes nothing and runs with no project in
+folder mode) and the three lookups where-else-to-search runs (`place_search`,
+`external_links_search`, `build_external_search_url`) that names no project, and a
 person-less project comes from `project_create` with no `personId`, not through
 `init-project`. Research on a named person still needs a FamilySearch person ID:
 `init-project` never searches by name, and with no ID it creates nothing and asks for

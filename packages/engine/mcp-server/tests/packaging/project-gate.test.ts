@@ -14,9 +14,9 @@ const NAMES = allToolSchemas.map((t) => t.name);
 const GATED = NAMES.filter((n) => !PROJECT_EXEMPT_TOOLS.has(n));
 
 describe("the project gate", () => {
-  it("exempts exactly the six project and sign-in tools and tree_gaps, all advertised", () => {
+  it("exempts exactly the project and sign-in tools, tree_gaps and the three where-else-to-search tools, all advertised", () => {
     expect([...PROJECT_EXEMPT_TOOLS].sort()).toEqual(
-      ["auth_status", "login", "logout", "project_context", "project_create", "project_list", "tree_gaps"],
+      ["auth_status", "build_external_search_url", "external_links_search", "login", "logout", "place_search", "project_context", "project_create", "project_list", "tree_gaps"],
     );
     for (const name of PROJECT_EXEMPT_TOOLS) expect(NAMES).toContain(name);
   });
@@ -43,7 +43,7 @@ describe("the project gate", () => {
 
   it("names a path that is not a folder as a missing path, not as a missing project", async () => {
     const missing = join(tmpdir(), "gate-no-such-folder-" + Date.now());
-    const refusal = await projectGateRefusal("place_search", { projectPath: missing });
+    const refusal = await projectGateRefusal("convert_calendar", { projectPath: missing });
     expect(refusal).toBe(`projectPath does not exist: ${missing}`);
   });
 
