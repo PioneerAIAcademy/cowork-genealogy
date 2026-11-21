@@ -1985,6 +1985,35 @@ _FORBIDDEN_COMPLETENESS_PATTERNS = [
     re.compile(r"\b(complete(d)?|exhaustive)\b[^.]{0,40}\bsurvey\b", re.IGNORECASE),
 ]
 
+_SEARCH_TARGET_PATTERNS = _FORBIDDEN_COMPLETENESS_PATTERNS[:2]
+_SENTENCE_BOUNDARY_RE = re.compile(r"[.;!?\n]|—")
+_SEARCH_VERB_RE = re.compile(r"\b(?:search|look|survey|scan|dispatch|query|quer)\w*\b", re.IGNORECASE)
+_ACHIEVED_RE = re.compile(
+    r"\b(?:found|find(?:s|ing)?|captured?|cover(?:s|ed|ing)?|accounted|returned|located|identified|turned\s+up)\b",
+    re.IGNORECASE,
+)
+
+
+def _completeness_claims(body: str) -> list[str]:
+    hits = []
+    for i, pattern in enumerate(_FORBIDDEN_COMPLETENESS_PATTERNS):
+        for m in pattern.finditer(body):
+            if i < len(_SEARCH_TARGET_PATTERNS) and _is_search_target(body, m):
+                continue
+            hits.append(pattern.pattern)
+            break
+    return hits
+
+
+def _is_search_target(body: str, m: re.Match) -> bool:
+    start = max((b.end() for b in _SENTENCE_BOUNDARY_RE.finditer(body, 0, m.start())), default=0)
+    before = body[start:m.start()]
+    if not re.search(r"\bfor\s+$", before, re.IGNORECASE):
+        return False
+    verbs = list(_SEARCH_VERB_RE.finditer(before))
+    return bool(verbs) and _ACHIEVED_RE.search(before[verbs[-1].end():]) is None
+
+
 _FORBIDDEN_LOCALITY_PATTERN = re.compile(
     r"\b(?:W[oó]jtowa|Pagorzyna)\b[^.]{0,60}\bno\s+(?:\w+\s+){0,2}"
     r"(?:entries|records|occurrences|mentions|hits)\b",
@@ -2037,7 +2066,7 @@ def test_survey_handback_relay_has_no_completeness_claim(text_response, test):
     body = text_response or ""
     assert body, "the router produced no text to relay the survey hand-back"
 
-    completeness_hits = [p.pattern for p in _FORBIDDEN_COMPLETENESS_PATTERNS if p.search(body)]
+    completeness_hits = _completeness_claims(body)
     assert not completeness_hits, (
         "the reply calls the survey complete or claims every occurrence/mention "
         f"was found; matched: {completeness_hits}"
