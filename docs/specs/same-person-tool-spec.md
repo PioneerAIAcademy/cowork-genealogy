@@ -275,12 +275,9 @@ that no sibling assertion and no name resolves, a role two siblings carry under
 different persona ids, and a `recordPersonaId` the record does not hold; on a
 projected record, a role two groups hold. Each lists the personas it is choosing
 between, so the next call can name one ("Party selection" says which).
-`same_person` is deliberately **not** in
-`tests/tools/no-project.test.ts`'s table: that table's first assertion requires
-the tool to RETURN `{ ok: false, reason: "no_project" }`, and this tool returns a
-score, so there is no answer shape to carry that verdict. That ruling is
-about a *write* being silently dropped; here nothing is saved, the explicit arm
-works anywhere, and saying so is the right answer.
+`same_person` called on a folder with no project fails with `NO_PROJECT_REFUSAL`; the
+explicit two-document arm names no project document, but through the server the gate
+still requires a `projectPath`.
 
 ### Arm B — explicit (two documents)
 

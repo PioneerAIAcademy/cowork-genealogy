@@ -11,7 +11,7 @@
 sidecar_read({ projectPath, ref, offset?, maxChars? })
   -> { ok: true, ref, totalChars, offset, content, truncated, nextOffset?,
        hitId?, hitIndex?, logId?, title?, recordDate?, recordPlace? }
-   | { ok: false, reason: "no_project" | "invalid_ref" | "not_found" | "not_text", errors: string[] }
+   | { ok: false, reason: "invalid_ref" | "not_found" | "not_text", errors: string[] }
 
 sidecar_read({ projectPath, refs, maxChars? })
   -> { ok: true, results: [ <one result above per ref> ] }   // the whole answer within 40,000

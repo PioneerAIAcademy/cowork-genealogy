@@ -601,7 +601,7 @@ Tool-level (the rows above are the pure core's throws):
 | Condition | Behavior |
 |-----------|----------|
 | `projectPath` has no `tree.gedcomx.json`, or it is invalid JSON | clear input error before merging; write nothing |
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }`; write nothing. The user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. Applies to `merge_warnings` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. Applies to `merge_warnings` identically |
 | `merge_tree_persons` and `research.json` is missing/invalid — with `tree.gedcomx.json` present, i.e. a *broken* project | clear input error; write nothing |
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
 | Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
