@@ -13914,8 +13914,17 @@ export async function researchAppend(
       }
     }
 
-    // §5.14: which of the entry's collections each record-type row covers.
-    for (const loc of Array.isArray(research?.localities) ? research.localities : []) fillRecordTypeRows(loc);
+    // §5.14: which of the entry's collections each record-type row covers, on the localities this
+    // call writes only: another writer's call must leave every stored entry as it was.
+    const priorLocalityIds = new Set(
+      (Array.isArray(beforeResearch?.localities) ? beforeResearch.localities : []).map((l: any) => l?.id),
+    );
+    const writtenLocalityIds = new Set(
+      ops.flatMap((op: any) => (op && op.section === "localities" && op.op === "update" && typeof op.entryId === "string" ? [op.entryId] : [])),
+    );
+    for (const loc of Array.isArray(research?.localities) ? research.localities : []) {
+      if (!priorLocalityIds.has(loc?.id) || writtenLocalityIds.has(loc?.id)) fillRecordTypeRows(loc);
+    }
 
     const originalRefusals = originalWithoutEvidenceRefusals(beforeResearch, research, ops, applied);
     if (originalRefusals.length > 0) {

@@ -49,9 +49,10 @@ def test_passes_on_an_item_naming_the_register(why):
         [BAPTISM],
         [BAPTISM, ("probate", "Patrick's estate file at the Register of Wills may name his daughter.")],
         [BAPTISM, ("court", "Orphans' court guardianship dockets, if Patrick died while she was a minor.")],
+        [BAPTISM, ("court", "Patrick's estate file at the Orphans' Court after 1908. It may confirm Margaret's birth year.")],
         [("vital_record", "Pennsylvania state birth certificate for Margaret, 1897.")],
     ],
-    ids=["baptism-only", "probate", "orphans-court-without-birth", "state-certificate"],
+    ids=["baptism-only", "probate", "orphans-court-without-birth", "estate-file-then-birth", "state-certificate"],
 )
 def test_fires_when_no_item_names_the_register(items):
     with pytest.raises(AssertionError, match="no plan item uses the birth register"):

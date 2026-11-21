@@ -19681,6 +19681,24 @@ describe("research_append: a localities guide is saved one section per call (#45
     });
   });
 
+  it("a write to another section leaves a stored locality's rows as they were", async () => {
+    const research: any = baseResearch();
+    const stored = {
+      id: "loc_001",
+      ...entry({
+        collections: [{ id: "4237104", title: "Portugal, Madeira, Catholic Church Records, 1539-1911", date_range: "1539-1911" }],
+        record_types: [{ type: "church", access: "unknown", summary: "Parish registers.", collection_ids: [] }],
+      }),
+      pages_read: [],
+      created: "2026-01-01",
+    };
+    research.localities = [stored];
+    await writeProject(research);
+    const r = await researchAppend({ projectPath: dir, section: "project", op: "update", fields: { title: "Funchal origins" } } as never);
+    expect((r as any).errors ?? []).toEqual([]);
+    expect((await readResearch()).localities[0]).toEqual(stored);
+  });
+
   it("in a batch, each update's rows merge onto the rows the op before left", async () => {
     await writeProject();
     await append();

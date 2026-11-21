@@ -4,7 +4,7 @@
     "skill": "research-plan",
     "name": "A birth register named only in the locality entry's rows reaches the plan",
     "type": "positive",
-    "description": "flynn-child-birth-rows: q_003 asks where Margaret Flynn was born about 1897 in Schuylkill County. Pennsylvania kept no state birth certificates before 1906; loc_001's court row alone says the county orphans' court records hold births and deaths for 1893-1905. research-plan must plan that register, which it can learn only from the entry's record_types rows (issue #4602).",
+    "description": "flynn-child-birth-rows: q_003 asks where Margaret Flynn was born about 1897 in Schuylkill County. Pennsylvania kept no state birth certificates before 1906; loc_001's vital_record and court rows alone say the county orphans' courts kept births and deaths for 1893-1905. research-plan must plan that register, which it can learn only from the entry's record_types rows (issue #4602).",
     "tags": [
       "planning",
       "reads-localities-entry",
@@ -24,8 +24,9 @@
   },
   "judge_context": [
     "loc_001 is already in research.json; research-plan reads it and does not survey the place.",
-    "Pennsylvania began state birth certificates in 1906. For a birth about 1897 the civil source is the county register of births kept by the orphans' court for 1893-1905, which loc_001's court row states, citing the Pennsylvania Probate Records wiki page. A plan with no item for that register misses the one civil record of the birth and fails Completeness; a church baptism item beside it is expected.",
-    "A deterministic validator checks that an item names that register; do not fail a run that carries it for its wording."
+    "Pennsylvania began state birth certificates in 1906. For a birth about 1897 the civil source is the county register of births kept by the orphans' court for 1893-1905, which loc_001's vital_record and court rows state, citing the Pennsylvania Probate Records wiki page. A plan with no item for that register misses the one civil record of the birth and fails Completeness; a church baptism item beside it is expected.",
+    "A deterministic validator checks that an item names that register; do not fail a run that carries it for its wording.",
+    "An item for Patrick's estate or a guardianship file at the orphans' court is not the birth register: only an item that searches the 1893-1905 county birth register for Margaret's birth counts."
   ],
   "mcp_fixtures": [
     "place-search-schuylkill-county",

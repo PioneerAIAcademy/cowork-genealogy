@@ -848,13 +848,13 @@
       "record_types": [
         {
           "type": "vital_record",
-          "years": "1906-",
+          "years": "1893-",
           "level": "state",
-          "held_at": null,
+          "held_at": "the county orphans' court (1893-1905); the Pennsylvania Department of Health from 1906",
           "access": "unknown",
           "collection_ids": [],
-          "summary": "Statewide birth and death registration began in 1906; pre-1906 vital events rely on church, cemetery and probate records.",
-          "source_url": null
+          "summary": "Statewide birth and death registration began in 1906; for 1893-1905 the county orphans' courts kept registers of births and deaths; earlier vital events rely on church, cemetery and probate records.",
+          "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Probate_Records"
         },
         {
           "type": "probate",
