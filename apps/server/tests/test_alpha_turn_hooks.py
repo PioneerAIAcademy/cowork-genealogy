@@ -241,10 +241,11 @@ def test_the_alpha_system_prompt_tells_the_agent_what_the_researcher_can_see(tmp
     assert real_agent.RESEARCHER_VIEW_NOTE in opts.system_prompt["append"]
     note = real_agent.RESEARCHER_VIEW_NOTE
     # Issue #4684: the agent told a researcher to drag a PDF into the chat.
-    assert "📎 button below the message box" in note
+    assert "To upload files, the researcher uses the 📎 button below the message box" in note
     assert "selects all the files at once" in note
     assert "dragging a file in or pasting it does not work" in note
-    assert "off while you are working and comes back when you finish your current step" in note
+    assert "The 📎 button is off while you are working and comes back when you end your turn and wait for their reply" in note
+    assert "so say so when you ask for files" in note
 
 
 def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():

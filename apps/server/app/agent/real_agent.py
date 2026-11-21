@@ -816,7 +816,7 @@ RESEARCHER_VIEW_NOTE = (
     "files, the researcher uses the 📎 button below the message box and "
     "selects all the files at once; dragging a file in or pasting it does not "
     "work. The 📎 button is off while you are working and comes back "
-    "when you finish your current step, so say so when you ask for files."
+    "when you end your turn and wait for their reply, so say so when you ask for files."
 )
 
 
