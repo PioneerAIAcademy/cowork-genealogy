@@ -70,7 +70,7 @@ Every delegation names a `projectPath`, and Step 6 always runs. With no `project
 
 A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: the survey, every row and section, and Step 6.
 
-When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
+When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey each one and save each as its own `localities` entry. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name every entry you wrote in `summary_for_user`, and any jurisdiction you did not survey as still needing its own survey.
 
 ### 2. Establish jurisdictional context
 

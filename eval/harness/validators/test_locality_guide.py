@@ -231,35 +231,55 @@ def test_catalog_search_called_and_broadened(tool_calls, test):
     )
 
 
-def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, test):
-    """VR6 (issue #3186) — tag-gated (`single-jurisdiction`): when delegated
-    several separate jurisdictions, the agent must survey only one. Asserts:
+# The counties a several-jurisdictions test's delegation names, by test id. A mapped
+# test must carry the `several-jurisdictions` tag, so the tag cannot be dropped silently.
+_DELEGATED_COUNTIES = {"ut_locality_guide_029": ("Pulaski", "Greenup", "Boyd")}
 
-      1. Exactly one localities[] entry is persisted (not one per county).
-      2. locality_survey ran for at most one county.
 
-    Guards the context-overflow bug: surveying three counties in parallel
-    produces ~30 tool calls whose results exceed the agent's context window.
+def _entry_counties(loc, counties):
+    """The delegated counties a localities entry is for: read from `for_place`, else
+    `place`, never from `jurisdictions` (a county formed from another names its parent)."""
+    text = (loc.get("for_place") or loc.get("place") or "").lower()
+    return [c for c in counties if re.search(rf"\b{c.lower()}\b", text)]
+
+
+def test_each_jurisdiction_is_its_own_entry(before_state, after_state, tool_calls, test):
+    """VR6 — tag-gated (`several-jurisdictions`): when one delegation names several
+    counties, the agent may survey one or all of them, but each county it surveys is
+    saved as its own localities entry. Asserts:
+
+      1. At least one localities entry is written.
+      2. No entry is for more than one of the delegated counties, and no county has two.
+      3. Every county `locality_survey` ran for has its own entry.
+
+    Naming the unsurveyed counties is the judge's; naming every entry written is
+    `test_in_project_return_follows_the_contract`'s.
     """
-    if "single-jurisdiction" not in (test.get("tags") or []):
-        pytest.skip("not a single-jurisdiction test")
-    # 1. Exactly one localities entry persisted
+    counties = _DELEGATED_COUNTIES.get(test.get("id"))
+    tagged = "several-jurisdictions" in (test.get("tags") or [])
+    if counties and not tagged:
+        raise AssertionError(f"{test.get('id')} is mapped in _DELEGATED_COUNTIES but has no 'several-jurisdictions' tag")
+    if not tagged:
+        pytest.skip("not a several-jurisdictions test")
+    assert counties, f"{test.get('id')} carries 'several-jurisdictions' but names no counties in _DELEGATED_COUNTIES"
     written = _written_localities(before_state, after_state)
-    assert len(written) == 1, (
-        f"expected exactly 1 localities entry, got {len(written)} — "
-        "the agent should survey one jurisdiction per call, not all of them"
-    )
-    # 2. The survey ran for at most one county (its parent level is that county's own).
-    county_firsts = set()
+    assert written, "no localities entry was written: the agent must survey at least one of the named counties"
+    owners = {}
+    for loc in written:
+        named = _entry_counties(loc, counties)
+        assert len(named) <= 1, (
+            f"localities[{loc.get('id')}] is for several counties {named}: each county is its own entry"
+        )
+        for c in named:
+            owners.setdefault(c, []).append(loc.get("id"))
+    doubled = {c: ids for c, ids in owners.items() if len(ids) > 1}
+    assert not doubled, f"a county has more than one entry: {doubled}"
+    surveyed = set()
     for tc in _survey_calls(tool_calls):
-        sp = (as_mapping(tc.get("args")).get("standardPlace") or "")
-        parts = [p.strip() for p in re.sub(r"\s*\([^()]*\)\s*$", "", sp).split(",") if p.strip()]
-        if len(parts) >= 3:
-            county_firsts.add(parts[0].lower())
-    assert len(county_firsts) <= 1, (
-        f"locality_survey ran for several counties: {sorted(county_firsts)} — "
-        "the agent should survey only one jurisdiction per call"
-    )
+        sp = (as_mapping(tc.get("args")).get("standardPlace") or "").lower()
+        surveyed.update(c for c in counties if re.search(rf"\b{c.lower()}\b", sp))
+    unsaved = sorted(surveyed - set(owners))
+    assert not unsaved, f"surveyed {unsaved} but saved no entry for it: each surveyed county is its own entry"
 
 
 # --- The guide is written once (issue #3442) ---------------------------------
