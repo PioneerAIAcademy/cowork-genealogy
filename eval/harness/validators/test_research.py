@@ -640,6 +640,126 @@ def test_status_question_answered_from_project_context_only(
     )
 
 
+# ── "write this up" (issue #4576, MCP App plan M2 "A readable report") ──────
+#
+# Tags `write-this-up-proof` (the question has a proof summary), `write-this-up-craft-only`
+# (its only evaluation is a craft read) and `write-this-up-no-proof` (it has none). The harness cannot produce a .docx, so the
+# report text is the main-thread reply plus every Write `content` and every Bash
+# command string. "No fact absent from the project" is the judge's, not this check's.
+
+# A tier GIVEN AS A RATING ("rated probable", "tier: probable", "probable rating"). A bare
+# "probable match" or "not yet proved" is ordinary prose, and a person-evidence link carries
+# `confidence: probable`; other wordings of a leaked tier are the judge's.
+_TIER_WORDS = r"(?:probable|proved|disproved|not[ _]proved|possible)"
+_TIER_RATING_RE = re.compile(
+    r"\b(?:rated|rating|tier|graded)\b[^.\n]{0,30}?\b" + _TIER_WORDS + r"\b"
+    r"|\b" + _TIER_WORDS + r"\s+(?:tier|rating)\b",
+    re.IGNORECASE,
+)
+# The proof's own narrative says "Probably"; the viewer shows `probable` as "likely".
+_TIER_STATED_RE = re.compile(r"\b(?:probable|probably|likely)\b", re.IGNORECASE)
+_BIRTHPLACE_RE = re.compile(r"birthplace|place of birth|born in (?:ireland|pennsylvania)", re.IGNORECASE)
+_VERDICT_RE = re.compile(r"looks[ _-]solid", re.IGNORECASE)
+_CRAFT_VERDICT_RE = re.compile(r"consider[ _]addressing", re.IGNORECASE)
+_NO_REVIEW_RE = re.compile(
+    r"no (?:\w+ )?review(?:er)?\b|not (?:yet )?(?:been )?(?:reviewed|requested)|review (?:was|has) not been",
+    re.IGNORECASE,
+)
+_CONTINUE_LINE_RE = re.compile(r"^\W*continue with\b", re.IGNORECASE)
+
+
+def _report_text(text_response, builtin_tool_calls) -> str:
+    parts = [text_response or ""]
+    for c in builtin_tool_calls or []:
+        args = c.get("args") or {}
+        if c.get("tool") == "Write":
+            parts.append(str(args.get("content") or ""))
+        elif c.get("tool") == "Bash":
+            parts.append(str(args.get("command") or ""))
+    return "\n".join(parts)
+
+
+def test_write_this_up_built_from_project_state(
+    tool_calls, builtin_tool_calls, text_response, test
+):
+    """Tag-gated (`write-this-up-proof`, `write-this-up-no-proof`).
+
+    Both: no spawn of any agent (so no proof-conclusion), no `research_append`, no
+    `Read`/`Grep` of the raw project files. `write-this-up-proof` adds: `research_query`
+    on `proof_summaries` and on `evaluations`; the report names the tier, the
+    reviewer's verdict, the resolved conflict and what was not yet searched.
+    `write-this-up-no-proof` adds: no tier word in the report.
+    """
+    from harness.skill_runner import SPAWN_TOOL_NAMES
+
+    tags = test.get("tags", [])
+    craft_only = "write-this-up-craft-only" in tags
+    with_proof = "write-this-up-proof" in tags or craft_only
+    if not with_proof and "write-this-up-no-proof" not in tags:
+        pytest.skip("not a write-this-up scenario")
+
+    sections = {
+        str((c.get("args") or {}).get("section") or "")
+        for c in (tool_calls or [])
+        if bare_tool_name(str(c.get("tool") or "")) == "research_query"
+    }
+    if with_proof:
+        missing = {"proof_summaries", "evaluations"} - sections
+        assert not missing, f"the report must read {sorted(missing)} with research_query; read {sorted(sections)}"
+    if craft_only:
+        assert any(bare_tool_name(str(c.get("tool") or "")) == "sidecar_read" for c in (tool_calls or [])), (
+            "the only evaluation may be a craft read, which only its body shows: the report must "
+            "read the body with sidecar_read before naming a reviewer's verdict"
+        )
+
+    reply_lines = [ln for ln in (text_response or "").splitlines() if ln.strip()]
+    assert not (reply_lines and _CONTINUE_LINE_RE.match(reply_lines[-1])), (
+        f"a report that is the only deliverable ends on no 'Continue with' line; got {reply_lines[-1]!r}"
+    )
+
+    spawns = [
+        (c.get("args") or {}).get("subagent_type") or "general-purpose"
+        for c in (builtin_tool_calls or [])
+        if c.get("tool") in SPAWN_TOOL_NAMES and "agent_id" not in c
+    ]
+    assert not spawns, f"a report is written by the main thread with no hand-off; got {spawns}"
+
+    appends = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "research_append"]
+    assert not appends, f"a report adds no claims; got {len(appends)} research_append call(s)"
+
+    raw = []
+    for c in (builtin_tool_calls or []):
+        if (c.get("tool") or "") not in ("Read", "Grep"):
+            continue
+        args = c.get("args") or {}
+        path = str(args.get("file_path") or args.get("path") or "")
+        glob = str(args.get("glob") or "")
+        if path.endswith(_PROJECT_FILES) or any(name in glob for name in _PROJECT_FILES):
+            raw.append(f"{c.get('tool')} {path} {glob}".strip())
+    assert not raw, f"the report must be built from tool reads, not the raw project files; got {raw}"
+
+    report = _report_text(text_response, builtin_tool_calls)
+    if with_proof:
+        lacking = []
+        if not _TIER_STATED_RE.search(report):
+            lacking.append("the tier (probable, probably or likely)")
+        if craft_only:
+            if _CRAFT_VERDICT_RE.search(report):
+                lacking.append("a craft read must not appear as the reviewer's verdict")
+            if not _NO_REVIEW_RE.search(report):
+                lacking.append("a statement that no review was requested")
+        elif not _VERDICT_RE.search(report):
+            lacking.append("the reviewer's verdict (looks solid)")
+        if not _BIRTHPLACE_RE.search(report):
+            lacking.append("the resolved birthplace conflict")
+        if not all(y in report for y in ("1870", "1880", "1900")):
+            lacking.append("what was not yet searched (the 1870, 1880 and 1900 censuses)")
+        assert not lacking, f"the report omits {lacking}"
+    else:
+        hits = sorted({m.group(0).lower() for m in _TIER_RATING_RE.finditer(report)})
+        assert not hits, f"no proof summary exists, so the report states no tier; found {hits}"
+
+
 # ── Moved from test_research_plan.py (issue #2116) ─────────────────────
 #
 # `ut_research_rpn` (formerly `ut_research_plan_003`) moved here when the
