@@ -70,9 +70,10 @@ Otherwise → proceed.
 
 ## Steps
 
-1. **The target, and whether the hit is extracted.** `project_context({ projectPath })`.
+1. **The target, and whether the hit is extracted.** `project_context({ projectPath, include: ["sources"] })`.
    `target` defaults to `subjectPersonIds[0]`. From the target's `persons` row,
-   note its `spouseIds`, `parentIds` and `childIds`. The hit is **already
+   note its `spouseIds`, `parentIds` and `childIds`. When the target's row is not
+   in `persons`, call once more with `include: ["persons", "sources"]`. The hit is **already
    extracted** when some `sources[].recordIds` entry has the same bare id as the
    hit: reduce both to the part after the last `:` (the hit id is the part of
    `hitRef` after `#`; a record id may be a URL).
