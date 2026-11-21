@@ -152,7 +152,9 @@ describe("source_screen", () => {
     const r = await screen({ matchPairs: matcher({ "I1|p_DDDD-111": 0.2 }) });
     expect(row(r, "S2").verdict).toBe("misattributed");
     expect(row(r, "S2").reasons.join(" ")).toMatch(/^a: leave-one-out score 0\.20/);
+    expect(row(r, "S2").linkCap).toBe("speculative");
     expect(row(r, "S1").verdict).toBe("fine");
+    expect(row(r, "S1")).not.toHaveProperty("linkCap");
   });
 
   it("misattributed: a record whose facts would bring an impossible warning (b)", async () => {
@@ -241,6 +243,7 @@ describe("source_screen", () => {
     expect(ocr.mock.calls[0][0]).not.toHaveProperty("projectPath");
     expect((ocr.mock.calls[0] as any[])[2].budgetMs).toBeGreaterThan(0);
     expect(row(r, "S1").verdict).toBe("indexing_error");
+    expect(row(r, "S1").linkCap).toBe("possible");
     expect(row(r, "S1").signals.e).toEqual({ lookingFor: "John Boyer, birth 1852", fact: "birth year", found: "FOUND" });
     expect(row(r, "S2")).toMatchObject({ verdict: "contradicts", signals: { e: { not_run: "no_disputed_fact" } } });
   });

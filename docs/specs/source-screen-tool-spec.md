@@ -181,6 +181,12 @@ In order, first match wins:
 
 `contradicts[]` is reported whatever the verdict.
 
+`linkCap` is the highest confidence a link to the record may carry:
+`speculative` on `misattributed`, `possible` on `indexing_error`, absent
+otherwise. person-evidence never links above it. It is a field, not a rule for
+the agent to derive, because the rule stated in prose alone held in only some
+runs of `ut_person_evidence_smc`.
+
 ### Thresholds
 
 `MISATTRIBUTED_BELOW = 0.5` (the baseline's `DEFAULT_THRESHOLD`) is kept: on the

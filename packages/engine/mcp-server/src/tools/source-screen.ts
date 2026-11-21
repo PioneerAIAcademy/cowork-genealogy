@@ -476,6 +476,8 @@ export async function sourceScreenTool(
       );
     }
     row.out.verdict = verdict;
+    if (verdict === "misattributed") row.out.linkCap = "speculative";
+    else if (verdict === "indexing_error") row.out.linkCap = "possible";
     row.out.reasons = reasons;
   }
 

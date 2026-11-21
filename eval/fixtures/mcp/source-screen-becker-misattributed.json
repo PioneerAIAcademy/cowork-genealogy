@@ -30,7 +30,8 @@
             "disagreements": []
           }
         },
-        "personaId": "p_1"
+        "personaId": "p_1",
+        "linkCap": "speculative"
       },
       {
         "sourceId": "S2",

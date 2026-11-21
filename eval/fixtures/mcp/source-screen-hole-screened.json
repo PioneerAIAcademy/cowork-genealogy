@@ -114,7 +114,8 @@
         "contradicts": [
           "S1",
           "S2"
-        ]
+        ],
+        "linkCap": "speculative"
       },
       {
         "sourceId": "S4",

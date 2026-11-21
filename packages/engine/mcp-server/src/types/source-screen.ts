@@ -51,6 +51,10 @@ export interface SourceScreenAttachment {
   /** Whether the attachment hangs on the person or on one of their relationships. */
   level: "person" | "relationship";
   verdict: SourceScreenVerdict;
+  /** The highest confidence a link to this record may carry: `speculative`
+   *  for a misattributed record, `possible` for an indexing error. Absent
+   *  otherwise. person-evidence caps its link here. */
+  linkCap?: "speculative" | "possible";
   /** One sentence per signal that fired, or the not-scored reason. */
   reasons: string[];
   /** The tree source ids of attachments this one contradicts (check h). */
