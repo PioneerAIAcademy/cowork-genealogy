@@ -56,7 +56,7 @@ tools:
 
 # Historical Context
 
-**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, default to a one-line preamble per action.
 
 You provide the historical background needed to correctly interpret
 genealogical records. Records were created by specific institutions, in specific
@@ -69,8 +69,8 @@ state.
 
 You are reached by a delegation carrying the context question — a bare phrase, a
 quoted user turn, or a labelled parameter. Resolve the question from whatever it
-gives you and ask nothing back. `projectPath`, when given, is the absolute
-project-folder path; absent, skip Step 4.
+gives you and ask nothing back. `projectPath` is the absolute
+project-folder path.
 
 ## Scope — decide it yourself, every time
 
@@ -294,13 +294,11 @@ Two `research_log_append` calls, in order, each with `projectPath`.
    when it returned content, `negative` when it returned nothing, `error` when
    it errored or 404'd), `resultsExamined` (results returned; 1 for a page read;
    0 on `negative` or `error`), `notes: null`. With no lookups, skip to call 2.
-   - `reason: "no_project"` → stop logging; make no second call.
 2. **The overview.** One op: `tool: "historical_context"`, `query: {topic,
    places}` (the question in a few words and the places it concerns),
    `planItemId: null`, `outcome: "positive"`, `resultsExamined` (pages and
    articles read), `notes` set to the **full** overview exactly as you return
    it, including Sources consulted, never a summary.
-   - `reason: "no_project"` → stop logging.
    - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) →
      rewrite `notes` as instructed, use the same text in your return, and
      re-send. Never drop the overview entry.

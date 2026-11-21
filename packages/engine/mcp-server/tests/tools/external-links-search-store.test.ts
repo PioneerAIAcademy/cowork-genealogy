@@ -336,11 +336,12 @@ describe("research_query section external_collections", () => {
     expect(q.ok).toBe(false);
   });
 
-  it("answers no_project for a folder that is not a project", async () => {
+  it("is refused for a folder that is not a project", async () => {
     const plain = await mkdtemp(join(tmpdir(), "ext-coll-plain-"));
     try {
       const q = await researchQuery({ projectPath: plain, section: "external_collections" });
-      expect(q).toMatchObject({ ok: false, reason: "no_project" });
+      expect(q.ok).toBe(false);
+      expect(JSON.stringify(q)).toContain("No project:");
     } finally {
       await rm(plain, { recursive: true, force: true });
     }

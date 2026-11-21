@@ -56,8 +56,11 @@ TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 # in the deleted research_delivered guidance (step mode phase 2) and moved here rather
 # than going with it.
 NO_PROJECT_NOTE = (
-    "While no project exists yet (`project_context` returns `no_project`), "
-    "a request about a named FamilySearch person starts a project first, through the research skill."
+    "While no project exists yet (`project_context` returns `no_project`), a call to any tool but "
+    "project_create, project_context and project_list is refused. An activity with no person in it (a page read, a record set's names, "
+    "a surname survey) starts a project first: project_create with the researcher's request as "
+    "objective and no personId. A request about a named FamilySearch person starts one through the "
+    "research skill, which needs the person's FamilySearch ID; with no ID, ask for it and create nothing."
 )
 
 

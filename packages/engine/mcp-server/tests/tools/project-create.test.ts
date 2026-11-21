@@ -24,6 +24,8 @@ import {
   type ProjectCreateDeps,
 } from "../../src/tools/project-create.js";
 import { PERSON_ID_REQUIRED, PROJECT_TREE_REMOVED } from "../../src/utils/tool-hint-messages.js";
+import { researchAppend } from "../../src/tools/research-append.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
 import { runWithProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
@@ -200,8 +202,6 @@ describe("project_create", () => {
   // ── A project always starts from a FamilySearch person (lead, 2026-11-02) ──
 
   it.each([
-    ["absent", undefined],
-    ["null", null],
     ["empty", ""],
     ["whitespace", " \n "],
   ])("refuses a %s personId before reading anyone, and writes nothing", async (_label, personId) => {
@@ -210,10 +210,46 @@ describe("project_create", () => {
     expect(r.ok).toBe(false);
     expect(r.errors).toEqual([PERSON_ID_REQUIRED]);
     expect(r.errors[0]).toMatch(/FamilySearch person ID/);
-    expect(r.errors[0]).toMatch(/survey-surname agent with no projectPath/);
     expect(oneReads).toBe(0);
     expect(await exists("research.json")).toBe(false);
     expect(await exists("tree.gedcomx.json")).toBe(false);
+  });
+
+  it.each([
+    ["absent", undefined],
+    ["null", null],
+  ])("creates a project with no person from the objective alone when personId is %s", async (_label, personId) => {
+    oneReads = 0;
+    const r: any = await projectCreate({ projectPath: dir, objective: "Read this page", personId } as any);
+    expect(r).toMatchObject({ ok: true, subject: null, objective: "Read this page" });
+    expect(oneReads).toBe(0);
+    const research = await readResearch();
+    expect(research.project.subject_person_ids).toEqual([]);
+    expect(research.researcher_profile).toEqual(HOUSE_RESEARCHER_PROFILE);
+    expect(JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).persons).toEqual([]);
+  });
+
+  it("refuses subjectPersonIds when there is no personId", async () => {
+    const r: any = await projectCreate({ projectPath: dir, objective: "x", personId: undefined, subjectPersonIds: ["I1"] });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/subjectPersonIds needs a personId/);
+    expect(await exists("research.json")).toBe(false);
+  });
+
+  it("a project with no person refuses a question but still takes a log entry", async () => {
+    await projectCreate({ projectPath: dir, objective: "Read this page", personId: undefined });
+    const q: any = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "append",
+      entry: { question: "Who?", question_kind: "targeted", rationale: "r", selection_basis: "user_directed", priority: "high", status: "open", depends_on: [], unblocks: [], resolved: null, resolution_assertion_ids: [], search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] } },
+    } as any);
+    expect(q.ok).toBe(false);
+    expect(JSON.stringify(q)).toMatch(/FamilySearch person ID/);
+    const log: any = await researchLogAppend({
+      projectPath: dir, tool: "record_search", query: { surname: "X" }, outcome: "negative", resultsExamined: 0, resultsAvailable: 0,
+    } as any);
+    expect(log.ok, JSON.stringify(log)).toBe(true);
   });
 
   it("refuses a personId that is not a string, saying what one looks like", async () => {
@@ -804,7 +840,7 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     }, { objective: "x" }, /already exist/],
     ["no objective", async () => {}, { objective: " " }, /objective is required/],
     ["a tree beside personId", async () => {}, { objective: "x", tree: { persons: [STUB] } }, /tree is no longer accepted/],
-    ["a blank personId", async () => {}, { objective: "x", personId: " " }, /personId is required/],
+    ["a blank personId", async () => {}, { objective: "x", personId: " " }, /personId is blank/],
   ])("refuses %s before reading anyone", async (_l, setup, extra, message) => {
     await setup();
     reads = 0;

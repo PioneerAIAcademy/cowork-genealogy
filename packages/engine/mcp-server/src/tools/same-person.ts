@@ -15,12 +15,7 @@ import {
   type ScoredRecordPersona,
   type ScoredTreePerson,
 } from "../types/same-person.js";
-import {
-  NO_PROJECT_MESSAGE_READ,
-  NoProjectError,
-  readProjectJson,
-  withProjectLock,
-} from "../utils/project-io.js";
+import { readProjectJson, withProjectLock } from "../utils/project-io.js";
 import { getProjectStore, type ProjectStore } from "../store/project-store.js";
 import { recordReadTool } from "./record-read.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
@@ -282,31 +277,12 @@ function personNamedBy(candidates: readonly SimplifiedPerson[], words: PartyWord
   return undefined;
 }
 
-/**
- * Read a project document, turning every not-a-project state into an
- * LLM-actionable error.
- *
- * `same_person` is NOT in `tests/tools/no-project.test.ts`'s table, and that is
- * deliberate rather than an omission. That table's first assertion requires the
- * tool to RETURN `{ ok: false, reason: "no_project" }`; this tool returns a
- * score, so there is no answer shape to carry a no-project verdict in. Issue
- * #1695's ruling — "it is not fine for the user to see an error merely because
- * they are not in a project" — is about a WRITE being silently dropped. Here
- * nothing is being saved, the explicit two-document form still works anywhere,
- * and the right answer is to say so, which is what these messages do.
- */
+/** Read a project document, turning every not-a-project state into an
+ *  LLM-actionable error. */
 async function readProject(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    if (e instanceof NoProjectError) {
-      throw new SamePersonInputError(
-        `same_person: ${NO_PROJECT_MESSAGE_READ} There are no project references to ` +
-          "resolve, so pass the two documents explicitly instead " +
-          "(gedcomx1/primaryId1/gedcomx2/primaryId2): get each record's document " +
-          "from `record_read` on its `recordId`.",
-      );
-    }
     throw new SamePersonInputError(
       e instanceof Error ? `same_person: ${e.message}` : String(e),
     );

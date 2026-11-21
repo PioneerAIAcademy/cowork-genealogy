@@ -48,15 +48,7 @@ import {
   unsettledConflictEnding,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
-import {
-  atomicWriteJson,
-  atomicWriteBoth,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-} from "../utils/project-io.js";
+import { atomicWriteJson, atomicWriteBoth, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/coerce-json-arg.js";
 import {
   readMatchScores,
@@ -8209,13 +8201,17 @@ export interface ExtractionEcho {
 export type ResearchAppendResult =
   | SingleSuccess
   | BatchSuccess
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; opsReceived?: number; reason?: "no_project" };
+  | { ok: false; errors: string[]; opsReceived?: number };
 
 /** Carries one or more user-facing messages: the single form echoes them
  *  verbatim; the batch form prefixes each with `ops[i]:`. */
+/** The refusal a `questions` append gets in a project with no person. */
+const NO_PERSON_QUESTIONS_REFUSAL =
+  "This project has no person, so it holds no research questions: a question is research on " +
+  "a person, and that starts a new project from a FamilySearch person ID. Ask the researcher " +
+  "for the ID, then start init-project with it. A log entry, a source and a locality still " +
+  "write here.";
+
 class ResearchAppendError extends Error {
   errors: string[];
   constructor(errors: string | string[]) {
@@ -8229,10 +8225,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — the outer catch turns it into
-    // noProjectResult(). Flattening it into ResearchAppendError here would lose
-    // the `reason` discriminator and ship it with isError.
-    if (e instanceof NoProjectError) throw e;
     throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -10020,6 +10012,16 @@ function applyOne(
     // of the same transition — see questionResolvedInvariants. Omitting it here
     // would leave the gate reachable only through one of the two fields.
     const fields = op.fields ?? {};
+    // A project with no person refuses research questions (lead, 2026-11-19):
+    // research on a person starts a new project from a FamilySearch person ID.
+    // Only an append is refused, so an older project that already holds a question
+    // with no subject still validates and updates.
+    if (op.op === "append") {
+      const subjects = research?.project?.subject_person_ids;
+      if (!Array.isArray(subjects) || subjects.length === 0) {
+        invariantErrors.push(NO_PERSON_QUESTIONS_REFUSAL);
+      }
+    }
     const resolutionTouchedThisOp =
       op.op === "append" ||
       Object.prototype.hasOwnProperty.call(fields, "status") ||
@@ -14009,7 +14011,6 @@ export async function researchAppend(
       validation: validationBlock,
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof ResearchAppendError) {
       // Single-op path (and pre-pass throws): the section is only known when
       // the caller used the non-batch form.

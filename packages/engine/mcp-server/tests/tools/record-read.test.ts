@@ -1,4 +1,5 @@
 import { LOCAL } from "../../src/auth/principal.js";
+import { makeLocalProject } from "../helpers/seed-project.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -1672,7 +1673,7 @@ const RECORD_WITH_SOURCES: GedcomX = {
 describe("record_read compacts its answer at the MCP boundary only (#4415)", () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "record-read-compact-"));
+    dir = (await makeLocalProject()).dir;
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -1693,7 +1694,7 @@ describe("record_read compacts its answer at the MCP boundary only (#4415)", () 
 
   it("the record_read tool call answers with the compacted shape", async () => {
     mockOk(RECORD_WITH_SOURCES);
-    const { isError, text } = await callTool("record_read", { recordId: "QVS9-DHDB" });
+    const { isError, text } = await callTool("record_read", { recordId: "QVS9-DHDB", projectPath: dir });
     expect(isError).toBe(false);
     const answer = JSON.parse(text);
     expect(answer.sources).toBeUndefined();

@@ -1366,11 +1366,10 @@ describe("imageTranscribeTool — `file` input (#2048)", () => {
     ).rejects.toThrow(/projectPath does not exist/);
   });
 
-  it("answers no_project (not an error) for a folder holding neither project file", async () => {
+  it("is refused for a folder holding neither project file", async () => {
     const plain = await mkdtemp(join(tmpdir(), "imgt-plain-"));
     try {
-      const r = await imageTranscribeTool({ file: "uploads/x.jpg", projectPath: plain }, LOCAL);
-      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      await expect(imageTranscribeTool({ file: "uploads/x.jpg", projectPath: plain }, LOCAL)).rejects.toThrow(/^No project:/);
       expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
     } finally {
       await rm(plain, { recursive: true, force: true });
@@ -1657,43 +1656,10 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(r.transcription).toBe("still read");
   });
 
-  it("returns the page inline with no projectPath, staging and saving nothing", async () => {
-    mockOpenRouterOk("Moses Dustin, Captain");
-    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL);
-    if ("ok" in r) throw new Error("unexpected no-project answer");
-    expect(r.transcription).toBe("Moses Dustin, Captain");
-    for (const key of ["staged", "digest", "imageRef", "stagingError"]) expect(r).not.toHaveProperty(key);
-  });
-
-  it("reads the page with no projectPath under a store that refuses every call (the connector)", async () => {
-    mockOpenRouterOk("Moses Dustin, Captain");
-    const r = await runWithProjectStore(unboundProjectStore("This call named no project."), () =>
-      imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL),
-    );
-    if ("ok" in r) throw new Error("unexpected no-project answer");
-    expect(r.transcription).toBe("Moses Dustin, Captain");
-  });
-
-  it("returns the page inline for a folder that is not a project, writing nothing into it", async () => {
-    const empty = await mkdtemp(join(tmpdir(), "imgt-noproj-"));
-    try {
-      mockOpenRouterOk("Moses Dustin, Captain");
-      const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: empty }, LOCAL);
-      if ("ok" in r) throw new Error("unexpected no-project answer");
-      expect(r.transcription).toBe("Moses Dustin, Captain");
-      expect(r).not.toHaveProperty("staged");
-      expect(r).not.toHaveProperty("imageRef");
-      expect(await readdir(empty)).toEqual([]);
-    } finally {
-      await rm(empty, { recursive: true, force: true });
-    }
-  });
-
-  it("still answers a `file` on a folder that is not a project with the no-project result", async () => {
+  it("refuses a `file` on a folder that is not a project", async () => {
     const empty = await mkdtemp(join(tmpdir(), "imgt-noproj-file-"));
     try {
-      const r = await imageTranscribeMcpTool({ file: "uploads/scan.jpg", projectPath: empty }, LOCAL);
-      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      await expect(imageTranscribeMcpTool({ file: "uploads/scan.jpg", projectPath: empty }, LOCAL)).rejects.toThrow(/^No project:/);
       expect(mockFetch).not.toHaveBeenCalled();
     } finally {
       await rm(empty, { recursive: true, force: true });

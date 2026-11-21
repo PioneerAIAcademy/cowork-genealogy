@@ -64,7 +64,7 @@ tools:
 
 # Locality Guide
 
-**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
 
 **Places:** Resolve with `place_search` / `place_search_all`; record `standardPlace` (and `standard_place` on persisted facts). See **Working with places (standard places)** below.
 
@@ -82,7 +82,7 @@ Produces a structured survey of what records exist for a specific place and time
 
 Determine place, time period, and scope from the user's request. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
 
-When the delegation names a `projectPath`, Step 6 runs, whatever its value. With no `projectPath`, Step 6 does not run.
+Step 6 runs, whatever the delegation asks.
 
 A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: every Step 3 call, the full template, and Step 6 when it applies.
 
@@ -137,7 +137,7 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "gettin
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", projectPath: "<project path; omit with no project>" })
+external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", projectPath: "<project path>" })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, summary: true })
 catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
@@ -172,8 +172,7 @@ Use the template under **Locality Guide Output Format** below, with every claim 
 ### 6. Persist the locality
 
 **Run this step whenever Step 1 says it runs**, whatever the project's objective and
-however the delegation is phrased. Only an answer of `ok: false` with
-`reason: "no_project"` means there is no project; on any other `ok: false`, fix the
+however the delegation is phrased. On `ok: false`, fix the
 call and send it again. Use `research_append`, first for the entry with no guide in it:
 
 ```

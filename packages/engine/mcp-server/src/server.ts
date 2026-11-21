@@ -152,6 +152,9 @@ import { allToolSchemas } from "./tool-schemas.js";
 import { writerToolResult, type OkFalseResult } from "./tool-result.js";
 import { readBuildInfo } from "./utils/build-info.js";
 import { rejectUnknownArgs } from "./utils/unknown-args.js";
+import { projectGateRefusal } from "./utils/project-gate.js";
+
+const ADVERTISED_TOOLS: ReadonlySet<string> = new Set(allToolSchemas.map((t) => t.name));
 
 export function createServer(principal: Principal): Server {
   // The two view tools and their page exist on this surface alone. The list never
@@ -212,6 +215,20 @@ export function createServer(principal: Principal): Server {
     if (unknownArgs !== null) {
       return {
         content: [{ type: "text", text: JSON.stringify({ error: unknownArgs }) }],
+        isError: true
+      };
+    }
+
+    // The one project gate (utils/project-gate.ts): every tool but the six that manage projects or sign-in, and tree_gaps, that
+    // manage projects or sign-in refuses a call with no project and names the two
+    // calls that start one. The two connector-only view tools were dispatched
+    // above, outside this gate on purpose: they resolve the project themselves.
+    const noProject = ADVERTISED_TOOLS.has(request.params.name)
+      ? await projectGateRefusal(request.params.name, request.params.arguments)
+      : null;
+    if (noProject !== null) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: noProject }) }],
         isError: true
       };
     }

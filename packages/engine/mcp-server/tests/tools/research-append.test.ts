@@ -236,7 +236,7 @@ function baseResearch(): {
   evaluations: Record<string, unknown>[];
 } {
   return {
-    project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+    project: { id: "rp_001", objective: "Test", subject_person_ids: ["I1"], status: "active", created: "2026-01-01", updated: "2026-01-01" },
     questions: [],
     plans: [],
     log: [],
@@ -8030,7 +8030,9 @@ describe("research_append (project singleton section)", () => {
     });
 
     it("removes nothing when no person is known to be imported", async () => {
-      await writeProject(research([openQuestion()]), tree());
+      const noSubject = research([openQuestion()]);
+      (noSubject.project as any).subject_person_ids = [];
+      await writeProject(noSubject, tree());
       const r = await resolveQ1();
       expect(r.ok, JSON.stringify(r)).toBe(true);
       expect((await readTree()).persons).toHaveLength(5);
