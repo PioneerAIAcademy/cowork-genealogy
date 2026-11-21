@@ -33,6 +33,8 @@ interface NameFamily {
 interface NameExpansionResult {
   expanded: string;
   expansions: Record<string, string[]>;
+  /** The same forms keyed by the name as the caller wrote it ("Eliza"). */
+  byWrittenName: Record<string, string[]>;
 }
 
 interface LoadedTable {
@@ -274,11 +276,18 @@ function hasAdjacentCapital(tokens: string[], index: number): boolean {
  * Returns null if no expansion applies.
  */
 export function expandLookingFor(lookingFor: string): NameExpansionResult | null {
-  const tokens = lookingFor.split(/\s+/).filter(Boolean);
+  // Strip the punctuation that sits beside a name in free text ("Lee, Eliza,
+  // father James", "(Eliza)") so the token matches the table (issue #4587).
+  // A trailing period is kept: the table's scribal forms carry one ("Jas.").
+  const tokens = lookingFor
+    .split(/\s+/)
+    .map((t) => t.replace(/^[("'[“‘]+/, "").replace(/[,;:!?)"'\]”’]+$/, ""))
+    .filter(Boolean);
   if (tokens.length === 0) return null;
 
   const alsoKnownAs: string[] = [];
   const expansions: Record<string, string[]> = {};
+  const byWrittenName: Record<string, string[]> = {};
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
@@ -293,10 +302,16 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
     // "May Thornton" → "Thornton" starts with T → expand.
     if (AMBIGUOUS_WORDS.has(token.toLowerCase()) && !hasAdjacentCapital(tokens, i)) continue;
 
-    const family = lookupNameFamily(token);
+    // A sentence-final name ("daughter of James.") is not a scribal form.
+    let name = token;
+    let family = lookupNameFamily(name);
+    if (!family && name.endsWith(".")) {
+      name = name.slice(0, -1);
+      family = lookupNameFamily(name);
+    }
     if (!family) continue;
 
-    const originalNorm = normalizeString(token);
+    const originalNorm = normalizeString(name);
     const others = family.allForms.filter(
       (f) => normalizeString(f) !== originalNorm
     );
@@ -304,6 +319,7 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
 
     alsoKnownAs.push(...others);
     expansions[family.formal] = others;
+    byWrittenName[name] = others;
   }
 
   if (alsoKnownAs.length === 0) return null;
@@ -314,5 +330,29 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
   return {
     expanded: `${lookingFor} (also known as ${unique.join(", ")})`,
     expansions,
+    byWrittenName,
   };
+}
+
+/**
+ * Which of each sought name's other forms appear on a page, as whole words,
+ * case-insensitively: `{ Eliza: ["Elizabeth"] }`. Names with no form on the
+ * page are left out; null when none has one.
+ */
+export function formsOnPage(
+  byWrittenName: Record<string, string[]>,
+  text: string,
+): Record<string, string[]> | null {
+  const out: Record<string, string[]> = {};
+  for (const [name, forms] of Object.entries(byWrittenName)) {
+    const present = forms.filter((form) => {
+      // "12 MAY 1821" or "last will" is not the name May or Will.
+      if (AMBIGUOUS_WORDS.has(form.toLowerCase())) return false;
+      const escaped = form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const tail = form.endsWith(".") ? "" : "(?![A-Za-z])";
+      return new RegExp(`(?<![A-Za-z])${escaped}${tail}`, "i").test(text);
+    });
+    if (present.length > 0) out[name] = present;
+  }
+  return Object.keys(out).length > 0 ? out : null;
 }
