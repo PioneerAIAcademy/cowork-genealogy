@@ -54,7 +54,10 @@ export interface ProjectContextInput {
 }
 
 /** `row` without the keys whose value is null, "" or []: in this answer an
- *  absent key means null or empty. `keep` names a key that stays even then. */
+ *  absent key means null or empty. `keep` names a key that stays even then.
+ *  A person's spouseIds/parentIds/childIds are the exception in meaning: the
+ *  project tree holds only copied relatives, so absent there is "not copied",
+ *  not "none" (#4668); the tool description says so. */
 function omitEmpty<T extends object>(row: T, keep: readonly string[] = []): T {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) {
@@ -638,7 +641,12 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
+    "values are ever null. The one exception is a person's spouseIds, parentIds and childIds: " +
+    "the project tree holds only the relatives copied into it, so an absent family key there " +
+    "means NOT COPIED, never none. A copied person's parents, other spouses (a stepparent) " +
+    "and children may exist in the Family Tree; to say a person has no parents, spouse or " +
+    "children, check the Family Tree with person_read, and say \"not in the project tree\" " +
+    "until you have. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
     "larger lists you read; persons and sources are returned whether or not you pass it, and status only when named. " +
     "Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
