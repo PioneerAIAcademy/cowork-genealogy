@@ -496,7 +496,8 @@ another spouse — call `research_append` once, after steps 7 and 8:
 — `person_id` the `subjectId`; `name`, `place` and `time_period` as the hit gives
 them; `record_ids` the hit's `id`, verbatim; `log_entry_ids` the step 7 log id;
 `notes` the ground. Other parents are no ground when `subject` has no `parents`.
-Never record one who may still be the subject. If the
+Never record one who may still be the subject. A date as the hit gives it is
+ground enough: do not hold the row back until the image is read. If the
 call returns a warning listing links, put their `pe_` ids in a
 `Hand-back: person-evidence` line (Return contract).
 
