@@ -757,8 +757,9 @@ export const projectCreateSchema = {
     "the subject, the objective and title as stored, each relative with their tree id and " +
     "relationship, and which memories were and were not transcribed. Add a person the " +
     "researcher named who is not among the relatives afterwards. `subjectPersonIds` takes " +
-    "FamilySearch IDs, and defaults to the person read. With no person ID, create no " +
-    "project: ask the researcher for one. A surname survey needs no project.\n" +
+    "FamilySearch IDs, and defaults to the person read. Research on a named person with no " +
+    "ID creates nothing: ask the researcher for the ID first. A project with no person " +
+    "refuses research questions.\n" +
     "\n" +
     "Refuses if either file already exists; it never overwrites a project. It writes the " +
     "fixed house `researcher_profile`; it does NOT write subscriptions — add those " +

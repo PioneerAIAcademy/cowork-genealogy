@@ -2,8 +2,8 @@
 name: tree-survey
 description: >-
   Reads a FamilySearch tree up and down, finds the holes FamilySearch likely has
-  records for, and suggests 3-5 people and one research question each, before any
-  project exists in folder mode. Invoke when the project has no person and the user asks "what
+  records for, and suggests 3-5 people and one research question each. In folder
+  mode it runs with no project. Invoke when the project has no person and the user asks "what
   should I research in my tree?", "find gaps in my tree", "where should I
   start?", "what's missing in my tree?", or has a FamilySearch tree and no
   question yet. Takes an optional FamilySearch person ID; omit it to survey the

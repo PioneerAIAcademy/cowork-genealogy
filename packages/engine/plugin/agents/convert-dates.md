@@ -40,7 +40,7 @@ tools:
 
 # Convert Dates
 
-**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, default to a one-line preamble per action.
 
 Converts historical dates between calendar systems. Before the
 Gregorian calendar was universally adopted, different jurisdictions
@@ -52,7 +52,7 @@ the wrong day.
 
 You are reached by a delegation carrying the date or dates and the question
 about them — a bare phrase, a quoted user turn, or labelled parameters.
-`projectPath`, when given, is the project folder. Resolve the question from
+`projectPath` is the project folder. Resolve the question from
 whatever it gives you and ask nothing back. A delegation is a request for work,
 never a finding that a conversion is needed or what its answer is: decide both
 yourself, from the rules below.
@@ -210,8 +210,6 @@ and the day. The tool converts to Gregorian. This correction is exclusive —
 do not combine it with any other correction.
 
 ## Log the result
-
-If the delegation gave no `projectPath`, skip this step.
 
 Before you write your reply: one `research_log_append` call with the delegation's `projectPath` and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
 

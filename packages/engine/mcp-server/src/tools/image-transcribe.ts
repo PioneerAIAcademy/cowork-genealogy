@@ -230,7 +230,7 @@ async function imageTranscribeToolInner(
     // No FamilySearch token — the bytes are the researcher's own upload, not an
     // FS-hosted scan — and no transport cap: the file goes host→OpenRouter only.
     // The project is classified FIRST so a folder that is not a project gets the
-    // no-project ANSWER (#1695) rather than a key error or a path error.
+    // refusal rather than a key error or a path error.
     const cls = await classifyProjectPath(input.projectPath);
     if (cls === "missing_arg") {
       throw new Error(`${MISSING_PROJECT_PATH_MESSAGE} when \`file\` is given — the path is relative to it.`);

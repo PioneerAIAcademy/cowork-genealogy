@@ -41,6 +41,12 @@ describe("the project gate", () => {
     }
   });
 
+  it("names a path that is not a folder as a missing path, not as a missing project", async () => {
+    const missing = join(tmpdir(), "gate-no-such-folder-" + Date.now());
+    const refusal = await projectGateRefusal("place_search", { projectPath: missing });
+    expect(refusal).toBe(`projectPath does not exist: ${missing}`);
+  });
+
   it("lets every gated tool through in a project, and the exempt ones through without one", async () => {
     const project = await makeLocalProject();
     try {

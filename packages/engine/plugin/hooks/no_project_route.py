@@ -43,8 +43,8 @@ import sys
 HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 
 CONTEXT = (
-    "If project_context reports no project in this folder, every tool but project_create refuses "
-    "until one exists. A request to research a person is a research job: hand it to the research "
+    "If project_context reports no project in this folder, a call to any tool but project_create, "
+    "project_context and project_list is refused until one exists. A request to research a person is a research job: hand it to the research "
     "skill, which starts the project from the person's FamilySearch ID, rather than answering it "
     "from a single lookup; with no ID it asks for one and creates nothing. In that case, if the "
     "message names more than one goal, you may summarise what the tree says and ask which to "
