@@ -3612,7 +3612,7 @@ def test_project_gate_refuses_a_non_exempt_tool_with_no_project_in_the_words_of_
     assert _extract_response_dict(named) == {"error": mock_mcp.NO_PROJECT_REFUSAL}
 
 
-def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_six(tmp_path):
+def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_seven(tmp_path):
     _seed_project(tmp_path)
     _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
     ran = _invoke(
@@ -3622,7 +3622,7 @@ def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_six(tmp_p
     )
     assert "error" not in _extract_response_dict(ran)
     assert mock_mcp.PROJECT_EXEMPT_TOOLS == {
-        "project_create", "project_list", "project_context", "login", "logout", "auth_status",
+        "project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps",
     }
 
 

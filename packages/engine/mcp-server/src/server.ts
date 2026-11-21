@@ -219,7 +219,7 @@ export function createServer(principal: Principal): Server {
       };
     }
 
-    // The one project gate (utils/project-gate.ts): every tool but the six that
+    // The one project gate (utils/project-gate.ts): every tool but the seven that
     // manage projects or sign-in refuses a call with no project and names the two
     // calls that start one. The two connector-only view tools were dispatched
     // above, outside this gate on purpose: they resolve the project themselves.

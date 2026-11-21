@@ -786,7 +786,8 @@ real weak-match signal, not an ARK artifact.
 Reverses the earlier ruling that it is fine for standalone work not to be persisted
 (replaced by the lead's ruling of 2026-11-19: every activity starts a project). `server.ts` calls `projectGateRefusal` once, beside `rejectUnknownArgs`,
 and every tool except `project_create`, `project_list`, `project_context`, `login`,
-`logout` and `auth_status` returns `isError: true` with `NO_PROJECT_REFUSAL` when
+`logout`, `auth_status` and `tree_gaps` (the tree survey, which writes nothing and runs
+with no project in folder mode) returns `isError: true` with `NO_PROJECT_REFUSAL` when
 `projectPath` is absent or names a folder that holds no project. The text names both
 routes: `project_create` with the researcher's request as the objective and no
 `personId` for an activity with no person, or init-project with the FamilySearch
@@ -802,8 +803,8 @@ The check of the argument comes first: a connector call that names no project ho
 store that cannot classify. The two connector-only view tools are dispatched before
 the gate and resolve their project themselves.
 
-`tests/packaging/project-gate.test.ts` fails when a schema outside the six lacks
-`projectPath` in `required`, and drives the gate both ways. The harness mirrors it in
+`tests/packaging/project-gate.test.ts` fails when a schema outside the exempt tools lacks
+`projectPath` in `required` (the exempt tools excepted), and drives the gate both ways. The harness mirrors it in
 `eval/harness/harness/mock_mcp.py` (`NO_PROJECT_REFUSAL`, `PROJECT_EXEMPT_TOOLS`).
 A tool called directly on a folder with no project fails with the same words
 (`NO_PROJECT_REFUSAL`); only `project_context` still answers `reason: "no_project"`.

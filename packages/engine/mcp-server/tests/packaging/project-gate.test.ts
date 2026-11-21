@@ -14,9 +14,9 @@ const NAMES = allToolSchemas.map((t) => t.name);
 const GATED = NAMES.filter((n) => !PROJECT_EXEMPT_TOOLS.has(n));
 
 describe("the project gate", () => {
-  it("exempts exactly the six project and sign-in tools, all advertised", () => {
+  it("exempts exactly the six project and sign-in tools and tree_gaps, all advertised", () => {
     expect([...PROJECT_EXEMPT_TOOLS].sort()).toEqual(
-      ["auth_status", "login", "logout", "project_context", "project_create", "project_list"],
+      ["auth_status", "login", "logout", "project_context", "project_create", "project_list", "tree_gaps"],
     );
     for (const name of PROJECT_EXEMPT_TOOLS) expect(NAMES).toContain(name);
   });
