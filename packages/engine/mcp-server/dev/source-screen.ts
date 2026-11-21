@@ -1,18 +1,31 @@
 /**
  * Source screen, steps 1 and 2's data side (issue #3408, plan comment of
- * 2026-10-14). Four subcommands:
+ * 2026-10-14), and the source_screen tool's measurement (issue #3504).
+ * Subcommands:
  *
  *   snapshot --pids <file> --out <dir> [--sample N] [--seed S] [--no-same-person]
  *   baseline --snapshot <dir> [--threshold T]
  *   plant    --spec <file> --out <dir> [--no-same-person]
+ *   screen   --snapshot <dir> [--without <check>]... [--image-read]
  *   score    --spec <file> --findings <jsonl> [--findings <jsonl> ...]
  *
- * `snapshot` and `plant` are the only network stages; `baseline` and `score`
- * read files. The truth set is restricted: every path argument must lie outside
- * the repo, except `--spec`, the committed fixture spec. Report counts only.
+ * `screen` builds each copy's project after planting, in the copy's own
+ * directory: a fresh research.json skeleton, then person mode
+ * (`extraction_append({ personId })`) over the snapshot's records, the copy's
+ * `records/` first. It then calls `source_screen` and writes the raw answer to
+ * `<stem>/<copy>.json` and the flagged attachments to `<stem>.jsonl`, where
+ * `<stem>` is `screen`, or `screen-without-<checks>` with `--without`. The
+ * matcher is live. Without `--image-read`, check e is dropped and the principal
+ * carries an empty OpenRouter key, so no page image is read; with it, the key
+ * comes from `~/.familysearch-mcp/config.json` (or the install env variable).
  *
- * Needs a FamilySearch session (`make e2e-login`) for `snapshot` and `plant`.
- * Not shipped in any artifact.
+ * `snapshot`, `plant` and `screen` are the network stages; `baseline` and
+ * `score` read files. The truth set is restricted: every path argument must lie
+ * outside the repo, except `--spec`, the committed fixture spec. Report counts
+ * only.
+ *
+ * Needs a FamilySearch session (`make e2e-login`) for `snapshot`, `plant` and
+ * `screen`. Not shipped in any artifact.
  *
  * Usage: npx tsx dev/source-screen.ts <subcommand> [flags]
  */
@@ -29,6 +42,12 @@ import {
 import { dirname, isAbsolute, join, relative, resolve, basename, sep } from "path";
 import { fileURLToPath } from "url";
 import { localPrincipal, type Principal } from "../src/auth/principal.js";
+import { getOpenRouterApiKey, installConfigFromEnv } from "../src/auth/config.js";
+import { runExtractionAppend, type ExtractionAppendDeps, type ExtractionBatchResult } from "../src/tools/extraction-append.js";
+import { EMPTY_SECTIONS, HOUSE_RESEARCHER_PROFILE } from "../src/tools/project-create.js";
+import { ALL_CHECKS, sourceScreenTool, type SourceScreenOptions } from "../src/tools/source-screen.js";
+import type { SourceScreenCheck, SourceScreenResponse, SourceScreenVerdict } from "../src/types/source-screen.js";
+import { stageSearchResults } from "../src/utils/results-staging.js";
 import { personReadTool } from "../src/tools/person-read.js";
 import { recordReadTool } from "../src/tools/record-read.js";
 import { sourceAttachmentsTool } from "../src/tools/source-attachments.js";
@@ -1191,16 +1210,177 @@ async function plantOne(ctx: Ctx, f: FixtureSpecEntry): Promise<void> {
   writeJson(join(dst, "meta.json"), { ...meta, copy_key: f.id, fixture_id: f.id, type: f.type, host: f.host, plant_calls: calls });
 }
 
+// ─── screen ─────────────────────────────────────────────────────────────────
+
+/** The verdicts that are findings, as the kinds `scoreFindings` reads. */
+export const SCREEN_KIND: Partial<Record<SourceScreenVerdict, string>> = {
+  misattributed: "misattributed",
+  indexing_error: "indexing",
+  contradicts: "source_conflict",
+};
+
+/** The flagged attachments of one copy's answer, keyed by the persona ARK the
+ *  attachment names (what the spec's `donor_ark` / `edit.persona_ark` hold),
+ *  never the tree source id. */
+export function screenRows(copy: string, answer: SourceScreenResponse): FindingRow[] {
+  if (answer.ok !== true || !("attachments" in answer)) return [];
+  const rows: FindingRow[] = [];
+  for (const a of answer.attachments) {
+    const kind = SCREEN_KIND[a.verdict];
+    if (!kind || !a.recordId) continue;
+    const s = a.signals.a;
+    rows.push({
+      copy_key: copy,
+      ark: toArk(a.recordId),
+      kind,
+      signal: "screen",
+      detail: a.reasons.join(" "),
+      ...(s && "score" in s ? { score: s.score } : {}),
+    });
+  }
+  return rows;
+}
+
+/** The research.json `project_create` writes, for one subject, before any search. */
+export function researchSkeleton(subjectId: string, today = new Date().toISOString().slice(0, 10)): Json {
+  const research: Json = {
+    project: {
+      id: "rp_001",
+      objective: `Screen the sources attached to ${subjectId}.`,
+      subject_person_ids: [subjectId],
+      status: "active",
+      created: today,
+      updated: today,
+    },
+  };
+  for (const section of EMPTY_SECTIONS) research[section] = [];
+  research.researcher_profile = { ...HOUSE_RESEARCHER_PROFILE };
+  return research;
+}
+
+/** A `record_read` over the snapshot: the copy's `records/` first, then the
+ *  shared cache, staged into the copy's project as a live read stages it. */
+export function snapshotReader(snapshot: string, copy: string): ExtractionAppendDeps {
+  return {
+    readRecord: (async ({ recordId, projectPath }: { recordId: string; projectPath?: string }) => {
+      const bare = arkToBareId(recordId);
+      const record = readRecord(snapshot, copy, bare);
+      if (!record) throw new Error(`Record ${recordId} was not found in FamilySearch historical records.`);
+      if (record.is_error) throw new Error(String(record.error));
+      const { birthRanges: _b, ...gedcomx } = recordGedcomx(record);
+      const staged = await stageSearchResults({
+        projectPath: projectPath!,
+        tool: "record_read",
+        response: { query: { recordId }, results: [{ recordId: `ark:/61903/1:1:${bare}`, gedcomx }] },
+      });
+      return { ...record, staged };
+    }) as ExtractionAppendDeps["readRecord"],
+  };
+}
+
+/** Make the copy's directory a project and run person mode over it. A copied
+ *  research.json or results/ (a plant copies its host whole) is replaced. */
+export async function buildCopyProject(snapshot: string, copy: string, principal: Principal): Promise<ExtractionBatchResult> {
+  const dir = personsDir(snapshot, copy);
+  const audit: AuditList = readJson(join(dir, "audit.json"));
+  rmSync(join(dir, "research.json"), { force: true });
+  rmSync(join(dir, "results"), { recursive: true, force: true });
+  writeJson(join(dir, "research.json"), researchSkeleton(audit.subject_id));
+  return runExtractionAppend({ projectPath: dir, personId: audit.subject_id }, snapshotReader(snapshot, copy), principal);
+}
+
+export const screenStem = (without: readonly string[] = []) =>
+  without.length ? `screen-without-${[...new Set(without)].sort().join("")}` : "screen";
+
+export interface ScreenOpts {
+  snapshot: string;
+  without?: SourceScreenCheck[];
+  imageRead?: boolean;
+  /** Default: the local principal, with an empty OpenRouter key unless `imageRead`. */
+  principal?: Principal;
+  /** Test seams: the matcher and the image read. */
+  screen?: Pick<SourceScreenOptions, "matchPairs" | "imageTranscribe">;
+}
+
+export interface ScreenLedger {
+  started: string;
+  finished?: string;
+  stem: string;
+  checks: SourceScreenCheck[];
+  image_read: boolean;
+  copies: number;
+  screened: number;
+  /** Copies with no snapshot to build from: not ready, living, or person_read failed. */
+  skipped: number;
+  /** Person mode or the tool answered ok:false or threw; scored as missing. */
+  failed: number;
+  counts: Partial<Record<SourceScreenVerdict, number>>;
+  rows: number;
+}
+
+export async function runScreen(o: ScreenOpts): Promise<ScreenLedger> {
+  const without = o.without ?? [];
+  for (const c of without) if (!ALL_CHECKS.includes(c)) throw new Error(`--without ${c}: not a check (${ALL_CHECKS.join(", ")})`);
+  const checks = ALL_CHECKS.filter((c) => !without.includes(c) && (o.imageRead || c !== "e"));
+  const principal = o.principal ?? (o.imageRead ? localPrincipal(installConfigFromEnv(process.env)) : localPrincipal({ openRouterApiKey: "" }));
+  if (o.imageRead && checks.includes("e")) await getOpenRouterApiKey(principal);
+  const run: RunJson = readJson(join(o.snapshot, "run.json"));
+  const stem = screenStem(without);
+  const answers = join(o.snapshot, stem);
+  rmSync(answers, { recursive: true, force: true });
+  const ledger: ScreenLedger = {
+    started: new Date().toISOString(), stem, checks: [...checks], image_read: Boolean(o.imageRead),
+    copies: 0, screened: 0, skipped: 0, failed: 0, counts: {}, rows: 0,
+  };
+  const rows: FindingRow[] = [];
+  for (const copy of listCopies(run)) {
+    ledger.copies += 1;
+    const dir = personsDir(o.snapshot, copy);
+    const meta = readJsonIf(join(dir, "meta.json"));
+    if (!meta || meta.living || !existsSync(join(dir, "audit.json"))) {
+      ledger.skipped += 1;
+      continue;
+    }
+    let answer: SourceScreenResponse;
+    try {
+      const built = await buildCopyProject(o.snapshot, copy, principal);
+      if (!built.ok) answer = { ok: false, errors: [`person mode: ${(built.errors ?? []).join(" ")}`] };
+      else {
+        const subject: string = readJson(join(dir, "audit.json")).subject_id;
+        answer = await sourceScreenTool({ projectPath: dir, personId: subject }, principal, { ...o.screen, checks });
+      }
+    } catch (e) {
+      answer = { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
+    }
+    writeJson(join(answers, `${copy}.json`), answer);
+    if (answer.ok !== true || !("attachments" in answer)) {
+      ledger.failed += 1;
+      continue;
+    }
+    ledger.screened += 1;
+    for (const [v, n] of Object.entries(answer.counts)) {
+      ledger.counts[v as SourceScreenVerdict] = (ledger.counts[v as SourceScreenVerdict] ?? 0) + (n ?? 0);
+    }
+    rows.push(...screenRows(copy, answer));
+  }
+  ledger.rows = rows.length;
+  writeFileSync(join(o.snapshot, `${stem}.jsonl`), rows.map((r) => JSON.stringify(r)).join("\n") + (rows.length ? "\n" : ""), "utf8");
+  ledger.finished = new Date().toISOString();
+  writeJson(join(o.snapshot, "runs", `${stem}-${ledger.started.replace(/[:.]/g, "-")}.json`), ledger);
+  return ledger;
+}
+
 // ─── score ──────────────────────────────────────────────────────────────────
 
 export interface FindingsFile {
   path: string;
-  step: "baseline" | "judge";
+  step: "baseline" | "judge" | "screen";
   rows: FindingRow[];
 }
 
 export function readFindings(path: string): FindingsFile {
-  const step = basename(path).startsWith("judge") ? "judge" : "baseline";
+  const name = basename(path);
+  const step = name.startsWith("judge") ? "judge" : name.startsWith("screen") ? "screen" : "baseline";
   const rows = readFileSync(path, "utf8")
     .split(/\r?\n/)
     .filter((l) => l.trim() !== "")
@@ -1235,10 +1415,16 @@ export interface TypeScore {
   false_alarm_signals?: Record<string, number>;
 }
 
-/** Whether a copy has its step's output: a baseline person dir, or a judge file. */
-function copyPresent(f: FindingsFile, copy: string): { present: boolean; harnessMiss: boolean; parseError?: boolean } {
+/** Whether a copy has its step's output: a baseline person dir, a judge file,
+ *  or a screen answer beside the `.jsonl` (an `ok:false` answer is missing, not
+ *  a clean audit). */
+export function copyPresent(f: FindingsFile, copy: string): { present: boolean; harnessMiss: boolean; parseError?: boolean } {
   const snap = dirname(f.path);
   if (f.step === "baseline") return { present: existsSync(join(personsDir(snap, copy), "meta.json")), harnessMiss: false };
+  if (f.step === "screen") {
+    const answer = readJsonIf(join(snap, basename(f.path).replace(/\.jsonl$/, ""), `${copy}.json`));
+    return { present: answer?.ok === true, harnessMiss: false };
+  }
   const j = readJsonIf(join(snap, "judge", `${copy}.json`));
   return { present: Boolean(j), harnessMiss: Boolean(j?.harness_miss), parseError: Boolean(j?.parse_error) };
 }
@@ -1358,6 +1544,11 @@ export function formatScores(file: FindingsFile, scores: TypeScore[]): string {
 
 // ─── cli ────────────────────────────────────────────────────────────────────
 
+/** Value-less flags besides the `--no-*` ones. */
+const BOOL_FLAGS = new Set(["--image-read"]);
+/** Which subcommands take each value-less flag. */
+const BOOL_ALLOWED: Record<string, string[]> = { "--no-same-person": ["snapshot", "plant"], "--image-read": ["screen"] };
+
 export function parseArgs(argv: string[]): { cmd: string; flags: Record<string, string[]>; bools: Set<string> } {
   const [cmd, ...rest] = argv;
   const flags: Record<string, string[]> = {};
@@ -1365,7 +1556,7 @@ export function parseArgs(argv: string[]): { cmd: string; flags: Record<string, 
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (!a.startsWith("--")) throw new Error(`unexpected argument ${a}`);
-    if (a.startsWith("--no-")) {
+    if (a.startsWith("--no-") || BOOL_FLAGS.has(a)) {
       bools.add(a);
       continue;
     }
@@ -1391,15 +1582,16 @@ const ALLOWED: Record<string, string[]> = {
   "tree-sources": ["--snapshot"],
   baseline: ["--snapshot", "--threshold"],
   plant: ["--spec", "--out"],
+  screen: ["--snapshot", "--without"],
   score: ["--spec", "--findings"],
 };
 const PATH_FLAGS = new Set(["--pids", "--out", "--snapshot", "--findings", "--spec"]);
 
 export async function main(argv: string[], tools?: Tools): Promise<number> {
   const { cmd, flags, bools } = parseArgs(argv);
-  if (!ALLOWED[cmd]) throw new Error(`usage: source-screen.ts snapshot|attachments|tree-sources|baseline|plant|score [flags]`);
+  if (!ALLOWED[cmd]) throw new Error(`usage: source-screen.ts snapshot|attachments|tree-sources|baseline|plant|screen|score [flags]`);
   for (const b of bools) {
-    if (b !== "--no-same-person" || !["snapshot", "plant"].includes(cmd)) throw new Error(`${cmd} does not take ${b}`);
+    if (!BOOL_ALLOWED[b]?.includes(cmd)) throw new Error(`${cmd} does not take ${b}`);
   }
   for (const f of Object.keys(flags)) {
     if (!ALLOWED[cmd].includes(f)) throw new Error(`${cmd} does not take ${f}`);
@@ -1454,6 +1646,15 @@ export async function main(argv: string[], tools?: Tools): Promise<number> {
     const ledger = await runPlant(loadSpec(one("--spec")), one("--out"), tools ?? liveTools(), samePersonOn);
     console.log(JSON.stringify(ledger, null, 2));
     return ledger.stopped ? 2 : 0;
+  }
+  if (cmd === "screen") {
+    const ledger = await runScreen({
+      snapshot: one("--snapshot"),
+      without: (flags["--without"] ?? []) as SourceScreenCheck[],
+      imageRead: bools.has("--image-read"),
+    });
+    console.log(JSON.stringify(ledger, null, 2));
+    return 0;
   }
   const spec = loadSpec(one("--spec"));
   const files = flags["--findings"] ?? [];

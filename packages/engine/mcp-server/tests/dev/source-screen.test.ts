@@ -5,7 +5,7 @@
  * actually throw.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cpSync, mkdtempSync, rmSync, writeFileSync, existsSync, readdirSync } from "fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync, readdirSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -41,7 +41,11 @@ import {
   runRefreshAttachments,
   runTreeSources,
   classifyArk,
+  copyPresent,
+  formatScores,
+  runScreen,
   runSnapshot,
+  screenRows,
   scoreFindings,
   SPEC_PATH,
   unplantedKey,
@@ -51,6 +55,7 @@ import {
   type Tools,
 } from "../../dev/source-screen.js";
 import { selectSubjectPersona } from "../../src/utils/record-persona-select.js";
+import { LOCAL } from "../../src/auth/principal.js";
 import { elapseBackoff } from "../helpers/elapse-backoff.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -1033,6 +1038,148 @@ describe("score", () => {
     const file = readFindings(join(dir, "judge.jsonl"));
     const s = byType(scoreFindings(SPEC, file));
     expect(s.hard_wrong_person).toMatchObject({ caught: 1, scored: 1, missing: ["wp2"] });
+  });
+});
+
+// ─── screen ─────────────────────────────────────────────────────────────────
+
+describe("screen", () => {
+  /** A matcher stub scoring by the persona's ARK: 0.1 for a donor, 0.95 otherwise. */
+  const matcher = (low: string[]) =>
+    vi.fn(async (pairs: Json[]) => ({
+      scorer: "familysearch" as const, model: null, floors: { thinSubject: 0.01, realNegative: 0.01 },
+      results: pairs.map((p) => {
+        const a = (p.rec.persons ?? []).find((x: Json) => x.id === p.personaId)?.ark;
+        return { score: low.includes(a) ? 0.1 : 0.95 };
+      }),
+    }));
+  const noOcr = vi.fn(async () => {
+    throw new Error("no OCR in this test");
+  });
+
+  /** plantWorld with a host record id person mode reads as an indexed record (`XXXX-XXX`). */
+  const screenWorld = (): World => {
+    const w = plantWorld();
+    w.persons["HOST-111"] = person("HOST-111", { personas: ["HSTP-111"] });
+    w.records = { [ark("HSTP-111")]: record("HSTP-111"), [ark("DONR-111")]: record("DONR-111", "Jacob", "Brown") };
+    w.attach = { [ark("HSTP-111")]: [{ personId: "HOST-111", tags: [] }], [ark("DONR-111")]: [{ personId: "DONR-OWN", tags: [] }] };
+    return w;
+  };
+
+  async function planted(): Promise<string> {
+    const out = mkTmp();
+    await runPlant(
+      spec([
+        { id: "fx_a", type: "easy_wrong_person", host: "HOST-111", donor_ark: ark("DONR-111") },
+        { id: "fx_i", type: "indexing_error", host: "HOST-111", edit: { persona_ark: ark("HSTP-111"), field: "Birth.date", value: "1805" } },
+      ]),
+      out,
+      fakeTools(screenWorld()),
+      false,
+    );
+    return out;
+  }
+  const screen = (out: string, low = [ark("DONR-111")]) =>
+    runScreen({ snapshot: out, principal: LOCAL, screen: { matchPairs: matcher(low) as any, imageTranscribe: noOcr as any } });
+
+  it("builds every copy's project after planting: the donor is linked on the wrong-person copy, the edited value is on the indexing copy", async () => {
+    const out = await planted();
+    const treeOf = (copy: string) => readFileSync(join(out, "persons", copy, "tree.gedcomx.json"), "utf8");
+    const before = treeOf("fx_a");
+    writeJson(join(out, "persons", "fx_a", "research.json"), { stale: true });
+    await screen(out);
+    expect(treeOf("fx_a")).toBe(before);
+    const research = (copy: string) => readJson(join(out, "persons", copy, "research.json"));
+    const donorAssertions = research("fx_a").assertions.filter((a: Json) => a.record_id === ark("DONR-111")).map((a: Json) => a.id);
+    expect(donorAssertions.length).toBeGreaterThan(0);
+    expect(research("fx_a").person_evidence.some((pe: Json) => pe.person_id === "HOST-111" && donorAssertions.includes(pe.assertion_id))).toBe(true);
+    const birth = (copy: string) =>
+      research(copy).assertions.find((a: Json) => a.record_id === ark("HSTP-111") && a.fact_type === "birth");
+    expect(birth("fx_i").value).toBe("1805");
+    expect(birth(unplantedKey("HOST-111")).value).toBe("1850");
+  });
+
+  it("writes each copy's raw answer and the FindingRow mapping, keyed by the persona ARK", async () => {
+    const out = await planted();
+    const ledger = await screen(out);
+    expect(ledger).toMatchObject({ stem: "screen", copies: 3, screened: 3, failed: 0 });
+    expect(ledger.checks).not.toContain("e");
+    expect(readJson(join(out, "screen", "fx_a.json")).ok).toBe(true);
+    const rows: FindingRow[] = readFindings(join(out, "screen.jsonl")).rows;
+    expect(rows.filter((r) => r.kind === "misattributed").map((r) => `${r.copy_key}|${r.ark}|${r.signal}`)).toEqual([`fx_a|${ark("DONR-111")}|screen`]);
+    expect(rows.every((r) => /^ark:\/61903\/1:1:/.test(r.ark!))).toBe(true);
+  });
+
+  it("maps each verdict to its kind and emits nothing for weak, fine or not_scored", () => {
+    const att = (verdict: string, id: string) => ({ sourceId: `S_${id}`, recordId: ark(id), level: "person", verdict, reasons: [`${verdict} reason`], signals: {} });
+    const rows = screenRows("c1", {
+      ok: true, personId: "I1", counts: {},
+      attachments: [att("misattributed", "M1"), att("indexing_error", "X1"), att("contradicts", "C1"), att("weak", "W1"), att("fine", "F1"), att("not_scored", "N1")],
+    } as any);
+    expect(rows.map((r) => [r.ark, r.kind, r.signal])).toEqual([
+      [ark("M1"), "misattributed", "screen"],
+      [ark("X1"), "indexing", "screen"],
+      [ark("C1"), "source_conflict", "screen"],
+    ]);
+    expect(screenRows("c1", { ok: false, errors: ["x"] })).toEqual([]);
+  });
+
+  it("--without names its own stem and drops the check; an unknown check is refused", async () => {
+    const out = await planted();
+    const ledger = await runScreen({ snapshot: out, without: ["a"], principal: LOCAL, screen: { matchPairs: matcher([ark("DONR-111")]) as any } });
+    expect(ledger.stem).toBe("screen-without-a");
+    expect(ledger.checks).not.toContain("a");
+    expect(existsSync(join(out, "screen-without-a.jsonl"))).toBe(true);
+    expect(readJson(join(out, "screen-without-a", "fx_a.json")).attachments.every((a: Json) => a.signals.a === undefined)).toBe(true);
+    await expect(runScreen({ snapshot: out, without: ["f" as any], principal: LOCAL })).rejects.toThrow(/not a check/);
+  });
+
+  it("readFindings labels screen files step screen, and the score header prints it", () => {
+    const dir = mkTmp();
+    for (const name of ["screen.jsonl", "screen-without-a.jsonl", "baseline.jsonl", "judge.jsonl"]) writeFileSync(join(dir, name), "", "utf8");
+    expect(readFindings(join(dir, "screen.jsonl")).step).toBe("screen");
+    expect(readFindings(join(dir, "screen-without-a.jsonl")).step).toBe("screen");
+    expect(readFindings(join(dir, "baseline.jsonl")).step).toBe("baseline");
+    expect(readFindings(join(dir, "judge.jsonl")).step).toBe("judge");
+    const file = readFindings(join(dir, "screen.jsonl"));
+    expect(formatScores(file, scoreFindings(spec([]), file, () => ({ present: true, harnessMiss: false })))).toMatch(/^== screen: screen\.jsonl/);
+  });
+
+  it("copyPresent counts an ok:false screen answer as missing, not as a clean audit", () => {
+    const dir = mkTmp();
+    writeFileSync(join(dir, "screen.jsonl"), "", "utf8");
+    writeJson(join(dir, "screen", "wp1.json"), { ok: true, personId: "H1", attachments: [], counts: {} });
+    writeJson(join(dir, "screen", "wp2.json"), { ok: false, errors: ["person mode: no read"] });
+    const file = readFindings(join(dir, "screen.jsonl"));
+    expect(copyPresent(file, "wp1").present).toBe(true);
+    expect(copyPresent(file, "wp2").present).toBe(false);
+    expect(copyPresent(file, "wp3").present).toBe(false);
+    const s = scoreFindings(spec([
+      { id: "wp1", type: "hard_wrong_person", host: "H1", donor_ark: ark("DON1") },
+      { id: "wp2", type: "hard_wrong_person", host: "H1", donor_ark: ark("DON2") },
+    ]), file).find((x) => x.type === "hard_wrong_person")!;
+    expect(s).toMatchObject({ scored: 1, missing: ["wp2"], misses: ["wp1"] });
+  });
+
+  it("keeps the blind and by-construction filters baseline-only", () => {
+    const SPEC = spec([{ id: "wp1", type: "hard_wrong_person", host: "H1", donor_ark: ark("DON1") }]);
+    const rows: FindingRow[] = [
+      { copy_key: "wp1", ark: null, kind: "warning", signal: "person_warnings" },
+      { copy_key: "wp1", ark: ark("DON1"), kind: "misattributed", signal: "multi_attached" },
+    ];
+    const present = () => ({ present: true, harnessMiss: false });
+    const base = scoreFindings(SPEC, { path: "baseline.jsonl", step: "baseline", rows }, present).find((x) => x.type === "hard_wrong_person")!;
+    expect(base).toMatchObject({ blind: 1, by_construction: 1, caught: 0 });
+    const scr = scoreFindings(SPEC, { path: "screen.jsonl", step: "screen", rows }, present).find((x) => x.type === "hard_wrong_person")!;
+    expect(scr.blind).toBeUndefined();
+    expect(scr.by_construction).toBeUndefined();
+    expect(scr.caught).toBe(1);
+  });
+
+  it("main: screen takes --image-read and --without; other subcommands refuse --image-read", async () => {
+    await expect(main(["baseline", "--snapshot", mkTmp(), "--image-read"])).rejects.toThrow(/does not take --image-read/);
+    await expect(main(["screen", "--snapshot", join(REPO_ROOT, "x")])).rejects.toThrow(/inside the repo/);
+    await expect(main(["screen", "--snapshot", mkTmp(), "--without", "q"])).rejects.toThrow(/not a check/);
   });
 });
 

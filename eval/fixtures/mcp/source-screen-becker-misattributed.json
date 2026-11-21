@@ -1,0 +1,75 @@
+{
+  "tool": "source_screen",
+  "description": "source_screen for John Becker (I1) on becker-attachment-links-question with the 1900 census (MM8C-43Q) misattributed: the real tool, checks a,b,c,h, with a stub matcher scoring MM8C-43Q 0.10 and MLFM-GC8 0.90.",
+  "args": {
+    "personId": "I1"
+  },
+  "response": {
+    "ok": true,
+    "personId": "I1",
+    "attachments": [
+      {
+        "sourceId": "S1",
+        "recordId": "ark:/61903/1:1:MM8C-43Q",
+        "level": "person",
+        "verdict": "misattributed",
+        "reasons": [
+          "a: leave-one-out score 0.10 is below 0.5."
+        ],
+        "signals": {
+          "a": {
+            "score": 0.1,
+            "band": "below"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": []
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          }
+        },
+        "personaId": "p_1",
+        "linkCap": "speculative"
+      },
+      {
+        "sourceId": "S2",
+        "recordId": "ark:/61903/1:1:MLFM-GC8",
+        "level": "person",
+        "verdict": "fine",
+        "reasons": [],
+        "signals": {
+          "a": {
+            "score": 0.9,
+            "band": "clear"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": []
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          }
+        },
+        "personaId": "p_1"
+      },
+      {
+        "sourceId": "S3",
+        "recordId": null,
+        "level": "person",
+        "verdict": "not_scored",
+        "reasons": [
+          "unindexed: the attachment is not an indexed record (an image, a document or a link to another site)."
+        ],
+        "signals": {}
+      }
+    ],
+    "counts": {
+      "misattributed": 1,
+      "fine": 1,
+      "not_scored": 1
+    }
+  }
+}

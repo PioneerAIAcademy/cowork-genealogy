@@ -1,0 +1,149 @@
+{
+  "tool": "source_screen",
+  "description": "source_screen on Christian P. Hole (KD96-TV2) in christian-hole-screened, after person mode. The real sourceScreenTool's answer, produced offline with checks a, b, c, h (e, the image read, excluded) and a STUB matchPairs, because FamilySearch's matchTwoExamples answers 400 Bad Request for these synthetic HOLE-00x records. The stub gives one fixed leave-one-out score per record: HOLE-001 0.94, HOLE-002 0.88, HOLE-003 0.07, HOLE-004 0.91. Every other signal and every verdict is the tool's own. S3 (1885 state census, born 1852, Otter Tail) is misattributed and names S1 and S2, whose birth years disagree with it; S1 (1900 census) and S4 (1898 marriage, no birth indexed) are fine; S2 (death index, death 1954 against the tree's 1945) is weak.",
+  "args": {
+    "personId": "KD96-TV2"
+  },
+  "response": {
+    "ok": true,
+    "personId": "KD96-TV2",
+    "attachments": [
+      {
+        "sourceId": "S1",
+        "recordId": "ark:/61903/1:1:HOLE-001",
+        "level": "person",
+        "verdict": "fine",
+        "reasons": [],
+        "signals": {
+          "a": {
+            "score": 0.94,
+            "band": "clear"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": []
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          },
+          "h": {
+            "contradicts": [
+              {
+                "sourceId": "S3",
+                "fact": "birth year"
+              }
+            ]
+          }
+        },
+        "personaId": "P1"
+      },
+      {
+        "sourceId": "S2",
+        "recordId": "ark:/61903/1:1:HOLE-002",
+        "level": "person",
+        "verdict": "weak",
+        "reasons": [
+          "b: Christian P. Hole (KD96-TV2): This person's death-like dates span more than 2 years — likely unreconciled conflicting records. Implausible; allowed at save. It depends on the record's Death of 10 June 1954; and on the tree's Death of 1945-06-10 (F4), which came with the tree.",
+          "b: Christian P. Hole (KD96-TV2): This person has 2 or more distinct Death dates more than 14 days apart — unreconciled conflicting records. Implausible; refused at save. It depends on the record's Death of 10 June 1954; and on the tree's Death of 1945-06-10 (F4), which came with the tree."
+        ],
+        "signals": {
+          "a": {
+            "score": 0.88,
+            "band": "clear"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": [
+              "Christian P. Hole (KD96-TV2): This person's death-like dates span more than 2 years — likely unreconciled conflicting records. Implausible; allowed at save. It depends on the record's Death of 10 June 1954; and on the tree's Death of 1945-06-10 (F4), which came with the tree.",
+              "Christian P. Hole (KD96-TV2): This person has 2 or more distinct Death dates more than 14 days apart — unreconciled conflicting records. Implausible; refused at save. It depends on the record's Death of 10 June 1954; and on the tree's Death of 1945-06-10 (F4), which came with the tree."
+            ]
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          },
+          "h": {
+            "contradicts": [
+              {
+                "sourceId": "S3",
+                "fact": "birth year"
+              }
+            ]
+          }
+        },
+        "personaId": "P1"
+      },
+      {
+        "sourceId": "S3",
+        "recordId": "ark:/61903/1:1:HOLE-003",
+        "level": "person",
+        "verdict": "misattributed",
+        "reasons": [
+          "a: leave-one-out score 0.07 is below 0.5.",
+          "h: birth year disagrees with S1.",
+          "h: birth year disagrees with S2."
+        ],
+        "signals": {
+          "a": {
+            "score": 0.07,
+            "band": "below"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": []
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          },
+          "h": {
+            "contradicts": [
+              {
+                "sourceId": "S1",
+                "fact": "birth year"
+              },
+              {
+                "sourceId": "S2",
+                "fact": "birth year"
+              }
+            ]
+          }
+        },
+        "personaId": "P1",
+        "contradicts": [
+          "S1",
+          "S2"
+        ],
+        "linkCap": "speculative"
+      },
+      {
+        "sourceId": "S4",
+        "recordId": "ark:/61903/1:1:HOLE-004",
+        "level": "person",
+        "verdict": "fine",
+        "reasons": [],
+        "signals": {
+          "a": {
+            "score": 0.91,
+            "band": "clear"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": []
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          }
+        },
+        "personaId": "P1"
+      }
+    ],
+    "counts": {
+      "fine": 2,
+      "weak": 1,
+      "misattributed": 1
+    }
+  }
+}
