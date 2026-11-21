@@ -61,7 +61,7 @@ ARK_RE = re.compile(r"ark:/\d+/[\w:.-]+")
 
 # A bare identifier-shaped number. **5+ digits, deliberately.** Four digits is a
 # year, and requiring years to trace flagged 442 legitimate derivations.
-NUM_RE = re.compile(r"(?<![\w.:/-])\d{5,}(?![\w.-])")
+NUM_RE = re.compile(r"(?<![\w.:/-])\d{5,}(?![\w-]|\.\d)")
 
 
 def _read(path: Path) -> str:

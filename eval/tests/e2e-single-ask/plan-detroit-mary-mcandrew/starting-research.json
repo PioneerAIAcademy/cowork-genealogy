@@ -66,280 +66,320 @@
           "title": "Michigan, Births and Christenings, 1775-1995",
           "date_range": "1775-1995",
           "person_count": 2943996,
-          "record_count": 899505
+          "record_count": 899505,
+          "availability": "name-searchable"
         },
         {
           "id": "1459684",
           "title": "Michigan, Births, 1867-1902",
           "date_range": "1867-1902",
           "person_count": 4215535,
-          "record_count": 1409988
+          "record_count": 1409988,
+          "availability": "name-searchable"
         },
         {
           "id": "1923472",
           "title": "Michigan, County Births, 1867-1917",
           "date_range": "1867-1917",
           "person_count": 3830045,
-          "record_count": 724380
+          "record_count": 724380,
+          "availability": "name-searchable"
         },
         {
           "id": "1452402",
           "title": "Michigan, Deaths, 1867-1897",
           "date_range": "1867-1897",
           "person_count": 1238724,
-          "record_count": 507104
+          "record_count": 507104,
+          "availability": "name-searchable"
         },
         {
           "id": "1675357",
           "title": "Michigan, Deaths and Burials, 1800-1995",
           "date_range": "1800-1995",
           "person_count": 3459942,
-          "record_count": 1094840
+          "record_count": 1094840,
+          "availability": "name-searchable"
         },
         {
           "id": "1968532",
           "title": "Michigan, Death Certificates, 1921-1952",
           "date_range": "1921-1952",
           "person_count": 4519138,
-          "record_count": 1654686
+          "record_count": 1654686,
+          "availability": "name-searchable"
         },
         {
           "id": "2215693",
           "title": "Michigan, Obituaries, 1820-2006",
           "date_range": "1820-2006",
           "person_count": 8932477,
-          "record_count": 8912502
+          "record_count": 8912502,
+          "availability": "name-searchable"
         },
         {
           "id": "2787825",
           "title": "Michigan, Church Records, 1819-1991",
           "date_range": "1819-1991",
           "person_count": 103627,
-          "record_count": 47038
+          "record_count": 47038,
+          "availability": "name-searchable"
         },
         {
           "id": "2013878",
           "title": "Michigan, Probate Records, 1797-1973",
           "date_range": "1797-1973",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         },
         {
           "id": "2632078",
           "title": "Michigan, Mortality Schedules, 1850-1880",
           "date_range": "1850-1880",
           "person_count": 41597,
-          "record_count": 41597
+          "record_count": 41597,
+          "availability": "name-searchable"
         },
         {
           "id": "1825187",
           "title": "Michigan, State Census, 1894",
           "date_range": "1894-1894",
           "person_count": 381961,
-          "record_count": 381961
+          "record_count": 381961,
+          "availability": "name-searchable"
         },
         {
           "id": "1916040",
           "title": "Michigan, Wayne, Detroit, Manifests of Arrivals at the Port of Detroit, 1906-1956",
           "date_range": "1906-1956",
           "person_count": 1364974,
-          "record_count": 1364860
+          "record_count": 1364860,
+          "availability": "name-searchable"
         },
         {
           "id": "3007553",
           "title": "Michigan, Census of World War I Veterans with Card Index, 1917-1919",
           "date_range": "1917-1919",
           "person_count": 568817,
-          "record_count": 227520
+          "record_count": 227520,
+          "availability": "name-searchable"
         },
         {
           "id": "2515887",
           "title": "Michigan, Church Marriages, 1865-1931",
           "date_range": "1865-1931",
           "person_count": 1316,
-          "record_count": 213
+          "record_count": 213,
+          "availability": "name-searchable"
         },
         {
           "id": "2515912",
           "title": "Michigan, Civil Marriages, 1834-1974",
           "date_range": "1834-1974",
           "person_count": 5286,
-          "record_count": 1098
+          "record_count": 1098,
+          "availability": "name-searchable"
         },
         {
           "id": "3246416",
           "title": "Michigan, Civil War Centennial Observance Commission, Committee on Civil War Grave Registration, Burial Records",
           "date_range": "1861-1963",
           "person_count": 86219,
-          "record_count": 84911
+          "record_count": 84911,
+          "availability": "name-searchable"
         },
         {
           "id": "2473289",
           "title": "Michigan, County Marriages Index, 1820-1937",
           "date_range": "1820-1937",
           "person_count": 49386,
-          "record_count": 14239
+          "record_count": 14239,
+          "availability": "name-searchable"
         },
         {
           "id": "1810350",
           "title": "Michigan, County Marriages, 1820-1941",
           "date_range": "1820-1941",
           "person_count": 2212986,
-          "record_count": 498558
+          "record_count": 498558,
+          "availability": "name-searchable"
         },
         {
           "id": "2426314",
           "title": "Michigan, Crew Lists for various ports, 1929-1966",
           "date_range": "1929-1966",
           "person_count": 140825,
-          "record_count": 140825
+          "record_count": 140825,
+          "availability": "name-searchable"
         },
         {
           "id": "1949333",
           "title": "Michigan, Death Index, 1971-1996",
           "date_range": "1971-1996",
           "person_count": 2052472,
-          "record_count": 2052472
+          "record_count": 2052472,
+          "availability": "name-searchable"
         },
         {
           "id": "2110745",
           "title": "Michigan, Eastern District, Naturalization Index, 1907-1995",
           "date_range": "1907-1995",
           "person_count": 567578,
-          "record_count": 567574
+          "record_count": 567574,
+          "availability": "name-searchable"
         },
         {
           "id": "2351035",
           "title": "Michigan, Grand Army of the Republic Membership Records, 1876-1945",
           "date_range": "1876-1945",
           "person_count": 205811,
-          "record_count": 61796
+          "record_count": 61796,
+          "availability": "name-searchable"
         },
         {
           "id": "1675359",
           "title": "Michigan, Marriages, 1822-1995",
           "date_range": "1822-1995",
           "person_count": 5126071,
-          "record_count": 1128807
+          "record_count": 1128807,
+          "availability": "name-searchable"
         },
         {
           "id": "1452395",
           "title": "Michigan, Marriages, 1868-1925",
           "date_range": "1868-1925",
           "person_count": 8076722,
-          "record_count": 1603279
+          "record_count": 1603279,
+          "availability": "name-searchable"
         },
         {
           "id": "4123955",
           "title": "Michigan, Military Discharge Records, ca.1847 - ca.1965",
           "date_range": "1846-1966",
           "person_count": 1032,
-          "record_count": 981
+          "record_count": 981,
+          "availability": "name-searchable"
         },
         {
           "id": "2546149",
           "title": "Michigan, Naturalization Records, 1837-1997",
           "date_range": "1837-1997",
-          "person_count": 2696838,
-          "record_count": 1587084
+          "person_count": 2696839,
+          "record_count": 1587084,
+          "availability": "name-searchable"
         },
         {
           "id": "3733440",
           "title": "Michigan, Saginaw County, Biographical Card File, ca. 1830-2000",
           "date_range": "1829-2001",
           "person_count": 50464,
-          "record_count": 20432
+          "record_count": 20432,
+          "availability": "name-searchable"
         },
         {
           "id": "2720701",
           "title": "Michigan, State Archives, Naturalization Records, 1812-1993",
           "date_range": "1812-1993",
           "person_count": 1859058,
-          "record_count": 37478
+          "record_count": 37478,
+          "availability": "name-searchable"
         },
         {
           "id": "3158869",
           "title": "Michigan, Wills and Deeds, ca. 1700s-2017",
           "date_range": "1700-2017",
           "person_count": 36559,
-          "record_count": 1
+          "record_count": 1,
+          "availability": "name-searchable"
         },
         {
           "id": "1420441",
           "title": "United States Census (Mortality Schedule), 1850-1880",
           "date_range": "1850-1880",
           "person_count": 1356791,
-          "record_count": 1356791
+          "record_count": 1356791,
+          "availability": "name-searchable"
         },
         {
           "id": "3754697",
           "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
           "date_range": "1748-1991",
           "person_count": 233239069,
-          "record_count": 67418133
+          "record_count": 67418133,
+          "availability": "name-searchable"
         },
         {
           "id": "1438024",
           "title": "United States, Census, 1870",
           "date_range": "1870-1870",
-          "person_count": 42384137,
-          "record_count": 40350030
+          "person_count": 42384138,
+          "record_count": 40350030,
+          "availability": "name-searchable"
         },
         {
           "id": "1417683",
           "title": "United States, Census, 1880",
           "date_range": "1880-1880",
           "person_count": 50472677,
-          "record_count": 50472677
+          "record_count": 50472677,
+          "availability": "name-searchable"
         },
         {
           "id": "1610551",
           "title": "United States, Census, 1890",
           "date_range": "1890-1890",
           "person_count": 7393,
-          "record_count": 6285
+          "record_count": 6285,
+          "availability": "name-searchable"
         },
         {
           "id": "1325221",
           "title": "United States, Census, 1900",
           "date_range": "1900-1900",
           "person_count": 76492831,
-          "record_count": 76492831
+          "record_count": 76492831,
+          "availability": "name-searchable"
         },
         {
           "id": "1727033",
           "title": "United States, Census, 1910",
           "date_range": "1910-1910",
           "person_count": 93758702,
-          "record_count": 93758702
+          "record_count": 93758702,
+          "availability": "name-searchable"
         },
         {
           "id": "1488411",
           "title": "United States, Census, 1920",
           "date_range": "1920-1920",
           "person_count": 107660184,
-          "record_count": 107660184
+          "record_count": 107660184,
+          "availability": "name-searchable"
         },
         {
           "id": "1810731",
           "title": "United States, Census, 1930",
           "date_range": "1930-1930",
           "person_count": 125179955,
-          "record_count": 125179955
+          "record_count": 125179955,
+          "availability": "name-searchable"
         },
         {
           "id": "1202535",
           "title": "United States, Social Security Death Index",
           "date_range": "1875-2014",
           "person_count": 93945885,
-          "record_count": 93945885
+          "record_count": 93945885,
+          "availability": "name-searchable"
         },
         {
           "id": "1968530",
           "title": "United States, World War I Draft Registration Cards, 1917-1918",
           "date_range": "1917-1918",
-          "person_count": 44906678,
-          "record_count": 32592786
+          "person_count": 44906686,
+          "record_count": 32592786,
+          "availability": "name-searchable"
         }
       ],
       "quirks": [

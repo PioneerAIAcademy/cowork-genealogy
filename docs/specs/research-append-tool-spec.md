@@ -739,8 +739,9 @@ new place without setting `standard_place`. On that update the existing assertio
 the base, no sidecar value is copied (geocoding only; its sidecar record still gives
 the record's country, below), a resolved value is written into the
 update's `standard_place`, and when nothing resolves, or the resolved value
-contradicts the place's country, the old `standard_place` is cleared (set to `null`)
-with a warning rather than kept for the new place.
+contradicts the place's country or its state or province (Lever A), the old
+`standard_place` is cleared (set to `null`) with a warning rather than kept for
+the new place.
 
 A place-of-event variant's place lifted from `value` before the levers run
 (§3.7) is a **value-derived** place. It is resolved, echoed and warned about
@@ -942,6 +943,19 @@ stays an opt-out, as on an append. The levers:
   country it recognizes, and those are where the corpus's mis-resolutions
   actually land. A contradiction still fires when the garbage sits *behind* a
   genuine polity ("Moravia, …, South Hwanghae, North Korea").
+
+  **One level down: a state/province contradiction (`divisionContradiction`).**
+  A value this lever itself filled — sidecar-copied or geocoded, never a
+  caller-supplied `standard_place`, which is out of scope here — is also
+  **dropped**, with a warning and never a refusal, when the place text's last
+  part names a US state, Puerto Rico or Canadian province (by full name, postal
+  code, or an abbreviation the lead's one-word list gives that division — "Miss"
+  is Mississippi) other than the one the standard place's jurisdictions name:
+  "Forest, Miss, United States" drops "Forest, Wisconsin, United States". The
+  check runs whether or not the country guard above could judge the pair, and
+  before it pushes its own "verify this" warning for a geocoded, country-unverifiable
+  answer, so a value the division check is about to drop is never also echoed
+  with a warning describing it as kept.
 
 A `localities` entry's `for_place` is checked against the place standard by a
 separate rule, which refuses rather than geocodes: §5.8.
@@ -1357,6 +1371,7 @@ audit's recommendation #5):
 | A `plan_items` append, or an inline item of a `plans` append, whose `repository` is not FamilySearch and that has no `collection_url` | **a warning, never a refusal**, listing the stored collections that fit it: rows of a stored place whose first part names a part of the item's jurisdiction, narrowed to its record type | The agent sees its choices as it writes. The free-text jurisdiction is matched loosely, which a hint can afford and a refusal could not. Silent when nothing fits or nothing is stored. `storedCollectionsHint` |
 | A `plans` append, a `plans` update carrying `items`, a `plan_items` append, or a `plan_items` update setting `date_range` or `status: "skipped"`, on a question with a `date_window` | **a warning, never a refusal**, when the span of the question's live plan items (no `superseded` plan, no `skipped` item) leaves more than half of the window uncovered; once per question per call, on the end state | A plan can stop short of the years its question needs, which a lifetime cannot stand in for — [`guardrail-enforcement-spec.md` §"A plan should reach its question's date window"](guardrail-enforcement-spec.md#a-plan-should-reach-its-questions-date-window) |
 | A `plan_items` append, a `plan_items` update that changes `jurisdiction`, or an inline item of a `plans` op whose `jurisdiction` changed | **refused** when the `jurisdiction` splits on "and", "or", "&", ";" or "/" into two or more parts and every part sits inside, or encloses, a recorded `localities[].place` (the same tail match as the locality warning) | search-records hands a plan item's jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and Texas, United States" names no searchable place. Requiring every part to be a researched locality is what leaves a single place with a joiner in its name ("Lewis and Clark County, Montana") alone; an elided part ("Smith County and Hill County, Texas") is not caught. Not applied to an edit that leaves a stored item's jurisdiction unchanged, even one re-sending it, so an item written before the rule stays editable. A two-place jurisdiction with one part the project has not researched ("Alabama and Georgia" where only Alabama is recorded) passes. The message tells the agent to write one item per place. | `compoundJurisdictionError` |
+| A `plans` append, a `plans` update carrying `items`, a `plan_items` append, or a `plan_items` update changing `sequence`, `jurisdiction`, `record_type` or `fallback_for`, on a plan for the **first** question | **refused** when `project.objective` names a target record (an explicit record noun: "baptism record", "death certificate", "1851 census") and the place of that event (the first capitalised word after "in"/"at", or "of" for a census, in the clause after the event's own verb: "born … in Kongsberg"), some item searches that record at that place (its `jurisdiction` contains the place and no place the objective ties to a different event, and its `record_type` fits the event), and the earliest such item either does not lead the plan or is a `fallback_for` an item that does not search it. Judged once per plan on the call's end state. Silent when no item searches the target, so an objective the parser misreads can never refuse; not applied to a plan that already buried the target before the call, so a plan written before the rule stays editable. The message names the item to move to sequence 1, or the `fallback_for` to clear, and says the rule applies only when the objective states both the record and its place | An alpha feedback session: the objective asked for a Kongsberg baptism and the plan put it at sequence 6 of 11, behind Trysil burial work that re-derived what the objective already stated; the session spent 3h18m in Trysil images and never searched Kongsberg. Lead decision 2026-08-31: a writer precondition, with the refusal rate measured before merging. Measured 2026-11-19 over the 241 first-question plans in the committed e2e corpus: it applies to **1** and refuses **0** (`npx tsx dev/measure-objective-target-lead.ts`). `objectiveTargetLeadError` |
 | any section | a **required-object field** holding a primitive is rejected — `search_stop`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled. `search_stop` renamed from `exhaustive_declaration` (2026-10-07) | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | `sources` append or update | **`original` needs stored evidence**: refused when the call's end state leaves a source `original` that it was not before, or an `original` that had evidence with none, and the source has no non-empty `transcription`, no non-empty `image_filename` and no FamilySearch document-image ARK (`3:1:`/`3:2:`, `findDocumentImageArk`) in `url`. `image_ark` does not count: the extractor stamps it on every index read. Exempt: a batch with at least one assertion append, every one `record_role: "absent"` (the absence browse). An `original` that never had evidence stays writable | `guardrail-enforcement-spec.md` §5 "`original` needs stored evidence"; lead ruling 2026-09-02 |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-append.ts` ("must not carry an id — the tool assigns it"); id immutability: [`research-schema-spec.md` §"3. ID Conventions"](research-schema-spec.md#3-id-conventions) |
@@ -2174,7 +2189,7 @@ and skipped when an earlier check has refused the batch.
 
 **Why.** research-plan plans from these counts without calling `collections_search`
 when every collection in a covering locality carries a `person_count`, and decides
-a name search vs an image browse on `person_count > 0`. In alpha feedback bundle
+a name search vs an image browse on each collection's `availability`. In alpha feedback bundle
 `feedback-2026-11-05T18-50-09-991Z.zip` one locality stored `person_count: 0` on all 13 of its collections, and the second plan
 sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 and
 380,262) to full-text search as browse-only. The agent cannot know a better count
@@ -2184,8 +2199,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   no id (absent, null, empty, or neither a string nor a number) cannot be checked: both counts become
   `null`, with the warning
   > `localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)`
-- **Found.** The id is in the catalog: both counts become the catalog's. A warning names each
-  value that changed:
+- **Found.** The id is in the catalog: both counts become the catalog's, and
+  `availability` becomes `collectionAvailability(personCount, imageCount)`:
+  `browse-only` with no indexed person or fewer than one per thousand page images,
+  else `name-searchable` (collections-search spec, "Why `availability`"). The label is
+  set without a warning. A warning names each count that changed:
   > `localities collections '<id>': <count> <old> -> <new>[, <count> <old> -> <new>], set from FamilySearch's catalog`
 
   `<count>` is `person_count` or `record_count`; only a count that changed is named,
@@ -2193,11 +2211,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   An absent `record_count` is filled without being named: `collections_search`
   returns no record count, so locality-guide leaves it out and this stamp is
   where it comes from. A supplied `record_count` that differs is still named.
-- **Not found.** Both counts become `null`, which sends research-plan back to
+- **Not found.** Both counts and `availability` become `null`, which sends research-plan back to
   `collections_search`:
   > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
 - **The catalog cannot be read** (no FamilySearch session, a network failure, a
-  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count in each such op becomes `null`, with one warning per op. The
+  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count and `availability` in each such op becomes `null`, with one warning per op. The
   underlying error, including the auth error's "Call the login tool", is not passed on:
   > `localities collections: FamilySearch's collection catalog could not be read, so every person_count and record_count in this entry was set to null (unknown)`
 - **A spent FamilySearch request budget** (the process-wide limit or the per-user
@@ -2206,7 +2224,7 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   geocode.
 - **The whole list.** After the stamp, a `localities` append gains every catalog
   collection for its place that it did not send (`fillLocalityCollections`), as
-  `{ id, title, date_range, person_count, record_count }`, after the rows it sent.
+  `{ id, title, date_range, person_count, record_count, availability }`, after the rows it sent.
   The place's collections are the ones `collections_search` lists: titles holding
   the scope `standardPlaceToCollectionsQuery` derives from the entry's `place`,
   else from the first `jurisdictions[].name` whose scope matches a title. At most
@@ -2250,8 +2268,13 @@ than the catalog, so a refusal would cost a turn and end in the same state.
     `United States, Kentucky, Agricultural Schedules, 1850-1880`, `United States Virgin
     Islands, Census Records, 1841-1911`, `Canada, Ontario, Births, 1869-1912` and `New
     Mexico, Deaths, 1889-1945` are not.
-  - **Core** (`isCoreNationalCollection`): the population and mortality censuses (a
-    region before `Census` allowed, as in `Canada, Prairie Provinces, Census, 1916`); in
+  - **Core** (`isCoreNationalCollection`): the population and mortality censuses. A
+    regional census (`Canada, Upper Canada, Census, 1842`) is core only for a locality
+    whose place, `for_place` or a jurisdiction name names a province the region covers
+    (`CENSUS_REGION_PROVINCES`: Lower Canada is Quebec, Upper Canada is Ontario, the
+    Prairie and Northwest Provinces are Manitoba, Saskatchewan and Alberta); a region not
+    listed is core nowhere. Those censuses reach no locality any other way: an Ontario
+    locality's place fill matches `Canada, Ontario`, which `Upper Canada` is not. In
     the United States the Social Security Death Index, the NUMIDENT files, the World War I
     and World War II draft registrations and the city directories; in Canada and Mexico
     the country-wide baptism, marriage and death indexes. About 160 of the United
