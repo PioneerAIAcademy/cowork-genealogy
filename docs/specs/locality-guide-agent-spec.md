@@ -65,7 +65,7 @@ otherwise re-fetched:
 - `collections_search` answers over its character budget carry `truncated: true`.
   Rows whose titles name the place come first, so what was left out is rows for
   other places in the same scope; the agent does not report it as a coverage gap.
-  research-plan chooses a name search or an image browse on `person_count > 0`.
+  research-plan chooses a name search or an image browse on the collection's `availability`.
 - `registration_start[]` — `{ event, level, year, source_url }` from the
   `{Jurisdiction}_Vital_Records` page, one per event and level, so
   research-exhaustiveness need not re-read that page. An event the page gives

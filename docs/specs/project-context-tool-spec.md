@@ -128,6 +128,7 @@ can drop:
       dateRange?: string,
       personCount?: number,
       recordCount?: number,
+      availability?: "browse-only",      // only on a browse-only row: the stored label, else from personCount
     }],
     quirks?: string[],
   }],
@@ -209,7 +210,11 @@ Projection rules:
   source's id; `assertionCount` counts those assertions.
 - **`localities`** — every `research.localities[]` entry, renamed to camelCase. `guide_markdown`
   and `pages_read` are left out; `research_query` serves the whole entry. A collection count
-  that is not an integer is left out.
+  that is not an integer is left out. A collection carries `availability: "browse-only"` when
+  its stored label (research-append spec §5.12) is browse-only, or, on a row saved before the
+  label existed, when `collectionAvailability(person_count)` is (a count of 0). Any other row
+  carries none and is name-searchable, as on a `collections_search` row. **Why:** a label on
+  every row was 11-13% of the answer on the four planning fixtures.
 - **`nationalCollections`** — the country-wide collections the localities hold, for a
   locality whose country (its `place`, else its first `jurisdictions[].name` with one) is the
   United States, Canada or Mexico. Their collections are scoped to the state or province, so

@@ -1940,6 +1940,16 @@
                   "null"
                 ],
                 "minimum": 0
+              },
+              "availability": {
+                "anyOf": [
+                  {
+                    "$ref": "enums.schema.json#/$defs/collection_availability"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }

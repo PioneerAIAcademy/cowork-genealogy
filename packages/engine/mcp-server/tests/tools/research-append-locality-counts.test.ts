@@ -29,7 +29,7 @@ const SCENARIO = resolve(__dirname, "../../../../../eval/fixtures/scenarios/mid-
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
 
-function catalogEntry(id: string, title: string, records: number, persons: number, startYear: number | null = 1855, endYear: number | null = startYear) {
+function catalogEntry(id: string, title: string, records: number, persons: number, startYear: number | null = 1855, endYear: number | null = startYear, images = 7754) {
   return {
     content: {
       gedcomx: {
@@ -40,7 +40,7 @@ function catalogEntry(id: string, title: string, records: number, persons: numbe
             content: [
               { count: records, resourceType: "http://gedcomx.org/Record" },
               { count: persons, resourceType: "http://gedcomx.org/Person" },
-              { count: 7754, resourceType: "http://gedcomx.org/DigitalArtifact#FamilySearch" },
+              { count: images, resourceType: "http://gedcomx.org/DigitalArtifact#FamilySearch" },
             ],
             searchMetadata: [{ imageCount: 7754, recordCount: records, ...(startYear === null ? {} : { startYear, endYear: endYear ?? startYear }) }],
           },
@@ -311,8 +311,8 @@ describe("research_append stamps locality collection counts from the catalog", (
       { projectPath: dir, section: "localities", op: "append", entry: { ...locality([], place), collections, ...extra } } as never,
       collectionCatalogLoader(LOCAL),
     );
-  const row1855 = { id: "1803969", title: "Illinois, State Census, 1855", date_range: "1855-1855", person_count: 240768, record_count: 60123 };
-  const row1865 = { id: "1803971", title: "Illinois, State Census, 1865", date_range: "1855-1855", person_count: 380262, record_count: 95456 };
+  const row1855 = { id: "1803969", title: "Illinois, State Census, 1855", date_range: "1855-1855", person_count: 240768, record_count: 60123, availability: "name-searchable" };
+  const row1865 = { id: "1803971", title: "Illinois, State Census, 1865", date_range: "1855-1855", person_count: 380262, record_count: 95456, availability: "name-searchable" };
 
   it("an append that sends no collections gets every catalog collection for its place", async () => {
     const r = await appendIn(ILLINOIS, []);
@@ -429,7 +429,7 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   describe("national collections (spec 5.12): the US, Canada and Mexico get their core country-wide rows", () => {
     const NATIONAL: FSCollectionsResponse = {
-      results: 17,
+      results: 20,
       index: 0,
       entries: [
         catalogEntry("m1", "Michigan, Death Records, 1867-1952", 1, 1, 1867, 1952),
@@ -444,6 +444,9 @@ describe("research_append stamps locality collection counts from the catalog", (
         catalogEntry("ca1901", "Canada, Census, 1901", 1, 1, 1901),
         catalogEntry("caon", "Canada, Ontario, Births, 1869-1912", 1, 1, 1869, 1912),
         catalogEntry("caon61", "Canada, Ontario, Census, 1861", 1, 1, 1861),
+        catalogEntry("cauc42", "Canada, Upper Canada, Census, 1842", 1, 1, 1842),
+        catalogEntry("calc42", "Canada, Lower Canada, Census, 1842", 1, 1, 1842),
+        catalogEntry("capr16", "Canada, Prairie Provinces, Census, 1916", 1, 1, 1916),
         catalogEntry("mx1930", "Mexico, National Census, 1930", 1, 1, 1929, 1931),
         catalogEntry("mxbap", "Mexico, Baptisms, 1560-1950", 1, 1, 1559, 1950),
         catalogEntry("mxja", "Mexico, Jalisco, Civil Registration, 1857-2000", 1, 1, 1857, 2000),
@@ -499,6 +502,23 @@ describe("research_append stamps locality collection counts from the catalog", (
       expect(await ids()).toEqual(["ca1901"]);
     });
 
+    it("gives a regional census only to a locality in a province it covers", async () => {
+      await appendIn("Halifax, Nova Scotia, Canada", [], { time_period: "1836-1920" });
+      expect(await ids()).toEqual(["ca1901"]);
+    });
+
+    it("gives Upper Canada's census to an Ontario locality and the Prairie census to an Alberta one", async () => {
+      await appendIn("Toronto, York, Ontario, Canada", [], { time_period: "1836-1920" });
+      await appendIn("Edmonton, Alberta, Canada", [], { time_period: "1900-1920" });
+      const doc = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const [toronto, edmonton] = doc.localities.slice(-2).map((l: any) => l.collections.map((c: any) => c.id));
+      expect(toronto).toContain("cauc42");
+      expect(toronto).not.toContain("calc42");
+      expect(toronto).not.toContain("capr16");
+      expect(edmonton).toEqual(expect.arrayContaining(["capr16"]));
+      expect(edmonton).not.toContain("cauc42");
+    });
+
     it("adds no duplicate for a country-level place the place fill already covered", async () => {
       await appendIn("Canada", [], { time_period: "1890-1910" });
       const stored = await ids();
@@ -530,6 +550,31 @@ describe("research_append stamps locality collection counts from the catalog", (
       expect(warningsOf(r)).toEqual([
         `localities collections: added ${LOCALITY_COLLECTIONS_FILL_MAX} of the ${LOCALITY_COLLECTIONS_FILL_MAX + 5} core national FamilySearch collections for "United States" overlapping 1870-1930 from the catalog`,
       ]);
+    });
+  });
+
+  describe("availability (spec 5.12): the label research-plan copies", () => {
+    const THIN: FSCollectionsResponse = {
+      results: 2,
+      index: 0,
+      entries: [
+        catalogEntry("1999196", "Pennsylvania, Probate Records, 1683-1994", 0, 52, 1683, 1994, 3200560),
+        catalogEntry("2466360", "Pennsylvania, Church Marriages, 1682-1976", 4873, 17743, 1682, 1976, 23593),
+      ],
+    };
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(THIN), { status: 200 }));
+    });
+
+    it("stamps a sent collection with a handful of persons over millions of images browse-only", async () => {
+      await appendIn("Schuylkill, Pennsylvania, United States", [{ id: "1999196", title: "Pennsylvania, Probate Records" }]);
+      const byId = Object.fromEntries((await storedCollections()).map((c: any) => [c.id, c.availability]));
+      expect(byId).toMatchObject({ "1999196": "browse-only", "2466360": "name-searchable" });
+    });
+
+    it("sets no label on a collection the catalog does not hold", async () => {
+      await appendIn("Schuylkill, Pennsylvania, United States", [{ id: "SYNTH-1", title: "Synthetic" }]);
+      expect((await storedCollections()).find((c: any) => c.id === "SYNTH-1")).toMatchObject({ availability: null });
     });
   });
 

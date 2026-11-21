@@ -1687,6 +1687,42 @@ def _trim_person_read(response: dict[str, Any]) -> dict[str, Any]:
         return response
 
 
+def _label_collection_rows(response: dict[str, Any]) -> dict[str, Any]:
+    """Mark each canned `collections_search` row browse-only where production
+    would, from the COMPILED `collectionAvailability` (a name-searchable row
+    carries no `availability`, as in production). A fixture row carries no
+    image count, so the person count alone decides, as for a stored row with no
+    label. A row that already has one keeps it. On a harness fault the response
+    goes back unlabelled, with a warning."""
+    js = _MCP_BUILD / "utils" / "collection-availability.js"
+    if not js.exists():
+        warnings.warn(f"mock collections_search rows unlabelled: no engine build at {js}", stacklevel=2)
+        return response
+    url = _node_module_url(js)
+    script = (
+        f"import {{ collectionAvailability }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const r = JSON.parse(readFileSync(0, 'utf-8'));"
+        " for (const row of r.results ?? []) {"
+        "   if (row && typeof row === 'object' && row.availability === undefined) {"
+        "     if (collectionAvailability(row.personCount, row.imageCount) === 'browse-only') row.availability = 'browse-only';"
+        "   }"
+        " }"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock collections_search rows unlabelled: node exited {proc.returncode}", stacklevel=2)
+            return response
+        parsed = json.loads(out)
+        return parsed if isinstance(parsed, dict) else response
+    except Exception as e:
+        warnings.warn(f"mock collections_search rows unlabelled: {type(e).__name__}: {e}", stacklevel=2)
+        return response
+
+
 def _warn_untrimmed(why: str) -> None:
     warnings.warn(
         f"mock person_read could not be trimmed ({why}); the response goes back in the "
@@ -1973,6 +2009,14 @@ def create_mock_server(
                 response = _store_external_collections(
                     _workspace, args, response, _stored_rows.get(source_name)
                 )
+
+            # Production's collections_search labels every row's availability.
+            if (
+                _name == "collections_search"
+                and "error" not in response
+                and isinstance(response.get("results"), list)
+            ):
+                response = _label_collection_rows(response)
 
             # Production's person_read answers, and stages, the model-facing trim
             # of the full read (#4384). A fixture holds the full read, which
