@@ -53,15 +53,7 @@ import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import { getPersonName } from "./person-warnings.js";
 import { isCoupleEventFactType } from "../utils/record-persona.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import {
-  atomicWriteJson,
-  atomicWriteBoth,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-} from "../utils/project-io.js";
+import { atomicWriteJson, atomicWriteBoth, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace } from "../utils/place-resolver.js";
 import { judgeSupplied, placeAnswer, type PlaceAnswer } from "../utils/place-verdict.js";
@@ -187,11 +179,7 @@ export type TreeEditResult =
       validation: { valid: true; warnings: string[] };
       conflicts_surfaced?: ConflictSurfaced[];
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  // The warning gate's refusal rides this same arm (see WarningGateRefusal).
-  | ({ ok: false; errors: string[]; reason?: "no_project" | "unjustified_warnings" } &
+  | ({ ok: false; errors: string[]; reason?: "unjustified_warnings" } &
       Partial<Pick<WarningGateRefusal, "message" | "warnings" | "conflicts_surfaced">>);
 
 /** One warning a gated write introduced, as the refusal reports it. */
@@ -249,9 +237,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult().
-    if (e instanceof NoProjectError) throw e;
     throw new TreeEditError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -1466,7 +1451,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
     return result;
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof TreeEditError) return { ok: false, errors: [e.message] };
     throw e;
   }

@@ -805,8 +805,8 @@ the gate and resolve their project themselves.
 `tests/packaging/project-gate.test.ts` fails when a schema outside the six lacks
 `projectPath` in `required`, and drives the gate both ways. The harness mirrors it in
 `eval/harness/harness/mock_mcp.py` (`NO_PROJECT_REFUSAL`, `PROJECT_EXEMPT_TOOLS`).
-The tool-level `no_project` fallbacks (`noProjectResult`) remain for a tool called
-directly and carry the same words.
+A tool called directly on a folder with no project fails with the same words
+(`NO_PROJECT_REFUSAL`); only `project_context` still answers `reason: "no_project"`.
 
 ### Set-once project fields
 

@@ -137,7 +137,7 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "gettin
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", projectPath: "<project path; omit with no project>" })
+external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", projectPath: "<project path>" })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, summary: true })
 catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
@@ -172,8 +172,7 @@ Use the template under **Locality Guide Output Format** below, with every claim 
 ### 6. Persist the locality
 
 **Run this step whenever Step 1 says it runs**, whatever the project's objective and
-however the delegation is phrased. Only an answer of `ok: false` with
-`reason: "no_project"` means there is no project; on any other `ok: false`, fix the
+however the delegation is phrased. On `ok: false`, fix the
 call and send it again. Use `research_append`, first for the entry with no guide in it:
 
 ```

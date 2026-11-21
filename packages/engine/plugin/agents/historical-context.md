@@ -294,13 +294,11 @@ Two `research_log_append` calls, in order, each with `projectPath`.
    when it returned content, `negative` when it returned nothing, `error` when
    it errored or 404'd), `resultsExamined` (results returned; 1 for a page read;
    0 on `negative` or `error`), `notes: null`. With no lookups, skip to call 2.
-   - `reason: "no_project"` → stop logging; make no second call.
 2. **The overview.** One op: `tool: "historical_context"`, `query: {topic,
    places}` (the question in a few words and the places it concerns),
    `planItemId: null`, `outcome: "positive"`, `resultsExamined` (pages and
    articles read), `notes` set to the **full** overview exactly as you return
    it, including Sources consulted, never a summary.
-   - `reason: "no_project"` → stop logging.
    - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) →
      rewrite `notes` as instructed, use the same text in your return, and
      re-send. Never drop the overview entry.

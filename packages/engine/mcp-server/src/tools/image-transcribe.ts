@@ -29,13 +29,7 @@ import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.j
 import { connectorUserId } from "../utils/user-limits.js";
 import { monotonicNow } from "../utils/fs-budget.js";
 import { getProjectStore } from "../store/project-store.js";
-import {
-  classifyProjectPath,
-  MISSING_PROJECT_PATH_MESSAGE,
-  missingProjectDirMessage,
-  noProjectResult,
-  type NoProjectResult,
-} from "../utils/project-io.js";
+import { classifyProjectPath, MISSING_PROJECT_PATH_MESSAGE, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
 import {
   compactImageTranscribeAnswer,
@@ -185,7 +179,7 @@ export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+): Promise<ImageTranscribeResult> {
   // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
   // unfolded input would read a valid imageArk call as "no image input".
   // Folding is idempotent, so the body's own fold is still correct for a
@@ -207,7 +201,7 @@ async function imageTranscribeToolInner(
    * fetch aborts it for real rather than abandoning the promise.
    */
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+): Promise<ImageTranscribeResult> {
   // The connector time budget (#3996) starts HERE, at entry — before the
   // Memories lookup, the fetch and the OCR all have a chance to spend from it.
   // monotonicNow() (utils/fs-budget.ts), not Date.now(): a wall-clock step
@@ -242,7 +236,7 @@ async function imageTranscribeToolInner(
       throw new Error(`${MISSING_PROJECT_PATH_MESSAGE} when \`file\` is given — the path is relative to it.`);
     }
     if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-    if (cls === "no_project") return noProjectResult("read");
+    if (cls === "no_project") throw new Error(NO_PROJECT_REFUSAL);
     const projectPath = input.projectPath as string;
 
     const problem = fileRefProblem(input.file);
@@ -544,15 +538,8 @@ async function imageTranscribeToolInner(
 export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  return compactOrPass(await imageTranscribeTool(input, principal));
-}
-
-function compactOrPass(
-  out: ImageTranscribeResult | NoProjectResult,
-): ImageTranscribeToolResponse | NoProjectResult {
-  if ("ok" in out) return out;
-  return compactImageTranscribeAnswer(out);
+): Promise<ImageTranscribeToolResponse> {
+  return compactImageTranscribeAnswer(await imageTranscribeTool(input, principal));
 }
 
 export const imageTranscribeToolSchema = {

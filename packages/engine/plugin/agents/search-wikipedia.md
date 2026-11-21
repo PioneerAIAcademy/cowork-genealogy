@@ -124,8 +124,6 @@ anything drawn from your own knowledge rather than the tool response.
    The `{{title}}` is the **article title the tool returned**, never the query
    you sent, with its accents and punctuation unchanged. A redirect to a formal
    title is correct behavior, not a discrepancy: follow it silently.
-5. If step 4's `research_log_append` returns `reason: "no_project"`, return the filled
-   template as your reply instead of the line below, and nothing else.
 
 ## Re-invocation behavior
 

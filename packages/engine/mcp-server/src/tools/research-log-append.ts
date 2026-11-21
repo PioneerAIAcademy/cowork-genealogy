@@ -22,17 +22,7 @@ import { getProjectStore } from "../store/project-store.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import {
-  atomicWriteJson,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-  isInsideProject,
-  assertInsideProject,
-  projectRelativeRef,
-} from "../utils/project-io.js";
+import { atomicWriteJson, readProjectJson, formatIssues, withProjectLock, isInsideProject, assertInsideProject, projectRelativeRef } from "../utils/project-io.js";
 import {
   checkStagedResults,
   consumeStagedResults,
@@ -362,10 +352,7 @@ export type ResearchLogAppendResult =
       planRationale?: string;
       next?: string;
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
 
 /** Raised for expected input problems; turned into `{ ok: false }`. */
 class LogAppendError extends Error {}
@@ -2367,9 +2354,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult().
-    if (e instanceof NoProjectError) throw e;
     throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -3060,12 +3044,6 @@ export async function researchLogAppend(
     // is written. The agent's pre-search note comes first, the escalation after.
     // Only for a tool's own write; a hand-logged entry keeps the agent's note.
     if (typeof singleOp.writtenBy === "string" && singleOp.writtenBy !== "") {
-      // Advisory, exactly as `escalation()` above is, and wrapped for the same
-      // reason it is: the note is a nicety and the write is not, so a failure
-      // computing it must drop the note rather than fail a search that already
-      // succeeded. Without this the throw escapes the outer catch (which
-      // converts only NoProjectError and LogAppendError) and record_search
-      // reports a completed search as a failed tool call.
       try {
         const note = nilEscalationNote(research, research.log.slice(priorLogLength));
         if (note) {
@@ -3101,7 +3079,6 @@ export async function researchLogAppend(
       },
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };
     throw e;
   }

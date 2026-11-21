@@ -1366,11 +1366,10 @@ describe("imageTranscribeTool — `file` input (#2048)", () => {
     ).rejects.toThrow(/projectPath does not exist/);
   });
 
-  it("answers no_project (not an error) for a folder holding neither project file", async () => {
+  it("is refused for a folder holding neither project file", async () => {
     const plain = await mkdtemp(join(tmpdir(), "imgt-plain-"));
     try {
-      const r = await imageTranscribeTool({ file: "uploads/x.jpg", projectPath: plain }, LOCAL);
-      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      await expect(imageTranscribeTool({ file: "uploads/x.jpg", projectPath: plain }, LOCAL)).rejects.toThrow(/^No project:/);
       expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
     } finally {
       await rm(plain, { recursive: true, force: true });
@@ -1657,11 +1656,10 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(r.transcription).toBe("still read");
   });
 
-  it("still answers a `file` on a folder that is not a project with the no-project result", async () => {
+  it("refuses a `file` on a folder that is not a project", async () => {
     const empty = await mkdtemp(join(tmpdir(), "imgt-noproj-file-"));
     try {
-      const r = await imageTranscribeMcpTool({ file: "uploads/scan.jpg", projectPath: empty }, LOCAL);
-      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      await expect(imageTranscribeMcpTool({ file: "uploads/scan.jpg", projectPath: empty }, LOCAL)).rejects.toThrow(/^No project:/);
       expect(mockFetch).not.toHaveBeenCalled();
     } finally {
       await rm(empty, { recursive: true, force: true });

@@ -146,14 +146,10 @@ export type MaterializeFactsResult =
        *  warning gate — a gender it filled in (tree-edit-tool-spec.md §6). */
       conflicts_surfaced?: ConflictSurfaced[];
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  // The warning gate's refusal rides this same arm.
   | {
       ok: false;
       errors: string[];
-      reason?: "no_project" | "unjustified_warnings";
+      reason?: "unjustified_warnings";
       message?: string;
       warnings?: Array<{
         warningId?: string;
