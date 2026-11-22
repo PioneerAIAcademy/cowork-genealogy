@@ -1,0 +1,665 @@
+{
+  "guard": "core-identifier-contradiction",
+  "description": "A probable or confident person_evidence link is refused when the record contradicts a core identifier the tree person carries. These cases cover the attached-births arm (#4444): a tree person whose own FamilySearch-attached records disagree on birthplace cannot carry a record that sides with one of them, or with an attachment the researcher ruled is not theirs, past speculative.",
+  "format": "expect: fire | silent, judged for the person_evidence entry named by `write` in `research` (the document as it stands after the write), with every live person_evidence entry of that document in view. `tree` holds the tree. No coordinates are looked up, so the cases use country-level and textual agreement only.",
+  "section": "person_evidence",
+  "cases": [
+    {
+      "id": "country-only-record-sides-with-one-attached-birth",
+      "expect": "fire",
+      "shape": "record-sides-with-one-attached-birth",
+      "why": "The person's attached census says New York and attached baptism says Ardfinnan; the new record says only 'Ireland', which agrees with the baptism. thomas-hanrahan-marriage, run 2026-11-09.",
+      "write": "pe_010",
+      "research": {
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CIVL-003",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CIVL-003-principal",
+            "fact_type": "birth",
+            "value": "Ireland",
+            "place": "Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_010",
+            "assertion_id": "a_003",
+            "person_id": "P1",
+            "confidence": "confident",
+            "rationale": "Birth matches.",
+            "match_score": 0.91,
+            "created": "2026-11-02",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": []
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "P1",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "relationship-link-of-the-same-party",
+      "expect": "fire",
+      "shape": "relationship-link-scoped-by-a-one-party-link",
+      "why": "The record's 'child of Thomas' assertion is linked to the person beside the record's own birth link, so it is about the same party and is capped with it.",
+      "write": "pe_011",
+      "research": {
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CIVL-003",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CIVL-003-principal",
+            "fact_type": "birth",
+            "value": "Ireland",
+            "place": "Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_004",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CIVL-003",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CIVL-003-principal",
+            "fact_type": "relationship",
+            "value": "child of Thomas",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_003",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Birth matches.",
+            "match_score": 0.91,
+            "created": "2026-11-02",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_011",
+            "assertion_id": "a_004",
+            "person_id": "P1",
+            "confidence": "confident",
+            "rationale": "Birth matches.",
+            "match_score": 0.91,
+            "created": "2026-11-02",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": []
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "P1",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "record-agrees-with-a-rejected-attachment",
+      "expect": "fire",
+      "shape": "record-agrees-with-a-ruled-out-attachment",
+      "why": "The researcher rejected the baptism as another person's; a record agreeing with that baptism and not with the live census cannot be linked above speculative.",
+      "write": "pe_010",
+      "research": {
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CIVL-003",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CIVL-003-principal",
+            "fact_type": "birth",
+            "value": "Ireland",
+            "place": "Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": "rj_001"
+          },
+          {
+            "id": "pe_010",
+            "assertion_id": "a_003",
+            "person_id": "P1",
+            "confidence": "confident",
+            "rationale": "Birth matches.",
+            "match_score": 0.91,
+            "created": "2026-11-02",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [
+          {
+            "id": "rj_001",
+            "assertion_id": "a_002",
+            "person_id": "P1",
+            "researcher_words": "That baptism is another John.",
+            "created": "2026-11-03"
+          }
+        ],
+        "conflicts": []
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "P1",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "attached-births-agree",
+      "expect": "silent",
+      "why": "'Ireland' and 'Cork, Ireland' agree, so the person's attached records do not contradict each other.",
+      "write": "pe_010",
+      "research": {
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "Ireland",
+            "place": "Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Cork, Ireland",
+            "place": "Cork, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CIVL-003",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CIVL-003-principal",
+            "fact_type": "birth",
+            "value": "Dublin, Ireland",
+            "place": "Dublin, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_010",
+            "assertion_id": "a_003",
+            "person_id": "P1",
+            "confidence": "confident",
+            "rationale": "Birth matches.",
+            "match_score": 0.91,
+            "created": "2026-11-02",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": []
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "P1",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ireland"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "one-attached-birth",
+      "expect": "silent",
+      "why": "A single attached birth cannot contradict itself.",
+      "write": "pe_010",
+      "research": {
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CIVL-003",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CIVL-003-principal",
+            "fact_type": "birth",
+            "value": "Ireland",
+            "place": "Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_010",
+            "assertion_id": "a_003",
+            "person_id": "P1",
+            "confidence": "confident",
+            "rationale": "Birth matches.",
+            "match_score": 0.91,
+            "created": "2026-11-02",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [],
+        "conflicts": []
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "P1",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "contradicted-attachment-rejected",
+      "expect": "silent",
+      "why": "Once the researcher rejects the census the record contradicts, the remaining attached birth agrees with the record.",
+      "write": "pe_010",
+      "research": {
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CENS-001",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CENS-001-principal",
+            "fact_type": "birth",
+            "value": "New York, United States",
+            "place": "New York, United States",
+            "information_quality": "indeterminate",
+            "informant": "self",
+            "informant_proximity": "household_member",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:BAPT-002",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:BAPT-002-principal",
+            "fact_type": "birth",
+            "value": "Ardfinnan, Tipperary, Ireland",
+            "place": "Ardfinnan, Tipperary, Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_1",
+            "record_id": "ark:/61903/1:1:CIVL-003",
+            "record_role": "principal",
+            "record_persona_id": "ark:/61903/1:1:CIVL-003-principal",
+            "fact_type": "birth",
+            "value": "Ireland",
+            "place": "Ireland",
+            "information_quality": "primary",
+            "informant": "self",
+            "informant_proximity": "participant",
+            "record_basis": "stated",
+            "extracted_for_question_ids": []
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": "rj_001"
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "P1",
+            "confidence": "speculative",
+            "rationale": "Linked because FamilySearch has this record attached to this person; not verified.",
+            "match_score": null,
+            "created": "2026-11-01",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_010",
+            "assertion_id": "a_003",
+            "person_id": "P1",
+            "confidence": "confident",
+            "rationale": "Birth matches.",
+            "match_score": 0.91,
+            "created": "2026-11-02",
+            "superseded_by": null
+          }
+        ],
+        "rejected_links": [
+          {
+            "id": "rj_001",
+            "assertion_id": "a_001",
+            "person_id": "P1",
+            "researcher_words": "That census is another John.",
+            "created": "2026-11-03"
+          }
+        ],
+        "conflicts": []
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "P1",
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "28 Nov 1872",
+                "place": "Ardfinnan, Tipperary, Ireland"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

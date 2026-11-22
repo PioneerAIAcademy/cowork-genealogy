@@ -8,6 +8,7 @@
  * check under the lock cannot disagree.
  */
 import { isLiveAssertion } from "./assertion-liveness.js";
+import { assertionsCoveredBy } from "./rejected-links.js";
 import { isRelationshipEstablishing } from "./source-ref-resolver.js";
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
@@ -41,9 +42,13 @@ export function assertionReferrers(research: any, tree: any, ids: ReadonlySet<st
     }
   }
   for (const rj of arr(research?.rejected_links)) {
-    if (hit(rj?.assertion_id)) {
+    // A rejection covers its whole record entry, so it rests on every assertion of it.
+    const covered = [...assertionsCoveredBy(rj, research?.assertions)].filter((id) => ids.has(id));
+    if (covered.length > 0) {
       out.push(
-        `rejected_links ${rj.id}: a researcher ruled ${rj.assertion_id} is not ${rj.person_id}. Re-extraction ` +
+        `rejected_links ${rj.id}: a researcher ruled ${rj.assertion_id} is not ${rj.person_id}` +
+          (covered.some((id) => id !== rj.assertion_id) ? ` (its record entry too: ${covered.join(", ")})` : "") +
+          `. Re-extraction ` +
           "would void that ruling, and a rejection is never removed, so this record cannot be re-extracted. " +
           "Ask the researcher.",
       );

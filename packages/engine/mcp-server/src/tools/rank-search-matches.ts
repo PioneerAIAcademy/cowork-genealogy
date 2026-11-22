@@ -2,6 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { connectorReauthMessage, isConnector } from "../auth/config.js";
 import { getProjectStore } from "../store/project-store.js";
 import { matchPairs } from "../utils/matcher.js";
+import { Mob } from "../utils/mob.js";
 import type { MatchCall, MatcherBackend } from "../types/matcher.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
@@ -182,8 +183,13 @@ export async function rankSearchMatches(
       ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames))
       : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames));
 
-  if (input.checkAttachments && matches.length > 0 && subject.familySearchId) {
-    await applyAttachments(matches, subject.familySearchId, principal);
+  // Flags are emitted only when true, so a row with no flag reads as attached to
+  // nobody. When the check did not run (no FamilySearch id) or failed, say so.
+  let attachmentsChecked: boolean | undefined;
+  if (input.checkAttachments && matches.length > 0) {
+    attachmentsChecked = subject.familySearchId
+      ? await applyAttachments(matches, subject.familySearchId, principal)
+      : false;
   }
 
   const out: RankSearchMatchesResult = {
@@ -192,9 +198,11 @@ export async function rankSearchMatches(
     returnedCount: matches.length,
     scoringErrors,
     scoreLogError,
+    realNegativeFloor: realNegative,
     ...tooThinField(subject),
     matches,
   };
+  if (attachmentsChecked === false) out.attachmentsChecked = false;
   if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
   if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
 
@@ -825,7 +833,8 @@ function tooThinField(subject: SubjectDoc): { subjectTooThin?: true; subjectTooT
 }
 
 interface SubjectDoc {
-  /** The enriched subject alone: what FamilySearch's matcher is sent. */
+  /** What FamilySearch's matcher is sent: the enriched subject with the parents,
+   *  spouses, children and siblings the tree gives them (`familyCut`). */
   doc: SimplifiedGedcomX;
   /** The project tree with the enriched subject in place of the tree person:
    *  what the matcher service is sent, cut around the subject. */
@@ -867,6 +876,23 @@ function subjectFamilySearchId(person: SimplifiedPerson): string | undefined {
   if (linked) return linked.toUpperCase();
   const id = person.id ?? "";
   return isFamilySearchPersonId(id) ? id.toUpperCase() : undefined;
+}
+
+/**
+ * The enriched subject with their family, cut as `same_person` and the matcher
+ * service cut it (`Mob.matchSubset()`), so a household record's spouse and
+ * children are compared with the tree's. Sent alone, the subject is a lone name,
+ * date and place: in thomas-hanrahan-marriage the right 1865 household (Thomas,
+ * Joanna, Mary) scored 0.003 against Thomas alone, under the 0.01 floor, so the
+ * page read as a real negative, and 0.168 with his family, top by twenty times.
+ * A subject the tree relates to no one is sent alone, as before.
+ */
+function familyCut(tree: SimplifiedGedcomX, subjectId: string, enriched: SimplifiedPerson): SimplifiedGedcomX {
+  try {
+    return new Mob(tree, subjectId).matchSubset().gedcomx;
+  } catch {
+    return { persons: [enriched] };
+  }
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
@@ -1016,12 +1042,13 @@ export async function buildSubjectDoc(
     surnames = [];
   }
 
+  const withSubject: SimplifiedGedcomX = {
+    ...safeTree,
+    persons: (safeTree.persons ?? []).map((p) => (p.id === subjectId ? enriched : p)),
+  };
   return {
-    doc: { persons: [enriched] },
-    tree: {
-      ...safeTree,
-      persons: (safeTree.persons ?? []).map((p) => (p.id === subjectId ? enriched : p)),
-    },
+    doc: familyCut(withSubject, subjectId, enriched),
+    tree: withSubject,
     birthYear: subjectBirthYear(enriched),
     discriminatingFacts: discriminatingFactCount(enriched),
     enrichedFacts: (enriched.facts ?? []).length - before,
@@ -1220,7 +1247,7 @@ async function applyAttachments(
   matches: RankedMatch[],
   familySearchId: string,
   principal: Principal,
-): Promise<void> {
+): Promise<boolean> {
   const uris = matches.map((m) => m.recordId);
   const isSubject = (p: { personId: string }) =>
     p.personId?.toUpperCase() === familySearchId;
@@ -1231,6 +1258,7 @@ async function applyAttachments(
       stub.attachedToSubject = persons.some(isSubject);
       stub.attachedToOther = persons.some((p) => !isSubject(p));
     }
+    return true;
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;
     // A connector caller whose FamilySearch session has ended must be told: with
@@ -1241,6 +1269,7 @@ async function applyAttachments(
     }
     // Best-effort: any other attachments failure must not fail the rank. Leave
     // the attachedTo* fields unset rather than asserting a wrong answer.
+    return false;
   }
 }
 

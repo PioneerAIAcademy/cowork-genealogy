@@ -123,7 +123,7 @@ that keeps the judge off the routing decision.
 
 | Test | Row | Scenario |
 |---|---|---|
-| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_pe7` (deleted in #4537; issue #4659 restores it) | Assertions not yet linked to persons | `flynn-household-skeleton` |
 | `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
 | `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
 | `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
@@ -137,10 +137,12 @@ spells `@plugin:search-images`, and `_paired_names()` picks it up.
 `project_context`'s advisory `nextStep`, which then said `search-records` for any
 planned item whatever its repository. The step now names `search-external-sites`
 for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
-advisory is still wrong on two of these states and the router passed both 3 of 3
-regardless: for `pe7` it says `research-exhaustiveness`, because a no-link leaves
-no record to tell a rejected assertion from an unlinked one, and for `si3` it says
-`search-records`, because browse-only is stated only in the plan item's rationale.
+advisory is still wrong on two of these states: for `pe7` it says
+`research-exhaustiveness`, because a no-link leaves no record to tell a rejected
+assertion from an unlinked one, and for `si3` it says `search-records`, because
+browse-only is stated only in the plan item's rationale. The router passed both 3
+of 3 regardless until 2026-11-18, when `pe7` began following the advisory (2 of 3
+on `main`).
 
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
@@ -336,6 +338,8 @@ which also asserts that nothing is handed off: a research-plan spawn (both
 deliverables in one turn) and the job path (locality-guide first) both fail it.
 The `delivers:<skill>` tag and its validator are gone: under step mode a compound
 ask hands off at most one deliverable, so there is nothing for them to count.
+
+`ut_research_p4s` (`bounded-record-old-place-name.json`, #4214) is a bounded transcription that also asks whether the record agrees with the tree: the page gives Paso de Sotos, the tree Villa Hidalgo (the same town), and the reply must give the names side by side, say it cannot tell whether they are one place, and give no verdict on the tree; `transcribes-in-place` asserts the calls and that nothing is handed off.
 
 **This one needed a fixture to exist at all, and that is the general rule.** Neither
 `person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock

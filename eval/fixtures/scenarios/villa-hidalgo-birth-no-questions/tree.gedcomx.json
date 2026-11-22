@@ -1,0 +1,28 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "María Ignacia",
+          "surname": "Robledo",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "8 March 1885",
+          "place": "Villa Hidalgo, Jalisco, Mexico"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

@@ -189,11 +189,30 @@ def _calls_named(tool_calls, name: str) -> list[tuple[int, dict]]:
     return [(i, c) for i, c in enumerate(tool_calls or []) if (c.get("tool") or "").endswith(name)]
 
 
+_IMAGE_ID = re.compile(r"(\d{9})_(\d{5})")
+
+
+def _id_parts(image_id) -> tuple[str, int] | None:
+    match = _IMAGE_ID.fullmatch(image_id) if isinstance(image_id, str) else None
+    return (match.group(1), int(match.group(2))) if match else None
+
+
+def _in_ranges(image_id, ranges) -> bool:
+    parts = _id_parts(image_id)
+    for pair in ranges:
+        if not (isinstance(pair, (list, tuple)) and len(pair) == 2):
+            continue
+        first, last = _id_parts(pair[0]), _id_parts(pair[1])
+        if parts and first and last and parts[0] == first[0] == last[0] and first[1] <= parts[1] <= last[1]:
+            return True
+    return False
+
+
 def test_bisect_before_transcribe(tool_calls, test):
     """Tag-gated: one year in a split group is found with volume_bisect, not by
     probing pages. The first volume_bisect call precedes every image_transcribe,
-    and no page before the bracket's lowPosition is read (positions index the
-    group's image_search list from 0)."""
+    and every page read lies inside one of the group's `imageIdRanges` and at or
+    after the bracket's `lowImageId`."""
     if "bisect-navigation" not in test.get("tags", []):
         pytest.skip("not a bisect-navigation test")
     bisects = _calls_named(tool_calls, "volume_bisect")
@@ -204,23 +223,28 @@ def test_bisect_before_transcribe(tool_calls, test):
         f"image_transcribe of {reads[0][1].get('args', {}).get('imageId')} came before the first volume_bisect"
     )
     group = (bisects[0][1].get("args") or {}).get("imageGroupNumber")
-    listing: list[str] = []
+    ranges: list = []
     for _, c in _calls_named(tool_calls, "image_search"):
         if (c.get("args") or {}).get("imageGroupNumber") == group:
-            listing = list((c.get("response") or {}).get("imageIds") or [])
-    assert listing, f"expected an image_search listing of {group}, which the bracket positions index"
+            ranges = list((c.get("response") or {}).get("imageIdRanges") or [])
+    assert ranges, f"expected an image_search listing of {group} with non-empty imageIdRanges"
     bracket = next(
-        (c.get("response") or {}).get("bracket")
-        for _, c in reversed(bisects)
-        if isinstance((c.get("response") or {}).get("bracket"), dict)
+        (
+            (c.get("response") or {}).get("bracket")
+            for _, c in reversed(bisects)
+            if isinstance((c.get("response") or {}).get("bracket"), dict)
+        ),
+        {},
     )
-    low = bracket["lowPosition"]
+    low = bracket.get("lowImageId")
+    low_parts = _id_parts(low)
+    assert low_parts, f"volume_bisect's bracket carries no usable lowImageId: {low!r}"
     outside = []
     for _, c in reads:
         image_id = (c.get("args") or {}).get("imageId")
-        if image_id not in listing or listing.index(image_id) < low:
+        if not _in_ranges(image_id, ranges) or not _id_parts(image_id) or image_id < low:
             outside.append(image_id)
-    assert not outside, f"read pages before the bracket (lowPosition {low}) or outside {group}: {outside}"
+    assert not outside, f"read pages before the bracket's lowImageId {low} or outside {group}'s imageIdRanges: {outside}"
 
 
 def test_item_route_before_transcribe(tool_calls, test):
@@ -342,4 +366,120 @@ def test_browse_log_never_labelled_image_transcribe(before_state, after_state, t
         f"volume_search), never image_transcribe; got entries {relabelled}. "
         "Relabelling the entry to attach a staged page file writes a results/ "
         "sidecar and leaves the browse unlogged."
+    )
+
+
+# --- Re-index one page against FamilySearch's index (#4141) ------------------
+#
+# The tester asked for a page re-indexed and compared with FamilySearch's index.
+# One fast OCR pass (image_transcribe) was taken as truth: "Michael Barry" in the
+# index was called a misreading of "Michael Berry", and "Mila Fuller" was called
+# missing from the index because the OCR read the line as "Milo Hall". The page
+# says Michael Barry and Milo Fuller. These checks hold the shape of a correct
+# answer: each disputed pair on one line, and no verdict against either reading.
+# #4578 holds a sibling verdict pattern in test_research.py on its own branch;
+# whichever lands second lifts both into validators_lib.
+
+_REINDEX_PAIRS = (
+    (("barry",), ("berry",)),
+    (("mila", "fuller"), ("milo", "hall")),
+)
+
+_REINDEX_VERDICT = re.compile(
+    r"\b(?:"
+    r"index(?:er)?\s+(?:is|was)\s+(?:wrong|in\s+error|incorrect|mistaken|an?\s+error)"
+    r"|index(?:er|ing)?\s+(?:mis-?read|mis-?spelled|missed|erred|got\s+it\s+wrong)"
+    r"|mis-?index(?:ed|ing)?"
+    r"|(?:index|indexing)\s+(?:error|mistake)"
+    r"|missing\s+from\s+(?:the\s+)?(?:original\s+|familysearch(?:'s)?\s+)?index"
+    r"|correct(?:ed)?\s+(?:spelling|reading|name)\s+is"
+    r"|(?:image|scan|page)\s+(?:is|was)\s+clear"
+    r"|clearly\s+(?:reads|shows|says)"
+    r")",
+    re.IGNORECASE,
+)
+
+# A clause ends at sentence punctuation, a table cell or a line break; a
+# negation counts only inside the verdict's own clause.
+_REINDEX_CLAUSE_BREAK = re.compile(r"[.,;:!?|\n]|\b(?:and|but|so|because|while|although)\b", re.IGNORECASE)
+_REINDEX_NEGATION = re.compile(r"\b(?:not|never|no|neither|nor|without)\b|n't\b", re.IGNORECASE)
+# Inside the verdict's own clause a negation counts only within the few words
+# just before it; an idiom that affirms ("no question", "without doubt") is not
+# one, and a conditional ("if the image is clear") asserts nothing.
+_REINDEX_AFFIRMING_IDIOM = re.compile(
+    r"\b(?:no\s+(?:question|doubt)|without\s+(?:a\s+)?(?:doubt|question)|not\s+surprisingly)\b", re.IGNORECASE
+)
+_REINDEX_CONDITIONAL = re.compile(r"\b(?:if|whether|unless)\b", re.IGNORECASE)
+_REINDEX_NEGATION_WINDOW = 6
+
+
+def _after_final_rule(text: str) -> str | None:
+    lines = (text or "").splitlines()
+    idx = max((i for i, line in enumerate(lines) if line.strip() == "---"), default=None)
+    return None if idx is None else "\n".join(lines[idx + 1 :])
+
+
+def _reindex_verdicts(text: str) -> list[str]:
+    hits = []
+    for m in _REINDEX_VERDICT.finditer(text or ""):
+        head = text[: m.start()]
+        breaks = list(_REINDEX_CLAUSE_BREAK.finditer(head))
+        clause = head[breaks[-1].end() :] if breaks else head
+        if _REINDEX_CONDITIONAL.search(clause):
+            continue
+        near = " ".join(_REINDEX_AFFIRMING_IDIOM.sub(" ", clause).split()[-_REINDEX_NEGATION_WINDOW:])
+        if _REINDEX_NEGATION.search(near):
+            continue
+        hits.append(m.group(0))
+    return hits
+
+
+def _line_pairs(block: str, left: tuple[str, ...], right: tuple[str, ...]) -> bool:
+    words = [set(re.findall(r"[a-z]+", line.lower())) for line in block.splitlines()]
+    return any(set(left) <= w and set(right) <= w for w in words)
+
+
+def test_reindex_reads_the_index_then_the_page_once(tool_calls, test):
+    """Tag-gated (reindex): the page's index comes from image_index before the
+    page is read, the page is read once with no projectPath, and nothing is
+    logged (no project)."""
+    if "reindex" not in test.get("tags", []):
+        pytest.skip("not a re-index test")
+    indexes = _calls_named(tool_calls, "image_index")
+    reads = _calls_named(tool_calls, "image_transcribe")
+    assert indexes, "the re-index never called image_index, so it had no index to compare against"
+    assert reads, "the re-index never read the page with image_transcribe"
+    assert indexes[0][0] < reads[0][0], "image_transcribe ran before image_index"
+    assert len(reads) == 1, f"the page was read {len(reads)} times; one read, never a second OCR pass"
+    assert not (_as_mapping(reads[0][1].get("args")).get("projectPath")), (
+        "image_transcribe was called with a projectPath; with no project it takes none"
+    )
+    writes = [c.get("tool") for c in tool_calls or [] if (c.get("tool") or "").endswith(("research_log_append", "research_append"))]
+    assert not writes, f"no project, so nothing is logged; got {writes}"
+
+
+def test_reindex_reply_pairs_readings_without_a_verdict(agent_returns, text_response, test):
+    """Tag-gated (reindex): after the final `---`, each disputed pair sits on one
+    line (Barry beside Berry; Mila Fuller beside Milo Hall), and no clause calls
+    the index wrong, a name missing from the index, or the image clear."""
+    if "reindex" not in test.get("tags", []):
+        pytest.skip("not a re-index test")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "search-images", test)
+    block = _after_final_rule(reply)
+    assert block is not None and block.strip(), "the reply has no block after a final `---`"
+    for left, right in _REINDEX_PAIRS:
+        assert _line_pairs(block, left, right) or not _line_pairs(reply, left, right), (
+            f"the line pairing {' '.join(left)} with {' '.join(right)} is above the final `---`, "
+            "and the router relays only what follows it; write no `---` after the table"
+        )
+        assert _line_pairs(block, left, right), (
+            f"no line pairs the index reading {' '.join(left)} with the page reading "
+            f"{' '.join(right)}; listing them as separate unmatched rows is the failure this test exists for"
+        )
+    verdicts = _reindex_verdicts(block)
+    assert not verdicts, (
+        "the reply takes one OCR pass as truth and judges the index: "
+        f"{verdicts}. Report a disagreement as a disagreement and point to the line on the image"
     )

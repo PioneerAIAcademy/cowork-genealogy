@@ -176,6 +176,155 @@
                           "ark:/61903/1:1:TTTT-TTT"
                         ]
                       }
+                    },
+                    {
+                      "id": "I5",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1730"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1762"
+                          },
+                          "place": {
+                            "original": "Wippra, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I2"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I5"
+                      },
+                      "person2": {
+                        "resource": "#I1"
+                      }
                     }
                   ],
                   "sourceDescriptions": [
@@ -326,6 +475,155 @@
                           "ark:/61903/1:1:TTTT-TTT"
                         ]
                       }
+                    },
+                    {
+                      "id": "I5",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1730"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1762"
+                          },
+                          "place": {
+                            "original": "Wippra, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I2"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I5"
+                      },
+                      "person2": {
+                        "resource": "#I1"
+                      }
                     }
                   ],
                   "sourceDescriptions": [
@@ -347,6 +645,7 @@
       "returnedCount": 3,
       "scoringErrors": 0,
       "scoreLogError": null,
+      "realNegativeFloor": 0.01,
       "matches": [
         {
           "matchRank": 1,
@@ -598,6 +897,155 @@
                           "ark:/61903/1:1:TTTT-TTT"
                         ]
                       }
+                    },
+                    {
+                      "id": "I5",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1730"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1762"
+                          },
+                          "place": {
+                            "original": "Wippra, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I2"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I5"
+                      },
+                      "person2": {
+                        "resource": "#I1"
+                      }
                     }
                   ],
                   "sourceDescriptions": [
@@ -748,6 +1196,155 @@
                           "ark:/61903/1:1:TTTT-TTT"
                         ]
                       }
+                    },
+                    {
+                      "id": "I5",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1730"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1762"
+                          },
+                          "place": {
+                            "original": "Wippra, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I2"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I5"
+                      },
+                      "person2": {
+                        "resource": "#I1"
+                      }
                     }
                   ],
                   "sourceDescriptions": [
@@ -769,6 +1366,7 @@
       "returnedCount": 3,
       "scoringErrors": 0,
       "scoreLogError": null,
+      "realNegativeFloor": 0.01,
       "matches": [
         {
           "matchRank": 1,
@@ -1109,6 +1707,7 @@
       "returnedCount": 0,
       "scoringErrors": 0,
       "scoreLogError": null,
+      "realNegativeFloor": 0.01,
       "subjectTooThin": true,
       "subjectTooThinNote": "Nothing in the project separates this person from a namesake: no date narrower than a year and no named spouse, parent or child. Every row is `needs-review — possible namesake`, whatever its score and however well it agrees. Report no row's family as this person's. Name what would settle identity (a precise date, or a named spouse, parent or child) and the record most likely to state it.",
       "matches": [],

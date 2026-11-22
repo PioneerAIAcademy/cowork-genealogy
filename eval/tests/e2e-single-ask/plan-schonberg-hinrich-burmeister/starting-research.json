@@ -1,0 +1,226 @@
+{
+  "project": {
+    "id": "rp_hinrich_burmeister_spouse",
+    "objective": "Did Hinrich Burmeister of Schönberg (b. 1653) have a son Hinrich baptised 29 July 1687, and is the 'Elsch Burmeister' named as the child's mother his first wife Liesbeth Oldenburg?",
+    "subject_person_ids": [
+      "G8CJ-7VL"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the mother of the child Hinrich Burmeister baptised at Schönberg on 29 July 1687, son of Hinrich Burmeister of Schönberg (b. 1653)?",
+      "rationale": "The objective turns on one child event: the 29 July 1687 baptism of a son Hinrich, whose mother the record names as 'Elsch Burmeister'. The tree has no 1687 baptism. Its only Hinrich son of this couple (P71D-DRJ) is christened 18 Aug 1683 and attached to Liesbeth Oldenburg, who married in Oct 1682 and died 4 Jan 1689, so a 1687 child would fall within her first marriage. Whether the 1683 entry and the 1687 baptism are one child or two is unresolved, and it decides whether the tree's assignment to Liesbeth stands. Naming the mother as the fact asked for lets the answer confirm or refute the identification of Elsch with Liesbeth Oldenburg.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1687-1687",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Mecklenburg-Strelitz, Germany",
+      "for_place": "Schönberg, Ratzeburg, Mecklenburg-Strelitz (Lutheran Parish)",
+      "time_period": "1683-1689",
+      "jurisdictions": [
+        {
+          "name": "Schönberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1701/1871"
+        },
+        {
+          "name": "Schönberg, Ratzeburg, Mecklenburg-Strelitz",
+          "date_range": "1806/1871"
+        },
+        {
+          "name": "Schönberg, Mecklenburg-Strelitz, Germany",
+          "date_range": "1871/1933"
+        },
+        {
+          "name": "Schönberg, Kreis Nordwestmecklenburg, Mecklenburg-Vorpommern, Germany",
+          "date_range": "1994/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4132032",
+          "title": "Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937",
+          "date_range": "1664-1937",
+          "person_count": 440965,
+          "record_count": 28930,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1473000",
+          "title": "Germany, Births and Baptisms, 1558-1898",
+          "date_range": "1557-1898",
+          "person_count": 29671418,
+          "record_count": 22780687,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1494474",
+          "title": "Germany, Deaths and Burials, 1582-1958",
+          "date_range": "1581-1958",
+          "person_count": 8192780,
+          "record_count": 2636397,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3015626",
+          "title": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+          "date_range": "1499-1971",
+          "person_count": 212026579,
+          "record_count": 70856117,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1473009",
+          "title": "Germany, Marriages, 1558-1929",
+          "date_range": "1557-1929",
+          "person_count": 5319967,
+          "record_count": 5106582,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1475962",
+          "title": "Germany, Rhineland-Palatinate Church Record Extractions and Family Registers, 1600-1925",
+          "date_range": "1600-1925",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        }
+      ],
+      "quirks": [
+        "FamilySearch's standard-place record for the Schönberg Lutheran Parish is dated 1701-1871, but the parish's own church book (catalog koha:266682) runs 1640-1875 and so covers the 1687 baptism well before 1701 — trust the catalog record and film dates, not the standard-place date range, when judging coverage for this period.",
+        "FamilySearch carries at least four distinct Schönberg place entries in the Mecklenburg area (the Mecklenburg-Strelitz parish/municipality near Ratzeburg, a separate Mecklenburg-Schwerin populated place, and the modern Nordwestmecklenburg municipality) plus an unrelated Schönberg Parish in Schleswig-Holstein — confirm which Schönberg before citing any record; this guide covers the Mecklenburg-Strelitz Schönberg near Ratzeburg (AG. Schönberg), 16 km east of Lübeck.",
+        "Schönberg's Kirchenbuch (catalog koha:266682) bundles baptisms, marriages, burials and confirmations across several microfilms split by date range — request film 69805 ('Taufen 1640-1749', imageGroupNumber 102151198) for a 1687 baptism, not the later films (69806-69810).",
+        "The collection 'Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937' (FamilySearch collection 4132032) likely draws on the same parish films and should be searched by name (Hinrich Burmeister) before ordering the film directly.",
+        "The FamilySearch Wiki's country-level Research Tips page states all German records are organized in the FamilySearch catalog by their 1871 place name — Schönberg's AG. (Amtsgericht) designation reflects that convention."
+      ],
+      "guide_markdown": "# Locality Guide: Schönberg, Mecklenburg-Strelitz, Germany (1683–1689)\n\n## Jurisdiction overview\n- **Place:** Schönberg, a Lutheran parish/municipality in the district (Amtsgericht) of Schönberg, Mecklenburg-Strelitz, located roughly 16 km east of Lübeck.\n- **Note on identity:** FamilySearch's place index lists several Schönberg entries for the Mecklenburg area at different dates (1701–1871 and 1806–1871 for the Ratzeburg/Mecklenburg-Strelitz parish and municipality, 1871–1933 for a later municipality record, and the modern 1994– Nordwestmecklenburg municipality) — these are successive standard-place records for the same town as jurisdictional status changed, not different places.\n- **Parent jurisdiction (period):** Mecklenburg-Strelitz.\n- **Key historical context:** The period 1683–1689 falls within the post-Thirty Years' War recovery era in Mecklenburg; Lutheran parish record-keeping was already well established at Schönberg by this date (the surviving church book begins in 1640).\n\n## Boundary changes\nThe FamilySearch place database shows Schönberg's jurisdictional label changing over time (parish 1701–1871, municipality 1806–1871, municipality 1871–1933, modern municipality 1994–) while its physical location and lat/long are constant. No tool result in this survey identifies an actual territorial split or re-parenting of Schönberg itself during 1683–1689; the parish's own record series (1640–1875) runs continuously through the target window.\n\n## Available record types\n\n### Church records (the record type that matters for this inquiry)\n- **Denomination:** Evangelische Kirche (Lutheran), the only denomination this survey found recorded for Schönberg.\n- **Record types:** The parish's Kirchenbuch (catalog entry koha:266682, creator \"Evangelische Kirche Schönberg (AG. Schönberg, Mecklenburg-Strelitz)\") covers baptisms (Taufen), marriages (Heiraten), burials (Tote) and confirmations (Konfirmationen), 1640–1875.\n- **Microfilms:** Six films split the run by date and record type — film 69805 \"Taufen 1640-1749\" (imageGroupNumber 102151198) is the one covering a 29 July 1687 baptism; film 69807 \"Taufen, Tote 1642-1809, Heiraten 1640-1809\" (imageGroupNumber 102151200) also spans 1687 for burials and marriages. Later films (69806, 69808-69810) cover 1750 onward and are out of scope for this inquiry.\n- **Where held:** FamilySearch's catalog marks this title available at the Granite Mountain Record Vault, the FamilySearch Library, and Online — the catalog entry (koha:266682) states \"Online\" availability for these microfilmed images.\n- **Indexed collection:** The collections_search result \"Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937\" (FamilySearch collection id 4132032, 440,965 persons) spans 1664–1937 and overlaps the target period; this is almost certainly an index/image set drawn from the same parish films, including Schönberg's, and should be searched by name first.\n- **Gaps:** This survey found no indication the 1640–1875 Kirchenbuch has gaps; no wiki page or catalog note states any loss for this specific parish.\n- **Language:** German (Kirchenbuch entries of this period are typically German, sometimes with Latin terms).\n\n### Census records\nNo civil or state census existed in Mecklenburg-Strelitz in the 1680s; this record type is inapplicable to the target period.\n\n### Probate and court records\nNo catalog or collection result specific to Schönberg probate/court records surfaced in this survey. The Germany Research Tips page (country level) notes German probate-relevant actions (bequests, inheritance) were often recorded in local court records (\"Schuld- und Pfandprotokolle\") rather than a dedicated probate series — consult the regional state archive for Mecklenburg-Strelitz if needed.\n\n### Land records\nNot surveyed in detail for this inquiry; no tool result returned land records specific to Schönberg for 1683–1689.\n\n### Military records\nNo conflict-specific military records were returned for Schönberg in this period by any tool call in this survey.\n\n### Cemetery records\nNo FindAGrave or BillionGraves coverage for 17th-century Schönberg burials was returned; burials of this date would be in the parish Kirchenbuch itself (Tote series), not a separate cemetery record.\n\n### Newspaper records\nNot applicable — no newspapers existed in 1680s Mecklenburg-Strelitz.\n\n### Immigration/emigration records\nNot applicable to the research question at hand (a 1687 baptism); no port-of-entry or passenger records bear on this locality/period.\n\n### Tax records\nNo Schönberg-specific tax records were returned by this survey's tool calls.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Catalog entry koha:266682 (Kirchenbuch 1640-1875, 6 films, marked \"Online\"); collection id 4132032 \"Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937\" (440,965 persons) | Both are the primary and (likely) only route to the 1687 baptism itself | Free |\n\n**Coverage of this survey:** `volume_search` scoped to the Schönberg Lutheran Parish standard place returned 0 digitized volumes (likely because the digitized/indexed breakdown is filed under the broader Mecklenburg-Strelitz place, not the parish-specific standard place); `catalog_search` confirms the relevant Kirchenbuch and its six films directly. A broader `volume_search` on Mecklenburg-Strelitz, Germany for 1680-1690 returned 40 matching volumes/coverages, of which this response detailed the first page (10); the Schönberg Taufen film specifically was not among that first page, so the full set was not examined for a volume_search match to the exact parish film.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| FamilySearch Library (Granite Mountain Record Vault / Salt Lake) | Microfilm copies of the original Schönberg Kirchenbuch (per catalog koha:266682) | In-person at a FamilySearch Library/affiliate, or online where digitized |\n\nNo tool result in this survey named the German archive holding the original manuscript register (the catalog's note says microfilm was \"aufgenommen von Manuskripten in Goslar,\" i.e., filmed from manuscripts in Goslar) — originals are not confirmed to be held at Goslar itself by any source beyond this filming note, and no other repository is named, so the custodian of the originals is unconfirmed by this survey.\n\n## Records NOT online\nThis survey found no record series for Schönberg that are confirmed offline-only; the Kirchenbuch for the target period is marked \"Online\" in the catalog.\n\n## Known record losses\nNo tool result in this survey states any loss for the Schönberg Kirchenbuch; the series is continuous 1640–1875 per the catalog.\n\n## Research tips\n- All German records are organized in the FamilySearch catalog by their 1871 place name, so Schönberg appears under Mecklenburg-Strelitz in the catalog rather than any later or current province name (https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies).\n- Work from the known to the unknown and document each generation's births via church records before relying on the tree (https://www.familysearch.org/en/wiki/Germany_Getting_Started).\n- Check witnesses at a baptism — they are often relatives and can resolve ambiguity between same-named individuals in the same parish (https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies).\n- Because the FamilySearch Wiki's `home`, `getting_started`, `online_records`, and `research_tips` pages have no dedicated Schönberg/Mecklenburg-Strelitz-level article (the parish-level `home` page returned \"No wiki page found\"), the country-level Germany pages are the best available guidance; consult the Mecklenburg-Strelitz GenWiki page (http://wiki-de.genealogy.net/Mecklenburg-Strelitz) for more local detail.\n- Given the neighboring parishes listed in the catalog search under the same AG. Schönberg jurisdiction (Herrnburg, Carlow, Selmsdorf, Demern, Domhof Ratzeburg, Schlagsdorf, Ziethen), search these adjoining parish Kirchenbücher if the 1687 baptism is not found in Schönberg's own register, since families sometimes used a neighboring church.\n- Search the collection \"Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937\" (FamilySearch collection 4132032) by name first, since it is indexed and may surface the Hinrich Burmeister baptism without browsing film 69805 image by image.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1680,
+        "end_year": 1690,
+        "total_volumes": 40,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 16,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Death",
+            "volumes": 16,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Cemetery",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Marriage",
+            "volumes": 16,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious",
+            "volumes": 40,
+            "browse_only": 3,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Baptism",
+            "volumes": 34,
+            "browse_only": 3,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Death",
+            "volumes": 14,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Marriage",
+            "volumes": 15,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Confirmation",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-12"
+    }
+  ]
+}

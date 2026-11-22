@@ -1,5 +1,6 @@
 /**
- * A lowered `timeoutMs` must bound the whole `image_search` call, not just each
+ * A lowered `timeoutMs` must bound the whole image-list call (`listGroupImageIds`,
+ * which `volume_bisect` and `image_search` share), not just each
  * HTTP request inside it (volume-bisect-tool-spec §8).
  *
  * This is the half `probe-budget.test.ts` structurally cannot cover. That one
@@ -20,7 +21,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({ getValidToken: vi.fn() }));
 
-import { imageSearchTool } from "../../src/tools/image-search.js";
+import { listGroupImageIds } from "../../src/tools/image-search.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 
@@ -56,11 +57,7 @@ describe("image_search retry budget", () => {
     // request counted here belongs to `fetchChildren` — the leg volume_bisect
     // sizes its budget on.
     await expect(
-      imageSearchTool(
-        { imageGroupNumber: "004516861_001_M9S4-SQB" },
-        LOCAL,
-        { timeoutMs: 40 },
-      ),
+      listGroupImageIds("004516861_001_M9S4-SQB", LOCAL, { timeoutMs: 40 }),
     ).rejects.toThrow();
 
     // Uncapped this is 3: `fetchWithRetry` keeps retrying inside its own 10s
@@ -80,7 +77,7 @@ describe("image_search retry budget", () => {
     // the assertion would pass for the wrong reason, and take 30s doing it.
     mode = "reject";
     await expect(
-      imageSearchTool({ imageGroupNumber: "004516861_001_M9S4-SQB" }, LOCAL),
+      listGroupImageIds("004516861_001_M9S4-SQB", LOCAL),
     ).rejects.toThrow();
 
     // The full attempt set, every time: 3 immediate rejections fit inside the
@@ -95,11 +92,7 @@ describe("image_search retry budget", () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "Date"] });
     try {
       const call = expect(
-        imageSearchTool(
-          { imageGroupNumber: "004516861_001_M9S4-SQB" },
-          LOCAL,
-          { timeoutMs: 40 },
-        ),
+        listGroupImageIds("004516861_001_M9S4-SQB", LOCAL, { timeoutMs: 40 }),
       ).rejects.toThrow();
       await vi.runAllTimersAsync();
       await call;
