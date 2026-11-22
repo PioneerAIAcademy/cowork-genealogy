@@ -422,6 +422,8 @@ const PROJECT_MODULES = new Set([
  * - `record_read`: stages the read when inside a project; the read works
  *   without one.
  * - `external_links_search`: stores external-collections.json optionally.
+ * - `locality_survey`: stages its answer and stores external-collections.json
+ *   when given a project; the survey works without one.
  * - `same_person`: reads project context optionally for enrichment.
  * - `rank_search_matches`: reads project context optionally for scoring.
  * - `person_quality`: reads tree optionally for quality scoring.
@@ -442,6 +444,7 @@ const OPTIONAL_PROJECT_TOOLS = new Set([
   "person_read",
   "record_read",
   "external_links_search",
+  "locality_survey",
   "same_person",
   "rank_search_matches",
   "person_quality",

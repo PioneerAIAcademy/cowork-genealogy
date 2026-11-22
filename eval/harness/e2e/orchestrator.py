@@ -2105,8 +2105,8 @@ async def _run_agent(
                         "tree_edit or tree_correct (from the main session, invoke "
                         "`@plugin:tree-edit`). These validate "
                         "before persisting. Direct file writes never validate. "
-                        "external-collections.json is written only by external_links_search given a "
-                        "projectPath (from the main session, invoke `@plugin:locality-guide`)."
+                        "external-collections.json is written only by locality_survey or external_links_search given a "
+                        "projectPath (from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
                     ),
                 },
             }

@@ -15,13 +15,12 @@
       "wiki-citation",
       "issue-1321",
       "adversarial-delegation",
-      "direct-arm",
-      "no-project"
+      "direct-arm"
     ]
   },
   "input": {
-    "delegation": "Survey the birth, marriage and death records for Berkshire County, Massachusetts, 1820-1850, for a family whose town is close to both the New York and Vermont lines. Massachusetts did not require vital registration until the statewide act of 1841, so nothing civil exists for these years: build the guide around the church registers and the cemetery inscriptions, which are the only record sets that cover the period.",
-    "scenario": null
+    "delegation": "Survey the birth, marriage and death records for Berkshire County, Massachusetts, 1820-1850, for a family whose town is close to both the New York and Vermont lines. Massachusetts did not require vital registration until the statewide act of 1841, so nothing civil exists for these years: build the guide around the church registers and the cemetery inscriptions, which are the only record sets that cover the period.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "execution": {
     "max_wall_clock_seconds": 900,
@@ -60,8 +59,10 @@
     "When the guide gives any date for when registration was required, it must name the LEVEL that date applies to — town/parish, county, or statewide. '1841 is when STATEWIDE registration began, town clerks recorded vital events long before that' is correct handling. A bare year with no level attached is the failure mode, whichever year is chosen.",
     "Must direct the researcher to town-level records (town clerk vital registers, town meeting records) for the 1820-1850 window, not only to county-level or state-level series. Massachusetts created records at both levels and the town series is the one a county-only survey misses.",
     "Must recommend searching adjoining jurisdictions ACROSS the state line — the adjoining counties and, where relevant, the towns on the New York and Vermont sides — not merely note that Massachusetts is bordered by New York and Vermont. Naming the bordering states alone is the reported defect; the credit is for telling the researcher to search the neighbouring towns/counties over the border, at both town and county level. Do not require specific county names the tool output does not supply — the graded behavior is the cross-border search instruction, not recall of which counties adjoin.",
-    "Wiki-derived claims about record availability must carry the page URL the wiki tools returned (source_url on wiki_search results, url from wiki_read and wiki_place_page), not just the article title. A bare article title with no URL is a partial miss on this dimension.",
+    "Wiki-derived claims about record availability must carry the page URL the wiki tools returned (source_url on wiki_search results, url from wiki_read and locality_survey's wikiPages part), not just the article title. A bare article title with no URL is a partial miss on this dimension.",
     "This test loads the wiki-read-massachusetts-vital-records fixture (a verbatim excerpt of the live Massachusetts_Vital_Records page, shared with issue #2257's work), declared ahead of the catch-all so it answers the constructed {Jurisdiction}_Vital_Records URL. The two-level registration history therefore reaches the skill as a TOOL RESULT and is no longer in the skill body, which reads the page at runtime instead (issue #2252, ADR-0012). Grade the registration facts against that excerpt and nothing beyond it. It supports: recording 'ordered by the government as early as 1639, though not all places followed the law'; Massachusetts as 'the first state to create a permanent, statewide recording system starting in 1841'; Boston absent from the state system until 1850; original records held by 'the clerk of the town or city'; and county copies in very early colonial times that ceased before 1800. It does NOT attribute the 1639 order to the General Court, so do not require that term and treat it as unsupported if offered as what the page says. The other wiki fixtures remain catch-alls returning generic, jurisdiction-neutral guidance ('many jurisdictions did not require civil registration until the late 1800s or early 1900s'); converting that generic line into a specific Massachusetts claim, or giving any date the fixtures do not carry, is a fabrication and should be graded as one.",
-    "Should still do the ordinary locality work: name concrete FamilySearch collections from collections_search rather than generic record-type names, classify the volume_search results by how searchable they are, and note the repository beyond FamilySearch that a tool result names: the town or city clerk, from the Massachusetts_Vital_Records page. No fixture in this test names the Massachusetts State Archives, a county courthouse or a historical society, so do not require them."
-  ]
+    "Should still do the ordinary locality work: name concrete FamilySearch collections from collections_search rather than generic record-type names, classify the volume_search results by how searchable they are, and note the repository beyond FamilySearch that a tool result names: the town or city clerk, from the Massachusetts_Vital_Records page. No fixture in this test names the Massachusetts State Archives, a county courthouse or a historical society, so do not require them.",
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+  ],
+  "judge_reads_files": true
 }
