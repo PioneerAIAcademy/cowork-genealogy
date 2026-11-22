@@ -290,7 +290,7 @@ comes before a new one. The search is one command — `gh issue list --state ope
 overlap is usually at a line number, not a title, and a comment on the issue
 that already owns the file beats a second issue against it.
 
-**Filing prompts the lead.** `gh issue create` is gated by a `PreToolUse` hook
+**Filing prompts whoever runs the session.** `gh issue create` is gated by a `PreToolUse` hook
 (`scripts/claude-hooks/gate-issue-create.py`, wired in `.claude/settings.json`,
 which Claude Code reads straight from the checkout — nothing to install) that
 stops the call and puts the rule in front of whoever runs the session before

@@ -254,7 +254,7 @@ can mask the failure you are trying to demonstrate. Say plainly when you skipped
 this.
 
 **One run, not three.** If a suite result looks like sampling noise, that is
-itself the finding — the test is too sensitive and needs an issue. Never ask an
+itself the finding — say so, and name the issue that already covers the test. Never ask an
 author to re-run a paid eval to settle it. If a re-run genuinely is needed, name
 the **directory** it must run from (almost always the PR's worktree, not the
 primary checkout) alongside the command; a run from the wrong tree produces a

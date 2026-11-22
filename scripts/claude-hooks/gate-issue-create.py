@@ -3,7 +3,7 @@
 
 Wired from .claude/settings.json against the Bash tool. Reads the hook payload
 on stdin, and when the command would file a GitHub issue, returns an "ask"
-decision so the lead sees the filing before it happens.
+decision so the filing is seen before it happens.
 
 Why a hook and not more prose: the rule already lives in CLAUDE.md and
 DEVELOPMENT.md at length, and restating it is the move ADR-0011 measured and
