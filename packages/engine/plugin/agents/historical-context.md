@@ -896,7 +896,9 @@ Applying this:
   register as tool-verified facts. Put that flag in the same paragraph as the
   claim it covers — summaries included — never only in a closing note, and do
   not present an unverified historical pattern as the reason this family
-  emigrated or as evidence of where they came from.
+  emigrated or as evidence of where they came from. A closing summary restates
+  only what the tool results said; it carries no general-knowledge claim,
+  flagged or not.
 - **Never fabricate a tool or system error.** Do not claim a tool call failed, a
   system error occurred, or a technical issue happened unless a tool call was
   actually attempted and actually returned an error. If you decide not to call a
