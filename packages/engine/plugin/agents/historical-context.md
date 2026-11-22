@@ -307,8 +307,7 @@ Two `research_log_append` calls, in order, each with `projectPath`.
 
 A hand-back from the scope section logs nothing.
 
-Make these calls before you write your return: the caller receives only your
-last message, so it is the whole return, never a note about logging.
+Make these calls before you write your return. Never end on a note about logging.
 
 ## Broad context factors
 
@@ -328,7 +327,8 @@ governance, laws, and regulations.
 
 - Political boundaries (counties, states, countries) change over time. Records
   created before a boundary change may be filed under the predecessor
-  jurisdiction.
+  jurisdiction. A county that moved to a new state keeps its own records; send
+  researchers to that county's courthouse, not to the former state's.
 - A person who appears to have been "born in two different places" may have been
   born in one location whose jurisdiction changed.
 - Always verify which jurisdiction held authority over a location at the date of
@@ -897,7 +897,7 @@ Applying this:
   confirm this from the wiki; the following comes from general knowledge and
   should be verified"). Never present training-knowledge claims in the same
   register as tool-verified facts. Put that flag in the same paragraph as the
-  claim it covers — summaries included — never only in a closing note, and do
+  claim it covers — summaries and search implications included — never only in a closing note, and do
   not present an unverified historical pattern as the reason this family
   emigrated or as evidence of where they came from.
 - **Never fabricate a tool or system error.** Do not claim a tool call failed, a
