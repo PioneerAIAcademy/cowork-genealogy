@@ -33,6 +33,10 @@ export interface MatchByIdResult {
   title: string;
   updated: string;
   matches: MatchByIdMatch[];
+  /** Set only on a tree-person answer with zero matches because FamilySearch
+   *  holds no match data for a person who exists. Absent on every ordinary
+   *  result, so a caller that never reads it is unaffected. */
+  note?: string;
 }
 
 export interface MatchApiMatchInfo {
@@ -56,11 +60,14 @@ export interface MatchApiResponse {
   title?: string;
   updated?: string;
   // `not-found` is present when the service could not resolve the id in the
-  // target system. It is the ONLY thing distinguishing "this persona has no
-  // matches" from "this id names no persona": both answer 200 with
-  // `entries: []` and `results: 0`, and both carry the same `title`. (An epoch
-  // `updated` of 1970-01-01T00:00:00.001Z is a second tell, but the link is the
-  // explicit one.) Measured 2026-09-10 — `dev/probe-match-not-found.ts`.
+  // target system. It separates "this persona has no matches" from "the
+  // service has no entry for this id": both answer 200 with `entries: []` and
+  // `results: 0`, and both carry the same `title`. (An epoch `updated` of
+  // 1970-01-01T00:00:00.001Z is a second tell, but the link is the explicit
+  // one.) It does NOT say the id names nothing: a live tree person the matcher
+  // has no entry for carries it too, so a tree-person tool checks the tree
+  // before reporting the person absent. Measured 2026-09-10 —
+  // `dev/probe-match-not-found.ts`.
   links?: {
     self?: { href?: string };
     "not-found"?: { href?: string };

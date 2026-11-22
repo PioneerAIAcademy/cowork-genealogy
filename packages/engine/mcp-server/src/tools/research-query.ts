@@ -36,6 +36,7 @@ import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
+import { unlinkedPartyRows, type UnlinkedPartyRow } from "../utils/unlinked-parties.js";
 
 /** The most items one page holds, and the most ids one list filter takes. A page
  *  also stops short of it when the whole answer would pass
@@ -181,6 +182,10 @@ export type ResearchQueryResult =
        *  here and never calls `same_person`, so this is where it learns a
        *  disagreement is settled. Absent when there is none. */
       settledConflicts?: SettledConflictRow[];
+      /** `person_evidence` only: for the live links on this page, each two-party
+       *  assertion linked to one tree person while the tree names the other
+       *  party, who has no link to it (§2.7). Absent when there is none. */
+      unlinkedParties?: UnlinkedPartyRow[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -245,6 +250,18 @@ function groupSettled(links: any[], notesByLink: Map<string, string[]>): Settled
     rows.set(key, row);
   }
   return [...rows.values()];
+}
+
+/** The tree `unlinkedPartyRows` reads, once outside `render` as `settledNotesByLink`
+ *  reads it, so a page-size probe does not re-read it. Never throws: no links or
+ *  an unreadable tree yields null, and no page carries `unlinkedParties`. */
+async function unlinkedPartiesTree(projectPath: string, links: any[]): Promise<any | null> {
+  if (links.length === 0) return null;
+  try {
+    return await readProjectJson(projectPath, "tree.gedcomx.json");
+  } catch {
+    return null;
+  }
 }
 
 class ResearchQueryError extends Error {}
@@ -999,6 +1016,8 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       section === "person_evidence"
         ? await settledNotesByLink(projectPath, research, ordered)
         : undefined;
+    const unlinkedTree =
+      section === "person_evidence" ? await unlinkedPartiesTree(projectPath, ordered) : null;
 
     const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
     return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
@@ -1021,6 +1040,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       if (settledNotes) {
         const rows = groupSettled(ordered.slice(start, end), settledNotes);
         if (rows.length > 0) page.settledConflicts = rows;
+      }
+      if (unlinkedTree) {
+        const unlinked = unlinkedPartyRows(research, unlinkedTree, ordered.slice(start, end));
+        if (unlinked.length > 0) page.unlinkedParties = unlinked;
       }
       if (countById) page.countById = countById;
       if (unregistered) page.unregisteredDisagreements = unregistered;
