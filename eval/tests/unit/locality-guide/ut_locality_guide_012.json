@@ -52,7 +52,7 @@
     "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Recognize Oklahoma was Indian Territory in the mid‑1800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn’t exist yet).",
+    "Recognize Oklahoma was Indian Territory in the mid‑1800s. The survey's wiki search returns tribal rolls, missionary registers and Bureau of Indian Affairs agency records held at the National Archives at Fort Worth; the guide should cover those three, as the results give them. The Oklahoma Historical Society appears only in the wiki_search results for the Five Civilized Tribes and the Dawes rolls: credit it when the agent ran such a search, and do not require it otherwise. No fixture names tribal offices, missionary archives or treaty records as repositories or record sets, so do not require them. Avoid Oklahoma state archives or statewide vital registration (didn’t exist yet).",
     "locality_survey's volumes part returns one image group of tribal enrollment cards (1840-1870) that is 99% indexed and full-text searchable. The skill should note that this volume is highly name-searchable on FamilySearch, contrasting it with the typically harder-to-search treaty and agency records discussed elsewhere in the guide.",
     "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
   ],
