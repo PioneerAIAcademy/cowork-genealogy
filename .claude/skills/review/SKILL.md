@@ -334,8 +334,9 @@ behaviour; consistency-only edits; eval threshold changes.
 hunk to its own branch", not an integration branch, not a follow-on PR. If good
 work in one PR spans two issues, the issues merge — the PR does not split. And a
 small related fix belongs *in this PR*, not in an issue filed against it: the
-branch is already open and already being reviewed. File an issue only for work
-that is genuinely large, blocked, or needs a decision nobody here can make.
+branch is already open and already being reviewed. What the PR cannot fix is
+dropped, not filed, unless it meets step 4 of CLAUDE.md § "Work you find along
+the way".
 
 ## 6. Confidence, and the gate on it
 
