@@ -1,5 +1,5 @@
 {
-  "run_log": "v8_2026-11-16_16-09-50.json",
+  "run_log": "v10_2026-11-22_14-43-57.json",
   "annotator": "dallan@quass.org",
   "corrections": [
     {
@@ -30,9 +30,9 @@
       "test_id": "ut_locality_guide_027",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
     },
     {
       "test_id": "ut_locality_guide_027",
@@ -54,30 +54,22 @@
       "test_id": "ut_locality_guide_r7k",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_r7k",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_r7k",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_locality_guide_r7k",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -85,18 +77,74 @@
     {
       "test_id": "ut_locality_guide_r7k",
       "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
     },
     {
       "test_id": "ut_locality_guide_r7k",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_q4g",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_q4g",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_q4g",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_q4g",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
+    },
+    {
+      "test_id": "ut_locality_guide_q4g",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_q4g",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_028",
@@ -104,7 +152,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
     },
     {
       "test_id": "ut_locality_guide_028",
@@ -112,31 +160,31 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
     },
     {
       "test_id": "ut_locality_guide_028",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_028",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "investigate later"
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
     },
     {
       "test_id": "ut_locality_guide_028",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_028",
@@ -144,10 +192,10 @@
       "dimension_name": "Research strategy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
     },
     {
-      "test_id": "ut_locality_guide_026",
+      "test_id": "ut_locality_guide_q4m",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -155,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_026",
+      "test_id": "ut_locality_guide_q4m",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -163,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_026",
+      "test_id": "ut_locality_guide_q4m",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -171,7 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_026",
+      "test_id": "ut_locality_guide_q4m",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -179,7 +227,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_026",
+      "test_id": "ut_locality_guide_q4m",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 3,
@@ -187,9 +235,65 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_026",
+      "test_id": "ut_locality_guide_q4m",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -197,18 +301,10 @@
     {
       "test_id": "ut_locality_guide_k9d",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_k9d",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "investigate later"
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_k9d",
@@ -216,7 +312,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "investigate later"
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_k9d",
@@ -232,28 +328,12 @@
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
     },
     {
       "test_id": "ut_locality_guide_k9d",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_v7h",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_v7h",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -261,6 +341,22 @@
     {
       "test_id": "ut_locality_guide_v7h",
       "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
@@ -280,44 +376,36 @@
       "dimension_name": "Record availability",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
     },
     {
       "test_id": "ut_locality_guide_v7h",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_locality_guide_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -325,261 +413,29 @@
     {
       "test_id": "ut_locality_guide_001",
       "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_locality_guide_001",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_007",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_007",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_018",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_018",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_018",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_locality_guide_021",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -587,7 +443,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_021",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -595,7 +451,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_021",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -603,7 +459,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_021",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -611,15 +467,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_021",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_locality_guide_021",
+      "test_id": "ut_locality_guide_r8f",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
       "llm_score": 3,
@@ -627,23 +483,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_023",
+      "test_id": "ut_locality_guide_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
     },
     {
-      "test_id": "ut_locality_guide_023",
+      "test_id": "ut_locality_guide_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
     },
     {
-      "test_id": "ut_locality_guide_023",
+      "test_id": "ut_locality_guide_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -651,7 +507,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_023",
+      "test_id": "ut_locality_guide_006",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -659,7 +515,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_023",
+      "test_id": "ut_locality_guide_006",
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 3,
@@ -667,7 +523,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_023",
+      "test_id": "ut_locality_guide_006",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
       "llm_score": 3,
@@ -675,23 +531,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_w6j",
+      "test_id": "ut_locality_guide_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_locality_guide_w6j",
+      "test_id": "ut_locality_guide_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_locality_guide_w6j",
+      "test_id": "ut_locality_guide_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -699,28 +555,172 @@
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_w6j",
+      "test_id": "ut_locality_guide_009",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_locality_guide_w6j",
-      "dimension_source": "rubric",
-      "dimension_name": "Record availability",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate later"
-    },
-    {
-      "test_id": "ut_locality_guide_w6j",
+      "test_id": "ut_locality_guide_009",
       "dimension_source": "rubric",
       "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate later"
+      "comment": "research and fix partials later"
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "research and fix partials later"
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }
