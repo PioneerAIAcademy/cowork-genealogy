@@ -311,6 +311,11 @@ _DELEGATION_MATCHER = "^(" + "|".join(sorted(DELEGATION_TOOLS)) + ")$"
 # faster; it does not make it succeed. `_drain_background` is the fix.
 _PRETOOL_TIMEOUT_S = 10.0
 
+# SDK stdout line ceiling in characters (SDK default 1 MiB): a main-thread Read puts the file's
+# base64 on one line twice, so this holds two copies of the largest upload's base64 (25 MiB,
+# app/sessions.py and proto/web/project_blobs.py) plus the JSON envelope.
+MAX_BUFFER_BYTES = 96 * 1024 * 1024
+
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
 # though only the newline bound does real work there. 4096 = Linux PATH_MAX; it
@@ -832,7 +837,8 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         "researcher_profile.narration_guidance from research.json as your "
         "narration style. "
         "With no project and no FamilySearch person ID, a request for the names and details "
-        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "recorded in a record set (a roll, register, muster list or volume), or to re-index "
+        "one page or compare it with its FamilySearch index, goes to the "
         "search-images agent with no projectPath, even when it names no images; relay "
         "everything after its final --- verbatim."
     )
@@ -843,6 +849,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         model=main.model,
         effort=main.effort,
         permission_mode="bypassPermissions",  # operator-controlled, headless
+        max_buffer_size=MAX_BUFFER_BYTES,
         system_prompt={
             "type": "preset",
             "preset": "claude_code",

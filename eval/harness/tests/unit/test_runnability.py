@@ -975,3 +975,83 @@ def test_no_committed_test_trips_the_run_agents_or_routing_suite_rules():
             tripped.append(f"{path.relative_to(TESTS)}: {result.reason}")
     assert seen > 100
     assert not tripped, "\n".join(tripped)
+
+
+# --- na_dimensions (#4548) ---------------------------------------------------
+
+
+def _na_check(tmp_path, na, *, negative=False, extra_heading="", tags=("no-harm",)):
+    fake_tests = tmp_path / "tests"
+    (fake_tests / "research").mkdir(parents=True)
+    (fake_tests / "research" / "rubric.md").write_text(
+        "# research\n\n## Score discipline\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "\n## Rationale quality\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        + (f"\n## {extra_heading}\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+           if extra_heading else ""),
+        encoding="utf-8",
+    )
+    d = _runnable_test_dict()
+    d["na_dimensions"] = na
+    d["test"]["tags"] = list(tags)
+    if negative:
+        d["test"]["type"] = "negative"
+        d["negative"] = {"correct_skill": [], "explanation": "x"}
+        d.pop("execution")
+    spec = load_test_from_dict(d)
+    return check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=fake_tests,
+        validators_dir=_validators_dir(tmp_path, OPT_IN_VALIDATOR),
+    )
+
+
+def test_na_dimensions_naming_rubric_headings_is_runnable(tmp_path):
+    result = _na_check(tmp_path, ["Score discipline", "Rationale quality"])
+    assert result.runnable is True, result.reason
+
+
+@pytest.mark.parametrize("bad", [
+    ["Score Discipline"],          # case typo: matching is exact
+    ["Score discipline", "Nope"],  # one good, one unknown
+    ["Correctness"],               # a base dimension is what the outcome gates on
+])
+def test_na_dimensions_naming_a_non_rubric_heading_is_refused(tmp_path, bad):
+    result = _na_check(tmp_path, bad)
+    assert result.runnable is False
+    assert "na_dimensions" in result.reason
+
+
+def test_na_dimensions_refuses_a_base_name_even_when_a_rubric_reuses_it(tmp_path):
+    result = _na_check(tmp_path, ["Correctness"], extra_heading="Correctness")
+    assert result.runnable is False
+    assert "base dimension" in result.reason
+
+
+def test_na_dimensions_without_a_gating_validator_is_refused(tmp_path):
+    result = _na_check(tmp_path, ["Score discipline"], tags=("unrelated",))
+    assert result.runnable is False
+    assert "no validator gates" in result.reason
+
+
+def test_na_dimensions_on_a_negative_test_is_refused(tmp_path):
+    result = _na_check(tmp_path, ["Score discipline"], negative=True)
+    assert result.runnable is False
+    assert "negative" in result.reason
+
+
+def test_no_committed_test_names_an_na_dimension_its_rubric_lacks():
+    """A rubric heading renamed, or a typo in a committed test's
+    `na_dimensions`, makes that test not_runnable; catch it here rather than
+    on the next paid run."""
+    refused, seen = [], 0
+    for path in sorted(TESTS.rglob("*.json")):
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict) or not raw.get("na_dimensions"):
+            continue
+        seen += 1
+        result = check_runnable(load_test_from_dict(raw), scenarios_dir=SCENARIOS,
+                                fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+        if not result.runnable:
+            refused.append(f"{path.relative_to(TESTS)}: {result.reason}")
+    assert seen >= 1
+    assert not refused, "\n".join(refused)

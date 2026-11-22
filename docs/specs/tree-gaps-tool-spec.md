@@ -222,9 +222,10 @@ A spouse's own baptism or death record says nothing about a child. A title that
 names no event ("Vital Records", "Church Registers") counts toward `total` only,
 so `fitting` is a floor.
 
-`pendingHints` is `null` when any person on the hole could not be read: the match
-service answers "no tree person" for some valid ids, a read can fail, and a read
-is not started once the 40 s time budget has passed or under 2 s remain. A
+`pendingHints` is `null` when any person on the hole could not be read: a read can
+fail, and a read is not started once the 40 s time budget has passed or under 2 s remain. A
+person the match service holds no data for but who exists in the tree counts as
+read with no hints (`fitting: 0`), not as unread. A
 partial count is never returned. Each person is read once however many holes
 name them, six at a time. Every read gets what is left of the 50 s deadline as
 its own timeout and retry budget, so none outlives the response. The reads start

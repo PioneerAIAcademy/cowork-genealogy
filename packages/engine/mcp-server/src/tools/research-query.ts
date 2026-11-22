@@ -36,6 +36,7 @@ import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
+import { unlinkedPartyRows, type UnlinkedPartyRow } from "../utils/unlinked-parties.js";
 
 /** The most items one page holds, and the most ids one list filter takes. A page
  *  also stops short of it when the whole answer would pass
@@ -145,12 +146,16 @@ export type ResearchQueryResult =
   | {
       ok: true;
       section: ResearchQuerySection;
-      /** Total matches (before paging and any `offset`). */
+      /** Total matches (before paging and any `offset`). On `assertions` it
+       *  counts assertions, not the groups `items` holds. */
       count: number;
+      /** The section's entries; on `assertions`, persona groups
+       *  (`flattenAssertionGroups` restores the flat assertions). */
       items: any[];
-      /** true when matches remain *beyond this page* (`count > offset +
-       *  items.length`) — page with `offset: nextOffset` (or narrow the filter)
-       *  rather than relying on this being everything. */
+      /** true when matches remain *beyond this page* — page with
+       *  `offset: nextOffset` (or narrow the filter) rather than relying on this
+       *  being everything. Never derive it from `items.length`: on
+       *  `assertions` an item is a group of several matches. */
       truncated: boolean;
       /** Present only when `truncated`: the `offset` of the next page. */
       nextOffset?: number;
@@ -177,6 +182,10 @@ export type ResearchQueryResult =
        *  here and never calls `same_person`, so this is where it learns a
        *  disagreement is settled. Absent when there is none. */
       settledConflicts?: SettledConflictRow[];
+      /** `person_evidence` only: for the live links on this page, each two-party
+       *  assertion linked to one tree person while the tree names the other
+       *  party, who has no link to it (§2.7). Absent when there is none. */
+      unlinkedParties?: UnlinkedPartyRow[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -241,6 +250,18 @@ function groupSettled(links: any[], notesByLink: Map<string, string[]>): Settled
     rows.set(key, row);
   }
   return [...rows.values()];
+}
+
+/** The tree `unlinkedPartyRows` reads, once outside `render` as `settledNotesByLink`
+ *  reads it, so a page-size probe does not re-read it. Never throws: no links or
+ *  an unreadable tree yields null, and no page carries `unlinkedParties`. */
+async function unlinkedPartiesTree(projectPath: string, links: any[]): Promise<any | null> {
+  if (links.length === 0) return null;
+  try {
+    return await readProjectJson(projectPath, "tree.gedcomx.json");
+  } catch {
+    return null;
+  }
 }
 
 class ResearchQueryError extends Error {}
@@ -476,11 +497,95 @@ function withoutInactiveRationale(plan: any): any {
   };
 }
 
+/** The keys every fact of one persona repeats, hoisted onto an assertions group.
+ *  Exactly these five: `informant` and `informant_proximity` vary within a
+ *  persona, and `record_document_id` is on too few assertions to pay. */
+const HOISTED_KEYS = ["record_id", "record_persona_id", "record_role", "source_id", "log_entry_id"] as const;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** The hoisted keys `a` carries, in fixed order; an absent key stays absent. */
+function assertionHead(a: Record<string, unknown>): Record<string, unknown> {
+  const head: Record<string, unknown> = {};
+  for (const key of HOISTED_KEYS) if (Object.hasOwn(a, key)) head[key] = a[key];
+  return head;
+}
+
+/** True when two assertions share all five hoisted keys, absent ≠ `null`. */
+function sameHead(a: unknown, b: unknown): boolean {
+  if (!isPlainObject(a) || !isPlainObject(b)) return false;
+  return HOISTED_KEYS.every((key) =>
+    Object.hasOwn(a, key) === Object.hasOwn(b, key) &&
+    (!Object.hasOwn(a, key) || JSON.stringify(a[key]) === JSON.stringify(b[key])),
+  );
+}
+
+/** `a` without the hoisted keys, and without `extracted_for_question_ids` when
+ *  it is exactly `[questionId]` (every hit of a questionId read contains it,
+ *  so its absence there is lossless). */
+function assertionFact(a: Record<string, unknown>, questionId: string | undefined): Record<string, unknown> {
+  const fact: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(a)) {
+    if ((HOISTED_KEYS as readonly string[]).includes(key)) continue;
+    if (
+      key === "extracted_for_question_ids" && questionId !== undefined &&
+      Array.isArray(value) && value.length === 1 && value[0] === questionId
+    ) continue;
+    fact[key] = value;
+  }
+  return fact;
+}
+
+/** An assertions page as groups: each maximal run of consecutive assertions
+ *  sharing the five hoisted keys becomes `{ ...head, facts: [...] }`. Order is
+ *  kept, so `flattenAssertionGroups` restores the page exactly. A non-object
+ *  entry passes through on its own. */
+function groupAssertions(items: unknown[], questionId: string | undefined): unknown[] {
+  const out: unknown[] = [];
+  let open: { facts: unknown[] } | undefined;
+  items.forEach((a, i) => {
+    if (!isPlainObject(a)) {
+      out.push(a);
+      open = undefined;
+      return;
+    }
+    if (open && sameHead(items[i - 1], a)) {
+      open.facts.push(assertionFact(a, questionId));
+      return;
+    }
+    open = { ...assertionHead(a), facts: [assertionFact(a, questionId)] };
+    out.push(open);
+  });
+  return out;
+}
+
+/** The inverse of the grouped `assertions` answer: one flat assertion per
+ *  fact, the group's hoisted keys restored, and `extracted_for_question_ids:
+ *  [questionId]` restored on a questionId read. An entry with no `facts` list
+ *  passes through unchanged, so a flat answer flattens to itself. */
+export function flattenAssertionGroups(items: unknown[], questionId?: string): unknown[] {
+  return items.flatMap((group) => {
+    if (!isPlainObject(group) || !Array.isArray(group.facts)) return [group];
+    const head = assertionHead(group);
+    return group.facts.map((fact) => {
+      const a: Record<string, unknown> = { ...head, ...(fact as Record<string, unknown>) };
+      if (questionId !== undefined && !Object.hasOwn(a, "extracted_for_question_ids")) {
+        a.extracted_for_question_ids = [questionId];
+      }
+      return a;
+    });
+  });
+}
+
 /** The page's items as the tool returns them. A log entry's `staged_ref` is
- *  research_log_append's own bookkeeping, read from research.json directly. */
-function projectItems(section: ResearchQuerySection, items: any[]): any[] {
+ *  research_log_append's own bookkeeping, read from research.json directly.
+ *  Assertions come back grouped by persona (`groupAssertions`). */
+function projectItems(section: ResearchQuerySection, items: any[], questionId?: string): any[] {
   if (section === "plans") return items.map(withoutInactiveRationale);
   if (section === "log") return items.map((entry) => without(entry, "staged_ref"));
+  if (section === "assertions") return groupAssertions(items, questionId);
   return items;
 }
 
@@ -911,13 +1016,16 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       section === "person_evidence"
         ? await settledNotesByLink(projectPath, research, ordered)
         : undefined;
+    const unlinkedTree =
+      section === "person_evidence" ? await unlinkedPartiesTree(projectPath, ordered) : null;
 
+    const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
     return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
       const page: OkPage = {
         ok: true as const,
         section,
         count: ordered.length,
-        items: projectItems(section, ordered.slice(start, end)),
+        items: projectItems(section, ordered.slice(start, end), questionId),
         truncated: end < ordered.length,
       };
       if (page.truncated) page.nextOffset = end;
@@ -932,6 +1040,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       if (settledNotes) {
         const rows = groupSettled(ordered.slice(start, end), settledNotes);
         if (rows.length > 0) page.settledConflicts = rows;
+      }
+      if (unlinkedTree) {
+        const unlinked = unlinkedPartyRows(research, unlinkedTree, ordered.slice(start, end));
+        if (unlinked.length > 0) page.unlinkedParties = unlinked;
       }
       if (countById) page.countById = countById;
       if (unregistered) page.unregisteredDisagreements = unregistered;
@@ -992,11 +1104,21 @@ export const researchQuerySchema = {
     "`offset: nextOffset`. An `offset` that is not where a page starts is refused, naming " +
     "the one to use. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document, with two omissions. An item of a plan " +
+    "projection, not a persisted document, with two omissions, and `assertions` " +
+    "come back grouped by persona (below). An item of a plan " +
     "that is not active (superseded or completed) carries no `rationale`, except " +
     "a skipped item with no `skip_category`, whose `rationale` holds its skip " +
     "reason for research-exhaustiveness; every item of the active plan keeps its " +
     "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`.\n" +
+    "\n" +
+    "`assertions` items are grouped by persona: each run of consecutive assertions " +
+    "sharing `record_id`, `record_persona_id`, `record_role`, `source_id` and " +
+    "`log_entry_id` is one `{ <those keys>, facts: [...] }`, and each fact holds " +
+    "every other field of one assertion (its `id` included). A key absent from the " +
+    "group is absent from its assertions, not null. On a `questionId` read a fact " +
+    "omits `extracted_for_question_ids` when it is exactly `[questionId]`. `count`, " +
+    "`offset`, `nextOffset` and `countById` count assertions (facts), never groups; " +
+    "a persona split across pages repeats its keys on the next page.\n" +
     "\n" +
     "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
