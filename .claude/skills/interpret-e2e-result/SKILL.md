@@ -257,7 +257,7 @@ Translate `stop_reason` into something a researcher can act on:
 - `timeout` — wall-clock cap fired (default 120 min; a fixture's `caps` can
   override). Either the question is too big for the cap or the agent looped.
   Skim the tail of `tool_calls` for repeating patterns.
-- `tool_cap` — agent hit the per-run tool-call cap (default 300).
+- `tool_cap` — agent hit the per-run tool-call cap (`caps.tool_calls` in the run log; default in `FixtureCaps`).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
 - `cost_cap` — spent past the cost threshold. **Not an interruption** — it
