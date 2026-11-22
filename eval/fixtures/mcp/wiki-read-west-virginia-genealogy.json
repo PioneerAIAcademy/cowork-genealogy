@@ -1,6 +1,6 @@
 {
   "tool": "wiki_read",
-  "description": "Excerpt from the live West_Virginia,_United_States_Genealogy page, probed 2026-09-15 at https://www.familysearch.org/en/wiki/West_Virginia,_United_States_Genealogy (15450 chars). Excerpt anchored on state-formation and boundary content the historical-context tests rely on. Its three sentences on where pre-1863 records are held were not on the live page; on 2026-11-22 two were replaced with the live page's \"It was created from the state of Virginia.\" and \"Many genealogy records are kept on the county level in the United States.\", and the Virginia county courthouses bullet was removed. The live page does not say where pre-1863 county records are held.",
+  "description": "Modelled on the live West_Virginia,_United_States_Genealogy page (https://www.familysearch.org/en/wiki/West_Virginia,_United_States_Genealogy, probed 2026-09-15), but not a verbatim excerpt: most of its Background, County Formation and Key Repositories text is not on the live page as saved on 2026-11-09. Its three sentences on where pre-1863 records are held were not on the live page either; on 2026-11-22 two were replaced with the live page's \"It was created from the state of Virginia.\" and \"Many genealogy records are kept on the county level in the United States.\", and the Virginia county courthouses bullet was removed. The live page does not say where pre-1863 county records are held.",
   "args": {
     "url": "~West_Virginia,_United_States_Genealogy"
   },
