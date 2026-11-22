@@ -258,8 +258,9 @@ Translate `stop_reason` into something a researcher can act on:
   override). Either the question is too big for the cap or the agent looped.
   Skim the tail of `tool_calls` for repeating patterns.
 - `tool_cap` — agent hit the per-run tool-call cap (`caps.tool_calls` in the run log; default in `FixtureCaps`).
-  Almost always means looping. Read the last 20 tool calls; the loop
-  shape is usually obvious.
+  Either the question is too big for the cap or the agent looped. Read the
+  last 20 tool calls: a loop repeats one call shape; varied searches and
+  reads mean it was still working.
 - `cost_cap` — spent past the cost threshold. **Not an interruption** — it
   is a post-hoc label (the cost-cap row of the stop-reason table in
   `docs/specs/e2e-test-spec.md`); on a step-mode run the host keeps replying
