@@ -155,6 +155,20 @@ describe("runLocalitySurvey", () => {
     expect(calls.filter((c) => c.startsWith("catalog"))).toHaveLength(1);
   });
 
+  it("keeps a catalog hit's later notes, where the archive holding the originals is often named", async () => {
+    const levoca = "Povôdné dokumnety boli mikrofilmované v Štátnom oblastnom archíve v Levoči.";
+    const notes = ["Greek Catholic parish registers. Text in Latin and Hungarian.", levoca, "x".repeat(400), "y".repeat(200)];
+    const hit = { id: "koha:727653", title: "Cirkevná matrika, 1824-1924", repositoryCalls: ["Online"], hydrated: true, notes };
+    const out: any = await runLocalitySurvey(
+      { standardPlace: "Kolonica, Snina, Slovakia" },
+      deps({ catalog: async () => ({ totalHits: 1, returned: 1, placeResolved: true, hydrationTimedOut: false, hydrateRequested: 10, hits: [hit] }) }),
+    );
+    const kept: string[] = out.catalog.levels[0].hits[0].notes;
+    expect(kept.slice(0, 2)).toEqual(notes.slice(0, 2));
+    expect(kept[2]).toHaveLength(300);
+    expect(kept).toHaveLength(3);
+  });
+
   it("reads a four-part city's section pages at its state", async () => {
     const calls: string[] = [];
     const out: any = await runLocalitySurvey(

@@ -93,7 +93,7 @@ vital-records page 25,000, outside links 32,000, the rest 20,000).
   outside links 3,500. Each says how many rows it `omitted`. Collections sort by person count
   (the call already keeps only those overlapping the years); outside links by how many of the
   template's record types they cover, then whether they overlap the years, then the most specific
-  place; catalog hits as the tool returns them; volumes as each level's summary and first page,
+  place; catalog hits as the tool returns them, each keeping its first two subjects, its first two film notes, and its notes in order (each cut at 300 characters, up to 600 in all, so a later note naming where the originals are survives); volumes as each level's summary and first page,
   deduplicated across levels by `imageGroupNumber`, the place's own level first.
 - **Wiki text**, the rest: `40,000 − JSON.stringify(answer with every page's content empty)`, less
   the names of every heading a page could leave out. The vital-records page goes first, up to 6,000,

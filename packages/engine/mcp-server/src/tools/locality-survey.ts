@@ -411,6 +411,21 @@ function compactVolume(v: VolumeGroup) {
   };
 }
 
+const NOTE_CHARS = 300;
+const NOTES_CHARS = 600;
+
+function compactNotes(notes: string[]): string[] {
+  const out: string[] = [];
+  let used = 0;
+  for (const n of notes) {
+    const cut = n.slice(0, NOTE_CHARS);
+    if (out.length && used + cut.length > NOTES_CHARS) break;
+    out.push(cut);
+    used += cut.length;
+  }
+  return out;
+}
+
 function compactHit(h: CatalogHit) {
   return {
     ...(h.id ? { id: h.id } : {}),
@@ -418,7 +433,7 @@ function compactHit(h: CatalogHit) {
     ...(h.creator ? { creator: h.creator } : {}),
     repositoryCalls: h.repositoryCalls,
     ...(h.subjects?.length ? { subjects: h.subjects.slice(0, 2) } : {}),
-    ...(h.notes?.length ? { notes: h.notes.slice(0, 1).map((n) => n.slice(0, 300)) } : {}),
+    ...(h.notes?.length ? { notes: compactNotes(h.notes) } : {}),
     ...(h.filmNotes?.length ? { filmNotes: h.filmNotes.slice(0, 2), filmNotesTotal: h.filmNotes.length } : {}),
   };
 }
