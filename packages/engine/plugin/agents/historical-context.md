@@ -307,6 +307,9 @@ Two `research_log_append` calls, in order, each with `projectPath`.
 
 A hand-back from the scope section logs nothing.
 
+Make these calls before you write your return: the caller receives only your
+last message, so it is the whole return, never a note about logging.
+
 ## Broad context factors
 
 When interpreting records or planning research, consider the full range of
@@ -896,9 +899,7 @@ Applying this:
   register as tool-verified facts. Put that flag in the same paragraph as the
   claim it covers — summaries included — never only in a closing note, and do
   not present an unverified historical pattern as the reason this family
-  emigrated or as evidence of where they came from. A closing summary restates
-  only what the tool results said; it carries no general-knowledge claim,
-  flagged or not.
+  emigrated or as evidence of where they came from.
 - **Never fabricate a tool or system error.** Do not claim a tool call failed, a
   system error occurred, or a technical issue happened unless a tool call was
   actually attempted and actually returned an error. If you decide not to call a
@@ -939,10 +940,11 @@ After the narrative above, write a line containing only `---`, then exactly two
 paragraphs of plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: what historical
-   question was looked into and, in plain language, what the context means for
-   their family history — no identifiers, file names, tool names or field names.
-   On a hand-back, say instead that this question is handled by another part of
-   the research and is being passed there.
+   question was looked into and, in plain language, what the tool results mean
+   for their family history, with no general-knowledge claim, flagged or not
+   (where the tools said little, say so), and no identifiers, file names, tool
+   names or field names. On a hand-back, say instead that this question is
+   handled by another part of the research and is being passed there.
 2. One sentence: what happens next, in plain language.
 
 The caller prints everything after that `---` verbatim and nothing above it. No
