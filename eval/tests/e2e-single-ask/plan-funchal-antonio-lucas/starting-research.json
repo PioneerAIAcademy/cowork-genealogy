@@ -65,43 +65,49 @@
           "id": "4426199",
           "title": "Portugal, Madeira, Catholic Church Records, 1044-1990",
           "date_range": "1044-1990",
-          "person_count": 17724446,
-          "record_count": 1329527
+          "person_count": 17724449,
+          "record_count": 1329527,
+          "availability": "name-searchable"
         },
         {
           "id": "1520601",
           "title": "Portugal Baptisms, 1570-1910",
           "date_range": "1569-1910",
           "person_count": 1199038,
-          "record_count": 302869
+          "record_count": 302869,
+          "availability": "name-searchable"
         },
         {
           "id": "1520605",
           "title": "Portugal Marriages, 1670-1910",
           "date_range": "1670-1910",
           "person_count": 320323,
-          "record_count": 44760
+          "record_count": 44760,
+          "availability": "name-searchable"
         },
         {
           "id": "1520606",
           "title": "Portugal Deaths, 1640-1910",
           "date_range": "1640-1910",
           "person_count": 247105,
-          "record_count": 98347
+          "record_count": 98347,
+          "availability": "name-searchable"
         },
         {
           "id": "4474701",
           "title": "Portugal, Civil Records, 1437-2023",
           "date_range": "1231-2023",
-          "person_count": 33916020,
-          "record_count": 11196
+          "person_count": 33915999,
+          "record_count": 11196,
+          "availability": "name-searchable"
         },
         {
           "id": "1925427",
           "title": "Portugal Passport Registers and Application Files, 1800-1946",
           "date_range": "1800-1946",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         }
       ],
       "quirks": [

@@ -405,9 +405,31 @@ describe("collectionsSearchTool field mapping", () => {
     });
   });
 
+  it("marks only a collection with no indexed person, or under one per thousand images, browse-only", async () => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        results: 3,
+        entries: [
+          makeEntry({ id: "1", title: "Pennsylvania, Probate Records, 1683-1994", placeIds: [1], personCount: 52, imageCount: 3200560 }),
+          makeEntry({ id: "2", title: "Pennsylvania, Orphans Court, 1700-1900", placeIds: [1], personCount: 0, imageCount: 900 }),
+          makeEntry({ id: "3", title: "Pennsylvania, County Marriages, 1885-1950", placeIds: [1], personCount: 500, imageCount: 200000 }),
+        ],
+      }),
+    });
+    const result = await collectionsSearchTool({ standardPlace: "Pennsylvania" }, LOCAL);
+    if (!("results" in result)) throw new Error("no results");
+    expect(Object.fromEntries(result.results.map((r) => [r.id, r.availability]))).toEqual({
+      "1": "browse-only",
+      "2": "browse-only",
+      "3": undefined,
+    });
+  });
+
   it("collectionCountsById still derives the /Record count the row no longer carries", () => {
     const counts = collectionCountsById(mockApiResponse);
-    expect(counts.get("1234")).toMatchObject({ personCount: 1048000, recordCount: 524000 });
+    expect(counts.get("1234")).toMatchObject({ personCount: 1048000, recordCount: 524000, imageCount: expect.any(Number) });
     // The title and years ride along for research_append's locality fill.
     expect(typeof counts.get("1234")?.title).toBe("string");
     expect(counts.get("1234")?.title).not.toBe("");

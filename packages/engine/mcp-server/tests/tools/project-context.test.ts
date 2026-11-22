@@ -731,7 +731,7 @@ describe("project_context", () => {
         timePeriod: "1870-1880",
         jurisdictions: [{ name: "Ringebu, Oppland, Norway", dateRange: "1838-" }],
         collections: [
-          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12 },
+          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12, availability: "browse-only" },
           { id: "1", title: "Uncounted" },
           { id: "2", title: "Bad count" },
         ],
@@ -800,6 +800,21 @@ describe("project_context", () => {
       ]);
       expect(r.nationalCollections).toEqual({ Canada: [{ id: "ca1901", title: "Canada, Census, 1901" }] });
       expect(r.localities?.[0].collections?.map((c) => c.id)).toEqual(["cans"]);
+    });
+
+    it("marks browse-only from a stored label over the count, or from an older row's count, and leaves name-searchable unmarked", async () => {
+      const r = await run([
+        loc("loc_001", "Schuylkill, Pennsylvania, United States", "1845-1908", [
+          { id: "1999196", title: "Pennsylvania, Probate Records, 1683-1994", person_count: 52, availability: "browse-only" },
+          { id: "2466360", title: "Pennsylvania, Church Marriages, 1682-1976", person_count: 17743 },
+          { id: "old0", title: "Pennsylvania, Old Browse Set", person_count: 0 },
+        ]),
+      ]);
+      expect(Object.fromEntries((r.localities?.[0].collections ?? []).map((c) => [c.id, c.availability]))).toEqual({
+        "1999196": "browse-only",
+        "2466360": undefined,
+        old0: "browse-only",
+      });
     });
 
     it("leaves a place outside the three countries alone, and gives no key", async () => {

@@ -506,6 +506,28 @@ describe("research_append (Phase 1)", () => {
       expect(r.unresolvedPlaces).toEqual(["West Bromwich, England"]);
     });
 
+    it("(4b) a state/province contradiction on update clears the fact's standard_place and warns, without failing", async () => {
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+      vi.mocked(resolveStandardPlace).mockImplementationOnce(async () => "Forest, Wisconsin, United States");
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "Forest, Miss, United States" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Forest, Miss, United States");
+      expect(f.standard_place).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place/);
+      expect(r.resolvedPlaces).toBeUndefined();
+      expect(r.unresolvedPlaces).toEqual(["Forest, Miss, United States"]);
+    });
+
     it("(5) `place: null` clears the fact's place rather than writing a null", async () => {
       // The tree schema types these `string` with no null branch, so assigning
       // null would make the fact invalid. `Object.hasOwn`, not truthiness, is
@@ -1716,6 +1738,56 @@ describe("research_append (Phase 1)", () => {
       } finally {
         vi.mocked(resolveStandardPlace).mockImplementation(stub);
       }
+    });
+
+    // Issue #4689: "Forest, Miss" was geocoded to Forest, Wisconsin — a wrong
+    // state is worse than none, so Lever A now drops a sidecar/geocoded value
+    // whose standard_place names a different state or province than the
+    // text's own (full name, postal code, or the one-word list's abbreviation).
+    it("on an append whose lookup is geocoded to a different state than the text's abbreviation names, which is dropped with a warning, not refused", async () => {
+      await writeProject();
+      vi.mocked(resolveStandardPlace).mockImplementationOnce(async () => "Forest, Wisconsin, United States");
+      const { id: _omit, ...a } = {
+        ...validAssertion("x", "src_001"),
+        fact_type: "military_service",
+        place: "Forest, Miss, United States",
+      };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain(
+        "could not resolve standard_place for 'Forest, Miss, United States' (left unset): the lookup's answer " +
+          "'Forest, Wisconsin, United States' names a different state or province",
+      );
+      expect(r.unresolvedPlaces).toEqual(["Forest, Miss, United States"]);
+      expect(r.resolvedPlaces).toBeUndefined();
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).toMatchObject({ fact_type: "military_service", place: "Forest, Miss, United States" });
+      expect(p).not.toHaveProperty("standard_place");
+    });
+
+    // When the country check alone cannot judge the pair ("Tenn" names no
+    // country, so `countryConsistency` is "unverifiable" before the state
+    // check ever runs), the state-contradiction drop must fire BEFORE the
+    // unverifiable branch's "verify this" warning is pushed — otherwise the
+    // response would carry a stale warning describing a standard_place that
+    // the very next check deletes.
+    it("on an append whose lookup is geocoded to a different state, where the country check alone cannot judge it, drops without ever warning to verify the dropped value", async () => {
+      await writeProject();
+      vi.mocked(resolveStandardPlace).mockImplementationOnce(async () => "Nashville, Davidson, Wisconsin, United States");
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "residence", place: "Nashville, Tenn" };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain(
+        "could not resolve standard_place for 'Nashville, Tenn' (left unset): the lookup's answer " +
+          "'Nashville, Davidson, Wisconsin, United States' names a different state or province",
+      );
+      expect(r.validation.warnings.join(" ")).not.toMatch(/verify it is the right place/);
+      expect(r.unresolvedPlaces).toEqual(["Nashville, Tenn"]);
+      expect(r.resolvedPlaces).toBeUndefined();
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).not.toHaveProperty("standard_place");
     });
 
     it.each([
@@ -11956,6 +12028,63 @@ describe("research_append (composite persist + enforcement)", () => {
     expect((await readResearch()).assertions[1].standard_place).toBe(
       "Pottsville, Schuylkill, Pennsylvania, United States",
     );
+  });
+
+  it("drops a sidecar-copied standard_place that names another state than the text's abbreviation (#4689)", async () => {
+    await writeProject(sidecarResearch());
+    const record = sidecarRecord();
+    record.gedcomx.persons[0].facts![0] = {
+      id: "F1",
+      type: "Residence",
+      place: "Forest, Miss, United States",
+      standard_place: "Forest, Wisconsin, United States",
+    };
+    await writeSidecar([record]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_id: "ark:/61903/1:1:ABCD-123",
+            log_entry_id: "log_001",
+            fact_type: "residence",
+            value: "Forest, Miss, United States",
+            place: "Forest, Miss, United States",
+          },
+        },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings).toContain(
+      "could not resolve standard_place for 'Forest, Miss, United States' (left unset): the lookup's answer " +
+        "'Forest, Wisconsin, United States' names a different state or province",
+    );
+    expect(r.unresolvedPlaces).toEqual(["Forest, Miss, United States"]);
+    expect(r.resolvedPlaces).toBeUndefined();
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    expect((await readResearch()).assertions.at(-1)).not.toHaveProperty("standard_place");
+  });
+
+  it("keeps a caller-supplied standard_place that names another state: only a looked-up value is dropped (#4689)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        place: "Forest, Miss, United States",
+        standard_place: "Forest, Wisconsin, United States",
+      },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/different state or province/);
+    expect((await readResearch()).assertions.at(-1).standard_place).toBe("Forest, Wisconsin, United States");
   });
 
   it("copies no other person's standard_place: in a census household only the head's own fact was named (SGZQ-Y3L's shape)", async () => {
