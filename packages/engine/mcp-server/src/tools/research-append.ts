@@ -13086,12 +13086,18 @@ function expandGuideSections(
 /** The FamilySearch collection ids a staged survey's wiki pages link to, in page order: the
  *  online-records page lists a place's collections as links, and the survey shows the agent
  *  only a share of it (spec §5.14, "Collections the wiki links"). */
-export function wikiLinkedCollectionIds(survey: any): string[] {
-  const texts: string[] = [];
+/** A staged survey's wiki pages that carry text: the four place pages and the topic pages. */
+function surveyPages(survey: any, topics: readonly string[]): { url: unknown; content: string }[] {
   const pages = survey?.wikiPages && typeof survey.wikiPages === "object" ? Object.values(survey.wikiPages) : [];
-  for (const page of [...pages, ...["vitalRecords", "churchRecords", "question"].map((k) => survey?.[k])]) {
-    if (page && typeof page === "object" && typeof (page as any).content === "string") texts.push((page as any).content);
+  const out: { url: unknown; content: string }[] = [];
+  for (const page of [...pages, ...topics.map((k) => survey?.[k])]) {
+    if (page && typeof page === "object" && typeof (page as any).content === "string") out.push(page as any);
   }
+  return out;
+}
+
+export function wikiLinkedCollectionIds(survey: any): string[] {
+  const texts = surveyPages(survey, ["vitalRecords", "churchRecords", "question"]).map((p) => p.content);
   const ids: string[] = [];
   for (const text of texts) {
     for (const m of text.matchAll(/familysearch\.org\/(?:[a-z]{2}\/)?search\/collection\/(\d+)/g)) {
@@ -13099,6 +13105,48 @@ export function wikiLinkedCollectionIds(survey: any): string[] {
     }
   }
   return ids;
+}
+
+/** A wiki page's title from its URL, so `.../wiki/Portugal_Civil_Registration` and its
+ *  encoded or spaced forms compare equal. Null for a URL that is not a wiki page. */
+function wikiTitleOf(url: unknown): string | null {
+  if (typeof url !== "string") return null;
+  const m = url.match(/\/wiki\/([^?#]+)/);
+  if (!m) return null;
+  let t = m[1];
+  try {
+    t = decodeURIComponent(t);
+  } catch {
+    /* keep it encoded */
+  }
+  return t.replace(/ /g, "_").toLowerCase();
+}
+
+/**
+ * Each `registration_start` row whose `source_url` is a page the survey read, and whose
+ * `year` that page's text does not contain (spec §5.14). A row citing a page the survey
+ * did not read is not checked here: its text is not in the staged answer.
+ */
+export function registrationYearsOffPage(rows: unknown, survey: any): string[] {
+  if (!Array.isArray(rows)) return [];
+  const byTitle = new Map<string, string>();
+  for (const p of surveyPages(survey, ["vitalRecords", "churchRecords", "namingCustoms", "searchHelp", "question"])) {
+    const t = wikiTitleOf(p.url);
+    if (t) byTitle.set(t, (byTitle.get(t) ?? "") + "\n" + p.content);
+  }
+  const out: string[] = [];
+  for (const [j, row] of rows.entries()) {
+    if (!row || typeof row !== "object") continue;
+    const { year, source_url } = row as Record<string, unknown>;
+    if (typeof year !== "number" || !Number.isInteger(year)) continue;
+    const text = byTitle.get(wikiTitleOf(source_url) ?? "");
+    if (text === undefined || new RegExp(`(?<!\\d)${year}(?!\\d)`).test(text)) continue;
+    out.push(
+      `registration_start[${j}] gives ${year}, which ${String(source_url)} does not contain: ` +
+        "save the year that page gives, or cite the page that gives this one.",
+    );
+  }
+  return out;
 }
 
 /** A localities append's wiki-linked collection ids, from its survey, for the collections fill. */
@@ -13181,6 +13229,11 @@ async function expandSurveyRefs(
     }
     if (!survey || typeof survey !== "object" || !Array.isArray(survey.pagesRead)) {
       refuse(`surveyRef '${op.surveyRef}' is not a locality_survey answer.`);
+      continue;
+    }
+    const offPage = registrationYearsOffPage(body?.registration_start, survey);
+    if (offPage.length > 0) {
+      for (const m of offPage) refuse(m);
       continue;
     }
     const filled: Record<string, unknown> = { ...(body ?? {}), pages_read: survey.pagesRead };

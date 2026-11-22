@@ -19799,6 +19799,52 @@ describe("research_append: a localities guide is saved one section per call (#45
       expect(catalogRowsFromSurvey({})).toEqual([]);
     });
 
+    const PORTUGAL_CIVIL = "https://www.familysearch.org/en/wiki/Portugal_Civil_Registration";
+    const civilSurvey = () =>
+      stageSurvey(dir, {
+        place: "Madeira, Portugal",
+        ...SURVEY_FIELDS,
+        vitalRecords: {
+          url: PORTUGAL_CIVIL,
+          found: true,
+          content: "In 1832, the government passed legislation. This system didn't come into effect until 1878. From 1911 onwards, all residents.",
+        },
+      });
+    const civilRow = (year: number, source_url = PORTUGAL_CIVIL) => ({ event: "birth", level: "national", year, source_url });
+
+    it("refuses a registration year the cited survey page does not contain, and writes nothing", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir, section: "localities", op: "append",
+        entry: entry({ registration_start: [civilRow(1878), civilRow(1880)] }), surveyRef: await civilSurvey(),
+      } as never);
+      expect(r.ok).toBe(false);
+      const all = refusals(r).join(" ");
+      expect(all).toContain(`registration_start[1] gives 1880, which ${PORTUGAL_CIVIL} does not contain`);
+      expect(all).not.toContain("registration_start[0]");
+      expect((await readResearch()).localities ?? []).toHaveLength(0);
+    });
+
+    it("accepts a year the cited page gives, however its URL is spelled", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir, section: "localities", op: "append",
+        entry: entry({ registration_start: [civilRow(1878), civilRow(1911, "https://www.familysearch.org/en/wiki/Portugal%20Civil%20Registration#Civil")] }),
+        surveyRef: await civilSurvey(),
+      } as never);
+      expect(r.ok).toBe(true);
+    });
+
+    it("does not check a year whose cited page the survey did not read", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir, section: "localities", op: "append",
+        entry: entry({ registration_start: [civilRow(1880, "https://www.familysearch.org/en/wiki/Madeira_Civil_Registration")] }),
+        surveyRef: await civilSurvey(),
+      } as never);
+      expect(r.ok).toBe(true);
+    });
+
     it("omits volume_summary when the survey has none", async () => {
       await writeProject();
       const ref = await stageSurvey(dir, { place: "Ohio, United States", pagesRead: SURVEY_FIELDS.pagesRead, volumeSummary: null });

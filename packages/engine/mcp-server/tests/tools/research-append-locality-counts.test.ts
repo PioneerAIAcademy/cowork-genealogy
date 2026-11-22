@@ -330,7 +330,7 @@ describe("research_append stamps locality collection counts from the catalog", (
           ...CATALOG,
           results: 4,
           entries: [
-            ...CATALOG.entries,
+            ...(CATALOG.entries ?? []),
             catalogEntry("1932399", "United States, Civil War Soldiers Index, 1861-1865", 600, 6300000),
             catalogEntry("1919999", "Illinois, Peoria, Birth Records, 1878-1994", 100, 2000),
           ],

@@ -2509,7 +2509,15 @@ saved.
   counts, beside the catalog's own collections for the place; one whose title begins with the scope
   and names another part of it (`New York, Yonkers, …` for Saratoga County) is left out, and an id
   the catalog lacks is never added.
-  Refused: an append with no `surveyRef`; `pages_read`, `volume_summary` or `catalog` in an append's `entry`
+  **A registration year is checked against the page it cites.** Each `registration_start` row in a
+  write carrying `surveyRef` whose `source_url` names a page the survey read (a place page or a
+  topic page, compared by wiki title, case and encoding aside) must give a `year` that page's text
+  contains as a whole number (`registrationYearsOffPage`). A row citing a page the survey did not
+  read is not checked: its text is not staged, and `research_append` reads no network. In the four
+  real-place single-ask runs on Haiku 5.5 at low (2026-11-22), every saved year (Michigan 1867,
+  1893, 1897; Nova Scotia 1763, 1864; Portugal 1878) cited the survey's own vital-records or
+  civil-registration page and appears on it.
+  Refused: a registration year off its cited survey page; an append with no `surveyRef`; `pages_read`, `volume_summary` or `catalog` in an append's `entry`
   or an update's `fields`; a `surveyRef` that is not a string, does not exist, or is not a
   survey answer; a `surveyRef` on another section. The wiring is `expandSurveyRefs`. A survey
   cannot be skipped and its counts cannot be copied wrong: 10 of 90 unit saving runs had

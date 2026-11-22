@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { collectionIdsByType, fillRecordTypeRows, recordTypeOfTitle } from "../../src/utils/locality-record-types.js";
 
-const entry = (extra: Record<string, unknown> = {}) => ({
+const entry = (extra: Record<string, unknown> = {}): Record<string, any> => ({
   collections: [
     { id: "1", title: "Pennsylvania, Death Certificates, 1906-1968", date_range: "1906-1968", person_count: 6542331 },
     { id: "2", title: "Pennsylvania, Schuylkill County Church Records", date_range: "1830-1920", person_count: 0 },
