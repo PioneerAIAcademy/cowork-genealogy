@@ -756,7 +756,7 @@ class FixtureCaps:
     # the model made no progress for ~40 min until the wall-clock cap. Conservative
     # default; tune down once the per-turn `timeline` shows the normal max gap.
     progress_stall_seconds: int = 600
-    tool_calls: int = 300
+    tool_calls: int = 500
     max_turns: int = 250
     max_cost_usd: float = 15.0
 
