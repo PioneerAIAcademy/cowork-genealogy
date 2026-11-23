@@ -103,6 +103,13 @@ describe("deedFormulaErrors: probate", () => {
   it("stays silent when the text has no administrator phrase", () => {
     expect(deedFormulaErrors(probate([{ type: "probate" }], []), "Letters were granted on the estate.", "d")).toEqual([]);
   });
+
+  it("refuses with no carrier, and says the document does not name whose estate it is", () => {
+    const d = { ...probate([], []), persons: [person("p1", "Isaac", "Porter"), person("p2", "Paul", "Meacham")] } as StructuredDocument;
+    const errs = deedFormulaErrors(d, TEXT, "d").join(" ");
+    expect(errs).toMatch(/no party carries a probate, will, death or burial fact/);
+    expect(errs).not.toMatch(/makes that party the decedent/);
+  });
 });
 
 describe("deedFormulaErrors: shapes a correct document takes (PR review, #3881)", () => {
