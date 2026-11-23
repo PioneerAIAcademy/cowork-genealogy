@@ -334,8 +334,9 @@ governance, laws, and regulations.
   born in one location whose jurisdiction changed.
 - Always verify which jurisdiction held authority over a location at the date of
   the event: that tells you which office made the record. For county records the
-  office is the county itself, wherever its courthouse lies now; a state's own
-  offices keep only state records.
+  office is the county itself, wherever its courthouse lies now, unless a tool
+  result shows the records were moved. For any other office, say where its
+  records are kept today only if a tool result shows it.
 - County formation dates determine which courthouse holds a record: for a record
   older than its county, search the parent county, which may now lie in another
   state.
@@ -604,7 +605,8 @@ surname is a **married** name, the children are most likely hers and the step
 reading leads. If it is her **maiden** name, they may instead be her brother's
 orphans — the same bond, with the guardian an **uncle by marriage**. The bond
 does not distinguish these; her prior marriage, or the children's father's
-estate, does.
+estate, does. Always name both readings, and keep the second open until a
+record shows whose surname it is.
 
 **When the record does not say which it is, the step reading still
 leads.** A marriage record gives her name *at marriage* and settles
@@ -937,7 +939,7 @@ the **Sources consulted** list — then this block:
 
 ```
 ### Search implications
-- hypothesis-tracking: <one candidate explanation per line, to test as a hypothesis>
+- hypothesis-tracking: <one candidate explanation per line, to test as a hypothesis; open with "(general knowledge)" when no tool result suggested it>
 - research-plan: <one fact per line that changes where or when to search>
 ```
 
